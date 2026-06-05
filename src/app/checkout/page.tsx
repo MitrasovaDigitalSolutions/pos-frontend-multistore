@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   IconScan,
   IconCategory,
@@ -56,6 +57,8 @@ interface CartItem extends Product {
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const { user, token, isLoading, logout, hasPermission, hasRole } = useAuth();
+
   const [cart, setCart] = useState<CartItem[]>([]);
   const [barcodeInput, setBarcodeInput] = useState("");
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
@@ -72,6 +75,28 @@ export default function CheckoutPage() {
   const [transactionCounter, setTransactionCounter] = useState(42);
 
   const barcodeInputRef = useRef<HTMLInputElement>(null);
+
+  // Authentication route protection
+  useEffect(() => {
+    if (!isLoading && !token) {
+      router.push("/login");
+    } else if (!isLoading && user && !hasPermission("create_sales")) {
+      toast.error("Anda tidak memiliki izin untuk mengakses Layar Kasir.");
+      router.push("/admin");
+    }
+  }, [isLoading, token, user, router, hasPermission]);
+
+  // Loading screen
+  if (isLoading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center space-y-3">
+          <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-xs text-slate-500 font-medium">Memuat terminal kasir...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Time & Auto Focus on Mount
   useEffect(() => {
@@ -240,21 +265,22 @@ export default function CheckoutPage() {
         </div>
 
         <div className="flex items-center gap-4">
+          {(hasRole("admin") || hasRole("manajer_toko") || hasRole("supervisor")) && (
+            <>
+              <Button
+                variant="ghost"
+                onClick={() => router.push("/admin")}
+                className="text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 h-8 px-3 rounded-lg flex items-center gap-1.5 cursor-pointer bg-transparent border-none"
+              >
+                <IconHome size={15} />
+                <span>Dashboard Admin</span>
+              </Button>
+              <div className="w-[1px] h-4 bg-slate-800"></div>
+            </>
+          )}
           <Button
             variant="ghost"
-            onClick={() => router.push("/admin")}
-            className="text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 h-8 px-3 rounded-lg flex items-center gap-1.5 cursor-pointer bg-transparent border-none"
-          >
-            <IconHome size={15} />
-            <span>Dashboard Admin</span>
-          </Button>
-          <div className="w-[1px] h-4 bg-slate-800"></div>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              toast.error("Logout sukses!");
-              router.push("/login");
-            }}
+            onClick={logout}
             className="text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-950/20 h-8 px-3 rounded-lg flex items-center gap-1.5 cursor-pointer bg-transparent border-none"
           >
             <IconLogout size={15} />
@@ -380,7 +406,7 @@ export default function CheckoutPage() {
               </div>
               <div className="flex justify-between text-[11px] font-semibold text-slate-400">
                 <span>Kasir Aktif</span>
-                <span className="text-slate-800 font-bold">Budi Setiawan (ID: 04)</span>
+                <span className="text-slate-800 font-bold">{user.name} (ID: {user.id})</span>
               </div>
               <div className="flex justify-between text-[11px] font-semibold text-slate-400">
                 <span>Tanggal / Waktu</span>
@@ -631,7 +657,7 @@ export default function CheckoutPage() {
             <div className="border-t border-dashed border-slate-300 my-2"></div>
             
             <div className="space-y-0.5 text-[9px] text-slate-500">
-              <div className="flex justify-between"><span>Kasir: Budi S.</span><span>Trm: POS-01</span></div>
+              <div className="flex justify-between"><span>Kasir: {user.name}</span><span>Trm: POS-01</span></div>
               <div className="flex justify-between"><span>No: {trxId}</span><span>04/06/2026</span></div>
             </div>
 
