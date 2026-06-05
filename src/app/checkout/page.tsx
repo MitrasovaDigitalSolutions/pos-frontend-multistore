@@ -275,11 +275,11 @@ export default function CheckoutPage() {
     const items: CartItem[] = (trxData.items || []).map((item: any) => ({
       product_id: item.product_id,
       itemId: item.id,
-      name: item.product_name,
-      price: parseFloat(item.unit_price),
-      qty: item.quantity,
+      name: item.nama_produk,           // backend: nama_produk
+      price: item.harga_satuan,         // backend: harga_satuan
+      qty: item.kuantitas,              // backend: kuantitas
       stock: item.product?.stok ?? 999,
-      barcode: item.product?.barcode ?? null,
+      barcode: item.product?.barcode ?? item.barcode ?? null,
     }));
     setCart(items);
   };
@@ -1046,30 +1046,30 @@ export default function CheckoutPage() {
             <div className="space-y-1.5">
               {(receipt?.items || []).map((item: any) => (
                 <div key={item.id} className="flex justify-between text-[10px]">
-                  <span>{item.quantity}x {String(item.product_name).substring(0, 16)}</span>
-                  <span>{formatRupiah(parseFloat(item.unit_price) * item.quantity)}</span>
+                  <span>{item.kuantitas}x {String(item.nama_produk).substring(0, 16)}</span>
+                  <span>{formatRupiah(item.harga_satuan * item.kuantitas)}</span>
                 </div>
               ))}
             </div>
             <div className="border-t border-dashed border-slate-300 my-2"></div>
             <div className="space-y-1">
-              <div className="flex justify-between"><span>Subtotal:</span><span>{formatRupiah(parseFloat(receipt?.subtotal ?? "0"))}</span></div>
-              <div className="flex justify-between"><span>PPN (11%):</span><span>{formatRupiah(parseFloat(receipt?.tax ?? "0"))}</span></div>
+              <div className="flex justify-between"><span>Subtotal:</span><span>{formatRupiah(receipt?.subtotal ?? 0)}</span></div>
+              <div className="flex justify-between"><span>PPN (11%):</span><span>{formatRupiah(receipt?.pajak ?? 0)}</span></div>
               <div className="flex justify-between font-extrabold text-[12px] text-slate-900">
-                <span>TOTAL:</span><span>{formatRupiah(parseFloat(receipt?.total ?? "0"))}</span>
+                <span>TOTAL:</span><span>{formatRupiah(receipt?.total ?? 0)}</span>
               </div>
             </div>
             <div className="border-t border-dashed border-slate-300 my-2"></div>
             <div className="space-y-1 text-[10px]">
-              {receipt?.payment_method === "cash" ? (
+              {receipt?.metode_pembayaran === "cash" ? (
                 <>
-                  <div className="flex justify-between"><span>Tunai:</span><span>{formatRupiah(parseFloat(receipt?.cash_received ?? "0"))}</span></div>
-                  <div className="flex justify-between"><span>Kembali:</span><span>{formatRupiah(parseFloat(receipt?.change ?? "0"))}</span></div>
+                  <div className="flex justify-between"><span>Tunai:</span><span>{formatRupiah(receipt?.nominal_bayar ?? 0)}</span></div>
+                  <div className="flex justify-between"><span>Kembali:</span><span>{formatRupiah(receipt?.kembalian ?? 0)}</span></div>
                 </>
               ) : (
                 <div className="flex justify-between capitalize">
-                  <span>Kartu {receipt?.card_type}:</span>
-                  <span>**** {receipt?.last_four}</span>
+                  <span>Kartu {receipt?.jenis_kartu}:</span>
+                  <span>**** {receipt?.nomor_kartu_akhir}</span>
                 </div>
               )}
             </div>
