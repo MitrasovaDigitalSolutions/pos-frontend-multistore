@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import {
   IconScan,
@@ -18,65 +18,97 @@ import {
   IconX,
   IconHome,
   IconLogout,
+  IconLoader2,
 } from "@tabler/icons-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
 
-// Database Produk Mock
-interface Product {
-  sku: string;
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+interface ApiProduct {
+  id: number;
+  nama: string;
+  merek: string;
+  barcode: string | null;
+  harga: number;
+  stok: number;
+  status: string;
+}
+
+interface CartItem {
+  product_id: number;
+  itemId?: number; // backend transaction_item id
   name: string;
   price: number;
-}
-
-const PRODUCTS_DATABASE: Record<string, Product> = {
-  "IDM-001": { sku: "IDM-001", name: "Indomie Goreng Rasa Ayam", price: 3500 },
-  "AQA-001": { sku: "AQA-001", name: "Air Mineral Aqua 600ml", price: 4000 },
-  "BRS-001": { sku: "BRS-001", name: "Beras Pandan Wangi 5kg", price: 65000 },
-  "GUL-001": { sku: "GUL-001", name: "Gula Pasir Gulaku 1kg", price: 17500 },
-  "MIN-001": { sku: "MIN-001", name: "Minyak Goreng Bimoli 2L", price: 34000 },
-  "TEH-001": { sku: "TEH-001", name: "Teh Celup Sariwangi isi 25", price: 6500 },
-  "ROT-001": { sku: "ROT-001", name: "Roti Tawar Sari Roti", price: 15000 },
-  "SUS-001": { sku: "SUS-001", name: "Susu UHT Ultra Milk 1L", price: 19000 },
-};
-
-interface CartItem extends Product {
   qty: number;
-  isNew?: boolean;
+  stock: number;
+  barcode: string | null;
 }
+
+interface HoldTransaction {
+  id: number;
+  items_count: number;
+  subtotal: number;
+  created_at: string;
+}
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { user, token, isLoading, logout, hasPermission, hasRole } = useAuth();
 
+  // Products from API
+  const [products, setProducts] = useState<ApiProduct[]>([]);
+  const [catalogSearch, setCatalogSearch] = useState("");
+
+  // Active draft transaction
+  const [transactionId, setTransactionId] = useState<number | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
+
+  // On-hold list
+  const [holdList, setHoldList] = useState<HoldTransaction[]>([]);
+
+  // UI state
   const [barcodeInput, setBarcodeInput] = useState("");
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
-  
-  // Payment States
-  const [cashReceived, setCashReceived] = useState("");
-  const [completedCash, setCompletedCash] = useState(0);
-  const [completedChange, setCompletedChange] = useState(0);
-  
-  const [trxId, setTrxId] = useState("TRX-20260604-0001");
-  const [trxTime, setTrxTime] = useState("");
-  const [transactionCounter, setTransactionCounter] = useState(42);
+  const [isHoldListOpen, setIsHoldListOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [payMode, setPayMode] = useState<"cash" | "card">("cash");
 
+  // Payment states
+  const [cashReceived, setCashReceived] = useState("");
+  const [cardType, setCardType] = useState("debit");
+  const [cardLast4, setCardLast4] = useState("");
+  const [cardRef, setCardRef] = useState("");
+
+  // Receipt data (after successful payment)
+  const [receipt, setReceipt] = useState<any>(null);
+
+  const [trxTime, setTrxTime] = useState("");
   const barcodeInputRef = useRef<HTMLInputElement>(null);
 
-  // Authentication route protection
+  // ─── Auth Guard ────────────────────────────────────────────────────────────
+
   useEffect(() => {
     if (!isLoading && !token) {
       router.push("/login");
@@ -86,7 +118,396 @@ export default function CheckoutPage() {
     }
   }, [isLoading, token, user, router, hasPermission]);
 
-  // Loading screen
+  // ─── Load Products ─────────────────────────────────────────────────────────
+
+  const fetchProducts = useCallback(async () => {
+    try {
+      const res = await apiFetch("/v1/products");
+      if (res.ok) {
+        const data = await res.json();
+        setProducts(data.data || data);
+      }
+    } catch {
+      toast.error("Gagal memuat produk dari server.");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (token) fetchProducts();
+  }, [token, fetchProducts]);
+
+  // ─── Clock & Keyboard Shortcuts ───────────────────────────────────────────
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setTrxTime(
+        `${now.toLocaleDateString("id-ID", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })} ${now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", hour12: false })}`
+      );
+    };
+    updateTime();
+    const timer = setInterval(updateTime, 60000);
+    barcodeInputRef.current?.focus();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "F1") {
+        e.preventDefault();
+        if (cart.length > 0) setIsPayModalOpen(true);
+      } else if (e.key === "F2") {
+        e.preventDefault();
+        setIsCatalogOpen((p) => !p);
+      } else if (e.key === "F5") {
+        e.preventDefault();
+        if (transactionId) handleHold();
+      } else if (e.key === "F6") {
+        e.preventDefault();
+        openHoldList();
+      } else if (e.key === "F10") {
+        e.preventDefault();
+        handleVoidDraft();
+      } else if (e.key === "Escape") {
+        setIsPayModalOpen(false);
+        setIsCatalogOpen(false);
+        setIsReceiptOpen(false);
+        setIsHoldListOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [cart, transactionId]);
+
+  // ─── Helpers ───────────────────────────────────────────────────────────────
+
+  const formatRupiah = (amount: number) =>
+    new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    })
+      .format(amount || 0)
+      .replace(/,00$/, "");
+
+  const subtotal = cart.reduce((acc, i) => acc + i.price * i.qty, 0);
+  const ppn = Math.round(subtotal * 0.11);
+  const grandTotal = subtotal + ppn;
+
+  const cashNum = parseFloat(cashReceived) || 0;
+  const changeValue = cashNum - grandTotal;
+  const isCashValid = cashNum >= grandTotal && grandTotal > 0;
+  const isCardValid = cardLast4.length === 4 && grandTotal > 0;
+
+  // ─── Transaction: Create Draft ─────────────────────────────────────────────
+
+  const ensureDraftTransaction = async (): Promise<number | null> => {
+    if (transactionId) return transactionId;
+    try {
+      const res = await apiFetch("/v1/transactions", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setTransactionId(data.data.id);
+        return data.data.id;
+      }
+      toast.error(data.message || "Gagal membuat transaksi.");
+      return null;
+    } catch {
+      toast.error("Koneksi gagal.");
+      return null;
+    }
+  };
+
+  // ─── Add Item to Cart ──────────────────────────────────────────────────────
+
+  const handleAddProduct = async (product: ApiProduct) => {
+    if (product.status !== "active") {
+      toast.error("Produk ini tidak aktif.");
+      return;
+    }
+    if (product.stok <= 0) {
+      toast.error(`Stok ${product.nama} habis!`);
+      return;
+    }
+
+    // Check if already in cart
+    const existing = cart.find((i) => i.product_id === product.id);
+    if (existing && existing.qty >= product.stok) {
+      toast.error(`Stok ${product.nama} tidak mencukupi!`);
+      return;
+    }
+
+    const trxId = await ensureDraftTransaction();
+    if (!trxId) return;
+
+    try {
+      setIsProcessing(true);
+      const res = await apiFetch(`/v1/transactions/${trxId}/items`, {
+        method: "POST",
+        body: JSON.stringify({ product_id: product.id, quantity: 1 }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        // Rebuild cart from response
+        const trxRes = await apiFetch(`/v1/transactions/${trxId}`);
+        const trxData = await trxRes.json();
+        if (trxRes.ok) {
+          buildCartFromTransaction(trxData.data);
+        }
+        toast.success(`${product.nama} ditambahkan.`);
+        setTimeout(() => barcodeInputRef.current?.focus(), 50);
+      } else {
+        toast.error(data.message || "Gagal menambahkan item.");
+      }
+    } catch {
+      toast.error("Koneksi gagal.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const buildCartFromTransaction = (trxData: any) => {
+    const items: CartItem[] = (trxData.items || []).map((item: any) => ({
+      product_id: item.product_id,
+      itemId: item.id,
+      name: item.nama_produk,           // backend: nama_produk
+      price: item.harga_satuan,         // backend: harga_satuan
+      qty: item.kuantitas,              // backend: kuantitas
+      stock: item.product?.stok ?? 999,
+      barcode: item.product?.barcode ?? item.barcode ?? null,
+    }));
+    setCart(items);
+  };
+
+  // ─── Update Item Quantity ──────────────────────────────────────────────────
+
+  const handleUpdateQty = async (item: CartItem, newQty: number) => {
+    if (!transactionId || !item.itemId) return;
+    if (newQty <= 0) {
+      handleRemoveItem(item);
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      const res = await apiFetch(
+        `/v1/transactions/${transactionId}/items/${item.itemId}`,
+        {
+          method: "PUT",
+          body: JSON.stringify({ quantity: newQty }),
+        }
+      );
+      const data = await res.json();
+      if (res.ok) {
+        setCart((prev) =>
+          prev.map((i) =>
+            i.itemId === item.itemId ? { ...i, qty: newQty } : i
+          )
+        );
+      } else {
+        toast.error(data.message || "Gagal update kuantitas.");
+      }
+    } catch {
+      toast.error("Koneksi gagal.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // ─── Remove Item ───────────────────────────────────────────────────────────
+
+  const handleRemoveItem = async (item: CartItem) => {
+    if (!transactionId || !item.itemId) return;
+    try {
+      setIsProcessing(true);
+      const res = await apiFetch(
+        `/v1/transactions/${transactionId}/items/${item.itemId}`,
+        { method: "DELETE" }
+      );
+      if (res.ok) {
+        setCart((prev) => prev.filter((i) => i.itemId !== item.itemId));
+        toast.error(`${item.name} dihapus.`);
+      } else {
+        toast.error("Gagal menghapus item.");
+      }
+    } catch {
+      toast.error("Koneksi gagal.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // ─── Barcode / Name Search ─────────────────────────────────────────────────
+
+  const handleBarcodeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const query = barcodeInput.trim();
+    setBarcodeInput("");
+    if (!query) return;
+
+    // Search by barcode first, then by name
+    let found = products.find(
+      (p) => p.barcode?.toLowerCase() === query.toLowerCase()
+    );
+    if (!found) {
+      found = products.find((p) =>
+        p.nama.toLowerCase().includes(query.toLowerCase())
+      );
+    }
+
+    if (found) {
+      await handleAddProduct(found);
+    } else {
+      // Try API barcode lookup
+      try {
+        const res = await apiFetch(`/v1/products/barcode/${encodeURIComponent(query)}`);
+        if (res.ok) {
+          const data = await res.json();
+          await handleAddProduct(data.data || data);
+        } else {
+          toast.error(`Produk "${query}" tidak ditemukan!`);
+        }
+      } catch {
+        toast.error(`Produk "${query}" tidak ditemukan!`);
+      }
+    }
+  };
+
+  // ─── Hold ─────────────────────────────────────────────────────────────────
+
+  const handleHold = async () => {
+    if (!transactionId || cart.length === 0) return;
+    try {
+      setIsProcessing(true);
+      const res = await apiFetch(`/v1/transactions/${transactionId}/hold`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        toast.info("Transaksi di-hold.");
+        setTransactionId(null);
+        setCart([]);
+      } else {
+        const d = await res.json();
+        toast.error(d.message || "Gagal hold transaksi.");
+      }
+    } catch {
+      toast.error("Koneksi gagal.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // ─── Hold List & Recall ────────────────────────────────────────────────────
+
+  const openHoldList = async () => {
+    try {
+      const res = await apiFetch("/v1/transactions/on-hold");
+      if (res.ok) {
+        const data = await res.json();
+        setHoldList(data.data || data);
+        setIsHoldListOpen(true);
+      }
+    } catch {
+      toast.error("Gagal memuat daftar hold.");
+    }
+  };
+
+  const handleRecall = async (holdTrxId: number) => {
+    try {
+      setIsProcessing(true);
+      const res = await apiFetch(`/v1/transactions/${holdTrxId}/recall`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setTransactionId(holdTrxId);
+        buildCartFromTransaction(data.data);
+        setIsHoldListOpen(false);
+        toast.success("Transaksi di-recall.");
+      } else {
+        toast.error(data.message || "Gagal recall.");
+      }
+    } catch {
+      toast.error("Koneksi gagal.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // ─── Void Draft ────────────────────────────────────────────────────────────
+
+  const handleVoidDraft = async () => {
+    if (cart.length === 0) return;
+    if (!confirm("Batalkan seluruh transaksi ini?")) return;
+    // Just discard locally — draft hasn't affected stock yet
+    setCart([]);
+    setTransactionId(null);
+    toast.error("Transaksi dibatalkan.");
+  };
+
+  // ─── Pay ───────────────────────────────────────────────────────────────────
+
+  const handlePay = async () => {
+    if (!transactionId) return;
+    setIsProcessing(true);
+
+    try {
+      let res: Response;
+
+      if (payMode === "cash") {
+        res = await apiFetch(`/v1/transactions/${transactionId}/pay/cash`, {
+          method: "POST",
+          body: JSON.stringify({ cash_received: cashNum }),
+        });
+      } else {
+        res = await apiFetch(`/v1/transactions/${transactionId}/pay/card`, {
+          method: "POST",
+          body: JSON.stringify({
+            card_type: cardType,
+            last_four: cardLast4,
+            reference_number: cardRef || `EDC-${Date.now()}`,
+          }),
+        });
+      }
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setReceipt(data.data || data);
+        setIsPayModalOpen(false);
+        setIsReceiptOpen(true);
+        // Refresh products to show updated stock
+        fetchProducts();
+      } else {
+        toast.error(data.message || "Pembayaran gagal.");
+      }
+    } catch {
+      toast.error("Koneksi gagal.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // ─── New Transaction ───────────────────────────────────────────────────────
+
+  const handleNewTransaction = () => {
+    setCart([]);
+    setTransactionId(null);
+    setReceipt(null);
+    setCashReceived("");
+    setCardLast4("");
+    setCardRef("");
+    setIsReceiptOpen(false);
+    setTimeout(() => barcodeInputRef.current?.focus(), 100);
+  };
+
+  // ─── Loading Screen ────────────────────────────────────────────────────────
+
   if (isLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -98,170 +519,28 @@ export default function CheckoutPage() {
     );
   }
 
-  // Time & Auto Focus on Mount
-  useEffect(() => {
-    updateTime();
-    const timer = setInterval(updateTime, 60000);
-    
-    // Auto focus to barcode field
-    barcodeInputRef.current?.focus();
-    
-    // Global Keyboard Shortcuts
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "F1") {
-        e.preventDefault();
-        if (cart.length > 0) setIsPayModalOpen(true);
-      } else if (e.key === "F2") {
-        e.preventDefault();
-        setIsCatalogOpen((prev) => !prev);
-      } else if (e.key === "F5") {
-        e.preventDefault();
-        toast.info("Transaksi Berhasil di-Hold (F5)");
-      } else if (e.key === "F6") {
-        e.preventDefault();
-        toast.info("Daftar Hold Transaksi Dibuka (F6)");
-      } else if (e.key === "F10") {
-        e.preventDefault();
-        handleVoidAll();
-      } else if (e.key === "Escape") {
-        setIsPayModalOpen(false);
-        setIsCatalogOpen(false);
-        setIsReceiptOpen(false);
-      }
-    };
-    
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      clearInterval(timer);
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [cart]);
+  const filteredProducts = products.filter(
+    (p) =>
+      p.status === "active" &&
+      (p.nama.toLowerCase().includes(catalogSearch.toLowerCase()) ||
+        (p.barcode?.toLowerCase().includes(catalogSearch.toLowerCase()) ?? false) ||
+        p.merek.toLowerCase().includes(catalogSearch.toLowerCase()))
+  );
 
-  const updateTime = () => {
-    const now = new Date();
-    const dateStr = now.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
-    const timeStr = now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", hour12: false });
-    setTrxTime(`${dateStr} ${timeStr}`);
-  };
-
-  // Helper formats Currency
-  const formatRupiah = (amount: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount).replace(/,00$/, "");
-  };
-
-  // Computations
-  const subtotal = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
-  const ppn = Math.round(subtotal * 0.11);
-  const grandTotal = subtotal + ppn;
-
-  // Add Product to Cart
-  const handleAddProduct = (sku: string) => {
-    const product = PRODUCTS_DATABASE[sku];
-    if (!product) return;
-
-    setCart((prev) => {
-      const idx = prev.findIndex((item) => item.sku === sku);
-      if (idx > -1) {
-        const updated = [...prev];
-        updated[idx] = { ...updated[idx], qty: updated[idx].qty + 1 };
-        return updated;
-      }
-      return [...prev, { ...product, qty: 1, isNew: true }];
-    });
-
-    toast.success(`${product.name} dimasukkan ke keranjang.`);
-    setTimeout(() => {
-      barcodeInputRef.current?.focus();
-    }, 50);
-  };
-
-  // Scan Code Trigger
-  const handleBarcodeSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const query = barcodeInput.trim().toUpperCase();
-    setBarcodeInput("");
-    if (!query) return;
-
-    if (PRODUCTS_DATABASE[query]) {
-      handleAddProduct(query);
-    } else {
-      // Find matching item name
-      const foundSku = Object.keys(PRODUCTS_DATABASE).find((key) =>
-        PRODUCTS_DATABASE[key].name.toUpperCase().includes(query)
-      );
-      if (foundSku) {
-        handleAddProduct(foundSku);
-      } else {
-        toast.error(`Produk atau Barcode "${query}" tidak ditemukan!`);
-      }
-    }
-  };
-
-  // Adjust Quantities
-  const handleAdjustQty = (sku: string, amount: number) => {
-    setCart((prev) =>
-      prev
-        .map((item) => {
-          if (item.sku === sku) {
-            return { ...item, qty: item.qty + amount };
-          }
-          return item;
-        })
-        .filter((item) => item.qty > 0)
-    );
-  };
-
-  // Remove single row
-  const handleRemoveItem = (sku: string, name: string) => {
-    setCart((prev) => prev.filter((item) => item.sku !== sku));
-    toast.error(`${name} dihapus dari keranjang.`);
-  };
-
-  // Cancel/Void all items
-  const handleVoidAll = () => {
-    if (cart.length === 0) return;
-    if (confirm("Apakah Anda yakin ingin membatalkan (VOID) seluruh transaksi ini?")) {
-      setCart([]);
-      toast.error("Seluruh transaksi belanja dibatalkan (VOID)!");
-    }
-  };
-
-  // Payment Change Calculation
-  const cashNum = parseFloat(cashReceived) || 0;
-  const changeValue = cashNum - grandTotal;
-  const isPaymentValid = cashNum >= grandTotal && grandTotal > 0;
-
-  // Complete Order
-  const handleCompleteTransaction = () => {
-    if (!isPaymentValid) return;
-    setCompletedCash(cashNum);
-    setCompletedChange(changeValue);
-    
-    setIsPayModalOpen(false);
-    setIsReceiptOpen(true);
-  };
-
-  const handleNewTransaction = () => {
-    setCart([]);
-    setIsReceiptOpen(false);
-    setTransactionCounter((prev) => prev + 1);
-    setTrxId(`TRX-20260604-000${transactionCounter}`);
-    setTimeout(() => {
-      barcodeInputRef.current?.focus();
-    }, 100);
-  };
+  // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="flex-grow flex flex-col h-screen overflow-hidden bg-slate-100 relative pb-8">
-      {/* Kasir Top Bar / Embedded header info */}
+      {/* Top Bar */}
       <div className="bg-slate-900 text-white h-12 px-6 flex items-center justify-between border-b border-slate-800">
         <div className="flex items-center gap-3">
           <IconScan size={20} className="text-indigo-400" />
           <span className="font-bold text-[13px] tracking-wide">GroceryPOS — Cashier Terminal</span>
+          {transactionId && (
+            <span className="bg-indigo-700 text-indigo-100 text-[9px] font-bold px-2 py-0.5 rounded-full tracking-wider">
+              TRX #{transactionId}
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-4">
@@ -298,19 +577,20 @@ export default function CheckoutPage() {
       </div>
 
       <div className="grid grid-cols-[65%_35%] h-[calc(100vh-80px)] overflow-hidden">
-        {/* Left Side: Product Input & Cart */}
+        {/* Left: Cart */}
         <div className="bg-white border-r border-slate-200 flex flex-col h-full overflow-hidden">
-          {/* Scanner Field */}
+          {/* Scanner */}
           <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex gap-3 items-center">
             <form onSubmit={handleBarcodeSubmit} className="flex-grow relative">
               <IconSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-indigo-500" size={18} />
               <Input
                 ref={barcodeInputRef}
                 type="text"
-                placeholder="Scan Barcode atau ketik nama produk... (Ketik Enter)"
+                placeholder="Scan Barcode atau ketik nama produk... (Enter)"
                 className="w-full h-11 pl-10 pr-4 text-[13px] font-semibold bg-white border-2 border-indigo-500 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-indigo-600 rounded-xl"
                 value={barcodeInput}
                 onChange={(e) => setBarcodeInput(e.target.value)}
+                disabled={isProcessing}
               />
             </form>
             <Button
@@ -323,14 +603,14 @@ export default function CheckoutPage() {
             </Button>
           </div>
 
-          {/* Cart Table Container */}
+          {/* Cart Table */}
           <div className="flex-grow overflow-y-auto p-4">
             {cart.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-slate-400 p-8 text-center animate-fade-in">
+              <div className="h-full flex flex-col items-center justify-center text-slate-400 p-8 text-center">
                 <IconScan size={48} className="text-slate-200 mb-3" />
                 <h4 className="text-[13px] font-bold text-slate-700">Belum Ada Item Belanja</h4>
                 <p className="text-xs text-slate-400 mt-1 max-w-[280px]">
-                  Silakan pindai barcode produk atau gunakan tombol Katalog di kanan atas untuk menambahkan item.
+                  Pindai barcode atau gunakan Katalog untuk menambahkan item.
                 </p>
               </div>
             ) : (
@@ -347,27 +627,28 @@ export default function CheckoutPage() {
                 </TableHeader>
                 <TableBody>
                   {cart.map((item, idx) => (
-                    <TableRow
-                      key={item.sku}
-                      className={`hover:bg-slate-50/50 transition-colors ${item.isNew ? "bg-indigo-50/30 animate-pulse" : ""}`}
-                    >
+                    <TableRow key={item.itemId ?? item.product_id} className="hover:bg-slate-50/50 transition-colors">
                       <TableCell className="text-center text-slate-400 font-medium">{idx + 1}</TableCell>
                       <TableCell>
                         <div className="font-bold text-slate-800 text-[12px]">{item.name}</div>
-                        <div className="text-[10px] text-slate-400 font-medium">SKU: {item.sku}</div>
+                        {item.barcode && (
+                          <div className="text-[10px] text-slate-400 font-medium">Barcode: {item.barcode}</div>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-center gap-1">
                           <button
-                            onClick={() => handleAdjustQty(item.sku, -1)}
-                            className="w-6 h-6 border border-slate-200 rounded flex items-center justify-center hover:bg-indigo-50 text-indigo-600 font-bold"
+                            onClick={() => handleUpdateQty(item, item.qty - 1)}
+                            disabled={isProcessing}
+                            className="w-6 h-6 border border-slate-200 rounded flex items-center justify-center hover:bg-indigo-50 text-indigo-600 font-bold disabled:opacity-40"
                           >
                             -
                           </button>
                           <span className="w-8 text-center text-xs font-bold text-slate-800">{item.qty}</span>
                           <button
-                            onClick={() => handleAdjustQty(item.sku, 1)}
-                            className="w-6 h-6 border border-slate-200 rounded flex items-center justify-center hover:bg-indigo-50 text-indigo-600 font-bold"
+                            onClick={() => handleUpdateQty(item, item.qty + 1)}
+                            disabled={isProcessing}
+                            className="w-6 h-6 border border-slate-200 rounded flex items-center justify-center hover:bg-indigo-50 text-indigo-600 font-bold disabled:opacity-40"
                           >
                             +
                           </button>
@@ -381,8 +662,9 @@ export default function CheckoutPage() {
                       </TableCell>
                       <TableCell className="text-center">
                         <button
-                          onClick={() => handleRemoveItem(item.sku, item.name)}
-                          className="text-rose-500 hover:bg-rose-50 p-1.5 rounded transition-colors"
+                          onClick={() => handleRemoveItem(item)}
+                          disabled={isProcessing}
+                          className="text-rose-500 hover:bg-rose-50 p-1.5 rounded transition-colors disabled:opacity-40"
                         >
                           <IconTrash size={16} />
                         </button>
@@ -395,18 +677,20 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* Right Side: Order Totals & Action Pad */}
+        {/* Right: Totals & Actions */}
         <div className="bg-indigo-50/30 p-6 flex flex-col justify-between h-full">
           <div>
-            {/* Trx Details */}
+            {/* Trx Info */}
             <div className="bg-white border border-slate-100 rounded-xl p-4 space-y-2.5 shadow-sm mb-4">
               <div className="flex justify-between text-[11px] font-semibold text-slate-400">
                 <span>No. Transaksi</span>
-                <span className="text-slate-800 font-bold">{trxId}</span>
+                <span className="text-slate-800 font-bold">
+                  {transactionId ? `TRX-${transactionId}` : "Belum mulai"}
+                </span>
               </div>
               <div className="flex justify-between text-[11px] font-semibold text-slate-400">
                 <span>Kasir Aktif</span>
-                <span className="text-slate-800 font-bold">{user.name} (ID: {user.id})</span>
+                <span className="text-slate-800 font-bold">{user.name}</span>
               </div>
               <div className="flex justify-between text-[11px] font-semibold text-slate-400">
                 <span>Tanggal / Waktu</span>
@@ -414,7 +698,7 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* Price Calculations */}
+            {/* Totals */}
             <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
               <div className="flex justify-between text-xs text-slate-400 font-semibold">
                 <span>Subtotal</span>
@@ -439,27 +723,29 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* Action Pad Buttons */}
+          {/* Action Buttons */}
           <div className="space-y-3 mt-4">
             <div className="grid grid-cols-2 gap-3">
               <Button
                 variant="outline"
-                onClick={() => toast.info("Fitur Hold Transaksi (F5) Berhasil")}
-                className="bg-white hover:bg-slate-50 border-slate-200 text-slate-700 h-10 font-bold text-xs rounded-xl flex gap-1.5 cursor-pointer"
+                onClick={handleHold}
+                disabled={cart.length === 0 || isProcessing}
+                className="bg-white hover:bg-slate-50 border-slate-200 text-slate-700 h-10 font-bold text-xs rounded-xl flex gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 <IconPlayerPause size={16} /> Hold (F5)
               </Button>
               <Button
                 variant="outline"
-                onClick={() => toast.info("Hold List Terbuka (F6)")}
+                onClick={openHoldList}
                 className="bg-white hover:bg-slate-50 border-slate-200 text-slate-700 h-10 font-bold text-xs rounded-xl flex gap-1.5 cursor-pointer"
               >
                 <IconPlayerPlay size={16} /> Recall (F6)
               </Button>
               <Button
                 variant="outline"
-                onClick={handleVoidAll}
-                className="bg-white hover:bg-rose-50 border-slate-200 hover:border-rose-200 text-rose-600 h-10 font-bold text-xs rounded-xl flex gap-1.5 cursor-pointer"
+                onClick={handleVoidDraft}
+                disabled={cart.length === 0 || isProcessing}
+                className="bg-white hover:bg-rose-50 border-slate-200 hover:border-rose-200 text-rose-600 h-10 font-bold text-xs rounded-xl flex gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 <IconTrash size={16} /> Void (F10)
               </Button>
@@ -473,236 +759,330 @@ export default function CheckoutPage() {
             </div>
 
             <Button
-              onClick={() => setIsPayModalOpen(true)}
-              disabled={cart.length === 0}
-              className="w-full h-16 bg-indigo-600 hover:bg-indigo-700 font-extrabold text-base rounded-xl flex items-center justify-center gap-3 cursor-pointer shadow-lg shadow-indigo-600/10 transition-all active:scale-[0.99]"
+              onClick={() => {
+                setPayMode("cash");
+                setCashReceived("");
+                setIsPayModalOpen(true);
+              }}
+              disabled={cart.length === 0 || isProcessing}
+              className="w-full h-16 bg-indigo-600 hover:bg-indigo-700 font-extrabold text-base rounded-xl flex items-center justify-center gap-3 cursor-pointer shadow-lg shadow-indigo-600/10 transition-all active:scale-[0.99] disabled:opacity-50"
             >
-              <IconCash size={24} />
+              {isProcessing ? (
+                <IconLoader2 size={24} className="animate-spin" />
+              ) : (
+                <IconCash size={24} />
+              )}
               <span>PROSES BAYAR (F1)</span>
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Embedded Shortcuts Bar */}
+      {/* Shortcuts Bar */}
       <div className="absolute left-0 right-0 bottom-0 h-8 bg-slate-900 text-slate-400 flex items-center px-6 text-[10px] gap-6 font-semibold select-none z-10">
         <div className="flex gap-1"><span className="bg-slate-800 text-white px-1.5 py-0.5 rounded font-bold">F1</span> Bayar</div>
         <div className="flex gap-1"><span className="bg-slate-800 text-white px-1.5 py-0.5 rounded font-bold">F2</span> Katalog</div>
         <div className="flex gap-1"><span className="bg-slate-800 text-white px-1.5 py-0.5 rounded font-bold">F5</span> Hold</div>
         <div className="flex gap-1"><span className="bg-slate-800 text-white px-1.5 py-0.5 rounded font-bold">F6</span> Recall</div>
         <div className="flex gap-1"><span className="bg-slate-800 text-white px-1.5 py-0.5 rounded font-bold">F10</span> Void</div>
-        <div className="flex gap-1"><span className="bg-slate-800 text-white px-1.5 py-0.5 rounded font-bold">Esc</span> Tutup Dialog</div>
+        <div className="flex gap-1"><span className="bg-slate-800 text-white px-1.5 py-0.5 rounded font-bold">Esc</span> Tutup</div>
       </div>
 
-      {/* ==============================================================================
-           DIALOG 1: CATALOG PRODUCTS SELECTOR
-           ============================================================================== */}
+      {/* ─── DIALOG 1: PRODUCT CATALOG ─────────────────────────────────────────── */}
       <Dialog open={isCatalogOpen} onOpenChange={setIsCatalogOpen}>
         <DialogContent className="max-w-2xl bg-white rounded-2xl border-slate-100 p-6">
-          <DialogHeader className="pb-4 border-b border-slate-100 flex flex-row items-center justify-between">
+          <DialogHeader className="pb-4 border-b border-slate-100">
             <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <IconPackage size={20} className="text-indigo-500" />
-              <span>Katalog Produk Cepat</span>
+              <span>Katalog Produk</span>
             </DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-3 gap-3 pt-4 max-h-[350px] overflow-y-auto pr-1">
-            {Object.keys(PRODUCTS_DATABASE).map((key) => {
-              const prod = PRODUCTS_DATABASE[key];
-              return (
-                <div
-                  key={prod.sku}
-                  onClick={() => {
-                    handleAddProduct(prod.sku);
-                    setIsCatalogOpen(false);
-                  }}
-                  className="bg-slate-50 border border-slate-100 hover:border-indigo-400 hover:bg-indigo-50/50 p-4 rounded-xl cursor-pointer text-center group transition-all"
-                >
-                  <h5 className="font-bold text-slate-800 text-[12px] group-hover:text-indigo-900">
-                    {prod.name}
-                  </h5>
-                  <div className="text-indigo-600 font-extrabold text-xs mt-1.5">
-                    {formatRupiah(prod.price)}
-                  </div>
-                  <div className="text-[9px] text-slate-400 font-medium mt-1">
-                    SKU: {prod.sku}
-                  </div>
+          <div className="pt-3 space-y-3">
+            <div className="relative">
+              <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+              <Input
+                placeholder="Cari produk..."
+                className="pl-8 h-9 text-xs border-slate-200 rounded-xl"
+                value={catalogSearch}
+                onChange={(e) => setCatalogSearch(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-3 max-h-[350px] overflow-y-auto pr-1">
+              {filteredProducts.length === 0 ? (
+                <div className="col-span-3 text-center py-8 text-slate-400 text-xs">
+                  Tidak ada produk ditemukan.
                 </div>
-              );
-            })}
+              ) : (
+                filteredProducts.map((p) => (
+                  <div
+                    key={p.id}
+                    onClick={async () => {
+                      await handleAddProduct(p);
+                      setIsCatalogOpen(false);
+                    }}
+                    className={`border p-4 rounded-xl cursor-pointer text-center group transition-all ${
+                      p.stok <= 0
+                        ? "border-slate-100 bg-slate-50 opacity-50 cursor-not-allowed"
+                        : "bg-slate-50 border-slate-100 hover:border-indigo-400 hover:bg-indigo-50/50"
+                    }`}
+                  >
+                    <h5 className="font-bold text-slate-800 text-[12px] group-hover:text-indigo-900 line-clamp-2">
+                      {p.nama}
+                    </h5>
+                    <div className="text-indigo-600 font-extrabold text-xs mt-1.5">
+                      {formatRupiah(p.harga)}
+                    </div>
+                    <div className={`text-[9px] font-bold mt-1 ${p.stok <= 5 ? "text-rose-500" : "text-slate-400"}`}>
+                      Stok: {p.stok}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* ==============================================================================
-           DIALOG 2: CHECKOUT / PAYMENT FORM
-           ============================================================================== */}
+      {/* ─── DIALOG 2: PAYMENT ─────────────────────────────────────────────────── */}
       <Dialog open={isPayModalOpen} onOpenChange={setIsPayModalOpen}>
-        <DialogContent className="max-w-[480px] bg-white rounded-2xl border-slate-100 p-6">
+        <DialogContent className="max-w-[500px] bg-white rounded-2xl border-slate-100 p-6">
           <DialogHeader className="pb-4 border-b border-slate-100">
             <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <IconCash size={20} className="text-indigo-500" />
               <span>Metode Pembayaran</span>
             </DialogTitle>
           </DialogHeader>
+
           <div className="space-y-5 pt-4">
+            {/* Grand total display */}
             <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl text-center">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                Total Tagihan Belanja
-              </span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Tagihan</span>
               <h2 className="text-3xl font-extrabold text-slate-950 mt-1 leading-none tabular-nums">
                 {formatRupiah(grandTotal)}
               </h2>
             </div>
 
+            {/* Mode toggle */}
             <div className="grid grid-cols-2 gap-3">
-              <Button className="h-11 font-bold text-xs bg-indigo-50 border border-indigo-200 text-indigo-600 hover:bg-indigo-100/50 rounded-xl flex gap-1.5 cursor-pointer">
+              <Button
+                onClick={() => setPayMode("cash")}
+                className={`h-11 font-bold text-xs rounded-xl flex gap-1.5 cursor-pointer ${
+                  payMode === "cash"
+                    ? "bg-indigo-600 text-white border-indigo-600"
+                    : "bg-indigo-50 border border-indigo-200 text-indigo-600 hover:bg-indigo-100"
+                }`}
+              >
                 <IconCash size={16} /> TUNAI (CASH)
               </Button>
               <Button
-                variant="outline"
-                onClick={() => toast.warning("Metode Non-Tunai / QRIS dipasang di tahap berikutnya!")}
-                className="h-11 font-bold text-xs border-slate-200 text-slate-500 rounded-xl flex gap-1.5 cursor-pointer"
+                onClick={() => setPayMode("card")}
+                className={`h-11 font-bold text-xs rounded-xl flex gap-1.5 cursor-pointer border ${
+                  payMode === "card"
+                    ? "bg-slate-700 text-white border-slate-700"
+                    : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
+                }`}
               >
-                <IconCreditCard size={16} /> KARTU / QRIS
+                <IconCreditCard size={16} /> KARTU / EDC
               </Button>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                Nominal Uang Diterima (Cash In)
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-lg select-none">
-                  Rp
-                </span>
-                <Input
-                  type="number"
-                  placeholder="0"
-                  className="h-14 pl-12 pr-4 text-2xl font-extrabold text-slate-950 bg-white border-2 border-indigo-500 focus-visible:ring-indigo-600 rounded-xl"
-                  value={cashReceived}
-                  onChange={(e) => setCashReceived(e.target.value)}
-                  autoFocus
-                />
+            {/* Cash fields */}
+            {payMode === "cash" && (
+              <>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    Nominal Uang Diterima
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-lg select-none">Rp</span>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      className="h-14 pl-12 pr-4 text-2xl font-extrabold text-slate-950 bg-white border-2 border-indigo-500 focus-visible:ring-indigo-600 rounded-xl"
+                      value={cashReceived}
+                      onChange={(e) => setCashReceived(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[10000, 20000, 50000, 100000, 200000].map((val) => (
+                    <button
+                      key={val}
+                      onClick={() => setCashReceived(val.toString())}
+                      className="bg-slate-50 hover:bg-indigo-50 hover:border-indigo-400 border border-slate-200 text-slate-800 py-2.5 text-xs font-bold rounded-xl transition-all tabular-nums"
+                    >
+                      {val.toLocaleString("id-ID")}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setCashReceived(grandTotal.toString())}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 text-xs font-bold rounded-xl transition-all"
+                  >
+                    Uang Pas
+                  </button>
+                </div>
+                <div className="border-t border-dashed border-slate-200 pt-4 text-center">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Kembalian</span>
+                  <h2 className={`text-3xl font-extrabold mt-1 tracking-tight tabular-nums ${changeValue < 0 ? "text-rose-500" : "text-emerald-500"}`}>
+                    {changeValue === 0 ? "Rp 0" : changeValue < 0 ? `Kurang ${formatRupiah(Math.abs(changeValue))}` : formatRupiah(changeValue)}
+                  </h2>
+                </div>
+              </>
+            )}
+
+            {/* Card fields */}
+            {payMode === "card" && (
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Jenis Kartu</label>
+                  <select
+                    className="w-full h-10 border border-slate-200 rounded-xl bg-white text-xs font-semibold px-3 focus:outline-none focus:border-indigo-600"
+                    value={cardType}
+                    onChange={(e) => setCardType(e.target.value)}
+                  >
+                    <option value="debit">Debit</option>
+                    <option value="credit">Kredit</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">4 Digit Terakhir Kartu</label>
+                  <Input
+                    type="text"
+                    maxLength={4}
+                    placeholder="XXXX"
+                    className="h-10 text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-xl tracking-[0.5rem] text-center font-mono text-lg"
+                    value={cardLast4}
+                    onChange={(e) => setCardLast4(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                    autoFocus
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">No. Referensi EDC (Opsional)</label>
+                  <Input
+                    type="text"
+                    placeholder="Nomor referensi EDC..."
+                    className="h-10 text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-xl"
+                    value={cardRef}
+                    onChange={(e) => setCardRef(e.target.value)}
+                  />
+                </div>
               </div>
-            </div>
-
-            {/* Quick cash suggestions */}
-            <div className="grid grid-cols-3 gap-2">
-              {[10000, 20000, 50000, 100000, 200000].map((val) => (
-                <button
-                  key={val}
-                  onClick={() => setCashReceived(val.toString())}
-                  className="bg-slate-50 hover:bg-indigo-50 hover:border-indigo-400 border border-slate-200 text-slate-800 py-2.5 text-xs font-bold rounded-xl transition-all tabular-nums"
-                >
-                  {val.toLocaleString("id-ID")}
-                </button>
-              ))}
-              <button
-                onClick={() => setCashReceived(grandTotal.toString())}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 text-xs font-bold rounded-xl transition-all shadow-sm shadow-indigo-600/10"
-              >
-                Uang Pas
-              </button>
-            </div>
-
-            {/* Change calc */}
-            <div className="border-t border-dashed border-slate-200 pt-4 text-center">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                Kembalian Uang
-              </span>
-              <h2
-                className={`text-3xl font-extrabold mt-1 tracking-tight tabular-nums ${
-                  changeValue < 0 ? "text-rose-500" : "text-emerald-500"
-                }`}
-              >
-                {changeValue === 0
-                  ? "Rp 0"
-                  : changeValue < 0
-                  ? `Kurang ${formatRupiah(Math.abs(changeValue))}`
-                  : formatRupiah(changeValue)}
-              </h2>
-            </div>
+            )}
 
             <Button
-              onClick={handleCompleteTransaction}
-              disabled={!isPaymentValid}
+              onClick={handlePay}
+              disabled={isProcessing || (payMode === "cash" ? !isCashValid : !isCardValid)}
               className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-200 disabled:cursor-not-allowed font-bold text-sm text-white rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-600/10"
             >
-              <IconPrinter size={18} />
-              <span>SELESAI & CETAK STRUK</span>
+              {isProcessing ? (
+                <IconLoader2 size={18} className="animate-spin" />
+              ) : (
+                <IconPrinter size={18} />
+              )}
+              <span>SELESAI &amp; CETAK STRUK</span>
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* ==============================================================================
-           DIALOG 3: SUCCESS & THERMAL RECEIPT DISPLAY
-           ============================================================================== */}
+      {/* ─── DIALOG 3: HOLD LIST ───────────────────────────────────────────────── */}
+      <Dialog open={isHoldListOpen} onOpenChange={setIsHoldListOpen}>
+        <DialogContent className="max-w-[480px] bg-white rounded-2xl border-slate-100 p-6">
+          <DialogHeader className="pb-4 border-b border-slate-100">
+            <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <IconPlayerPlay size={20} className="text-indigo-500" />
+              <span>Daftar Transaksi Hold</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="pt-4 space-y-2 max-h-[350px] overflow-y-auto">
+            {holdList.length === 0 ? (
+              <div className="text-center py-8 text-slate-400 text-xs">Tidak ada transaksi yang di-hold.</div>
+            ) : (
+              holdList.map((h) => (
+                <div key={h.id} className="flex items-center justify-between border border-slate-100 rounded-xl p-4 bg-slate-50/50">
+                  <div>
+                    <div className="font-bold text-slate-800 text-xs">TRX #{h.id}</div>
+                    <div className="text-[10px] text-slate-400">{h.items_count} item · {formatRupiah(h.subtotal)}</div>
+                  </div>
+                  <Button
+                    onClick={() => handleRecall(h.id)}
+                    disabled={isProcessing}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold h-8 rounded-lg px-3 cursor-pointer"
+                  >
+                    Recall
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── DIALOG 4: RECEIPT ────────────────────────────────────────────────── */}
       <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
         <DialogContent className="max-w-[380px] bg-white rounded-2xl border-slate-100 p-6 flex flex-col items-center">
-          <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mb-3 animate-bounce">
+          <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-3 animate-bounce">
             <IconCircleCheck size={28} />
           </div>
           <DialogTitle className="text-base font-bold text-slate-900">Pembayaran Sukses!</DialogTitle>
-          <p className="text-[11px] text-slate-400 mt-0.5 text-center">Struk penjualan telah berhasil dicetak.</p>
+          <p className="text-[11px] text-slate-400 mt-0.5 text-center">Transaksi tercatat dan stok telah diperbarui.</p>
 
-          {/* Paper Thermal Receipt Mockup */}
-          <div className="w-full max-w-[320px] bg-white border border-slate-200 p-5 mt-4 rounded shadow-inner font-mono text-[11px] text-slate-800 relative bg-[radial-gradient(#f1f1f1_1px,transparent_1px)] [background-size:16px_16px]">
+          {/* Thermal Receipt */}
+          <div className="w-full max-w-[320px] bg-white border border-slate-200 p-5 mt-4 rounded shadow-inner font-mono text-[11px] text-slate-800 relative">
             <div className="text-center space-y-0.5 mb-4">
               <h4 className="font-extrabold text-[12px]">GROCERYMART</h4>
               <p className="text-[10px]">Jl. Raya Contoh No. 1, Jakarta</p>
-              <p className="text-[9px] text-slate-500">Telp: 021-123456</p>
             </div>
-            
             <div className="border-t border-dashed border-slate-300 my-2"></div>
-            
             <div className="space-y-0.5 text-[9px] text-slate-500">
-              <div className="flex justify-between"><span>Kasir: {user.name}</span><span>Trm: POS-01</span></div>
-              <div className="flex justify-between"><span>No: {trxId}</span><span>04/06/2026</span></div>
+              <div className="flex justify-between"><span>Kasir: {user.name}</span><span>POS-01</span></div>
+              <div className="flex justify-between">
+                <span>TRX #{receipt?.id}</span>
+                <span>{new Date().toLocaleDateString("id-ID")}</span>
+              </div>
             </div>
-
             <div className="border-t border-dashed border-slate-300 my-2"></div>
-            
-            {/* items */}
             <div className="space-y-1.5">
-              {cart.map((item) => (
-                <div key={item.sku} className="flex justify-between text-[10px]">
-                  <span>{item.qty} x {item.name.substring(0, 16)}</span>
-                  <span>{formatRupiah(item.price * item.qty)}</span>
+              {(receipt?.items || []).map((item: any) => (
+                <div key={item.id} className="flex justify-between text-[10px]">
+                  <span>{item.kuantitas}x {String(item.nama_produk).substring(0, 16)}</span>
+                  <span>{formatRupiah(item.harga_satuan * item.kuantitas)}</span>
                 </div>
               ))}
             </div>
-
             <div className="border-t border-dashed border-slate-300 my-2"></div>
-
             <div className="space-y-1">
-              <div className="flex justify-between"><span>Subtotal:</span><span>{formatRupiah(subtotal)}</span></div>
-              <div className="flex justify-between"><span>PPN (11%):</span><span>{formatRupiah(ppn)}</span></div>
+              <div className="flex justify-between"><span>Subtotal:</span><span>{formatRupiah(receipt?.subtotal ?? 0)}</span></div>
+              <div className="flex justify-between"><span>PPN (11%):</span><span>{formatRupiah(receipt?.pajak ?? 0)}</span></div>
               <div className="flex justify-between font-extrabold text-[12px] text-slate-900">
-                <span>TOTAL:</span><span>{formatRupiah(grandTotal)}</span>
+                <span>TOTAL:</span><span>{formatRupiah(receipt?.total ?? 0)}</span>
               </div>
             </div>
-
             <div className="border-t border-dashed border-slate-300 my-2"></div>
-
-            <div className="space-y-1">
-              <div className="flex justify-between"><span>Tunai:</span><span>{formatRupiah(completedCash)}</span></div>
-              <div className="flex justify-between"><span>Kembali:</span><span>{formatRupiah(completedChange)}</span></div>
+            <div className="space-y-1 text-[10px]">
+              {receipt?.metode_pembayaran === "cash" ? (
+                <>
+                  <div className="flex justify-between"><span>Tunai:</span><span>{formatRupiah(receipt?.nominal_bayar ?? 0)}</span></div>
+                  <div className="flex justify-between"><span>Kembali:</span><span>{formatRupiah(receipt?.kembalian ?? 0)}</span></div>
+                </>
+              ) : (
+                <div className="flex justify-between capitalize">
+                  <span>Kartu {receipt?.jenis_kartu}:</span>
+                  <span>**** {receipt?.nomor_kartu_akhir}</span>
+                </div>
+              )}
             </div>
-
             <div className="border-t border-dashed border-slate-300 my-2"></div>
-
-            <div className="text-center text-[9px] text-slate-400 space-y-0.5 mt-3">
+            <div className="text-center text-[9px] text-slate-400 mt-3">
               <p>Terima Kasih Atas Kunjungan Anda</p>
-              <p>Barang yang sudah dibeli tidak dapat</p>
-              <p>ditukar atau dikembalikan</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 w-full mt-6">
             <Button
               onClick={handleNewTransaction}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs h-10 rounded-xl flex gap-1.5 cursor-pointer shadow-sm shadow-indigo-600/10"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs h-10 rounded-xl flex gap-1.5 cursor-pointer"
             >
               Transaksi Baru
             </Button>
