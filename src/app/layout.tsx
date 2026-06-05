@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/context/AuthContext";
 import ShowcaseToolbar from "@/components/ShowcaseToolbar";
 
 const dmSans = DM_Sans({
@@ -23,9 +24,11 @@ export default function RootLayout({
   return (
     <html lang="id" className={`${dmSans.variable} font-sans h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
-        {children}
-        <Toaster position="top-right" />
-        <ShowcaseToolbar />
+        <AuthProvider>
+          {children}
+          <Toaster position="top-right" />
+          <ShowcaseToolbar />
+        </AuthProvider>
       </body>
     </html>
   );

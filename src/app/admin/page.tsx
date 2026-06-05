@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   IconHome,
   IconShoppingCart,
@@ -67,6 +68,8 @@ const TAB_TITLES: Record<string, string> = {
 
 export default function AdminDashboardPage() {
   const router = useRouter();
+  const { user, token, isLoading, logout, hasRole, hasPermission } = useAuth();
+  
   const [activeTab, setActiveTab] = useState<string>("dashboard");
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
   
@@ -87,10 +90,46 @@ export default function AdminDashboardPage() {
   const [storePhone, setStorePhone] = useState("021-123456");
   const [taxRate, setTaxRate] = useState("11");
 
-  const handleLogout = () => {
-    toast.error("Logout sukses!");
-    router.push("/login");
+  // Route protection
+  useEffect(() => {
+    if (!isLoading && !token) {
+      router.push("/login");
+    } else if (!isLoading && user) {
+      const canAccessAdmin = user.roles.includes("admin") || user.roles.includes("manajer_toko") || user.roles.includes("supervisor");
+      if (!canAccessAdmin) {
+        toast.error("Anda tidak memiliki izin untuk mengakses Dashboard Admin.");
+        router.push("/checkout");
+      }
+    }
+  }, [isLoading, token, user, router]);
+
+  // Adjust default active tab based on permissions
+  useEffect(() => {
+    if (user) {
+      const hasViewReports = user.roles.includes("admin") || user.permissions.includes("view_reports");
+      const hasManageProducts = user.roles.includes("admin") || user.permissions.includes("manage_products");
+      
+      if (!hasViewReports && hasManageProducts) {
+        setActiveTab("products");
+      }
+    }
+  }, [user]);
+
+  const handleLogout = async () => {
+    await logout();
   };
+
+  // Loading screen
+  if (isLoading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center space-y-3">
+          <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-xs text-slate-500 font-medium">Memuat dashboard admin...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleAddProductSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -175,58 +214,74 @@ export default function AdminDashboardPage() {
                 Menu Utama
               </span>
               <ul className="space-y-0.5">
-                <li>
-                  <button onClick={() => setActiveTab("dashboard")} className={getLinkClass("dashboard")}>
-                    <IconHome size={18} />
-                    <span>Dashboard</span>
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => router.push("/checkout")} className={getLinkClass("pos")}>
-                    <IconDeviceLaptop size={18} />
-                    <span>Layar Kasir (POS)</span>
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => setActiveTab("products")} className={getLinkClass("products")}>
-                    <IconPackage size={18} />
-                    <span>Manajemen Produk</span>
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => setActiveTab("categories")} className={getLinkClass("categories")}>
-                    <IconCategory size={18} />
-                    <span>Kategori Produk</span>
-                  </button>
-                </li>
+                {(hasRole("admin") || hasPermission("view_reports")) && (
+                  <li>
+                    <button onClick={() => setActiveTab("dashboard")} className={getLinkClass("dashboard")}>
+                      <IconHome size={18} />
+                      <span>Dashboard</span>
+                    </button>
+                  </li>
+                )}
+                {(hasRole("admin") || hasPermission("create_sales")) && (
+                  <li>
+                    <button onClick={() => router.push("/checkout")} className={getLinkClass("pos")}>
+                      <IconDeviceLaptop size={18} />
+                      <span>Layar Kasir (POS)</span>
+                    </button>
+                  </li>
+                )}
+                {(hasRole("admin") || hasPermission("manage_products")) && (
+                  <li>
+                    <button onClick={() => setActiveTab("products")} className={getLinkClass("products")}>
+                      <IconPackage size={18} />
+                      <span>Manajemen Produk</span>
+                    </button>
+                  </li>
+                )}
+                {(hasRole("admin") || hasPermission("manage_products")) && (
+                  <li>
+                    <button onClick={() => setActiveTab("categories")} className={getLinkClass("categories")}>
+                      <IconCategory size={18} />
+                      <span>Kategori Produk</span>
+                    </button>
+                  </li>
+                )}
               </ul>
             </div>
 
-            <div className="space-y-1">
-              <span className="text-[9px] font-extrabold text-slate-600 uppercase tracking-widest px-3 block">
-                Inventori & Laporan
-              </span>
-              <ul className="space-y-0.5">
-                <li>
-                  <button onClick={() => setActiveTab("inventory")} className={getLinkClass("inventory")}>
-                    <IconBox size={18} />
-                    <span>Stok Barang</span>
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => setActiveTab("receiving")} className={getLinkClass("receiving")}>
-                    <IconTruckDelivery size={18} />
-                    <span>Penerimaan</span>
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => setActiveTab("reports")} className={getLinkClass("reports")}>
-                    <IconChartBar size={18} />
-                    <span>Laporan Penjualan</span>
-                  </button>
-                </li>
-              </ul>
-            </div>
+            {(hasRole("admin") || hasPermission("manage_products") || hasPermission("view_reports")) && (
+              <div className="space-y-1">
+                <span className="text-[9px] font-extrabold text-slate-600 uppercase tracking-widest px-3 block">
+                  Inventori & Laporan
+                </span>
+                <ul className="space-y-0.5">
+                  {(hasRole("admin") || hasPermission("manage_products")) && (
+                    <li>
+                      <button onClick={() => setActiveTab("inventory")} className={getLinkClass("inventory")}>
+                        <IconBox size={18} />
+                        <span>Stok Barang</span>
+                      </button>
+                    </li>
+                  )}
+                  {(hasRole("admin") || hasPermission("manage_products")) && (
+                    <li>
+                      <button onClick={() => setActiveTab("receiving")} className={getLinkClass("receiving")}>
+                        <IconTruckDelivery size={18} />
+                        <span>Penerimaan</span>
+                      </button>
+                    </li>
+                  )}
+                  {(hasRole("admin") || hasPermission("view_reports")) && (
+                    <li>
+                      <button onClick={() => setActiveTab("reports")} className={getLinkClass("reports")}>
+                        <IconChartBar size={18} />
+                        <span>Laporan Penjualan</span>
+                      </button>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
 
@@ -235,12 +290,14 @@ export default function AdminDashboardPage() {
             Sistem
           </span>
           <ul className="space-y-0.5">
-            <li>
-              <button onClick={() => setActiveTab("settings")} className={getLinkClass("settings")}>
-                <IconSettings size={18} />
-                <span>Pengaturan Toko</span>
-              </button>
-            </li>
+            {hasRole("admin") && (
+              <li>
+                <button onClick={() => setActiveTab("settings")} className={getLinkClass("settings")}>
+                  <IconSettings size={18} />
+                  <span>Pengaturan Toko</span>
+                </button>
+              </li>
+            )}
             <li>
               <button
                 onClick={handleLogout}
@@ -257,13 +314,27 @@ export default function AdminDashboardPage() {
       {/* Main Content Area */}
       <main className="flex-grow p-6 px-8 overflow-y-auto h-full">
         {/* Header */}
-        <header className="flex justify-between items-center mb-6">
-          <h2 className="text-base font-bold text-slate-900">
+        <header className="flex justify-between items-center mb-6 border-b border-slate-200/60 pb-4">
+          <h2 className="text-base font-extrabold text-slate-900">
             {TAB_TITLES[activeTab] || activeTab}
           </h2>
-          <div className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-3 py-1.5 rounded-full flex items-center gap-2 font-bold text-xs select-none">
-            <IconCalendar size={15} />
-            <span>Hari Ini: 04 Juni 2026</span>
+          <div className="flex items-center gap-4">
+            <div className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-3 py-1.5 rounded-full flex items-center gap-2 font-bold text-xs select-none">
+              <IconCalendar size={15} />
+              <span>Hari Ini: 04 Juni 2026</span>
+            </div>
+
+            <div className="h-5 w-[1px] bg-slate-200"></div>
+
+            <div className="flex items-center gap-2.5">
+              <div className="text-right">
+                <div className="text-xs font-bold text-slate-800 leading-tight">{user.name}</div>
+                <div className="text-[9px] font-extrabold uppercase text-indigo-600 tracking-wider leading-none mt-0.5">{user.roles[0]?.replace('_', ' ')}</div>
+              </div>
+              <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-extrabold text-xs shadow-sm shadow-indigo-600/5 select-none">
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+            </div>
           </div>
         </header>
 

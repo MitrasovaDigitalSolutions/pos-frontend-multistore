@@ -1,21 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { IconShoppingCart, IconUser, IconLock, IconEye, IconEyeOff, IconLoader2 } from "@tabler/icons-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { user, login } = useAuth();
   const [username, setUsername] = useState("admin_pos");
   const [password, setPassword] = useState("password");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  // If user is already authenticated, redirect them automatically
+  useEffect(() => {
+    if (user) {
+      if (user.roles.includes("admin") || user.roles.includes("manajer_toko") || user.roles.includes("supervisor")) {
+        router.push("/admin");
+      } else {
+        router.push("/checkout");
+      }
+    }
+  }, [user, router]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username || !password) {
       toast.error("Username dan password wajib diisi!");
@@ -23,12 +36,15 @@ export default function LoginPage() {
     }
 
     setIsLoading(true);
-    // Simulate API delay
-    setTimeout(() => {
-      setIsLoading(false);
-      toast.success("Login berhasil! Selamat datang, Kasir Budi.");
-      router.push("/checkout");
-    }, 1200);
+    const res = await login(username, password);
+    setIsLoading(false);
+
+    if (res.success) {
+      toast.success(res.message || "Login berhasil!");
+      // Redirect logic will be handled by the useEffect above when the user state changes
+    } else {
+      toast.error(res.message || "Username atau password salah.");
+    }
   };
 
   return (
