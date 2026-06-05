@@ -241,28 +241,40 @@ export default function CheckoutPage() {
       return;
     }
 
-    const trxId = await ensureDraftTransaction();
-    if (!trxId) return;
-
     try {
       setIsProcessing(true);
-      const res = await apiFetch(`/v1/transactions/${trxId}/items`, {
-        method: "POST",
-        body: JSON.stringify({ product_id: product.id, quantity: 1 }),
-      });
-      const data = await res.json();
 
-      if (res.ok) {
-        // Rebuild cart from response
-        const trxRes = await apiFetch(`/v1/transactions/${trxId}`);
-        const trxData = await trxRes.json();
-        if (trxRes.ok) {
-          buildCartFromTransaction(trxData.data);
+      if (!transactionId) {
+        // Create transaction and add first item in one request
+        const res = await apiFetch("/v1/transactions", {
+          method: "POST",
+          body: JSON.stringify({
+            items: [{ product_id: product.id, quantity: 1 }]
+          }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setTransactionId(data.data.id);
+          buildCartFromTransaction(data.data);
+          toast.success(`${product.nama} ditambahkan.`);
+          setTimeout(() => barcodeInputRef.current?.focus(), 50);
+        } else {
+          toast.error(data.message || "Gagal membuat transaksi.");
         }
-        toast.success(`${product.nama} ditambahkan.`);
-        setTimeout(() => barcodeInputRef.current?.focus(), 50);
       } else {
-        toast.error(data.message || "Gagal menambahkan item.");
+        // Add to existing transaction
+        const res = await apiFetch(`/v1/transactions/${transactionId}/items`, {
+          method: "POST",
+          body: JSON.stringify({ product_id: product.id, quantity: 1 }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          buildCartFromTransaction(data.data);
+          toast.success(`${product.nama} ditambahkan.`);
+          setTimeout(() => barcodeInputRef.current?.focus(), 50);
+        } else {
+          toast.error(data.message || "Gagal menambahkan item.");
+        }
       }
     } catch {
       toast.error("Koneksi gagal.");

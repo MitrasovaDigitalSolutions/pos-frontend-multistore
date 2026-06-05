@@ -1,4 +1,4 @@
-const DEFAULT_API_URL = "http://localhost:8000/api";
+const DEFAULT_API_URL = "http://127.0.0.1:8000/api";
 
 export async function apiFetch(endpoint: string, options: RequestInit = {}): Promise<Response> {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL;
