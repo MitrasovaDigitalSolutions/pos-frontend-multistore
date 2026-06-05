@@ -1103,8 +1103,19 @@ export default function AdminDashboardPage() {
                         <TableCell className="text-center">
                           <div className="flex justify-center gap-2">
                             <button
-                              onClick={() => {
-                                setSelectedOpname(op);
+                              onClick={async () => {
+                                // Fetch full detail (with items.product) from show endpoint
+                                try {
+                                  const res = await apiFetch(`/v1/inventory/opname/${op.id}`);
+                                  if (res.ok) {
+                                    const data = await res.json();
+                                    setSelectedOpname(data.data || data);
+                                  } else {
+                                    setSelectedOpname(op);
+                                  }
+                                } catch {
+                                  setSelectedOpname(op);
+                                }
                                 setIsDetailOpnameOpen(true);
                               }}
                               className="text-xs font-bold text-indigo-600 hover:underline bg-transparent border-none cursor-pointer"
