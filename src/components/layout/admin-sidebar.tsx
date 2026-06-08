@@ -14,6 +14,8 @@ import {
     IconLogout,
     IconDeviceLaptop,
     IconUsers,
+    IconBuildingStore,
+    IconShieldLock,
 } from "@tabler/icons-react";
 import { hasRole, hasPermission } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
@@ -39,7 +41,7 @@ export function AdminSidebar() {
         }
         // For general routes (except stock where tab determines sub-route)
         if (path === ROUTES.ADMIN_STOCK) {
-            return pathname === path && currentTab !== "receiving";
+            return pathname === path && currentTab !== "receiving" && currentTab !== "suppliers";
         }
         return pathname === path;
     };
@@ -157,6 +159,20 @@ export function AdminSidebar() {
                                         </Link>
                                     </li>
                                 )}
+                                {hasManageProducts && (
+                                    <li>
+                                        <Link
+                                            href={`${ROUTES.ADMIN_STOCK}?tab=suppliers`}
+                                            className={getLinkClass(
+                                                ROUTES.ADMIN_STOCK,
+                                                "suppliers",
+                                            )}
+                                        >
+                                            <IconBuildingStore size={18} />
+                                            <span>Kelola Supplier</span>
+                                        </Link>
+                                    </li>
+                                )}
                                 {hasViewReports && (
                                     <li>
                                         <Link
@@ -200,6 +216,17 @@ export function AdminSidebar() {
                             >
                                 <IconSettings size={18} />
                                 <span>Pengaturan Toko</span>
+                            </Link>
+                        </li>
+                    )}
+                    {hasAdmin && (
+                        <li>
+                            <Link
+                                href={ROUTES.ADMIN_AUDIT}
+                                className={getLinkClass(ROUTES.ADMIN_AUDIT)}
+                            >
+                                <IconShieldLock size={18} />
+                                <span>Log Aktivitas</span>
                             </Link>
                         </li>
                     )}

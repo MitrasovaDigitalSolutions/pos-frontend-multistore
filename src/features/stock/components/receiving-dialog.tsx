@@ -18,32 +18,48 @@ import {
     receivingSchema,
     type ReceivingInput,
 } from "../schemas/receiving-schema";
-import { useCreateReceiving } from "../api/stock-api";
+import { useCreateReceiving, useUpdateReceiving, useAllSuppliers } from "../api/stock-api";
 import type { Product } from "@/features/products/types";
+import type { Receiving } from "../types";
 
 interface ReceivingDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     products: Product[];
+    editingReceiving?: Receiving | null;
 }
 
 export function ReceivingDialog({
     open,
     onOpenChange,
     products,
+    editingReceiving = null,
 }: ReceivingDialogProps) {
     const createReceiving = useCreateReceiving();
+    const updateReceiving = useUpdateReceiving();
+    const { data: suppliers = [], isLoading: suppliersLoading } = useAllSuppliers();
     
+    const isEdit = !!editingReceiving;
+
     const productOptions = products.map((p) => ({
         value: String(p.id),
         label: p.nama,
     }));
 
+    const supplierOptions = suppliers.map((s) => ({
+        value: String(s.id),
+        label: s.nama,
+    }));
+
     const methods = useForm<ReceivingInput>({
         resolver: zodResolver(receivingSchema) as Resolver<ReceivingInput>,
         defaultValues: {
+            supplier_id: null,
             supplier: "",
             nomor_faktur: "",
+            nilai_faktur: null,
+            status_pembayaran: "pending",
+            status: "completed",
             catatan: "",
             items: [{ product_id: 0, kuantitas: 0 }],
         },
@@ -54,6 +70,7 @@ export function ReceivingDialog({
         control,
         handleSubmit,
         reset,
+        setValue,
         formState: { errors },
     } = methods;
 
@@ -64,69 +81,120 @@ export function ReceivingDialog({
 
     useEffect(() => {
         if (open) {
-            reset({
-                supplier: "",
-                nomor_faktur: "",
-                catatan: "",
-                items: [{ product_id: 0, kuantitas: 0 }],
-            });
+            if (editingReceiving) {
+                reset({
+                    supplier_id: editingReceiving.supplier_id,
+                    supplier: editingReceiving.supplier || "",
+                    nomor_faktur: editingReceiving.nomor_faktur || "",
+                    nilai_faktur: editingReceiving.nilai_faktur,
+                    status_pembayaran: editingReceiving.status_pembayaran,
+                    status: editingReceiving.status,
+                    catatan: editingReceiving.catatan || "",
+                    items: editingReceiving.items?.map((item) => ({
+                        product_id: item.product_id,
+                        kuantitas: item.kuantitas,
+                    })) || [{ product_id: 0, kuantitas: 0 }],
+                });
+            } else {
+                reset({
+                    supplier_id: null,
+                    supplier: "",
+                    nomor_faktur: "",
+                    nilai_faktur: null,
+                    status_pembayaran: "pending",
+                    status: "completed",
+                    catatan: "",
+                    items: [{ product_id: 0, kuantitas: 0 }],
+                });
+            }
         }
-    }, [open, reset]);
+    }, [open, editingReceiving, reset]);
 
-    const isPending = createReceiving.isPending;
+    const isPending = createReceiving.isPending || updateReceiving.isPending;
 
     const onSubmit = (data: ReceivingInput) => {
-        createReceiving.mutate(data, {
-            onSuccess: () => {
-                toast.success("Penerimaan barang berhasil disimpan.");
-                onOpenChange(false);
-            },
-            onError: (err) => {
-                toast.error(err.message || "Gagal mencatat penerimaan.");
-            },
-        });
+        // Find corresponding supplier name from selected id
+        if (data.supplier_id) {
+            const selectedSup = suppliers.find((s) => s.id === Number(data.supplier_id));
+            if (selectedSup) {
+                data.supplier = selectedSup.nama;
+            }
+        }
+
+        if (isEdit && editingReceiving) {
+            updateReceiving.mutate(
+                { id: editingReceiving.id, data },
+                {
+                    onSuccess: () => {
+                        toast.success("Penerimaan barang berhasil diperbarui.");
+                        onOpenChange(false);
+                    },
+                    onError: (err) => {
+                        toast.error(err.message || "Gagal memperbarui penerimaan.");
+                    },
+                }
+            );
+        } else {
+            createReceiving.mutate(data, {
+                onSuccess: () => {
+                    toast.success("Penerimaan barang berhasil disimpan.");
+                    onOpenChange(false);
+                },
+                onError: (err) => {
+                    toast.error(err.message || "Gagal mencatat penerimaan.");
+                },
+            });
+        }
+    };
+
+    const handleFormSubmit = (status: "draft" | "completed") => {
+        setValue("status", status);
+        handleSubmit(onSubmit)();
     };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-125 bg-white rounded-2xl border-slate-100 p-6 overflow-y-auto max-h-[90vh]">
+            <DialogContent className="max-w-xl bg-white rounded-2xl border-slate-100 p-6 overflow-y-auto max-h-[90vh]">
                 <DialogHeader className="pb-4 border-b border-slate-100">
                     <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
                         <IconTruckDelivery
                             size={20}
                             className="text-emerald-500"
                         />
-                        <span>Penerimaan Barang Dari Supplier</span>
+                        <span>
+                            {isEdit
+                                ? `Ubah Penerimaan Draft (${editingReceiving.nomor_penerimaan})`
+                                : "Penerimaan Barang Dari Supplier"}
+                        </span>
                     </DialogTitle>
                 </DialogHeader>
 
                 <FormProvider {...methods}>
                     <form
-                        onSubmit={handleSubmit(onSubmit)}
+                        onSubmit={(e) => e.preventDefault()}
                         className="space-y-4 pt-4"
                     >
-                        <div className="grid grid-cols-2 gap-3">
-                            {/* Supplier */}
-                            <div className="space-y-1.5">
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Supplier Dropdown */}
+                            <div className="space-y-1.5 col-span-2 sm:col-span-1">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                    Supplier
+                                    Supplier *
                                 </label>
-                                <Input
-                                    type="text"
-                                    placeholder="Nama supplier/distributor..."
-                                    className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                                    disabled={isPending}
-                                    {...register("supplier")}
+                                <FormSelect<ReceivingInput>
+                                    name="supplier_id"
+                                    options={supplierOptions}
+                                    placeholder={suppliersLoading ? "Memuat supplier..." : "-- Pilih Supplier --"}
+                                    disabled={isPending || suppliersLoading}
                                 />
-                                {errors.supplier && (
+                                {errors.supplier_id && (
                                     <p className="text-[10px] text-rose-500 font-medium">
-                                        {errors.supplier.message}
+                                        {errors.supplier_id.message}
                                     </p>
                                 )}
                             </div>
 
                             {/* No. Faktur */}
-                            <div className="space-y-1.5">
+                            <div className="space-y-1.5 col-span-2 sm:col-span-1">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                     No. Faktur
                                 </label>
@@ -140,6 +208,48 @@ export function ReceivingDialog({
                                 {errors.nomor_faktur && (
                                     <p className="text-[10px] text-rose-500 font-medium">
                                         {errors.nomor_faktur.message}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Nilai Faktur */}
+                            <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    Nilai Faktur / Invoice
+                                </label>
+                                <Input
+                                    type="number"
+                                    placeholder="Total tagihan Rp..."
+                                    className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                                    disabled={isPending}
+                                    {...register("nilai_faktur")}
+                                />
+                                {errors.nilai_faktur && (
+                                    <p className="text-[10px] text-rose-500 font-medium">
+                                        {errors.nilai_faktur.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Status Pembayaran */}
+                            <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    Status Pembayaran
+                                </label>
+                                <FormSelect<ReceivingInput>
+                                    name="status_pembayaran"
+                                    options={[
+                                        { value: "pending", label: "Pending / Tempo" },
+                                        { value: "paid", label: "Paid / Lunas" },
+                                    ]}
+                                    placeholder="Pilih status"
+                                    disabled={isPending}
+                                />
+                                {errors.status_pembayaran && (
+                                    <p className="text-[10px] text-rose-500 font-medium">
+                                        {errors.status_pembayaran.message}
                                     </p>
                                 )}
                             </div>
@@ -223,13 +333,24 @@ export function ReceivingDialog({
                             )}
                         </div>
 
-                        <Button
-                            type="submit"
-                            className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4"
-                            disabled={isPending}
-                        >
-                            {isPending ? "Menyimpan..." : "Terima Barang Masuk"}
-                        </Button>
+                        <div className="flex gap-3 pt-4 border-t border-slate-50">
+                            <Button
+                                type="button"
+                                onClick={() => handleFormSubmit("draft")}
+                                className="flex-1 h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
+                                disabled={isPending}
+                            >
+                                Simpan Draft
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={() => handleFormSubmit("completed")}
+                                className="flex-1 h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
+                                disabled={isPending}
+                            >
+                                {isPending ? "Menyimpan..." : "Selesai & Tambah Stok"}
+                            </Button>
+                        </div>
                     </form>
                 </FormProvider>
             </DialogContent>
