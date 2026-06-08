@@ -206,7 +206,7 @@ export default function AdminDashboardPage() {
       const res = await apiFetch("/v1/reports/summary");
       if (res.ok) {
         const data = await res.json();
-        setSummary(data);
+        setSummary(data.data || data);
       }
     } catch (err) {
       console.error("Failed to fetch summary:", err);
@@ -230,7 +230,7 @@ export default function AdminDashboardPage() {
       const res = await apiFetch(`/v1/reports/sales/daily?date=${dateStr}`);
       if (res.ok) {
         const data = await res.json();
-        setDailyReport(data);
+        setDailyReport(data.data || data);
       }
     } catch (err) {
       console.error("Failed to fetch daily report:", err);
