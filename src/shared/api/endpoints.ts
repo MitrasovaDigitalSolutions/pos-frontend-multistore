@@ -29,6 +29,9 @@ export const ENDPOINTS = {
         DELETE: (id: number) => `/v1/users/${id}`,
     },
 
+    // Activity Logs
+    ACTIVITY_LOGS: "/v1/activity-logs",
+
     // Inventory
     INVENTORY: {
         MOVEMENTS: "/v1/inventory/movements",
@@ -36,12 +39,24 @@ export const ENDPOINTS = {
         RECEIVING: {
             LIST: "/v1/inventory/receiving",
             CREATE: "/v1/inventory/receiving",
+            DETAIL: (id: number) => `/v1/inventory/receiving/${id}`,
+            UPDATE: (id: number) => `/v1/inventory/receiving/${id}`,
+            DELETE: (id: number) => `/v1/inventory/receiving/${id}`,
+            PAYMENT_STATUS: (id: number) => `/v1/inventory/receiving/${id}/payment-status`,
         },
         OPNAME: {
             LIST: "/v1/inventory/opname",
             CREATE: "/v1/inventory/opname",
             DETAIL: (id: number) => `/v1/inventory/opname/${id}`,
             UPDATE: (id: number) => `/v1/inventory/opname/${id}`,
+            DELETE: (id: number) => `/v1/inventory/opname/${id}`,
+        },
+        SUPPLIERS: {
+            LIST: "/v1/inventory/suppliers",
+            ALL: "/v1/inventory/suppliers/all",
+            CREATE: "/v1/inventory/suppliers",
+            UPDATE: (id: number) => `/v1/inventory/suppliers/${id}`,
+            DELETE: (id: number) => `/v1/inventory/suppliers/${id}`,
         },
     },
 

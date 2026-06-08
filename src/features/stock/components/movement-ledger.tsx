@@ -100,6 +100,15 @@ export function MovementLedger({
                     </span>
                 ),
             },
+            {
+                accessorKey: "user",
+                header: "Petugas",
+                cell: ({ row }) => (
+                    <span className="text-[11px] font-semibold text-slate-700">
+                        {row.original.user?.name || "System"}
+                    </span>
+                ),
+            },
         ],
         [],
     );

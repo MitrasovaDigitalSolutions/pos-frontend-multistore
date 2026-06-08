@@ -1,5 +1,14 @@
 import type { Product } from "@/features/products/types";
 
+export interface Supplier {
+    id: number;
+    nama: string;
+    email: string | null;
+    nomor_telepon: string | null;
+    alamat: string | null;
+    created_at: string;
+}
+
 export interface StockMovement {
     id: number;
     product_id: number;
@@ -10,6 +19,11 @@ export interface StockMovement {
     alasan: string | null;
     created_at: string;
     product?: Product;
+    user?: {
+        id: number;
+        name: string;
+        username: string;
+    };
 }
 
 export interface ReceivingItem {
@@ -24,8 +38,13 @@ export interface ReceivingItem {
 export interface Receiving {
     id: number;
     nomor_penerimaan: string;
-    supplier: string;
+    supplier_id: number | null;
+    supplier_relationship?: Supplier | null;
+    supplier: string | null;
     nomor_faktur: string | null;
+    nilai_faktur: number | null;
+    status: "draft" | "completed";
+    status_pembayaran: "pending" | "paid";
     catatan: string | null;
     created_at: string;
     items?: ReceivingItem[];

@@ -36,6 +36,7 @@ export const queryKeys = {
         opnames: () => [...queryKeys.inventory.all, "opnames"] as const,
         opnameDetail: (id: number) =>
             [...queryKeys.inventory.all, "opname", id] as const,
+        suppliers: () => [...queryKeys.inventory.all, "suppliers"] as const,
     },
 
     // Transactions (checkout)
@@ -44,5 +45,11 @@ export const queryKeys = {
         onHold: () => [...queryKeys.transactions.all, "on-hold"] as const,
         detail: (id: number) =>
             [...queryKeys.transactions.all, "detail", id] as const,
+    },
+
+    // Activity Logs
+    activityLogs: {
+        all: ["activity-logs"] as const,
+        list: () => [...queryKeys.activityLogs.all, "list"] as const,
     },
 } as const;

@@ -1,13 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useProducts } from "@/features/products/api/products-api";
 import {
     useStockMovements,
     useOpnames,
     useReceivings,
+    useSuppliers,
 } from "@/features/stock/api/stock-api";
+import type { Supplier } from "@/features/stock/types";
+import { SupplierList } from "@/features/stock/components/supplier-list";
+import { SupplierDialog } from "@/features/stock/components/supplier-dialog";
 import { LowStockTable } from "@/features/stock/components/low-stock-table";
 import { OpnameList } from "@/features/stock/components/opname-list";
 import { MovementLedger } from "@/features/stock/components/movement-ledger";
@@ -27,6 +31,20 @@ export default function AdminStockPage() {
     const [movementsPage, setMovementsPage] = useState(1);
     const [opnamesPage, setOpnamesPage] = useState(1);
     const [receivingsPage, setReceivingsPage] = useState(1);
+    
+    // Suppliers State
+    const [suppliersPage, setSuppliersPage] = useState(1);
+    const [suppliersPerPage, setSuppliersPerPage] = useState(10);
+    const [suppliersSearch, setSuppliersSearch] = useState("");
+    const [debouncedSuppliersSearch, setDebouncedSuppliersSearch] = useState("");
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSuppliersSearch(suppliersSearch);
+            setSuppliersPage(1);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [suppliersSearch]);
 
     // Load all products (up to 1000) for local low stock warnings and selection dropdowns in modals
     const { data: productsData, isLoading: productsLoading } = useProducts({
@@ -47,11 +65,21 @@ export default function AdminStockPage() {
         isLoading: receivingsLoading,
         isFetching: receivingsFetching,
     } = useReceivings({ page: receivingsPage, per_page: 10 });
+    const {
+        data: suppliersData,
+        isLoading: suppliersLoading,
+        isFetching: suppliersFetching,
+    } = useSuppliers({
+        page: suppliersPage,
+        per_page: suppliersPerPage,
+        search: debouncedSuppliersSearch || undefined,
+    });
 
     const products = productsData?.data || [];
     const movements = movementsData?.data || [];
     const opnames = opnamesData?.data || [];
     const receivings = receivingsData?.data || [];
+    const suppliers = suppliersData?.data || [];
 
     // Modals
     const [isAdjustmentOpen, setIsAdjustmentOpen] = useState(false);
@@ -61,6 +89,10 @@ export default function AdminStockPage() {
     const [selectedOpnameId, setSelectedOpnameId] = useState<number | null>(
         null,
     );
+    
+    // Suppliers Modals State
+    const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
+    const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
 
     // Show page loader only on initial load of products (critical configurations)
     if (productsLoading && !productsData) {
@@ -70,6 +102,16 @@ export default function AdminStockPage() {
     const handleViewOpnameDetail = (id: number) => {
         setSelectedOpnameId(id);
         setIsDetailOpnameOpen(true);
+    };
+
+    const handleEditSupplier = (supplier: Supplier) => {
+        setEditingSupplier(supplier);
+        setIsSupplierModalOpen(true);
+    };
+
+    const handleAddSupplierClick = () => {
+        setEditingSupplier(null);
+        setIsSupplierModalOpen(true);
     };
 
     return (
@@ -134,16 +176,33 @@ export default function AdminStockPage() {
                         isFetching={movementsFetching}
                     />
                 </div>
-            ) : (
+            ) : currentTab === "receiving" ? (
                 /* Receiving Log Table View */
                 <ReceivingList
                     receivings={receivings}
+                    products={products}
                     meta={receivingsData?.meta}
                     page={receivingsPage}
                     onPageChange={setReceivingsPage}
                     onAddClick={() => setIsReceivingModalOpen(true)}
                     isLoading={receivingsLoading}
                     isFetching={receivingsFetching}
+                />
+            ) : (
+                /* Supplier Master Data Table View */
+                <SupplierList
+                    suppliers={suppliers}
+                    meta={suppliersData?.meta}
+                    page={suppliersPage}
+                    perPage={suppliersPerPage}
+                    onPageChange={setSuppliersPage}
+                    onPerPageChange={setSuppliersPerPage}
+                    search={suppliersSearch}
+                    onSearchChange={setSuppliersSearch}
+                    onEdit={handleEditSupplier}
+                    onAddClick={handleAddSupplierClick}
+                    isLoading={suppliersLoading}
+                    isFetching={suppliersFetching}
                 />
             )}
 
@@ -170,6 +229,12 @@ export default function AdminStockPage() {
                 open={isReceivingModalOpen}
                 onOpenChange={setIsReceivingModalOpen}
                 products={products || []}
+            />
+
+            <SupplierDialog
+                open={isSupplierModalOpen}
+                onOpenChange={setIsSupplierModalOpen}
+                editingSupplier={editingSupplier}
             />
         </div>
     );

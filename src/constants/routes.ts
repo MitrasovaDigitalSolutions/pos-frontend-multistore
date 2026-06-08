@@ -11,6 +11,7 @@ export const ROUTES = {
     ADMIN_REPORTS: "/admin/reports",
     ADMIN_USERS: "/admin/users",
     ADMIN_SETTINGS: "/admin/settings",
+    ADMIN_AUDIT: "/admin/audit",
 
     // Protected - POS
     CHECKOUT: "/checkout",
