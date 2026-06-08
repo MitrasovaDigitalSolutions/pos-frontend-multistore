@@ -34,7 +34,9 @@ export function MovementLedger({
                 header: "Waktu",
                 cell: ({ row }) => (
                     <span className="text-[11px] text-slate-500">
-                        {new Date(row.original.created_at).toLocaleString("id-ID")}
+                        {new Date(row.original.created_at).toLocaleString(
+                            "id-ID",
+                        )}
                     </span>
                 ),
             },
@@ -67,7 +69,13 @@ export function MovementLedger({
                     const mv = row.original;
                     const isPositive = mv.kuantitas > 0;
                     return (
-                        <span className={isPositive ? "text-emerald-600" : "text-rose-500"}>
+                        <span
+                            className={
+                                isPositive
+                                    ? "text-emerald-600"
+                                    : "text-rose-500"
+                            }
+                        >
                             {isPositive ? `+${mv.kuantitas}` : mv.kuantitas}
                         </span>
                     );
@@ -115,7 +123,7 @@ export function MovementLedger({
 
     return (
         <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4">
-            <h3 className="text-xs font-bold text-slate-900 border-b border-slate-50 pb-2">
+            <h3 className="text-sm font-bold text-slate-900 border-b border-slate-50 pb-2">
                 Kartu Kendali Mutasi Stok (Terbaru)
             </h3>
             <DataTable
@@ -134,4 +142,3 @@ export function MovementLedger({
         </section>
     );
 }
-
