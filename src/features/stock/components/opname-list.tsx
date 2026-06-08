@@ -47,7 +47,7 @@ export function OpnameList({
     const handleFinalize = (op: Opname) => {
         if (
             confirm(
-                "Finalisasi opname ini sekarang? Stok sistem akan dikoreksi secara permanen."
+                "Finalisasi opname ini sekarang? Stok sistem akan dikoreksi secara permanen.",
             )
         ) {
             const itemsPayload = (op.items || []).map((it) => ({
@@ -69,9 +69,11 @@ export function OpnameList({
                         toast.success("Stock opname berhasil difinalisasi!");
                     },
                     onError: (err) => {
-                        toast.error(err.message || "Gagal memfinalisasi opname.");
+                        toast.error(
+                            err.message || "Gagal memfinalisasi opname.",
+                        );
                     },
-                }
+                },
             );
         }
     };
@@ -105,10 +107,13 @@ export function OpnameList({
                 header: "Tanggal",
                 cell: ({ row }) => (
                     <span className="text-slate-500 font-medium text-xs">
-                        {new Date(row.original.created_at).toLocaleString("id-ID", {
-                            dateStyle: "medium",
-                            timeStyle: "short",
-                        })}
+                        {new Date(row.original.created_at).toLocaleString(
+                            "id-ID",
+                            {
+                                dateStyle: "medium",
+                                timeStyle: "short",
+                            },
+                        )}
                     </span>
                 ),
             },
@@ -186,27 +191,27 @@ export function OpnameList({
                 },
             },
         ],
-        [onViewDetail, canDeleteDraft]
+        [onViewDetail, canDeleteDraft],
     );
 
     return (
-        <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4">
-            <h3 className="text-sm font-bold text-slate-900 border-b border-slate-50 pb-2">
-                Daftar Dokumen Stock Opname
-            </h3>
-            <DataTable
-                columns={columns}
-                data={opnames}
-                isLoading={isLoading}
-                isFetching={isFetching}
-                emptyMessage="Belum ada rekaman stock opname."
-                page={page}
-                onPageChange={onPageChange}
-                meta={meta}
-                entityName="dokumen"
-                virtualize={true}
-                estimateRowHeight={44}
-            />
-        </section>
+        // <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4">
+        //     <h3 className="text-sm font-bold text-slate-900 border-b border-slate-50 pb-2">
+        //         Daftar Dokumen Stock Opname
+        //     </h3>
+        <DataTable
+            columns={columns}
+            data={opnames}
+            isLoading={isLoading}
+            isFetching={isFetching}
+            emptyMessage="Belum ada rekaman stock opname."
+            page={page}
+            onPageChange={onPageChange}
+            meta={meta}
+            entityName="dokumen"
+            virtualize={true}
+            estimateRowHeight={44}
+        />
+        // </section>
     );
 }

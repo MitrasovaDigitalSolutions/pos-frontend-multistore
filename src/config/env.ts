@@ -12,7 +12,6 @@ const envSchema = z.object({
     NEXTAUTH_SECRET: z
         .string()
         .min(8, "NEXTAUTH_SECRET must be at least 8 characters"),
-
     NEXTAUTH_URL: z.url().optional(),
 
     // Node

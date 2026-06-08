@@ -1,5 +1,6 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { ApiError, NetworkError } from "@/shared/errors/api-error";
+import { signOut } from "@/lib/auth";
 
 // ─── Axios Instance ─────────────────────────────────────────────────────────
 // All requests go through the Next.js API proxy route handler.
@@ -32,7 +33,7 @@ apiClient.interceptors.request.use(
 
 apiClient.interceptors.response.use(
     (response) => response,
-    (
+    async (
         error: AxiosError<{
             message?: string;
             errors?: Record<string, string[]>;
@@ -52,7 +53,8 @@ apiClient.interceptors.response.use(
                 typeof window !== "undefined" &&
                 window.location.pathname !== "/login"
             ) {
-                window.location.href = "/login";
+                await signOut({ redirectTo: "/login" });
+                // window.location.href = "/login";
             }
         }
 
