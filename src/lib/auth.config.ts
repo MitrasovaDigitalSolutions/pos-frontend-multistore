@@ -115,7 +115,12 @@ export default {
 
     // Route protection via authorized callback (used by proxy.ts)
     authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
+      // If the token has an error (e.g. API returned 401 and token is marked
+      // as invalid), treat the user as unauthenticated. This prevents the
+      // redirect loop: protected page → 401 → signOut → /login → middleware
+      // sees stale session → redirects back to protected page → 401 again.
+      const hasTokenError = !!(auth as Record<string, unknown> | null)?.error;
+      const isLoggedIn = !!auth?.user && !hasTokenError;
       const { pathname } = nextUrl;
 
       // Allow public routes

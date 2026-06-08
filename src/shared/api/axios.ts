@@ -2,6 +2,10 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { ApiError, NetworkError } from "@/shared/errors/api-error";
 import { signOut } from "@/lib/auth";
 
+// Guard to prevent multiple concurrent signOut calls when several
+// requests simultaneously receive a 401 response.
+let isSigningOut = false;
+
 // ─── Axios Instance ─────────────────────────────────────────────────────────
 // All requests go through the Next.js API proxy route handler.
 // The proxy attaches the Bearer token from the server-side session.
@@ -48,13 +52,14 @@ apiClient.interceptors.response.use(
 
         // Unauthorized — session expired, force re-login
         if (status === 401) {
-            // Redirect will be handled by NextAuth's proxy/middleware
             if (
                 typeof window !== "undefined" &&
-                window.location.pathname !== "/login"
+                window.location.pathname !== "/login" &&
+                !isSigningOut
             ) {
+                isSigningOut = true;
                 await signOut({ redirectTo: "/login" });
-                // window.location.href = "/login";
+                // isSigningOut intentionally stays true until page reload.
             }
         }
 
