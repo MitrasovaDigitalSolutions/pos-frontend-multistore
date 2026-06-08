@@ -547,7 +547,7 @@ export default function CheckoutPage() {
       <div className="bg-slate-900 text-white h-12 px-6 flex items-center justify-between border-b border-slate-800">
         <div className="flex items-center gap-3">
           <IconScan size={20} className="text-indigo-400" />
-          <span className="font-bold text-[13px] tracking-wide">GroceryPOS — Cashier Terminal</span>
+          <span className="font-bold text-[13px] tracking-wide">TumbasPOS — Cashier Terminal</span>
           {transactionId && (
             <span className="bg-indigo-700 text-indigo-100 text-[9px] font-bold px-2 py-0.5 rounded-full tracking-wider">
               TRX #{transactionId}

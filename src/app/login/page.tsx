@@ -54,8 +54,8 @@ export default function LoginPage() {
           <div className="mx-auto w-12 h-12 bg-indigo-100/80 text-indigo-600 rounded-xl flex items-center justify-center text-2xl mb-4">
             <IconShoppingCart size={24} />
           </div>
-          <CardTitle className="text-lg font-bold text-slate-900">GroceryPOS</CardTitle>
-          <CardDescription className="text-xs text-slate-400">Sistem Point of Sale Supermarket</CardDescription>
+          <CardTitle className="text-lg font-bold text-slate-900">TumbasPOS</CardTitle>
+          <CardDescription className="text-xs text-slate-400">Sistem Point of Sale Ritel Modern</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-5">

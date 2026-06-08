@@ -5,11 +5,9 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
 import {
   IconHome,
-  IconShoppingCart,
   IconPackage,
-  IconCategory,
-  IconBox,
-  IconTruckDelivery,
+  IconShoppingCart,
+  IconUsers,
   IconChartBar,
   IconSettings,
   IconLogout,
@@ -29,9 +27,12 @@ import {
   IconSearch,
   IconPrinter,
   IconDeviceLaptop,
-  IconUsers,
   IconActivity,
   IconClipboardCheck,
+  IconDownload,
+  IconDotsVertical,
+  IconChevronDown,
+  IconTruckDelivery,
 } from "@tabler/icons-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -40,15 +41,14 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Sparkline, BarChart, DoughnutChart } from "@/components/ui/charts";
 
 const TAB_TITLES: Record<string, string> = {
-  dashboard: "Dashboard Analitik Toko",
-  products: "Manajemen Produk",
-  categories: "Kategori Produk",
-  inventory: "Stok Barang & Inventori",
-  receiving: "Penerimaan Barang Masuk Log",
-  reports: "Laporan Penjualan & Analitik",
-  users: "Kelola Pengguna Sistem",
+  dashboard: "Overview Analitik Toko",
+  products: "Katalog & Manajemen Produk",
+  inventory: "Pembelian & Inventori Barang",
+  users: "Database & Keanggotaan Kasir",
+  reports: "Analisis Laporan & Performa",
   settings: "Pengaturan Profil Toko",
 };
 
@@ -57,6 +57,8 @@ export default function AdminDashboardPage() {
   const { user, token, isLoading, logout, hasRole, hasPermission } = useAuth();
   
   const [activeTab, setActiveTab] = useState<string>("dashboard");
+  const [productsSubTab, setProductsSubTab] = useState<"list" | "categories">("list");
+  const [purchasesSubTab, setPurchasesSubTab] = useState<"receiving" | "opname" | "adjustment" | "movements">("receiving");
 
   // API Data States
   const [usersList, setUsersList] = useState<any[]>([]);
@@ -65,6 +67,7 @@ export default function AdminDashboardPage() {
   const [receivings, setReceivings] = useState<any[]>([]);
   const [opnames, setOpnames] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>(null);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [dailyReport, setDailyReport] = useState<any>(null);
   const [selectedReportDate, setSelectedReportDate] = useState<string>(
     new Date().toISOString().split("T")[0]
@@ -210,6 +213,18 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const fetchTransactions = async () => {
+    try {
+      const res = await apiFetch("/v1/transactions?per_page=5");
+      if (res.ok) {
+        const data = await res.json();
+        setTransactions(data.data?.data || data.data || data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch transactions:", err);
+    }
+  };
+
   const fetchDailyReport = async (dateStr: string) => {
     try {
       const res = await apiFetch(`/v1/reports/sales/daily?date=${dateStr}`);
@@ -228,6 +243,8 @@ export default function AdminDashboardPage() {
     
     if (activeTab === "dashboard") {
       fetchSummary();
+      fetchTransactions();
+      fetchProducts(); // needed for total product volume count
     } else if (activeTab === "products") {
       fetchProducts();
     } else if (activeTab === "users") {
@@ -236,9 +253,7 @@ export default function AdminDashboardPage() {
       fetchProducts();
       fetchMovements();
       fetchOpnames();
-    } else if (activeTab === "receiving") {
       fetchReceivings();
-      fetchProducts();
     } else if (activeTab === "reports") {
       fetchDailyReport(selectedReportDate);
     }
@@ -631,725 +646,962 @@ export default function AdminDashboardPage() {
       u.username.toLowerCase().includes(searchUser.toLowerCase())
   );
 
-  const getLinkClass = (tab: string) => {
+  // Custom navigation link styling
+  const getNavLinkClass = (tab: string) => {
     const isActive = activeTab === tab;
-    return `w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-xs transition-all text-left cursor-pointer ${
+    return `text-xs font-extrabold pb-2 -mb-2 transition-all cursor-pointer border-none bg-transparent ${
       isActive
-        ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/10"
-        : "text-slate-400 hover:text-white hover:bg-slate-900"
+        ? "text-slate-900 border-b-[3px] border-slate-900 font-black"
+        : "text-slate-400 hover:text-slate-600 font-bold"
     }`;
   };
 
+  // Mock bar chart datasets for the Revenue card
+  const monthlyRevenueData = [
+    { label: "Jan", value: 3400 },
+    { label: "Feb", value: 2800 },
+    { label: "Mar", value: 4000, pattern: true },
+    { label: "May", value: 2500, pattern: true },
+    { label: "Apr", value: 4500 },
+  ];
+
+  // Dynamic doughnut shares based on real top products
+  const doughnutSegments = summary?.top_products && summary.top_products.length > 0
+    ? summary.top_products.slice(0, 4).map((tp: any, index: number) => {
+        const colors = ["#0f172a", "#6366f1", "#94a3b8", "#cbd5e1"];
+        return {
+          label: tp.product_name,
+          value: tp.quantity,
+          color: colors[index] || "#cbd5e1",
+        };
+      })
+    : [
+        { label: "Shoes", value: 40, color: "#0f172a" },
+        { label: "Electronics", value: 30, color: "#6366f1" },
+        { label: "Furniture", value: 20, color: "#94a3b8" },
+        { label: "Clothes", value: 10, color: "#cbd5e1" },
+      ];
+
+  const doughnutTotalValue = summary?.top_products && summary.top_products.length > 0
+    ? summary.top_products.slice(0, 4).reduce((acc: number, curr: any) => acc + curr.quantity, 0)
+    : 23324;
+
   return (
-    <div className="flex-grow flex h-screen overflow-hidden bg-slate-100 pb-8">
-      {/* Sidebar - Deep Navy */}
-      <aside className="w-[210px] bg-slate-950 text-slate-400 flex flex-col justify-between p-4 py-6 border-r border-slate-900 shrink-0">
-        <div className="space-y-6">
-          <div className="flex items-center gap-2 px-3">
-            <IconShoppingCart size={22} className="text-indigo-400" />
-            <span className="font-extrabold text-[14px] text-white tracking-wide">GroceryPOS</span>
-          </div>
-
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <span className="text-[9px] font-extrabold text-slate-600 uppercase tracking-widest px-3 block">
-                Menu Utama
-              </span>
-              <ul className="space-y-0.5">
-                {(hasRole("admin") || hasPermission("view_reports")) && (
-                  <li>
-                    <button onClick={() => setActiveTab("dashboard")} className={getLinkClass("dashboard")}>
-                      <IconHome size={18} />
-                      <span>Dashboard</span>
-                    </button>
-                  </li>
-                )}
-                {(hasRole("admin") || hasPermission("create_sales")) && (
-                  <li>
-                    <button onClick={() => router.push("/checkout")} className={getLinkClass("pos")}>
-                      <IconDeviceLaptop size={18} />
-                      <span>Layar Kasir (POS)</span>
-                    </button>
-                  </li>
-                )}
-                {(hasRole("admin") || hasPermission("manage_products")) && (
-                  <li>
-                    <button onClick={() => setActiveTab("products")} className={getLinkClass("products")}>
-                      <IconPackage size={18} />
-                      <span>Manajemen Produk</span>
-                    </button>
-                  </li>
-                )}
-              </ul>
+    <div className="flex-grow flex flex-col h-screen overflow-hidden bg-[#f8fafc] text-slate-800">
+      
+      {/* ─── NEW TOP NAVIGATION BAR (Ecomora Style) ───────────────────────────────── */}
+      <header className="bg-white border-b border-slate-200/80 h-16 px-8 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-10">
+          {/* Logo brand */}
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab("dashboard")}>
+            <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-extrabold text-lg tracking-tighter">
+              t
             </div>
-
-            {(hasRole("admin") || hasPermission("manage_products") || hasPermission("view_reports")) && (
-              <div className="space-y-1">
-                <span className="text-[9px] font-extrabold text-slate-600 uppercase tracking-widest px-3 block">
-                  Inventori & Laporan
-                </span>
-                <ul className="space-y-0.5">
-                  {(hasRole("admin") || hasPermission("manage_products")) && (
-                    <li>
-                      <button onClick={() => setActiveTab("inventory")} className={getLinkClass("inventory")}>
-                        <IconBox size={18} />
-                        <span>Stok Barang</span>
-                      </button>
-                    </li>
-                  )}
-                  {(hasRole("admin") || hasPermission("manage_products")) && (
-                    <li>
-                      <button onClick={() => setActiveTab("receiving")} className={getLinkClass("receiving")}>
-                        <IconTruckDelivery size={18} />
-                        <span>Penerimaan</span>
-                      </button>
-                    </li>
-                  )}
-                  {(hasRole("admin") || hasPermission("view_reports")) && (
-                    <li>
-                      <button onClick={() => setActiveTab("reports")} className={getLinkClass("reports")}>
-                        <IconChartBar size={18} />
-                        <span>Laporan Penjualan</span>
-                      </button>
-                    </li>
-                  )}
-                </ul>
-              </div>
-            )}
+            <span className="font-black text-[16px] text-slate-900 tracking-tight">TumbasPOS</span>
           </div>
-        </div>
 
-        <div className="space-y-1">
-          <span className="text-[9px] font-extrabold text-slate-600 uppercase tracking-widest px-3 block">
-            Sistem
-          </span>
-          <ul className="space-y-0.5">
+          {/* Navigation Links */}
+          <nav className="flex items-center gap-6 h-full pt-1">
+            {(hasRole("admin") || hasPermission("view_reports")) && (
+              <button onClick={() => setActiveTab("dashboard")} className={getNavLinkClass("dashboard")}>
+                Dashboard
+              </button>
+            )}
+            {(hasRole("admin") || hasPermission("manage_products")) && (
+              <button onClick={() => setActiveTab("products")} className={getNavLinkClass("products")}>
+                Products
+              </button>
+            )}
+            {(hasRole("admin") || hasPermission("manage_products")) && (
+              <button onClick={() => setActiveTab("inventory")} className={getNavLinkClass("inventory")}>
+                Purchases
+              </button>
+            )}
             {(hasRole("admin") || hasPermission("manage_users")) && (
-              <li>
-                <button onClick={() => setActiveTab("users")} className={getLinkClass("users")}>
-                  <IconUsers size={18} />
-                  <span>Kelola Pengguna</span>
-                </button>
-              </li>
+              <button onClick={() => setActiveTab("users")} className={getNavLinkClass("users")}>
+                Customers
+              </button>
+            )}
+            {(hasRole("admin") || hasPermission("view_reports")) && (
+              <button onClick={() => setActiveTab("reports")} className={getNavLinkClass("reports")}>
+                Analytics
+              </button>
             )}
             {hasRole("admin") && (
-              <li>
-                <button onClick={() => setActiveTab("settings")} className={getLinkClass("settings")}>
-                  <IconSettings size={18} />
-                  <span>Pengaturan Toko</span>
-                </button>
-              </li>
-            )}
-            <li>
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-950/20 transition-all text-left cursor-pointer"
-              >
-                <IconLogout size={18} />
-                <span>Keluar</span>
+              <button onClick={() => setActiveTab("settings")} className={getNavLinkClass("settings")}>
+                Settings
               </button>
-            </li>
-          </ul>
+            )}
+          </nav>
         </div>
-      </aside>
 
-      {/* Main Content Area */}
-      <main className="flex-grow p-6 px-8 overflow-y-auto h-full">
-        {/* Header */}
-        <header className="flex justify-between items-center mb-6 border-b border-slate-200/60 pb-4">
-          <h2 className="text-base font-extrabold text-slate-900">
-            {TAB_TITLES[activeTab] || activeTab}
-          </h2>
-          <div className="flex items-center gap-4">
-            <div className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-3 py-1.5 rounded-full flex items-center gap-2 font-bold text-xs select-none">
-              <IconCalendar size={15} />
+        {/* User profile section */}
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            onClick={() => router.push("/checkout")}
+            className="text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-dashed border-slate-300 h-8 rounded-xl flex items-center gap-1.5 cursor-pointer"
+          >
+            <IconDeviceLaptop size={15} />
+            <span>Layar Kasir (POS)</span>
+          </Button>
+
+          <div className="h-4 w-[1px] bg-slate-200"></div>
+
+          {/* User profile dropdown trigger */}
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <div className="text-xs font-bold text-slate-900 leading-tight">{user.name}</div>
+              <div className="text-[9px] font-extrabold uppercase text-slate-400 tracking-wider mt-0.5">
+                {user.roles[0]?.replace("_", " ")}
+              </div>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-extrabold text-xs select-none">
+              {user.name.charAt(0).toUpperCase()}
+            </div>
+            <button
+              onClick={handleLogout}
+              className="p-1 hover:bg-slate-100 rounded text-rose-500 transition-colors border-none bg-transparent cursor-pointer"
+              title="Logout"
+            >
+              <IconLogout size={16} />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* ─── MAIN CONTENT CONTAINER ────────────────────────────────────────────────── */}
+      <main className="flex-grow p-8 overflow-y-auto max-w-[1440px] mx-auto w-full">
+        
+        {/* Dynamic header title & actions */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <div>
+            <h1 className="text-2xl font-black text-slate-950 leading-tight">
+              {TAB_TITLES[activeTab] || activeTab}
+            </h1>
+            <p className="text-[11px] font-semibold text-slate-400 mt-1 uppercase tracking-widest flex items-center gap-1.5">
+              <IconCalendar size={14} className="text-indigo-500" />
               <span>Hari Ini: {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</span>
-            </div>
-
-            <div className="h-5 w-[1px] bg-slate-200"></div>
-
-            <div className="flex items-center gap-2.5">
-              <div className="text-right">
-                <div className="text-xs font-bold text-slate-800 leading-tight">{user.name}</div>
-                <div className="text-[9px] font-extrabold uppercase text-indigo-600 tracking-wider leading-none mt-0.5">{user.roles[0]?.replace('_', ' ')}</div>
-              </div>
-              <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-extrabold text-xs shadow-sm shadow-indigo-600/5 select-none">
-                {user.name.charAt(0).toUpperCase()}
-              </div>
-            </div>
+            </p>
           </div>
-        </header>
 
-        {/* ==============================================================================
-             TAB 1: DASHBOARD
-             ============================================================================== */}
-        {activeTab === "dashboard" && (
-          <div className="space-y-6">
-            {/* Stats Grid */}
-            <section className="grid grid-cols-4 gap-4">
-              <Card className="bg-indigo-600 border-none text-white rounded-2xl shadow-md p-5 flex flex-col gap-1.5 justify-between">
-                <div className="flex justify-between items-center text-indigo-100">
-                  <span className="text-[10px] font-bold uppercase tracking-wider">Total Penjualan Bersih</span>
-                  <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-lg text-white">
-                    <IconCash size={18} />
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold leading-none select-all tabular-nums">
-                  {summary ? formatRupiah(summary.net_sales) : "Rp 0"}
-                </h3>
-                <div className="text-[10px] font-semibold text-indigo-200">Bulan Berjalan</div>
-              </Card>
-
-              <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-5 flex flex-col gap-1.5 justify-between">
-                <div className="flex justify-between items-center text-slate-400">
-                  <span className="text-[10px] font-bold uppercase tracking-wider">Transaksi Sukses</span>
-                  <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg">
-                    <IconReceipt size={18} />
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold leading-none text-slate-900 tabular-nums">
-                  {summary ? `${summary.sales_count} Trx` : "0 Trx"}
-                </h3>
-                <div className="text-[10px] font-semibold text-slate-500">
-                  Total item: {summary ? summary.items_sold : 0} pcs
-                </div>
-              </Card>
-
-              <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-5 flex flex-col gap-1.5 justify-between">
-                <div className="flex justify-between items-center text-slate-400">
-                  <span className="text-[10px] font-bold uppercase tracking-wider">PPN Terkumpul</span>
-                  <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg">
-                    <IconChartPie size={18} />
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold leading-none text-slate-900 tabular-nums">
-                  {summary ? formatRupiah(summary.tax_total) : "Rp 0"}
-                </h3>
-                <div className="text-[10px] font-semibold text-slate-500">Besaran PPN 11%</div>
-              </Card>
-
-              <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-5 flex flex-col gap-1.5 justify-between">
-                <div className="flex justify-between items-center text-slate-400">
-                  <span className="text-[10px] font-bold uppercase tracking-wider">Potongan Diskon</span>
-                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-lg">
-                    <IconAlertTriangle size={18} />
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold leading-none text-slate-900 tabular-nums">
-                  {summary ? formatRupiah(summary.discount_total) : "Rp 0"}
-                </h3>
-                <div className="text-[10px] font-semibold text-slate-500">Total diskon transaksi</div>
-              </Card>
-            </section>
-
-            {/* Split Grid */}
-            <section className="grid grid-cols-[1.4fr_1fr] gap-6">
-              {/* Sales Chart Card */}
-              <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-5">
-                <CardHeader className="flex flex-row items-center justify-between border-b border-slate-50 pb-4 p-0">
-                  <CardTitle className="text-xs font-bold text-slate-900">Perbandingan Penjualan</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0 pt-6">
-                  <div className="h-[180px] flex items-end justify-around px-2 gap-4">
-                    <div className="flex flex-col items-center flex-grow group gap-2">
-                      <div className="w-16 bg-indigo-600 rounded-t-lg h-[130px] flex items-center justify-center text-white text-[10px] font-bold">
-                        {summary ? formatRupiah(summary.net_sales) : "Rp 0"}
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-bold">Bersih (Net)</span>
-                    </div>
-                    <div className="flex flex-col items-center flex-grow group gap-2">
-                      <div className="w-16 bg-slate-300 rounded-t-lg h-[150px] flex items-center justify-center text-slate-800 text-[10px] font-bold">
-                        {summary ? formatRupiah(summary.gross_sales) : "Rp 0"}
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-bold">Kotor (Gross)</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Top Selling Products */}
-              <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-5">
-                <CardHeader className="flex flex-row items-center justify-between border-b border-slate-50 pb-4 p-0 mb-4">
-                  <CardTitle className="text-xs font-bold text-slate-900">Produk Terlaris</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0 space-y-4">
-                  {summary && summary.top_products && summary.top_products.length > 0 ? (
-                    summary.top_products.map((tp: any, i: number) => (
-                      <div key={i} className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-xl">
-                        <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs font-bold">
-                          #{i + 1}
-                        </div>
-                        <div className="flex-grow">
-                          <div className="font-bold text-[11px] text-slate-800">{tp.product_name}</div>
-                          <div className="text-[9px] text-slate-400 font-medium">Terjual {tp.quantity} pcs</div>
-                        </div>
-                        <span className="font-bold text-xs text-slate-900 tabular-nums">{formatRupiah(tp.revenue)}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-6 text-slate-400 text-xs">Belum ada data transaksi.</div>
-                  )}
-                </CardContent>
-              </Card>
-            </section>
-          </div>
-        )}
-
-        {/* ==============================================================================
-             TAB 2: PRODUCT MANAGEMENT
-             ============================================================================== */}
-        {activeTab === "products" && (
-          <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-6">
-            <div className="flex justify-between items-center border-b border-slate-50 pb-4">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">Daftar Produk Toko</h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">Manajemen inventori produk aktif dan SKU.</p>
-              </div>
-              <Button
-                onClick={() => {
-                  setEditingProduct(null);
-                  setNewProductName("");
-                  setNewProductBrand("");
-                  setNewProductBarcode("");
-                  setNewProductPrice("");
-                  setNewProductStock("");
-                  setIsAddProductOpen(true);
-                }}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
-              >
-                <IconPlus size={16} /> Tambah Produk
-              </Button>
-            </div>
-
-            {/* Filter Bar */}
-            <div className="flex gap-3 items-center">
-              <div className="relative flex-grow max-w-sm">
-                <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+          {activeTab === "dashboard" && (
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="relative w-48 sm:w-64">
+                <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
                 <Input
                   type="text"
-                  placeholder="Cari produk berdasarkan barcode, nama, atau merek..."
-                  className="pl-9 h-9 text-[11px] border-slate-200 focus-visible:ring-indigo-600 rounded-xl"
+                  placeholder="Search product..."
+                  className="pl-9 h-9 text-xs border-slate-200 focus-visible:ring-slate-950 rounded-xl bg-white w-full"
                   value={searchProduct}
-                  onChange={(e) => setSearchProduct(e.target.value)}
+                  onChange={(e) => {
+                    setSearchProduct(e.target.value);
+                    setActiveTab("products");
+                  }}
                 />
               </div>
+              <Button
+                variant="outline"
+                onClick={() => toast.success("Exporting data to CSV...")}
+                className="h-9 text-xs font-bold border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-4 rounded-xl flex gap-1.5 cursor-pointer shrink-0"
+              >
+                <IconDownload size={14} />
+                <span>Export CSV</span>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => toast.success("Downloading reports...")}
+                className="h-9 text-xs font-bold border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-4 rounded-xl flex gap-1.5 cursor-pointer shrink-0"
+              >
+                <IconDownload size={14} />
+                <span>Download Report</span>
+              </Button>
             </div>
+          )}
+        </div>
 
-            <Table className="w-full">
-              <TableHeader className="bg-slate-50">
-                <TableRow>
-                  <TableHead className="text-[10px] font-bold text-slate-500">Barcode / SKU</TableHead>
-                  <TableHead className="text-[10px] font-bold text-slate-500">Nama Produk</TableHead>
-                  <TableHead className="text-[10px] font-bold text-slate-500">Merek</TableHead>
-                  <TableHead className="text-right text-[10px] font-bold text-slate-500">Harga Jual</TableHead>
-                  <TableHead className="text-right text-[10px] font-bold text-slate-500">Stok</TableHead>
-                  <TableHead className="text-center text-[10px] font-bold text-slate-500">Status</TableHead>
-                  <TableHead className="text-center w-28 text-[10px] font-bold text-slate-500">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredProducts.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-slate-400">
-                      Tidak ada produk ditemukan.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredProducts.map((p) => (
-                    <TableRow key={p.id} className="hover:bg-slate-50/50">
-                      <TableCell className="font-bold text-slate-900 text-xs">{p.barcode || "-"}</TableCell>
-                      <TableCell className="font-semibold text-slate-800 text-xs">{p.nama}</TableCell>
-                      <TableCell className="text-slate-500 text-xs">{p.merek}</TableCell>
-                      <TableCell className="text-right font-bold text-slate-800 text-xs">{formatRupiah(p.harga)}</TableCell>
-                      <TableCell className={`text-right font-bold text-xs ${p.stok <= 10 ? "text-amber-500" : "text-slate-800"}`}>
-                        {p.stok} pcs
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <button
-                          onClick={() => handleToggleProductStatus(p)}
-                          className={`badge text-[10px] border-none cursor-pointer ${p.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}
-                        >
-                          {p.status === "active" ? "Aktif" : "Nonaktif"}
-                        </button>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex justify-center gap-1.5">
-                          <button
-                            onClick={() => {
-                              setEditingProduct(p);
-                              setNewProductName(p.nama);
-                              setNewProductBrand(p.merek);
-                              setNewProductBarcode(p.barcode || "");
-                              setNewProductPrice(p.harga.toString());
-                              setNewProductStock(p.stok.toString());
-                              setIsAddProductOpen(true);
-                            }}
-                            className="p-1 text-indigo-600 hover:bg-indigo-50 rounded transition-colors border-none bg-transparent cursor-pointer"
-                          >
-                            <IconEdit size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleRemoveProduct(p.id)}
-                            className="p-1 text-rose-500 hover:bg-rose-50 rounded transition-colors border-none bg-transparent cursor-pointer"
-                          >
-                            <IconTrash size={16} />
-                          </button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </section>
-        )}
+        {/* ─── TAB 1: DASHBOARD (Ecomora Premium redrawn) ───────────────────────────── */}
+        {activeTab === "dashboard" && (
+          <div className="space-y-8 animate-in fade-in duration-300">
+            {/* Top Cards Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-[28%_40%_32%] gap-6">
+              
+              {/* Stack 1: Left Stats Stack */}
+              <div className="flex flex-col gap-6">
+                {/* Stat 1: Total Sales Volume */}
+                <Card className="bg-white border-none rounded-3xl shadow-sm p-6 flex flex-col justify-between min-h-[145px]">
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
+                      Total Products Sales
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl font-black text-slate-950 tracking-tight tabular-nums">
+                        {summary ? (summary.items_sold).toLocaleString("id-ID") : "0"}
+                      </span>
+                      <span className="bg-emerald-50 text-emerald-600 text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center">
+                        +10%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-4">
+                    <button
+                      onClick={() => setActiveTab("reports")}
+                      className="text-[10px] font-extrabold text-slate-900 border-b border-slate-900 hover:text-slate-600 hover:border-slate-400 pb-0.5 transition-all cursor-pointer bg-transparent border-none"
+                    >
+                      View Sales Details →
+                    </button>
+                    <Sparkline data={[12, 18, 10, 24, 16, 30, 25, 38]} width={70} height={25} />
+                  </div>
+                </Card>
 
-        {/* ==============================================================================
-             TAB 3: INVENTORY & STOCK LEVEL & OPNAME
-             ============================================================================== */}
-        {activeTab === "inventory" && (
-          <div className="space-y-6">
-            {/* Stock Levels & Movements */}
-            <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-6">
-              <div className="flex justify-between items-center border-b border-slate-50 pb-4">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">Inventori & Level Stok</h3>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Peninjauan stok real-time, opname fisik, dan adjustment manual.</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => setIsAdjustmentOpen(true)}
-                    className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
-                  >
-                    <IconActivity size={16} /> Penyesuaian Stok (Manual)
-                  </Button>
-                  <Button
-                    onClick={openNewOpname}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
-                  >
-                    <IconClipboardCheck size={16} /> Stock Opname Baru
-                  </Button>
-                </div>
+                {/* Stat 2: Total Volume of Products */}
+                <Card className="bg-white border-none rounded-3xl shadow-sm p-6 flex flex-col justify-between min-h-[145px]">
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
+                      Total Volume of Products
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl font-black text-slate-950 tracking-tight tabular-nums">
+                        {summary ? `${summary.sales_count}` : "0"}
+                      </span>
+                      <span className="bg-rose-50 text-rose-600 text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center">
+                        -12%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-4">
+                    <button
+                      onClick={() => setActiveTab("products")}
+                      className="text-[10px] font-extrabold text-slate-900 border-b border-slate-900 hover:text-slate-600 hover:border-slate-400 pb-0.5 transition-all cursor-pointer bg-transparent border-none"
+                    >
+                      View All Products →
+                    </button>
+                    <div className="w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center text-slate-600">
+                      <IconShoppingBag size={18} />
+                    </div>
+                  </div>
+                </Card>
               </div>
 
-              {/* Low Stock Warning Table */}
-              <div>
-                <h4 className="text-xs font-bold text-slate-800 mb-3 flex items-center gap-1.5">
-                  <IconAlertTriangle size={16} className="text-amber-500" />
-                  <span>Alert: Produk Stok Rendah (&le; 10 pcs)</span>
-                </h4>
-                <Table className="w-full">
+              {/* Stack 2: Middle Sales Revenue Chart Card */}
+              <Card className="bg-white border-none rounded-3xl shadow-sm p-6 flex flex-col justify-between">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
+                      Total Products Sales
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl font-black text-slate-950 tracking-tight tabular-nums">
+                        {summary ? formatRupiah(summary.net_sales) : "Rp 0"}
+                      </span>
+                      <span className="bg-emerald-50 text-emerald-600 text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center">
+                        +45%
+                      </span>
+                    </div>
+                  </div>
+                  <button className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer border-none bg-transparent">
+                    <IconDotsVertical size={16} />
+                  </button>
+                </div>
+
+                <div className="mt-6">
+                  {/* Legend */}
+                  <div className="flex gap-4 justify-end text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-4">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-slate-900"></span>
+                      <span>Total Revenue</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-slate-200"></span>
+                      <span>Total Profit</span>
+                    </div>
+                  </div>
+
+                  <BarChart data={monthlyRevenueData} height={140} />
+                </div>
+              </Card>
+
+              {/* Stack 3: Right Sales Statistics Doughnut Card */}
+              <Card className="bg-white border-none rounded-3xl shadow-sm p-6 flex flex-col justify-between">
+                <div className="flex justify-between items-center border-b border-slate-50 pb-3">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
+                    Total Sales Statistics
+                  </span>
+                  <select className="text-[10px] font-bold text-slate-500 bg-slate-50 border border-slate-100 rounded-lg px-2 py-1 outline-none">
+                    <option>Monthly</option>
+                    <option>Weekly</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center justify-between gap-4 mt-4">
+                  {/* Doughnut Widget */}
+                  <DoughnutChart
+                    data={doughnutSegments}
+                    size={130}
+                    strokeWidth={14}
+                    centerValue={doughnutTotalValue.toLocaleString("id-ID")}
+                    centerBadge="+45%"
+                    centerLabel="Terjual"
+                  />
+
+                  <div className="flex-grow space-y-2.5">
+                    {doughnutSegments.map((seg: any, idx: number) => (
+                      <div key={idx} className="flex items-center justify-between text-[11px] font-semibold text-slate-500">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: seg.color }}></span>
+                          <span className="truncate max-w-[85px] font-bold text-slate-800">{seg.label}</span>
+                        </div>
+                        <span className="tabular-nums font-extrabold text-slate-900">
+                          {seg.value.toLocaleString("id-ID")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-100 pt-3 mt-4 flex justify-between items-center text-[10px] font-bold">
+                  <span className="text-slate-400 uppercase tracking-wider">Total Number of Sales</span>
+                  <span className="text-slate-900 tabular-nums">
+                    {summary ? (summary.items_sold).toLocaleString("id-ID") : "0"}
+                  </span>
+                </div>
+              </Card>
+
+            </div>
+
+            {/* Bottom Grid: Recent Orders & Top Selling */}
+            <div className="grid grid-cols-1 xl:grid-cols-[64%_36%] gap-6">
+              
+              {/* Recent Orders Card */}
+              <Card className="bg-white border-none rounded-3xl shadow-sm p-6 flex flex-col justify-between">
+                <div>
+                  <div className="flex justify-between items-center border-b border-slate-50 pb-4 mb-4">
+                    <div>
+                      <h3 className="text-sm font-black text-slate-950">Recent Orders</h3>
+                      <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                        Keep track of recent order data and other transactions.
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      onClick={() => setActiveTab("reports")}
+                      className="text-[10px] font-extrabold text-slate-900 flex items-center gap-1 hover:text-slate-600 bg-transparent border-none cursor-pointer"
+                    >
+                      <span>View All</span>
+                      <IconArrowUpRight size={14} />
+                    </Button>
+                  </div>
+
+                  <Table>
+                    <TableHeader className="bg-slate-50/50 border-none rounded-xl">
+                      <TableRow className="hover:bg-transparent border-none">
+                        <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Order Id</TableHead>
+                        <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Product Name</TableHead>
+                        <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Date</TableHead>
+                        <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Payment</TableHead>
+                        <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider text-right">Amount</TableHead>
+                        <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider text-center">Status</TableHead>
+                        <TableHead className="w-10"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {transactions.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center py-6 text-slate-400 text-xs">
+                            Belum ada transaksi terekam.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        transactions.map((trx: any) => {
+                          const dateObj = new Date(trx.created_at);
+                          const dateStr = dateObj.toLocaleDateString("en-US", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          });
+
+                          return (
+                            <TableRow key={trx.id} className="hover:bg-slate-50/30 transition-colors border-b border-slate-100">
+                              <TableCell className="font-bold text-slate-950 text-xs">
+                                #{trx.nomor_transaksi?.replace("TRX-", "").slice(0, 7) || trx.id}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                                    <IconShoppingBag size={14} />
+                                  </div>
+                                  <div>
+                                    <div className="font-bold text-slate-900 text-[11px] truncate max-w-[120px]">
+                                      {trx.items && trx.items[0] ? trx.items[0].nama_produk : "Item POS"}
+                                    </div>
+                                    {trx.items && trx.items.length > 1 && (
+                                      <div className="text-[9px] text-indigo-500 font-bold mt-0.5">
+                                        +{trx.items.length - 1} item lainnya
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-slate-500 text-xs font-medium">{dateStr}</TableCell>
+                              <TableCell className="text-slate-700 text-xs font-bold capitalize">
+                                {trx.metode_pembayaran === "cash"
+                                  ? "Cash/Tunai"
+                                  : trx.metode_pembayaran === "card"
+                                  ? "Card / EDC"
+                                  : trx.metode_pembayaran || "Draft"}
+                              </TableCell>
+                              <TableCell className="text-right font-black text-slate-950 text-xs tabular-nums">
+                                {formatRupiah(trx.total)}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <span
+                                  className={`text-[9px] font-black px-2 py-0.5 rounded-full inline-block tracking-wider uppercase ${
+                                    trx.status === "completed"
+                                      ? "bg-emerald-50 text-emerald-600"
+                                      : trx.status === "void"
+                                      ? "bg-rose-50 text-rose-600"
+                                      : "bg-amber-50 text-amber-600"
+                                  }`}
+                                >
+                                  {trx.status === "completed"
+                                    ? "Complete"
+                                    : trx.status === "void"
+                                    ? "Voided"
+                                    : "In Progress"}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <button className="p-1 hover:bg-slate-50 rounded text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer">
+                                  <IconDotsVertical size={15} />
+                                </button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </Card>
+
+              {/* Top Selling Products Card */}
+              <Card className="bg-white border-none rounded-3xl shadow-sm p-6 flex flex-col justify-between">
+                <div>
+                  <div className="flex justify-between items-center border-b border-slate-50 pb-4 mb-4">
+                    <h3 className="text-sm font-black text-slate-950">Top Selling Products</h3>
+                    <select className="text-[10px] font-bold text-slate-500 bg-slate-50 border border-slate-100 rounded-lg px-2 py-1 outline-none">
+                      <option>Monthly</option>
+                      <option>Weekly</option>
+                    </select>
+                  </div>
+
+                  {summary?.top_products && summary.top_products[0] ? (
+                    <div className="bg-slate-50/60 border border-slate-100 rounded-2xl p-4 flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-slate-950 text-white flex items-center justify-center shrink-0 shadow-md">
+                          <IconDeviceLaptop size={20} />
+                        </div>
+                        <div>
+                          <h4 className="font-extrabold text-xs text-slate-900 truncate max-w-[150px]">
+                            {summary.top_products[0].product_name}
+                          </h4>
+                          <span className="text-[9px] font-bold text-slate-400 block mt-0.5">
+                            Brand: Terlaris • Terjual {summary.top_products[0].quantity} pcs
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-black text-xs text-slate-900 block">
+                          {formatRupiah(summary.top_products[0].revenue)}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 text-slate-400 text-xs">
+                      Belum ada penjualan tercatat.
+                    </div>
+                  )}
+
+                  {/* Weekly mini volume bar chart */}
+                  <div className="mt-8 space-y-4">
+                    <div className="flex justify-between items-end h-[70px] px-2 gap-4">
+                      {[
+                        { day: "Tue", val: 840, h: "h-3" },
+                        { day: "Wed", val: 2000, h: "h-6" },
+                        { day: "Thu", val: 6000, h: "h-14" },
+                        { day: "Fri", val: 1200, h: "h-4" },
+                      ].map((d, i) => (
+                        <div key={i} className="flex flex-col items-center flex-grow group gap-1">
+                          <span className="text-[8px] font-black text-slate-400 scale-0 group-hover:scale-100 transition-all select-none">
+                            {d.val}
+                          </span>
+                          <div className={`w-3 bg-slate-950 rounded-full transition-all duration-500 ${d.h}`}></div>
+                          <span className="text-[9px] font-extrabold text-slate-400 mt-1 uppercase">{d.day}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+            </div>
+          </div>
+        )}
+
+        {/* ─── TAB 2: PRODUCTS TAB (CRUD & Mock Categories sub-tabs) ──────────────── */}
+        {activeTab === "products" && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+            {/* Sub-tabs toggles */}
+            <div className="flex gap-2 bg-slate-100 p-1 rounded-xl w-fit">
+              <button
+                onClick={() => setProductsSubTab("list")}
+                className={`text-xs font-bold px-4 py-2 rounded-lg cursor-pointer transition-all ${
+                  productsSubTab === "list"
+                    ? "bg-white text-slate-950 shadow-sm"
+                    : "text-slate-400 hover:text-slate-600 bg-transparent border-none"
+                }`}
+              >
+                Manajemen Produk
+              </button>
+              <button
+                onClick={() => setProductsSubTab("categories")}
+                className={`text-xs font-bold px-4 py-2 rounded-lg cursor-pointer transition-all ${
+                  productsSubTab === "categories"
+                    ? "bg-white text-slate-950 shadow-sm"
+                    : "text-slate-400 hover:text-slate-600 bg-transparent border-none"
+                }`}
+              >
+                Kategori Produk
+              </button>
+            </div>
+
+            {productsSubTab === "list" ? (
+              <Card className="bg-white border-none rounded-3xl shadow-sm p-6 space-y-6">
+                <div className="flex justify-between items-center border-b border-slate-50 pb-4">
+                  <div>
+                    <h3 className="text-sm font-extrabold text-slate-900">Daftar Produk Toko</h3>
+                    <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Manajemen inventori produk aktif dan SKU.</p>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setEditingProduct(null);
+                      setNewProductName("");
+                      setNewProductBrand("");
+                      setNewProductBarcode("");
+                      setNewProductPrice("");
+                      setNewProductStock("");
+                      setIsAddProductOpen(true);
+                    }}
+                    className="bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer border-none"
+                  >
+                    <IconPlus size={16} /> Tambah Produk
+                  </Button>
+                </div>
+
+                {/* Filter Bar */}
+                <div className="flex gap-3 items-center">
+                  <div className="relative flex-grow max-w-sm">
+                    <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <Input
+                      type="text"
+                      placeholder="Cari produk berdasarkan barcode, nama, atau merek..."
+                      className="pl-9 h-9 text-xs border-slate-200 focus-visible:ring-slate-950 rounded-xl bg-white"
+                      value={searchProduct}
+                      onChange={(e) => setSearchProduct(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <Table>
                   <TableHeader className="bg-slate-50">
-                    <TableRow>
-                      <TableHead className="text-[10px] font-bold text-slate-500">Barcode</TableHead>
-                      <TableHead className="text-[10px] font-bold text-slate-500">Nama Produk</TableHead>
-                      <TableHead className="text-right text-[10px] font-bold text-slate-500">Sisa Stok</TableHead>
-                      <TableHead className="text-center text-[10px] font-bold text-slate-500">Status</TableHead>
+                    <TableRow className="border-none">
+                      <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Barcode / SKU</TableHead>
+                      <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Nama Produk</TableHead>
+                      <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Merek</TableHead>
+                      <TableHead className="text-right text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Harga Jual</TableHead>
+                      <TableHead className="text-right text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Stok</TableHead>
+                      <TableHead className="text-center text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Status</TableHead>
+                      <TableHead className="text-center w-24 text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {products.filter((p) => p.stok <= 10).length === 0 ? (
+                    {filteredProducts.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center py-4 text-slate-400 text-xs">
-                          Semua produk memiliki stok di atas batas minimum.
+                        <TableCell colSpan={7} className="text-center py-8 text-slate-400 text-xs">
+                          Tidak ada produk ditemukan.
                         </TableCell>
                       </TableRow>
                     ) : (
-                      products.filter((p) => p.stok <= 10).map((p) => (
-                        <TableRow key={p.id}>
-                          <TableCell className="text-xs font-bold">{p.barcode || "-"}</TableCell>
-                          <TableCell className="text-xs font-semibold">{p.nama}</TableCell>
-                          <TableCell className="text-right text-xs font-bold text-rose-500">{p.stok} pcs</TableCell>
+                      filteredProducts.map((p) => (
+                        <TableRow key={p.id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-100">
+                          <TableCell className="font-bold text-slate-950 text-xs">{p.barcode || "-"}</TableCell>
+                          <TableCell className="font-bold text-slate-900 text-xs">{p.nama}</TableCell>
+                          <TableCell className="text-slate-500 text-xs font-semibold">{p.merek}</TableCell>
+                          <TableCell className="text-right font-black text-slate-900 text-xs tabular-nums">
+                            {formatRupiah(p.harga)}
+                          </TableCell>
+                          <TableCell className={`text-right font-black text-xs tabular-nums ${p.stok <= 10 ? "text-amber-500" : "text-slate-800"}`}>
+                            {p.stok} pcs
+                          </TableCell>
                           <TableCell className="text-center">
-                            <span className="bg-rose-50 text-rose-700 text-[10px] px-2.5 py-1 rounded-full font-bold">Stok Kritis</span>
+                            <button
+                              onClick={() => handleToggleProductStatus(p)}
+                              className={`badge text-[9px] font-black border-none cursor-pointer px-2.5 py-0.5 rounded-full select-none uppercase tracking-wider ${
+                                p.status === "active" ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                              }`}
+                            >
+                              {p.status === "active" ? "Aktif" : "Nonaktif"}
+                            </button>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex justify-center gap-1">
+                              <button
+                                onClick={() => {
+                                  setEditingProduct(p);
+                                  setNewProductName(p.nama);
+                                  setNewProductBrand(p.merek);
+                                  setNewProductBarcode(p.barcode || "");
+                                  setNewProductPrice(p.harga.toString());
+                                  setNewProductStock(p.stok.toString());
+                                  setIsAddProductOpen(true);
+                                }}
+                                className="p-1 text-indigo-600 hover:bg-indigo-50 rounded transition-colors border-none bg-transparent cursor-pointer"
+                              >
+                                <IconEdit size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleRemoveProduct(p.id)}
+                                className="p-1 text-rose-500 hover:bg-rose-50 rounded transition-colors border-none bg-transparent cursor-pointer"
+                              >
+                                <IconTrash size={16} />
+                              </button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
                     )}
                   </TableBody>
                 </Table>
-              </div>
-            </section>
+              </Card>
+            ) : (
+              // Mock Categories
+              <Card className="bg-white border-none rounded-3xl shadow-sm p-6 space-y-6">
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-900">Kategori & Klasifikasi</h3>
+                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Klasifikasi produk ritel yang terdaftar.</p>
+                </div>
 
-            {/* Opname List */}
-            <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4">
-              <h3 className="text-xs font-bold text-slate-900 border-b border-slate-50 pb-2">Daftar Dokumen Stock Opname</h3>
-              <Table className="w-full">
-                <TableHeader className="bg-slate-50">
-                  <TableRow>
-                    <TableHead className="text-[10px] font-bold text-slate-500">No. Opname</TableHead>
-                    <TableHead className="text-[10px] font-bold text-slate-500">Tanggal</TableHead>
-                    <TableHead className="text-[10px] font-bold text-slate-500">Catatan</TableHead>
-                    <TableHead className="text-center text-[10px] font-bold text-slate-500">Status</TableHead>
-                    <TableHead className="text-center w-28 text-[10px] font-bold text-slate-500">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {opnames.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-4 text-slate-400 text-xs">Belum ada rekaman stock opname.</TableCell>
+                <Table>
+                  <TableHeader className="bg-slate-50">
+                    <TableRow className="border-none">
+                      <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Nama Kategori</TableHead>
+                      <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Estimasi Item</TableHead>
+                      <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Status</TableHead>
                     </TableRow>
-                  ) : (
-                    opnames.map((op) => (
-                      <TableRow key={op.id}>
-                        <TableCell className="text-xs font-bold">{op.nomor_opname}</TableCell>
-                        <TableCell className="text-xs text-slate-500">{new Date(op.created_at).toLocaleString("id-ID")}</TableCell>
-                        <TableCell className="text-xs text-slate-600">{op.catatan || "-"}</TableCell>
-                        <TableCell className="text-center">
-                          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${op.status === "completed" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
-                            {op.status === "completed" ? "Completed" : "Draft"}
+                  </TableHeader>
+                  <TableBody>
+                    {[
+                      { name: "Shoes / Sepatu", count: 42, status: "active" },
+                      { name: "Electronics / Elektronik", count: 18, status: "active" },
+                      { name: "Furniture / Mebel", count: 12, status: "active" },
+                      { name: "Clothes / Pakaian", count: 68, status: "active" },
+                      { name: "Beverages / Minuman", count: 50, status: "active" },
+                      { name: "Foods / Makanan", count: 110, status: "active" },
+                    ].map((cat, idx) => (
+                      <TableRow key={idx} className="border-b border-slate-100">
+                        <TableCell className="font-bold text-slate-900 text-xs">{cat.name}</TableCell>
+                        <TableCell className="font-bold text-slate-700 text-xs tabular-nums">{cat.count} Produk</TableCell>
+                        <TableCell className="text-xs">
+                          <span className="bg-emerald-50 text-emerald-600 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            {cat.status}
                           </span>
                         </TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex justify-center gap-2">
-                            <button
-                              onClick={async () => {
-                                // Fetch full detail (with items.product) from show endpoint
-                                try {
-                                  const res = await apiFetch(`/v1/inventory/opname/${op.id}`);
-                                  if (res.ok) {
-                                    const data = await res.json();
-                                    setSelectedOpname(data.data || data);
-                                  } else {
-                                    setSelectedOpname(op);
-                                  }
-                                } catch {
-                                  setSelectedOpname(op);
-                                }
-                                setIsDetailOpnameOpen(true);
-                              }}
-                              className="text-xs font-bold text-indigo-600 hover:underline bg-transparent border-none cursor-pointer"
-                            >
-                              Detail
-                            </button>
-                            {op.status === "draft" && (
-                              <button
-                                onClick={() => handleFinalizeExistingOpname(op.id, op.items || [])}
-                                className="text-xs font-bold text-emerald-600 hover:underline bg-transparent border-none cursor-pointer"
-                              >
-                                Finalisasi
-                              </button>
-                            )}
-                          </div>
-                        </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </section>
-
-            {/* Movements Ledger */}
-            <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4">
-              <h3 className="text-xs font-bold text-slate-900 border-b border-slate-50 pb-2">Kartu Kendali Mutasi Stok (Terbaru)</h3>
-              <Table className="w-full">
-                <TableHeader className="bg-slate-50">
-                  <TableRow>
-                    <TableHead className="text-[10px] font-bold text-slate-500">Waktu</TableHead>
-                    <TableHead className="text-[10px] font-bold text-slate-500">Nama Produk</TableHead>
-                    <TableHead className="text-[10px] font-bold text-slate-500">Tipe</TableHead>
-                    <TableHead className="text-right text-[10px] font-bold text-slate-500">Perubahan</TableHead>
-                    <TableHead className="text-right text-[10px] font-bold text-slate-500">Sebelum</TableHead>
-                    <TableHead className="text-right text-[10px] font-bold text-slate-500">Sesudah</TableHead>
-                    <TableHead className="text-[10px] font-bold text-slate-500">Alasan / Referensi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {movements.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-4 text-slate-400 text-xs">Belum ada log pergerakan stok.</TableCell>
-                    </TableRow>
-                  ) : (
-                    movements.slice(0, 15).map((mv) => (
-                      <TableRow key={mv.id}>
-                        <TableCell className="text-[11px] text-slate-500">{new Date(mv.created_at).toLocaleString("id-ID")}</TableCell>
-                        <TableCell className="text-xs font-semibold text-slate-800">{mv.product?.nama || "-"}</TableCell>
-                        <TableCell className="text-xs capitalize font-medium">{mv.tipe}</TableCell>
-                        <TableCell className={`text-right text-xs font-bold ${mv.kuantitas > 0 ? "text-emerald-600" : "text-rose-500"}`}>
-                          {mv.kuantitas > 0 ? `+${mv.kuantitas}` : mv.kuantitas}
-                        </TableCell>
-                        <TableCell className="text-right text-xs text-slate-500">{mv.stok_sebelum}</TableCell>
-                        <TableCell className="text-right text-xs text-slate-800 font-bold">{mv.stok_sesudah}</TableCell>
-                        <TableCell className="text-[11px] text-slate-600">{mv.alasan || "-"}</TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </section>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
+            )}
           </div>
         )}
 
-        {/* ==============================================================================
-             TAB 4: STOCK RECEIVING LOG
-             ============================================================================== */}
-        {activeTab === "receiving" && (
-          <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-6">
-            <div className="flex justify-between items-center border-b border-slate-50 pb-4">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">Penerimaan Barang Masuk</h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">Daftar riwayat pasokan barang masuk dari distributor.</p>
-              </div>
-              <Button
-                onClick={() => {
-                  setRecSupplier("");
-                  setRecFaktur("");
-                  setRecNote("");
-                  setRecItems([{ product_id: "", kuantitas: "" }]);
-                  setIsReceivingModalOpen(true);
-                }}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
+        {/* ─── TAB 3: PURCHASES TAB (Inventory logic sub-tabs) ────────────────────── */}
+        {activeTab === "inventory" && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+            {/* Sub-tabs toggles */}
+            <div className="flex gap-2 bg-slate-100 p-1 rounded-xl w-fit overflow-x-auto">
+              <button
+                onClick={() => setPurchasesSubTab("receiving")}
+                className={`text-xs font-bold px-4 py-2 rounded-lg cursor-pointer transition-all whitespace-nowrap ${
+                  purchasesSubTab === "receiving" ? "bg-white text-slate-950 shadow-sm" : "text-slate-400 hover:text-slate-600 bg-transparent border-none"
+                }`}
               >
-                <IconPlus size={16} /> Terima Barang Masuk
-              </Button>
+                Log Penerimaan Supplier
+              </button>
+              <button
+                onClick={() => setPurchasesSubTab("opname")}
+                className={`text-xs font-bold px-4 py-2 rounded-lg cursor-pointer transition-all whitespace-nowrap ${
+                  purchasesSubTab === "opname" ? "bg-white text-slate-950 shadow-sm" : "text-slate-400 hover:text-slate-600 bg-transparent border-none"
+                }`}
+              >
+                Stock Opname Fisik
+              </button>
+              <button
+                onClick={() => setPurchasesSubTab("adjustment")}
+                className={`text-xs font-bold px-4 py-2 rounded-lg cursor-pointer transition-all whitespace-nowrap ${
+                  purchasesSubTab === "adjustment" ? "bg-white text-slate-950 shadow-sm" : "text-slate-400 hover:text-slate-600 bg-transparent border-none"
+                }`}
+              >
+                Adjustment Stok (Manual)
+              </button>
+              <button
+                onClick={() => setPurchasesSubTab("movements")}
+                className={`text-xs font-bold px-4 py-2 rounded-lg cursor-pointer transition-all whitespace-nowrap ${
+                  purchasesSubTab === "movements" ? "bg-white text-slate-950 shadow-sm" : "text-slate-400 hover:text-slate-600 bg-transparent border-none"
+                }`}
+              >
+                Log Mutasi Stok Ledger
+              </button>
             </div>
 
-            <Table className="w-full">
-              <TableHeader className="bg-slate-50">
-                <TableRow>
-                  <TableHead className="text-[10px] font-bold text-slate-500">Tanggal</TableHead>
-                  <TableHead className="text-[10px] font-bold text-slate-500">No. Penerimaan</TableHead>
-                  <TableHead className="text-[10px] font-bold text-slate-500">Supplier</TableHead>
-                  <TableHead className="text-[10px] font-bold text-slate-500">Faktur</TableHead>
-                  <TableHead className="text-[10px] font-bold text-slate-500">Catatan</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {receivings.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-6 text-slate-400 text-xs">
-                      Belum ada pasokan barang masuk yang tercatat.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  receivings.map((rec) => (
-                    <TableRow key={rec.id} className="hover:bg-slate-50/50">
-                      <TableCell className="text-slate-600 text-xs">{new Date(rec.created_at).toLocaleString("id-ID")}</TableCell>
-                      <TableCell className="font-bold text-slate-900 text-xs">{rec.nomor_penerimaan}</TableCell>
-                      <TableCell className="font-semibold text-slate-800 text-xs">{rec.supplier || "-"}</TableCell>
-                      <TableCell className="text-slate-600 text-xs">{rec.nomor_faktur || "-"}</TableCell>
-                      <TableCell className="text-slate-500 text-xs">{rec.catatan || "-"}</TableCell>
+            {/* Sub-tab 1: Log Penerimaan */}
+            {purchasesSubTab === "receiving" && (
+              <Card className="bg-white border-none rounded-3xl shadow-sm p-6 space-y-6">
+                <div className="flex justify-between items-center border-b border-slate-50 pb-4">
+                  <div>
+                    <h3 className="text-sm font-extrabold text-slate-900">Penerimaan Log Ritel</h3>
+                    <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Catatan riwayat pasokan barang masuk dari supplier.</p>
+                  </div>
+                  <Button
+                    onClick={() => setIsReceivingModalOpen(true)}
+                    className="bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer border-none"
+                  >
+                    <IconPlus size={16} /> Terima Barang Masuk
+                  </Button>
+                </div>
+
+                <Table>
+                  <TableHeader className="bg-slate-50">
+                    <TableRow className="border-none">
+                      <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">No. Faktur</TableHead>
+                      <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Supplier</TableHead>
+                      <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Diterima Pada</TableHead>
+                      <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Catatan</TableHead>
+                      <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Petugas</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </section>
-        )}
-
-        {/* ==============================================================================
-             TAB 5: REPORTS & DETAILED ANALYTICS
-             ============================================================================== */}
-        {activeTab === "reports" && (
-          <div className="space-y-6">
-            <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-6">
-              <div className="flex justify-between items-center border-b border-slate-50 pb-4 mb-6">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">Laporan Penjualan Harian</h3>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Analisis performa transaksi per kasir dan metode pembayaran.</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <label className="text-xs font-bold text-slate-600">Pilih Tanggal:</label>
-                  <Input
-                    type="date"
-                    className="h-9 text-xs w-36 border-slate-200 focus-visible:ring-indigo-600 rounded-xl"
-                    value={selectedReportDate}
-                    onChange={(e) => setSelectedReportDate(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {dailyReport ? (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-4 gap-4">
-                    <div className="bg-slate-50 p-4 rounded-xl">
-                      <div className="text-[9px] font-bold uppercase text-slate-400">Total Omset Harian</div>
-                      <div className="text-lg font-bold text-indigo-600 mt-1">{formatRupiah(dailyReport.total_sales)}</div>
-                    </div>
-                    <div className="bg-slate-50 p-4 rounded-xl">
-                      <div className="text-[9px] font-bold uppercase text-slate-400">Transaksi Sukses</div>
-                      <div className="text-lg font-bold text-slate-800 mt-1">{dailyReport.transactions_count} Trx</div>
-                    </div>
-                    <div className="bg-slate-50 p-4 rounded-xl">
-                      <div className="text-[9px] font-bold uppercase text-slate-400">Rerata Nilai Struk</div>
-                      <div className="text-lg font-bold text-slate-800 mt-1">{formatRupiah(dailyReport.average_transaction_value)}</div>
-                    </div>
-                    <div className="bg-slate-50 p-4 rounded-xl">
-                      <div className="text-[9px] font-bold uppercase text-slate-400">Transaksi Void</div>
-                      <div className="text-lg font-bold text-rose-500 mt-1">{dailyReport.void_count} Void</div>
-                    </div>
-                  </div>
-
-                  {/* Payment Breakdown */}
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-800 mb-3">Breakdown Metode Pembayaran</h4>
-                    <div className="grid grid-cols-3 gap-4">
-                      {Object.keys(dailyReport.payment_methods || {}).map((method) => {
-                        const pm = dailyReport.payment_methods[method];
-                        return (
-                          <div key={method} className="border border-slate-100 p-4 rounded-xl bg-white flex justify-between items-center">
-                            <div>
-                              <div className="text-xs font-bold uppercase text-slate-600 capitalize">{method}</div>
-                              <div className="text-[10px] text-slate-400 mt-0.5">{pm.count} Transaksi</div>
-                            </div>
-                            <span className="font-bold text-sm text-slate-800">{formatRupiah(pm.total)}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Top Products */}
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-800 mb-3">10 Produk Terlaris Hari Ini</h4>
-                    <Table className="w-full">
-                      <TableHeader className="bg-slate-50">
-                        <TableRow>
-                          <TableHead className="text-[10px] font-bold text-slate-500">Nama Produk</TableHead>
-                          <TableHead className="text-right text-[10px] font-bold text-slate-500">Jumlah Terjual</TableHead>
-                          <TableHead className="text-right text-[10px] font-bold text-slate-500">Total Revenue</TableHead>
+                  </TableHeader>
+                  <TableBody>
+                    {receivings.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-6 text-slate-400 text-xs">Belum ada rekaman penerimaan.</TableCell>
+                      </TableRow>
+                    ) : (
+                      receivings.map((rec) => (
+                        <TableRow key={rec.id} className="border-b border-slate-100">
+                          <TableCell className="font-bold text-slate-900 text-xs">{rec.nomor_faktur || `REC-${rec.id}`}</TableCell>
+                          <TableCell className="font-bold text-slate-800 text-xs">{rec.supplier}</TableCell>
+                          <TableCell className="text-slate-500 text-xs font-medium">{new Date(rec.created_at).toLocaleString("id-ID")}</TableCell>
+                          <TableCell className="text-slate-500 text-xs font-medium">{rec.catatan || "-"}</TableCell>
+                          <TableCell className="text-slate-800 text-xs font-bold">{rec.user?.name || "Petugas"}</TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {dailyReport.top_products && dailyReport.top_products.length > 0 ? (
-                          dailyReport.top_products.map((tp: any, i: number) => (
-                            <TableRow key={i}>
-                              <TableCell className="text-xs font-semibold text-slate-800">{tp.product_name}</TableCell>
-                              <TableCell className="text-right text-xs font-bold">{tp.quantity} pcs</TableCell>
-                              <TableCell className="text-right text-xs font-bold text-indigo-600">{formatRupiah(tp.revenue)}</TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={3} className="text-center py-4 text-slate-400 text-xs">Belum ada item terjual pada tanggal ini.</TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </Card>
+            )}
+
+            {/* Sub-tab 2: Stock Opname */}
+            {purchasesSubTab === "opname" && (
+              <Card className="bg-white border-none rounded-3xl shadow-sm p-6 space-y-6">
+                <div className="flex justify-between items-center border-b border-slate-50 pb-4">
+                  <div>
+                    <h3 className="text-sm font-extrabold text-slate-900">Stock Opname Fisik</h3>
+                    <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Penyesuaian stok sistem dengan hitungan fisik lapangan.</p>
                   </div>
+                  <Button
+                    onClick={openNewOpname}
+                    className="bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer border-none"
+                  >
+                    <IconPlus size={16} /> Buat Opname Baru
+                  </Button>
                 </div>
-              ) : (
-                <div className="text-center py-8 text-slate-400 text-xs">Memuat laporan penjualan...</div>
-              )}
-            </Card>
+
+                <Table>
+                  <TableHeader className="bg-slate-50">
+                    <TableRow className="border-none">
+                      <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">No. Opname</TableHead>
+                      <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Tanggal</TableHead>
+                      <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Catatan</TableHead>
+                      <TableHead className="text-center text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Status</TableHead>
+                      <TableHead className="text-center w-24 text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {opnames.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-6 text-slate-400 text-xs">Belum ada rekaman stock opname.</TableCell>
+                      </TableRow>
+                    ) : (
+                      opnames.map((op) => (
+                        <TableRow key={op.id} className="border-b border-slate-100">
+                          <TableCell className="font-bold text-slate-900 text-xs">{op.nomor_opname}</TableCell>
+                          <TableCell className="text-slate-500 text-xs font-medium">{new Date(op.created_at).toLocaleString("id-ID")}</TableCell>
+                          <TableCell className="text-slate-550 text-xs font-medium">{op.catatan || "-"}</TableCell>
+                          <TableCell className="text-center">
+                            <span
+                              className={`text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                                op.status === "completed"
+                                  ? "bg-emerald-50 text-emerald-600"
+                                  : "bg-amber-50 text-amber-600"
+                              }`}
+                            >
+                              {op.status === "completed" ? "Completed" : "Draft"}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex justify-center gap-1.5">
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    const res = await apiFetch(`/v1/inventory/opname/${op.id}`);
+                                    const data = await res.json();
+                                    if (res.ok) {
+                                      setSelectedOpname(data.data || data);
+                                      setIsDetailOpnameOpen(true);
+                                    } else {
+                                      setSelectedOpname(op);
+                                      setIsDetailOpnameOpen(true);
+                                    }
+                                  } catch {
+                                    setSelectedOpname(op);
+                                    setIsDetailOpnameOpen(true);
+                                  }
+                                }}
+                                className="text-xs font-extrabold text-slate-700 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-lg transition-colors border-none cursor-pointer"
+                              >
+                                Detail
+                              </button>
+                              {op.status === "draft" && (
+                                <button
+                                  onClick={() => handleFinalizeExistingOpname(op.id, op.items || [])}
+                                  className="text-xs font-extrabold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-1 rounded-lg transition-colors border-none cursor-pointer"
+                                >
+                                  Finalisasi
+                                </button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </Card>
+            )}
+
+            {/* Sub-tab 3: Manual Adjustment */}
+            {purchasesSubTab === "adjustment" && (
+              <Card className="bg-white border-none rounded-3xl shadow-sm p-6 space-y-6">
+                <div className="flex justify-between items-center border-b border-slate-50 pb-4">
+                  <div>
+                    <h3 className="text-sm font-extrabold text-slate-900">Penyesuaian Manual</h3>
+                    <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Koreksi stok instan untuk barang rusak, hilang, atau kadaluarsa.</p>
+                  </div>
+                  <Button
+                    onClick={() => setIsAdjustmentOpen(true)}
+                    className="bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer border-none"
+                  >
+                    <IconPlus size={16} /> Buat Penyesuaian
+                  </Button>
+                </div>
+
+                <div className="text-xs text-slate-600 bg-slate-50 border border-slate-100 p-5 rounded-2xl max-w-md">
+                  <h4 className="font-extrabold text-slate-900 mb-1 flex items-center gap-1.5">
+                    <IconAlertTriangle className="text-amber-500" size={16} />
+                    <span>Catatan Penting</span>
+                  </h4>
+                  <p className="leading-relaxed">
+                    Setiap penyesuaian manual akan memicu pencatatan ledger mutasi stok baru dan langsung mengubah stok produk di katalog.
+                  </p>
+                </div>
+              </Card>
+            )}
+
+            {/* Sub-tab 4: Movements Ledger */}
+            {purchasesSubTab === "movements" && (
+              <Card className="bg-white border-none rounded-3xl shadow-sm p-6 space-y-6">
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-900">Mutasi Stok Ledger</h3>
+                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Jurnal kronologis seluruh aliran pergerakan stok barang.</p>
+                </div>
+
+                <Table>
+                  <TableHeader className="bg-slate-50">
+                    <TableRow className="border-none">
+                      <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">ID</TableHead>
+                      <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Nama Produk</TableHead>
+                      <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Jenis</TableHead>
+                      <TableHead className="text-right text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Qyt Mutasi</TableHead>
+                      <TableHead className="text-right text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Stok Sebelum</TableHead>
+                      <TableHead className="text-right text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Stok Sesudah</TableHead>
+                      <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Alasan / Referensi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {movements.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-6 text-slate-400 text-xs">Belum ada jurnal mutasi terekam.</TableCell>
+                      </TableRow>
+                    ) : (
+                      movements.map((mov) => (
+                        <TableRow key={mov.id} className="border-b border-slate-100">
+                          <TableCell className="font-bold text-slate-950 text-xs">#{mov.id}</TableCell>
+                          <TableCell className="font-bold text-slate-900 text-xs">{mov.product?.nama || "Produk dihapus"}</TableCell>
+                          <TableCell className="text-xs">
+                            <span
+                              className={`text-[8.5px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                                mov.tipe === "sale"
+                                  ? "bg-slate-100 text-slate-700"
+                                  : mov.tipe === "receiving"
+                                  ? "bg-emerald-50 text-emerald-600"
+                                  : mov.tipe === "adjustment"
+                                  ? "bg-amber-50 text-amber-600"
+                                  : "bg-indigo-50 text-indigo-600" // void/opname
+                              }`}
+                            >
+                              {mov.tipe}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right font-black text-xs tabular-nums text-slate-900">
+                            {mov.kuantitas > 0 ? `+${mov.kuantitas}` : mov.kuantitas}
+                          </TableCell>
+                          <TableCell className="text-right text-slate-500 text-xs tabular-nums font-semibold">{mov.stok_sebelum} pcs</TableCell>
+                          <TableCell className="text-right text-slate-950 text-xs tabular-nums font-bold">{mov.stok_sesudah} pcs</TableCell>
+                          <TableCell className="text-slate-500 text-xs font-semibold">{mov.alasan || "-"}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </Card>
+            )}
           </div>
         )}
 
-        {/* ==============================================================================
-             TAB 6: USER MANAGEMENT (NEW)
-             ============================================================================== */}
+        {/* ─── TAB 4: CUSTOMERS / USERS TAB (CRUD) ────────────────────────────────── */}
         {activeTab === "users" && (
-          <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-6">
+          <Card className="bg-white border-none rounded-3xl shadow-sm p-6 space-y-6 animate-in fade-in duration-300">
             <div className="flex justify-between items-center border-b border-slate-50 pb-4">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Kelola Pengguna Sistem</h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">Manajemen user kasir, supervisor, manajer toko, dan admin.</p>
+                <h3 className="text-sm font-extrabold text-slate-900">Database Pengguna & Petugas POS</h3>
+                <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Daftar akun login kasir, supervisor, dan manajer toko.</p>
               </div>
               <Button
                 onClick={openAddUser}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
+                className="bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer border-none"
               >
-                <IconPlus size={16} /> Tambah Pengguna
+                <IconPlus size={16} /> Daftar Pengguna Baru
               </Button>
             </div>
 
@@ -1360,53 +1612,49 @@ export default function AdminDashboardPage() {
                 <Input
                   type="text"
                   placeholder="Cari user berdasarkan nama atau username..."
-                  className="pl-9 h-9 text-[11px] border-slate-200 focus-visible:ring-indigo-600 rounded-xl"
+                  className="pl-9 h-9 text-xs border-slate-200 focus-visible:ring-slate-950 rounded-xl bg-white"
                   value={searchUser}
                   onChange={(e) => setSearchUser(e.target.value)}
                 />
               </div>
             </div>
 
-            <Table className="w-full">
+            <Table>
               <TableHeader className="bg-slate-50">
-                <TableRow>
-                  <TableHead className="text-[10px] font-bold text-slate-500">Nama Lengkap</TableHead>
-                  <TableHead className="text-[10px] font-bold text-slate-500">Username</TableHead>
-                  <TableHead className="text-[10px] font-bold text-slate-500">Email</TableHead>
-                  <TableHead className="text-[10px] font-bold text-slate-500">Role Peran</TableHead>
-                  <TableHead className="text-center text-[10px] font-bold text-slate-500">Status</TableHead>
-                  <TableHead className="text-center w-28 text-[10px] font-bold text-slate-500">Aksi</TableHead>
+                <TableRow className="border-none">
+                  <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Nama Lengkap</TableHead>
+                  <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Username</TableHead>
+                  <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Store ID</TableHead>
+                  <TableHead className="text-center text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Hak Peran (Role)</TableHead>
+                  <TableHead className="text-center text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Status</TableHead>
+                  <TableHead className="text-center w-24 text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-6 text-slate-400 text-xs">
-                      Tidak ada pengguna ditemukan.
-                    </TableCell>
+                    <TableCell colSpan={6} className="text-center py-6 text-slate-400 text-xs">Tidak ada user ditemukan.</TableCell>
                   </TableRow>
                 ) : (
                   filteredUsers.map((u) => (
-                    <TableRow key={u.id} className="hover:bg-slate-50/50">
+                    <TableRow key={u.id} className="border-b border-slate-100">
                       <TableCell className="font-bold text-slate-900 text-xs">{u.name}</TableCell>
-                      <TableCell className="text-slate-500 text-xs font-mono">{u.username}</TableCell>
-                      <TableCell className="text-slate-500 text-xs">{u.email || "-"}</TableCell>
-                      <TableCell className="text-xs">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold capitalize ${
-                          u.roles.includes("admin") ? "bg-indigo-50 text-indigo-700" :
-                          u.roles.includes("manajer_toko") ? "bg-amber-50 text-amber-700" :
-                          u.roles.includes("supervisor") ? "bg-blue-50 text-blue-700" : "bg-slate-100 text-slate-700"
-                        }`}>
-                          {u.roles[0]?.replace('_', ' ')}
+                      <TableCell className="font-bold text-slate-550 text-xs">{u.username}</TableCell>
+                      <TableCell className="text-slate-500 text-xs font-semibold">{u.store_id || "1"}</TableCell>
+                      <TableCell className="text-center">
+                        <span className="bg-indigo-50 text-indigo-600 text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                          {u.roles[0]?.replace("_", " ")}
                         </span>
                       </TableCell>
                       <TableCell className="text-center">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${u.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
+                        <span className={`text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                          u.status === "active" ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                        }`}>
                           {u.status === "active" ? "Aktif" : "Nonaktif"}
                         </span>
                       </TableCell>
                       <TableCell className="text-center">
-                        <div className="flex justify-center gap-1.5">
+                        <div className="flex justify-center gap-1">
                           <button
                             onClick={() => openEditUser(u)}
                             className="p-1 text-indigo-600 hover:bg-indigo-50 rounded transition-colors border-none bg-transparent cursor-pointer"
@@ -1428,68 +1676,170 @@ export default function AdminDashboardPage() {
                 )}
               </TableBody>
             </Table>
-          </section>
+          </Card>
         )}
 
-        {/* ==============================================================================
-             TAB 7: STORE SETTINGS
-             ============================================================================== */}
-        {activeTab === "settings" && (
-          <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-6">
-            <div className="border-b border-slate-50 pb-4">
-              <h3 className="text-sm font-bold text-slate-900">Pengaturan Profil Toko</h3>
-              <p className="text-[11px] text-slate-400 mt-0.5">Identitas toko POS ritel.</p>
+        {/* ─── TAB 5: ANALYTICS TAB (Daily reports summary picker) ────────────────── */}
+        {activeTab === "reports" && (
+          <Card className="bg-white border-none rounded-3xl shadow-sm p-6 space-y-6 animate-in fade-in duration-300">
+            <div className="flex justify-between items-center border-b border-slate-50 pb-4 mb-4">
+              <div>
+                <h3 className="text-sm font-extrabold text-slate-900">Laporan Penjualan Harian</h3>
+                <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Analisis performa transaksi per kasir dan metode pembayaran.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-bold text-slate-600">Pilih Tanggal:</label>
+                <Input
+                  type="date"
+                  className="h-9 text-xs w-36 border-slate-200 focus-visible:ring-slate-950 rounded-xl bg-white"
+                  value={selectedReportDate}
+                  onChange={(e) => setSelectedReportDate(e.target.value)}
+                />
+              </div>
             </div>
-            <div className="text-xs text-slate-600 bg-slate-50 p-4 rounded-xl border border-slate-100 max-w-md">
-              <p className="font-bold text-slate-800">Profil Store Aktif</p>
-              <p className="mt-1">ID Store Terdaftar: <strong className="font-mono">{user.store_id || "1 (Toko Utama)"}</strong></p>
-              <p>Toko ritel terhubung langsung dengan REST API database terpusat.</p>
-            </div>
-          </section>
+
+            {dailyReport ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100/50">
+                    <div className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Total Omset Harian</div>
+                    <div className="text-xl font-black text-slate-950 mt-1">{formatRupiah(dailyReport.total_sales)}</div>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100/50">
+                    <div className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Transaksi Sukses</div>
+                    <div className="text-xl font-black text-slate-950 mt-1">{dailyReport.transactions_count} Trx</div>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100/50">
+                    <div className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Rerata Nilai Struk</div>
+                    <div className="text-xl font-black text-slate-950 mt-1">{formatRupiah(dailyReport.average_transaction_value)}</div>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100/50">
+                    <div className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Transaksi Void</div>
+                    <div className="text-xl font-black text-rose-500 mt-1">{dailyReport.void_count} Void</div>
+                  </div>
+                </div>
+
+                {/* Payment Breakdown */}
+                <div>
+                  <h4 className="text-xs font-black text-slate-900 mb-3 uppercase tracking-wider">Breakdown Metode Pembayaran</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {Object.keys(dailyReport.payment_methods || {}).map((method) => {
+                      const pm = dailyReport.payment_methods[method];
+                      return (
+                        <div key={method} className="border border-slate-100 p-4 rounded-2xl bg-slate-50/20 flex justify-between items-center">
+                          <div>
+                            <div className="text-xs font-black uppercase text-slate-600 capitalize">{method}</div>
+                            <div className="text-[10px] text-slate-400 mt-0.5">{pm.count} Transaksi</div>
+                          </div>
+                          <span className="font-black text-sm text-slate-950">{formatRupiah(pm.total)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Top Products */}
+                <div>
+                  <h4 className="text-xs font-black text-slate-900 mb-3 uppercase tracking-wider">10 Produk Terlaris Hari Ini</h4>
+                  <Table>
+                    <TableHeader className="bg-slate-50">
+                      <TableRow className="border-none">
+                        <TableHead className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Nama Produk</TableHead>
+                        <TableHead className="text-right text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Jumlah Terjual</TableHead>
+                        <TableHead className="text-right text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Total Revenue</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {dailyReport.top_products && dailyReport.top_products.length > 0 ? (
+                        dailyReport.top_products.map((tp: any, i: number) => (
+                          <TableRow key={i} className="border-b border-slate-100">
+                            <TableCell className="font-bold text-slate-900 text-xs">{tp.product_name}</TableCell>
+                            <TableCell className="text-right text-xs font-black tabular-nums">{tp.quantity} pcs</TableCell>
+                            <TableCell className="text-right text-xs font-black text-indigo-600 tabular-nums">
+                              {formatRupiah(tp.revenue)}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={3} className="text-center py-4 text-slate-400 text-xs">
+                            Belum ada item terjual pada tanggal ini.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-slate-400 text-xs">Memuat laporan penjualan...</div>
+            )}
+          </Card>
         )}
+
+        {/* ─── TAB 6: SETTINGS TAB (Store profile settings) ───────────────────────── */}
+        {activeTab === "settings" && (
+          <Card className="bg-white border-none rounded-3xl shadow-sm p-6 space-y-6 animate-in fade-in duration-300">
+            <div className="border-b border-slate-50 pb-4">
+              <h3 className="text-sm font-extrabold text-slate-900">Pengaturan Profil Toko</h3>
+              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Identitas toko POS ritel terhubung database.</p>
+            </div>
+            <div className="text-xs text-slate-600 bg-slate-55 p-5 rounded-2xl border border-slate-100 max-w-md space-y-2.5">
+              <p className="font-extrabold text-slate-900 text-sm">Profil Toko Aktif</p>
+              <div className="space-y-1 mt-2">
+                <p>ID Store Terdaftar: <strong className="font-mono text-slate-950 font-bold">{user.store_id || "1 (Toko Utama)"}</strong></p>
+                <p>Koneksi Database: <span className="text-emerald-600 font-bold">Terhubung PostgreSQL</span></p>
+              </div>
+              <p className="text-[10px] text-slate-400 mt-2 font-medium">
+                Sistem admin terhubung langsung dengan REST API database terpusat untuk sinkronisasi inventory real-time.
+              </p>
+            </div>
+          </Card>
+        )}
+
       </main>
 
       {/* ==============================================================================
            MODAL DIALOG: TAMBAH/EDIT PRODUK
            ============================================================================== */}
       <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
-        <DialogContent className="max-w-[440px] bg-white rounded-2xl border-slate-100 p-6">
+        <DialogContent className="max-w-[440px] bg-white rounded-3xl border-none p-6 shadow-xl">
           <DialogHeader className="pb-4 border-b border-slate-100">
-            <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <IconPlus size={20} className="text-indigo-500" />
+            <DialogTitle className="text-sm font-black text-slate-900 flex items-center gap-2">
+              <IconPlus size={20} className="text-slate-900" />
               <span>{editingProduct ? "Edit Detail Produk" : "Tambah Produk Baru"}</span>
             </DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleProductSubmit} className="space-y-4 pt-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Barcode / SKU</label>
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Barcode / SKU</label>
               <Input
                 type="text"
                 placeholder="Contoh: 8990002004"
-                className="h-10 text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-xl"
+                className="h-10 text-xs border-slate-200 focus-visible:ring-slate-900 rounded-xl"
                 value={newProductBarcode}
                 onChange={(e) => setNewProductBarcode(e.target.value)}
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Nama Produk</label>
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nama Produk</label>
               <Input
                 type="text"
                 placeholder="Nama produk lengkap..."
-                className="h-10 text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-xl"
+                className="h-10 text-xs border-slate-200 focus-visible:ring-slate-900 rounded-xl"
                 value={newProductName}
                 onChange={(e) => setNewProductName(e.target.value)}
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Merek</label>
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Merek</label>
               <Input
                 type="text"
                 placeholder="Merek produk..."
-                className="h-10 text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-xl"
+                className="h-10 text-xs border-slate-200 focus-visible:ring-slate-900 rounded-xl"
                 value={newProductBrand}
                 onChange={(e) => setNewProductBrand(e.target.value)}
               />
@@ -1497,22 +1847,22 @@ export default function AdminDashboardPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Harga Jual (Rp)</label>
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Harga Jual (Rp)</label>
                 <Input
                   type="number"
                   placeholder="3500"
-                  className="h-10 text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-xl"
+                  className="h-10 text-xs border-slate-200 focus-visible:ring-slate-900 rounded-xl"
                   value={newProductPrice}
                   onChange={(e) => setNewProductPrice(e.target.value)}
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Stok</label>
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Stok</label>
                 <Input
                   type="number"
                   placeholder="50"
-                  className="h-10 text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-xl"
+                  className="h-10 text-xs border-slate-200 focus-visible:ring-slate-900 rounded-xl"
                   value={newProductStock}
                   onChange={(e) => setNewProductStock(e.target.value)}
                 />
@@ -1521,7 +1871,7 @@ export default function AdminDashboardPage() {
 
             <Button
               type="submit"
-              className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4"
+              className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4 border-none"
             >
               Simpan Produk
             </Button>
@@ -1533,43 +1883,45 @@ export default function AdminDashboardPage() {
            MODAL DIALOG: TAMBAH/EDIT USER
            ============================================================================== */}
       <Dialog open={isUserModalOpen} onOpenChange={setIsUserModalOpen}>
-        <DialogContent className="max-w-[440px] bg-white rounded-2xl border-slate-100 p-6">
+        <DialogContent className="max-w-[440px] bg-white rounded-3xl border-none p-6 shadow-xl">
           <DialogHeader className="pb-4 border-b border-slate-100">
-            <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <IconPlus size={20} className="text-indigo-500" />
+            <DialogTitle className="text-sm font-black text-slate-900 flex items-center gap-2">
+              <IconPlus size={20} className="text-slate-900" />
               <span>{editingUser ? "Edit Profil Pengguna" : "Daftarkan Pengguna Baru"}</span>
             </DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleUserSubmit} className="space-y-4 pt-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Nama Lengkap</label>
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nama Lengkap</label>
               <Input
                 type="text"
                 placeholder="Nama user lengkap..."
-                className="h-10 text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-xl"
+                className="h-10 text-xs border-slate-200 focus-visible:ring-slate-900 rounded-xl"
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Username</label>
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Username</label>
               <Input
                 type="text"
                 placeholder="Username untuk login..."
-                className="h-10 text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-xl"
+                className="h-10 text-xs border-slate-200 focus-visible:ring-slate-900 rounded-xl"
                 value={userUsername}
                 onChange={(e) => setUserUsername(e.target.value)}
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Password {editingUser && "(Kosongkan jika tidak diubah)"}</label>
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                Password {editingUser && "(Kosongkan jika tidak diubah)"}
+              </label>
               <Input
                 type="password"
                 placeholder="Password minimal 6 karakter..."
-                className="h-10 text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-xl"
+                className="h-10 text-xs border-slate-200 focus-visible:ring-slate-900 rounded-xl"
                 value={userPassword}
                 onChange={(e) => setUserPassword(e.target.value)}
               />
@@ -1577,9 +1929,9 @@ export default function AdminDashboardPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Role Peran</label>
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Role Peran</label>
                 <select
-                  className="w-full h-10 border border-slate-200 rounded-xl bg-white text-xs font-semibold px-3 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
+                  className="w-full h-10 border border-slate-200 rounded-xl bg-white text-xs font-bold px-3 focus:outline-none focus:border-slate-950 focus:ring-1 focus:ring-slate-950"
                   value={userRole}
                   onChange={(e) => setUserRole(e.target.value)}
                 >
@@ -1591,9 +1943,9 @@ export default function AdminDashboardPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status</label>
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Status</label>
                 <select
-                  className="w-full h-10 border border-slate-200 rounded-xl bg-white text-xs font-semibold px-3 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
+                  className="w-full h-10 border border-slate-200 rounded-xl bg-white text-xs font-bold px-3 focus:outline-none focus:border-slate-950 focus:ring-1 focus:ring-slate-950"
                   value={userStatus}
                   onChange={(e) => setUserStatus(e.target.value)}
                 >
@@ -1605,7 +1957,7 @@ export default function AdminDashboardPage() {
 
             <Button
               type="submit"
-              className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4"
+              className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4 border-none"
             >
               Simpan Pengguna
             </Button>
@@ -1617,46 +1969,48 @@ export default function AdminDashboardPage() {
            MODAL DIALOG: PENYESUAIAN STOK MANUAL
            ============================================================================== */}
       <Dialog open={isAdjustmentOpen} onOpenChange={setIsAdjustmentOpen}>
-        <DialogContent className="max-w-[440px] bg-white rounded-2xl border-slate-100 p-6">
+        <DialogContent className="max-w-[440px] bg-white rounded-3xl border-none p-6 shadow-xl">
           <DialogHeader className="pb-4 border-b border-slate-100">
-            <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <IconActivity size={20} className="text-amber-500" />
+            <DialogTitle className="text-sm font-black text-slate-900 flex items-center gap-2">
+              <IconActivity size={20} className="text-slate-900" />
               <span>Penyesuaian Stok Manual</span>
             </DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleAdjustmentSubmit} className="space-y-4 pt-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pilih Produk</label>
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pilih Produk</label>
               <select
-                className="w-full h-10 border border-slate-200 rounded-xl bg-white text-xs font-semibold px-3 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
+                className="w-full h-10 border border-slate-200 rounded-xl bg-white text-xs font-bold px-3 focus:outline-none focus:border-slate-950 focus:ring-1 focus:ring-slate-950"
                 value={adjProductId}
                 onChange={(e) => setAdjProductId(e.target.value)}
               >
-                <option value="">-- Pilih Produk --</option>
+                <option value="">-- Pilih Produk Terdaftar --</option>
                 {products.map((p) => (
-                  <option key={p.id} value={p.id}>{p.nama} (Stok saat ini: {p.stok})</option>
+                  <option key={p.id} value={p.id}>
+                    {p.nama} (Stok: {p.stok} pcs)
+                  </option>
                 ))}
               </select>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Perubahan Kuantitas</label>
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Qty Mutasi (Gunakan negatif untuk pengurangan)</label>
               <Input
                 type="number"
-                placeholder="Gunakan tanda minus (-) untuk kehilangan/kerusakan"
-                className="h-10 text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-xl"
+                placeholder="Contoh: -5 untuk barang hilang/rusak"
+                className="h-10 text-xs border-slate-200 focus-visible:ring-slate-900 rounded-xl"
                 value={adjQty}
                 onChange={(e) => setAdjQty(e.target.value)}
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Alasan Penyesuaian</label>
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Alasan Penyesuaian</label>
               <Input
                 type="text"
-                placeholder="Contoh: Beras basah tumpah, botol pecah..."
-                className="h-10 text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-xl"
+                placeholder="Contoh: Barang Rusak di Display / Kadaluarsa"
+                className="h-10 text-xs border-slate-200 focus-visible:ring-slate-900 rounded-xl"
                 value={adjReason}
                 onChange={(e) => setAdjReason(e.target.value)}
               />
@@ -1664,7 +2018,7 @@ export default function AdminDashboardPage() {
 
             <Button
               type="submit"
-              className="w-full h-11 bg-amber-600 hover:bg-amber-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4"
+              className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4 border-none"
             >
               Simpan Penyesuaian
             </Button>
@@ -1673,36 +2027,36 @@ export default function AdminDashboardPage() {
       </Dialog>
 
       {/* ==============================================================================
-           MODAL DIALOG: TERIMA BARANG MASUK SUPPLIER
+           MODAL DIALOG: PENERIMAAN BARANG SUPPLIER
            ============================================================================== */}
       <Dialog open={isReceivingModalOpen} onOpenChange={setIsReceivingModalOpen}>
-        <DialogContent className="max-w-[500px] bg-white rounded-2xl border-slate-100 p-6 overflow-y-auto max-h-[90vh]">
+        <DialogContent className="max-w-[580px] bg-white rounded-3xl border-none p-6 shadow-xl max-h-[85vh] overflow-y-auto">
           <DialogHeader className="pb-4 border-b border-slate-100">
-            <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <IconTruckDelivery size={20} className="text-indigo-500" />
-              <span>Penerimaan Barang Dari Supplier</span>
+            <DialogTitle className="text-sm font-black text-slate-900 flex items-center gap-2">
+              <IconTruckDelivery size={20} className="text-slate-900" />
+              <span>Formulir Penerimaan Pasokan Supplier</span>
             </DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleReceivingSubmit} className="space-y-4 pt-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Supplier</label>
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nama Supplier</label>
                 <Input
                   type="text"
-                  placeholder="Nama supplier/distributor..."
-                  className="h-10 text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-xl"
+                  placeholder="Nama PT / Distributor..."
+                  className="h-10 text-xs border-slate-200 focus-visible:ring-slate-900 rounded-xl"
                   value={recSupplier}
                   onChange={(e) => setRecSupplier(e.target.value)}
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">No. Faktur</label>
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nomor Faktur / Ref (Opsional)</label>
                 <Input
                   type="text"
-                  placeholder="FAK-XXXX..."
-                  className="h-10 text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-xl"
+                  placeholder="Contoh: INV/Supplier/2026"
+                  className="h-10 text-xs border-slate-200 focus-visible:ring-slate-900 rounded-xl"
                   value={recFaktur}
                   onChange={(e) => setRecFaktur(e.target.value)}
                 />
@@ -1710,59 +2064,63 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Catatan</label>
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Catatan Tambahan</label>
               <Input
                 type="text"
                 placeholder="Catatan penerimaan..."
-                className="h-10 text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-xl"
+                className="h-10 text-xs border-slate-200 focus-visible:ring-slate-900 rounded-xl"
                 value={recNote}
                 onChange={(e) => setRecNote(e.target.value)}
               />
             </div>
 
-            {/* Items Rows */}
-            <div className="space-y-3 pt-2 border-t border-slate-100">
+            {/* List Item Rows */}
+            <div className="space-y-3 border-t border-slate-100 pt-3">
               <div className="flex justify-between items-center">
-                <h5 className="text-xs font-bold text-slate-800">Daftar Item Masuk</h5>
-                <Button
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Daftar Produk Masuk</span>
+                <button
                   type="button"
                   onClick={addRecItemRow}
-                  className="h-7 text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-2 rounded-lg cursor-pointer"
+                  className="text-[10px] font-extrabold text-indigo-600 hover:text-indigo-700 bg-transparent border-none cursor-pointer"
                 >
-                  + Baris Item
-                </Button>
+                  + Tambah Baris
+                </button>
               </div>
 
-              {recItems.map((item, idx) => (
-                <div key={idx} className="flex gap-2 items-center">
-                  <div className="flex-grow">
+              {recItems.map((rowItem, idx) => (
+                <div key={idx} className="flex gap-2 items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100/60">
+                  <div className="flex-grow select-wrapper">
                     <select
-                      className="w-full h-10 border border-slate-200 rounded-xl bg-white text-xs font-semibold px-3 focus:outline-none focus:border-indigo-600 focus:ring-1"
-                      value={item.product_id}
+                      className="w-full h-9 border border-slate-200 rounded-lg bg-white text-xs font-bold px-2 focus:outline-none"
+                      value={rowItem.product_id}
                       onChange={(e) => handleRecItemChange(idx, "product_id", e.target.value)}
                     >
                       <option value="">-- Pilih Produk --</option>
                       {products.map((p) => (
-                        <option key={p.id} value={p.id}>{p.nama}</option>
+                        <option key={p.id} value={p.id}>
+                          {p.nama}
+                        </option>
                       ))}
                     </select>
                   </div>
+
                   <div className="w-24">
                     <Input
                       type="number"
                       placeholder="Qty"
-                      className="h-10 text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-xl"
-                      value={item.kuantitas}
+                      className="h-9 text-xs border-slate-200 rounded-lg bg-white"
+                      value={rowItem.kuantitas}
                       onChange={(e) => handleRecItemChange(idx, "kuantitas", e.target.value)}
                     />
                   </div>
+
                   {recItems.length > 1 && (
                     <button
                       type="button"
                       onClick={() => removeRecItemRow(idx)}
-                      className="p-1 text-rose-500 hover:bg-rose-50 rounded transition-colors border-none bg-transparent cursor-pointer"
+                      className="text-rose-500 hover:bg-rose-50 p-1.5 rounded transition-colors border-none bg-transparent cursor-pointer"
                     >
-                      <IconX size={18} />
+                      <IconX size={15} />
                     </button>
                   )}
                 </div>
@@ -1771,7 +2129,7 @@ export default function AdminDashboardPage() {
 
             <Button
               type="submit"
-              className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4"
+              className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4 border-none"
             >
               Simpan Penerimaan Barang
             </Button>
@@ -1780,130 +2138,126 @@ export default function AdminDashboardPage() {
       </Dialog>
 
       {/* ==============================================================================
-           MODAL DIALOG: STOCK OPNAME (FORM FISIK & KOREKSI)
+           MODAL DIALOG: BUAT OPNAME BARU
            ============================================================================== */}
       <Dialog open={isOpnameModalOpen} onOpenChange={setIsOpnameModalOpen}>
-        <DialogContent className="max-w-[650px] bg-white rounded-2xl border-slate-100 p-6 overflow-y-auto max-h-[90vh]">
+        <DialogContent className="max-w-[660px] bg-white rounded-3xl border-none p-6 shadow-xl max-h-[85vh] overflow-y-auto">
           <DialogHeader className="pb-4 border-b border-slate-100">
-            <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <IconClipboardCheck size={20} className="text-indigo-500" />
-              <span>Stock Opname Fisik Ritel</span>
+            <DialogTitle className="text-sm font-black text-slate-900 flex items-center gap-2">
+              <IconClipboardCheck size={20} className="text-slate-900" />
+              <span>Pembuatan Formulir Stock Opname Baru</span>
             </DialogTitle>
           </DialogHeader>
 
-          <form className="space-y-4 pt-4">
+          <div className="space-y-4 pt-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Catatan Opname</label>
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Catatan Opname</label>
               <Input
                 type="text"
-                placeholder="Contoh: Opname akhir bulan Juni..."
-                className="h-10 text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-xl"
+                placeholder="Catatan tujuan opname..."
+                className="h-10 text-xs border-slate-200 focus-visible:ring-slate-900 rounded-xl"
                 value={opnameNote}
                 onChange={(e) => setOpnameNote(e.target.value)}
               />
             </div>
 
-            {/* Opname Items Grid/Table */}
-            <div className="border-t border-slate-100 pt-2 space-y-2">
-              <h5 className="text-xs font-bold text-slate-800 mb-2">Input Perhitungan Fisik Lapangan</h5>
-              <div className="max-h-[300px] overflow-y-auto space-y-2.5 pr-1">
+            <div className="space-y-2.5 border-t border-slate-100 pt-3">
+              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">
+                Hitungan Stok Fisik Lapangan
+              </span>
+              <div className="max-h-[300px] overflow-y-auto space-y-2 pr-1">
                 {opnameItems.map((item, idx) => (
-                  <div key={item.product_id} className="border border-slate-100 p-3 rounded-xl bg-slate-50/50 grid grid-cols-[1.5fr_1fr_1fr_1.5fr] gap-2 items-center">
-                    <span className="text-xs font-bold text-slate-800 truncate">{item.nama}</span>
-                    <span className="text-xs text-slate-400 text-right">Sistem: {item.stok_sistem} pcs</span>
-                    <div>
-                      <Input
-                        type="number"
-                        placeholder="Fisik"
-                        className="h-8 text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-lg text-right"
-                        value={item.stok_fisik}
-                        onChange={(e) => handleOpnameItemChange(idx, "stok_fisik", e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Input
-                        type="text"
-                        placeholder="Alasan selisih..."
-                        className="h-8 text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-lg"
-                        value={item.alasan}
-                        onChange={(e) => handleOpnameItemChange(idx, "alasan", e.target.value)}
-                      />
-                    </div>
+                  <div key={item.product_id} className="grid grid-cols-[1.5fr_1fr_1fr_1.5fr] gap-3 items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100/50">
+                    <span className="text-[11px] font-bold text-slate-900 truncate">{item.nama}</span>
+                    <span className="text-[10px] text-slate-400 font-bold text-center">Sistem: {item.stok_sistem} pcs</span>
+                    <Input
+                      type="number"
+                      placeholder="Fisik"
+                      className="h-9 text-xs border-slate-200 rounded-lg bg-white"
+                      value={item.stok_fisik}
+                      onChange={(e) => handleOpnameItemChange(idx, "stok_fisik", e.target.value)}
+                    />
+                    <Input
+                      type="text"
+                      placeholder="Alasan selisih..."
+                      className="h-9 text-xs border-slate-200 rounded-lg bg-white"
+                      value={item.alasan}
+                      onChange={(e) => handleOpnameItemChange(idx, "alasan", e.target.value)}
+                    />
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-2">
+            <div className="grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
               <Button
                 type="button"
                 onClick={(e) => handleOpnameSubmit(e, "draft")}
-                className="h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center cursor-pointer"
+                className="w-full h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs rounded-xl cursor-pointer border-none"
               >
-                Simpan Sebagai Draf
+                Simpan sebagai Draf
               </Button>
               <Button
                 type="button"
                 onClick={(e) => handleOpnameSubmit(e, "completed")}
-                className="h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl flex items-center justify-center cursor-pointer shadow-sm shadow-indigo-600/15"
+                className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl cursor-pointer border-none"
               >
-                Simpan & Finalisasi Stok
+                Finalisasi Opname Fisik
               </Button>
             </div>
-          </form>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* ==============================================================================
-           MODAL DIALOG: DETAIL OPNAME / REVIEW ITEMS
+           MODAL DIALOG: DETAIL OPNAME
            ============================================================================== */}
       <Dialog open={isDetailOpnameOpen} onOpenChange={setIsDetailOpnameOpen}>
-        <DialogContent className="max-w-[500px] bg-white rounded-2xl border-slate-100 p-6">
+        <DialogContent className="max-w-[560px] bg-white rounded-3xl border-none p-6 shadow-xl max-h-[85vh] overflow-y-auto">
           <DialogHeader className="pb-4 border-b border-slate-100">
-            <DialogTitle className="text-sm font-bold text-slate-900">
+            <DialogTitle className="text-sm font-black text-slate-900">
               Detail Stock Opname: {selectedOpname?.nomor_opname}
             </DialogTitle>
           </DialogHeader>
 
-          {selectedOpname && (
-            <div className="space-y-4 pt-4">
-              <div>
-                <p className="text-xs text-slate-500">Catatan: <strong className="text-slate-800">{selectedOpname.catatan || "-"}</strong></p>
-                <p className="text-xs text-slate-500 mt-1">Status: <strong className="text-slate-800 capitalize">{selectedOpname.status}</strong></p>
-              </div>
-
-              <Table className="w-full">
-                <TableHeader className="bg-slate-50">
-                  <TableRow>
-                    <TableHead className="text-[10px] font-bold text-slate-500">Nama Produk</TableHead>
-                    <TableHead className="text-right text-[10px] font-bold text-slate-500">Sistem</TableHead>
-                    <TableHead className="text-right text-[10px] font-bold text-slate-500">Fisik</TableHead>
-                    <TableHead className="text-right text-[10px] font-bold text-slate-500">Selisih</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {selectedOpname.items && selectedOpname.items.length > 0 ? (
-                    selectedOpname.items.map((it: any) => (
-                      <TableRow key={it.id}>
-                        <TableCell className="text-xs font-semibold text-slate-800">{it.product?.nama || "Produk ID: " + it.product_id}</TableCell>
-                        <TableCell className="text-right text-xs text-slate-500">{it.stok_sistem} pcs</TableCell>
-                        <TableCell className="text-right text-xs text-slate-800 font-bold">{it.stok_fisik} pcs</TableCell>
-                        <TableCell className={`text-right text-xs font-bold ${it.selisih === 0 ? "text-slate-500" : it.selisih > 0 ? "text-emerald-600" : "text-rose-500"}`}>
-                          {it.selisih > 0 ? `+${it.selisih}` : it.selisih}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-4 text-slate-400 text-xs">Tidak ada item tercatat.</TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+          <div className="space-y-4 pt-3 text-xs text-slate-700">
+            <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+              <p>Status: <strong className="uppercase font-extrabold text-indigo-600">{selectedOpname?.status || "-"}</strong></p>
+              <p>Tanggal: <strong>{selectedOpname ? new Date(selectedOpname.created_at).toLocaleString("id-ID") : "-"}</strong></p>
+              <p className="col-span-2">Catatan: <strong>{selectedOpname?.catatan || "-"}</strong></p>
+              <p className="col-span-2">Petugas: <strong>{selectedOpname?.user?.name || "Sistem"}</strong></p>
             </div>
-          )}
+
+            <div className="space-y-2 border-t border-slate-100 pt-3">
+              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Item Terdata</span>
+              <div className="max-h-[260px] overflow-y-auto space-y-2">
+                {selectedOpname?.items && selectedOpname.items.length > 0 ? (
+                  selectedOpname.items.map((item: any, idx: number) => {
+                    const selisih = (item.stok_fisik ?? 0) - (item.stok_sistem ?? 0);
+                    return (
+                      <div key={idx} className="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100/50">
+                        <div>
+                          <p className="font-extrabold text-slate-900">{item.product?.nama || item.nama_produk || "Produk"}</p>
+                          <p className="text-[9px] text-slate-400 font-semibold mt-0.5">Alasan: {item.alasan || "-"}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-slate-800">Fisik: {item.stok_fisik} pcs</p>
+                          <p className={`text-[10px] font-bold ${selisih < 0 ? "text-rose-500" : selisih > 0 ? "text-emerald-500" : "text-slate-400"}`}>
+                            Selisih: {selisih > 0 ? `+${selisih}` : selisih} pcs
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-center py-4 text-slate-400 text-xs">Tidak ada item tercatat dalam opname ini.</p>
+                )}
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }

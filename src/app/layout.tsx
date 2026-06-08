@@ -12,8 +12,8 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "GroceryPOS — Sistem Point of Sale",
-  description: "Sistem Point of Sale Modern untuk Supermarket / Grocery",
+  title: "TumbasPOS — Sistem Point of Sale",
+  description: "Sistem Point of Sale Modern Ritel",
 };
 
 export default function RootLayout({
