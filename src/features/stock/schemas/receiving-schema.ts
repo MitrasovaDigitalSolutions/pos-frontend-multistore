@@ -6,12 +6,21 @@ export const receivingItemSchema = z.object({
 });
 
 export const receivingSchema = z.object({
-    supplier: z.string().min(1, "Supplier wajib diisi"),
+    supplier_id: z.coerce.number().min(1, "Supplier wajib dipilih").nullable().optional(),
+    supplier: z.string().nullable().optional(),
     nomor_faktur: z
         .string()
         .nullable()
         .optional()
         .transform((val) => val || null),
+    nilai_faktur: z.coerce
+        .number()
+        .min(0, "Nilai faktur minimal 0")
+        .nullable()
+        .optional()
+        .transform((val) => (val === undefined || val === null ? null : Number(val))),
+    status_pembayaran: z.enum(["pending", "paid"]).default("pending"),
+    status: z.enum(["draft", "completed"]).default("completed"),
     catatan: z
         .string()
         .nullable()

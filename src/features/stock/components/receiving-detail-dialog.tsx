@@ -1,0 +1,214 @@
+"use client";
+
+import { useState } from "react";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { IconClipboardList, IconClock, IconFileDescription } from "@tabler/icons-react";
+import { useReceivingDetail, useActivityLogs } from "../api/stock-api";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { PageLoader } from "@/components/feedback/page-loader";
+
+interface ReceivingDetailDialogProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    receivingId: number | null;
+}
+
+export function ReceivingDetailDialog({
+    open,
+    onOpenChange,
+    receivingId,
+}: ReceivingDetailDialogProps) {
+    const [activeTab, setActiveTab] = useState<"items" | "logs">("items");
+
+    const { data: receiving, isLoading: isDetailLoading } = useReceivingDetail(receivingId);
+
+    // Fetch activity logs related to this receipt number
+    const { data: logsData, isLoading: isLogsLoading } = useActivityLogs({
+        search: receiving?.nomor_penerimaan || undefined,
+    });
+
+    const logs = logsData?.data || [];
+
+    const handleOpenChange = (val: boolean) => {
+        onOpenChange(val);
+        if (!val) {
+            setActiveTab("items"); // Reset to items tab on close
+        }
+    };
+
+    if (receivingId === null || !open) return null;
+
+    return (
+        <Dialog open={open} onOpenChange={handleOpenChange}>
+            <DialogContent className="max-w-xl bg-white rounded-2xl border-slate-100 p-6 overflow-y-auto max-h-[90vh]">
+                <DialogHeader className="pb-4 border-b border-slate-100">
+                    <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <IconClipboardList size={20} className="text-emerald-500" />
+                        <span>Detail Penerimaan Barang</span>
+                    </DialogTitle>
+                </DialogHeader>
+
+                {isDetailLoading || !receiving ? (
+                    <div className="py-8">
+                        <PageLoader message="Memuat detail penerimaan..." />
+                    </div>
+                ) : (
+                    <div className="space-y-5 pt-4">
+                        {/* Invoice Header Details */}
+                        <div className="grid grid-cols-2 gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100 text-xs">
+                            <div className="space-y-1">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase">No. Penerimaan</span>
+                                <p className="font-bold text-slate-900">{receiving.nomor_penerimaan}</p>
+                            </div>
+                            <div className="space-y-1">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase">Tanggal Masuk</span>
+                                <p className="font-semibold text-slate-700">
+                                    {new Date(receiving.created_at).toLocaleString("id-ID", {
+                                        dateStyle: "medium",
+                                        timeStyle: "short",
+                                    })}
+                                </p>
+                            </div>
+                            <div className="space-y-1">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase">Supplier</span>
+                                <p className="font-semibold text-slate-800">
+                                    {receiving.supplier_relationship
+                                        ? receiving.supplier_relationship.nama
+                                        : receiving.supplier || "-"}
+                                </p>
+                            </div>
+                            <div className="space-y-1">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase">No. Faktur</span>
+                                <p className="font-semibold text-slate-700">{receiving.nomor_faktur || "-"}</p>
+                            </div>
+                            <div className="space-y-1">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase">Nilai Tagihan</span>
+                                <p className="font-bold text-slate-900">
+                                    {receiving.nilai_faktur !== null ? formatRupiah(receiving.nilai_faktur) : "-"}
+                                </p>
+                            </div>
+                            <div className="space-y-1">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase">Status Pembayaran</span>
+                                <div>
+                                    <span
+                                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                            receiving.status_pembayaran === "paid"
+                                                ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                                                : "bg-rose-50 text-rose-700 border-rose-100"
+                                        }`}
+                                    >
+                                        {receiving.status_pembayaran === "paid" ? "Lunas" : "Pending / Tempo"}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="space-y-1 col-span-2">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase">Catatan / Keterangan</span>
+                                <p className="text-slate-600 font-medium">{receiving.catatan || "-"}</p>
+                            </div>
+                        </div>
+
+                        {/* Tabs Navigation */}
+                        <div className="flex border-b border-slate-100">
+                            <button
+                                onClick={() => setActiveTab("items")}
+                                className={`px-4 py-2 text-xs font-bold border-b-2 flex items-center gap-1.5 cursor-pointer transition-colors ${
+                                    activeTab === "items"
+                                        ? "border-emerald-600 text-emerald-600"
+                                        : "border-transparent text-slate-400 hover:text-slate-600"
+                                }`}
+                            >
+                                <IconFileDescription size={16} />
+                                Daftar Barang ({receiving.items?.length || 0})
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("logs")}
+                                className={`px-4 py-2 text-xs font-bold border-b-2 flex items-center gap-1.5 cursor-pointer transition-colors ${
+                                    activeTab === "logs"
+                                        ? "border-emerald-600 text-emerald-600"
+                                        : "border-transparent text-slate-400 hover:text-slate-600"
+                                }`}
+                            >
+                                <IconClock size={16} />
+                                Log Aktivitas ({logs.length})
+                            </button>
+                        </div>
+
+                        {/* Tab Content */}
+                        <div className="min-h-48 max-h-72 overflow-y-auto">
+                            {activeTab === "items" ? (
+                                <div className="border border-slate-100 rounded-xl overflow-hidden">
+                                    <table className="w-full text-left border-collapse text-xs">
+                                        <thead>
+                                            <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                <th className="p-3">Nama Produk</th>
+                                                <th className="p-3 text-right">Jumlah Masuk</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-50 font-medium">
+                                            {receiving.items?.map((item) => (
+                                                <tr key={item.id} className="hover:bg-slate-50/50">
+                                                    <td className="p-3 font-semibold text-slate-900">
+                                                        {item.product?.nama || "Produk dihapus"}
+                                                    </td>
+                                                    <td className="p-3 text-right text-slate-700 font-mono">
+                                                        {item.kuantitas} pcs
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {(!receiving.items || receiving.items.length === 0) && (
+                                                <tr>
+                                                    <td colSpan={2} className="p-4 text-center text-slate-400">
+                                                        Tidak ada item barang tercatat.
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : isLogsLoading ? (
+                                <PageLoader message="Memuat logs..." />
+                            ) : (
+                                <div className="space-y-4 pl-3 pr-1 py-1">
+                                    {logs.map((log) => (
+                                        <div key={log.id} className="relative flex gap-3 pb-4 last:pb-0 border-l border-slate-100 pl-4">
+                                            {/* Dot */}
+                                            <div className="absolute -left-1.5 top-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
+                                            <div className="space-y-0.5 text-xs">
+                                                <p className="font-semibold text-slate-800">
+                                                    {log.description}
+                                                </p>
+                                                <div className="flex gap-2 text-[10px] text-slate-400 font-mono">
+                                                    <span>
+                                                        {new Date(log.created_at).toLocaleString("id-ID")}
+                                                    </span>
+                                                    <span>•</span>
+                                                    <span>Oleh: {log.user?.name || "System"}</span>
+                                                    {log.ip_address && (
+                                                        <>
+                                                            <span>•</span>
+                                                            <span>IP: {log.ip_address}</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {logs.length === 0 && (
+                                        <p className="text-center py-8 text-slate-400 text-xs">
+                                            Belum ada log aktivitas tercatat untuk penerimaan ini.
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </DialogContent>
+        </Dialog>
+    );
+}
