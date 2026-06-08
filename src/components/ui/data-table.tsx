@@ -1,21 +1,4 @@
-import * as React from "react";
-import {
-    ColumnDef,
-    flexRender,
-    getCoreRowModel,
-    getSortedRowModel,
-    SortingState,
-    useReactTable,
-} from "@tanstack/react-table";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 import {
     Pagination,
     PaginationContent,
@@ -25,10 +8,33 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/components/ui/pagination";
-import { CommandSelect } from "@/components/ui/command-select";
-import { Input } from "@/components/ui/input";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { Search, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import {
+    ColumnDef,
+    flexRender,
+    getCoreRowModel,
+    getSortedRowModel,
+    SortingState,
+    useReactTable,
+} from "@tanstack/react-table";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
+import * as React from "react";
 
 import "@tanstack/react-table";
 
@@ -225,7 +231,7 @@ export function DataTable<TData, TValue>({
             <div
                 ref={parentRef}
                 className={cn(
-                    "w-full overflow-auto max-h-[450px]",
+                    "w-full overflow-auto max-h-112.5",
                     virtualize &&
                         "scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent",
                     className,
@@ -240,8 +246,10 @@ export function DataTable<TData, TValue>({
                                 className="hover:bg-transparent border-b border-slate-100 bg-slate-50"
                             >
                                 {headerGroup.headers.map((header) => {
-                                    const isSortable = header.column.getCanSort();
-                                    const sortDirection = header.column.getIsSorted();
+                                    const isSortable =
+                                        header.column.getCanSort();
+                                    const sortDirection =
+                                        header.column.getIsSorted();
 
                                     return (
                                         <TableHead
@@ -252,7 +260,8 @@ export function DataTable<TData, TValue>({
                                                     ?.headerClassName,
                                             )}
                                             style={{
-                                                width: header.column.columnDef.size,
+                                                width: header.column.columnDef
+                                                    .size,
                                             }}
                                         >
                                             {header.isPlaceholder ? null : (
@@ -271,7 +280,8 @@ export function DataTable<TData, TValue>({
                                                     <span>
                                                         {flexRender(
                                                             header.column
-                                                                .columnDef.header,
+                                                                .columnDef
+                                                                .header,
                                                             header.getContext(),
                                                         )}
                                                     </span>
@@ -433,22 +443,27 @@ export function DataTable<TData, TValue>({
                         {onPerPageChange && perPage !== undefined && (
                             <div className="flex items-center gap-1.5">
                                 <span>Tampilkan:</span>
-                                <CommandSelect
-                                    value={String(perPage)}
-                                    onChange={(val) => {
-                                        onPerPageChange?.(Number(val));
-                                        onPageChange?.(1);
-                                    }}
-                                    options={[
-                                        { value: "5", label: "5 data" },
-                                        { value: "10", label: "10 data" },
-                                        { value: "25", label: "25 data" },
-                                        { value: "50", label: "50 data" },
-                                    ]}
-                                    wrapperClassName="w-28"
-                                    searchPlaceholder="Cari data..."
-                                    placeholder={`${perPage} data`}
-                                />
+                                {/* CREATE SELECT PAGINATION */}
+                                <Select
+                                    onValueChange={(value) =>
+                                        onPerPageChange(Number(value))
+                                    }
+                                    defaultValue={perPage.toString()}
+                                >
+                                    <SelectTrigger className="h-8 w-24 border-slate-200 focus-visible:ring-indigo-600 rounded-xl bg-white text-xs">
+                                        <SelectValue placeholder="Pilih" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {[5, 10, 20, 50, 100].map((option) => (
+                                            <SelectItem
+                                                key={option}
+                                                value={option.toString()}
+                                            >
+                                                {option}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         )}
                     </div>

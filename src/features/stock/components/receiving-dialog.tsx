@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm, useFieldArray, FormProvider, type Resolver } from "react-hook-form";
+import {
+    useForm,
+    useFieldArray,
+    FormProvider,
+    type Resolver,
+} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
     Dialog,
@@ -33,7 +38,7 @@ export function ReceivingDialog({
     products,
 }: ReceivingDialogProps) {
     const createReceiving = useCreateReceiving();
-    
+
     const productOptions = products.map((p) => ({
         value: String(p.id),
         label: p.nama,
@@ -189,7 +194,9 @@ export function ReceivingDialog({
                                 >
                                     <div className="grow">
                                         <FormSelect<ReceivingInput>
-                                            name={`items.${idx}.product_id` as any}
+                                            name={
+                                                `items.${idx}.product_id` as any
+                                            }
                                             options={productOptions}
                                             placeholder="-- Pilih Produk --"
                                             disabled={isPending}
@@ -201,7 +208,9 @@ export function ReceivingDialog({
                                             placeholder="Qty"
                                             className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
                                             disabled={isPending}
-                                            {...register(`items.${idx}.kuantitas`)}
+                                            {...register(
+                                                `items.${idx}.kuantitas`,
+                                            )}
                                         />
                                     </div>
                                     {fields.length > 1 && (

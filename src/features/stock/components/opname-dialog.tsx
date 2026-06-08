@@ -116,7 +116,7 @@ export function OpnameDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-162.5 bg-white rounded-2xl border-slate-100 p-6 overflow-y-auto max-h-[90vh]">
+            <DialogContent className="max-w-full bg-white rounded-2xl border-slate-100 p-6 overflow-y-auto max-h-[90vh]">
                 <DialogHeader className="pb-4 border-b border-slate-100">
                     <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
                         <IconClipboardCheck

@@ -11,7 +11,10 @@ interface LowStockTableProps {
     isLoading?: boolean;
 }
 
-export function LowStockTable({ products, isLoading = false }: LowStockTableProps) {
+export function LowStockTable({
+    products,
+    isLoading = false,
+}: LowStockTableProps) {
     const lowStockProducts = useMemo(() => {
         return products.filter((p) => p.stok <= 10);
     }, [products]);
@@ -26,37 +29,35 @@ export function LowStockTable({ products, isLoading = false }: LowStockTableProp
                         {row.original.barcode || "-"}
                     </span>
                 ),
+                size: 120,
             },
             {
                 accessorKey: "nama",
                 header: "Nama Produk",
                 cell: ({ row }) => (
-                    <span className="font-semibold">
-                        {row.original.nama}
-                    </span>
+                    <span className="font-semibold">{row.original.nama}</span>
                 ),
+                size: 240,
             },
             {
                 accessorKey: "stok",
                 header: "Sisa Stok",
                 meta: {
-                    headerClassName: "text-right",
-                    cellClassName: "text-right font-bold text-rose-500",
+                    headerClassName: "text-left",
+                    cellClassName: "text-left font-bold text-rose-500",
                 },
                 cell: ({ row }) => `${row.original.stok} pcs`,
+                size: 40,
             },
             {
                 id: "status",
                 header: "Status",
-                meta: {
-                    headerClassName: "text-center",
-                    cellClassName: "text-center",
-                },
                 cell: () => (
                     <span className="bg-rose-50 text-rose-700 text-[10px] px-2.5 py-1 rounded-full font-bold">
                         Stok Kritis
                     </span>
                 ),
+                size: 40,
             },
         ],
         [],
@@ -78,4 +79,3 @@ export function LowStockTable({ products, isLoading = false }: LowStockTableProp
         </div>
     );
 }
-
