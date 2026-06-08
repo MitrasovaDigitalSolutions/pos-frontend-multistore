@@ -52,19 +52,19 @@ export function OpnameDetailDialog({
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogContent className="max-w-xl bg-white rounded-2xl border-slate-100 p-6 overflow-y-auto max-h-[90vh]">
-                <DialogHeader className="pb-4 border-b border-slate-100">
+            <DialogContent className="max-w-xl bg-white rounded-2xl border-slate-100 p-6 flex flex-col max-h-[90vh]">
+                <DialogHeader className="pb-4 border-b border-slate-100 shrink-0">
                     <DialogTitle className="text-sm font-bold text-slate-900">
                         Detail Stock Opname: {selectedOpname?.nomor_opname || "Memuat..."}
                     </DialogTitle>
                 </DialogHeader>
 
                 {isDetailLoading || !selectedOpname ? (
-                    <div className="py-8">
+                    <div className="py-8 flex-1 flex items-center justify-center">
                         <PageLoader message="Memuat detail opname..." />
                     </div>
                 ) : (
-                    <div className="space-y-4 pt-4">
+                    <div className="space-y-4 pt-4 flex-1 overflow-y-auto pr-1 min-h-0">
                         <div className="grid grid-cols-2 gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100 text-xs">
                             <div>
                                 <span className="text-[10px] font-bold text-slate-400 uppercase">Catatan</span>

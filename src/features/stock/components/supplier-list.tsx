@@ -141,7 +141,7 @@ export function SupplierList({
                 </div>
                 <Button
                     onClick={onAddClick}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
                 >
                     <IconPlus size={16} /> Tambah Supplier
                 </Button>

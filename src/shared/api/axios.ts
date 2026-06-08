@@ -53,8 +53,8 @@ apiClient.interceptors.response.use(
                 typeof window !== "undefined" &&
                 window.location.pathname !== "/login"
             ) {
-                window.location.href = "/login";
                 await signOut({ redirectTo: "/login" });
+                // window.location.href = "/login";
             }
         }
 

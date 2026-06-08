@@ -45,8 +45,8 @@ export function ReceivingDetailDialog({
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogContent className="max-w-xl bg-white rounded-2xl border-slate-100 p-6 overflow-y-auto max-h-[90vh]">
-                <DialogHeader className="pb-4 border-b border-slate-100">
+            <DialogContent className="max-w-xl bg-white rounded-2xl border-slate-100 p-6 flex flex-col max-h-[90vh]">
+                <DialogHeader className="pb-4 border-b border-slate-100 flex-shrink-0">
                     <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
                         <IconClipboardList size={20} className="text-emerald-500" />
                         <span>Detail Penerimaan Barang</span>
@@ -54,11 +54,11 @@ export function ReceivingDetailDialog({
                 </DialogHeader>
 
                 {isDetailLoading || !receiving ? (
-                    <div className="py-8">
+                    <div className="py-8 flex-1 flex items-center justify-center">
                         <PageLoader message="Memuat detail penerimaan..." />
                     </div>
                 ) : (
-                    <div className="space-y-5 pt-4">
+                    <div className="space-y-5 pt-4 flex-1 overflow-y-auto pr-1 min-h-0">
                         {/* Invoice Header Details */}
                         <div className="grid grid-cols-2 gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100 text-xs">
                             <div className="space-y-1">
