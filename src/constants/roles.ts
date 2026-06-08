@@ -1,0 +1,60 @@
+// ─── Role Constants ─────────────────────────────────────────────────────────
+
+export const ROLES = {
+  ADMIN: "admin",
+  MANAJER_TOKO: "manajer_toko",
+  SUPERVISOR: "supervisor",
+  KASIR: "kasir",
+} as const;
+
+export type Role = (typeof ROLES)[keyof typeof ROLES];
+
+// ─── Permission Constants ───────────────────────────────────────────────────
+
+export const PERMISSIONS = {
+  VIEW_REPORTS: "view_reports",
+  MANAGE_PRODUCTS: "manage_products",
+  MANAGE_USERS: "manage_users",
+  CREATE_SALES: "create_sales",
+  MANAGE_INVENTORY: "manage_inventory",
+  MANAGE_SETTINGS: "manage_settings",
+} as const;
+
+export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
+
+// ─── Role Hierarchy ─────────────────────────────────────────────────────────
+
+/** Roles that can access the admin dashboard */
+export const ADMIN_ROLES: Role[] = [
+  ROLES.ADMIN,
+  ROLES.MANAJER_TOKO,
+  ROLES.SUPERVISOR,
+];
+
+/** All roles including cashier */
+export const ALL_ROLES: Role[] = [
+  ROLES.ADMIN,
+  ROLES.MANAJER_TOKO,
+  ROLES.SUPERVISOR,
+  ROLES.KASIR,
+];
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+export function hasRole(userRoles: string[], role: string): boolean {
+  if (userRoles.includes(ROLES.ADMIN)) return true;
+  return userRoles.includes(role);
+}
+
+export function hasPermission(
+  userRoles: string[],
+  userPermissions: string[],
+  permission: string
+): boolean {
+  if (userRoles.includes(ROLES.ADMIN)) return true;
+  return userPermissions.includes(permission);
+}
+
+export function canAccessAdmin(userRoles: string[]): boolean {
+  return ADMIN_ROLES.some((role) => userRoles.includes(role));
+}
