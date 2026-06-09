@@ -23,7 +23,11 @@ async function handler(req: NextRequest) {
   headers.set("Accept", "application/json");
   headers.set("Content-Type", "application/json");
 
-  if (accessToken) {
+  // Check client Authorization header (prioritized for testing)
+  const clientAuth = req.headers.get("Authorization");
+  if (clientAuth) {
+    headers.set("Authorization", clientAuth);
+  } else if (accessToken) {
     headers.set("Authorization", `Bearer ${accessToken}`);
   }
 

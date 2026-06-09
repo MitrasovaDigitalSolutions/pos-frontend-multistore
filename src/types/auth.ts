@@ -34,6 +34,7 @@ declare module "next-auth" {
     interface Session {
         user: User;
         accessToken: string;
+        cashDrawerSessionId?: number | null;
         error?: "RefreshTokenError";
     }
 }
@@ -43,6 +44,7 @@ declare module "next-auth/jwt" {
         user: User;
         accessToken: string;
         accessTokenExpires: number;
+        cashDrawerSessionId?: number | null;
         error?: "RefreshTokenError";
     }
 }

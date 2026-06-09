@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { useDailyReport } from "../api/reports-api";
 import { DataTable } from "@/components/ui/data-table";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function DailyReportView() {
     const [selectedReportDate, setSelectedReportDate] = useState<string>(
@@ -27,23 +28,24 @@ export function DailyReportView() {
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <label className="text-xs font-bold text-slate-600">
+                    <span className="text-xs font-bold text-slate-600 whitespace-nowrap">
                         Pilih Tanggal:
-                    </label>
-                    <Input
-                        type="date"
-                        className="h-9 text-xs w-36 border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                    </span>
+                    <DatePicker
+                        placeholder="Pilih tanggal..."
+                        className="w-48"
+                        clearable={false}
                         value={selectedReportDate}
-                        onChange={(e) => setSelectedReportDate(e.target.value)}
+                        onChange={(val) => setSelectedReportDate(val)}
                     />
                 </div>
             </div>
 
-            {isLoading ? (
+            {!isLoading && !dailyReport ? (
                 <div className="text-center py-8 text-slate-400 text-xs">
-                    Memuat laporan penjualan...
+                    Belum ada data laporan penjualan.
                 </div>
-            ) : dailyReport ? (
+            ) : (
                 <div className="space-y-6">
                     <div className="grid grid-cols-4 gap-4">
                         <div className="bg-slate-50 p-4 rounded-xl">
@@ -51,7 +53,11 @@ export function DailyReportView() {
                                 Total Omset Harian
                             </div>
                             <div className="text-lg font-bold text-emerald-600 mt-1">
-                                {formatRupiah(dailyReport.total_sales)}
+                                {isLoading ? (
+                                    <Skeleton className="h-6 w-28 mt-1" />
+                                ) : (
+                                    formatRupiah(dailyReport?.total_sales ?? 0)
+                                )}
                             </div>
                         </div>
                         <div className="bg-slate-50 p-4 rounded-xl">
@@ -59,7 +65,11 @@ export function DailyReportView() {
                                 Transaksi Sukses
                             </div>
                             <div className="text-lg font-bold text-slate-800 mt-1">
-                                {dailyReport.transactions_count} Trx
+                                {isLoading ? (
+                                    <Skeleton className="h-6 w-20 mt-1" />
+                                ) : (
+                                    `${dailyReport?.transactions_count ?? 0} Trx`
+                                )}
                             </div>
                         </div>
                         <div className="bg-slate-50 p-4 rounded-xl">
@@ -67,8 +77,12 @@ export function DailyReportView() {
                                 Rerata Nilai Struk
                             </div>
                             <div className="text-lg font-bold text-slate-800 mt-1">
-                                {formatRupiah(
-                                    dailyReport.average_transaction_value,
+                                {isLoading ? (
+                                    <Skeleton className="h-6 w-28 mt-1" />
+                                ) : (
+                                    formatRupiah(
+                                        dailyReport?.average_transaction_value ?? 0,
+                                    )
                                 )}
                             </div>
                         </div>
@@ -77,7 +91,11 @@ export function DailyReportView() {
                                 Transaksi Void
                             </div>
                             <div className="text-lg font-bold text-rose-500 mt-1">
-                                {dailyReport.void_count} Void
+                                {isLoading ? (
+                                    <Skeleton className="h-6 w-20 mt-1" />
+                                ) : (
+                                    `${dailyReport?.void_count ?? 0} Void`
+                                )}
                             </div>
                         </div>
                     </div>
@@ -88,29 +106,44 @@ export function DailyReportView() {
                             Breakdown Metode Pembayaran
                         </h4>
                         <div className="grid grid-cols-3 gap-4">
-                            {Object.keys(dailyReport.payment_methods || {}).map(
-                                (method) => {
-                                    const pm =
-                                        dailyReport.payment_methods[method];
-                                    return (
-                                        <div
-                                            key={method}
-                                            className="border border-slate-100 p-4 rounded-xl bg-white flex justify-between items-center"
-                                        >
-                                            <div>
-                                                <div className="text-xs font-bold uppercase text-slate-600">
-                                                    {method}
-                                                </div>
-                                                <div className="text-[10px] text-slate-400 mt-0.5">
-                                                    {pm.count} Transaksi
-                                                </div>
-                                            </div>
-                                            <span className="font-bold text-sm text-slate-800">
-                                                {formatRupiah(pm.total)}
-                                            </span>
+                            {isLoading ? (
+                                Array.from({ length: 3 }).map((_, idx) => (
+                                    <div
+                                        key={idx}
+                                        className="border border-slate-100 p-4 rounded-xl bg-white flex justify-between items-center h-[72px]"
+                                    >
+                                        <div className="space-y-2 w-full">
+                                            <Skeleton className="h-4 w-20" />
+                                            <Skeleton className="h-3 w-12" />
                                         </div>
-                                    );
-                                },
+                                        <Skeleton className="h-5 w-20" />
+                                    </div>
+                                ))
+                            ) : (
+                                Object.keys(dailyReport?.payment_methods || {}).map(
+                                    (method) => {
+                                        const pm =
+                                            dailyReport?.payment_methods?.[method];
+                                        return (
+                                            <div
+                                                key={method}
+                                                className="border border-slate-100 p-4 rounded-xl bg-white flex justify-between items-center"
+                                            >
+                                                <div>
+                                                    <div className="text-xs font-bold uppercase text-slate-600">
+                                                        {method}
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-400 mt-0.5">
+                                                        {pm?.count ?? 0} Transaksi
+                                                    </div>
+                                                </div>
+                                                <span className="font-bold text-sm text-slate-800">
+                                                    {formatRupiah(pm?.total ?? 0)}
+                                                </span>
+                                            </div>
+                                        );
+                                    },
+                                )
                             )}
                         </div>
                     </div>
@@ -153,16 +186,12 @@ export function DailyReportView() {
                                         formatRupiah(row.original.revenue),
                                 },
                             ]}
-                            data={dailyReport.top_products || []}
+                            data={dailyReport?.top_products || []}
                             isLoading={isLoading}
                             emptyMessage="Belum ada item terjual pada tanggal ini."
                             virtualize={false} // Small list of 10 items, no need to virtualize
                         />
                     </div>
-                </div>
-            ) : (
-                <div className="text-center py-8 text-slate-400 text-xs">
-                    Belum ada data laporan penjualan.
                 </div>
             )}
         </Card>

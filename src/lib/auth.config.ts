@@ -64,7 +64,13 @@ export default {
 
   callbacks: {
     // Store custom data in JWT
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
+      if (trigger === "update" && session) {
+        if (session.cashDrawerSessionId !== undefined) {
+          token.cashDrawerSessionId = session.cashDrawerSessionId;
+        }
+      }
+      
       if (user) {
         // Initial sign in
         const userData = (user as Record<string, unknown>).userData as User;
@@ -107,6 +113,7 @@ export default {
         session.user = token.user as typeof session.user;
       }
       session.accessToken = token.accessToken as string;
+      session.cashDrawerSessionId = token.cashDrawerSessionId as number | null | undefined;
       if (token.error) {
         session.error = token.error as "RefreshTokenError";
       }

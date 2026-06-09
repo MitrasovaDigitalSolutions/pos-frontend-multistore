@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { IconCalendar } from "@tabler/icons-react";
 
 const PATH_TITLES: Record<string, string> = {
-  "/admin": "Dashboard Analitik Toko",
+  "/admin": "Dashboard",
   "/admin/products": "Manajemen Produk",
   "/admin/stock": "Stok Barang & Inventori",
   "/admin/reports": "Laporan Penjualan & Analitik",
@@ -65,3 +65,4 @@ export function AdminHeader() {
     </header>
   );
 }
+

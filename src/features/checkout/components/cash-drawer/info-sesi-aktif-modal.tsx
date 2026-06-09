@@ -1,0 +1,103 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useCashDrawerDetail } from "../../api/cash-drawer-api";
+import { SessionDetailsView } from "./session-details-view";
+import { CashInForm } from "./cash-in-form";
+import { CashOutForm } from "./cash-out-form";
+import { CloseShiftForm } from "./close-shift-form";
+
+interface InfoSesiAktifModalProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    sessionId: number | null;
+    token?: string;
+    onCloseSuccess: () => void;
+}
+
+type ModalSubView = "info" | "cash_in" | "cash_out" | "close_shift";
+
+export function InfoSesiAktifModal({
+    open,
+    onOpenChange,
+    sessionId,
+    token,
+    onCloseSuccess,
+}: InfoSesiAktifModalProps) {
+    const [subView, setSubView] = useState<ModalSubView>("info");
+
+    const { data: detailData, isLoading: isDetailLoading, refetch: refetchDetail } =
+        useCashDrawerDetail(sessionId, token);
+
+    const activeSession = detailData?.data;
+
+    // Reset subview when modal open status changes
+    useEffect(() => {
+        if (open) {
+            setSubView("info");
+        }
+    }, [open]);
+
+    const handleActionSuccess = () => {
+        setSubView("info");
+        refetchDetail();
+    };
+
+    const handleCloseSuccess = () => {
+        onOpenChange(false);
+        onCloseSuccess();
+    };
+
+    return (
+        <Dialog
+            open={open}
+            onOpenChange={(val) => {
+                // Only allow closing if not loading and currently on "info" view
+                if (val && !isDetailLoading) {
+                    onOpenChange(true);
+                } else if (!val && subView === "info") {
+                    onOpenChange(false);
+                }
+            }}
+        >
+            <DialogContent className="max-w-lg bg-white rounded-2xl border-slate-100 p-6 shadow-2xl">
+                {subView === "info" && (
+                    <SessionDetailsView
+                        activeSession={activeSession}
+                        isLoading={isDetailLoading}
+                        onAction={(view) => setSubView(view)}
+                    />
+                )}
+
+                {subView === "cash_in" && sessionId && (
+                    <CashInForm
+                        sessionId={sessionId}
+                        token={token}
+                        onSuccess={handleActionSuccess}
+                        onCancel={() => setSubView("info")}
+                    />
+                )}
+
+                {subView === "cash_out" && sessionId && (
+                    <CashOutForm
+                        sessionId={sessionId}
+                        token={token}
+                        onSuccess={handleActionSuccess}
+                        onCancel={() => setSubView("info")}
+                    />
+                )}
+
+                {subView === "close_shift" && sessionId && activeSession && (
+                    <CloseShiftForm
+                        sessionId={sessionId}
+                        expectedCash={activeSession.expected_cash}
+                        token={token}
+                        onSuccess={handleCloseSuccess}
+                        onCancel={() => setSubView("info")}
+                    />
+                )}
+            </DialogContent>
+        </Dialog>
+    );
+}
