@@ -1,16 +1,15 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Product } from "@/features/products/types";
+import { queryKeys } from "@/lib/query-keys";
 import {
+    apiDelete,
     apiGet,
-    apiGetData,
     apiGetList,
     apiPost,
-    apiPut,
-    apiDelete,
+    apiPut
 } from "@/shared/api/api-client";
-import { queryKeys } from "@/lib/query-keys";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
-import type { HoldTransaction, TrxData, Receipt } from "../types";
-import type { Product } from "@/features/products/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { HoldTransaction, Receipt, TrxData } from "../types";
 
 export function useHeldTransactions(params?: PaginationParams) {
     return useQuery<PaginatedResponse<HoldTransaction>>({
@@ -109,6 +108,7 @@ export function usePayCash() {
             }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+            queryClient.invalidateQueries({ queryKey: ["cash-drawer"] });
         },
     });
 }
@@ -129,6 +129,7 @@ export function usePayCard() {
             apiPost(`/v1/transactions/${transactionId}/pay/card`, cardDetails),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+            queryClient.invalidateQueries({ queryKey: ["cash-drawer"] });
         },
     });
 }

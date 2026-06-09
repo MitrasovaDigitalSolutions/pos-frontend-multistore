@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import { useCashDrawerDetail } from "../../api/cash-drawer-api";
 import { SessionDetailsView } from "./session-details-view";
 import { CashInForm } from "./cash-in-form";
@@ -26,6 +27,7 @@ export function InfoSesiAktifModal({
     onCloseSuccess,
 }: InfoSesiAktifModalProps) {
     const [subView, setSubView] = useState<ModalSubView>("info");
+    const [showHistory, setShowHistory] = useState(false);
 
     const { data: detailData, isLoading: isDetailLoading, refetch: refetchDetail } =
         useCashDrawerDetail(sessionId, token);
@@ -35,7 +37,9 @@ export function InfoSesiAktifModal({
     // Reset subview when modal open status changes
     useEffect(() => {
         if (open) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setSubView("info");
+            setShowHistory(false);
         }
     }, [open]);
 
@@ -61,12 +65,17 @@ export function InfoSesiAktifModal({
                 }
             }}
         >
-            <DialogContent className="max-w-lg bg-white rounded-2xl border-slate-100 p-6 shadow-2xl">
+            <DialogContent className={cn(
+                "bg-white rounded-2xl border-slate-100 p-6 shadow-2xl transition-all duration-300",
+                showHistory && subView === "info" ? "max-w-3xl sm:max-w-3xl" : "max-w-lg sm:max-w-lg"
+            )}>
                 {subView === "info" && (
                     <SessionDetailsView
                         activeSession={activeSession}
                         isLoading={isDetailLoading}
                         onAction={(view) => setSubView(view)}
+                        showHistory={showHistory}
+                        setShowHistory={setShowHistory}
                     />
                 )}
 

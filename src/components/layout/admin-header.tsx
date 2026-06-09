@@ -46,7 +46,7 @@ export function AdminHeader() {
       <h2 className="text-lg font-extrabold text-slate-900">{getTitle()}</h2>
       <div className="flex items-center gap-4">
         {/* Date Badge */}
-        <div className="bg-amber-50 text-amber-500 border border-amber-100 px-3 py-1.5 rounded-full flex items-center gap-2 font-bold text-xs select-none">
+        <div className="bg-sky-50 text-sky-500 border border-sky-100 px-3 py-1.5 rounded-full flex items-center gap-2 font-bold text-xs select-none">
           <IconCalendar size={15} />
           <span>Hari Ini: {formattedDate}</span>
         </div>

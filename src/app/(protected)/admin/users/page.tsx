@@ -2,6 +2,8 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { hasRole, hasPermission } from "@/constants/roles";
 import { useUsers } from "@/features/users/api/users-api";
 import { UserTable } from "@/features/users/components/user-table";
 import { UserFormDialog } from "@/features/users/components/user-form-dialog";
@@ -10,6 +12,17 @@ import type { User } from "@/features/users/types";
 import { PageLoader } from "@/components/feedback/page-loader";
 
 function AdminUsersContent() {
+  const { data: session } = useSession();
+  const userRoles = session?.user?.roles || [];
+  const userPermissions = session?.user?.permissions || [];
+
+  const hasViewUsers =
+    hasRole(userRoles, "admin") ||
+    hasPermission(userRoles, userPermissions, "view_users");
+  const hasManageUsers =
+    hasRole(userRoles, "admin") ||
+    hasPermission(userRoles, userPermissions, "manage_users");
+
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab") === "permissions" ? "permissions" : "users";
   const [activeTab, setActiveTab] = useState<"users" | "permissions">(initialTab);
@@ -50,6 +63,17 @@ function AdminUsersContent() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
+  if (!hasViewUsers) {
+    return (
+      <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm">
+        <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
+        <p className="text-xs text-slate-400 mt-1">Anda tidak memiliki izin untuk mengakses halaman manajemen pengguna.</p>
+      </div>
+    );
+  }
+
+  const showMapping = activeTab === "permissions" && hasManageUsers;
+
   const handleEdit = (user: User) => {
     setEditingUser(user);
     setIsDialogOpen(true);
@@ -74,31 +98,33 @@ function AdminUsersContent() {
         </div>
 
         {/* Premium Tab Buttons */}
-        <div className="flex bg-slate-200/60 p-1 rounded-xl w-fit border border-slate-200/30">
-          <button
-            onClick={() => setActiveTab("users")}
-            className={`px-4 py-2 text-xs font-extrabold rounded-lg transition-all duration-200 cursor-pointer ${
-              activeTab === "users"
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-800"
-            }`}
-          >
-            Daftar Pengguna
-          </button>
-          <button
-            onClick={() => setActiveTab("permissions")}
-            className={`px-4 py-2 text-xs font-extrabold rounded-lg transition-all duration-200 cursor-pointer ${
-              activeTab === "permissions"
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-800"
-            }`}
-          >
-            Peran & Hak Akses
-          </button>
-        </div>
+        {hasManageUsers && (
+          <div className="flex bg-slate-200/60 p-1 rounded-xl w-fit border border-slate-200/30">
+            <button
+              onClick={() => setActiveTab("users")}
+              className={`px-4 py-2 text-xs font-extrabold rounded-lg transition-all duration-200 cursor-pointer ${
+                activeTab === "users"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              Daftar Pengguna
+            </button>
+            <button
+              onClick={() => setActiveTab("permissions")}
+              className={`px-4 py-2 text-xs font-extrabold rounded-lg transition-all duration-200 cursor-pointer ${
+                activeTab === "permissions"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              Peran & Hak Akses
+            </button>
+          </div>
+        )}
       </div>
 
-      {activeTab === "users" ? (
+      {!showMapping ? (
         <div className="space-y-6">
           <UserTable
             users={usersData?.data || []}

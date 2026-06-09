@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import type { Opname } from "../types";
 import { DataTable } from "@/components/ui/data-table";
 import { IconEye, IconCheck, IconTrash } from "@tabler/icons-react";
-import { hasRole } from "@/constants/roles";
+import { hasRole, hasPermission } from "@/constants/roles";
 
 interface OpnameListProps {
     opnames: Opname[];
@@ -39,10 +39,11 @@ export function OpnameList({
     const deleteOpname = useDeleteOpname();
 
     const userRoles = session?.user?.roles || [];
-    const canDeleteDraft =
+    const userPermissions = session?.user?.permissions || [];
+    const hasManageInventory =
         hasRole(userRoles, "admin") ||
-        hasRole(userRoles, "manajer_toko") ||
-        hasRole(userRoles, "supervisor");
+        hasPermission(userRoles, userPermissions, "manage_inventory");
+    const canDeleteDraft = hasManageInventory;
 
     const handleFinalize = (op: Opname) => {
         if (
@@ -168,7 +169,7 @@ export function OpnameList({
                             >
                                 <IconEye size={16} />
                             </button>
-                            {isDraft && (
+                            {isDraft && hasManageInventory && (
                                 <button
                                     onClick={() => handleFinalize(op)}
                                     className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer"
@@ -191,7 +192,7 @@ export function OpnameList({
                 },
             },
         ],
-        [onViewDetail, canDeleteDraft],
+        [onViewDetail, canDeleteDraft, hasManageInventory],
     );
 
     return (

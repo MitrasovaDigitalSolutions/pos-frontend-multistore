@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
     IconShield,
@@ -43,33 +43,57 @@ const ROLE_METADATA: Record<string, { label: string; desc: string }> = {
 };
 
 const PERMISSION_METADATA: Record<string, { label: string; desc: string }> = {
-    view_reports: {
-        label: "Lihat Laporan Penjualan",
-        desc: "Mengakses dashboard statistik, ringkasan shift, dan riwayat laporan penjualan harian.",
+    manage_users: {
+        label: "Kelola Pengguna",
+        desc: "Mengatur user kasir/supervisor, hak akses role, serta menonaktifkan akun karyawan.",
+    },
+    view_users: {
+        label: "Lihat Pengguna",
+        desc: "Melihat daftar karyawan dan informasi perannya tanpa hak untuk melakukan modifikasi.",
     },
     manage_products: {
         label: "Kelola Master Produk",
         desc: "Menambah, mengubah, dan menghapus data barang, kategori, serta harga jual.",
     },
-    manage_users: {
-        label: "Kelola Pengguna",
-        desc: "Mengatur user kasir/supervisor, hak akses role, serta menonaktifkan akun karyawan.",
-    },
-    create_sales: {
-        label: "Melakukan Penjualan (POS)",
-        desc: "Menggunakan layar kasir checkout, memproses pembayaran, dan membuka cash drawer.",
+    view_products: {
+        label: "Lihat Master Produk",
+        desc: "Melihat katalog produk, harga jual, barcode, dan data pendukung tanpa hak mengubah.",
     },
     manage_sales: {
         label: "Kelola Transaksi Penjualan",
         desc: "Melihat, merevisi, atau membatalkan transaksi penjualan dan pesanan yang sudah tercatat.",
     },
+    view_reports: {
+        label: "Lihat Laporan Penjualan",
+        desc: "Mengakses dashboard statistik, ringkasan shift, dan riwayat laporan penjualan harian.",
+    },
+    create_sales: {
+        label: "Melakukan Penjualan (POS)",
+        desc: "Menggunakan layar kasir checkout, memproses pembayaran, dan membuka cash drawer.",
+    },
+    view_sales: {
+        label: "Lihat Transaksi Penjualan",
+        desc: "Melihat riwayat dan detail transaksi penjualan tanpa hak mengubah atau membatalkan.",
+    },
     manage_inventory: {
         label: "Kelola Stok & Inventori",
-        desc: "Melakukan stock opname fisik, penerimaan barang masuk, serta mengelola supplier.",
+        desc: "Melakukan stock opname fisik, penerimaan barang masuk, serta penyesuaian stok.",
     },
     view_inventory: {
         label: "Lihat Stok & Inventori",
         desc: "Memantau sisa stok barang, daftar produk, dan mutasi inventori tanpa hak mengubah.",
+    },
+    manage_suppliers: {
+        label: "Kelola Supplier",
+        desc: "Menambah, mengedit, dan menghapus master data supplier/pemasok barang.",
+    },
+    view_suppliers: {
+        label: "Lihat Supplier",
+        desc: "Melihat daftar supplier dan informasi kontak distributor tanpa hak mengubah.",
+    },
+    view_audit_logs: {
+        label: "Lihat Audit Logs",
+        desc: "Mengakses catatan riwayat log aktivitas sistem dan audit keamanan.",
     },
     operate_cash_drawer: {
         label: "Operasikan Cash Drawer",
@@ -82,10 +106,6 @@ const PERMISSION_METADATA: Record<string, { label: string; desc: string }> = {
     view_cash_drawer: {
         label: "Lihat Laporan Cash Drawer",
         desc: "Melihat laporan aktivitas, riwayat buka/tutup, dan selisih saldo cash drawer.",
-    },
-    manage_settings: {
-        label: "Pengaturan Toko & Printer",
-        desc: "Mengonfigurasi nama toko, alamat, struk belanja, dan parameter sistem utama.",
     },
 };
 
@@ -107,20 +127,18 @@ export function RolePermissionMapping() {
     const [searchQuery, setSearchQuery] = useState("");
     const [pendingToggles, setPendingToggles] = useState<Record<string, boolean>>({});
 
-    // Set default selected role
-    useEffect(() => {
-        if (roles && roles.length > 0 && !selectedRoleName) {
-            setSelectedRoleName(roles[0].name);
-        }
-    }, [roles, selectedRoleName]);
+    // Derive activeRoleName: use selectedRoleName if valid, otherwise default to first role name
+    const activeRoleName = (roles && roles.some((r) => r.name === selectedRoleName))
+        ? selectedRoleName
+        : (roles && roles.length > 0 ? roles[0].name : null);
 
     const isLoading = rolesLoading || permissionsLoading;
     const isError = rolesError || permissionsError;
 
-    const selectedRole = roles?.find((r) => r.name === selectedRoleName);
+    const selectedRole = roles?.find((r) => r.name === activeRoleName);
 
     const handleToggle = async (permissionName: string, isAssigned: boolean) => {
-        if (!selectedRoleName) return;
+        if (!activeRoleName) return;
 
         // Optimistic-like local loading per toggle
         setPendingToggles((prev) => ({ ...prev, [permissionName]: true }));
@@ -129,10 +147,10 @@ export function RolePermissionMapping() {
 
         if (isAssigned) {
             revokeMutation.mutate(
-                { role: selectedRoleName, permission: permissionName },
+                { role: activeRoleName, permission: permissionName },
                 {
                     onSuccess: () => {
-                        toast.success(`Akses '${label}' berhasil dicabut dari ${ROLE_METADATA[selectedRoleName]?.label || selectedRoleName}.`);
+                        toast.success(`Akses '${label}' berhasil dicabut dari ${ROLE_METADATA[activeRoleName]?.label || activeRoleName}.`);
                     },
                     onError: (err) => {
                         toast.error(err.message || "Gagal mencabut hak akses.");
@@ -144,10 +162,10 @@ export function RolePermissionMapping() {
             );
         } else {
             assignMutation.mutate(
-                { role: selectedRoleName, permission: permissionName },
+                { role: activeRoleName, permission: permissionName },
                 {
                     onSuccess: () => {
-                        toast.success(`Akses '${label}' berhasil diberikan ke ${ROLE_METADATA[selectedRoleName]?.label || selectedRoleName}.`);
+                        toast.success(`Akses '${label}' berhasil diberikan ke ${ROLE_METADATA[activeRoleName]?.label || activeRoleName}.`);
                     },
                     onError: (err) => {
                         toast.error(err.message || "Gagal memberikan hak akses.");
@@ -216,7 +234,7 @@ export function RolePermissionMapping() {
                             desc: "Hak akses yang ditentukan oleh sistem.",
                         };
                         const Icon = ROLE_ICONS[role.name] || IconUserCheck;
-                        const isSelected = selectedRoleName === role.name;
+                        const isSelected = activeRoleName === role.name;
                         const count = role.permissions.length;
 
                         return (
@@ -276,7 +294,7 @@ export function RolePermissionMapping() {
                                     <span>
                                         Konfigurasi Hak Akses:{" "}
                                         <span className="text-emerald-600 capitalize">
-                                            {ROLE_METADATA[selectedRoleName || ""]?.label || selectedRoleName}
+                                             {ROLE_METADATA[activeRoleName || ""]?.label || activeRoleName}
                                         </span>
                                     </span>
                                 </CardTitle>

@@ -9,7 +9,7 @@ import type { Receiving } from "../types";
 import type { Product } from "@/features/products/types";
 import { DataTable } from "@/components/ui/data-table";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { hasRole } from "@/constants/roles";
+import { hasRole, hasPermission } from "@/constants/roles";
 import { toast } from "sonner";
 import {
     useDeleteReceiving,
@@ -55,10 +55,11 @@ export function ReceivingList({
     const [isEditOpen, setIsEditOpen] = useState(false);
 
     const userRoles = session?.user?.roles || [];
-    const canDeleteDraft =
+    const userPermissions = session?.user?.permissions || [];
+    const hasManageInventory =
         hasRole(userRoles, "admin") ||
-        hasRole(userRoles, "manajer_toko") ||
-        hasRole(userRoles, "supervisor");
+        hasPermission(userRoles, userPermissions, "manage_inventory");
+    const canDeleteDraft = hasManageInventory;
 
     const handleTogglePaymentStatus = (id: number, currentStatus: "pending" | "paid") => {
         const nextStatus = currentStatus === "paid" ? "pending" : "paid";
@@ -194,6 +195,18 @@ export function ReceivingList({
                 header: "Pembayaran",
                 cell: ({ row }) => {
                     const status = row.original.status_pembayaran;
+                    if (!hasManageInventory) {
+                        return (
+                            <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${status === "paid"
+                                        ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                                        : "bg-rose-50 text-rose-700 border-rose-100"
+                                    }`}
+                            >
+                                {status === "paid" ? "Lunas" : "Pending"}
+                            </span>
+                        );
+                    }
                     return (
                         <button
                             onClick={() =>
@@ -246,7 +259,7 @@ export function ReceivingList({
                             >
                                 <IconEye size={16} />
                             </button>
-                            {isDraft && (
+                            {isDraft && hasManageInventory && (
                                 <>
                                     <button
                                         onClick={() => handleEditClick(rec)}
@@ -278,7 +291,7 @@ export function ReceivingList({
                 },
             },
         ],
-        [canDeleteDraft]
+        [canDeleteDraft, hasManageInventory]
     );
 
     return (
@@ -292,12 +305,14 @@ export function ReceivingList({
                         Daftar riwayat pasokan barang masuk dari distributor.
                     </p>
                 </div>
-                <Button
-                    onClick={onAddClick}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
-                >
-                    <IconPlus size={16} /> Terima Barang Masuk
-                </Button>
+                {hasManageInventory && (
+                    <Button
+                        onClick={onAddClick}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
+                    >
+                        <IconPlus size={16} /> Terima Barang Masuk
+                    </Button>
+                )}
             </div>
 
             <DataTable

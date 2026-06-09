@@ -1,16 +1,15 @@
 "use client";
 
-import React from "react";
-import { useForm, FormProvider, type Resolver } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/forms/form-input";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { IconChevronLeft, IconDoorExit, IconLoader2 } from "@tabler/icons-react";
+import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
+import { toast } from "sonner";
 import { useCloseCashDrawer } from "../../api/cash-drawer-api";
 import { closeCashDrawerSchema, type CloseCashDrawerInput } from "../../schemas/cash-drawer-schema";
-import { IconChevronLeft, IconLoader2, IconDoorExit } from "@tabler/icons-react";
 
 interface CloseShiftFormProps {
     sessionId: number;
@@ -37,9 +36,9 @@ export function CloseShiftForm({
         },
     });
 
-    const { handleSubmit, watch, formState: { isSubmitting } } = methods;
+    const { handleSubmit, formState: { isSubmitting } } = methods;
 
-    const actualClosing = watch("actual_closing_balance") || 0;
+    const actualClosing = useWatch({ control: methods.control, name: "actual_closing_balance" }) || 0;
     const diff = actualClosing - expectedCash;
 
     const onSubmit = async (data: CloseCashDrawerInput) => {
@@ -54,6 +53,7 @@ export function CloseShiftForm({
             });
             toast.success("Sesi shift laci kasir berhasil ditutup.");
             onSuccess();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             toast.error(err?.message || "Gagal menutup laci kasir.");
         }

@@ -7,13 +7,32 @@ import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { useDailyReport } from "../api/reports-api";
 import { DataTable } from "@/components/ui/data-table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSession } from "next-auth/react";
+import { hasRole, hasPermission } from "@/constants/roles";
 
 export function DailyReportView() {
+    const { data: session } = useSession();
+    const userRoles = session?.user?.roles || [];
+    const userPermissions = session?.user?.permissions || [];
+
+    const hasViewReports =
+        hasRole(userRoles, "admin") ||
+        hasPermission(userRoles, userPermissions, "view_reports");
+
     const [selectedReportDate, setSelectedReportDate] = useState<string>(
         new Date().toISOString().split("T")[0],
     );
 
     const { data: dailyReport, isLoading } = useDailyReport(selectedReportDate);
+
+    if (!hasViewReports) {
+        return (
+            <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm">
+                <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
+                <p className="text-xs text-slate-400 mt-1">Anda tidak memiliki izin untuk melihat laporan penjualan.</p>
+            </div>
+        );
+    }
 
     return (
         <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-6">
