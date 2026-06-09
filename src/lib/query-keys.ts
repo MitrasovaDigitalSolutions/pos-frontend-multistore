@@ -39,6 +39,21 @@ export const queryKeys = {
             [...queryKeys.reports.all, "daily", date] as const,
     },
 
+    // Suppliers
+    suppliers: {
+        all: ["suppliers"] as const,
+    },
+
+    // Categories
+    categories: {
+        all: ["categories"] as const,
+    },
+
+    // Brands
+    brands: {
+        all: ["brands"] as const,
+    },
+
     // Inventory
     inventory: {
         all: ["inventory"] as const,
@@ -47,7 +62,6 @@ export const queryKeys = {
         opnames: () => [...queryKeys.inventory.all, "opnames"] as const,
         opnameDetail: (id: number) =>
             [...queryKeys.inventory.all, "opname", id] as const,
-        suppliers: () => [...queryKeys.inventory.all, "suppliers"] as const,
     },
 
     // Transactions (checkout)

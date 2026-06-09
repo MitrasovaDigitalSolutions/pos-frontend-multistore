@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
-import { useForm, type Resolver } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useFormContext } from "react-hook-form";
 import {
     Dialog,
     DialogContent,
@@ -13,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { IconPlus } from "@tabler/icons-react";
 import { toast } from "sonner";
-import { productSchema, type ProductInput } from "../schemas/product-schema";
+import { type ProductInput } from "../schemas/product-schema";
 import { useCreateProduct, useUpdateProduct } from "../api/products-api";
 import type { Product } from "../types";
 
@@ -34,34 +32,8 @@ export function ProductFormDialog({
     const {
         register,
         handleSubmit,
-        reset,
         formState: { errors },
-    } = useForm<ProductInput>({
-        resolver: zodResolver(productSchema) as Resolver<ProductInput>,
-    });
-
-    // Reset form when editingProduct or open status changes
-    useEffect(() => {
-        if (open) {
-            if (editingProduct) {
-                reset({
-                    nama: editingProduct.nama,
-                    merek: editingProduct.merek,
-                    barcode: editingProduct.barcode || "",
-                    harga: editingProduct.harga,
-                    stok: editingProduct.stok,
-                });
-            } else {
-                reset({
-                    nama: "",
-                    merek: "",
-                    barcode: "",
-                    harga: 0,
-                    stok: 0,
-                });
-            }
-        }
-    }, [editingProduct, open, reset]);
+    } = useFormContext<ProductInput>();
 
     const isPending = createProduct.isPending || updateProduct.isPending;
 

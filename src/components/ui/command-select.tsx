@@ -1,5 +1,6 @@
 import * as React from "react"
 import { Check, ChevronsUpDown, Search, Loader2 } from "lucide-react"
+import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 import { cn } from "@/lib/utils"
 
 export interface CommandOption {
@@ -207,18 +208,6 @@ export function CommandSelect({
   disabled = false,
 }: CommandSelectProps) {
   const [open, setOpen] = React.useState(false)
-  const containerRef = React.useRef<HTMLDivElement>(null)
-
-  // Click outside to close
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
 
   const selectedOption = options.find((opt) => opt.value === value)
 
@@ -228,45 +217,59 @@ export function CommandSelect({
   }
 
   return (
-    <div ref={containerRef} className={cn("relative w-full", wrapperClassName)}>
-      <button
-        type="button"
-        onClick={() => !disabled && setOpen(!open)}
-        disabled={disabled}
-        className={cn(
-          "flex h-8 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 outline-none transition-all hover:bg-slate-50 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer",
-          className
-        )}
-      >
-        <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
-        <ChevronsUpDown className="ml-1.5 h-3.5 w-3.5 shrink-0 opacity-50" />
-      </button>
+    <div className={cn("relative w-full", wrapperClassName)}>
+      <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
+        <PopoverPrimitive.Trigger
+          render={
+            <button
+              type="button"
+              disabled={disabled}
+              className={cn(
+                "flex h-8 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 outline-none transition-all hover:bg-slate-50 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer",
+                className
+              )}
+            >
+              <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
+              <ChevronsUpDown className="ml-1.5 h-3.5 w-3.5 shrink-0 opacity-50" />
+            </button>
+          }
+        />
 
-      {open && (
-        <div className="absolute right-0 top-full z-50 mt-1 max-h-[300px] w-full min-w-[150px] rounded-xl border border-slate-100 bg-white shadow-lg animate-in fade-in-0 zoom-in-95 duration-100">
-          <Command selectedValue={value} onSelect={handleSelect} disableLocalFilter={!!onSearchChange}>
-            <CommandInput
-              placeholder={searchPlaceholder}
-              onValueChange={onSearchChange}
-              autoFocus
-            />
-            <CommandList>
-              {isLoading && (
-                <CommandEmpty isLoading={true} />
-              )}
-              {!isLoading && options.length === 0 && (
-                <CommandEmpty>{emptyMessage}</CommandEmpty>
-              )}
-              {!isLoading &&
-                options.map((opt) => (
-                  <CommandItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </CommandItem>
-                ))}
-            </CommandList>
-          </Command>
-        </div>
-      )}
+        <PopoverPrimitive.Portal>
+          <PopoverPrimitive.Positioner
+            align="start"
+            side="bottom"
+            sideOffset={4}
+            className="isolate z-50"
+          >
+            <PopoverPrimitive.Popup
+              className="w-(--anchor-width) min-w-[150px] max-h-[300px] origin-(--transform-origin) animate-in fade-in-0 zoom-in-95 duration-100 outline-none overflow-hidden"
+            >
+              <Command selectedValue={value} onSelect={handleSelect} disableLocalFilter={!!onSearchChange} className="shadow-lg">
+                <CommandInput
+                  placeholder={searchPlaceholder}
+                  onValueChange={onSearchChange}
+                  autoFocus
+                />
+                <CommandList>
+                  {isLoading && (
+                    <CommandEmpty isLoading={true} />
+                  )}
+                  {!isLoading && options.length === 0 && (
+                    <CommandEmpty>{emptyMessage}</CommandEmpty>
+                  )}
+                  {!isLoading &&
+                    options.map((opt) => (
+                      <CommandItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </CommandItem>
+                    ))}
+                </CommandList>
+              </Command>
+            </PopoverPrimitive.Popup>
+          </PopoverPrimitive.Positioner>
+        </PopoverPrimitive.Portal>
+      </PopoverPrimitive.Root>
     </div>
   )
 }

@@ -1,13 +1,5 @@
 import type { Product } from "@/features/products/types";
-
-export interface Supplier {
-    id: number;
-    nama: string;
-    email: string | null;
-    nomor_telepon: string | null;
-    alamat: string | null;
-    created_at: string;
-}
+import type { Supplier } from "@/features/suppliers/types";
 
 export interface StockMovement {
     id: number;

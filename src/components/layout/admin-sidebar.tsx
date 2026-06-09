@@ -1,24 +1,25 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-    IconHome,
-    IconShoppingCart,
-    IconPackage,
-    IconBox,
-    IconTruckDelivery,
-    IconChartBar,
-    IconSettings,
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import { useSidebarStore } from "@/stores/sidebar-store";
+import {
     IconLogout,
-    IconDeviceLaptop,
-    IconUsers,
-    IconBuildingStore,
-    IconShieldLock,
+    IconShoppingCart
 } from "@tabler/icons-react";
-import { hasRole, hasPermission } from "@/constants/roles";
-import { ROUTES } from "@/constants/routes";
+import { ChevronsLeft, ChevronsRight } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { NAVIGATION_CONFIG } from "./sidebar-config";
+import { SidebarLink } from "./sidebar-link";
+import { SidebarSubmenu } from "./sidebar-submenu";
 
 export function AdminSidebar() {
     const pathname = usePathname();
@@ -26,6 +27,17 @@ export function AdminSidebar() {
     const { data: session } = useSession();
     const user = session?.user;
 
+    const { isCollapsed, toggle } = useSidebarStore();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setMounted(true);
+        }, 0);
+        return () => clearTimeout(timer);
+    }, []);
+
+    const collapsed = mounted ? isCollapsed : false;
     const currentTab = searchParams.get("tab") || "inventory";
 
     const userRoles = user?.roles || [];
@@ -40,226 +52,155 @@ export function AdminSidebar() {
             return pathname === path && currentTab === tab;
         }
         if (path === ROUTES.ADMIN_STOCK) {
-            return pathname === path && currentTab !== "receiving" && currentTab !== "suppliers";
+            return pathname === path && currentTab !== "receiving";
         }
         return pathname === path;
     };
 
-    const getLinkClass = (path: string, tab?: string) => {
-        const active = isActive(path, tab);
-        return `w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-xs transition-all text-left cursor-pointer ${active
-                ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/10"
-                : "text-gray-400 hover:text-white hover:bg-gray-900"
-            }`;
-    };
-
-    const hasViewReports =
-        hasRole(userRoles, "admin") ||
-        hasPermission(userRoles, userPermissions, "view_reports");
-    const hasCreateSales =
-        hasRole(userRoles, "admin") ||
-        hasPermission(userRoles, userPermissions, "create_sales");
-    const hasManageProducts =
-        hasRole(userRoles, "admin") ||
-        hasPermission(userRoles, userPermissions, "manage_products");
-    const hasViewProducts =
-        hasRole(userRoles, "admin") ||
-        hasPermission(userRoles, userPermissions, "view_products");
-    const hasManageUsers =
-        hasRole(userRoles, "admin") ||
-        hasPermission(userRoles, userPermissions, "manage_users");
-    const hasViewUsers =
-        hasRole(userRoles, "admin") ||
-        hasPermission(userRoles, userPermissions, "view_users");
-    const hasManageInventory =
-        hasRole(userRoles, "admin") ||
-        hasPermission(userRoles, userPermissions, "manage_inventory");
-    const hasViewInventory =
-        hasRole(userRoles, "admin") ||
-        hasPermission(userRoles, userPermissions, "view_inventory");
-    const hasManageSuppliers =
-        hasRole(userRoles, "admin") ||
-        hasPermission(userRoles, userPermissions, "manage_suppliers");
-    const hasViewSuppliers =
-        hasRole(userRoles, "admin") ||
-        hasPermission(userRoles, userPermissions, "view_suppliers");
-    const hasViewAuditLogs =
-        hasRole(userRoles, "admin") ||
-        hasPermission(userRoles, userPermissions, "view_audit_logs");
-    const hasAdmin = hasRole(userRoles, "admin");
+    // Helper to get active routes from config mapping
+    const ROUTES = {
+        ADMIN_STOCK: "/admin/stock",
+    } as const;
 
     return (
-        <aside className="w-52.5 bg-gray-950 text-gray-400 flex flex-col justify-between p-4 py-6 border-r border-gray-900 shrink-0">
-            <div className="space-y-6">
-                <div className="flex items-center gap-2 px-3">
-                    <IconShoppingCart size={22} className="text-emerald-400" />
-                    <span className="font-extrabold text-[14px] text-white tracking-wide">
-                        MSG POS
-                    </span>
-                </div>
+        <TooltipProvider delayDuration={0}>
+            <aside
+                className={cn(
+                    "relative bg-gray-950 text-gray-400 flex flex-col justify-between border-r border-gray-900 shrink-0 transition-all duration-300 h-screen select-none",
+                    collapsed ? "w-16" : "w-52.5"
+                )}
+            >
+                <button
+                    onClick={toggle}
+                    className="absolute top-2 -right-4 z-10 w-4 h-16 flex items-center justify-center rounded-tr-md rounded-br-md bg-gray-950 text-gray-400 hover:text-white hover:bg-gray-900 shadow-md cursor-pointer transition-all outline-none"
+                    title={collapsed ? "Perluas Menu" : "Sembunyikan Menu"}
+                >
+                    {collapsed ? (
+                        <ChevronsRight size={13} className="stroke-[3]" />
+                    ) : (
+                        <ChevronsLeft size={13} className="stroke-[3]" />
+                    )}
+                </button>
 
-                <div className="space-y-4">
-                    <div className="space-y-1">
-                        <span className="text-[9px] font-extrabold text-gray-600 uppercase tracking-widest px-3 block">
-                            Menu Utama
+                {/* Top Header Logo */}
+                <div
+                    className={cn(
+                        "py-7 flex items-center gap-2 border-b border-gray-950/20 shrink-0",
+                        collapsed ? "justify-center px-0" : "px-6"
+                    )}
+                >
+                    <IconShoppingCart
+                        size={24}
+                        className="text-emerald-400 shrink-0"
+                    />
+                    {!collapsed && (
+                        <span className="font-extrabold text-md text-white tracking-wide">
+                            MSG POS
                         </span>
-                        <ul className="space-y-0.5">
-                            {hasViewReports && (
-                                <li>
-                                    <Link
-                                        href={ROUTES.ADMIN}
-                                        className={getLinkClass(ROUTES.ADMIN)}
-                                    >
-                                        <IconHome size={18} />
-                                        <span>Dashboard</span>
-                                    </Link>
-                                </li>
-                            )}
-                            {hasCreateSales && (
-                                <li>
-                                    <Link
-                                        href={ROUTES.CHECKOUT}
-                                        className={getLinkClass(
-                                            ROUTES.CHECKOUT,
-                                        )}
-                                    >
-                                        <IconDeviceLaptop size={18} />
-                                        <span>Layar Kasir (POS)</span>
-                                    </Link>
-                                </li>
-                            )}
-                            {(hasManageProducts || hasViewProducts) && (
-                                <li>
-                                    <Link
-                                        href={ROUTES.ADMIN_PRODUCTS}
-                                        className={getLinkClass(
-                                            ROUTES.ADMIN_PRODUCTS,
-                                        )}
-                                    >
-                                        <IconPackage size={18} />
-                                        <span>Manajemen Produk</span>
-                                    </Link>
-                                </li>
-                            )}
-                        </ul>
-                    </div>
-
-                    {(hasManageInventory || hasViewInventory || hasManageSuppliers || hasViewSuppliers || hasViewReports) && (
-                        <div className="space-y-1">
-                            <span className="text-[9px] font-extrabold text-gray-600 uppercase tracking-widest px-3 block">
-                                Inventori & Laporan
-                            </span>
-                            <ul className="space-y-0.5">
-                                {(hasManageInventory || hasViewInventory) && (
-                                    <li>
-                                        <Link
-                                            href={`${ROUTES.ADMIN_STOCK}?tab=inventory`}
-                                            className={getLinkClass(
-                                                ROUTES.ADMIN_STOCK,
-                                                "inventory",
-                                            )}
-                                        >
-                                            <IconBox size={18} />
-                                            <span>Stok Barang</span>
-                                        </Link>
-                                    </li>
-                                )}
-                                {(hasManageInventory || hasViewInventory) && (
-                                    <li>
-                                        <Link
-                                            href={`${ROUTES.ADMIN_STOCK}?tab=receiving`}
-                                            className={getLinkClass(
-                                                ROUTES.ADMIN_STOCK,
-                                                "receiving",
-                                            )}
-                                        >
-                                            <IconTruckDelivery size={18} />
-                                            <span>Penerimaan</span>
-                                        </Link>
-                                    </li>
-                                )}
-                                {(hasManageSuppliers || hasViewSuppliers) && (
-                                    <li>
-                                        <Link
-                                            href={`${ROUTES.ADMIN_STOCK}?tab=suppliers`}
-                                            className={getLinkClass(
-                                                ROUTES.ADMIN_STOCK,
-                                                "suppliers",
-                                            )}
-                                        >
-                                            <IconBuildingStore size={18} />
-                                            <span>Kelola Supplier</span>
-                                        </Link>
-                                    </li>
-                                )}
-                                {hasViewReports && (
-                                    <li>
-                                        <Link
-                                            href={ROUTES.ADMIN_REPORTS}
-                                            className={getLinkClass(
-                                                ROUTES.ADMIN_REPORTS,
-                                            )}
-                                        >
-                                            <IconChartBar size={18} />
-                                            <span>Laporan Penjualan</span>
-                                        </Link>
-                                    </li>
-                                )}
-                            </ul>
-                        </div>
                     )}
                 </div>
-            </div>
 
-            <div className="space-y-1">
-                <span className="text-[9px] font-extrabold text-gray-600 uppercase tracking-widest px-3 block">
-                    Sistem
-                </span>
-                <ul className="space-y-0.5">
-                    {(hasManageUsers || hasViewUsers) && (
-                        <li>
-                            <Link
-                                href={ROUTES.ADMIN_USERS}
-                                className={getLinkClass(ROUTES.ADMIN_USERS)}
-                            >
-                                <IconUsers size={18} />
-                                <span>Kelola Pengguna</span>
-                            </Link>
-                        </li>
-                    )}
-                    {hasAdmin && (
-                        <li>
-                            <Link
-                                href={ROUTES.ADMIN_SETTINGS}
-                                className={getLinkClass(ROUTES.ADMIN_SETTINGS)}
-                            >
-                                <IconSettings size={18} />
-                                <span>Pengaturan Toko</span>
-                            </Link>
-                        </li>
-                    )}
-                    {hasViewAuditLogs && (
-                        <li>
-                            <Link
-                                href={ROUTES.ADMIN_AUDIT}
-                                className={getLinkClass(ROUTES.ADMIN_AUDIT)}
-                            >
-                                <IconShieldLock size={18} />
-                                <span>Log Aktivitas</span>
-                            </Link>
-                        </li>
-                    )}
-                    <li>
-                        <button
-                            onClick={handleLogout}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-950/20 transition-all text-left cursor-pointer border-none bg-transparent"
-                        >
-                            <IconLogout size={18} />
-                            <span>Keluar</span>
-                        </button>
-                    </li>
-                </ul>
-            </div>
-        </aside>
+                {/* Middle Scrollable Section (Menu List) */}
+                <ScrollArea className="flex-1 min-h-0 py-2">
+                    <div
+                        className={cn(
+                            "flex flex-col pb-4",
+                            collapsed ? "px-2 space-y-4" : "px-4 space-y-5"
+                        )}
+                    >
+                        {NAVIGATION_CONFIG.map((section) => {
+                            // Filter items based on active user role/permission checks
+                            const visibleItems = section.items.filter((item) =>
+                                item.permission(userRoles, userPermissions)
+                            );
+
+                            if (visibleItems.length === 0) return null;
+
+                            return (
+                                <div key={section.title} className="space-y-1">
+                                    {!collapsed ? (
+                                        <span className="text-[9px] font-extrabold text-gray-600 uppercase tracking-widest px-3 block">
+                                            {section.title}
+                                        </span>
+                                    ) : (
+                                        <div className="h-px bg-gray-900 my-2 w-10 mx-auto" />
+                                    )}
+                                    <ul
+                                        className={cn(
+                                            "space-y-0.5",
+                                            collapsed && "flex flex-col gap-1"
+                                        )}
+                                    >
+                                        {visibleItems.map((item) => {
+                                            if (item.type === "link") {
+                                                return (
+                                                    <SidebarLink
+                                                        key={item.path + (item.tab || "")}
+                                                        path={item.path}
+                                                        label={item.label}
+                                                        icon={item.icon}
+                                                        tab={item.tab}
+                                                        collapsed={collapsed}
+                                                        isActive={isActive(item.path, item.tab)}
+                                                    />
+                                                );
+                                            } else {
+                                                return (
+                                                    <SidebarSubmenu
+                                                        key={item.label}
+                                                        label={item.label}
+                                                        icon={item.icon}
+                                                        items={item.items}
+                                                        collapsed={collapsed}
+                                                        pathname={pathname}
+                                                        userRoles={userRoles}
+                                                        userPermissions={userPermissions}
+                                                        isActive={isActive}
+                                                    />
+                                                );
+                                            }
+                                        })}
+                                    </ul>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </ScrollArea>
+
+                {/* Bottom Fixed Section (Logout Button) */}
+                <div className={cn("p-4 border-t border-gray-900 bg-gray-950 shrink-0", collapsed ? "px-2" : "px-4")}>
+                    <ul className="space-y-0.5">
+                        {collapsed ? (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="w-10 h-10 mx-auto flex items-center justify-center rounded-xl text-rose-500 hover:text-rose-300 hover:bg-rose-950/20 transition-all cursor-pointer border-none bg-transparent outline-none"
+                                    >
+                                        <IconLogout size={18} />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent
+                                    side="right"
+                                    className="bg-gray-900 border-gray-800 text-white font-bold text-xs"
+                                >
+                                    Keluar
+                                </TooltipContent>
+                            </Tooltip>
+                        ) : (
+                            <li>
+                                <button
+                                    onClick={handleLogout}
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-950/20 transition-all text-left cursor-pointer border-none bg-transparent outline-none"
+                                >
+                                    <IconLogout size={18} />
+                                    <span>Keluar</span>
+                                </button>
+                            </li>
+                        )}
+                    </ul>
+                </div>
+            </aside>
+        </TooltipProvider>
     );
 }
