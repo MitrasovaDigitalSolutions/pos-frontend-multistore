@@ -1,15 +1,17 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { hasRole, hasPermission } from "@/constants/roles";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { IconEdit, IconTrash, IconPlus } from "@tabler/icons-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { IconPlus } from "@tabler/icons-react";
 import type { Supplier } from "../types";
 import { DataTable } from "@/components/ui/data-table";
 import { useDeleteSupplier } from "../api/suppliers-api";
 import { toast } from "sonner";
+
 
 interface SupplierListProps {
     suppliers: Supplier[];
@@ -53,18 +55,26 @@ export function SupplierList({
         hasPermission(userRoles, userPermissions, "manage_suppliers");
 
     const deleteSupplier = useDeleteSupplier();
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [supplierToDelete, setSupplierToDelete] = useState<Supplier | null>(null);
 
-    const handleDelete = (id: number) => {
-        if (confirm("Apakah Anda yakin ingin menghapus data supplier ini?")) {
-            deleteSupplier.mutate(id, {
-                onSuccess: () => {
-                    toast.success("Supplier berhasil dihapus.");
-                },
-                onError: (err) => {
-                    toast.error(err.message || "Gagal menghapus supplier.");
-                },
-            });
-        }
+    const handleDelete = (s: Supplier) => {
+        setSupplierToDelete(s);
+        setIsConfirmOpen(true);
+    };
+
+    const handleConfirmDelete = () => {
+        if (!supplierToDelete) return;
+        deleteSupplier.mutate(supplierToDelete.id, {
+            onSuccess: () => {
+                toast.success(`Supplier "${supplierToDelete.nama}" berhasil dihapus.`);
+                setIsConfirmOpen(false);
+                setSupplierToDelete(null);
+            },
+            onError: (err) => {
+                toast.error(err.message || "Gagal menghapus supplier.");
+            },
+        });
     };
 
     const columns = useMemo<ColumnDef<Supplier>[]>(
@@ -108,41 +118,10 @@ export function SupplierList({
                 },
             ];
 
-            if (hasManageSuppliers) {
-                baseColumns.push({
-                    id: "actions",
-                    header: "Aksi",
-                    enableSorting: false,
-                    meta: {
-                        headerClassName: "text-center w-28",
-                        cellClassName: "text-center",
-                    },
-                    cell: ({ row }) => {
-                        const sup = row.original;
-                        return (
-                            <div className="flex justify-center gap-1.5">
-                                <button
-                                    onClick={() => onEdit(sup)}
-                                    className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer"
-                                >
-                                    <IconEdit size={16} />
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(sup.id)}
-                                    className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer"
-                                >
-                                    <IconTrash size={16} />
-                                </button>
-                            </div>
-                        );
-                    },
-                });
-            }
-
             return baseColumns;
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [hasManageSuppliers, onEdit],
+        [hasManageSuppliers],
     );
 
     return (
@@ -183,6 +162,32 @@ export function SupplierList({
                 searchPlaceholder="Cari supplier berdasarkan nama..."
                 virtualize={true}
                 estimateRowHeight={44}
+                onEdit={hasManageSuppliers ? onEdit : undefined}
+                onDelete={hasManageSuppliers ? handleDelete : undefined}
+            />
+
+            <ConfirmDialog
+                open={isConfirmOpen}
+                onOpenChange={setIsConfirmOpen}
+                title="Hapus Supplier"
+                description={
+                    supplierToDelete ? (
+                        <span>
+                            Apakah Anda yakin ingin menghapus supplier{" "}
+                            <strong className="font-semibold text-slate-900">
+                                {supplierToDelete.nama}
+                            </strong>
+                            ? Tindakan ini tidak dapat dibatalkan.
+                        </span>
+                    ) : (
+                        "Apakah Anda yakin ingin menghapus supplier ini?"
+                    )
+                }
+                confirmText="Ya, Hapus"
+                cancelText="Batal"
+                onConfirm={handleConfirmDelete}
+                isLoading={deleteSupplier.isPending}
+                variant="danger"
             />
         </section>
     );

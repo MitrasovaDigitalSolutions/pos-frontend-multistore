@@ -6,19 +6,31 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/forms/form-input";
+import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { toast } from "sonner";
 import { useOpenCashDrawer } from "../../api/cash-drawer-api";
 import { openCashDrawerSchema, type OpenCashDrawerInput } from "../../schemas/cash-drawer-schema";
-import { IconLock, IconLoader2, IconDeviceFloppy, IconLogout } from "@tabler/icons-react";
-import { signOut } from "next-auth/react";
+import { IconLock, IconLoader2, IconDeviceFloppy, IconLogout, IconHome } from "@tabler/icons-react";
+import { signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { canAccessAdmin } from "@/constants/roles";
+import { cn } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface BukaShiftModalProps {
     open: boolean;
     token?: string;
     onSuccess: (sessionId: number) => void;
+    isLoading?: boolean;
 }
 
-export function BukaShiftModal({ open, token, onSuccess }: BukaShiftModalProps) {
+export function BukaShiftModal({ open, token, onSuccess, isLoading = false }: BukaShiftModalProps) {
+    const { data: session } = useSession();
+    const router = useRouter();
+    const userRoles = session?.user?.roles || [];
+    const showAdminBtn = canAccessAdmin(userRoles);
+    const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = React.useState(false);
+
     const openMutation = useOpenCashDrawer();
 
     const methods = useForm<OpenCashDrawerInput>({
@@ -47,24 +59,34 @@ export function BukaShiftModal({ open, token, onSuccess }: BukaShiftModalProps) 
             } else {
                 toast.error("Gagal mendapatkan ID sesi laci kasir.");
             }
-        } catch (err: any) {
-            const message = err?.message || "Gagal membuka laci kasir.";
+        } catch (err) {
+            const error = err as Error;
+            const message = error.message || "Gagal membuka laci kasir.";
             toast.error(message);
         }
     };
 
+    const isFormDisabled = openMutation.isPending || isSubmitting || isLoading;
+
     return (
-        <Dialog open={open} onOpenChange={() => { }}>
+        <>
+            <Dialog open={open} onOpenChange={() => { }}>
             <DialogContent className="max-w-md bg-white rounded-2xl border-slate-100 p-6 shadow-2xl" showCloseButton={false}>
                 <DialogHeader className="pb-4 border-b border-slate-100">
                     <DialogTitle className="text-base font-extrabold text-slate-900 flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600">
-                            <IconLock size={18} />
+                            {isFormDisabled ? (
+                                <IconLoader2 size={18} className="animate-spin text-emerald-600" />
+                            ) : (
+                                <IconLock size={18} />
+                            )}
                         </div>
                         <div>
                             <span className="block text-sm font-extrabold">Buka Shift Laci Kasir</span>
                             <span className="block text-[11px] font-medium text-slate-400 mt-0.5">
-                                Masukkan saldo awal laci untuk memulai shift.
+                                {isLoading 
+                                    ? "Memeriksa status sesi laci kasir..." 
+                                    : "Masukkan saldo awal laci untuk memulai shift."}
                             </span>
                         </div>
                     </DialogTitle>
@@ -72,12 +94,11 @@ export function BukaShiftModal({ open, token, onSuccess }: BukaShiftModalProps) 
 
                 <FormProvider {...methods}>
                     <form onSubmit={handleSubmit(onSubmit)} className="pt-4 space-y-4">
-                        <FormInput<OpenCashDrawerInput>
+                        <FormNominalInput<OpenCashDrawerInput>
                             name="opening_balance"
                             label="Saldo Awal (Rp)"
-                            type="number"
                             placeholder="0"
-                            disabled={openMutation.isPending || isSubmitting}
+                            disabled={isFormDisabled}
                         />
 
                         <FormInput<OpenCashDrawerInput>
@@ -85,37 +106,72 @@ export function BukaShiftModal({ open, token, onSuccess }: BukaShiftModalProps) 
                             label="Catatan Pembukaan (Opsional)"
                             type="text"
                             placeholder="Contoh: Modal awal shift pagi."
-                            disabled={openMutation.isPending || isSubmitting}
+                            disabled={isFormDisabled}
                         />
 
-                        <div className="grid grid-cols-12 gap-4 pt-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => signOut({ callbackUrl: "/login" })}
-                                className="col-span-4 h-11 border border-rose-200 hover:bg-rose-50 text-rose-600 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer bg-white"
-                            >
-                                <IconLogout size={16} />
-                                <span>Logout</span>
-                            </Button>
+                        <div className="space-y-3 pt-2">
                             <Button
                                 type="submit"
-                                disabled={openMutation.isPending || isSubmitting}
-                                className="col-span-8 h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-emerald-600/10 active:scale-[0.99] transition-all disabled:opacity-50 border-none"
+                                disabled={isFormDisabled}
+                                className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-emerald-600/10 active:scale-[0.99] transition-all disabled:opacity-50 border-none"
                             >
-                                {openMutation.isPending || isSubmitting ? (
+                                {isFormDisabled ? (
                                     <IconLoader2 size={16} className="animate-spin" />
                                 ) : (
                                     <IconDeviceFloppy size={16} />
                                 )}
-                                <span>Mulai Shift (Buka Laci)</span>
+                                <span>
+                                    {isLoading 
+                                        ? "Memeriksa Sesi..." 
+                                        : (openMutation.isPending || isSubmitting) 
+                                            ? "Membuka Laci..." 
+                                            : "Mulai Shift (Buka Laci)"}
+                                </span>
                             </Button>
 
+                            <div className={cn("grid gap-3", showAdminBtn ? "grid-cols-2" : "grid-cols-1")}>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setIsLogoutConfirmOpen(true)}
+                                    className="h-11 border border-rose-200 hover:bg-rose-50 text-rose-600 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer bg-white w-full"
+                                    disabled={isFormDisabled}
+                                >
+                                    <IconLogout size={16} />
+                                    <span>Logout</span>
+                                </Button>
 
+                                {showAdminBtn && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => router.push("/admin")}
+                                        className="h-11 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer bg-white w-full"
+                                        disabled={isFormDisabled}
+                                    >
+                                        <IconHome size={16} />
+                                        <span>Kembali ke Admin</span>
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                     </form>
                 </FormProvider>
             </DialogContent>
         </Dialog>
-    );
+
+        <ConfirmDialog
+            open={isLogoutConfirmOpen}
+            onOpenChange={setIsLogoutConfirmOpen}
+            title="Keluar dari Akun"
+            description="Apakah Anda yakin ingin keluar dari aplikasi? Sesi Anda saat ini akan diakhiri."
+            confirmText="Ya, Keluar"
+            cancelText="Batal"
+            variant="danger"
+            onConfirm={async () => {
+                await signOut({ callbackUrl: "/login" });
+            }}
+        />
+    </>
+);
 }

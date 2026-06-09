@@ -1,6 +1,6 @@
 "use client";
 
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Scrollable } from "@/components/ui/scrollable";
 import {
     Tooltip,
     TooltipContent,
@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 import { NAVIGATION_CONFIG } from "./sidebar-config";
 import { SidebarLink } from "./sidebar-link";
 import { SidebarSubmenu } from "./sidebar-submenu";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export function AdminSidebar() {
     const pathname = usePathname();
@@ -29,6 +30,7 @@ export function AdminSidebar() {
 
     const { isCollapsed, toggle } = useSidebarStore();
     const [mounted, setMounted] = useState(false);
+    const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -43,8 +45,8 @@ export function AdminSidebar() {
     const userRoles = user?.roles || [];
     const userPermissions = user?.permissions || [];
 
-    const handleLogout = async () => {
-        await signOut({ callbackUrl: "/login" });
+    const handleLogout = () => {
+        setIsLogoutConfirmOpen(true);
     };
 
     const isActive = (path: string, tab?: string) => {
@@ -101,7 +103,7 @@ export function AdminSidebar() {
                 </div>
 
                 {/* Middle Scrollable Section (Menu List) */}
-                <ScrollArea className="flex-1 min-h-0 py-2">
+                <Scrollable className="flex-1 min-h-0 py-2">
                     <div
                         className={cn(
                             "flex flex-col pb-4",
@@ -165,7 +167,7 @@ export function AdminSidebar() {
                             );
                         })}
                     </div>
-                </ScrollArea>
+                </Scrollable>
 
                 {/* Bottom Fixed Section (Logout Button) */}
                 <div className={cn("p-4 border-t border-gray-900 bg-gray-950 shrink-0", collapsed ? "px-2" : "px-4")}>
@@ -201,6 +203,19 @@ export function AdminSidebar() {
                     </ul>
                 </div>
             </aside>
+
+            <ConfirmDialog
+                open={isLogoutConfirmOpen}
+                onOpenChange={setIsLogoutConfirmOpen}
+                title="Keluar dari Akun"
+                description="Apakah Anda yakin ingin keluar dari aplikasi? Sesi Anda saat ini akan diakhiri."
+                confirmText="Ya, Keluar"
+                cancelText="Batal"
+                variant="danger"
+                onConfirm={async () => {
+                    await signOut({ callbackUrl: "/login" });
+                }}
+            />
         </TooltipProvider>
     );
 }

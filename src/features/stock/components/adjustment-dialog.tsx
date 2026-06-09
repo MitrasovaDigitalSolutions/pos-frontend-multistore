@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { FormSelect } from "@/components/forms/form-select";
 import { IconActivity } from "@tabler/icons-react";
 import { toast } from "sonner";
+import { FormNumberInput } from "@/components/forms/form-number-input";
 import {
     adjustmentSchema,
     type AdjustmentInput,
@@ -103,24 +104,13 @@ export function AdjustmentDialog({
                             disabled={isPending}
                         />
 
-                        {/* Kuantitas */}
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                Kuantitas Perubahan (+ / -)
-                            </label>
-                            <Input
-                                type="number"
-                                placeholder="Contoh: -5 untuk kurangi, 10 untuk tambah..."
-                                className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                                disabled={isPending}
-                                {...register("kuantitas")}
-                            />
-                            {errors.kuantitas && (
-                                <p className="text-[10px] text-rose-500 font-medium">
-                                    {errors.kuantitas.message}
-                                </p>
-                            )}
-                        </div>
+                        <FormNumberInput<AdjustmentInput>
+                            name="kuantitas"
+                            label="Kuantitas Perubahan (+ / -)"
+                            placeholder="Contoh: -5 untuk kurangi, 10 untuk tambah..."
+                            disabled={isPending}
+                            allowNegative={true}
+                        />
 
                         {/* Alasan */}
                         <div className="space-y-1.5">

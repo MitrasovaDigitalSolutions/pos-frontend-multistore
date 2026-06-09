@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/forms/form-input";
+import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { toast } from "sonner";
 import { useCashIn } from "../../api/cash-drawer-api";
 import { cashInSchema, type CashInInput } from "../../schemas/cash-drawer-schema";
@@ -43,8 +44,9 @@ export function CashInForm({ sessionId, token, onSuccess, onCancel }: CashInForm
             });
             toast.success("Pencatatan Cash In berhasil!");
             onSuccess();
-        } catch (err: any) {
-            toast.error(err?.message || "Gagal mencatat uang masuk.");
+        } catch (err) {
+            const error = err as Error;
+            toast.error(error.message || "Gagal mencatat uang masuk.");
         }
     };
 
@@ -66,10 +68,9 @@ export function CashInForm({ sessionId, token, onSuccess, onCancel }: CashInForm
 
             <FormProvider {...methods}>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
-                    <FormInput<CashInInput>
+                    <FormNominalInput<CashInInput>
                         name="amount"
                         label="Jumlah Uang Masuk (Rp)"
-                        type="number"
                         placeholder="0"
                         disabled={cashInMutation.isPending || isSubmitting}
                     />

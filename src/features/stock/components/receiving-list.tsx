@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { IconPlus, IconEye, IconEdit, IconTrash, IconCheck } from "@tabler/icons-react";
+import { IconPlus } from "@tabler/icons-react";
 import type { Receiving } from "../types";
 import type { Product } from "@/features/products/types";
 import { DataTable } from "@/components/ui/data-table";
@@ -18,6 +18,7 @@ import {
 } from "../api/stock-api";
 import { ReceivingDialog } from "./receiving-dialog";
 import { ReceivingDetailDialog } from "./receiving-detail-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface ReceivingListProps {
     receivings: Receiving[];
@@ -54,6 +55,23 @@ export function ReceivingList({
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
 
+    const [confirmDialog, setConfirmDialog] = useState<{
+        open: boolean;
+        title: string;
+        description: React.ReactNode;
+        confirmText: string;
+        cancelText?: string;
+        variant: "danger" | "warning" | "info" | "success";
+        onConfirm: () => void;
+    }>({
+        open: false,
+        title: "",
+        description: "",
+        confirmText: "",
+        variant: "warning",
+        onConfirm: () => {},
+    });
+
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
     const hasManageInventory =
@@ -77,52 +95,66 @@ export function ReceivingList({
     };
 
     const handleFinalize = (receiving: Receiving) => {
-        if (
-            confirm(
-                "Apakah Anda yakin ingin menyelesaikan penerimaan ini? Stok produk akan langsung ditambahkan ke inventori dan tidak dapat diubah lagi."
-            )
-        ) {
-            const itemsInput = (receiving.items || []).map((item) => ({
-                product_id: item.product_id,
-                kuantitas: item.kuantitas,
-            }));
+        setConfirmDialog({
+            open: true,
+            title: "Selesaikan Penerimaan",
+            description: "Apakah Anda yakin ingin menyelesaikan penerimaan ini? Stok produk akan langsung ditambahkan ke inventori dan tidak dapat diubah lagi.",
+            confirmText: "Ya, Selesaikan",
+            cancelText: "Batal",
+            variant: "warning",
+            onConfirm: () => {
+                const itemsInput = (receiving.items || []).map((item) => ({
+                    product_id: item.product_id,
+                    kuantitas: item.kuantitas,
+                }));
 
-            updateReceiving.mutate(
-                {
-                    id: receiving.id,
-                    data: {
-                        supplier_id: receiving.supplier_id,
-                        nomor_faktur: receiving.nomor_faktur,
-                        nilai_faktur: receiving.nilai_faktur,
-                        status_pembayaran: receiving.status_pembayaran,
-                        status: "completed",
-                        catatan: receiving.catatan,
-                        items: itemsInput,
+                updateReceiving.mutate(
+                    {
+                        id: receiving.id,
+                        data: {
+                            supplier_id: receiving.supplier_id,
+                            nomor_faktur: receiving.nomor_faktur,
+                            nilai_faktur: receiving.nilai_faktur,
+                            status_pembayaran: receiving.status_pembayaran,
+                            status: "completed",
+                            catatan: receiving.catatan,
+                            items: itemsInput,
+                        },
                     },
-                },
-                {
-                    onSuccess: () => {
-                        toast.success("Penerimaan barang berhasil diselesaikan.");
-                    },
-                    onError: (err) => {
-                        toast.error(err.message || "Gagal menyelesaikan penerimaan.");
-                    },
-                }
-            );
-        }
+                    {
+                        onSuccess: () => {
+                            toast.success("Penerimaan barang berhasil diselesaikan.");
+                            setConfirmDialog((prev) => ({ ...prev, open: false }));
+                        },
+                        onError: (err) => {
+                            toast.error(err.message || "Gagal menyelesaikan penerimaan.");
+                        },
+                    }
+                );
+            },
+        });
     };
 
     const handleDelete = (id: number) => {
-        if (confirm("Apakah Anda yakin ingin menghapus draft penerimaan ini?")) {
-            deleteReceiving.mutate(id, {
-                onSuccess: () => {
-                    toast.success("Draft penerimaan berhasil dihapus.");
-                },
-                onError: (err) => {
-                    toast.error(err.message || "Gagal menghapus draft.");
-                },
-            });
-        }
+        setConfirmDialog({
+            open: true,
+            title: "Hapus Draft Penerimaan",
+            description: "Apakah Anda yakin ingin menghapus draft penerimaan ini?",
+            confirmText: "Ya, Hapus",
+            cancelText: "Batal",
+            variant: "danger",
+            onConfirm: () => {
+                deleteReceiving.mutate(id, {
+                    onSuccess: () => {
+                        toast.success("Draft penerimaan berhasil dihapus.");
+                        setConfirmDialog((prev) => ({ ...prev, open: false }));
+                    },
+                    onError: (err) => {
+                        toast.error(err.message || "Gagal menghapus draft.");
+                    },
+                });
+            },
+        });
     };
 
     const handleEditClick = (receiving: Receiving) => {
@@ -239,59 +271,8 @@ export function ReceivingList({
                     );
                 },
             },
-            {
-                id: "actions",
-                header: "Aksi",
-                enableSorting: false,
-                meta: {
-                    headerClassName: "text-center w-32",
-                    cellClassName: "text-center",
-                },
-                cell: ({ row }) => {
-                    const rec = row.original;
-                    const isDraft = rec.status === "draft";
-                    return (
-                        <div className="flex justify-center gap-1">
-                            <button
-                                onClick={() => handleDetailClick(rec)}
-                                className="p-1.5 text-slate-600 hover:bg-slate-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer"
-                                title="Lihat Detail"
-                            >
-                                <IconEye size={16} />
-                            </button>
-                            {isDraft && hasManageInventory && (
-                                <>
-                                    <button
-                                        onClick={() => handleEditClick(rec)}
-                                        className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer"
-                                        title="Ubah Draft"
-                                    >
-                                        <IconEdit size={16} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleFinalize(rec)}
-                                        className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer"
-                                        title="Finalisasi"
-                                    >
-                                        <IconCheck size={16} />
-                                    </button>
-                                </>
-                            )}
-                            {isDraft && canDeleteDraft && (
-                                <button
-                                    onClick={() => handleDelete(rec.id)}
-                                    className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer"
-                                    title="Hapus Draft"
-                                >
-                                    <IconTrash size={16} />
-                                </button>
-                            )}
-                        </div>
-                    );
-                },
-            },
         ],
-        [canDeleteDraft, hasManageInventory]
+        [canDeleteDraft, hasManageInventory, handleTogglePaymentStatus]
     );
 
     return (
@@ -327,6 +308,13 @@ export function ReceivingList({
                 entityName="transaksi masuk"
                 virtualize={true}
                 estimateRowHeight={44}
+                onView={handleDetailClick}
+                onEdit={handleEditClick}
+                hideEdit={(rec) => !(rec.status === "draft" && hasManageInventory)}
+                onCheck={handleFinalize}
+                hideCheck={(rec) => !(rec.status === "draft" && hasManageInventory)}
+                onDelete={(rec) => handleDelete(rec.id)}
+                hideDelete={(rec) => !(rec.status === "draft" && canDeleteDraft)}
             />
 
             {/* Edit Draft Dialog */}
@@ -342,6 +330,19 @@ export function ReceivingList({
                 open={isDetailOpen}
                 onOpenChange={setIsDetailOpen}
                 receivingId={selectedReceiving?.id || null}
+            />
+
+            {/* Confirm Dialog */}
+            <ConfirmDialog
+                open={confirmDialog.open}
+                onOpenChange={(open) => setConfirmDialog((prev) => ({ ...prev, open }))}
+                title={confirmDialog.title}
+                description={confirmDialog.description}
+                confirmText={confirmDialog.confirmText}
+                cancelText={confirmDialog.cancelText}
+                variant={confirmDialog.variant}
+                onConfirm={confirmDialog.onConfirm}
+                isLoading={updateReceiving.isPending || deleteReceiving.isPending}
             />
         </section>
     );

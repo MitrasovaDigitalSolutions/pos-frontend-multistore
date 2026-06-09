@@ -54,6 +54,11 @@ export function Products() {
       barcode: "",
       harga: 0,
       stok: 0,
+      harga_beli: 0,
+      margin: 0,
+      category_id: null,
+      brand_id: null,
+      image: null,
     },
   });
 
@@ -74,6 +79,11 @@ export function Products() {
       barcode: product.barcode || "",
       harga: product.harga,
       stok: product.stok,
+      harga_beli: product.harga_beli ?? 0,
+      margin: product.margin ?? 0,
+      category_id: product.category_id ?? null,
+      brand_id: product.brand_id ?? null,
+      image: null,
     });
     setIsDialogOpen(true);
   };
@@ -86,6 +96,11 @@ export function Products() {
       barcode: "",
       harga: 0,
       stok: 0,
+      harga_beli: 0,
+      margin: 0,
+      category_id: null,
+      brand_id: null,
+      image: null,
     });
     setIsDialogOpen(true);
   };

@@ -12,6 +12,7 @@ import { ReceiptDialog } from "@/features/checkout/components/receipt-dialog";
 import { BukaShiftModal, InfoSesiAktifModal } from "@/features/checkout/components/cash-drawer";
 import { useCurrentCashDrawer } from "@/features/checkout/api/cash-drawer-api";
 import { signOut } from "next-auth/react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function CheckoutPage() {
     const state = useCheckoutState();
@@ -19,6 +20,7 @@ export default function CheckoutPage() {
     // Cash Drawer Sesi States
     const [isInfoSesiOpen, setIsInfoSesiOpen] = useState(false);
     const [hasAutoOpened, setHasAutoOpened] = useState(false);
+    const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
 
     const cashDrawerToken = state.session?.accessToken;
 
@@ -44,10 +46,14 @@ export default function CheckoutPage() {
                 state.update({ cashDrawerSessionId: activeDrawerSession.id });
             }
             if (!hasAutoOpened) {
-                setIsInfoSesiOpen(true);
-                setHasAutoOpened(true);
+                const timer = setTimeout(() => {
+                    setIsInfoSesiOpen(true);
+                    setHasAutoOpened(true);
+                }, 0);
+                return () => clearTimeout(timer);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeDrawerSession, state.session, state.update, hasAutoOpened]);
 
     const handleOpenShiftSuccess = async (sessionId: number) => {
@@ -62,8 +68,8 @@ export default function CheckoutPage() {
         setHasAutoOpened(false);
     };
 
-    const handleLogout = async () => {
-        await signOut({ callbackUrl: "/login" });
+    const handleLogout = () => {
+        setIsLogoutConfirmOpen(true);
     };
 
     return (
@@ -132,6 +138,30 @@ export default function CheckoutPage() {
             </div>
 
             {/* Dialogs */}
+            <ConfirmDialog
+                open={state.isVoidConfirmOpen}
+                onOpenChange={state.setIsVoidConfirmOpen}
+                title="Batal Transaksi"
+                description="Apakah Anda yakin ingin membatalkan seluruh transaksi ini? Keranjang belanja akan dikosongkan."
+                confirmText="Ya, Batalkan"
+                cancelText="Kembali"
+                variant="danger"
+                onConfirm={state.handleConfirmVoid}
+            />
+
+            <ConfirmDialog
+                open={isLogoutConfirmOpen}
+                onOpenChange={setIsLogoutConfirmOpen}
+                title="Keluar dari Akun"
+                description="Apakah Anda yakin ingin keluar dari aplikasi? Sesi Anda saat ini akan diakhiri."
+                confirmText="Ya, Keluar"
+                cancelText="Batal"
+                variant="danger"
+                onConfirm={async () => {
+                    await signOut({ callbackUrl: "/login" });
+                }}
+            />
+
             <CatalogDialog
                 open={state.isCatalogOpen}
                 onOpenChange={state.setIsCatalogOpen}
@@ -144,11 +174,7 @@ export default function CheckoutPage() {
                 onOpenChange={state.setIsPayModalOpen}
                 grandTotal={state.grandTotal}
                 transactionId={state.transactionId}
-                onPaySuccess={(receiptData) => {
-                    state.setReceipt(receiptData);
-                    state.setIsReceiptOpen(true);
-                    state.refetchProducts();
-                }}
+                onPaySuccess={state.handlePaymentSuccess}
             />
 
             <HoldListDialog
@@ -161,7 +187,13 @@ export default function CheckoutPage() {
 
             <ReceiptDialog
                 open={state.isReceiptOpen}
-                onOpenChange={state.setIsReceiptOpen}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        state.handleNewTransaction();
+                    } else {
+                        state.setIsReceiptOpen(true);
+                    }
+                }}
                 receipt={state.receipt}
                 cashierName={state.user?.name || ""}
                 onNewTransaction={state.handleNewTransaction}
@@ -172,6 +204,7 @@ export default function CheckoutPage() {
                 open={isBukaShiftOpen}
                 token={cashDrawerToken}
                 onSuccess={handleOpenShiftSuccess}
+                isLoading={isDrawerLoading}
             />
 
             <InfoSesiAktifModal

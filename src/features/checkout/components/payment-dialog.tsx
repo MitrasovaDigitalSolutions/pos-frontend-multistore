@@ -160,13 +160,18 @@ export function PaymentDialog({
                                         Rp
                                     </span>
                                     <Input
-                                        type="number"
+                                        type="text"
                                         placeholder="0"
                                         className="h-14 pl-12 pr-4 text-2xl font-extrabold text-slate-950 bg-white border-2 border-emerald-500 focus-visible:ring-emerald-600 rounded-xl"
-                                        value={cashReceived}
-                                        onChange={(e) =>
-                                            setCashReceived(e.target.value)
+                                        value={
+                                            cashReceived
+                                                ? new Intl.NumberFormat("id-ID").format(Number(cashReceived))
+                                                : ""
                                         }
+                                        onChange={(e) => {
+                                            const clean = e.target.value.replace(/\D/g, "");
+                                            setCashReceived(clean);
+                                        }}
                                         disabled={isProcessing}
                                         autoFocus
                                     />

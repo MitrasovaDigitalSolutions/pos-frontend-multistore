@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { hasRole, hasPermission } from "@/constants/roles";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { IconEdit, IconTrash, IconPlus } from "@tabler/icons-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { IconPlus } from "@tabler/icons-react";
 import type { Category } from "../types";
 import { DataTable } from "@/components/ui/data-table";
 import { useDeleteCategory } from "../api/categories-api";
@@ -53,18 +54,26 @@ export function CategoryList({
         hasPermission(userRoles, userPermissions, "manage_products");
 
     const deleteCategory = useDeleteCategory();
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
 
-    const handleDelete = (id: number) => {
-        if (confirm("Apakah Anda yakin ingin menghapus kategori ini?")) {
-            deleteCategory.mutate(id, {
-                onSuccess: () => {
-                    toast.success("Kategori berhasil dihapus.");
-                },
-                onError: (err) => {
-                    toast.error(err.message || "Gagal menghapus kategori.");
-                },
-            });
-        }
+    const handleDelete = (c: Category) => {
+        setCategoryToDelete(c);
+        setIsConfirmOpen(true);
+    };
+
+    const handleConfirmDelete = () => {
+        if (!categoryToDelete) return;
+        deleteCategory.mutate(categoryToDelete.id, {
+            onSuccess: () => {
+                toast.success(`Kategori "${categoryToDelete.nama}" berhasil dihapus.`);
+                setIsConfirmOpen(false);
+                setCategoryToDelete(null);
+            },
+            onError: (err) => {
+                toast.error(err.message || "Gagal menghapus kategori.");
+            },
+        });
     };
 
     const columns = useMemo<ColumnDef<Category>[]>(
@@ -79,52 +88,21 @@ export function CategoryList({
                         </span>
                     ),
                 },
-                {
-                    accessorKey: "deskripsi",
-                    header: "Deskripsi",
-                    cell: ({ row }) => (
-                        <span className="text-slate-500 text-xs line-clamp-1">
-                            {row.original.deskripsi || "-"}
-                        </span>
-                    ),
-                },
+                // {
+                //     accessorKey: "deskripsi",
+                //     header: "Deskripsi",
+                //     cell: ({ row }) => (
+                //         <span className="text-slate-500 text-xs line-clamp-1">
+                //             {row.original.deskripsi || "-"}
+                //         </span>
+                //     ),
+                // },
             ];
-
-            if (hasManageProducts) {
-                baseColumns.push({
-                    id: "actions",
-                    header: "Aksi",
-                    enableSorting: false,
-                    meta: {
-                        headerClassName: "text-center w-28",
-                        cellClassName: "text-center",
-                    },
-                    cell: ({ row }) => {
-                        const cat = row.original;
-                        return (
-                            <div className="flex justify-center gap-1.5">
-                                <button
-                                    onClick={() => onEdit(cat)}
-                                    className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer"
-                                >
-                                    <IconEdit size={16} />
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(cat.id)}
-                                    className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer"
-                                >
-                                    <IconTrash size={16} />
-                                </button>
-                            </div>
-                        );
-                    },
-                });
-            }
 
             return baseColumns;
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [hasManageProducts, onEdit],
+        [hasManageProducts],
     );
 
     return (
@@ -165,6 +143,32 @@ export function CategoryList({
                 searchPlaceholder="Cari kategori berdasarkan nama..."
                 virtualize={true}
                 estimateRowHeight={44}
+                onEdit={hasManageProducts ? onEdit : undefined}
+                onDelete={hasManageProducts ? handleDelete : undefined}
+            />
+
+            <ConfirmDialog
+                open={isConfirmOpen}
+                onOpenChange={setIsConfirmOpen}
+                title="Hapus Kategori Produk"
+                description={
+                    categoryToDelete ? (
+                        <span>
+                            Apakah Anda yakin ingin menghapus kategori{" "}
+                            <strong className="font-semibold text-slate-900">
+                                {categoryToDelete.nama}
+                            </strong>
+                            ? Tindakan ini tidak dapat dibatalkan.
+                        </span>
+                    ) : (
+                        "Apakah Anda yakin ingin menghapus kategori ini?"
+                    )
+                }
+                confirmText="Ya, Hapus"
+                cancelText="Batal"
+                onConfirm={handleConfirmDelete}
+                isLoading={deleteCategory.isPending}
+                variant="danger"
             />
         </section>
     );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormContext, Controller, type FieldPath, type FieldValues } from "react-hook-form";
+import { useFormContext, Controller, type FieldPath, type FieldValues, type FieldError, type FieldErrors } from "react-hook-form";
 import { CommandSelect, type CommandOption } from "@/components/ui/command-select";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +16,7 @@ interface FormSelectProps<T extends FieldValues> {
     className?: string;
     wrapperClassName?: string;
     disabled?: boolean;
+    size?: "sm" | "md" | "lg";
 }
 
 export function FormSelect<T extends FieldValues>({
@@ -30,6 +31,7 @@ export function FormSelect<T extends FieldValues>({
     className,
     wrapperClassName,
     disabled,
+    size = 'md',
 }: FormSelectProps<T>) {
     const {
         control,
@@ -37,11 +39,20 @@ export function FormSelect<T extends FieldValues>({
     } = useFormContext<T>();
 
     // Helper to resolve nested errors, e.g. "items.0.product_id" -> errors.items[0].product_id
-    const getNestedValue = (obj: any, path: string) => {
-        return path
+    const getNestedValue = (
+        obj: FieldErrors<T>,
+        path: string,
+    ): FieldError | undefined => {
+        const value = path
             .split(/[.[\]]+/)
             .filter(Boolean)
-            .reduce((prev, curr) => prev?.[curr], obj);
+            .reduce<unknown>((prev, curr) => {
+                if (prev && typeof prev === "object") {
+                    return (prev as Record<string, unknown>)[curr];
+                }
+                return undefined;
+            }, obj);
+        return value as FieldError | undefined;
     };
 
     const error = getNestedValue(errors, name);
@@ -81,12 +92,13 @@ export function FormSelect<T extends FieldValues>({
                             className
                         )}
                         disabled={disabled}
+                        size={size}
                     />
                 )}
             />
             {error && (
                 <p className="text-[10px] text-rose-500 font-medium">
-                    {error.message as string}
+                    {error.message}
                 </p>
             )}
         </div>

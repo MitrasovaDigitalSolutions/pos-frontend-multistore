@@ -21,9 +21,9 @@ export function useProducts(params?: PaginationParams) {
 
 export function useCreateProduct() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<Product>, Error, ProductInput>({
+    return useMutation<ApiResponse<Product>, Error, FormData>({
         mutationFn: (newProduct) =>
-            apiPost<ApiResponse<Product>, ProductInput>(
+            apiPost<ApiResponse<Product>, FormData>(
                 "/v1/products",
                 newProduct,
             ),
@@ -38,10 +38,10 @@ export function useUpdateProduct() {
     return useMutation<
         ApiResponse<Product>,
         Error,
-        { id: number; data: ProductInput }
+        { id: number; data: FormData }
     >({
         mutationFn: ({ id, data }) =>
-            apiPut<ApiResponse<Product>, ProductInput>(
+            apiPost<ApiResponse<Product>, FormData>(
                 `/v1/products/${id}`,
                 data,
             ),

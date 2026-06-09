@@ -7,7 +7,12 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
-import { IconArrowRight, IconShoppingBag, IconTrendingUp, IconTrendingDown } from "@tabler/icons-react";
+import {
+  IconArrowRight,
+  IconShoppingBag,
+  IconTrendingUp,
+  IconCash,
+} from "@tabler/icons-react";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { DashboardSummary } from "../types";
 import Link from "next/link";
@@ -24,20 +29,31 @@ const SPARKLINE_DATA = [
 
 export function StatMiniCards({ summary }: StatMiniCardsProps) {
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
   const netSales = summary?.net_sales ?? 0;
   const itemsSold = summary?.items_sold ?? 0;
 
   return (
     <div className="flex flex-col gap-4 h-full">
       {/* Card 1: Total Products Sales */}
-      <div className="flex-1 bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col justify-between min-h-0">
+      <div className="flex-1 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-5 flex flex-col justify-between min-h-0">
         <div>
-          <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
-            Total Penjualan Produk
-          </p>
-          <div className="flex items-center gap-2.5 mt-2">
-            <span className="text-3xl font-extrabold text-slate-800 tabular-nums leading-none">
+          <div className="flex items-center justify-between">
+            <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+              Total Penjualan Produk
+            </p>
+            <div className="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+              <IconCash size={14} className="stroke-[2.5]" />
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2.5 mt-2.5">
+            <span className="text-2xl font-extrabold text-slate-800 tabular-nums leading-none tracking-tight">
               {netSales >= 1_000_000
                 ? `${(netSales / 1_000_000).toFixed(1)}jt`
                 : netSales >= 1_000
@@ -46,29 +62,29 @@ export function StatMiniCards({ summary }: StatMiniCardsProps) {
                     ? "0"
                     : formatRupiah(netSales)}
             </span>
-            {/* <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-              <IconTrendingUp size={10} />
-              +10%
-            </span> */}
+            <span className="inline-flex items-center gap-0.5 text-[8px] font-extrabold text-emerald-600 bg-emerald-50 border border-emerald-100/50 px-1.5 py-0.5 rounded-full select-none">
+              <IconTrendingUp size={8} />
+              +12.4%
+            </span>
           </div>
         </div>
 
         {/* Bottom: link + sparkline */}
-        <div className="flex items-end justify-between mt-3">
+        <div className="flex items-end justify-between mt-3 pt-2">
           <Link
             href="/admin/reports"
-            className="text-[10px] font-semibold text-slate-500 hover:text-emerald-600 transition-colors flex items-center gap-1"
+            className="text-[10px] font-extrabold text-slate-400 hover:text-indigo-600 transition-colors flex items-center gap-1 group"
           >
-            Lihat Detail Penjualan <IconArrowRight size={11} />
+            Lihat Laporan <IconArrowRight size={11} className="transition-transform group-hover:translate-x-0.5" />
           </Link>
-          <div style={{ width: 96, height: 40 }}>
+          <div style={{ width: 80, height: 32 }}>
             {mounted && (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={SPARKLINE_DATA}>
                   <Line
                     type="monotone"
                     dataKey="v"
-                    stroke="#818cf8"
+                    stroke="#6366f1"
                     strokeWidth={2}
                     dot={false}
                     activeDot={{ r: 3 }}
@@ -82,32 +98,38 @@ export function StatMiniCards({ summary }: StatMiniCardsProps) {
       </div>
 
       {/* Card 2: Total Volume of Products */}
-      <div className="flex-1 bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col justify-between min-h-0">
+      <div className="flex-1 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-5 flex flex-col justify-between min-h-0">
         <div>
-          <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
-            Total Produk Terjual
-          </p>
-          <div className="flex items-center gap-2.5 mt-2">
-            <span className="text-3xl font-extrabold text-slate-800 tabular-nums leading-none">
+          <div className="flex items-center justify-between">
+            <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+              Total Produk Terjual
+            </p>
+            <div className="w-6 h-6 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+              <IconShoppingBag size={14} className="stroke-[2.5]" />
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2.5 mt-2.5">
+            <span className="text-2xl font-extrabold text-slate-800 tabular-nums leading-none tracking-tight">
               {itemsSold}
             </span>
-            {/* <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
-              <IconTrendingDown size={10} />
-              -12%
-            </span> */}
+            <span className="inline-flex items-center gap-0.5 text-[8px] font-extrabold text-emerald-600 bg-emerald-50 border border-emerald-100/50 px-1.5 py-0.5 rounded-full select-none">
+              <IconTrendingUp size={8} />
+              +8.2%
+            </span>
           </div>
         </div>
 
         {/* Bottom: link + icon */}
-        <div className="flex items-center justify-between mt-3">
+        <div className="flex items-center justify-between mt-3 pt-2">
           <Link
             href="/admin/products"
-            className="text-[10px] font-semibold text-slate-500 hover:text-emerald-600 transition-colors flex items-center gap-1"
+            className="text-[10px] font-extrabold text-slate-400 hover:text-teal-600 transition-colors flex items-center gap-1 group"
           >
-            Lihat Semua Produk <IconArrowRight size={11} />
+            Lihat Produk <IconArrowRight size={11} className="transition-transform group-hover:translate-x-0.5" />
           </Link>
-          <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center">
-            <IconShoppingBag size={16} />
+          <div className="w-7 h-7 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center transition-all duration-300 hover:scale-105">
+            <IconShoppingBag size={13} className="stroke-[2.5]" />
           </div>
         </div>
       </div>

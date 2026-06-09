@@ -96,13 +96,19 @@ export function useCheckoutState() {
         }
     }, []);
 
+    const [isVoidConfirmOpen, setIsVoidConfirmOpen] = useState(false);
+
     const handleVoidDraft = useCallback(async () => {
         if (cart.length === 0) return;
-        if (!confirm("Batalkan seluruh transaksi ini?")) return;
+        setIsVoidConfirmOpen(true);
+    }, [cart.length]);
+
+    const handleConfirmVoid = useCallback(() => {
         setCart([]);
         setTransactionId(null);
+        setIsVoidConfirmOpen(false);
         toast.error("Transaksi dibatalkan.");
-    }, [cart.length]);
+    }, []);
 
     const buildCartFromTransaction = (trxData?: TrxData) => {
         if (!trxData) return;
@@ -287,6 +293,14 @@ export function useCheckoutState() {
         setTimeout(() => barcodeInputRef.current?.focus(), 100);
     };
 
+    const handlePaymentSuccess = (receiptData: Receipt) => {
+        setReceipt(receiptData);
+        setIsReceiptOpen(true);
+        refetchProducts();
+        setCart([]);
+        setTransactionId(null);
+    };
+
     // ─── Clock & Keyboard Shortcuts ───────────────────────────────────────────
     useEffect(() => {
         const updateTime = () => {
@@ -368,6 +382,9 @@ export function useCheckoutState() {
         ppn,
         grandTotal,
         hasAccessAdmin,
+        isVoidConfirmOpen,
+        setIsVoidConfirmOpen,
+        handleConfirmVoid,
         handleHold,
         openHoldList,
         handleVoidDraft,
@@ -377,5 +394,6 @@ export function useCheckoutState() {
         handleBarcodeSubmit,
         handleRecall,
         handleNewTransaction,
+        handlePaymentSuccess,
     };
 }

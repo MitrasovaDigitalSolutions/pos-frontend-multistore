@@ -18,6 +18,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FormSelect } from "@/components/forms/form-select";
+import { FormNominalInput } from "@/components/forms/form-nominal-input";
+import { FormNumberInput } from "@/components/forms/form-number-input";
 import { IconTruckDelivery, IconX } from "@tabler/icons-react";
 import { toast } from "sonner";
 import {
@@ -235,22 +237,13 @@ export function ReceivingDialog({
 
                             <div className="grid grid-cols-2 gap-4">
                                 {/* Nilai Faktur */}
-                                <div className="space-y-1.5 col-span-2 sm:col-span-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                        Nilai Faktur / Invoice
-                                    </label>
-                                    <Input
-                                        type="number"
+                                <div className="col-span-2 sm:col-span-1">
+                                    <FormNominalInput<ReceivingInput>
+                                        name="nilai_faktur"
+                                        label="Nilai Faktur / Invoice"
                                         placeholder="Total tagihan Rp..."
-                                        className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
                                         disabled={isPending}
-                                        {...register("nilai_faktur")}
                                     />
-                                    {errors.nilai_faktur && (
-                                        <p className="text-[10px] text-rose-500 font-medium">
-                                            {errors.nilai_faktur.message}
-                                        </p>
-                                    )}
                                 </div>
 
                                 {/* Status Pembayaran */}
@@ -342,14 +335,10 @@ export function ReceivingDialog({
                                             />
                                         </div>
                                         <div className="w-24">
-                                            <Input
-                                                type="number"
+                                            <FormNumberInput<ReceivingInput>
+                                                name={`items.${idx}.kuantitas` as FieldPath<ReceivingInput>}
                                                 placeholder="Qty"
-                                                className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
                                                 disabled={isPending}
-                                                {...register(
-                                                    `items.${idx}.kuantitas`,
-                                                )}
                                             />
                                         </div>
                                         {fields.length > 1 && (

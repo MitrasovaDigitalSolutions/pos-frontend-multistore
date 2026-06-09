@@ -151,3 +151,16 @@
     animation: shimmer-loading 1.5s infinite linear;
 }
 
+/* Custom Scrollable Scrollbar Styles */
+.scrollable-scrollbar {
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+}
+
+[data-slot="scrollable"]:hover .scrollable-scrollbar,
+[data-slot="scrollable"][data-scrolling] .scrollable-scrollbar,
+.scrollable-scrollbar[data-scrolling] {
+    opacity: 1 !important;
+}
+
+

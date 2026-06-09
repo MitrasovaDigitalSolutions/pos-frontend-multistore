@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useSession } from "next-auth/react";
-import { hasRole, hasPermission } from "@/constants/roles";
-import { useActivityLogs, type ActivityLog } from "@/features/stock/api/stock-api";
 import { DataTable } from "@/components/ui/data-table";
+import { hasPermission, hasRole } from "@/constants/roles";
+import { useActivityLogs, type ActivityLog } from "@/features/stock/api/stock-api";
 import { ColumnDef } from "@tanstack/react-table";
-import { CommandSelect } from "@/components/ui/command-select";
+import { useSession } from "next-auth/react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function AdminAuditPage() {
     const { data: session } = useSession();
@@ -21,16 +20,8 @@ export default function AdminAuditPage() {
     const [perPage, setPerPage] = useState(10);
     const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
-    const [actionFilter, setActionFilter] = useState<string>("all");
+    // const [actionFilter, setActionFilter] = useState<string>("all");
 
-    if (!hasViewAuditLogs) {
-        return (
-            <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm">
-                <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
-                <p className="text-xs text-slate-400 mt-1">Anda tidak memiliki izin untuk melihat log aktivitas.</p>
-            </div>
-        );
-    }
 
     // Debounce search input to avoid excessive API requests
     useEffect(() => {
@@ -50,11 +41,11 @@ export default function AdminAuditPage() {
         search: debouncedSearch || undefined,
     });
 
-    const filteredLogs = useMemo(() => {
-        const data = logsData?.data || [];
-        if (actionFilter === "all") return data;
-        return data.filter((log) => log.action.includes(actionFilter));
-    }, [logsData?.data, actionFilter]);
+    // const filteredLogs = useMemo(() => {
+    //     const data = logsData?.data || [];
+    //     if (actionFilter === "all") return data;
+    //     return data.filter((log) => log.action.includes(actionFilter));
+    // }, [logsData?.data, actionFilter]);
 
     const getActionBadgeClass = (action: string) => {
         if (action.includes("login") || action.includes("logout")) {
@@ -146,26 +137,35 @@ export default function AdminAuditPage() {
         [],
     );
 
-    const actionFilterSlot = (
-        <CommandSelect
-            value={actionFilter}
-            onChange={(val) => {
-                setActionFilter(val);
-                setPage(1);
-            }}
-            options={[
-                { value: "all", label: "Semua Aksi" },
-                { value: "login", label: "Autentikasi" },
-                { value: "supplier", label: "Supplier" },
-                { value: "receiving", label: "Penerimaan" },
-                { value: "opname", label: "Opname" },
-                { value: "adjustment", label: "Adjustment" },
-            ]}
-            wrapperClassName="w-40"
-            searchPlaceholder="Cari tipe aksi..."
-            placeholder="Pilih Aksi"
-        />
-    );
+    if (!hasViewAuditLogs) {
+        return (
+            <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm">
+                <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
+                <p className="text-xs text-slate-400 mt-1">Anda tidak memiliki izin untuk melihat log aktivitas.</p>
+            </div>
+        );
+    }
+
+    // const actionFilterSlot = (
+    //     <CommandSelect
+    //         value={actionFilter}
+    //         onChange={(val) => {
+    //             setActionFilter(val);
+    //             setPage(1);
+    //         }}
+    //         options={[
+    //             { value: "all", label: "Semua Aksi" },
+    //             { value: "login", label: "Autentikasi" },
+    //             { value: "supplier", label: "Supplier" },
+    //             { value: "receiving", label: "Penerimaan" },
+    //             { value: "opname", label: "Opname" },
+    //             { value: "adjustment", label: "Adjustment" },
+    //         ]}
+    //         wrapperClassName="w-40"
+    //         searchPlaceholder="Cari tipe aksi..."
+    //         placeholder="Pilih Aksi"
+    //     />
+    // );
 
     return (
         <div className="space-y-6">
@@ -183,7 +183,7 @@ export default function AdminAuditPage() {
 
                 <DataTable
                     columns={columns}
-                    data={filteredLogs}
+                    data={logsData?.data || []}
                     isLoading={isLoading}
                     isFetching={isFetching}
                     emptyMessage="Tidak ada catatan aktivitas ditemukan."
@@ -196,7 +196,7 @@ export default function AdminAuditPage() {
                     search={search}
                     onSearchChange={setSearch}
                     searchPlaceholder="Cari log berdasarkan deskripsi atau user..."
-                    filters={actionFilterSlot}
+                    // filters={actionFilterSlot}
                     virtualize={true}
                     estimateRowHeight={44}
                 />

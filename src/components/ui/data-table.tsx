@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable react-hooks/incompatible-library */
 import { Input } from "@/components/ui/input";
 import {
     Pagination,
@@ -9,6 +11,13 @@ import {
     PaginationPrevious,
 } from "@/components/ui/pagination";
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
     Table,
     TableBody,
     TableCell,
@@ -16,14 +25,8 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { IconCheck, IconEdit, IconEye, IconTrash } from "@tabler/icons-react";
 import {
     ColumnDef,
     flexRender,
@@ -76,6 +79,21 @@ interface DataTableProps<TData, TValue> {
     onSearchChange?: (search: string) => void;
     searchPlaceholder?: string;
     filters?: React.ReactNode;
+
+    // Row Actions Props
+    onEdit?: (row: TData) => void;
+    onDelete?: (row: TData) => void;
+    onView?: (row: TData) => void;
+    onCheck?: (row: TData) => void;
+    hideEdit?: boolean | ((row: TData) => boolean);
+    disableEdit?: boolean | ((row: TData) => boolean);
+    hideDelete?: boolean | ((row: TData) => boolean);
+    disableDelete?: boolean | ((row: TData) => boolean);
+    hideView?: boolean | ((row: TData) => boolean);
+    disableView?: boolean | ((row: TData) => boolean);
+    hideCheck?: boolean | ((row: TData) => boolean);
+    disableCheck?: boolean | ((row: TData) => boolean);
+    extraActions?: (row: TData) => React.ReactNode;
 }
 
 export function DataTable<TData, TValue>({
@@ -98,12 +116,147 @@ export function DataTable<TData, TValue>({
     onSearchChange,
     searchPlaceholder = "Cari data...",
     filters,
+
+    // Row Actions Props destructured
+    onEdit,
+    onDelete,
+    onView,
+    onCheck,
+    hideEdit,
+    disableEdit,
+    hideDelete,
+    disableDelete,
+    hideView,
+    disableView,
+    hideCheck,
+    disableCheck,
+    extraActions,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = React.useState<SortingState>([]);
 
+    // Dynamically build column list based on whether actions are provided
+    const tableColumns = React.useMemo(() => {
+        const startIndex = (page - 1) * (perPage || 0) + 1;
+        const noColumn: ColumnDef<TData, unknown> = {
+            id: "rowNumber",
+            header: "No.",
+            enableSorting: false,
+            size: 50,
+            meta: {
+                headerClassName: "text-center w-12",
+                cellClassName: "text-center text-slate-500 font-medium text-xs font-mono",
+            },
+            cell: ({ row }) => startIndex + row.index,
+        };
+
+        const baseCols = [noColumn, ...columns];
+
+        const hasActions = !!(onEdit || onDelete || onView || onCheck || extraActions);
+        if (!hasActions) return baseCols;
+
+        const actionColumn: ColumnDef<TData, unknown> = {
+            id: "actions",
+            header: "Aksi",
+            enableSorting: false,
+            meta: {
+                headerClassName: "text-center w-28 sticky right-0 bg-slate-50 z-20 shadow-[-1px_0_0_0_rgba(241,245,249,1)] border-l border-slate-100",
+                cellClassName: "text-center sticky right-0 bg-white group-hover:bg-slate-50/50 z-10 shadow-[-1px_0_0_0_rgba(241,245,249,1)] border-l border-slate-100 transition-colors",
+            },
+            cell: ({ row }) => {
+                const item = row.original;
+                const isEditHidden = typeof hideEdit === "function" ? hideEdit(item) : !!hideEdit;
+                const isDeleteHidden = typeof hideDelete === "function" ? hideDelete(item) : !!hideDelete;
+                const isViewHidden = typeof hideView === "function" ? hideView(item) : !!hideView;
+                const isCheckHidden = typeof hideCheck === "function" ? hideCheck(item) : !!hideCheck;
+
+                const isEditDisabled = typeof disableEdit === "function" ? disableEdit(item) : !!disableEdit;
+                const isDeleteDisabled = typeof disableDelete === "function" ? disableDelete(item) : !!disableDelete;
+                const isViewDisabled = typeof disableView === "function" ? disableView(item) : !!disableView;
+                const isCheckDisabled = typeof disableCheck === "function" ? disableCheck(item) : !!disableCheck;
+
+                return (
+                    <div className="flex justify-center gap-1.5 items-center">
+                        {onView && !isViewHidden && (
+                            <button
+                                onClick={() => onView(item)}
+                                disabled={isViewDisabled}
+                                className={cn(
+                                    "p-1 text-slate-600 hover:bg-slate-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer",
+                                    isViewDisabled && "opacity-40 cursor-not-allowed hover:bg-transparent"
+                                )}
+                                title="Lihat Detail"
+                            >
+                                <IconEye size={16} />
+                            </button>
+                        )}
+                        {onEdit && !isEditHidden && (
+                            <button
+                                onClick={() => onEdit(item)}
+                                disabled={isEditDisabled}
+                                className={cn(
+                                    "p-1 text-amber-600 hover:bg-amber-50 rounded transition-colors border-none bg-transparent cursor-pointer",
+                                    isEditDisabled && "opacity-40 cursor-not-allowed hover:bg-transparent"
+                                )}
+                                title="Ubah"
+                            >
+                                <IconEdit size={16} />
+                            </button>
+                        )}
+                        {onCheck && !isCheckHidden && (
+                            <button
+                                onClick={() => onCheck(item)}
+                                disabled={isCheckDisabled}
+                                className={cn(
+                                    "p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors border-none bg-transparent cursor-pointer",
+                                    isCheckDisabled && "opacity-40 cursor-not-allowed hover:bg-transparent"
+                                )}
+                                title="Finalisasi"
+                            >
+                                <IconCheck size={16} />
+                            </button>
+                        )}
+                        {onDelete && !isDeleteHidden && (
+                            <button
+                                onClick={() => onDelete(item)}
+                                disabled={isDeleteDisabled}
+                                className={cn(
+                                    "p-1 text-rose-500 hover:bg-rose-50 rounded transition-colors border-none bg-transparent cursor-pointer",
+                                    isDeleteDisabled && "opacity-40 cursor-not-allowed hover:bg-transparent"
+                                )}
+                                title="Hapus"
+                            >
+                                <IconTrash size={16} />
+                            </button>
+                        )}
+                        {extraActions?.(item)}
+                    </div>
+                );
+            },
+        };
+
+        return [...baseCols, actionColumn];
+    }, [
+        columns,
+        page,
+        perPage,
+        onEdit,
+        onDelete,
+        onView,
+        onCheck,
+        hideEdit,
+        disableEdit,
+        hideDelete,
+        disableDelete,
+        hideView,
+        disableView,
+        hideCheck,
+        disableCheck,
+        extraActions,
+    ]);
+
     const table = useReactTable({
         data,
-        columns,
+        columns: tableColumns,
         state: {
             sorting,
         },
@@ -268,6 +421,8 @@ export function DataTable<TData, TValue>({
                                                 <div
                                                     className={cn(
                                                         "flex items-center gap-1.5",
+                                                        header.column.columnDef.meta?.headerClassName?.includes("text-center") && "justify-center",
+                                                        header.column.columnDef.meta?.headerClassName?.includes("text-right") && "justify-end",
                                                         isSortable &&
                                                         "cursor-pointer select-none hover:text-slate-700 transition-colors",
                                                     )}
@@ -314,12 +469,15 @@ export function DataTable<TData, TValue>({
                             }).map((_, rowIndex) => (
                                 <TableRow
                                     key={rowIndex}
-                                    className="border-b border-slate-100"
+                                    className="border-b border-slate-100 group"
                                 >
-                                    {columns.map((_, colIndex) => (
+                                    {tableColumns.map((col, colIndex) => (
                                         <TableCell
                                             key={colIndex}
-                                            className="py-4 px-4"
+                                            className={cn(
+                                                "py-4 px-4",
+                                                col.meta?.cellClassName
+                                            )}
                                         >
                                             <div className="h-4 bg-slate-100/80 animate-pulse rounded-lg w-2/3" />
                                         </TableCell>
@@ -330,7 +488,7 @@ export function DataTable<TData, TValue>({
                             // Empty State
                             <TableRow>
                                 <TableCell
-                                    colSpan={columns.length}
+                                    colSpan={tableColumns.length}
                                     className="text-center py-12 text-slate-400 text-xs font-medium"
                                 >
                                     {emptyMessage}
@@ -342,7 +500,7 @@ export function DataTable<TData, TValue>({
                                 {paddingTop > 0 && (
                                     <tr style={{ height: `${paddingTop}px` }}>
                                         <td
-                                            colSpan={columns.length}
+                                            colSpan={tableColumns.length}
                                             style={{ padding: 0 }}
                                         />
                                     </tr>
@@ -355,7 +513,7 @@ export function DataTable<TData, TValue>({
                                             data-index={virtualRow.index}
                                             ref={rowVirtualizer.measureElement}
                                             className={cn(
-                                                "hover:bg-slate-50/50 border-b border-slate-100 transition-colors",
+                                                "hover:bg-slate-50/50 border-b border-slate-100 transition-colors group",
                                                 isFetching && "opacity-75",
                                             )}
                                         >
@@ -386,7 +544,7 @@ export function DataTable<TData, TValue>({
                                         style={{ height: `${paddingBottom}px` }}
                                     >
                                         <td
-                                            colSpan={columns.length}
+                                            colSpan={tableColumns.length}
                                             style={{ padding: 0 }}
                                         />
                                     </tr>
@@ -398,7 +556,7 @@ export function DataTable<TData, TValue>({
                                 <TableRow
                                     key={row.id}
                                     className={cn(
-                                        "hover:bg-slate-50/50 border-b border-slate-100 transition-colors",
+                                        "hover:bg-slate-50/50 border-b border-slate-100 transition-colors group",
                                         isFetching && "opacity-75",
                                     )}
                                 >
@@ -492,3 +650,4 @@ export function DataTable<TData, TValue>({
         </div>
     );
 }
+

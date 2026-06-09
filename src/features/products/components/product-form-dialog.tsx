@@ -1,6 +1,10 @@
 "use client";
 
-import { useFormContext } from "react-hook-form";
+import { FormImageUpload } from "@/components/forms/form-image-upload";
+import { FormNominalInput } from "@/components/forms/form-nominal-input";
+import { FormNumberInput } from "@/components/forms/form-number-input";
+import { FormSelect } from "@/components/forms/form-select";
+import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogContent,
@@ -8,11 +12,14 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { IconPlus } from "@tabler/icons-react";
+import { useBrands } from "@/features/brands/api/brands-api";
+import { useCategories } from "@/features/categories/api/categories-api";
+import { IconPackage } from "@tabler/icons-react";
+import { useEffect, useMemo } from "react";
+import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
-import { type ProductInput } from "../schemas/product-schema";
 import { useCreateProduct, useUpdateProduct } from "../api/products-api";
+import { type ProductInput } from "../schemas/product-schema";
 import type { Product } from "../types";
 
 interface ProductFormDialogProps {
@@ -32,15 +39,105 @@ export function ProductFormDialog({
     const {
         register,
         handleSubmit,
+        watch,
+        setValue,
         formState: { errors },
     } = useFormContext<ProductInput>();
 
     const isPending = createProduct.isPending || updateProduct.isPending;
 
+    // Load categories and brands
+    const { data: categoriesRes } = useCategories({ per_page: 1000 });
+    const { data: brandsRes } = useBrands({ per_page: 1000 });
+
+    const categoryOptions = useMemo(() => {
+        const list = categoriesRes?.data || [];
+        return [
+            { value: "", label: "Tanpa Kategori" },
+            ...list.map((c) => ({ value: String(c.id), label: c.nama }))
+        ];
+    }, [categoriesRes]);
+
+    const brandOptions = useMemo(() => {
+        const list = brandsRes?.data || [];
+        return [
+            { value: "", label: "Tanpa Brand" },
+            ...list.map((b) => ({ value: String(b.id), label: b.nama }))
+        ];
+    }, [brandsRes]);
+
+    // Automatic Margin & Price calculations
+    const hargaBeli = watch("harga_beli");
+    const harga = watch("harga");
+    const margin = watch("margin");
+
+    useEffect(() => {
+        const activeId = document.activeElement?.id;
+
+        if (activeId === "harga_beli" || activeId === "harga") {
+            const hBeli = Number(hargaBeli) || 0;
+            const hJual = Number(harga) || 0;
+            if (hJual > 0) {
+                const calculatedMargin = ((hJual - hBeli) / hJual) * 100;
+                setValue("margin", parseFloat(calculatedMargin.toFixed(2)));
+            } else {
+                setValue("margin", 0);
+            }
+        }
+    }, [hargaBeli, harga, setValue]);
+
+    useEffect(() => {
+        const activeId = document.activeElement?.id;
+
+        if (activeId === "margin") {
+            const hBeli = Number(hargaBeli) || 0;
+            const mrg = Number(margin) || 0;
+            if (mrg < 100) {
+                const calculatedHarga = hBeli / (1 - mrg / 100);
+                setValue("harga", Math.round(calculatedHarga));
+            }
+        }
+    }, [margin, hargaBeli, setValue]);
+
     const onSubmit = (data: ProductInput) => {
+        const formData = new FormData();
+        formData.append("nama", data.nama);
+
+        const selectedBrandOption = brandOptions.find((b) => b.value === String(data.brand_id));
+        const brandName = selectedBrandOption && data.brand_id ? selectedBrandOption.label : "Umum";
+        formData.append("merek", brandName);
+
+        if (data.barcode) {
+            formData.append("barcode", data.barcode);
+        }
+
+        formData.append("harga", String(data.harga));
+        formData.append("stok", String(data.stok));
+
+        if (data.harga_beli !== null && data.harga_beli !== undefined) {
+            formData.append("harga_beli", String(data.harga_beli));
+        }
+
+        if (data.margin !== null && data.margin !== undefined) {
+            formData.append("margin", String(data.margin));
+        }
+
+        if (data.category_id !== null && data.category_id !== undefined) {
+            formData.append("category_id", String(data.category_id));
+        }
+
+        if (data.brand_id !== null && data.brand_id !== undefined) {
+            formData.append("brand_id", String(data.brand_id));
+        }
+
+        if (data.image instanceof File) {
+            formData.append("image", data.image);
+        }
+
         if (editingProduct) {
+            formData.append("_method", "PUT");
             updateProduct.mutate(
-                { id: editingProduct.id, data },
+                { id: editingProduct.id, data: formData },
                 {
                     onSuccess: (res) => {
                         toast.success(
@@ -54,7 +151,7 @@ export function ProductFormDialog({
                 },
             );
         } else {
-            createProduct.mutate(data, {
+            createProduct.mutate(formData, {
                 onSuccess: (res) => {
                     toast.success(
                         res.message || "Produk berhasil ditambahkan!",
@@ -68,12 +165,16 @@ export function ProductFormDialog({
         }
     };
 
+    const initialImageUrl = editingProduct?.image_path
+        ? `${process.env.NEXT_PUBLIC_API_URL}/storage/${editingProduct.image_path}`
+        : null;
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-110 bg-white rounded-2xl border-slate-100 p-6">
+            <DialogContent className="sm:max-w-4xl bg-white rounded-2xl border-slate-100 p-6">
                 <DialogHeader className="pb-4 border-b border-slate-100">
                     <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                        <IconPlus size={20} className="text-emerald-500" />
+                        <IconPackage size={20} className="text-emerald-500" />
                         <span>
                             {editingProduct
                                 ? "Edit Detail Produk"
@@ -84,112 +185,129 @@ export function ProductFormDialog({
 
                 <form
                     onSubmit={handleSubmit(onSubmit)}
-                    className="space-y-4 pt-4"
+                    className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4"
                 >
-                    {/* Barcode */}
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            Barcode / SKU
-                        </label>
-                        <Input
-                            type="text"
-                            placeholder="Contoh: 8990002004"
-                            className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                    {/* Kolom Kiri: Upload Gambar */}
+                    <div className="md:col-span-1">
+                        <FormImageUpload<ProductInput>
+                            name="image"
+                            label="Gambar Produk"
                             disabled={isPending}
-                            {...register("barcode")}
+                            initialUrl={initialImageUrl}
                         />
-                        {errors.barcode && (
-                            <p className="text-[10px] text-rose-500 font-medium">
-                                {errors.barcode.message}
-                            </p>
-                        )}
                     </div>
 
-                    {/* Nama Produk */}
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            Nama Produk
-                        </label>
-                        <Input
-                            type="text"
-                            placeholder="Nama produk lengkap..."
-                            className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                            disabled={isPending}
-                            {...register("nama")}
-                        />
-                        {errors.nama && (
-                            <p className="text-[10px] text-rose-500 font-medium">
-                                {errors.nama.message}
-                            </p>
-                        )}
-                    </div>
+                    {/* Kolom Kanan: Detail & Informasi Produk */}
+                    <div className="md:col-span-2 space-y-4">
+                        {/* Barcode & Nama Produk */}
+                        <div className="grid grid-cols-3 gap-3">
+                            <div className="col-span-1 space-y-1.5">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    Barcode / SKU
+                                </label>
+                                <Input
+                                    type="text"
+                                    placeholder="Contoh: 8990002004"
+                                    className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                                    disabled={isPending}
+                                    {...register("barcode")}
+                                />
+                                {errors.barcode && (
+                                    <p className="text-[10px] text-rose-500 font-medium">
+                                        {errors.barcode.message}
+                                    </p>
+                                )}
+                            </div>
 
-                    {/* Merek */}
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            Merek
-                        </label>
-                        <Input
-                            type="text"
-                            placeholder="Merek produk..."
-                            className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                            disabled={isPending}
-                            {...register("merek")}
-                        />
-                        {errors.merek && (
-                            <p className="text-[10px] text-rose-500 font-medium">
-                                {errors.merek.message}
-                            </p>
-                        )}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                        {/* Harga */}
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                Harga Jual (Rp)
-                            </label>
-                            <Input
-                                type="number"
-                                placeholder="3500"
-                                className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                                disabled={isPending}
-                                {...register("harga")}
-                            />
-                            {errors.harga && (
-                                <p className="text-[10px] text-rose-500 font-medium">
-                                    {errors.harga.message}
-                                </p>
-                            )}
+                            <div className="col-span-2 space-y-1.5">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    Nama Produk
+                                </label>
+                                <Input
+                                    type="text"
+                                    placeholder="Nama produk lengkap..."
+                                    className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                                    disabled={isPending}
+                                    {...register("nama")}
+                                />
+                                {errors.nama && (
+                                    <p className="text-[10px] text-rose-500 font-medium">
+                                        {errors.nama.message}
+                                    </p>
+                                )}
+                            </div>
                         </div>
 
-                        {/* Stok */}
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                Stok
-                            </label>
-                            <Input
-                                type="number"
+                        {/* Kategori, Brand & Stok */}
+                        <div className="grid grid-cols-3 gap-3">
+                            <FormSelect<ProductInput>
+                                name="category_id"
+                                label="Kategori"
+                                options={categoryOptions}
+                                placeholder="Pilih Kategori"
+                                searchPlaceholder="Cari kategori..."
+                                disabled={isPending}
+                                size="md"
+                            />
+                            <FormSelect<ProductInput>
+                                name="brand_id"
+                                label="Brand"
+                                options={brandOptions}
+                                placeholder="Pilih Brand"
+                                searchPlaceholder="Cari brand..."
+                                disabled={isPending}
+                                size="md"
+                            />
+                            <FormNumberInput<ProductInput>
+                                name="stok"
+                                label="Stok"
                                 placeholder="50"
-                                className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                                disabled={isPending}
-                                {...register("stok")}
+                                disabled={isPending || !!editingProduct}
+                                helperText={
+                                    editingProduct ? (
+                                        <p className="text-[9px] text-slate-400 font-semibold mt-0.5 leading-snug">
+                                            Stok hanya dapat disesuaikan melalui menu stok masuk/keluar.
+                                        </p>
+                                    ) : undefined
+                                }
                             />
-                            {errors.stok && (
-                                <p className="text-[10px] text-rose-500 font-medium">
-                                    {errors.stok.message}
-                                </p>
-                            )}
+                        </div>
+
+                        {/* Keuangan: Harga Beli, Harga Jual, Margin */}
+                        <div className="grid grid-cols-3 gap-3">
+                            <FormNominalInput<ProductInput>
+                                name="harga_beli"
+                                label="Harga Beli (Rp)"
+                                placeholder="Contoh: 8.000"
+                                disabled={isPending}
+                            />
+
+                            <FormNominalInput<ProductInput>
+                                name="harga"
+                                label="Harga Jual (Rp)"
+                                placeholder="Contoh: 10.000"
+                                disabled={isPending}
+                            />
+
+                            <FormNumberInput<ProductInput>
+                                name="margin"
+                                label="Margin (%)"
+                                placeholder="Contoh: 20"
+                                disabled={isPending}
+                            />
+                        </div>
+
+                        {/* Submit Button */}
+                        <div className="pt-2">
+                            <Button
+                                type="submit"
+                                className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
+                                disabled={isPending}
+                            >
+                                {isPending ? "Menyimpan..." : "Simpan Produk"}
+                            </Button>
                         </div>
                     </div>
-
-                    <Button
-                        type="submit"
-                        className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4"
-                        disabled={isPending}
-                    >
-                        {isPending ? "Menyimpan..." : "Simpan Produk"}
-                    </Button>
                 </form>
             </DialogContent>
         </Dialog>
