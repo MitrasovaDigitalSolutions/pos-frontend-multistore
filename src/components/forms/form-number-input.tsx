@@ -9,6 +9,8 @@ import {
     useFormContext,
     type FieldPath,
     type FieldValues,
+    type FieldError,
+    type FieldErrors,
 } from "react-hook-form";
 
 interface FormNumberInputProps<T extends FieldValues> extends Omit<
@@ -36,7 +38,24 @@ export function FormNumberInput<T extends FieldValues>({
         formState: { errors },
     } = useFormContext<T>();
 
-    const error = errors[name];
+    // Helper to resolve nested errors, e.g. "items.0.product_id" -> errors.items[0].product_id
+    const getNestedValue = (
+        obj: FieldErrors<T>,
+        path: string,
+    ): FieldError | undefined => {
+        const value = path
+            .split(/[.[\]]+/)
+            .filter(Boolean)
+            .reduce<unknown>((prev, curr) => {
+                if (prev && typeof prev === "object") {
+                    return (prev as Record<string, unknown>)[curr];
+                }
+                return undefined;
+            }, obj);
+        return value as FieldError | undefined;
+    };
+
+    const error = getNestedValue(errors, name);
     const value = watch(name);
 
     const inputRef = useRef<HTMLInputElement | null>(null);

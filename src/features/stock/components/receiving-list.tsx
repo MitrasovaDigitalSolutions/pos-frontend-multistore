@@ -106,6 +106,10 @@ export function ReceivingList({
                 const itemsInput = (receiving.items || []).map((item) => ({
                     product_id: item.product_id,
                     kuantitas: item.kuantitas,
+                    harga_beli: item.harga_beli || 0,
+                    update_harga_jual: false,
+                    harga_jual_baru: null,
+                    margin_baru: null,
                 }));
 
                 updateReceiving.mutate(

@@ -13,6 +13,7 @@ interface FormSelectProps<T extends FieldValues> {
     emptyMessage?: string;
     isLoading?: boolean;
     onSearchChange?: (search: string) => void;
+    onChange?: (value: string) => void;
     className?: string;
     wrapperClassName?: string;
     disabled?: boolean;
@@ -28,6 +29,7 @@ export function FormSelect<T extends FieldValues>({
     emptyMessage,
     isLoading,
     onSearchChange,
+    onChange,
     className,
     wrapperClassName,
     disabled,
@@ -80,6 +82,9 @@ export function FormSelect<T extends FieldValues>({
                                 field.onChange(val === "" ? "" : Number(val));
                             } else {
                                 field.onChange(val);
+                            }
+                            if (onChange) {
+                                onChange(val);
                             }
                         }}
                         placeholder={placeholder}

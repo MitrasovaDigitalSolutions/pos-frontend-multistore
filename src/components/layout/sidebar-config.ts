@@ -71,7 +71,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
             {
                 type: "link",
                 path: ROUTES.ADMIN_STOCK,
-                label: "Stok Barang",
+                label: "Stok Opname",
                 icon: IconBox,
                 tab: "inventory",
                 permission: (roles, permissions) =>
