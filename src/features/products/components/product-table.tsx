@@ -1,17 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useSession } from "next-auth/react";
-import { hasRole, hasPermission } from "@/constants/roles";
-import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { IconEdit, IconTrash, IconPlus } from "@tabler/icons-react";
+import { CommandSelect } from "@/components/ui/command-select";
+import { DataTable } from "@/components/ui/data-table";
+import { hasPermission, hasRole } from "@/constants/roles";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { IconEdit, IconPlus, IconTrash } from "@tabler/icons-react";
+import { ColumnDef } from "@tanstack/react-table";
+import { useSession } from "next-auth/react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useDeleteProduct, useToggleProductStatus } from "../api/products-api";
 import type { Product } from "../types";
-import { toast } from "sonner";
-import { DataTable } from "@/components/ui/data-table";
-import { CommandSelect } from "@/components/ui/command-select";
 
 interface ProductTableProps {
     products: Product[];
@@ -46,7 +46,7 @@ export function ProductTable({
     onAddClick,
     isLoading = false,
     isFetching = false,
-    }: ProductTableProps) {
+}: ProductTableProps) {
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
@@ -224,12 +224,14 @@ export function ProductTable({
 
             return baseColumns;
         },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         [hasManageProducts, onEdit],
     );
 
     const filtersSlot = (
         <CommandSelect
             value={statusFilter}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onChange={(val) => setStatusFilter(val as any)}
             options={[
                 { value: "all", label: "Semua Status" },

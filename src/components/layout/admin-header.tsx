@@ -6,9 +6,12 @@ import { IconCalendar } from "@tabler/icons-react";
 
 const PATH_TITLES: Record<string, string> = {
   "/admin": "Dashboard",
-  "/admin/products": "Manajemen Produk",
   "/admin/stock": "Stok Barang & Inventori",
-  "/admin/reports": "Laporan Penjualan & Analitik",
+  "/admin/suppliers": "Master Supplier",
+  "/admin/products": "Master Produk",
+  "/admin/categories": "Master Kategori Produk",
+  "/admin/brands": "Master Brand / Merek",
+  "/admin/reports": "Laporan Penjualan",
   "/admin/users": "Kelola Pengguna Sistem",
   "/admin/settings": "Pengaturan Profil Toko",
 };

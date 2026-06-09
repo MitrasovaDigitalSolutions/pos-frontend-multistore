@@ -2,11 +2,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiGetData, apiGetList, apiPost, apiPut, apiPatch, apiDelete } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
-import type { StockMovement, Receiving, Opname, Supplier } from "../types";
+import type { StockMovement, Receiving, Opname } from "../types";
 import type { AdjustmentInput } from "../schemas/adjustment-schema";
 import type { ReceivingInput } from "../schemas/receiving-schema";
 import type { OpnameInput } from "../schemas/opname-schema";
-import type { SupplierInput } from "../schemas/supplier-schema";
 
 export function useStockMovements(params?: PaginationParams) {
     return useQuery<PaginatedResponse<StockMovement>>({
@@ -109,65 +108,6 @@ export function useFinalizeOpname() {
     });
 }
 
-// ─── Supplier Master Data Hooks ──────────────────────────────────────────────
-
-export function useSuppliers(params?: PaginationParams & { search?: string }) {
-    return useQuery<PaginatedResponse<Supplier>>({
-        queryKey: [...queryKeys.inventory.suppliers(), params],
-        queryFn: () => apiGetList<Supplier>("/v1/inventory/suppliers", params),
-    });
-}
-
-export function useAllSuppliers() {
-    return useQuery<Supplier[]>({
-        queryKey: [...queryKeys.inventory.suppliers(), "all"],
-        queryFn: () => apiGetData<Supplier[]>("/v1/inventory/suppliers/all"),
-    });
-}
-
-export function useCreateSupplier() {
-    const queryClient = useQueryClient();
-    return useMutation<ApiResponse<Supplier>, Error, SupplierInput>({
-        mutationFn: (data) =>
-            apiPost<ApiResponse<Supplier>, SupplierInput>(
-                "/v1/inventory/suppliers",
-                data,
-            ),
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.inventory.suppliers(),
-            });
-        },
-    });
-}
-
-export function useUpdateSupplier() {
-    const queryClient = useQueryClient();
-    return useMutation<ApiResponse<Supplier>, Error, { id: number; data: SupplierInput }>({
-        mutationFn: ({ id, data }) =>
-            apiPut<ApiResponse<Supplier>, SupplierInput>(
-                `/v1/inventory/suppliers/${id}`,
-                data,
-            ),
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.inventory.suppliers(),
-            });
-        },
-    });
-}
-
-export function useDeleteSupplier() {
-    const queryClient = useQueryClient();
-    return useMutation<ApiResponse<void>, Error, number>({
-        mutationFn: (id) => apiDelete<ApiResponse<void>>(`/v1/inventory/suppliers/${id}`),
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.inventory.suppliers(),
-            });
-        },
-    });
-}
 
 // ─── Enhanced Receiving Hooks ────────────────────────────────────────────────
 

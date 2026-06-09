@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { IconEdit, IconTrash, IconPlus } from "@tabler/icons-react";
 import type { Supplier } from "../types";
 import { DataTable } from "@/components/ui/data-table";
-import { useDeleteSupplier } from "../api/stock-api";
+import { useDeleteSupplier } from "../api/suppliers-api";
 import { toast } from "sonner";
 
 interface SupplierListProps {
@@ -141,6 +141,7 @@ export function SupplierList({
 
             return baseColumns;
         },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         [hasManageSuppliers, onEdit],
     );
 

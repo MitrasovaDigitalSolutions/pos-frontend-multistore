@@ -6,6 +6,7 @@ import {
     useFieldArray,
     FormProvider,
     type Resolver,
+    type FieldPath,
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -26,8 +27,8 @@ import {
 import {
     useCreateReceiving,
     useUpdateReceiving,
-    useAllSuppliers,
 } from "../api/stock-api";
+import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
 import type { Product } from "@/features/products/types";
 import type { Receiving } from "../types";
 
@@ -333,7 +334,7 @@ export function ReceivingDialog({
                                         <div className="grow">
                                             <FormSelect<ReceivingInput>
                                                 name={
-                                                    `items.${idx}.product_id` as any
+                                                    `items.${idx}.product_id` as FieldPath<ReceivingInput>
                                                 }
                                                 options={productOptions}
                                                 placeholder="-- Pilih Produk --"
