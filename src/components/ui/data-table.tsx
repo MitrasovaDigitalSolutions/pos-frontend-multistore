@@ -130,13 +130,13 @@ export function DataTable<TData, TValue>({
     const [paddingTop, paddingBottom] =
         virtualize && virtualItems.length > 0
             ? [
-                  Math.max(0, virtualItems[0].start),
-                  Math.max(
-                      0,
-                      rowVirtualizer.getTotalSize() -
-                          virtualItems[virtualItems.length - 1].end,
-                  ),
-              ]
+                Math.max(0, virtualItems[0].start),
+                Math.max(
+                    0,
+                    rowVirtualizer.getTotalSize() -
+                    virtualItems[virtualItems.length - 1].end,
+                ),
+            ]
             : [0, 0];
 
     // Render pagination numbers list
@@ -199,8 +199,8 @@ export function DataTable<TData, TValue>({
         <div className="relative border border-slate-100 rounded-2xl bg-white shadow-sm overflow-hidden flex flex-col">
             {/* Subtle loader bar at the top of the table container for background updates */}
             {isFetching && (
-                <div className="absolute top-0 left-0 right-0 h-0.5 bg-indigo-50/50 overflow-hidden z-20">
-                    <div className="h-full bg-indigo-500/80 animate-shimmer-loading w-[35%] rounded-full" />
+                <div className="absolute top-0 left-0 right-0 h-0.5 bg-emerald-50/50 overflow-hidden z-20">
+                    <div className="h-full bg-emerald-500/80 animate-shimmer-loading w-[35%] rounded-full" />
                 </div>
             )}
 
@@ -213,7 +213,7 @@ export function DataTable<TData, TValue>({
                             <Input
                                 type="text"
                                 placeholder={searchPlaceholder}
-                                className="pl-9 h-9 text-[11px] border-slate-200 focus-visible:ring-indigo-600 rounded-xl bg-white w-full"
+                                className="pl-9 h-9 text-[11px] border-slate-200 focus-visible:ring-emerald-600 rounded-xl bg-white w-full"
                                 value={search || ""}
                                 onChange={(e) => onSearchChange(e.target.value)}
                             />
@@ -233,7 +233,7 @@ export function DataTable<TData, TValue>({
                 className={cn(
                     "w-full overflow-auto max-h-112.5",
                     virtualize &&
-                        "scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent",
+                    "scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent",
                     className,
                 )}
                 style={virtualize ? { maxHeight } : undefined}
@@ -269,7 +269,7 @@ export function DataTable<TData, TValue>({
                                                     className={cn(
                                                         "flex items-center gap-1.5",
                                                         isSortable &&
-                                                            "cursor-pointer select-none hover:text-slate-700 transition-colors",
+                                                        "cursor-pointer select-none hover:text-slate-700 transition-colors",
                                                     )}
                                                     onClick={
                                                         isSortable
@@ -288,11 +288,11 @@ export function DataTable<TData, TValue>({
                                                     {isSortable && (
                                                         <span className="shrink-0 text-slate-400">
                                                             {sortDirection ===
-                                                            "asc" ? (
-                                                                <ArrowUp className="h-3 w-3 text-indigo-600 font-bold" />
+                                                                "asc" ? (
+                                                                <ArrowUp className="h-3 w-3 text-emerald-600 font-bold" />
                                                             ) : sortDirection ===
-                                                              "desc" ? (
-                                                                <ArrowDown className="h-3 w-3 text-indigo-600 font-bold" />
+                                                                "desc" ? (
+                                                                <ArrowDown className="h-3 w-3 text-emerald-600 font-bold" />
                                                             ) : (
                                                                 <ArrowUpDown className="h-3 w-3 opacity-40 hover:opacity-100" />
                                                             )}
@@ -450,7 +450,7 @@ export function DataTable<TData, TValue>({
                                     }
                                     defaultValue={perPage.toString()}
                                 >
-                                    <SelectTrigger className="h-8 w-24 border-slate-200 focus-visible:ring-indigo-600 rounded-xl bg-white text-xs">
+                                    <SelectTrigger className="h-8 w-24 border-slate-200 focus-visible:ring-emerald-600 rounded-xl bg-white text-xs">
                                         <SelectValue placeholder="Pilih" />
                                     </SelectTrigger>
                                     <SelectContent>

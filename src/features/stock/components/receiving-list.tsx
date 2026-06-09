@@ -199,11 +199,10 @@ export function ReceivingList({
                             onClick={() =>
                                 handleTogglePaymentStatus(row.original.id, status)
                             }
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold border cursor-pointer transition-colors ${
-                                status === "paid"
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold border cursor-pointer transition-colors ${status === "paid"
                                     ? "bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100"
                                     : "bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-100"
-                            }`}
+                                }`}
                         >
                             {status === "paid" ? "Lunas" : "Pending"}
                         </button>
@@ -217,11 +216,10 @@ export function ReceivingList({
                     const status = row.original.status;
                     return (
                         <span
-                            className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                                status === "completed"
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${status === "completed"
                                     ? "bg-blue-50 text-blue-700"
                                     : "bg-amber-50 text-amber-700"
-                            }`}
+                                }`}
                         >
                             {status === "completed" ? "Selesai" : "Draft"}
                         </span>
@@ -252,7 +250,7 @@ export function ReceivingList({
                                 <>
                                     <button
                                         onClick={() => handleEditClick(rec)}
-                                        className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer"
+                                        className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer"
                                         title="Ubah Draft"
                                     >
                                         <IconEdit size={16} />

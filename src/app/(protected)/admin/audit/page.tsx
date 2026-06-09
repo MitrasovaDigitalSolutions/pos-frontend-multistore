@@ -53,7 +53,7 @@ export default function AdminAuditPage() {
         if (action.includes("finalize")) {
             return "bg-teal-50 text-teal-700 border-teal-100";
         }
-        return "bg-indigo-50 text-indigo-700 border-indigo-100";
+        return "bg-emerald-50 text-emerald-700 border-emerald-100";
     };
 
     const columns = useMemo<ColumnDef<ActivityLog>[]>(

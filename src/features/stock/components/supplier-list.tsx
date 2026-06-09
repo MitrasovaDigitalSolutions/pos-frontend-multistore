@@ -110,7 +110,7 @@ export function SupplierList({
                         <div className="flex justify-center gap-1.5">
                             <button
                                 onClick={() => onEdit(sup)}
-                                className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer"
+                                className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer"
                             >
                                 <IconEdit size={16} />
                             </button>

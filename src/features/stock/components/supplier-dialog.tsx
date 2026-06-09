@@ -109,7 +109,7 @@ export function SupplierDialog({
                     <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
                         <IconBuildingStore
                             size={20}
-                            className="text-indigo-500"
+                            className="text-emerald-500"
                         />
                         <span>
                             {isEdit ? "Ubah Data Supplier" : "Tambah Supplier Baru"}
@@ -130,7 +130,7 @@ export function SupplierDialog({
                             <Input
                                 type="text"
                                 placeholder="PT. Distributor Sembako..."
-                                className="h-10 text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-xl"
+                                className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
                                 disabled={isPending}
                                 {...register("nama")}
                             />
@@ -150,7 +150,7 @@ export function SupplierDialog({
                                 <Input
                                     type="text"
                                     placeholder="0812XXXXXXXX..."
-                                    className="h-10 text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-xl"
+                                    className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
                                     disabled={isPending}
                                     {...register("nomor_telepon")}
                                 />
@@ -169,7 +169,7 @@ export function SupplierDialog({
                                 <Input
                                     type="text"
                                     placeholder="supplier@mail.com..."
-                                    className="h-10 text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-xl"
+                                    className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
                                     disabled={isPending}
                                     {...register("email")}
                                 />
@@ -189,7 +189,7 @@ export function SupplierDialog({
                             <FormTextarea
                                 name="alamat"
                                 placeholder="Alamat lengkap distributor..."
-                                className="text-xs border-slate-200 focus-visible:ring-indigo-600 rounded-xl min-h-16"
+                                className="text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl min-h-16"
                                 disabled={isPending}
                             />
                             {errors.alamat && (
@@ -201,7 +201,7 @@ export function SupplierDialog({
 
                         <Button
                             type="submit"
-                            className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4"
+                            className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4"
                             disabled={isPending}
                         >
                             {isPending ? "Menyimpan..." : isEdit ? "Simpan Perubahan" : "Daftarkan Supplier"}

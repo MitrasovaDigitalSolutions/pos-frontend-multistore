@@ -107,15 +107,14 @@ export function UserTable({
                     const u = row.original;
                     return (
                         <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold capitalize ${
-                                u.roles.includes("admin")
-                                    ? "bg-indigo-50 text-indigo-700"
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold capitalize ${u.roles.includes("admin")
+                                    ? "bg-emerald-50 text-emerald-700"
                                     : u.roles.includes("manajer_toko")
-                                      ? "bg-amber-50 text-amber-700"
-                                      : u.roles.includes("supervisor")
-                                        ? "bg-blue-50 text-blue-700"
-                                        : "bg-slate-100 text-slate-700"
-                            }`}
+                                        ? "bg-amber-50 text-amber-700"
+                                        : u.roles.includes("supervisor")
+                                            ? "bg-blue-50 text-blue-700"
+                                            : "bg-slate-100 text-slate-700"
+                                }`}
                         >
                             {u.roles[0]?.replace("_", " ")}
                         </span>
@@ -133,11 +132,10 @@ export function UserTable({
                     const u = row.original;
                     return (
                         <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                u.status === "active"
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${u.status === "active"
                                     ? "bg-emerald-50 text-emerald-700"
                                     : "bg-rose-50 text-rose-700"
-                            }`}
+                                }`}
                         >
                             {u.status === "active" ? "Aktif" : "Nonaktif"}
                         </span>
@@ -158,7 +156,7 @@ export function UserTable({
                         <div className="flex justify-center gap-1.5">
                             <button
                                 onClick={() => onEdit(u)}
-                                className="p-1 text-indigo-600 hover:bg-indigo-50 rounded transition-colors border-none bg-transparent cursor-pointer"
+                                className="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors border-none bg-transparent cursor-pointer"
                             >
                                 <IconEdit size={16} />
                             </button>
@@ -208,7 +206,7 @@ export function UserTable({
                 </div>
                 <Button
                     onClick={onAddClick}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
                 >
                     <IconPlus size={16} /> Tambah Pengguna
                 </Button>

@@ -15,7 +15,7 @@ export function Sparkline({
   data,
   width = 100,
   height = 40,
-  color = "#4f46e5", // Indigo-600
+  color = "#4f46e5", // emerald-600
   fillColor = "rgba(79, 70, 229, 0.1)",
 }: SparklineProps) {
   const points = useMemo(() => {
@@ -117,7 +117,7 @@ export function BarChart({ data, height = 180, barColor = "#0f172a" }: BarChartP
                 <span className="absolute -top-7 scale-0 group-hover:scale-100 transition-all bg-slate-900 text-white text-[9px] font-bold py-1 px-1.5 rounded shadow z-10 whitespace-nowrap">
                   {item.value.toLocaleString("id-ID")}
                 </span>
-                
+
                 {/* Bar */}
                 <div
                   style={{ height: `${barHeight}%` }}
