@@ -51,7 +51,7 @@ export function StatMiniCards({ summary }: StatMiniCardsProps) {
               <IconCash size={14} className="stroke-[2.5]" />
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2.5 mt-2.5">
             <span className="text-2xl font-extrabold text-slate-800 tabular-nums leading-none tracking-tight">
               {netSales >= 1_000_000
@@ -108,7 +108,7 @@ export function StatMiniCards({ summary }: StatMiniCardsProps) {
               <IconShoppingBag size={14} className="stroke-[2.5]" />
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2.5 mt-2.5">
             <span className="text-2xl font-extrabold text-slate-800 tabular-nums leading-none tracking-tight">
               {itemsSold}
@@ -128,9 +128,6 @@ export function StatMiniCards({ summary }: StatMiniCardsProps) {
           >
             Lihat Produk <IconArrowRight size={11} className="transition-transform group-hover:translate-x-0.5" />
           </Link>
-          <div className="w-7 h-7 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center transition-all duration-300 hover:scale-105">
-            <IconShoppingBag size={13} className="stroke-[2.5]" />
-          </div>
         </div>
       </div>
     </div>

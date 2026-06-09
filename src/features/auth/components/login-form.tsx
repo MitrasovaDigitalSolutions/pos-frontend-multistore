@@ -70,8 +70,12 @@ export function LoginForm() {
             });
 
             if (res?.error) {
-                // NextAuth helper displays the error thrown in authorize callback
-                toast.error(res.error || "Username atau password salah.");
+                const errorMessage = res.error === "CredentialsSignin"
+                    ? "Username atau password salah."
+                    : res.error === "Configuration"
+                    ? "Gagal menghubungkan ke server atau terjadi kesalahan konfigurasi."
+                    : res.error;
+                toast.error(errorMessage);
             } else {
                 toast.success("Login berhasil!");
                 // Redirect is handled by the useEffect above

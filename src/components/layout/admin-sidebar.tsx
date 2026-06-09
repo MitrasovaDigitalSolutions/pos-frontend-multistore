@@ -14,7 +14,8 @@ import {
     IconShoppingCart
 } from "@tabler/icons-react";
 import { ChevronsLeft, ChevronsRight } from "lucide-react";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { signOut } from "@/lib/auth-helpers";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { NAVIGATION_CONFIG } from "./sidebar-config";

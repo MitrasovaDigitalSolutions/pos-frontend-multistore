@@ -1,8 +1,15 @@
 import type { User } from "@/types/auth";
-import type { NextAuthConfig } from "next-auth";
+import { type NextAuthConfig, CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { ROUTES, PUBLIC_ROUTES, AUTH_ROUTES } from "@/constants/routes";
 import { canAccessAdmin } from "@/constants/roles";
+
+class CustomAuthError extends CredentialsSignin {
+  constructor(code: string) {
+    super();
+    this.code = code;
+  }
+}
 
 export default {
   providers: [
@@ -31,7 +38,7 @@ export default {
           const data = await res.json();
 
           if (!res.ok || !data.access_token) {
-            throw new Error(data.message || "Login gagal.");
+            throw new CustomAuthError(data.message || "Login gagal.");
           }
 
           return {
@@ -42,6 +49,9 @@ export default {
             userData: data.user,
           };
         } catch (error) {
+          if (error instanceof CredentialsSignin) {
+            throw error;
+          }
           if (error instanceof Error) {
             throw new Error(error.message);
           }

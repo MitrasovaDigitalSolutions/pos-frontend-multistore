@@ -11,7 +11,7 @@ import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form"
 import { toast } from "sonner";
 import { useCloseCashDrawer } from "../../api/cash-drawer-api";
 import { closeCashDrawerSchema, type CloseCashDrawerInput } from "../../schemas/cash-drawer-schema";
-import { signOut } from "next-auth/react";
+import { signOut } from "@/lib/auth-helpers";
 
 interface CloseShiftFormProps {
     sessionId: number;

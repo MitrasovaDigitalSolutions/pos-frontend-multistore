@@ -11,7 +11,7 @@ import { HoldListDialog } from "@/features/checkout/components/hold-list-dialog"
 import { ReceiptDialog } from "@/features/checkout/components/receipt-dialog";
 import { BukaShiftModal, InfoSesiAktifModal } from "@/features/checkout/components/cash-drawer";
 import { useCurrentCashDrawer } from "@/features/checkout/api/cash-drawer-api";
-import { signOut } from "next-auth/react";
+import { signOut } from "@/lib/auth-helpers";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export function Checkout() {
