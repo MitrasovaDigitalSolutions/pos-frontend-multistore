@@ -15,7 +15,7 @@ import { signOut } from "next-auth/react";
 
 export default function CheckoutPage() {
     const state = useCheckoutState();
-    
+
     // Cash Drawer Sesi States
     const [isInfoSesiOpen, setIsInfoSesiOpen] = useState(false);
     const [hasAutoOpened, setHasAutoOpened] = useState(false);
@@ -30,16 +30,19 @@ export default function CheckoutPage() {
     } = useCurrentCashDrawer(cashDrawerToken);
 
     const activeDrawerSession = currentDrawerData?.data;
-    const isBukaShiftOpen = !isDrawerLoading && !activeDrawerSession;
 
-    // Synchronize cashDrawerSessionId and handle auto-open Info modal
+    const isSessionLoaded = state.session !== undefined;
+    const hasCashDrawerSession = !!state.session?.cashDrawerSessionId;
+
+    const isBukaShiftOpen = isSessionLoaded && (
+        !hasCashDrawerSession || (!isDrawerLoading && !activeDrawerSession)
+    );
+
     useEffect(() => {
         if (activeDrawerSession) {
-            // Update next-auth session token if mismatch
             if (state.session && state.session.cashDrawerSessionId !== activeDrawerSession.id) {
                 state.update({ cashDrawerSessionId: activeDrawerSession.id });
             }
-            // Auto open active session details on mount
             if (!hasAutoOpened) {
                 setIsInfoSesiOpen(true);
                 setHasAutoOpened(true);

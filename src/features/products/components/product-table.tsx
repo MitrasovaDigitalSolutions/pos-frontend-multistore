@@ -136,8 +136,8 @@ export function ProductTable({
                     return (
                         <span
                             className={`font-bold ${p.stok <= 10
-                                    ? "text-amber-500"
-                                    : "text-slate-800"
+                                ? "text-amber-500"
+                                : "text-slate-800"
                                 }`}
                         >
                             {p.stok} pcs
@@ -158,8 +158,8 @@ export function ProductTable({
                         <button
                             onClick={() => handleToggleStatus(p)}
                             className={`badge text-[10px] border-none cursor-pointer ${p.status === "active"
-                                    ? "bg-emerald-50 text-emerald-700"
-                                    : "bg-rose-50 text-rose-700"
+                                ? "bg-emerald-50 text-emerald-700"
+                                : "bg-rose-50 text-rose-700"
                                 }`}
                         >
                             {p.status === "active" ? "Aktif" : "Nonaktif"}
@@ -181,7 +181,7 @@ export function ProductTable({
                         <div className="flex justify-center gap-1.5">
                             <button
                                 onClick={() => onEdit(p)}
-                                className="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors border-none bg-transparent cursor-pointer"
+                                className="p-1 text-amber-600 hover:bg-amber-50 rounded transition-colors border-none bg-transparent cursor-pointer"
                             >
                                 <IconEdit size={16} />
                             </button>

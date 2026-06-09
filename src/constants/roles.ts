@@ -16,7 +16,12 @@ export const PERMISSIONS = {
   MANAGE_PRODUCTS: "manage_products",
   MANAGE_USERS: "manage_users",
   CREATE_SALES: "create_sales",
+  MANAGE_SALES: "manage_sales",
   MANAGE_INVENTORY: "manage_inventory",
+  VIEW_INVENTORY: "view_inventory",
+  OPERATE_CASH_DRAWER: "operate_cash_drawer",
+  MANAGE_CASH_DRAWER: "manage_cash_drawer",
+  VIEW_CASH_DRAWER: "view_cash_drawer",
   MANAGE_SETTINGS: "manage_settings",
 } as const;
 

@@ -1,5 +1,5 @@
-import { AdminSidebar } from "@/components/layout/admin-sidebar";
 import { AdminHeader } from "@/components/layout/admin-header";
+import { AdminSidebar } from "@/components/layout/admin-sidebar";
 import type { ReactNode } from "react";
 
 interface AdminLayoutProps {
@@ -7,6 +7,7 @@ interface AdminLayoutProps {
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
+
     return (
         <div className="grow flex h-screen overflow-hidden bg-slate-100">
             <AdminSidebar />

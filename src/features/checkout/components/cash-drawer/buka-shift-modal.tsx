@@ -88,11 +88,20 @@ export function BukaShiftModal({ open, token, onSuccess }: BukaShiftModalProps) 
                             disabled={openMutation.isPending || isSubmitting}
                         />
 
-                        <div className="pt-2 space-y-2">
+                        <div className="grid grid-cols-12 gap-4 pt-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => signOut({ callbackUrl: "/login" })}
+                                className="col-span-4 h-11 border border-rose-200 hover:bg-rose-50 text-rose-600 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer bg-white"
+                            >
+                                <IconLogout size={16} />
+                                <span>Logout</span>
+                            </Button>
                             <Button
                                 type="submit"
                                 disabled={openMutation.isPending || isSubmitting}
-                                className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-emerald-600/10 active:scale-[0.99] transition-all disabled:opacity-50 border-none"
+                                className="col-span-8 h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-emerald-600/10 active:scale-[0.99] transition-all disabled:opacity-50 border-none"
                             >
                                 {openMutation.isPending || isSubmitting ? (
                                     <IconLoader2 size={16} className="animate-spin" />
@@ -102,15 +111,7 @@ export function BukaShiftModal({ open, token, onSuccess }: BukaShiftModalProps) 
                                 <span>Mulai Shift (Buka Laci)</span>
                             </Button>
 
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => signOut({ callbackUrl: "/login" })}
-                                className="w-full h-11 border border-rose-200 hover:bg-rose-50 text-rose-600 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer bg-white"
-                            >
-                                <IconLogout size={16} />
-                                <span>Keluar Sistem (Logout)</span>
-                            </Button>
+
                         </div>
                     </form>
                 </FormProvider>
