@@ -1,3 +1,5 @@
+import type { Transaction } from "@/types/common";
+
 export interface CashDrawerMovement {
     id: number;
     cash_drawer_session_id: number;
@@ -41,9 +43,20 @@ export interface CashDrawerSession {
     closing_note: string | null;
     opened_at: string;
     closed_at: string | null;
-    closed_by: number | null;
+    closed_by: number | null | {
+        id: number;
+        name: string;
+        username: string;
+        email: string;
+        email_verified_at: string | null;
+        store_id: number | null;
+        status: string;
+        created_at: string;
+        updated_at: string;
+    };
     created_at: string;
     updated_at: string;
+    transactions?: Transaction[];
     user?: {
         id: number;
         name: string;

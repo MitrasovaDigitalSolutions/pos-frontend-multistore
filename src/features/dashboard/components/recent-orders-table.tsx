@@ -144,13 +144,6 @@ export function RecentOrdersTable({ from, to, paymentMethod }: RecentOrdersTable
                         {statusLabel}
                       </span>
                     </td>
-
-                    {/* Actions */}
-                    <td className="py-3">
-                      <button className="text-slate-300 hover:text-slate-500 text-base font-bold leading-none opacity-0 group-hover:opacity-100 transition-opacity">
-                        ···
-                      </button>
-                    </td>
                   </tr>
                 );
               })
