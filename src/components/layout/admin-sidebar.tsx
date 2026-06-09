@@ -39,7 +39,6 @@ export function AdminSidebar() {
         if (tab) {
             return pathname === path && currentTab === tab;
         }
-        // For general routes (except stock where tab determines sub-route)
         if (path === ROUTES.ADMIN_STOCK) {
             return pathname === path && currentTab !== "receiving" && currentTab !== "suppliers";
         }
@@ -48,11 +47,10 @@ export function AdminSidebar() {
 
     const getLinkClass = (path: string, tab?: string) => {
         const active = isActive(path, tab);
-        return `w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-xs transition-all text-left cursor-pointer ${
-            active
+        return `w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-xs transition-all text-left cursor-pointer ${active
                 ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/10"
                 : "text-gray-400 hover:text-white hover:bg-gray-900"
-        }`;
+            }`;
     };
 
     const hasViewReports =
@@ -64,9 +62,30 @@ export function AdminSidebar() {
     const hasManageProducts =
         hasRole(userRoles, "admin") ||
         hasPermission(userRoles, userPermissions, "manage_products");
+    const hasViewProducts =
+        hasRole(userRoles, "admin") ||
+        hasPermission(userRoles, userPermissions, "view_products");
     const hasManageUsers =
         hasRole(userRoles, "admin") ||
         hasPermission(userRoles, userPermissions, "manage_users");
+    const hasViewUsers =
+        hasRole(userRoles, "admin") ||
+        hasPermission(userRoles, userPermissions, "view_users");
+    const hasManageInventory =
+        hasRole(userRoles, "admin") ||
+        hasPermission(userRoles, userPermissions, "manage_inventory");
+    const hasViewInventory =
+        hasRole(userRoles, "admin") ||
+        hasPermission(userRoles, userPermissions, "view_inventory");
+    const hasManageSuppliers =
+        hasRole(userRoles, "admin") ||
+        hasPermission(userRoles, userPermissions, "manage_suppliers");
+    const hasViewSuppliers =
+        hasRole(userRoles, "admin") ||
+        hasPermission(userRoles, userPermissions, "view_suppliers");
+    const hasViewAuditLogs =
+        hasRole(userRoles, "admin") ||
+        hasPermission(userRoles, userPermissions, "view_audit_logs");
     const hasAdmin = hasRole(userRoles, "admin");
 
     return (
@@ -109,7 +128,7 @@ export function AdminSidebar() {
                                     </Link>
                                 </li>
                             )}
-                            {hasManageProducts && (
+                            {(hasManageProducts || hasViewProducts) && (
                                 <li>
                                     <Link
                                         href={ROUTES.ADMIN_PRODUCTS}
@@ -125,13 +144,13 @@ export function AdminSidebar() {
                         </ul>
                     </div>
 
-                    {(hasManageProducts || hasViewReports) && (
+                    {(hasManageInventory || hasViewInventory || hasManageSuppliers || hasViewSuppliers || hasViewReports) && (
                         <div className="space-y-1">
                             <span className="text-[9px] font-extrabold text-gray-600 uppercase tracking-widest px-3 block">
                                 Inventori & Laporan
                             </span>
                             <ul className="space-y-0.5">
-                                {hasManageProducts && (
+                                {(hasManageInventory || hasViewInventory) && (
                                     <li>
                                         <Link
                                             href={`${ROUTES.ADMIN_STOCK}?tab=inventory`}
@@ -145,7 +164,7 @@ export function AdminSidebar() {
                                         </Link>
                                     </li>
                                 )}
-                                {hasManageProducts && (
+                                {(hasManageInventory || hasViewInventory) && (
                                     <li>
                                         <Link
                                             href={`${ROUTES.ADMIN_STOCK}?tab=receiving`}
@@ -159,7 +178,7 @@ export function AdminSidebar() {
                                         </Link>
                                     </li>
                                 )}
-                                {hasManageProducts && (
+                                {(hasManageSuppliers || hasViewSuppliers) && (
                                     <li>
                                         <Link
                                             href={`${ROUTES.ADMIN_STOCK}?tab=suppliers`}
@@ -197,7 +216,7 @@ export function AdminSidebar() {
                     Sistem
                 </span>
                 <ul className="space-y-0.5">
-                    {hasManageUsers && (
+                    {(hasManageUsers || hasViewUsers) && (
                         <li>
                             <Link
                                 href={ROUTES.ADMIN_USERS}
@@ -219,7 +238,7 @@ export function AdminSidebar() {
                             </Link>
                         </li>
                     )}
-                    {hasAdmin && (
+                    {hasViewAuditLogs && (
                         <li>
                             <Link
                                 href={ROUTES.ADMIN_AUDIT}

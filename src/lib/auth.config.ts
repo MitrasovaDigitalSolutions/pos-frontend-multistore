@@ -34,12 +34,10 @@ export default {
             throw new Error(data.message || "Login gagal.");
           }
 
-          // Return user object — will be stored in JWT
           return {
             id: String(data.user.id),
             name: data.user.name,
             email: data.user.email,
-            // Custom fields stored in JWT via callbacks
             accessToken: data.access_token,
             userData: data.user,
           };
@@ -63,22 +61,24 @@ export default {
   },
 
   callbacks: {
-    // Store custom data in JWT
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
+      if (trigger === "update" && session) {
+        if (session.cashDrawerSessionId !== undefined) {
+          token.cashDrawerSessionId = session.cashDrawerSessionId;
+        }
+      }
+
       if (user) {
-        // Initial sign in
         const userData = (user as Record<string, unknown>).userData as User;
         token.accessToken = (user as Record<string, unknown>).accessToken as string;
         token.user = userData;
         token.accessTokenExpires = Date.now() + 7 * 60 * 60 * 1000; // 7 hours
       }
 
-      // Check if token is about to expire
       if (typeof token.accessTokenExpires === "number" && Date.now() < token.accessTokenExpires) {
         return token;
       }
 
-      // Token expired — try refresh
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         const res = await fetch(`${apiUrl}/v1/auth/me`, {
@@ -101,29 +101,27 @@ export default {
       return { ...token, error: "RefreshTokenError" as const };
     },
 
-    // Expose custom data to client session
     async session({ session, token }) {
       if (token.user) {
         session.user = token.user as typeof session.user;
       }
       session.accessToken = token.accessToken as string;
+      session.cashDrawerSessionId = token.cashDrawerSessionId as number | null | undefined;
       if (token.error) {
         session.error = token.error as "RefreshTokenError";
       }
       return session;
     },
 
-    // Route protection via authorized callback (used by proxy.ts)
     authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
+      const hasTokenError = !!(auth as Record<string, unknown> | null)?.error;
+      const isLoggedIn = !!auth?.user && !hasTokenError;
       const { pathname } = nextUrl;
 
-      // Allow public routes
       if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
         return true;
       }
 
-      // Auth routes — redirect to appropriate page if already logged in
       if (AUTH_ROUTES.includes(pathname)) {
         if (isLoggedIn) {
           const userRoles = (auth?.user as unknown as Record<string, unknown>)?.roles as string[] | undefined;
@@ -135,12 +133,9 @@ export default {
         return true;
       }
 
-      // Protected routes — require authentication
       if (!isLoggedIn) {
-        return false; // NextAuth redirects to signIn page
+        return false;
       }
-
-      // Role-based route protection for admin dashboard
       if (pathname.startsWith("/admin")) {
         const userRoles = (auth?.user as unknown as User)?.roles;
         if (!userRoles || !canAccessAdmin(userRoles)) {

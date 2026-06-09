@@ -30,7 +30,7 @@ const CommandContext = React.createContext<{
   disableLocalFilter?: boolean
 }>({
   search: "",
-  setSearch: () => {},
+  setSearch: () => { },
 })
 
 // ─── Command (Wrapper) ───────────────────────────────────────────────────────
@@ -122,7 +122,7 @@ export const CommandEmpty = React.forwardRef<
         className={cn("py-4 text-center text-xs text-slate-400 flex items-center justify-center gap-1.5", className)}
         {...props}
       >
-        <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-600" />
+        <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-600" />
         <span>Memuat data...</span>
       </div>
     )
@@ -149,7 +149,7 @@ export const CommandItem = React.forwardRef<
   }
 >(({ className, value, keywords = [], children, onClick, ...props }, ref) => {
   const { search, selectedValue, onSelect, disableLocalFilter } = React.useContext(CommandContext)
-  
+
   // Local filtering if no remote API search is active
   const matches = React.useMemo(() => {
     if (disableLocalFilter) return true
@@ -157,7 +157,7 @@ export const CommandItem = React.forwardRef<
     const searchLower = search.toLowerCase()
     const labelText = typeof children === "string" ? children.toLowerCase() : ""
     const valueLower = value.toLowerCase()
-    
+
     return (
       labelText.includes(searchLower) ||
       valueLower.includes(searchLower) ||
@@ -179,13 +179,13 @@ export const CommandItem = React.forwardRef<
       ref={ref}
       className={cn(
         "relative flex cursor-pointer select-none items-center rounded-lg px-2.5 py-1.5 text-xs outline-none transition-colors hover:bg-slate-50 hover:text-slate-900 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
-        isSelected && "bg-indigo-50/50 text-indigo-700 font-bold",
+        isSelected && "bg-emerald-50/50 text-emerald-700 font-bold",
         className
       )}
       onClick={handleSelect}
       {...props}
     >
-      {isSelected && <Check className="mr-2 h-3.5 w-3.5 text-indigo-600" />}
+      {isSelected && <Check className="mr-2 h-3.5 w-3.5 text-emerald-600" />}
       <span className={cn(!isSelected && "pl-[22px]")}>{children || value}</span>
     </div>
   )
@@ -234,7 +234,7 @@ export function CommandSelect({
         onClick={() => !disabled && setOpen(!open)}
         disabled={disabled}
         className={cn(
-          "flex h-8 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 outline-none transition-all hover:bg-slate-50 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer",
+          "flex h-8 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 outline-none transition-all hover:bg-slate-50 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer",
           className
         )}
       >

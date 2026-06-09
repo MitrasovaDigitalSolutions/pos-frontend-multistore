@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { IconCalendar } from "@tabler/icons-react";
 
 const PATH_TITLES: Record<string, string> = {
-  "/admin": "Dashboard Analitik Toko",
+  "/admin": "Dashboard",
   "/admin/products": "Manajemen Produk",
   "/admin/stock": "Stok Barang & Inventori",
   "/admin/reports": "Laporan Penjualan & Analitik",
@@ -28,6 +28,10 @@ export function AdminHeader() {
     return PATH_TITLES[pathname] || "Dashboard Admin";
   };
 
+  if (pathname.startsWith("/admin/users")) {
+    return null;
+  }
+
   const formattedDate = new Date().toLocaleDateString("id-ID", {
     day: "numeric",
     month: "long",
@@ -39,10 +43,10 @@ export function AdminHeader() {
 
   return (
     <header className="flex justify-between items-center mb-6 border-b border-slate-200/60 pb-4">
-      <h2 className="text-base font-extrabold text-slate-900">{getTitle()}</h2>
+      <h2 className="text-lg font-extrabold text-slate-900">{getTitle()}</h2>
       <div className="flex items-center gap-4">
         {/* Date Badge */}
-        <div className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-3 py-1.5 rounded-full flex items-center gap-2 font-bold text-xs select-none">
+        <div className="bg-sky-50 text-sky-500 border border-sky-100 px-3 py-1.5 rounded-full flex items-center gap-2 font-bold text-xs select-none">
           <IconCalendar size={15} />
           <span>Hari Ini: {formattedDate}</span>
         </div>
@@ -65,3 +69,4 @@ export function AdminHeader() {
     </header>
   );
 }
+

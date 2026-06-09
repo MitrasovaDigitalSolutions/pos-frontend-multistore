@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
+import { hasRole, hasPermission } from "@/constants/roles";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { IconEdit, IconTrash, IconPlus } from "@tabler/icons-react";
@@ -46,6 +47,12 @@ export function UserTable({
     isFetching = false,
 }: UserTableProps) {
     const { data: session } = useSession();
+    const userRoles = session?.user?.roles || [];
+    const userPermissions = session?.user?.permissions || [];
+    const hasManageUsers =
+        hasRole(userRoles, "admin") ||
+        hasPermission(userRoles, userPermissions, "manage_users");
+
     const deactivateUser = useDeactivateUser();
     const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
 
@@ -72,112 +79,117 @@ export function UserTable({
     }, [users, statusFilter]);
 
     const columns = useMemo<ColumnDef<User>[]>(
-        () => [
-            {
-                accessorKey: "name",
-                header: "Nama Lengkap",
-                cell: ({ row }) => (
-                    <span className="font-bold text-slate-900">
-                        {row.original.name}
-                    </span>
-                ),
-            },
-            {
-                accessorKey: "username",
-                header: "Username",
-                cell: ({ row }) => (
-                    <span className="text-slate-500 font-mono">
-                        {row.original.username}
-                    </span>
-                ),
-            },
-            {
-                accessorKey: "email",
-                header: "Email",
-                cell: ({ row }) => (
-                    <span className="text-slate-500">
-                        {row.original.email || "-"}
-                    </span>
-                ),
-            },
-            {
-                accessorKey: "roles",
-                header: "Role Peran",
-                cell: ({ row }) => {
-                    const u = row.original;
-                    return (
-                        <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold capitalize ${
-                                u.roles.includes("admin")
-                                    ? "bg-indigo-50 text-indigo-700"
-                                    : u.roles.includes("manajer_toko")
-                                      ? "bg-amber-50 text-amber-700"
-                                      : u.roles.includes("supervisor")
-                                        ? "bg-blue-50 text-blue-700"
-                                        : "bg-slate-100 text-slate-700"
-                            }`}
-                        >
-                            {u.roles[0]?.replace("_", " ")}
+        () => {
+            const baseColumns: ColumnDef<User>[] = [
+                {
+                    accessorKey: "name",
+                    header: "Nama Lengkap",
+                    cell: ({ row }) => (
+                        <span className="font-bold text-slate-900">
+                            {row.original.name}
                         </span>
-                    );
+                    ),
                 },
-            },
-            {
-                accessorKey: "status",
-                header: "Status",
-                meta: {
-                    headerClassName: "text-center",
-                    cellClassName: "text-center",
+                {
+                    accessorKey: "username",
+                    header: "Username",
+                    cell: ({ row }) => (
+                        <span className="text-slate-500 font-mono">
+                            {row.original.username}
+                        </span>
+                    ),
                 },
-                cell: ({ row }) => {
-                    const u = row.original;
-                    return (
-                        <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                u.status === "active"
+                {
+                    accessorKey: "email",
+                    header: "Email",
+                    cell: ({ row }) => (
+                        <span className="text-slate-500">
+                            {row.original.email || "-"}
+                        </span>
+                    ),
+                },
+                {
+                    accessorKey: "roles",
+                    header: "Role Peran",
+                    cell: ({ row }) => {
+                        const u = row.original;
+                        return (
+                            <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold capitalize ${u.roles.includes("admin")
+                                    ? "bg-emerald-50 text-emerald-700"
+                                    : u.roles.includes("manajer_toko")
+                                        ? "bg-amber-50 text-amber-700"
+                                        : u.roles.includes("supervisor")
+                                            ? "bg-blue-50 text-blue-700"
+                                            : "bg-slate-100 text-slate-700"
+                                    }`}
+                            >
+                                {u.roles[0]?.replace("_", " ")}
+                            </span>
+                        );
+                    },
+                },
+                {
+                    accessorKey: "status",
+                    header: "Status",
+                    meta: {
+                        headerClassName: "text-center",
+                        cellClassName: "text-center",
+                    },
+                    cell: ({ row }) => {
+                        const u = row.original;
+                        return (
+                            <span
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${u.status === "active"
                                     ? "bg-emerald-50 text-emerald-700"
                                     : "bg-rose-50 text-rose-700"
-                            }`}
-                        >
-                            {u.status === "active" ? "Aktif" : "Nonaktif"}
-                        </span>
-                    );
-                },
-            },
-            {
-                id: "actions",
-                header: "Aksi",
-                enableSorting: false,
-                meta: {
-                    headerClassName: "text-center w-28",
-                    cellClassName: "text-center",
-                },
-                cell: ({ row }) => {
-                    const u = row.original;
-                    return (
-                        <div className="flex justify-center gap-1.5">
-                            <button
-                                onClick={() => onEdit(u)}
-                                className="p-1 text-indigo-600 hover:bg-indigo-50 rounded transition-colors border-none bg-transparent cursor-pointer"
+                                    }`}
                             >
-                                <IconEdit size={16} />
-                            </button>
-                            {currentUser &&
-                                u.id !== currentUser.id &&
-                                u.status === "active" && (
-                                    <button
-                                        onClick={() => handleDeactivate(u.id)}
-                                        className="p-1 text-rose-500 hover:bg-rose-50 rounded transition-colors border-none bg-transparent cursor-pointer"
-                                    >
-                                        <IconTrash size={16} />
-                                    </button>
-                                )}
-                        </div>
-                    );
+                                {u.status === "active" ? "Aktif" : "Nonaktif"}
+                            </span>
+                        );
+                    },
                 },
-            },
-        ],
-        [currentUser],
+            ];
+
+            if (hasManageUsers) {
+                baseColumns.push({
+                    id: "actions",
+                    header: "Aksi",
+                    enableSorting: false,
+                    meta: {
+                        headerClassName: "text-center w-28",
+                        cellClassName: "text-center",
+                    },
+                    cell: ({ row }) => {
+                        const u = row.original;
+                        return (
+                            <div className="flex justify-center gap-1.5">
+                                <button
+                                    onClick={() => onEdit(u)}
+                                    className="p-1 text-amber-600 hover:bg-amber-50 rounded transition-colors border-none bg-transparent cursor-pointer"
+                                >
+                                    <IconEdit size={16} />
+                                </button>
+                                {currentUser &&
+                                    u.id !== currentUser.id &&
+                                    u.status === "active" && (
+                                        <button
+                                            onClick={() => handleDeactivate(u.id)}
+                                            className="p-1 text-rose-500 hover:bg-rose-50 rounded transition-colors border-none bg-transparent cursor-pointer"
+                                        >
+                                            <IconTrash size={16} />
+                                        </button>
+                                    )}
+                            </div>
+                        );
+                    },
+                });
+            }
+
+            return baseColumns;
+        },
+        [currentUser, hasManageUsers, onEdit],
     );
 
     const filtersSlot = (
@@ -206,12 +218,14 @@ export function UserTable({
                         Daftar akun kasir, supervisor, dan manajer.
                     </p>
                 </div>
-                <Button
-                    onClick={onAddClick}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
-                >
-                    <IconPlus size={16} /> Tambah Pengguna
-                </Button>
+                {hasManageUsers && (
+                    <Button
+                        onClick={onAddClick}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
+                    >
+                        <IconPlus size={16} /> Tambah Pengguna
+                    </Button>
+                )}
             </div>
 
             <DataTable

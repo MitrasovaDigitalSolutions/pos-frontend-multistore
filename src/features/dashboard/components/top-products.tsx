@@ -1,52 +1,153 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { DashboardSummary } from "../types";
+import { IconTrophy } from "@tabler/icons-react";
 
 interface TopProductsProps {
-    summary: DashboardSummary | undefined;
+  summary: DashboardSummary | undefined;
 }
 
-export function TopProducts({ summary }: TopProductsProps) {
+const RANK_COLORS = [
+  { bar: "#10b981", badge: "bg-emerald-500", text: "text-white" },
+  { bar: "#38bdf8", badge: "bg-sky-400", text: "text-white" },
+  { bar: "#f59e0b", badge: "bg-amber-400", text: "text-white" },
+  { bar: "#f87171", badge: "bg-red-400", text: "text-white" },
+  { bar: "#a78bfa", badge: "bg-violet-400", text: "text-white" },
+];
+
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
     return (
-        <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-5">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-slate-50 pb-4 p-0 mb-4">
-                <CardTitle className="text-xs font-bold text-slate-900">
-                    Produk Terlaris
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 space-y-4">
-                {summary &&
-                summary.top_products &&
-                summary.top_products.length > 0 ? (
-                    summary.top_products.map((tp, i) => (
-                        <div
-                            key={i}
-                            className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-xl"
-                        >
-                            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs font-bold">
-                                #{i + 1}
-                            </div>
-                            <div className="grow">
-                                <div className="font-bold text-[11px] text-slate-800">
-                                    {tp.product_name}
-                                </div>
-                                <div className="text-[9px] text-slate-400 font-medium">
-                                    Terjual {tp.quantity} pcs
-                                </div>
-                            </div>
-                            <span className="font-bold text-xs text-slate-900 tabular-nums">
-                                {formatRupiah(tp.revenue)}
-                            </span>
-                        </div>
-                    ))
-                ) : (
-                    <div className="text-center py-6 text-slate-400 text-xs">
-                        Belum ada data transaksi.
-                    </div>
-                )}
-            </CardContent>
-        </Card>
+      <div className="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 shadow-2xl text-white text-xs">
+        <div className="font-bold">{payload[0]?.payload?.name}</div>
+        <div className="text-slate-300 mt-0.5">
+          {formatRupiah(payload[0]?.value)}
+        </div>
+      </div>
     );
+  }
+  return null;
+};
+
+export function TopProducts({ summary }: TopProductsProps) {
+  const products = summary?.top_products ?? [];
+
+  const chartData = products.slice(0, 5).map((p, i) => ({
+    name:
+      p.product_name.length > 14
+        ? p.product_name.slice(0, 14) + "…"
+        : p.product_name,
+    fullName: p.product_name,
+    revenue: p.revenue,
+    qty: p.quantity,
+    color: RANK_COLORS[i]?.bar ?? "#94a3b8",
+  }));
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 flex flex-col gap-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+            <IconTrophy size={17} />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-slate-800">Produk Terlaris</div>
+            <div className="text-[10px] text-slate-400">Top 5 berdasarkan omzet</div>
+          </div>
+        </div>
+      </div>
+
+      {products.length > 0 ? (
+        <>
+          {/* Horizontal Bar Chart */}
+          <div className="h-36">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                layout="vertical"
+                data={chartData}
+                barCategoryGap="25%"
+                margin={{ top: 0, right: 8, bottom: 0, left: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                <XAxis
+                  type="number"
+                  tick={{ fontSize: 9, fill: "#cbd5e1" }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) => {
+                    if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(0)}jt`;
+                    if (v >= 1_000) return `${(v / 1_000).toFixed(0)}k`;
+                    return `${v}`;
+                  }}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  tick={{ fontSize: 9, fill: "#64748b", fontWeight: 600 }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={70}
+                />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: "#f8fafc" }} />
+                <Bar dataKey="revenue" radius={[0, 6, 6, 0]} maxBarSize={14}>
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* List */}
+          <div className="space-y-2">
+            {products.slice(0, 5).map((tp, i) => {
+              const colors = RANK_COLORS[i] ?? RANK_COLORS[4];
+              return (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 rounded-xl p-2.5 hover:bg-slate-50 transition-colors"
+                >
+                  <div
+                    className={`w-6 h-6 rounded-lg ${colors.badge} ${colors.text} flex items-center justify-center text-[10px] font-extrabold shrink-0`}
+                  >
+                    {i + 1}
+                  </div>
+                  <div className="grow min-w-0">
+                    <div className="font-bold text-[11px] text-slate-800 truncate">
+                      {tp.product_name}
+                    </div>
+                    <div className="text-[9px] text-slate-400 font-medium">
+                      Terjual {tp.quantity} pcs
+                    </div>
+                  </div>
+                  <span className="font-bold text-xs text-slate-900 tabular-nums shrink-0">
+                    {formatRupiah(tp.revenue)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <div className="flex-1 flex flex-col items-center justify-center py-8 text-slate-300 gap-2">
+          <IconTrophy size={32} strokeWidth={1.5} />
+          <span className="text-xs font-medium text-slate-400">
+            Belum ada data penjualan.
+          </span>
+        </div>
+      )}
+    </div>
+  );
 }

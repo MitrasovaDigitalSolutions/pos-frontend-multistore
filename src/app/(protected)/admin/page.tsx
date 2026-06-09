@@ -1,27 +1,61 @@
 "use client";
 
-import { useDashboardSummary } from "@/features/dashboard/api/dashboard-api";
-import { StatsGrid } from "@/features/dashboard/components/stats-grid";
-import { SalesChart } from "@/features/dashboard/components/sales-chart";
-import { TopProducts } from "@/features/dashboard/components/top-products";
+import { useState } from "react";
+import { useDashboardSummary, useSalesHistory } from "@/features/dashboard/api/dashboard-api";
+import { DashboardPageHeader } from "@/features/dashboard/components/dashboard-page-header";
+import { StatMiniCards } from "@/features/dashboard/components/stat-mini-cards";
+import { RevenueChart } from "@/features/dashboard/components/revenue-chart";
+import { SalesStatistics } from "@/features/dashboard/components/sales-statistics";
+import { RecentOrdersTable } from "@/features/dashboard/components/recent-orders-table";
+import { TopSellingWeekly } from "@/features/dashboard/components/top-selling-weekly";
 import { PageLoader } from "@/components/feedback/page-loader";
 
 export default function AdminDashboardPage() {
-  const { data: summary, isLoading } = useDashboardSummary();
+  const [from, setFrom] = useState<string>("");
+  const [to, setTo] = useState<string>("");
+  const [paymentMethod, setPaymentMethod] = useState<string>("");
+
+  const { data: summary, isLoading } = useDashboardSummary({
+    from: from || undefined,
+    to: to || undefined,
+    payment_method: paymentMethod || undefined,
+  });
+
+  const { data: history } = useSalesHistory({
+    from: from || undefined,
+    to: to || undefined,
+  });
 
   if (isLoading) {
     return <PageLoader message="Memuat dashboard admin..." />;
   }
 
   return (
-    <div className="space-y-6">
-      {/* Stats Cards */}
-      <StatsGrid summary={summary} />
+    <div>
+      {/* <DashboardPageHeader
+        from={from}
+        setFrom={setFrom}
+        to={to}
+        setTo={setTo}
+        paymentMethod={paymentMethod}
+        setPaymentMethod={setPaymentMethod}
+      /> */}
 
-      {/* Charts & Top Products */}
-      <section className="grid grid-cols-[1.4fr_1fr] gap-6">
-        <SalesChart summary={summary} />
-        <TopProducts summary={summary} />
+      <section className="grid gap-4 mb-4" style={{ gridTemplateColumns: "220px 1fr 280px" }}>
+        <StatMiniCards summary={summary} />
+
+        <RevenueChart summary={summary} history={history} />
+
+        <SalesStatistics summary={summary} />
+      </section>
+
+      <section className="grid gap-4" style={{ gridTemplateColumns: "1fr 280px" }}>
+        <RecentOrdersTable
+          from={from}
+          to={to}
+          paymentMethod={paymentMethod}
+        />
+        <TopSellingWeekly summary={summary} />
       </section>
     </div>
   );

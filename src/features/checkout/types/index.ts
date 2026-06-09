@@ -51,3 +51,5 @@ export interface TrxItem {
 export interface TrxData {
     items?: TrxItem[];
 }
+
+export * from "./cash-drawer";

@@ -12,12 +12,22 @@ export type Role = (typeof ROLES)[keyof typeof ROLES];
 // ─── Permission Constants ───────────────────────────────────────────────────
 
 export const PERMISSIONS = {
-  VIEW_REPORTS: "view_reports",
-  MANAGE_PRODUCTS: "manage_products",
   MANAGE_USERS: "manage_users",
+  VIEW_USERS: "view_users",
+  MANAGE_PRODUCTS: "manage_products",
+  VIEW_PRODUCTS: "view_products",
+  MANAGE_SALES: "manage_sales",
+  VIEW_REPORTS: "view_reports",
   CREATE_SALES: "create_sales",
+  VIEW_SALES: "view_sales",
   MANAGE_INVENTORY: "manage_inventory",
-  MANAGE_SETTINGS: "manage_settings",
+  VIEW_INVENTORY: "view_inventory",
+  MANAGE_SUPPLIERS: "manage_suppliers",
+  VIEW_SUPPLIERS: "view_suppliers",
+  VIEW_AUDIT_LOGS: "view_audit_logs",
+  OPERATE_CASH_DRAWER: "operate_cash_drawer",
+  MANAGE_CASH_DRAWER: "manage_cash_drawer",
+  VIEW_CASH_DRAWER: "view_cash_drawer",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

@@ -1,0 +1,112 @@
+"use client";
+
+import React from "react";
+import { useForm, FormProvider, type Resolver } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { FormInput } from "@/components/forms/form-input";
+import { toast } from "sonner";
+import { useCashIn } from "../../api/cash-drawer-api";
+import { cashInSchema, type CashInInput } from "../../schemas/cash-drawer-schema";
+import { IconChevronLeft, IconLoader2, IconArrowDownLeft } from "@tabler/icons-react";
+
+interface CashInFormProps {
+    sessionId: number;
+    token?: string;
+    onSuccess: () => void;
+    onCancel: () => void;
+}
+
+export function CashInForm({ sessionId, token, onSuccess, onCancel }: CashInFormProps) {
+    const cashInMutation = useCashIn();
+
+    const methods = useForm<CashInInput>({
+        resolver: zodResolver(cashInSchema) as Resolver<CashInInput>,
+        defaultValues: {
+            amount: 0,
+            note: "",
+        },
+    });
+
+    const { handleSubmit, formState: { isSubmitting } } = methods;
+
+    const onSubmit = async (data: CashInInput) => {
+        try {
+            await cashInMutation.mutateAsync({
+                session: sessionId,
+                payload: {
+                    amount: data.amount,
+                    note: data.note?.trim() || undefined,
+                },
+                token,
+            });
+            toast.success("Pencatatan Cash In berhasil!");
+            onSuccess();
+        } catch (err: any) {
+            toast.error(err?.message || "Gagal mencatat uang masuk.");
+        }
+    };
+
+    return (
+        <div className="space-y-4">
+            <DialogHeader className="pb-4 border-b border-slate-100">
+                <DialogTitle className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={onCancel}
+                        className="p-1 rounded hover:bg-slate-100 transition-colors border-none bg-transparent cursor-pointer text-slate-500"
+                        disabled={cashInMutation.isPending || isSubmitting}
+                    >
+                        <IconChevronLeft size={18} />
+                    </button>
+                    <span>Pencatatan Cash In (Uang Masuk)</span>
+                </DialogTitle>
+            </DialogHeader>
+
+            <FormProvider {...methods}>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
+                    <FormInput<CashInInput>
+                        name="amount"
+                        label="Jumlah Uang Masuk (Rp)"
+                        type="number"
+                        placeholder="0"
+                        disabled={cashInMutation.isPending || isSubmitting}
+                    />
+
+                    <FormInput<CashInInput>
+                        name="note"
+                        label="Catatan / Alasan Uang Masuk"
+                        type="text"
+                        placeholder="Contoh: Tambahan uang receh modal kembalian."
+                        disabled={cashInMutation.isPending || isSubmitting}
+                    />
+
+                    <div className="flex gap-3 pt-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onCancel}
+                            className="grow h-11 border-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer bg-white"
+                            disabled={cashInMutation.isPending || isSubmitting}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={cashInMutation.isPending || isSubmitting}
+                            className="grow h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer border-none shadow-lg shadow-emerald-600/10"
+                        >
+                            {cashInMutation.isPending || isSubmitting ? (
+                                <IconLoader2 size={16} className="animate-spin" />
+                            ) : (
+                                <IconArrowDownLeft size={16} />
+                            )}
+                            <span>Simpan Cash In</span>
+                        </Button>
+                    </div>
+                </form>
+            </FormProvider>
+        </div>
+    );
+}

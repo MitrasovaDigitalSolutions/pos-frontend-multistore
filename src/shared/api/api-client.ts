@@ -44,8 +44,11 @@ export async function apiDelete<T>(url: string): Promise<T> {
 
 // ─── Convenience: Unwrap ApiResponse ────────────────────────────────────────
 
-export async function apiGetData<T>(url: string): Promise<T> {
-    const response = await apiGet<ApiResponse<T>>(url);
+export async function apiGetData<T>(
+    url: string,
+    config?: AxiosRequestConfig,
+): Promise<T> {
+    const response = await apiGet<ApiResponse<T>>(url, config);
     return response.data;
 }
 

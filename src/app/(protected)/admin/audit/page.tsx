@@ -1,17 +1,36 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useSession } from "next-auth/react";
+import { hasRole, hasPermission } from "@/constants/roles";
 import { useActivityLogs, type ActivityLog } from "@/features/stock/api/stock-api";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { CommandSelect } from "@/components/ui/command-select";
 
 export default function AdminAuditPage() {
+    const { data: session } = useSession();
+    const userRoles = session?.user?.roles || [];
+    const userPermissions = session?.user?.permissions || [];
+
+    const hasViewAuditLogs =
+        hasRole(userRoles, "admin") ||
+        hasPermission(userRoles, userPermissions, "view_audit_logs");
+
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
     const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
     const [actionFilter, setActionFilter] = useState<string>("all");
+
+    if (!hasViewAuditLogs) {
+        return (
+            <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm">
+                <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
+                <p className="text-xs text-slate-400 mt-1">Anda tidak memiliki izin untuk melihat log aktivitas.</p>
+            </div>
+        );
+    }
 
     // Debounce search input to avoid excessive API requests
     useEffect(() => {
@@ -53,7 +72,7 @@ export default function AdminAuditPage() {
         if (action.includes("finalize")) {
             return "bg-teal-50 text-teal-700 border-teal-100";
         }
-        return "bg-indigo-50 text-indigo-700 border-indigo-100";
+        return "bg-emerald-50 text-emerald-700 border-emerald-100";
     };
 
     const columns = useMemo<ColumnDef<ActivityLog>[]>(

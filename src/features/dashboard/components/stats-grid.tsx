@@ -1,7 +1,6 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
-import { IconCash, IconReceipt, IconChartPie, IconAlertTriangle } from "@tabler/icons-react";
+import { IconCash, IconReceipt, IconChartPie, IconTag, IconTrendingUp, IconTrendingDown } from "@tabler/icons-react";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { DashboardSummary } from "../types";
 
@@ -9,66 +8,109 @@ interface StatsGridProps {
   summary: DashboardSummary | undefined;
 }
 
+const cards = [
+  {
+    key: "net_sales" as const,
+    label: "Total Penjualan Bersih",
+    sub: "Bulan Berjalan",
+    icon: IconCash,
+    gradient: "from-emerald-500 to-emerald-700",
+    glow: "shadow-emerald-400/40",
+    iconBg: "bg-white/20",
+    format: (v: number) => formatRupiah(v),
+    trend: "+10%",
+    trendUp: true,
+  },
+  {
+    key: "sales_count" as const,
+    label: "Transaksi Sukses",
+    sub: (s: DashboardSummary) => `Total item: ${s.items_sold} pcs`,
+    icon: IconReceipt,
+    gradient: "from-sky-400 to-sky-600",
+    glow: "shadow-sky-400/40",
+    iconBg: "bg-white/20",
+    format: (v: number) => `${v} Trx`,
+    trend: "+8%",
+    trendUp: true,
+  },
+  {
+    key: "tax_total" as const,
+    label: "PPN Terkumpul",
+    sub: "PPN 11%",
+    icon: IconChartPie,
+    gradient: "from-amber-400 to-amber-600",
+    glow: "shadow-amber-400/40",
+    iconBg: "bg-white/20",
+    format: (v: number) => formatRupiah(v),
+    trend: "+5%",
+    trendUp: true,
+  },
+  {
+    key: "discount_total" as const,
+    label: "Potongan Diskon",
+    sub: "Total diskon transaksi",
+    icon: IconTag,
+    gradient: "from-red-400 to-rose-600",
+    glow: "shadow-red-400/40",
+    iconBg: "bg-white/20",
+    format: (v: number) => formatRupiah(v),
+    trend: "-12%",
+    trendUp: false,
+  },
+];
+
 export function StatsGrid({ summary }: StatsGridProps) {
   return (
     <section className="grid grid-cols-4 gap-4">
-      {/* Total Penjualan Bersih */}
-      <Card className="bg-emerald-600 border-none text-white rounded-2xl shadow-md p-5 flex flex-col gap-1.5 justify-between">
-        <div className="flex justify-between items-center text-emerald-100">
-          <span className="text-[10px] font-bold uppercase tracking-wider">Total Penjualan Bersih</span>
-          <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-lg text-white">
-            <IconCash size={18} />
-          </div>
-        </div>
-        <h3 className="text-xl font-bold leading-none select-all tabular-nums">
-          {summary ? formatRupiah(summary.net_sales) : "Rp 0"}
-        </h3>
-        <div className="text-[10px] font-semibold text-emerald-200">Bulan Berjalan</div>
-      </Card>
+      {cards.map((card) => {
+        const Icon = card.icon;
+        const TrendIcon = card.trendUp ? IconTrendingUp : IconTrendingDown;
+        const rawVal = summary ? summary[card.key] : 0;
+        const displayVal = card.format(rawVal as number);
+        const subText =
+          typeof card.sub === "function"
+            ? summary
+              ? card.sub(summary)
+              : ""
+            : card.sub;
 
-      {/* Transaksi Sukses */}
-      <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-5 flex flex-col gap-1.5 justify-between">
-        <div className="flex justify-between items-center text-slate-400">
-          <span className="text-[10px] font-bold uppercase tracking-wider">Transaksi Sukses</span>
-          <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg">
-            <IconReceipt size={18} />
-          </div>
-        </div>
-        <h3 className="text-xl font-bold leading-none text-slate-900 tabular-nums">
-          {summary ? `${summary.sales_count} Trx` : "0 Trx"}
-        </h3>
-        <div className="text-[10px] font-semibold text-slate-500">
-          Total item: {summary ? summary.items_sold : 0} pcs
-        </div>
-      </Card>
+        return (
+          <div
+            key={card.key}
+            className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${card.gradient} p-5 shadow-lg ${card.glow} flex flex-col gap-3 text-white`}
+          >
+            {/* Decorative blob */}
+            <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-white/10 blur-xl pointer-events-none" />
+            <div className="absolute -bottom-6 -left-4 w-20 h-20 rounded-full bg-black/10 blur-xl pointer-events-none" />
 
-      {/* PPN Terkumpul */}
-      <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-5 flex flex-col gap-1.5 justify-between">
-        <div className="flex justify-between items-center text-slate-400">
-          <span className="text-[10px] font-bold uppercase tracking-wider">PPN Terkumpul</span>
-          <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-lg">
-            <IconChartPie size={18} />
-          </div>
-        </div>
-        <h3 className="text-xl font-bold leading-none text-slate-900 tabular-nums">
-          {summary ? formatRupiah(summary.tax_total) : "Rp 0"}
-        </h3>
-        <div className="text-[10px] font-semibold text-slate-500">Besaran PPN 11%</div>
-      </Card>
+            {/* Header row */}
+            <div className="flex items-start justify-between relative z-10">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-white/80 leading-tight max-w-[80%]">
+                {card.label}
+              </span>
+              <div className={`w-9 h-9 rounded-xl ${card.iconBg} flex items-center justify-center shrink-0`}>
+                <Icon size={18} className="text-white" />
+              </div>
+            </div>
 
-      {/* Potongan Diskon */}
-      <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-5 flex flex-col gap-1.5 justify-between">
-        <div className="flex justify-between items-center text-slate-400">
-          <span className="text-[10px] font-bold uppercase tracking-wider">Potongan Diskon</span>
-          <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center text-lg">
-            <IconAlertTriangle size={18} />
+            {/* Value */}
+            <div className="relative z-10">
+              <div className="text-2xl font-extrabold leading-none tabular-nums tracking-tight">
+                {displayVal}
+              </div>
+            </div>
+
+            {/* Footer row */}
+            <div className="flex items-center justify-between relative z-10">
+              <span className="text-[10px] text-white/70 font-medium">{subText}</span>
+              <div className={`flex items-center gap-1 text-[10px] font-bold ${card.trendUp ? "text-white" : "text-white/80"}`}>
+                <TrendIcon size={12} />
+                {card.trend}
+              </div>
+            </div>
           </div>
-        </div>
-        <h3 className="text-xl font-bold leading-none text-slate-900 tabular-nums">
-          {summary ? formatRupiah(summary.discount_total) : "Rp 0"}
-        </h3>
-        <div className="text-[10px] font-semibold text-slate-500">Total diskon transaksi</div>
-      </Card>
+        );
+      })}
     </section>
   );
 }

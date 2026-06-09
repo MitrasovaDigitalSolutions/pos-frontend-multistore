@@ -22,10 +22,26 @@ import type { Supplier } from "@/features/stock/types";
 import { IconActivity, IconClipboardCheck } from "@tabler/icons-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { hasRole, hasPermission } from "@/constants/roles";
 
 export default function AdminStockPage() {
     const searchParams = useSearchParams();
     const currentTab = searchParams.get("tab") || "inventory";
+
+    const { data: session } = useSession();
+    const userRoles = session?.user?.roles || [];
+    const userPermissions = session?.user?.permissions || [];
+
+    const hasViewInventory =
+        hasRole(userRoles, "admin") ||
+        hasPermission(userRoles, userPermissions, "view_inventory");
+    const hasViewSuppliers =
+        hasRole(userRoles, "admin") ||
+        hasPermission(userRoles, userPermissions, "view_suppliers");
+    const hasManageInventory =
+        hasRole(userRoles, "admin") ||
+        hasPermission(userRoles, userPermissions, "manage_inventory");
 
     const [movementsPage, setMovementsPage] = useState(1);
     const [opnamesPage, setOpnamesPage] = useState(1);
@@ -96,6 +112,24 @@ export default function AdminStockPage() {
         null,
     );
 
+    if ((currentTab === "inventory" || currentTab === "receiving") && !hasViewInventory) {
+        return (
+            <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm">
+                <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
+                <p className="text-xs text-slate-400 mt-1">Anda tidak memiliki izin untuk melihat data stok/inventori.</p>
+            </div>
+        );
+    }
+
+    if (currentTab === "suppliers" && !hasViewSuppliers) {
+        return (
+            <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm">
+                <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
+                <p className="text-xs text-slate-400 mt-1">Anda tidak memiliki izin untuk melihat data supplier.</p>
+            </div>
+        );
+    }
+
     // Show page loader only on initial load of products (critical configurations)
     if (productsLoading && !productsData) {
         return <PageLoader message="Memuat inventori & stok..." />;
@@ -132,22 +166,24 @@ export default function AdminStockPage() {
                                     adjustment manual.
                                 </p>
                             </div>
-                            <div className="flex gap-2">
-                                <Button
-                                    onClick={() => setIsAdjustmentOpen(true)}
-                                    className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
-                                >
-                                    <IconActivity size={16} /> Penyesuaian Stok
-                                    (Manual)
-                                </Button>
-                                <Button
-                                    onClick={() => setIsOpnameModalOpen(true)}
-                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
-                                >
-                                    <IconClipboardCheck size={16} /> Stock
-                                    Opname Baru
-                                </Button>
-                            </div>
+                            {hasManageInventory && (
+                                <div className="flex gap-2">
+                                    <Button
+                                        onClick={() => setIsAdjustmentOpen(true)}
+                                        className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
+                                    >
+                                        <IconActivity size={16} /> Penyesuaian Stok
+                                        (Manual)
+                                    </Button>
+                                    <Button
+                                        onClick={() => setIsOpnameModalOpen(true)}
+                                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
+                                    >
+                                        <IconClipboardCheck size={16} /> Stock
+                                        Opname Baru
+                                    </Button>
+                                </div>
+                            )}
                         </div>
 
                         {/* Low Stock Alert Table */}

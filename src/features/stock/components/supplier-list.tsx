@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
+import { useSession } from "next-auth/react";
+import { hasRole, hasPermission } from "@/constants/roles";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { IconEdit, IconTrash, IconPlus } from "@tabler/icons-react";
@@ -43,6 +45,13 @@ export function SupplierList({
     isLoading = false,
     isFetching = false,
 }: SupplierListProps) {
+    const { data: session } = useSession();
+    const userRoles = session?.user?.roles || [];
+    const userPermissions = session?.user?.permissions || [];
+    const hasManageSuppliers =
+        hasRole(userRoles, "admin") ||
+        hasPermission(userRoles, userPermissions, "manage_suppliers");
+
     const deleteSupplier = useDeleteSupplier();
 
     const handleDelete = (id: number) => {
@@ -59,73 +68,80 @@ export function SupplierList({
     };
 
     const columns = useMemo<ColumnDef<Supplier>[]>(
-        () => [
-            {
-                accessorKey: "nama",
-                header: "Nama Supplier",
-                cell: ({ row }) => (
-                    <span className="font-bold text-slate-900 text-xs">
-                        {row.original.nama}
-                    </span>
-                ),
-            },
-            {
-                accessorKey: "nomor_telepon",
-                header: "No. Telepon / HP",
-                cell: ({ row }) => (
-                    <span className="text-slate-600 font-medium text-xs font-mono">
-                        {row.original.nomor_telepon || "-"}
-                    </span>
-                ),
-            },
-            {
-                accessorKey: "email",
-                header: "Email",
-                cell: ({ row }) => (
-                    <span className="text-slate-600 text-xs">
-                        {row.original.email || "-"}
-                    </span>
-                ),
-            },
-            {
-                accessorKey: "alamat",
-                header: "Alamat",
-                cell: ({ row }) => (
-                    <span className="text-slate-500 text-xs line-clamp-1">
-                        {row.original.alamat || "-"}
-                    </span>
-                ),
-            },
-            {
-                id: "actions",
-                header: "Aksi",
-                enableSorting: false,
-                meta: {
-                    headerClassName: "text-center w-28",
-                    cellClassName: "text-center",
+        () => {
+            const baseColumns: ColumnDef<Supplier>[] = [
+                {
+                    accessorKey: "nama",
+                    header: "Nama Supplier",
+                    cell: ({ row }) => (
+                        <span className="font-bold text-slate-900 text-xs">
+                            {row.original.nama}
+                        </span>
+                    ),
                 },
-                cell: ({ row }) => {
-                    const sup = row.original;
-                    return (
-                        <div className="flex justify-center gap-1.5">
-                            <button
-                                onClick={() => onEdit(sup)}
-                                className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer"
-                            >
-                                <IconEdit size={16} />
-                            </button>
-                            <button
-                                onClick={() => handleDelete(sup.id)}
-                                className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer"
-                            >
-                                <IconTrash size={16} />
-                            </button>
-                        </div>
-                    );
+                {
+                    accessorKey: "nomor_telepon",
+                    header: "No. Telepon / HP",
+                    cell: ({ row }) => (
+                        <span className="text-slate-600 font-medium text-xs font-mono">
+                            {row.original.nomor_telepon || "-"}
+                        </span>
+                    ),
                 },
-            },
-        ],
-        [],
+                {
+                    accessorKey: "email",
+                    header: "Email",
+                    cell: ({ row }) => (
+                        <span className="text-slate-600 text-xs">
+                            {row.original.email || "-"}
+                        </span>
+                    ),
+                },
+                {
+                    accessorKey: "alamat",
+                    header: "Alamat",
+                    cell: ({ row }) => (
+                        <span className="text-slate-500 text-xs line-clamp-1">
+                            {row.original.alamat || "-"}
+                        </span>
+                    ),
+                },
+            ];
+
+            if (hasManageSuppliers) {
+                baseColumns.push({
+                    id: "actions",
+                    header: "Aksi",
+                    enableSorting: false,
+                    meta: {
+                        headerClassName: "text-center w-28",
+                        cellClassName: "text-center",
+                    },
+                    cell: ({ row }) => {
+                        const sup = row.original;
+                        return (
+                            <div className="flex justify-center gap-1.5">
+                                <button
+                                    onClick={() => onEdit(sup)}
+                                    className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer"
+                                >
+                                    <IconEdit size={16} />
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(sup.id)}
+                                    className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer"
+                                >
+                                    <IconTrash size={16} />
+                                </button>
+                            </div>
+                        );
+                    },
+                });
+            }
+
+            return baseColumns;
+        },
+        [hasManageSuppliers, onEdit],
     );
 
     return (
@@ -139,12 +155,14 @@ export function SupplierList({
                         Daftar nama, kontak, dan alamat distributor pemasok barang dagangan.
                     </p>
                 </div>
-                <Button
-                    onClick={onAddClick}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
-                >
-                    <IconPlus size={16} /> Tambah Supplier
-                </Button>
+                {hasManageSuppliers && (
+                    <Button
+                        onClick={onAddClick}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
+                    >
+                        <IconPlus size={16} /> Tambah Supplier
+                    </Button>
+                )}
             </div>
 
             <DataTable
