@@ -181,7 +181,7 @@ export interface ActivityLog {
     description: string;
     ip_address: string | null;
     user_agent: string | null;
-    properties: any;
+    properties: Record<string, unknown> | null;
     created_at: string;
     user?: {
         id: number;
