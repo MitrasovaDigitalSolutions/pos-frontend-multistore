@@ -1,21 +1,20 @@
 "use client";
 
-import { useFormContext } from "react-hook-form";
+import { FormInput } from "@/components/forms/form-input";
+import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { FormInput } from "@/components/forms/form-input";
-import { FormTextarea } from "@/components/forms/form-textarea";
-import { Button } from "@/components/ui/button";
 import { IconFolder } from "@tabler/icons-react";
+import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
+import { useCreateCategory, useUpdateCategory } from "../api/categories-api";
 import {
     type CategoryInput,
 } from "../schemas/category-schema";
-import { useCreateCategory, useUpdateCategory } from "../api/categories-api";
 import type { Category } from "../types";
 
 interface CategoryDialogProps {
@@ -93,14 +92,14 @@ export function CategoryDialog({
                         disabled={isPending}
                     />
 
-                    {/* Deskripsi */}
+                    {/* Deskripsi
                     <FormTextarea
                         name="deskripsi"
                         label="Deskripsi"
                         placeholder="Deskripsi singkat kategori produk..."
                         className="text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl min-h-20"
                         disabled={isPending}
-                    />
+                    /> */}
 
                     <Button
                         type="submit"

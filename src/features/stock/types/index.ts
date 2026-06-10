@@ -23,6 +23,7 @@ export interface ReceivingItem {
     receiving_id: number;
     product_id: number;
     kuantitas: number;
+    harga_beli: number;
     created_at: string;
     product?: Product;
 }

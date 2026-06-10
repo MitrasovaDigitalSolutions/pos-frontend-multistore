@@ -3,6 +3,20 @@ import { z } from "zod";
 export const receivingItemSchema = z.object({
     product_id: z.coerce.number().min(1, "Produk wajib dipilih"),
     kuantitas: z.coerce.number().min(1, "Jumlah minimal 1 pcs"),
+    harga_beli: z.coerce.number().min(0, "Harga beli minimal 0"),
+    update_harga_jual: z.boolean().default(false),
+    harga_jual_baru: z.coerce
+        .number()
+        .min(0, "Harga jual baru minimal 0")
+        .nullable()
+        .optional()
+        .transform((val) => (val === undefined || val === null ? null : Number(val))),
+    margin_baru: z.coerce
+        .number()
+        .min(0, "Margin baru minimal 0")
+        .nullable()
+        .optional()
+        .transform((val) => (val === undefined || val === null ? null : Number(val))),
 });
 
 export const receivingSchema = z.object({

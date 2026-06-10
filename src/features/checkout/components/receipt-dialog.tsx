@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { IconCircleCheck, IconPrinter } from "@tabler/icons-react";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { Receipt } from "../types";
+import { Scrollable } from "@/components/ui/scrollable";
 
 interface ReceiptDialogProps {
     open: boolean;
@@ -23,117 +24,127 @@ export function ReceiptDialog({
 }: ReceiptDialogProps) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-95 bg-white rounded-2xl border-slate-100 p-6 flex flex-col items-center">
-                <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-3 animate-bounce">
-                    <IconCircleCheck size={28} />
-                </div>
-                <DialogTitle className="text-base font-bold text-slate-900">
-                    Pembayaran Sukses!
-                </DialogTitle>
-                <p className="text-[11px] text-slate-400 mt-0.5 text-center">
-                    Transaksi tercatat dan stok telah diperbarui.
-                </p>
-
-                {/* Thermal Receipt */}
-                <div className="w-full max-w-[320px] bg-white border border-slate-200 p-5 mt-4 rounded shadow-inner font-mono text-[11px] text-slate-800 relative">
-                    <div className="text-center space-y-0.5 mb-4">
-                        <h4 className="font-extrabold text-[12px]">
-                            GROCERYMART
-                        </h4>
-                        <p className="text-[10px]">
-                            Jl. Raya Contoh No. 1, Jakarta
-                        </p>
+            <DialogContent className="max-w-md bg-white rounded-2xl border-slate-100 p-6 flex flex-col max-h-[90vh] sm:max-h-[85vh]" showCloseButton={false}>
+                {/* Header Section (Fixed) */}
+                <div className="flex flex-col items-center shrink-0">
+                    <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-2 animate-bounce">
+                        <IconCircleCheck size={24} />
                     </div>
-                    <div className="border-t border-dashed border-slate-300 my-2"></div>
-                    <div className="space-y-0.5 text-[9px] text-slate-500">
-                        <div className="flex justify-between">
-                            <span>Kasir: {cashierName}</span>
-                            <span>POS-01</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>TRX #{receipt?.id}</span>
-                            <span>
-                                {new Date().toLocaleDateString("id-ID")}
-                            </span>
-                        </div>
-                    </div>
-                    <div className="border-t border-dashed border-slate-300 my-2"></div>
-                    <div className="space-y-1.5">
-                        {(receipt?.items || []).map((item) => (
-                            <div
-                                key={item.id}
-                                className="flex justify-between text-[10px]"
-                            >
-                                <span>
-                                    {item.kuantitas}x{" "}
-                                    {String(item.nama_produk).substring(0, 16)}
-                                </span>
-                                <span>
-                                    {formatRupiah(
-                                        item.harga_satuan * item.kuantitas,
-                                    )}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="border-t border-dashed border-slate-300 my-2"></div>
-                    <div className="space-y-1">
-                        <div className="flex justify-between">
-                            <span>Subtotal:</span>
-                            <span>{formatRupiah(receipt?.subtotal ?? 0)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>PPN (11%):</span>
-                            <span>{formatRupiah(receipt?.pajak ?? 0)}</span>
-                        </div>
-                        <div className="flex justify-between font-extrabold text-[12px] text-slate-900">
-                            <span>TOTAL:</span>
-                            <span>{formatRupiah(receipt?.total ?? 0)}</span>
-                        </div>
-                    </div>
-                    <div className="border-t border-dashed border-slate-300 my-2"></div>
-                    <div className="space-y-1 text-[10px]">
-                        {receipt?.metode_pembayaran === "cash" ? (
-                            <>
-                                <div className="flex justify-between">
-                                    <span>Tunai:</span>
-                                    <span>
-                                        {formatRupiah(
-                                            receipt?.nominal_bayar ?? 0,
-                                        )}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span>Kembali:</span>
-                                    <span>
-                                        {formatRupiah(receipt?.kembalian ?? 0)}
-                                    </span>
-                                </div>
-                            </>
-                        ) : (
-                            <div className="flex justify-between capitalize">
-                                <span>Kartu {receipt?.jenis_kartu}:</span>
-                                <span>**** {receipt?.nomor_kartu_akhir}</span>
-                            </div>
-                        )}
-                    </div>
-                    <div className="border-t border-dashed border-slate-300 my-2"></div>
-                    <div className="text-center text-[9px] text-slate-400 mt-3">
-                        <p>Terima Kasih Atas Kunjungan Anda</p>
-                    </div>
+                    <DialogTitle className="text-base font-extrabold text-slate-900">
+                        Pembayaran Sukses!
+                    </DialogTitle>
+                    <p className="text-[10px] text-slate-400 mt-0.5 text-center">
+                        Transaksi tercatat dan stok telah diperbarui.
+                    </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 w-full mt-6">
+                {/* Scrollable Receipt Area (Middle) */}
+                <Scrollable className="flex-1 min-h-0 py-2 my-3 border-y border-slate-50">
+                    <div className="flex flex-col items-center pr-1 w-full">
+                        {/* Thermal Receipt */}
+                        <div className="w-full max-w-[320px] bg-slate-50/50 border border-slate-200/60 p-5 rounded-xl shadow-inner font-mono text-[10px] text-slate-700 relative">
+                            <div className="text-center space-y-0.5 mb-3">
+                                <h4 className="font-extrabold text-[11px] text-slate-800 tracking-wider">
+                                    GROCERYMART
+                                </h4>
+                                <p className="text-[9px] text-slate-400">
+                                    Jl. Raya Contoh No. 1, Jakarta
+                                </p>
+                            </div>
+                            <div className="border-t border-dashed border-slate-300 my-2"></div>
+                            
+                            <div className="space-y-0.5 text-[9px] text-slate-400">
+                                <div className="flex justify-between">
+                                    <span>Kasir: {cashierName}</span>
+                                    <span>POS-01</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>TRX #{receipt?.id}</span>
+                                    <span>
+                                        {new Date().toLocaleDateString("id-ID")}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="border-t border-dashed border-slate-300 my-2"></div>
+                            
+                            {/* Scrollable Items List inside receipt */}
+                            <Scrollable className="max-h-[140px] pr-1">
+                                <div className="space-y-1.5 pb-1">
+                                    {(receipt?.items || []).map((item) => (
+                                        <div
+                                            key={item.id}
+                                            className="flex justify-between text-[10px] text-slate-600"
+                                        >
+                                            <span className="truncate max-w-[170px]" title={item.nama_produk}>
+                                                {item.kuantitas}x {item.nama_produk}
+                                            </span>
+                                            <span className="tabular-nums font-semibold shrink-0">
+                                                {formatRupiah(item.harga_satuan * item.kuantitas)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </Scrollable>
+                            
+                            <div className="border-t border-dashed border-slate-300 my-2"></div>
+                            
+                            <div className="space-y-1 text-slate-600">
+                                <div className="flex justify-between">
+                                    <span>Subtotal:</span>
+                                    <span className="tabular-nums font-semibold">{formatRupiah(receipt?.subtotal ?? 0)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>PPN (11%):</span>
+                                    <span className="tabular-nums font-semibold">{formatRupiah(receipt?.pajak ?? 0)}</span>
+                                </div>
+                                <div className="flex justify-between font-extrabold text-[11px] text-slate-900 pt-0.5">
+                                    <span>TOTAL:</span>
+                                    <span className="tabular-nums">{formatRupiah(receipt?.total ?? 0)}</span>
+                                </div>
+                            </div>
+                            
+                            <div className="border-t border-dashed border-slate-300 my-2"></div>
+                            
+                            <div className="space-y-1 text-[9px] text-slate-400">
+                                {receipt?.metode_pembayaran === "cash" ? (
+                                    <>
+                                        <div className="flex justify-between text-slate-500 font-semibold">
+                                            <span>Tunai:</span>
+                                            <span className="tabular-nums">{formatRupiah(receipt?.nominal_bayar ?? 0)}</span>
+                                        </div>
+                                        <div className="flex justify-between text-emerald-600 font-bold">
+                                            <span>Kembali:</span>
+                                            <span className="tabular-nums">{formatRupiah(receipt?.kembalian ?? 0)}</span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="flex justify-between capitalize text-slate-500 font-semibold">
+                                        <span>Kartu {receipt?.jenis_kartu}:</span>
+                                        <span>**** {receipt?.nomor_kartu_akhir}</span>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div className="border-t border-dashed border-slate-300 my-2"></div>
+                            <div className="text-center text-[9px] text-slate-400 mt-2.5">
+                                <p>Terima Kasih Atas Kunjungan Anda</p>
+                            </div>
+                        </div>
+                    </div>
+                </Scrollable>
+
+                {/* Action Buttons (Fixed Footer) */}
+                <div className="grid grid-cols-2 gap-3 w-full pt-4 border-t border-slate-100 shrink-0">
                     <Button
                         onClick={onNewTransaction}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-10 rounded-xl flex gap-1.5 cursor-pointer border-none"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-11 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer border-none shadow-lg shadow-emerald-600/10 active:scale-[0.99] transition-all"
                     >
                         Transaksi Baru
                     </Button>
                     <Button
                         variant="outline"
                         onClick={() => window.print()}
-                        className="border-slate-200 text-slate-700 font-bold text-xs h-10 rounded-xl flex gap-1.5 cursor-pointer"
+                        className="border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs h-11 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                         <IconPrinter size={16} /> Print Ulang
                     </Button>
@@ -142,3 +153,4 @@ export function ReceiptDialog({
         </Dialog>
     );
 }
+

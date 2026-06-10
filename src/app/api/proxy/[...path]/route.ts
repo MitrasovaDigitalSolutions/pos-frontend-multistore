@@ -21,7 +21,14 @@ async function handler(req: NextRequest) {
   // Build headers
   const headers = new Headers();
   headers.set("Accept", "application/json");
-  headers.set("Content-Type", "application/json");
+
+  // Forward the original Content-Type (which contains the multipart boundary)
+  const contentType = req.headers.get("Content-Type");
+  if (contentType) {
+    headers.set("Content-Type", contentType);
+  } else {
+    headers.set("Content-Type", "application/json");
+  }
 
   // Check client Authorization header (prioritized for testing)
   const clientAuth = req.headers.get("Authorization");
@@ -40,7 +47,7 @@ async function handler(req: NextRequest) {
   try {
     const body =
       req.method !== "GET" && req.method !== "HEAD"
-        ? await req.text()
+        ? await req.arrayBuffer()
         : undefined;
 
     const response = await fetch(targetUrl, {

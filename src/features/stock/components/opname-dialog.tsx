@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm, useFieldArray, type Resolver } from "react-hook-form";
+import { useForm, useFieldArray, FormProvider, type Resolver, type FieldPath } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
     Dialog,
@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { opnameSchema, type OpnameInput } from "../schemas/opname-schema";
 import { useCreateOpname, useFinalizeOpname } from "../api/stock-api";
 import type { Product } from "@/features/products/types";
+import { FormNumberInput } from "@/components/forms/form-number-input";
 
 interface OpnameDialogProps {
     open: boolean;
@@ -31,13 +32,7 @@ export function OpnameDialog({
     const createOpname = useCreateOpname();
     const finalizeOpname = useFinalizeOpname();
 
-    const {
-        register,
-        control,
-        handleSubmit,
-        reset,
-        formState: { errors },
-    } = useForm<OpnameInput>({
+    const methods = useForm<OpnameInput>({
         resolver: zodResolver(opnameSchema) as Resolver<OpnameInput>,
         defaultValues: {
             catatan: "",
@@ -45,6 +40,14 @@ export function OpnameDialog({
             items: [],
         },
     });
+
+    const {
+        register,
+        control,
+        handleSubmit,
+        reset,
+        formState: { errors },
+    } = methods;
 
     const { fields } = useFieldArray({
         control,
@@ -77,7 +80,6 @@ export function OpnameDialog({
             createOpname.mutate(payload, {
                 onSuccess: (res) => {
                     if (status === "completed") {
-                        // Finalize it
                         const opnameId = res.data.id;
                         finalizeOpname.mutate(
                             {
@@ -127,101 +129,99 @@ export function OpnameDialog({
                     </DialogTitle>
                 </DialogHeader>
 
-                <form
-                    className="flex flex-col flex-1 overflow-hidden min-h-0 pt-4"
-                    onSubmit={(e) => e.preventDefault()}
-                >
-                    <div className="flex-1 overflow-y-auto pr-1 space-y-4 pb-4">
-                        {/* Catatan */}
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                Catatan Opname
-                            </label>
-                            <Input
-                                type="text"
-                                placeholder="Contoh: Opname akhir bulan Juni..."
-                                className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                                disabled={isPending}
-                                {...register("catatan")}
-                            />
-                            {errors.catatan && (
-                                <p className="text-[10px] text-rose-500 font-medium">
-                                    {errors.catatan.message}
-                                </p>
-                            )}
-                        </div>
+                <FormProvider {...methods}>
+                    <form
+                        className="flex flex-col flex-1 overflow-hidden min-h-0 pt-4"
+                        onSubmit={(e) => e.preventDefault()}
+                    >
+                        <div className="flex-1 overflow-y-auto pr-1 space-y-4 pb-4">
+                            {/* Catatan */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    Catatan Opname
+                                </label>
+                                <Input
+                                    type="text"
+                                    placeholder="Contoh: Opname akhir bulan Juni..."
+                                    className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                                    disabled={isPending}
+                                    {...register("catatan")}
+                                />
+                                {errors.catatan && (
+                                    <p className="text-[10px] text-rose-500 font-medium">
+                                        {errors.catatan.message}
+                                    </p>
+                                )}
+                            </div>
 
-                        {/* Opname Items Grid */}
-                        <div className="border-t border-slate-100 pt-2 space-y-2">
-                            <h5 className="text-xs font-bold text-slate-800 mb-2">
-                                Input Perhitungan Fisik Lapangan
-                            </h5>
-                            <div className="max-h-75 overflow-y-auto space-y-2.5 pr-1">
-                                {fields.map((field, idx) => {
-                                    const product = products.find(
-                                        (p) => p.id === field.product_id,
-                                    );
-                                    return (
-                                        <div
-                                            key={field.id}
-                                            className="border border-slate-100 p-3 rounded-xl bg-slate-50/50 grid grid-cols-[1.5fr_1fr_1fr_1.5fr] gap-2 items-center"
-                                        >
-                                            <span className="text-xs font-bold text-slate-800 truncate">
-                                                {product?.nama || "Produk Hilang"}
-                                            </span>
-                                            <span className="text-xs text-slate-400 text-right">
-                                                Sistem: {product?.stok || 0} pcs
-                                            </span>
-                                            <div>
-                                                <Input
-                                                    type="number"
-                                                    placeholder="Fisik"
-                                                    className="h-8 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-lg text-right"
-                                                    disabled={isPending}
-                                                    {...register(
-                                                        `items.${idx}.stok_fisik`,
-                                                    )}
-                                                />
+                            {/* Opname Items Grid */}
+                            <div className="border-t border-slate-100 pt-2 space-y-2">
+                                <h5 className="text-xs font-bold text-slate-800 mb-2">
+                                    Input Perhitungan Fisik Lapangan
+                                </h5>
+                                <div className="max-h-75 overflow-y-auto space-y-2.5 pr-1">
+                                    {fields.map((field, idx) => {
+                                        const product = products.find(
+                                            (p) => p.id === field.product_id,
+                                        );
+                                        return (
+                                            <div
+                                                key={field.id}
+                                                className="border border-slate-100 p-3 rounded-xl bg-slate-50/50 grid grid-cols-[1.5fr_1fr_1fr_1.5fr] gap-2 items-center"
+                                            >
+                                                <span className="text-xs font-bold text-slate-800 truncate">
+                                                    {product?.nama || "Produk Hilang"}
+                                                </span>
+                                                <span className="text-xs text-slate-400 text-right">
+                                                    Sistem: {product?.stok || 0} pcs
+                                                </span>
+                                                <div>
+                                                    <FormNumberInput<OpnameInput>
+                                                        name={`items.${idx}.stok_fisik` as FieldPath<OpnameInput>}
+                                                        placeholder="Fisik"
+                                                        className="h-8 text-xs border-slate-200 rounded-lg text-right"
+                                                        disabled={isPending}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <Input
+                                                        type="text"
+                                                        placeholder="Alasan selisih..."
+                                                        className="h-8 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-lg"
+                                                        disabled={isPending}
+                                                        {...register(
+                                                            `items.${idx}.alasan`,
+                                                        )}
+                                                    />
+                                                </div>
                                             </div>
-                                            <div>
-                                                <Input
-                                                    type="text"
-                                                    placeholder="Alasan selisih..."
-                                                    className="h-8 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-lg"
-                                                    disabled={isPending}
-                                                    {...register(
-                                                        `items.${idx}.alasan`,
-                                                    )}
-                                                />
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100 shrink-0 bg-white">
-                        <Button
-                            type="button"
-                            onClick={() => handleSave("draft")}
-                            className="h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center cursor-pointer border-none"
-                            disabled={isPending}
-                        >
-                            Simpan Sebagai Draf
-                        </Button>
-                        <Button
-                            type="button"
-                            onClick={() => handleSave("completed")}
-                            className="h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center cursor-pointer shadow-sm shadow-emerald-600/15 border-none"
-                            disabled={isPending}
-                        >
-                            Simpan & Finalisasi Stok
-                        </Button>
-                    </div>
-                </form>
+                        <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100 shrink-0 bg-white">
+                            <Button
+                                type="button"
+                                onClick={() => handleSave("draft")}
+                                className="h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center cursor-pointer border-none"
+                                disabled={isPending}
+                            >
+                                Simpan Sebagai Draf
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={() => handleSave("completed")}
+                                className="h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center cursor-pointer shadow-sm shadow-emerald-600/15 border-none"
+                                disabled={isPending}
+                            >
+                                Simpan & Finalisasi Stok
+                            </Button>
+                        </div>
+                    </form>
+                </FormProvider>
             </DialogContent>
         </Dialog>
     );
-
 }

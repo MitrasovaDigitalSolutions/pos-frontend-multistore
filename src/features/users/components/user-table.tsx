@@ -1,16 +1,19 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
-import { useMemo, useState } from "react";
-import { useSession } from "next-auth/react";
-import { hasRole, hasPermission } from "@/constants/roles";
-import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { IconEdit, IconTrash, IconPlus } from "@tabler/icons-react";
+import { CommandSelect } from "@/components/ui/command-select";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { DataTable } from "@/components/ui/data-table";
+import { hasPermission, hasRole } from "@/constants/roles";
+import { IconPlus } from "@tabler/icons-react";
+import { ColumnDef } from "@tanstack/react-table";
+import { useSession } from "next-auth/react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useDeactivateUser } from "../api/users-api";
 import type { User } from "../types";
-import { toast } from "sonner";
-import { DataTable } from "@/components/ui/data-table";
-import { CommandSelect } from "@/components/ui/command-select";
 
 interface UserTableProps {
     users: User[];
@@ -58,17 +61,26 @@ export function UserTable({
 
     const currentUser = session?.user;
 
-    const handleDeactivate = (id: number) => {
-        if (confirm("Apakah Anda yakin ingin menonaktifkan pengguna ini?")) {
-            deactivateUser.mutate(id, {
-                onSuccess: () => {
-                    toast.success("Pengguna berhasil dinonaktifkan.");
-                },
-                onError: () => {
-                    toast.error("Gagal menonaktifkan pengguna.");
-                },
-            });
-        }
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
+
+    const handleDeactivate = (u: User) => {
+        setUserToDeactivate(u);
+        setIsConfirmOpen(true);
+    };
+
+    const handleConfirmDeactivate = () => {
+        if (!userToDeactivate) return;
+        deactivateUser.mutate(userToDeactivate.id, {
+            onSuccess: () => {
+                toast.success(`Pengguna "${userToDeactivate.name}" berhasil dinonaktifkan.`);
+                setIsConfirmOpen(false);
+                setUserToDeactivate(null);
+            },
+            onError: () => {
+                toast.error("Gagal menonaktifkan pengguna.");
+            },
+        });
     };
 
     const filteredUsers = useMemo(() => {
@@ -152,44 +164,9 @@ export function UserTable({
                 },
             ];
 
-            if (hasManageUsers) {
-                baseColumns.push({
-                    id: "actions",
-                    header: "Aksi",
-                    enableSorting: false,
-                    meta: {
-                        headerClassName: "text-center w-28",
-                        cellClassName: "text-center",
-                    },
-                    cell: ({ row }) => {
-                        const u = row.original;
-                        return (
-                            <div className="flex justify-center gap-1.5">
-                                <button
-                                    onClick={() => onEdit(u)}
-                                    className="p-1 text-amber-600 hover:bg-amber-50 rounded transition-colors border-none bg-transparent cursor-pointer"
-                                >
-                                    <IconEdit size={16} />
-                                </button>
-                                {currentUser &&
-                                    u.id !== currentUser.id &&
-                                    u.status === "active" && (
-                                        <button
-                                            onClick={() => handleDeactivate(u.id)}
-                                            className="p-1 text-rose-500 hover:bg-rose-50 rounded transition-colors border-none bg-transparent cursor-pointer"
-                                        >
-                                            <IconTrash size={16} />
-                                        </button>
-                                    )}
-                            </div>
-                        );
-                    },
-                });
-            }
-
             return baseColumns;
         },
-        [currentUser, hasManageUsers, onEdit],
+        [hasManageUsers],
     );
 
     const filtersSlot = (
@@ -246,6 +223,33 @@ export function UserTable({
                 filters={filtersSlot}
                 virtualize={true}
                 estimateRowHeight={44}
+                onEdit={hasManageUsers ? onEdit : undefined}
+                onDelete={hasManageUsers ? handleDeactivate : undefined}
+                hideDelete={(u) => !(currentUser && u.id !== currentUser.id && u.status === "active")}
+            />
+
+            <ConfirmDialog
+                open={isConfirmOpen}
+                onOpenChange={setIsConfirmOpen}
+                title="Nonaktifkan Pengguna"
+                description={
+                    userToDeactivate ? (
+                        <span>
+                            Apakah Anda yakin ingin menonaktifkan pengguna{" "}
+                            <strong className="font-semibold text-slate-900">
+                                {userToDeactivate.name}
+                            </strong>
+                            ? Akun ini tidak akan bisa digunakan untuk masuk ke sistem.
+                        </span>
+                    ) : (
+                        "Apakah Anda yakin ingin menonaktifkan pengguna ini?"
+                    )
+                }
+                confirmText="Ya, Nonaktifkan"
+                cancelText="Batal"
+                onConfirm={handleConfirmDeactivate}
+                isLoading={deactivateUser.isPending}
+                variant="danger"
             />
         </section>
     );

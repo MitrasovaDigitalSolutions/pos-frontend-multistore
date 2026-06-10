@@ -1,7 +1,7 @@
 "use client";
 
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { IconDotsVertical } from "@tabler/icons-react";
+import { IconDotsVertical, IconPresentation } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import {
   Bar,
@@ -71,24 +71,30 @@ export function RevenueChart({ summary, history }: RevenueChartProps) {
     : buildData(summary);
   const gross = summary?.gross_sales ?? 0;
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col gap-3">
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col gap-3">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
-            Total Penjualan Produk
-          </p>
-          <div className="flex items-center gap-2.5 mt-1.5">
-            <span className="text-2xl font-extrabold text-slate-800 tabular-nums">
+          <div className="flex items-center gap-1.5">
+            <div className="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <IconPresentation size={14} className="stroke-[2.5]" />
+            </div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+              Total Penjualan Produk
+            </span>
+          </div>
+          <div className="flex items-center gap-2.5 mt-2">
+            <span className="text-2xl font-black text-slate-800 tabular-nums tracking-tight">
               {formatRupiah(gross)}
             </span>
-            {/* <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-              <IconTrendingUp size={10} />
-              +45%
-            </span> */}
           </div>
         </div>
         <button className="text-slate-300 hover:text-slate-500 transition-colors">
@@ -97,18 +103,18 @@ export function RevenueChart({ summary, history }: RevenueChartProps) {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-5 text-[10px] font-semibold text-slate-500">
+      <div className="flex items-center gap-5 text-[10px] font-extrabold text-slate-500 border-b border-slate-50 pb-2">
         <span className="flex items-center gap-1.5">
-          <span className="w-3 h-2 rounded-sm bg-amber-600 inline-block" />
+          <span className="w-2.5 h-2 rounded-sm bg-indigo-500 inline-block" />
           Total Revenue
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-3 h-2 rounded-sm bg-emerald-600 inline-block" />
+          <span className="w-2.5 h-2 rounded-sm bg-teal-500 inline-block" />
           Total Profit
         </span>
       </div>
 
-      {/* Chart – only render in browser to avoid SSR width=-1 warning */}
+      {/* Chart – only render in browser to avoid SSR warning */}
       <div style={{ width: "100%", height: 185 }}>
         {mounted && (
           <ResponsiveContainer width="100%" height="100%">
@@ -118,6 +124,16 @@ export function RevenueChart({ summary, history }: RevenueChartProps) {
               barGap={2}
               margin={{ top: 4, right: 4, bottom: 0, left: -20 }}
             >
+              <defs>
+                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#818cf8" stopOpacity={1}/>
+                  <stop offset="100%" stopColor="#4f46e5" stopOpacity={0.8}/>
+                </linearGradient>
+                <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#2dd4bf" stopOpacity={1}/>
+                  <stop offset="100%" stopColor="#0d9488" stopOpacity={0.8}/>
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
               <XAxis
                 dataKey="month"
@@ -131,13 +147,13 @@ export function RevenueChart({ summary, history }: RevenueChartProps) {
                 tickLine={false}
                 tickFormatter={(v) => {
                   if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}jt`;
-                  if (v >= 1_000) return `${(v / 1_000).toFixed(1)}k`;
+                  if (v >= 1_000) return `${(v / 1_000).toFixed(0)}k`;
                   return `${v}`;
                 }}
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: "#f8fafc" }} />
-              <Bar dataKey="revenue" name="Total Revenue" maxBarSize={20} radius={[4, 4, 0, 0]} fill="#f59e0b" />
-              <Bar dataKey="profit" name="Total Profit" maxBarSize={20} radius={[4, 4, 0, 0]} fill="#10b981" />
+              <Bar dataKey="revenue" name="Total Revenue" maxBarSize={16} radius={[3, 3, 0, 0]} fill="url(#colorRevenue)" className="transition-all duration-300 hover:opacity-90" />
+              <Bar dataKey="profit" name="Total Profit" maxBarSize={16} radius={[3, 3, 0, 0]} fill="url(#colorProfit)" className="transition-all duration-300 hover:opacity-90" />
             </BarChart>
           </ResponsiveContainer>
         )}

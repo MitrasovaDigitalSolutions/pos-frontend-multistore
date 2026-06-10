@@ -1,18 +1,18 @@
 "use client";
 
+import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { IconTrophy } from "@tabler/icons-react";
 import {
-  BarChart,
   Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
 } from "recharts";
-import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { DashboardSummary } from "../types";
-import { IconTrophy } from "@tabler/icons-react";
 
 interface TopProductsProps {
   summary: DashboardSummary | undefined;
@@ -26,7 +26,15 @@ const RANK_COLORS = [
   { bar: "#a78bfa", badge: "bg-violet-400", text: "text-white" },
 ];
 
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({ active, payload }: {
+  active?: boolean;
+  payload?: Array<{
+    value: number;
+    payload: {
+      name: string;
+    };
+  }>;
+}) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 shadow-2xl text-white text-xs">

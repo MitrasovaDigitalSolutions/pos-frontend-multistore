@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/shared/api/axios";
-import type { ApiResponse } from "@/types/api";
+import type { ApiResponse, PaginatedResponse } from "@/types/api";
 import type {
     CashDrawerSession,
     OpenCashDrawerPayload,
@@ -138,6 +138,34 @@ export function useCloseCashDrawer() {
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ["cash-drawer", "current"] });
             queryClient.invalidateQueries({ queryKey: ["cash-drawer", "detail", variables.session] });
+        },
+    });
+}
+
+export interface CashDrawerSessionsParams {
+    page?: number;
+    per_page?: number;
+    status?: "open" | "closed";
+    user_id?: number;
+    from?: string;
+    to?: string;
+    sort_by?: string;
+    sort_order?: "asc" | "desc";
+}
+
+// 7. Hook to list cashier sessions (paginated)
+export function useCashDrawerSessions(params?: CashDrawerSessionsParams, token?: string) {
+    return useQuery<PaginatedResponse<CashDrawerSession>>({
+        queryKey: ["cash-drawer", "sessions", params, token],
+        queryFn: async () => {
+            const { data } = await apiClient.get<PaginatedResponse<CashDrawerSession>>(
+                "/v1/cash-drawer/sessions",
+                {
+                    params,
+                    ...getRequestConfig(token),
+                }
+            );
+            return data;
         },
     });
 }

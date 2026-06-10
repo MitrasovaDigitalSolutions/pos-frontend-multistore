@@ -8,6 +8,7 @@ import {
     IconUsers,
     IconSettings,
     IconShieldLock,
+    IconWallet,
 } from "@tabler/icons-react";
 import { ROUTES } from "@/constants/routes";
 import { hasRole, hasPermission } from "@/constants/roles";
@@ -71,7 +72,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
             {
                 type: "link",
                 path: ROUTES.ADMIN_STOCK,
-                label: "Stok Barang",
+                label: "Stok Opname",
                 icon: IconBox,
                 tab: "inventory",
                 permission: (roles, permissions) =>
@@ -97,6 +98,14 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 icon: IconChartBar,
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+            },
+            {
+                type: "link",
+                path: ROUTES.ADMIN_CASH_DRAWER,
+                label: "Sesi Kasir",
+                icon: IconWallet,
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") || hasPermission(roles, permissions, "view_cash_drawer"),
             },
         ],
     },

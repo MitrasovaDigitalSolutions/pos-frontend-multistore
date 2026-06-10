@@ -20,6 +20,7 @@ interface CommandSelectProps {
   className?: string
   wrapperClassName?: string
   disabled?: boolean
+  size?: "sm" | "md" | "lg"
 }
 
 // ─── Command Context ─────────────────────────────────────────────────────────
@@ -206,10 +207,17 @@ export function CommandSelect({
   className,
   wrapperClassName,
   disabled = false,
+  size = "sm",
 }: CommandSelectProps) {
   const [open, setOpen] = React.useState(false)
 
   const selectedOption = options.find((opt) => opt.value === value)
+
+  const sizeClasses = {
+    sm: "h-8 text-xs font-bold text-slate-700",
+    md: "h-10 text-xs font-medium text-slate-800",
+    lg: "h-12 text-sm font-medium text-slate-800",
+  }[size]
 
   const handleSelect = (val: string) => {
     onChange(val)
@@ -225,7 +233,8 @@ export function CommandSelect({
               type="button"
               disabled={disabled}
               className={cn(
-                "flex h-8 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 outline-none transition-all hover:bg-slate-50 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer",
+                "flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-1.5 outline-none transition-all hover:bg-slate-50 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer",
+                sizeClasses,
                 className
               )}
             >

@@ -1,14 +1,14 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useFinalizeOpname, useDeleteOpname } from "../api/stock-api";
 import { toast } from "sonner";
 import type { Opname } from "../types";
 import { DataTable } from "@/components/ui/data-table";
-import { IconEye, IconCheck, IconTrash } from "@tabler/icons-react";
 import { hasRole, hasPermission } from "@/constants/roles";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface OpnameListProps {
     opnames: Opname[];
@@ -45,51 +45,82 @@ export function OpnameList({
         hasPermission(userRoles, userPermissions, "manage_inventory");
     const canDeleteDraft = hasManageInventory;
 
-    const handleFinalize = (op: Opname) => {
-        if (
-            confirm(
-                "Finalisasi opname ini sekarang? Stok sistem akan dikoreksi secara permanen.",
-            )
-        ) {
-            const itemsPayload = (op.items || []).map((it) => ({
-                product_id: it.product_id,
-                stok_fisik: it.stok_fisik,
-                alasan: it.alasan || "Finalisasi opname",
-            }));
+    const [confirmDialog, setConfirmDialog] = useState<{
+        open: boolean;
+        title: string;
+        description: React.ReactNode;
+        confirmText: string;
+        cancelText?: string;
+        variant: "danger" | "warning" | "info" | "success";
+        onConfirm: () => void;
+    }>({
+        open: false,
+        title: "",
+        description: "",
+        confirmText: "",
+        variant: "warning",
+        onConfirm: () => {},
+    });
 
-            finalizeOpname.mutate(
-                {
-                    id: op.id,
-                    data: {
-                        status: "completed",
-                        items: itemsPayload,
+    const handleFinalize = (op: Opname) => {
+        setConfirmDialog({
+            open: true,
+            title: "Finalisasi Stock Opname",
+            description: "Finalisasi opname ini sekarang? Stok sistem akan dikoreksi secara permanen.",
+            confirmText: "Ya, Finalisasi",
+            cancelText: "Batal",
+            variant: "warning",
+            onConfirm: () => {
+                const itemsPayload = (op.items || []).map((it) => ({
+                    product_id: it.product_id,
+                    stok_fisik: it.stok_fisik,
+                    alasan: it.alasan || "Finalisasi opname",
+                }));
+
+                finalizeOpname.mutate(
+                    {
+                        id: op.id,
+                        data: {
+                            status: "completed",
+                            items: itemsPayload,
+                        },
                     },
-                },
-                {
-                    onSuccess: () => {
-                        toast.success("Stock opname berhasil difinalisasi!");
+                    {
+                        onSuccess: () => {
+                            toast.success("Stock opname berhasil difinalisasi!");
+                            setConfirmDialog((prev) => ({ ...prev, open: false }));
+                        },
+                        onError: (err) => {
+                            toast.error(
+                                err.message || "Gagal memfinalisasi opname.",
+                            );
+                        },
                     },
-                    onError: (err) => {
-                        toast.error(
-                            err.message || "Gagal memfinalisasi opname.",
-                        );
-                    },
-                },
-            );
-        }
+                );
+            },
+        });
     };
 
     const handleDelete = (id: number) => {
-        if (confirm("Apakah Anda yakin ingin menghapus draft opname ini?")) {
-            deleteOpname.mutate(id, {
-                onSuccess: () => {
-                    toast.success("Draft opname berhasil dihapus.");
-                },
-                onError: (err) => {
-                    toast.error(err.message || "Gagal menghapus draft opname.");
-                },
-            });
-        }
+        setConfirmDialog({
+            open: true,
+            title: "Hapus Draft Opname",
+            description: "Apakah Anda yakin ingin menghapus draft opname ini?",
+            confirmText: "Ya, Hapus",
+            cancelText: "Batal",
+            variant: "danger",
+            onConfirm: () => {
+                deleteOpname.mutate(id, {
+                    onSuccess: () => {
+                        toast.success("Draft opname berhasil dihapus.");
+                        setConfirmDialog((prev) => ({ ...prev, open: false }));
+                    },
+                    onError: (err) => {
+                        toast.error(err.message || "Gagal menghapus draft opname.");
+                    },
+                });
+            },
+        });
     };
 
     const columns = useMemo<ColumnDef<Opname>[]>(
@@ -149,70 +180,42 @@ export function OpnameList({
                     );
                 },
             },
-            {
-                id: "actions",
-                header: "Aksi",
-                enableSorting: false,
-                meta: {
-                    headerClassName: "text-center w-28",
-                    cellClassName: "text-center",
-                },
-                cell: ({ row }) => {
-                    const op = row.original;
-                    const isDraft = op.status === "draft";
-                    return (
-                        <div className="flex justify-center gap-1">
-                            <button
-                                onClick={() => onViewDetail(op.id)}
-                                className="p-1.5 text-slate-600 hover:bg-slate-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer"
-                                title="Lihat Detail"
-                            >
-                                <IconEye size={16} />
-                            </button>
-                            {isDraft && hasManageInventory && (
-                                <button
-                                    onClick={() => handleFinalize(op)}
-                                    className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer"
-                                    title="Finalisasi"
-                                >
-                                    <IconCheck size={16} />
-                                </button>
-                            )}
-                            {isDraft && canDeleteDraft && (
-                                <button
-                                    onClick={() => handleDelete(op.id)}
-                                    className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer"
-                                    title="Hapus Draft"
-                                >
-                                    <IconTrash size={16} />
-                                </button>
-                            )}
-                        </div>
-                    );
-                },
-            },
         ],
-        [onViewDetail, canDeleteDraft, hasManageInventory],
+        [],
     );
 
     return (
-        // <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4">
-        //     <h3 className="text-sm font-bold text-slate-900 border-b border-slate-50 pb-2">
-        //         Daftar Dokumen Stock Opname
-        //     </h3>
-        <DataTable
-            columns={columns}
-            data={opnames}
-            isLoading={isLoading}
-            isFetching={isFetching}
-            emptyMessage="Belum ada rekaman stock opname."
-            page={page}
-            onPageChange={onPageChange}
-            meta={meta}
-            entityName="dokumen"
-            virtualize={true}
-            estimateRowHeight={44}
-        />
-        // </section>
+        <>
+            <DataTable
+                columns={columns}
+                data={opnames}
+                isLoading={isLoading}
+                isFetching={isFetching}
+                emptyMessage="Belum ada rekaman stock opname."
+                page={page}
+                onPageChange={onPageChange}
+                meta={meta}
+                entityName="dokumen"
+                virtualize={true}
+                estimateRowHeight={44}
+                onView={(op) => onViewDetail(op.id)}
+                onCheck={handleFinalize}
+                hideCheck={(op) => !(op.status === "draft" && hasManageInventory)}
+                onDelete={(op) => handleDelete(op.id)}
+                hideDelete={(op) => !(op.status === "draft" && canDeleteDraft)}
+            />
+
+            <ConfirmDialog
+                open={confirmDialog.open}
+                onOpenChange={(open) => setConfirmDialog((prev) => ({ ...prev, open }))}
+                title={confirmDialog.title}
+                description={confirmDialog.description}
+                confirmText={confirmDialog.confirmText}
+                cancelText={confirmDialog.cancelText}
+                variant={confirmDialog.variant}
+                onConfirm={confirmDialog.onConfirm}
+                isLoading={finalizeOpname.isPending || deleteOpname.isPending}
+            />
+        </>
     );
 }

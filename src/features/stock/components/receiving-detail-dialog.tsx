@@ -10,7 +10,8 @@ import {
 import { IconClipboardList, IconClock, IconFileDescription } from "@tabler/icons-react";
 import { useReceivingDetail, useActivityLogs } from "../api/stock-api";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { PageLoader } from "@/components/feedback/page-loader";
+import { Scrollable } from "@/components/ui/scrollable";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ReceivingDetailDialogProps {
     open: boolean;
@@ -45,7 +46,7 @@ export function ReceivingDetailDialog({
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogContent className="max-w-xl bg-white rounded-2xl border-slate-100 p-6 flex flex-col max-h-[90vh]">
+            <DialogContent className="sm:max-w-3xl bg-white rounded-2xl border-slate-100 p-6 flex flex-col max-h-[90vh]">
                 <DialogHeader className="pb-4 border-b border-slate-100 flex-shrink-0">
                     <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
                         <IconClipboardList size={20} className="text-emerald-500" />
@@ -54,13 +55,51 @@ export function ReceivingDetailDialog({
                 </DialogHeader>
 
                 {isDetailLoading || !receiving ? (
-                    <div className="py-8 flex-1 flex items-center justify-center">
-                        <PageLoader message="Memuat detail penerimaan..." />
+                    <div className="space-y-5 pt-4 flex-1 flex flex-col min-h-0 overflow-hidden">
+                        {/* Header Details Skeleton */}
+                        <div className="grid grid-cols-2 gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100 shrink-0">
+                            {[...Array(6)].map((_, i) => (
+                                <div key={i} className="space-y-2">
+                                    <Skeleton className="h-3 w-16" />
+                                    <Skeleton className="h-4 w-28" />
+                                </div>
+                            ))}
+                            <div className="space-y-2 col-span-2">
+                                <Skeleton className="h-3 w-24" />
+                                <Skeleton className="h-4 w-full" />
+                            </div>
+                        </div>
+
+                        {/* Tabs Skeleton */}
+                        <div className="flex border-b border-slate-100 shrink-0 gap-4 pb-2">
+                            <Skeleton className="h-8 w-28 rounded-lg" />
+                            <Skeleton className="h-8 w-28 rounded-lg" />
+                        </div>
+
+                        {/* Items Table Skeleton */}
+                        <div className="border border-slate-100 rounded-xl overflow-hidden mt-1 flex-1 min-h-0 flex flex-col">
+                            <div className="bg-slate-50 p-3 flex justify-between border-b border-slate-100 shrink-0">
+                                <Skeleton className="h-4 w-24" />
+                                <Skeleton className="h-4 w-16" />
+                                <Skeleton className="h-4 w-16" />
+                                <Skeleton className="h-4 w-20" />
+                            </div>
+                            <div className="p-3 space-y-4 overflow-y-auto flex-1">
+                                {[...Array(3)].map((_, i) => (
+                                    <div key={i} className="flex justify-between items-center">
+                                        <Skeleton className="h-4 w-40" />
+                                        <Skeleton className="h-4 w-12" />
+                                        <Skeleton className="h-4 w-10" />
+                                        <Skeleton className="h-4 w-16" />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 ) : (
-                    <div className="space-y-5 pt-4 flex-1 overflow-y-auto pr-1 min-h-0">
+                    <div className="space-y-5 pt-4 flex-1 flex flex-col min-h-0 overflow-hidden">
                         {/* Invoice Header Details */}
-                        <div className="grid grid-cols-2 gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100 text-xs">
+                        <div className="grid grid-cols-2 gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100 text-xs shrink-0">
                             <div className="space-y-1">
                                 <span className="text-[10px] font-bold text-slate-400 uppercase">No. Penerimaan</span>
                                 <p className="font-bold text-slate-900">{receiving.nomor_penerimaan}</p>
@@ -113,7 +152,7 @@ export function ReceivingDetailDialog({
                         </div>
 
                         {/* Tabs Navigation */}
-                        <div className="flex border-b border-slate-100">
+                        <div className="flex border-b border-slate-100 shrink-0">
                             <button
                                 onClick={() => setActiveTab("items")}
                                 className={`px-4 py-2 text-xs font-bold border-b-2 flex items-center gap-1.5 cursor-pointer transition-colors ${
@@ -139,30 +178,41 @@ export function ReceivingDetailDialog({
                         </div>
 
                         {/* Tab Content */}
-                        <div className="min-h-48 max-h-72 overflow-y-auto">
+                        <Scrollable className="flex-1 min-h-0 max-h-[450px] pr-1">
                             {activeTab === "items" ? (
                                 <div className="border border-slate-100 rounded-xl overflow-hidden">
                                     <table className="w-full text-left border-collapse text-xs">
                                         <thead>
                                             <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                                 <th className="p-3">Nama Produk</th>
+                                                <th className="p-3 text-right">Harga Beli</th>
                                                 <th className="p-3 text-right">Jumlah Masuk</th>
+                                                <th className="p-3 text-right">Subtotal</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50 font-medium">
-                                            {receiving.items?.map((item) => (
-                                                <tr key={item.id} className="hover:bg-slate-50/50">
-                                                    <td className="p-3 font-semibold text-slate-900">
-                                                        {item.product?.nama || "Produk dihapus"}
-                                                    </td>
-                                                    <td className="p-3 text-right text-slate-700 font-mono">
-                                                        {item.kuantitas} pcs
-                                                    </td>
-                                                </tr>
-                                            ))}
+                                            {receiving.items?.map((item) => {
+                                                const subtotal = (item.harga_beli || 0) * (item.kuantitas || 0);
+                                                return (
+                                                    <tr key={item.id} className="hover:bg-slate-50/50">
+                                                        <td className="p-3 font-semibold text-slate-900">
+                                                            {item.product?.nama || "Produk dihapus"}
+                                                        </td>
+                                                        <td className="p-3 text-right text-slate-700 font-mono">
+                                                            {item.harga_beli ? formatRupiah(item.harga_beli) : "Rp 0"}
+                                                        </td>
+                                                        <td className="p-3 text-right text-slate-700 font-mono">
+                                                            {item.kuantitas} pcs
+                                                        </td>
+                                                        <td className="p-3 text-right text-slate-900 font-bold font-mono">
+                                                            {formatRupiah(subtotal)}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
                                             {(!receiving.items || receiving.items.length === 0) && (
                                                 <tr>
-                                                    <td colSpan={2} className="p-4 text-center text-slate-400">
+                                                    <td colSpan={4} className="p-4 text-center text-slate-400">
                                                         Tidak ada item barang tercatat.
                                                     </td>
                                                 </tr>
@@ -171,7 +221,17 @@ export function ReceivingDetailDialog({
                                     </table>
                                 </div>
                             ) : isLogsLoading ? (
-                                <PageLoader message="Memuat logs..." />
+                                <div className="space-y-4 pl-3 pr-1 py-1">
+                                    {[...Array(3)].map((_, i) => (
+                                        <div key={i} className="relative flex gap-3 pb-4 last:pb-0 border-l border-slate-100 pl-4 animate-pulse">
+                                            <div className="absolute -left-1.5 top-0.5 w-3 h-3 bg-slate-200 rounded-full border-2 border-white shadow-sm" />
+                                            <div className="space-y-2 w-full">
+                                                <Skeleton className="h-4 w-3/4" />
+                                                <Skeleton className="h-3 w-1/2" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             ) : (
                                 <div className="space-y-4 pl-3 pr-1 py-1">
                                     {logs.map((log) => (
@@ -205,7 +265,7 @@ export function ReceivingDetailDialog({
                                     )}
                                 </div>
                             )}
-                        </div>
+                        </Scrollable>
                     </div>
                 )}
             </DialogContent>

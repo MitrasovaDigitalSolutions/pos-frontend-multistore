@@ -204,3 +204,32 @@ export function useReceivingDetail(id: number | null) {
         enabled: id !== null && id > 0,
     });
 }
+
+export interface ComparePricesInput {
+    items: {
+        product_id: number;
+        harga_beli: number;
+    }[];
+}
+
+export interface ComparePricesResult {
+    product_id: number;
+    nama: string;
+    harga_beli_lama: number;
+    harga_beli_baru: number;
+    harga_jual_lama: number;
+    margin_lama: number;
+    harga_jual_saran: number;
+    selisih_harga_beli: number;
+    perlu_alert: boolean;
+}
+
+export function useComparePrices() {
+    return useMutation<ApiResponse<ComparePricesResult[]>, Error, ComparePricesInput>({
+        mutationFn: (data) =>
+            apiPost<ApiResponse<ComparePricesResult[]>, ComparePricesInput>(
+                "/v1/inventory/receiving/compare-prices",
+                data,
+            ),
+    });
+}

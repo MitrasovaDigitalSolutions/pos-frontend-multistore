@@ -1,21 +1,20 @@
 "use client";
 
-import { useFormContext } from "react-hook-form";
+import { FormInput } from "@/components/forms/form-input";
+import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { FormInput } from "@/components/forms/form-input";
-import { FormTextarea } from "@/components/forms/form-textarea";
-import { Button } from "@/components/ui/button";
 import { IconTag } from "@tabler/icons-react";
+import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
+import { useCreateBrand, useUpdateBrand } from "../api/brands-api";
 import {
     type BrandInput,
 } from "../schemas/brand-schema";
-import { useCreateBrand, useUpdateBrand } from "../api/brands-api";
 import type { Brand } from "../types";
 
 interface BrandDialogProps {
@@ -93,14 +92,14 @@ export function BrandDialog({
                         disabled={isPending}
                     />
 
-                    {/* Deskripsi */}
+                    {/* Deskripsi
                     <FormTextarea
                         name="deskripsi"
                         label="Deskripsi"
                         placeholder="Deskripsi singkat brand/merek produk..."
                         className="text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl min-h-20"
                         disabled={isPending}
-                    />
+                    /> */}
 
                     <Button
                         type="submit"

@@ -1,6 +1,7 @@
 "use client";
 
 import { FormInput } from "@/components/forms/form-input";
+import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { Button } from "@/components/ui/button";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
@@ -10,6 +11,7 @@ import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form"
 import { toast } from "sonner";
 import { useCloseCashDrawer } from "../../api/cash-drawer-api";
 import { closeCashDrawerSchema, type CloseCashDrawerInput } from "../../schemas/cash-drawer-schema";
+import { signOut } from "@/lib/auth-helpers";
 
 interface CloseShiftFormProps {
     sessionId: number;
@@ -53,9 +55,10 @@ export function CloseShiftForm({
             });
             toast.success("Sesi shift laci kasir berhasil ditutup.");
             onSuccess();
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (err: any) {
-            toast.error(err?.message || "Gagal menutup laci kasir.");
+            await signOut({ callbackUrl: "/login" });
+        } catch (err) {
+            const error = err as Error;
+            toast.error(error.message || "Gagal menutup laci kasir.");
         }
     };
 
@@ -71,7 +74,7 @@ export function CloseShiftForm({
                     >
                         <IconChevronLeft size={18} />
                     </button>
-                    <span>Tutup Shift & Hitung Uang Laci</span>
+                    <span>Akhiri Shift & Hitung Uang Laci</span>
                 </DialogTitle>
             </DialogHeader>
 
@@ -84,10 +87,9 @@ export function CloseShiftForm({
 
             <div className="space-y-4 pt-2">
                 <FormProvider {...methods}>
-                    <FormInput<CloseCashDrawerInput>
+                    <FormNominalInput<CloseCashDrawerInput>
                         name="actual_closing_balance"
                         label="Jumlah Saldo Akhir Nyata (Fisik Laci)"
-                        type="number"
                         placeholder="0"
                         disabled={closeMutation.isPending || isSubmitting}
                     />

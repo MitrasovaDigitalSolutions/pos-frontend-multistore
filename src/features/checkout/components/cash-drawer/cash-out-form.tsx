@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/forms/form-input";
+import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { toast } from "sonner";
 import { useCashOut } from "../../api/cash-drawer-api";
 import { cashOutSchema, type CashOutInput } from "../../schemas/cash-drawer-schema";
@@ -43,8 +44,9 @@ export function CashOutForm({ sessionId, token, onSuccess, onCancel }: CashOutFo
             });
             toast.success("Pencatatan Cash Out berhasil!");
             onSuccess();
-        } catch (err: any) {
-            toast.error(err?.message || "Gagal mencatat uang keluar.");
+        } catch (err) {
+            const error = err as Error;
+            toast.error(error.message || "Gagal mencatat uang keluar.");
         }
     };
 
@@ -66,10 +68,9 @@ export function CashOutForm({ sessionId, token, onSuccess, onCancel }: CashOutFo
 
             <FormProvider {...methods}>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
-                    <FormInput<CashOutInput>
+                    <FormNominalInput<CashOutInput>
                         name="amount"
                         label="Jumlah Uang Keluar (Rp)"
-                        type="number"
                         placeholder="0"
                         disabled={cashOutMutation.isPending || isSubmitting}
                     />

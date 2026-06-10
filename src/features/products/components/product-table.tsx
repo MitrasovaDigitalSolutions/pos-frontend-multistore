@@ -2,16 +2,18 @@
 
 import { Button } from "@/components/ui/button";
 import { CommandSelect } from "@/components/ui/command-select";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { IconEdit, IconPlus, IconTrash } from "@tabler/icons-react";
+import { IconPlus } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useDeleteProduct, useToggleProductStatus } from "../api/products-api";
 import type { Product } from "../types";
+
 
 interface ProductTableProps {
     products: Product[];
@@ -58,6 +60,9 @@ export function ProductTable({
     const toggleStatus = useToggleProductStatus();
     const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
 
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+
     const handleToggleStatus = (p: Product) => {
         const nextStatus = p.status === "active" ? "inactive" : "active";
         toggleStatus.mutate(
@@ -75,17 +80,23 @@ export function ProductTable({
         );
     };
 
-    const handleRemoveProduct = (id: number) => {
-        if (confirm("Apakah Anda yakin ingin menghapus produk ini?")) {
-            deleteProduct.mutate(id, {
-                onSuccess: () => {
-                    toast.success("Produk berhasil dihapus.");
-                },
-                onError: () => {
-                    toast.error("Gagal menghapus produk.");
-                },
-            });
-        }
+    const handleRemoveProduct = (p: Product) => {
+        setProductToDelete(p);
+        setIsConfirmOpen(true);
+    };
+
+    const handleConfirmDelete = () => {
+        if (!productToDelete) return;
+        deleteProduct.mutate(productToDelete.id, {
+            onSuccess: () => {
+                toast.success(`Produk "${productToDelete.nama}" berhasil dihapus.`);
+                setIsConfirmOpen(false);
+                setProductToDelete(null);
+            },
+            onError: () => {
+                toast.error("Gagal menghapus produk.");
+            },
+        });
     };
 
     const filteredProducts = useMemo(() => {
@@ -117,13 +128,33 @@ export function ProductTable({
                     ),
                 },
                 {
-                    accessorKey: "merek",
-                    header: "Merek",
+                    accessorKey: "category",
+                    header: "Kategori",
                     cell: ({ row }) => (
-                        <span className="text-slate-500">
-                            {row.original.merek}
+                        <span className="text-slate-500 text-xs">
+                            {row.original.category?.nama || "-"}
                         </span>
                     ),
+                },
+                {
+                    accessorKey: "merek",
+                    header: "Merek/Brand",
+                    cell: ({ row }) => (
+                        <span className="text-slate-500 text-xs">
+                            {row.original.brand?.nama || row.original.merek || "-"}
+                        </span>
+                    ),
+                },
+                {
+                    accessorKey: "harga_beli",
+                    header: "Harga Beli",
+                    meta: {
+                        headerClassName: "text-right",
+                        cellClassName: "text-right text-slate-500 text-xs",
+                    },
+                    cell: ({ row }) => row.original.harga_beli !== null && row.original.harga_beli !== undefined
+                        ? formatRupiah(row.original.harga_beli)
+                        : "-",
                 },
                 {
                     accessorKey: "harga",
@@ -133,6 +164,17 @@ export function ProductTable({
                         cellClassName: "text-right font-bold text-slate-800",
                     },
                     cell: ({ row }) => formatRupiah(row.original.harga),
+                },
+                {
+                    accessorKey: "margin",
+                    header: "Margin",
+                    meta: {
+                        headerClassName: "text-right",
+                        cellClassName: "text-right text-slate-500 text-xs",
+                    },
+                    cell: ({ row }) => row.original.margin !== null && row.original.margin !== undefined
+                        ? `${row.original.margin}%`
+                        : "-",
                 },
                 {
                     accessorKey: "stok",
@@ -191,41 +233,10 @@ export function ProductTable({
                 },
             ];
 
-            if (hasManageProducts) {
-                baseColumns.push({
-                    id: "actions",
-                    header: "Aksi",
-                    enableSorting: false,
-                    meta: {
-                        headerClassName: "text-center w-28",
-                        cellClassName: "text-center",
-                    },
-                    cell: ({ row }) => {
-                        const p = row.original;
-                        return (
-                            <div className="flex justify-center gap-1.5">
-                                <button
-                                    onClick={() => onEdit(p)}
-                                    className="p-1 text-amber-600 hover:bg-amber-50 rounded transition-colors border-none bg-transparent cursor-pointer"
-                                >
-                                    <IconEdit size={16} />
-                                </button>
-                                <button
-                                    onClick={() => handleRemoveProduct(p.id)}
-                                    className="p-1 text-rose-500 hover:bg-rose-50 rounded transition-colors border-none bg-transparent cursor-pointer"
-                                >
-                                    <IconTrash size={16} />
-                                </button>
-                            </div>
-                        );
-                    },
-                });
-            }
-
             return baseColumns;
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [hasManageProducts, onEdit],
+        [hasManageProducts],
     );
 
     const filtersSlot = (
@@ -283,6 +294,32 @@ export function ProductTable({
                 filters={filtersSlot}
                 virtualize={true}
                 estimateRowHeight={44}
+                onEdit={hasManageProducts ? onEdit : undefined}
+                onDelete={hasManageProducts ? handleRemoveProduct : undefined}
+            />
+
+            <ConfirmDialog
+                open={isConfirmOpen}
+                onOpenChange={setIsConfirmOpen}
+                title="Hapus Produk"
+                description={
+                    productToDelete ? (
+                        <span>
+                            Apakah Anda yakin ingin menghapus produk{" "}
+                            <strong className="font-semibold text-slate-900 dark:text-slate-100">
+                                {productToDelete.nama}
+                            </strong>
+                            ? Tindakan ini tidak dapat dibatalkan.
+                        </span>
+                    ) : (
+                        "Apakah Anda yakin ingin menghapus produk ini?"
+                    )
+                }
+                confirmText="Ya, Hapus"
+                cancelText="Batal"
+                onConfirm={handleConfirmDelete}
+                isLoading={deleteProduct.isPending}
+                variant="danger"
             />
         </section>
     );

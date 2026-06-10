@@ -3,18 +3,7 @@
 import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { IconCalendar } from "@tabler/icons-react";
-
-const PATH_TITLES: Record<string, string> = {
-  "/admin": "Dashboard",
-  "/admin/stock": "Stok Barang & Inventori",
-  "/admin/suppliers": "Master Supplier",
-  "/admin/products": "Master Produk",
-  "/admin/categories": "Master Kategori Produk",
-  "/admin/brands": "Master Brand / Merek",
-  "/admin/reports": "Laporan Penjualan",
-  "/admin/users": "Kelola Pengguna Sistem",
-  "/admin/settings": "Pengaturan Profil Toko",
-};
+import { NAVIGATION_CONFIG } from "./sidebar-config";
 
 export function AdminHeader() {
   const pathname = usePathname();
@@ -25,10 +14,28 @@ export function AdminHeader() {
   const currentTab = searchParams.get("tab") || "inventory";
 
   const getTitle = () => {
-    if (pathname === "/admin/stock" && currentTab === "receiving") {
-      return "Penerimaan Barang Masuk Log";
+    // Search NAVIGATION_CONFIG for matching route
+    for (const section of NAVIGATION_CONFIG) {
+      for (const item of section.items) {
+        if (item.type === "link") {
+          if (item.path === pathname) {
+            // If the item specifies a tab, it must match currentTab
+            if (item.tab && item.tab !== currentTab) {
+              continue;
+            }
+            return item.label;
+          }
+        } else if (item.type === "submenu") {
+          for (const subItem of item.items) {
+            if (subItem.path === pathname) {
+              return subItem.label;
+            }
+          }
+        }
+      }
     }
-    return PATH_TITLES[pathname] || "Dashboard Admin";
+
+    return "Dashboard Admin";
   };
 
   if (pathname.startsWith("/admin/users")) {
@@ -49,7 +56,7 @@ export function AdminHeader() {
       <h2 className="text-lg font-extrabold text-slate-900">{getTitle()}</h2>
       <div className="flex items-center gap-4">
         {/* Date Badge */}
-        <div className="bg-sky-50 text-sky-500 border border-sky-100 px-3 py-1.5 rounded-full flex items-center gap-2 font-bold text-xs select-none">
+        <div className="bg-yellow-50 text-yellow-500 border border-yellow-100 px-3 py-1.5 rounded-full flex items-center gap-2 font-bold text-xs select-none">
           <IconCalendar size={15} />
           <span>Hari Ini: {formattedDate}</span>
         </div>
