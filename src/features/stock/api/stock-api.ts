@@ -1,23 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiGetData, apiGetList, apiPost, apiPut, apiPatch, apiDelete } from "@/shared/api/api-client";
+import { apiGetData, apiGetList, apiPost, apiPut, apiDelete } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
-import type { StockMovement, Receiving, Opname } from "../types";
+import type { StockMovement, Opname } from "../types";
 import type { AdjustmentInput } from "../schemas/adjustment-schema";
-import type { ReceivingInput } from "../schemas/receiving-schema";
 import type { OpnameInput } from "../schemas/opname-schema";
 
 export function useStockMovements(params?: PaginationParams) {
     return useQuery<PaginatedResponse<StockMovement>>({
         queryKey: [...queryKeys.inventory.movements(), params],
         queryFn: () => apiGetList<StockMovement>("/v1/inventory/movements", params),
-    });
-}
-
-export function useReceivings(params?: PaginationParams) {
-    return useQuery<PaginatedResponse<Receiving>>({
-        queryKey: [...queryKeys.inventory.receivings(), params],
-        queryFn: () => apiGetList<Receiving>("/v1/inventory/receiving", params),
     });
 }
 
@@ -47,23 +39,6 @@ export function useCreateAdjustment() {
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.inventory.movements(),
-            });
-            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
-        },
-    });
-}
-
-export function useCreateReceiving() {
-    const queryClient = useQueryClient();
-    return useMutation<ApiResponse<Receiving>, Error, ReceivingInput>({
-        mutationFn: (data) =>
-            apiPost<ApiResponse<Receiving>, ReceivingInput>(
-                "/v1/inventory/receiving",
-                data,
-            ),
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.inventory.receivings(),
             });
             queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
@@ -108,54 +83,6 @@ export function useFinalizeOpname() {
     });
 }
 
-
-// ─── Enhanced Receiving Hooks ────────────────────────────────────────────────
-
-export function useUpdateReceiving() {
-    const queryClient = useQueryClient();
-    return useMutation<ApiResponse<Receiving>, Error, { id: number; data: ReceivingInput }>({
-        mutationFn: ({ id, data }) =>
-            apiPut<ApiResponse<Receiving>, ReceivingInput>(
-                `/v1/inventory/receiving/${id}`,
-                data,
-            ),
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.inventory.receivings(),
-            });
-            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
-        },
-    });
-}
-
-export function useDeleteReceiving() {
-    const queryClient = useQueryClient();
-    return useMutation<ApiResponse<void>, Error, number>({
-        mutationFn: (id) => apiDelete<ApiResponse<void>>(`/v1/inventory/receiving/${id}`),
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.inventory.receivings(),
-            });
-        },
-    });
-}
-
-export function useUpdateReceivingPaymentStatus() {
-    const queryClient = useQueryClient();
-    return useMutation<ApiResponse<Receiving>, Error, { id: number; status_pembayaran: "pending" | "paid" }>({
-        mutationFn: ({ id, status_pembayaran }) =>
-            apiPatch<ApiResponse<Receiving>, { status_pembayaran: "pending" | "paid" }>(
-                `/v1/inventory/receiving/${id}/payment-status`,
-                { status_pembayaran },
-            ),
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.inventory.receivings(),
-            });
-        },
-    });
-}
-
 // ─── Opname Deletion Hook ────────────────────────────────────────────────────
 
 export function useDeleteOpname() {
@@ -194,42 +121,5 @@ export function useActivityLogs(params?: PaginationParams & { search?: string })
     return useQuery<PaginatedResponse<ActivityLog>>({
         queryKey: [...queryKeys.activityLogs.list(), params],
         queryFn: () => apiGetList<ActivityLog>("/v1/activity-logs", params),
-    });
-}
-
-export function useReceivingDetail(id: number | null) {
-    return useQuery<Receiving>({
-        queryKey: [...queryKeys.inventory.receivings(), "detail", id || 0],
-        queryFn: () => apiGetData<Receiving>(`/v1/inventory/receiving/${id}`),
-        enabled: id !== null && id > 0,
-    });
-}
-
-export interface ComparePricesInput {
-    items: {
-        product_id: number;
-        harga_beli: number;
-    }[];
-}
-
-export interface ComparePricesResult {
-    product_id: number;
-    nama: string;
-    harga_beli_lama: number;
-    harga_beli_baru: number;
-    harga_jual_lama: number;
-    margin_lama: number;
-    harga_jual_saran: number;
-    selisih_harga_beli: number;
-    perlu_alert: boolean;
-}
-
-export function useComparePrices() {
-    return useMutation<ApiResponse<ComparePricesResult[]>, Error, ComparePricesInput>({
-        mutationFn: (data) =>
-            apiPost<ApiResponse<ComparePricesResult[]>, ComparePricesInput>(
-                "/v1/inventory/receiving/compare-prices",
-                data,
-            ),
     });
 }

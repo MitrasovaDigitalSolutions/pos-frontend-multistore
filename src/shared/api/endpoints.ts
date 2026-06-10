@@ -32,6 +32,9 @@ export const ENDPOINTS = {
     // Activity Logs
     ACTIVITY_LOGS: "/v1/activity-logs",
 
+    // Cash Accounts
+    CASH_ACCOUNTS: "/v1/cash-accounts",
+
     // Inventory
     INVENTORY: {
         MOVEMENTS: "/v1/inventory/movements",
@@ -57,6 +60,35 @@ export const ENDPOINTS = {
             CREATE: "/v1/inventory/suppliers",
             UPDATE: (id: number) => `/v1/inventory/suppliers/${id}`,
             DELETE: (id: number) => `/v1/inventory/suppliers/${id}`,
+        },
+    },
+
+    // Purchase
+    PURCHASE: {
+        RECEIVING: {
+            LIST: "/v1/purchase/receiving",
+            CREATE: "/v1/purchase/receiving",
+            DETAIL: (id: number) => `/v1/purchase/receiving/${id}`,
+            UPDATE: (id: number) => `/v1/purchase/receiving/${id}`,
+            DELETE: (id: number) => `/v1/purchase/receiving/${id}`,
+            PAYMENT_STATUS: (id: number) => `/v1/purchase/receiving/${id}/payment-status`,
+            COMPARE_PRICES: "/v1/purchase/receiving/compare-prices",
+        },
+        ORDER: {
+            LIST: "/v1/purchase/order",
+            CREATE: "/v1/purchase/order",
+            DETAIL: (id: number) => `/v1/purchase/order/${id}`,
+            UPDATE: (id: number) => `/v1/purchase/order/${id}`,
+            DELETE: (id: number) => `/v1/purchase/order/${id}`,
+            FINALIZE: (id: number) => `/v1/purchase/order/${id}/finalize`,
+            CANCEL: (id: number) => `/v1/purchase/order/${id}/cancel`,
+        },
+        PAYMENT: {
+            LIST: "/v1/purchase/payment",
+            CREATE: "/v1/purchase/payment",
+            DETAIL: (id: number) => `/v1/purchase/payment/${id}`,
+            UPDATE: (id: number) => `/v1/purchase/payment/${id}`,
+            DELETE: (id: number) => `/v1/purchase/payment/${id}`,
         },
     },
 

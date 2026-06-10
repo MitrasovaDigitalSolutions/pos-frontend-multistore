@@ -1,17 +1,19 @@
+import { hasPermission, hasRole } from "@/constants/roles";
+import { ROUTES } from "@/constants/routes";
 import {
-    IconHome,
-    IconDeviceLaptop,
-    IconDatabase,
+    IconArrowBackUp,
     IconBox,
-    IconTruckDelivery,
     IconChartBar,
-    IconUsers,
+    IconDatabase,
+    IconDeviceLaptop,
+    IconHome,
     IconSettings,
     IconShieldLock,
-    IconWallet,
+    IconShoppingCart,
+    IconTruckDelivery,
+    IconUsers,
+    IconWallet
 } from "@tabler/icons-react";
-import { ROUTES } from "@/constants/routes";
-import { hasRole, hasPermission } from "@/constants/roles";
 
 export interface SidebarMenuItem {
     type: "link";
@@ -82,17 +84,6 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
             },
             {
                 type: "link",
-                path: ROUTES.ADMIN_STOCK,
-                label: "Penerimaan",
-                icon: IconTruckDelivery,
-                tab: "receiving",
-                permission: (roles, permissions) =>
-                    hasRole(roles, "admin") ||
-                    hasPermission(roles, permissions, "view_inventory") ||
-                    hasPermission(roles, permissions, "manage_inventory"),
-            },
-            {
-                type: "link",
                 path: ROUTES.ADMIN_REPORTS,
                 label: "Laporan Penjualan",
                 icon: IconChartBar,
@@ -106,6 +97,51 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 icon: IconWallet,
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") || hasPermission(roles, permissions, "view_cash_drawer"),
+            },
+        ],
+    },
+    {
+        title: "Transaksi Pembelian",
+        items: [
+            {
+                type: "link",
+                path: ROUTES.ADMIN_PURCHASE_ORDER,
+                label: "Pemesanan",
+                icon: IconShoppingCart,
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") ||
+                    hasPermission(roles, permissions, "view_purchase") ||
+                    hasPermission(roles, permissions, "manage_purchase"),
+            },
+            {
+                type: "link",
+                path: ROUTES.ADMIN_PURCHASE_RECEIVING,
+                label: "Penerimaan",
+                icon: IconTruckDelivery,
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") ||
+                    hasPermission(roles, permissions, "view_purchase") ||
+                    hasPermission(roles, permissions, "manage_purchase"),
+            },
+            {
+                type: "link",
+                path: ROUTES.ADMIN_PURCHASE_PAYMENT,
+                label: "Pembayaran",
+                icon: IconWallet,
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") ||
+                    hasPermission(roles, permissions, "view_purchase") ||
+                    hasPermission(roles, permissions, "manage_purchase"),
+            },
+            {
+                type: "link",
+                path: ROUTES.ADMIN_PURCHASE_RETURN,
+                label: "Retur",
+                icon: IconArrowBackUp,
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") ||
+                    hasPermission(roles, permissions, "view_purchase") ||
+                    hasPermission(roles, permissions, "manage_purchase"),
             },
         ],
     },

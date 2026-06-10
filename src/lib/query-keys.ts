@@ -64,6 +64,24 @@ export const queryKeys = {
             [...queryKeys.inventory.all, "opname", id] as const,
     },
 
+    // Purchase
+    purchase: {
+        all: ["purchase"] as const,
+        receivings: () => [...queryKeys.purchase.all, "receivings"] as const,
+        receivingDetail: (id: number) =>
+            [...queryKeys.purchase.all, "receiving", id] as const,
+        orders: () => [...queryKeys.purchase.all, "orders"] as const,
+        orderDetail: (id: number) =>
+            [...queryKeys.purchase.all, "order", id] as const,
+        payments: () => [...queryKeys.purchase.all, "payments"] as const,
+        paymentDetail: (id: number) =>
+            [...queryKeys.purchase.all, "payment", id] as const,
+    },
+
+    cashAccounts: {
+        all: ["cash-accounts"] as const,
+    },
+
     // Transactions (checkout)
     transactions: {
         all: ["transactions"] as const,

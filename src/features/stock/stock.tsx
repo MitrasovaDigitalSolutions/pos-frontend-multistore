@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { useProducts } from "@/features/products/api/products-api";
 import {
     useOpnames,
-    useReceivings,
     useStockMovements,
 } from "@/features/stock/api/stock-api";
 import { AdjustmentDialog } from "@/features/stock/components/adjustment-dialog";
@@ -13,17 +12,23 @@ import { MovementLedger } from "@/features/stock/components/movement-ledger";
 import { OpnameDetailDialog } from "@/features/stock/components/opname-detail-dialog";
 import { OpnameDialog } from "@/features/stock/components/opname-dialog";
 import { OpnameList } from "@/features/stock/components/opname-list";
-import { ReceivingDialog } from "@/features/stock/components/receiving-dialog";
-import { ReceivingList } from "@/features/stock/components/receiving-list";
 import { IconActivity, IconClipboardCheck } from "@tabler/icons-react";
-import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { hasRole, hasPermission } from "@/constants/roles";
 
 export function StockManagement() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const currentTab = searchParams.get("tab") || "inventory";
+
+    // Redirect legacy stock tab=receiving requests to the new purchase route
+    useEffect(() => {
+        if (currentTab === "receiving") {
+            router.replace("/admin/purchase/receiving");
+        }
+    }, [currentTab, router]);
 
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
@@ -38,7 +43,6 @@ export function StockManagement() {
 
     const [movementsPage, setMovementsPage] = useState(1);
     const [opnamesPage, setOpnamesPage] = useState(1);
-    const [receivingsPage, setReceivingsPage] = useState(1);
 
     // Load all products (up to 1000) for local low stock warnings and selection dropdowns in modals
     const { data: productsData, isLoading: productsLoading } = useProducts({
@@ -54,27 +58,20 @@ export function StockManagement() {
         isLoading: opnamesLoading,
         isFetching: opnamesFetching,
     } = useOpnames({ page: opnamesPage, per_page: 10 });
-    const {
-        data: receivingsData,
-        isLoading: receivingsLoading,
-        isFetching: receivingsFetching,
-    } = useReceivings({ page: receivingsPage, per_page: 10 });
 
     const products = productsData?.data || [];
     const movements = movementsData?.data || [];
     const opnames = opnamesData?.data || [];
-    const receivings = receivingsData?.data || [];
 
     // Modals
     const [isAdjustmentOpen, setIsAdjustmentOpen] = useState(false);
     const [isOpnameModalOpen, setIsOpnameModalOpen] = useState(false);
-    const [isReceivingModalOpen, setIsReceivingModalOpen] = useState(false);
     const [isDetailOpnameOpen, setIsDetailOpnameOpen] = useState(false);
     const [selectedOpnameId, setSelectedOpnameId] = useState<number | null>(
         null,
     );
 
-    if ((currentTab === "inventory" || currentTab === "receiving") && !hasViewInventory) {
+    if (currentTab === "inventory" && !hasViewInventory) {
         return (
             <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm">
                 <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
@@ -150,18 +147,6 @@ export function StockManagement() {
                         isFetching={movementsFetching}
                     />
                 </div>
-            ) : currentTab === "receiving" ? (
-                /* Receiving Log Table View */
-                <ReceivingList
-                    receivings={receivings}
-                    products={products}
-                    meta={receivingsData?.meta}
-                    page={receivingsPage}
-                    onPageChange={setReceivingsPage}
-                    onAddClick={() => setIsReceivingModalOpen(true)}
-                    isLoading={receivingsLoading}
-                    isFetching={receivingsFetching}
-                />
             ) : (
                 <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm">
                     <p className="text-sm font-bold text-slate-800">Halaman Tidak Ditemukan</p>
@@ -185,12 +170,6 @@ export function StockManagement() {
                 open={isDetailOpnameOpen}
                 onOpenChange={setIsDetailOpnameOpen}
                 opnameId={selectedOpnameId}
-            />
-
-            <ReceivingDialog
-                open={isReceivingModalOpen}
-                onOpenChange={setIsReceivingModalOpen}
-                products={products || []}
             />
         </div>
     );

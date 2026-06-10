@@ -15,7 +15,7 @@ import {
     useDeleteReceiving,
     useUpdateReceiving,
     useUpdateReceivingPaymentStatus,
-} from "../api/stock-api";
+} from "../api/purchase-api";
 import { ReceivingDialog } from "./receiving-dialog";
 import { ReceivingDetailDialog } from "./receiving-detail-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -74,10 +74,10 @@ export function ReceivingList({
 
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
-    const hasManageInventory =
+    const hasManagePurchase =
         hasRole(userRoles, "admin") ||
-        hasPermission(userRoles, userPermissions, "manage_inventory");
-    const canDeleteDraft = hasManageInventory;
+        hasPermission(userRoles, userPermissions, "manage_purchase");
+    const canDeleteDraft = hasManagePurchase;
 
     const handleTogglePaymentStatus = (id: number, currentStatus: "pending" | "paid") => {
         const nextStatus = currentStatus === "paid" ? "pending" : "paid";
@@ -231,7 +231,7 @@ export function ReceivingList({
                 header: "Pembayaran",
                 cell: ({ row }) => {
                     const status = row.original.status_pembayaran;
-                    if (!hasManageInventory) {
+                    if (!hasManagePurchase) {
                         return (
                             <span
                                 className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${status === "paid"
@@ -276,7 +276,7 @@ export function ReceivingList({
                 },
             },
         ],
-        [canDeleteDraft, hasManageInventory, handleTogglePaymentStatus]
+        [canDeleteDraft, hasManagePurchase, handleTogglePaymentStatus]
     );
 
     return (
@@ -290,7 +290,7 @@ export function ReceivingList({
                         Daftar riwayat pasokan barang masuk dari distributor.
                     </p>
                 </div>
-                {hasManageInventory && (
+                {hasManagePurchase && (
                     <Button
                         onClick={onAddClick}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
@@ -314,9 +314,9 @@ export function ReceivingList({
                 estimateRowHeight={44}
                 onView={handleDetailClick}
                 onEdit={handleEditClick}
-                hideEdit={(rec) => !(rec.status === "draft" && hasManageInventory)}
+                hideEdit={(rec) => !(rec.status === "draft" && hasManagePurchase)}
                 onCheck={handleFinalize}
-                hideCheck={(rec) => !(rec.status === "draft" && hasManageInventory)}
+                hideCheck={(rec) => !(rec.status === "draft" && hasManagePurchase)}
                 onDelete={(rec) => handleDelete(rec.id)}
                 hideDelete={(rec) => !(rec.status === "draft" && canDeleteDraft)}
             />

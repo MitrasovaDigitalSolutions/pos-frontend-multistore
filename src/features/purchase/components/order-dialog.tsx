@@ -1,6 +1,5 @@
 "use client";
 
-import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { FormSelect } from "@/components/forms/form-select";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +13,7 @@ import { Scrollable } from "@/components/ui/scrollable";
 import type { Product } from "@/features/products/types";
 import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IconPlus, IconTruckDelivery } from "@tabler/icons-react";
+import { IconPlus, IconClipboardCheck } from "@tabler/icons-react";
 import { useEffect } from "react";
 import {
     FormProvider,
@@ -24,40 +23,40 @@ import {
 } from "react-hook-form";
 import { toast } from "sonner";
 import {
-    useCreateReceiving,
-    useUpdateReceiving,
-    useReceivingDetail,
-} from "../api/stock-api";
+    useCreatePurchaseOrder,
+    useUpdatePurchaseOrder,
+    usePurchaseOrderDetail,
+} from "../api/purchase-api";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-    receivingSchema,
-    type ReceivingInput,
-} from "../schemas/receiving-schema";
-import type { Receiving } from "../types";
-import { ReceivingItemRow } from "./receiving-item-row";
+    purchaseOrderSchema,
+    type PurchaseOrderInput,
+} from "../schemas/order-schema";
+import type { PurchaseOrder } from "../types";
+import { OrderItemRow } from "./order-item-row";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
 
-interface ReceivingDialogProps {
+interface OrderDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     products: Product[];
-    editingReceiving?: Receiving | null;
+    editingOrder?: PurchaseOrder | null;
 }
 
-export function ReceivingDialog({
+export function OrderDialog({
     open,
     onOpenChange,
     products,
-    editingReceiving = null,
-}: ReceivingDialogProps) {
-    const createReceiving = useCreateReceiving();
-    const updateReceiving = useUpdateReceiving();
-    const { data: suppliers = [], isLoading: suppliersLoading } =
-        useAllSuppliers();
+    editingOrder = null,
+}: OrderDialogProps) {
+    const createOrder = useCreatePurchaseOrder();
+    const updateOrder = useUpdatePurchaseOrder();
+    const { data: suppliers = [], isLoading: suppliersLoading } = useAllSuppliers();
 
-    const isEdit = !!editingReceiving;
+    const isEdit = !!editingOrder;
 
-    const { data: detailData, isLoading: detailLoading } = useReceivingDetail(
-        editingReceiving?.id || null,
+    const { data: detailData, isLoading: detailLoading } = usePurchaseOrderDetail(
+        editingOrder?.id || null,
     );
 
     const productOptions = products.map((p) => ({
@@ -70,17 +69,14 @@ export function ReceivingDialog({
         label: s.nama,
     }));
 
-    const methods = useForm<ReceivingInput>({
-        resolver: zodResolver(receivingSchema) as Resolver<ReceivingInput>,
+    const methods = useForm<PurchaseOrderInput>({
+        resolver: zodResolver(purchaseOrderSchema) as Resolver<PurchaseOrderInput>,
         defaultValues: {
             supplier_id: null,
-            supplier: "",
-            nomor_faktur: "",
-            nilai_faktur: null,
-            status_pembayaran: "pending",
-            status: "completed",
+            supplier_name: "",
+            tanggal_po: new Date().toISOString().split("T")[0],
             catatan: "",
-            items: [{ product_id: 0, kuantitas: 0, harga_beli: 0, update_harga_jual: false, harga_jual_baru: null, margin_baru: null }],
+            items: [{ product_id: 0, kuantitas: 0, harga_estimasi: 0 }],
         },
     });
 
@@ -90,6 +86,7 @@ export function ReceivingDialog({
         handleSubmit,
         reset,
         setValue,
+        watch,
         formState: { errors },
     } = methods;
 
@@ -100,147 +97,133 @@ export function ReceivingDialog({
 
     useEffect(() => {
         if (open) {
-            if (editingReceiving) {
-                const currentData = detailData || editingReceiving;
+            if (editingOrder) {
+                const currentData = detailData || editingOrder;
                 reset({
                     supplier_id: currentData.supplier_id,
-                    supplier: currentData.supplier || "",
-                    nomor_faktur: currentData.nomor_faktur || "",
-                    nilai_faktur: currentData.nilai_faktur,
-                    status_pembayaran: currentData.status_pembayaran,
-                    status: currentData.status,
+                    supplier_name: currentData.supplier_name || "",
+                    tanggal_po: currentData.tanggal_po,
                     catatan: currentData.catatan || "",
                     items: currentData.items?.map((item) => ({
                         product_id: item.product_id,
                         kuantitas: item.kuantitas,
-                        harga_beli: item.harga_beli || 0,
-                        update_harga_jual: false,
-                        harga_jual_baru: null,
-                        margin_baru: null,
-                    })) || [{ product_id: 0, kuantitas: 0, harga_beli: 0, update_harga_jual: false, harga_jual_baru: null, margin_baru: null }],
+                        harga_estimasi: item.harga_estimasi || 0,
+                    })) || [{ product_id: 0, kuantitas: 0, harga_estimasi: 0 }],
                 });
             } else {
                 reset({
                     supplier_id: null,
-                    supplier: "",
-                    nomor_faktur: "",
-                    nilai_faktur: null,
-                    status_pembayaran: "pending",
-                    status: "completed",
+                    supplier_name: "",
+                    tanggal_po: new Date().toISOString().split("T")[0],
                     catatan: "",
-                    items: [{ product_id: 0, kuantitas: 0, harga_beli: 0, update_harga_jual: false, harga_jual_baru: null, margin_baru: null }],
+                    items: [{ product_id: 0, kuantitas: 0, harga_estimasi: 0 }],
                 });
             }
         }
-    }, [open, editingReceiving, reset, detailData]);
+    }, [open, editingOrder, reset, detailData]);
 
-    const isPending = createReceiving.isPending || updateReceiving.isPending;
+    const isPending = createOrder.isPending || updateOrder.isPending;
     const showLoading = isEdit && detailLoading;
 
-    const onSubmit = (data: ReceivingInput) => {
+    // Calculate live total estimation
+    const itemsWatch = watch("items") || [];
+    const liveTotalEstimation = itemsWatch.reduce((acc, curr) => {
+        const qty = Number(curr?.kuantitas) || 0;
+        const price = Number(curr?.harga_estimasi) || 0;
+        return acc + qty * price;
+    }, 0);
+
+    const onSubmit = (data: PurchaseOrderInput) => {
         // Find corresponding supplier name from selected id
         if (data.supplier_id) {
             const selectedSup = suppliers.find(
                 (s) => s.id === Number(data.supplier_id),
             );
             if (selectedSup) {
-                data.supplier = selectedSup.nama;
+                data.supplier_name = selectedSup.nama;
             }
         }
 
-        if (isEdit && editingReceiving) {
-            updateReceiving.mutate(
-                { id: editingReceiving.id, data },
+        if (isEdit && editingOrder) {
+            updateOrder.mutate(
+                { id: editingOrder.id, data },
                 {
                     onSuccess: () => {
-                        toast.success("Penerimaan barang berhasil diperbarui.");
+                        toast.success("Draft Purchase Order berhasil diperbarui.");
                         onOpenChange(false);
                     },
                     onError: (err) => {
                         toast.error(
-                            err.message || "Gagal memperbarui penerimaan.",
+                            err.message || "Gagal memperbarui draft Purchase Order.",
                         );
                     },
                 },
             );
         } else {
-            createReceiving.mutate(data, {
+            createOrder.mutate(data, {
                 onSuccess: () => {
-                    toast.success("Penerimaan barang berhasil disimpan.");
+                    toast.success("Draft Purchase Order berhasil disimpan.");
                     onOpenChange(false);
                 },
                 onError: (err) => {
-                    toast.error(err.message || "Gagal mencatat penerimaan.");
+                    toast.error(err.message || "Gagal membuat Purchase Order.");
                 },
             });
         }
     };
 
-    const handleFormSubmit = (status: "draft" | "completed") => {
-        setValue("status", status);
-        handleSubmit(onSubmit)();
-    };
-
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-fit! bg-white rounded-2xl border-slate-100 p-6 flex flex-col max-h-[90vh]">
-                <DialogHeader className="pb-4 border-b border-slate-100 shrink-0">
+                <DialogHeader className="pb-4 border-b border-slate-100 shrink-0 flex flex-row justify-between items-center gap-6">
                     <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                        <IconTruckDelivery
+                        <IconClipboardCheck
                             size={20}
                             className="text-emerald-500"
                         />
                         <span>
                             {isEdit
-                                ? `Ubah Penerimaan Draft (${editingReceiving.nomor_penerimaan})`
-                                : "Penerimaan Barang Dari Supplier"}
+                                ? `Ubah Draft PO (${editingOrder.nomor_po})`
+                                : "Buat Dokumen Pemesanan (Purchase Order)"}
                         </span>
                     </DialogTitle>
+
+                    {!showLoading && (
+                        <div className="bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-100/50 flex flex-col items-end mr-4">
+                            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                                Nilai Estimasi Total
+                            </span>
+                            <span className="text-xs font-extrabold text-emerald-600 font-mono">
+                                {formatRupiah(liveTotalEstimation)}
+                            </span>
+                        </div>
+                    )}
                 </DialogHeader>
 
                 <FormProvider {...methods}>
                     <form
-                        onSubmit={(e) => e.preventDefault()}
+                        onSubmit={handleSubmit(onSubmit)}
                         className="flex flex-col flex-1 overflow-hidden min-h-0 pt-4"
                     >
                         <Scrollable className="flex-1 pr-1">
                             {showLoading ? (
                                 <div className="space-y-4 pb-4 pr-1">
                                     <div className="grid grid-cols-2 gap-4">
-                                        {/* Supplier Dropdown Skeleton */}
                                         <div className="space-y-1.5 col-span-2 sm:col-span-1">
                                             <Skeleton className="h-3 w-16 rounded" />
                                             <Skeleton className="h-10 w-full rounded-xl" />
                                         </div>
-
-                                        {/* No. Faktur Skeleton */}
                                         <div className="space-y-1.5 col-span-2 sm:col-span-1">
                                             <Skeleton className="h-3 w-16 rounded" />
                                             <Skeleton className="h-10 w-full rounded-xl" />
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
-                                        {/* Nilai Faktur Skeleton */}
-                                        <div className="col-span-2 sm:col-span-1 space-y-1.5">
-                                            <Skeleton className="h-3 w-28 rounded" />
-                                            <Skeleton className="h-10 w-full rounded-xl" />
-                                        </div>
-
-                                        {/* Status Pembayaran Skeleton */}
-                                        <div className="space-y-1.5 col-span-2 sm:col-span-1">
-                                            <Skeleton className="h-3 w-28 rounded" />
-                                            <Skeleton className="h-10 w-full rounded-xl" />
-                                        </div>
-                                    </div>
-
-                                    {/* Catatan Skeleton */}
                                     <div className="space-y-1.5">
                                         <Skeleton className="h-3 w-16 rounded" />
                                         <Skeleton className="h-10 w-full rounded-xl" />
                                     </div>
 
-                                    {/* Items Rows Skeleton */}
                                     <div className="space-y-4 pt-4 border-t border-slate-100">
                                         <div className="flex justify-between items-center">
                                             <Skeleton className="h-4 w-28 rounded" />
@@ -274,7 +257,7 @@ export function ReceivingDialog({
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                                 Supplier *
                                             </label>
-                                            <FormSelect<ReceivingInput>
+                                            <FormSelect<PurchaseOrderInput>
                                                 name="supplier_id"
                                                 options={supplierOptions}
                                                 placeholder={
@@ -291,60 +274,20 @@ export function ReceivingDialog({
                                             )}
                                         </div>
 
-                                        {/* No. Faktur */}
+                                        {/* Tanggal PO */}
                                         <div className="space-y-1.5 col-span-2 sm:col-span-1">
                                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                                No. Faktur
+                                                Tanggal PO *
                                             </label>
                                             <Input
-                                                type="text"
-                                                placeholder="FAK-XXXX..."
+                                                type="date"
                                                 className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
                                                 disabled={isPending}
-                                                {...register("nomor_faktur")}
+                                                {...register("tanggal_po")}
                                             />
-                                            {errors.nomor_faktur && (
+                                            {errors.tanggal_po && (
                                                 <p className="text-[10px] text-rose-500 font-medium">
-                                                    {errors.nomor_faktur.message}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        {/* Nilai Faktur */}
-                                        <div className="col-span-2 sm:col-span-1">
-                                            <FormNominalInput<ReceivingInput>
-                                                name="nilai_faktur"
-                                                label="Nilai Faktur / Invoice"
-                                                placeholder="Total tagihan Rp..."
-                                                disabled={isPending}
-                                            />
-                                        </div>
-
-                                        {/* Status Pembayaran */}
-                                        <div className="space-y-1.5 col-span-2 sm:col-span-1">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                                Status Pembayaran
-                                            </label>
-                                            <FormSelect<ReceivingInput>
-                                                name="status_pembayaran"
-                                                options={[
-                                                    {
-                                                        value: "pending",
-                                                        label: "Pending / Tempo",
-                                                    },
-                                                    {
-                                                        value: "paid",
-                                                        label: "Paid / Lunas",
-                                                    },
-                                                ]}
-                                                placeholder="Pilih status"
-                                                disabled={isPending}
-                                            />
-                                            {errors.status_pembayaran && (
-                                                <p className="text-[10px] text-rose-500 font-medium">
-                                                    {errors.status_pembayaran.message}
+                                                    {errors.tanggal_po.message}
                                                 </p>
                                             )}
                                         </div>
@@ -353,11 +296,11 @@ export function ReceivingDialog({
                                     {/* Catatan */}
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                            Catatan
+                                            Catatan / Keterangan
                                         </label>
                                         <Input
                                             type="text"
-                                            placeholder="Catatan penerimaan..."
+                                            placeholder="Catatan pengerjaan atau detail pengiriman..."
                                             className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
                                             disabled={isPending}
                                             {...register("catatan")}
@@ -373,13 +316,13 @@ export function ReceivingDialog({
                                     <div className="space-y-4 pt-4 border-t border-slate-100">
                                         <div className="flex justify-between items-center">
                                             <h5 className="text-xs font-bold text-slate-800">
-                                                Daftar Barang Diterima
+                                                Daftar Barang yang Dipesan
                                             </h5>
                                         </div>
 
                                         <div className="space-y-3">
                                             {fields.map((field, idx) => (
-                                                <ReceivingItemRow
+                                                <OrderItemRow
                                                     key={field.id}
                                                     idx={idx}
                                                     isPending={isPending}
@@ -397,10 +340,7 @@ export function ReceivingDialog({
                                                 append({
                                                     product_id: 0,
                                                     kuantitas: 0,
-                                                    harga_beli: 0,
-                                                    update_harga_jual: false,
-                                                    harga_jual_baru: null,
-                                                    margin_baru: null,
+                                                    harga_estimasi: 0,
                                                 })
                                             }
                                             variant="outline"
@@ -424,21 +364,19 @@ export function ReceivingDialog({
                         <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-slate-100 shrink-0 bg-white">
                             <Button
                                 type="button"
-                                onClick={() => handleFormSubmit("draft")}
-                                className="w-full sm:w-auto px-6 h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
-                                disabled={isPending || showLoading}
+                                onClick={() => onOpenChange(false)}
+                                variant="outline"
+                                className="w-full sm:w-auto px-6 h-11 border-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center cursor-pointer bg-white"
+                                disabled={isPending}
                             >
-                                Simpan Draft
+                                Batal
                             </Button>
                             <Button
-                                type="button"
-                                onClick={() => handleFormSubmit("completed")}
+                                type="submit"
                                 className="w-full sm:w-auto px-6 h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
                                 disabled={isPending || showLoading}
                             >
-                                {isPending
-                                    ? "Menyimpan..."
-                                    : "Selesai & Tambah Stok"}
+                                {isPending ? "Menyimpan..." : "Simpan Draft PO"}
                             </Button>
                         </div>
                     </form>

@@ -8,7 +8,8 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { IconClipboardList, IconClock, IconFileDescription } from "@tabler/icons-react";
-import { useReceivingDetail, useActivityLogs } from "../api/stock-api";
+import { useReceivingDetail } from "../api/purchase-api";
+import { useActivityLogs } from "@/features/stock/api/stock-api";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { Scrollable } from "@/components/ui/scrollable";
 import { Skeleton } from "@/components/ui/skeleton";
