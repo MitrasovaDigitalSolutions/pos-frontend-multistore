@@ -209,7 +209,11 @@ export function AdminSidebar() {
                 open={isLogoutConfirmOpen}
                 onOpenChange={setIsLogoutConfirmOpen}
                 title="Keluar dari Akun"
-                description="Apakah Anda yakin ingin keluar dari aplikasi? Sesi Anda saat ini akan diakhiri."
+                description={
+                    session?.cashDrawerSessionId
+                        ? "PERHATIAN: Shift laci kasir Anda masih aktif! Keluar hanya akan log out akun, shift laci kasir TIDAK akan ditutup."
+                        : "Apakah Anda yakin ingin keluar dari aplikasi?"
+                }
                 confirmText="Ya, Keluar"
                 cancelText="Batal"
                 variant="danger"

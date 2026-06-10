@@ -5,37 +5,45 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useProducts } from "@/features/products/api/products-api";
-import {
-    useCreateTransaction,
-    useAddTransactionItem,
-    useUpdateTransactionItem,
-    useDeleteTransactionItem,
-    useHoldTransaction,
-    useRecallTransaction,
-    lookupBarcode,
-} from "@/features/checkout/api/checkout-api";
-import { apiGet, apiGetList } from "@/shared/api/api-client";
-import type { CartItem, HoldTransaction, Receipt, TrxData } from "@/features/checkout/types";
+import { lookupBarcode } from "@/features/checkout/api/checkout-api";
+import type { CartItem, HoldTransaction, Receipt } from "@/features/checkout/types";
 import type { Product } from "@/features/products/types";
-import type { ApiResponse } from "@/types/api";
+import { useCheckoutStore } from "@/stores/checkout-store";
 
 export function useCheckoutState() {
     const router = useRouter();
     const { data: session, update } = useSession();
     const user = session?.user;
 
-    // Products from API
+    // Products list from API for Catalog & Search
     const { data: productsData, refetch: refetchProducts } = useProducts({
         per_page: 1000,
     });
     const products = productsData?.data;
 
-    // Active draft transaction
-    const [transactionId, setTransactionId] = useState<number | null>(null);
-    const [cart, setCart] = useState<CartItem[]>([]);
+    // Connect to local checkout Zustand store
+    const storeCart = useCheckoutStore((state) => state.cart);
+    const storeHoldList = useCheckoutStore((state) => state.holdList);
+    const addItem = useCheckoutStore((state) => state.addItem);
+    const updateItemQty = useCheckoutStore((state) => state.updateItemQty);
+    const removeItem = useCheckoutStore((state) => state.removeItem);
+    const clearCart = useCheckoutStore((state) => state.clearCart);
+    const addHoldTransaction = useCheckoutStore((state) => state.addHoldTransaction);
+    const removeHoldTransaction = useCheckoutStore((state) => state.removeHoldTransaction);
+    const clearHoldList = useCheckoutStore((state) => state.clearHoldList);
 
-    // On-hold list
-    const [holdList, setHoldList] = useState<HoldTransaction[]>([]);
+    // Hydration check to prevent Next.js hydration mismatches
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // Expose cart & holdList safely
+    const cart = mounted ? storeCart : [];
+    const holdList = mounted ? storeHoldList : [];
+
+    // Recalled transaction reference ID (purely for local UI representation)
+    const [activeRecallId, setActiveRecallId] = useState<number | null>(null);
 
     // UI state
     const [barcodeInput, setBarcodeInput] = useState("");
@@ -51,14 +59,6 @@ export function useCheckoutState() {
     const [trxTime, setTrxTime] = useState("");
     const barcodeInputRef = useRef<HTMLInputElement>(null);
 
-    // Mutations
-    const createTransaction = useCreateTransaction();
-    const addTransactionItem = useAddTransactionItem();
-    const updateTransactionItem = useUpdateTransactionItem();
-    const deleteTransactionItem = useDeleteTransactionItem();
-    const holdTransaction = useHoldTransaction();
-    const recallTransaction = useRecallTransaction();
-
     // ─── Calculations ─────────────────────────────────────────────────────────
     const subtotal = cart.reduce((acc, i) => acc + i.price * i.qty, 0);
     const ppn = Math.round(subtotal * 0.11);
@@ -66,92 +66,48 @@ export function useCheckoutState() {
 
     // ─── Handlers ─────────────────────────────────────────────────────────────
 
-    const handleHold = useCallback(async () => {
-        if (!transactionId || cart.length === 0) return;
+    const handleHold = useCallback(() => {
+        if (cart.length === 0) return;
         try {
             setIsProcessing(true);
-            await holdTransaction.mutateAsync(transactionId);
+            const holdId = activeRecallId || Date.now();
+            
+            const newHold: HoldTransaction = {
+                id: holdId,
+                items_count: cart.reduce((acc, item) => acc + item.qty, 0),
+                subtotal,
+                created_at: new Date().toISOString(),
+                items: cart,
+            };
+
+            addHoldTransaction(newHold);
             toast.info("Transaksi di-hold.");
-            setTransactionId(null);
-            setCart([]);
-        } catch (err) {
-            const message =
-                err instanceof Error ? err.message : "Gagal hold transaksi.";
-            toast.error(message);
+            clearCart();
+            setActiveRecallId(null);
+        } catch {
+            toast.error("Gagal hold transaksi.");
         } finally {
             setIsProcessing(false);
         }
-    }, [transactionId, cart.length, holdTransaction]);
+    }, [cart, subtotal, addHoldTransaction, clearCart, activeRecallId]);
 
-    const openHoldList = useCallback(async () => {
-        try {
-            const res = await apiGetList<HoldTransaction>(
-                "/v1/transactions/on-hold",
-                { per_page: 105 },
-            );
-            setHoldList(res.data);
-            setIsHoldListOpen(true);
-        } catch {
-            toast.error("Gagal memuat daftar hold.");
-        }
+    const openHoldList = useCallback(() => {
+        setIsHoldListOpen(true);
     }, []);
 
     const [isVoidConfirmOpen, setIsVoidConfirmOpen] = useState(false);
 
-    const handleVoidDraft = useCallback(async () => {
+    const handleVoidDraft = useCallback(() => {
         if (cart.length === 0) return;
         setIsVoidConfirmOpen(true);
     }, [cart.length]);
 
     const handleConfirmVoid = useCallback(() => {
-        setCart([]);
-        setTransactionId(null);
+        clearCart();
+        setActiveRecallId(null);
         setIsVoidConfirmOpen(false);
         toast.error("Transaksi dibatalkan.");
-    }, []);
-
-    const buildCartFromTransaction = (trxData?: TrxData) => {
-        if (!trxData) return;
-        const items: CartItem[] = (trxData.items || []).map((item) => ({
-            product_id: item.product_id,
-            itemId: item.id,
-            name: item.nama_produk,
-            price: item.harga_satuan,
-            qty: item.kuantitas,
-            stock: item.product?.stok ?? 999,
-            barcode: item.product?.barcode ?? item.barcode ?? null,
-        }));
-        setCart(items);
-    };
-
-    const ensureDraftTransaction = async (): Promise<number | null> => {
-        if (transactionId) return transactionId;
-        try {
-            const res = await createTransaction.mutateAsync();
-            if (res?.data?.id) {
-                setTransactionId(res.data.id);
-                return res.data.id;
-            }
-            toast.error(res?.message || "Gagal membuat transaksi.");
-            return null;
-        } catch {
-            toast.error("Koneksi gagal.");
-            return null;
-        }
-    };
-
-    const fetchTransactionDetails = async (id: number) => {
-        try {
-            const res = await apiGet<ApiResponse<TrxData>>(
-                `/v1/transactions/${id}`,
-            );
-            if (res?.data) {
-                buildCartFromTransaction(res.data);
-            }
-        } catch {
-            toast.error("Gagal sinkronisasi transaksi dengan server.");
-        }
-    };
+    }, [clearCart]);
 
     const handleAddProduct = async (product: Product) => {
         if (product.status !== "active") {
@@ -169,72 +125,40 @@ export function useCheckoutState() {
             return;
         }
 
-        const trxId = await ensureDraftTransaction();
-        if (!trxId) return;
-
         try {
             setIsProcessing(true);
-            await addTransactionItem.mutateAsync({
-                transactionId: trxId,
+            addItem({
                 product_id: product.id,
-                quantity: 1,
+                name: product.nama,
+                price: product.harga,
+                qty: 1,
+                stock: product.stok,
+                barcode: product.barcode || null,
             });
-
-            await fetchTransactionDetails(trxId);
             toast.success(`${product.nama} ditambahkan.`);
             setTimeout(() => barcodeInputRef.current?.focus(), 50);
-        } catch (err) {
-            const message =
-                err instanceof Error ? err.message : "Gagal menambahkan item.";
-            toast.error(message);
+        } catch {
+            toast.error("Gagal menambahkan item.");
         } finally {
             setIsProcessing(false);
         }
     };
 
     const handleUpdateQty = async (item: CartItem, newQty: number) => {
-        if (!transactionId || !item.itemId) return;
         if (newQty <= 0) {
             handleRemoveItem(item);
             return;
         }
-
-        try {
-            setIsProcessing(true);
-            await updateTransactionItem.mutateAsync({
-                transactionId,
-                itemId: item.itemId,
-                quantity: newQty,
-            });
-            setCart((prev) =>
-                prev.map((i) =>
-                    i.itemId === item.itemId ? { ...i, qty: newQty } : i,
-                ),
-            );
-        } catch (err) {
-            const message =
-                err instanceof Error ? err.message : "Gagal update kuantitas.";
-            toast.error(message);
-        } finally {
-            setIsProcessing(false);
+        if (newQty > item.stock) {
+            toast.error(`Stok ${item.name} tidak mencukupi! Maksimal: ${item.stock}`);
+            return;
         }
+        updateItemQty(item.product_id, newQty);
     };
 
     const handleRemoveItem = async (item: CartItem) => {
-        if (!transactionId || !item.itemId) return;
-        try {
-            setIsProcessing(true);
-            await deleteTransactionItem.mutateAsync({
-                transactionId,
-                itemId: item.itemId,
-            });
-            setCart((prev) => prev.filter((i) => i.itemId !== item.itemId));
-            toast.error(`${item.name} dihapus.`);
-        } catch {
-            toast.error("Gagal menghapus item.");
-        } finally {
-            setIsProcessing(false);
-        }
+        removeItem(item.product_id);
+        toast.error(`${item.name} dihapus.`);
     };
 
     const handleBarcodeSubmit = async (e: React.FormEvent) => {
@@ -268,26 +192,47 @@ export function useCheckoutState() {
         }
     };
 
-    const handleRecall = async (holdTrxId: number) => {
+    const handleRecall = useCallback((holdTrxId: number) => {
         try {
             setIsProcessing(true);
-            const res = await recallTransaction.mutateAsync(holdTrxId);
-            setTransactionId(holdTrxId);
-            buildCartFromTransaction(res.data);
+            const held = storeHoldList.find((h) => h.id === holdTrxId);
+            if (!held) {
+                toast.error("Transaksi hold tidak ditemukan.");
+                return;
+            }
+
+            // Auto-hold active cart if not empty
+            const activeCart = useCheckoutStore.getState().cart;
+            if (activeCart.length > 0) {
+                const currentHoldId = activeRecallId || Date.now();
+                const autoHoldItem: HoldTransaction = {
+                    id: currentHoldId,
+                    items_count: activeCart.reduce((acc, item) => acc + item.qty, 0),
+                    subtotal: activeCart.reduce((acc, i) => acc + i.price * i.qty, 0),
+                    created_at: new Date().toISOString(),
+                    items: activeCart,
+                };
+                addHoldTransaction(autoHoldItem);
+                toast.info("Transaksi sebelumnya otomatis di-hold.");
+            }
+
+            // Load items into cart
+            useCheckoutStore.getState().setCart(held.items);
+            setActiveRecallId(held.id);
+            // Remove from holdList
+            removeHoldTransaction(holdTrxId);
             setIsHoldListOpen(false);
             toast.success("Transaksi di-recall.");
-        } catch (err) {
-            const message =
-                err instanceof Error ? err.message : "Gagal recall.";
-            toast.error(message);
+        } catch {
+            toast.error("Gagal recall transaksi.");
         } finally {
             setIsProcessing(false);
         }
-    };
+    }, [storeHoldList, removeHoldTransaction, activeRecallId, addHoldTransaction]);
 
     const handleNewTransaction = () => {
-        setCart([]);
-        setTransactionId(null);
+        clearCart();
+        setActiveRecallId(null);
         setReceipt(null);
         setIsReceiptOpen(false);
         setTimeout(() => barcodeInputRef.current?.focus(), 100);
@@ -297,9 +242,14 @@ export function useCheckoutState() {
         setReceipt(receiptData);
         setIsReceiptOpen(true);
         refetchProducts();
-        setCart([]);
-        setTransactionId(null);
+        clearCart();
+        setActiveRecallId(null);
     };
+
+    const handleClearHoldList = useCallback(() => {
+        clearHoldList();
+        toast.error("Semua transaksi hold telah dihapus.");
+    }, [clearHoldList]);
 
     // ─── Clock & Keyboard Shortcuts ───────────────────────────────────────────
     useEffect(() => {
@@ -326,7 +276,7 @@ export function useCheckoutState() {
                 setIsCatalogOpen((p) => !p);
             } else if (e.key === "F5") {
                 e.preventDefault();
-                if (transactionId) handleHold();
+                if (cart.length > 0) handleHold();
             } else if (e.key === "F6") {
                 e.preventDefault();
                 openHoldList();
@@ -345,7 +295,7 @@ export function useCheckoutState() {
             clearInterval(timer);
             window.removeEventListener("keydown", handleKeyDown);
         };
-    }, [cart, transactionId, handleHold, openHoldList, handleVoidDraft]);
+    }, [cart, handleHold, openHoldList, handleVoidDraft]);
 
     const hasAccessAdmin = !!(
         user?.roles?.includes("admin") ||
@@ -360,7 +310,7 @@ export function useCheckoutState() {
         user,
         products,
         refetchProducts,
-        transactionId,
+        transactionId: activeRecallId,
         cart,
         holdList,
         barcodeInput,
@@ -395,5 +345,6 @@ export function useCheckoutState() {
         handleRecall,
         handleNewTransaction,
         handlePaymentSuccess,
+        handleClearHoldList,
     };
 }

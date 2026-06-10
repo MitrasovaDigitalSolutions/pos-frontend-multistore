@@ -1,32 +1,22 @@
 "use client";
 
-import { useHeldTransactions } from "@/features/checkout/api/checkout-api";
+import { useCheckoutStore } from "@/stores/checkout-store";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconReceipt2, IconArrowUpRight, IconClock } from "@tabler/icons-react";
 import Link from "next/link";
-
-const STATUS_CONFIG = {
-  draft: {
-    label: "Draft",
-    className: "bg-amber-50 text-amber-600 border border-amber-200",
-  },
-  on_hold: {
-    label: "Ditahan",
-    className: "bg-sky-50 text-sky-600 border border-sky-200",
-  },
-  paid: {
-    label: "Lunas",
-    className: "bg-emerald-50 text-emerald-600 border border-emerald-200",
-  },
-  void: {
-    label: "Void",
-    className: "bg-red-50 text-red-500 border border-red-200",
-  },
-};
+import { useEffect, useState } from "react";
+import type { HoldTransaction } from "@/features/checkout/types";
 
 export function RecentOrders() {
-  const { data, isLoading } = useHeldTransactions({ page: 1, per_page: 5 });
-  const transactions = data?.data ?? [];
+  const storeHoldList = useCheckoutStore((state) => state.holdList);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Limit recent held transactions on dashboard to first 5 items
+  const transactions = mounted ? storeHoldList.slice(0, 5) : [];
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 flex flex-col gap-4">
@@ -70,7 +60,7 @@ export function RecentOrders() {
             </tr>
           </thead>
           <tbody>
-            {isLoading ? (
+            {!mounted ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <tr key={i} className="border-b border-slate-50">
                   <td colSpan={4} className="py-3">
@@ -88,7 +78,7 @@ export function RecentOrders() {
                 </td>
               </tr>
             ) : (
-              transactions.map((trx) => {
+              transactions.map((trx: HoldTransaction) => {
                 const date = new Date(trx.created_at);
                 const timeStr = date.toLocaleTimeString("id-ID", {
                   hour: "2-digit",
@@ -105,7 +95,7 @@ export function RecentOrders() {
                   >
                     <td className="py-2.5 pr-2">
                       <span className="font-bold text-slate-700">
-                        #{String(trx.id).padStart(7, "0")}
+                        #{String(trx.id).slice(-7)}
                       </span>
                     </td>
                     <td className="py-2.5 pr-2 text-right">

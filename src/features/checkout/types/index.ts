@@ -13,6 +13,7 @@ export interface HoldTransaction {
     items_count: number;
     subtotal: number;
     created_at: string;
+    items: CartItem[];
 }
 
 export interface ReceiptItem {

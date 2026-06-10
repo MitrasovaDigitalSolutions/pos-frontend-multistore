@@ -3,7 +3,7 @@
 import React from "react";
 import { useForm, FormProvider, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/forms/form-input";
 import { FormNominalInput } from "@/components/forms/form-nominal-input";
@@ -71,28 +71,31 @@ export function BukaShiftModal({ open, token, onSuccess, isLoading = false }: Bu
 
     return (
         <>
-            <Dialog open={open} onOpenChange={() => { }}>
-            <DialogContent className="max-w-md bg-white rounded-2xl border-slate-100 p-6 shadow-2xl" showCloseButton={false}>
-                <DialogHeader className="pb-4 border-b border-slate-100">
-                    <DialogTitle className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600">
+            <BaseDialog
+                open={open}
+                onOpenChange={() => {}}
+                title={
+                    <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
                             {isFormDisabled ? (
-                                <IconLoader2 size={18} className="animate-spin text-emerald-600" />
+                                <IconLoader2 size={16} className="animate-spin text-emerald-600" />
                             ) : (
-                                <IconLock size={18} />
+                                <IconLock size={16} />
                             )}
                         </div>
                         <div>
                             <span className="block text-sm font-extrabold">Buka Shift Laci Kasir</span>
                             <span className="block text-[11px] font-medium text-slate-400 mt-0.5">
-                                {isLoading 
-                                    ? "Memeriksa status sesi laci kasir..." 
+                                {isLoading
+                                    ? "Memeriksa status sesi laci kasir..."
                                     : "Masukkan saldo awal laci untuk memulai shift."}
                             </span>
                         </div>
-                    </DialogTitle>
-                </DialogHeader>
-
+                    </div>
+                }
+                className="max-w-md"
+                showCloseButton={false}
+            >
                 <FormProvider {...methods}>
                     <form onSubmit={handleSubmit(onSubmit)} className="pt-4 space-y-4">
                         <FormNominalInput<OpenCashDrawerInput>
@@ -122,10 +125,10 @@ export function BukaShiftModal({ open, token, onSuccess, isLoading = false }: Bu
                                     <IconDeviceFloppy size={16} />
                                 )}
                                 <span>
-                                    {isLoading 
-                                        ? "Memeriksa Sesi..." 
-                                        : (openMutation.isPending || isSubmitting) 
-                                            ? "Membuka Laci..." 
+                                    {isLoading
+                                        ? "Memeriksa Sesi..."
+                                        : (openMutation.isPending || isSubmitting)
+                                            ? "Membuka Laci..."
                                             : "Mulai Shift (Buka Laci)"}
                                 </span>
                             </Button>
@@ -158,8 +161,7 @@ export function BukaShiftModal({ open, token, onSuccess, isLoading = false }: Bu
                         </div>
                     </form>
                 </FormProvider>
-            </DialogContent>
-        </Dialog>
+            </BaseDialog>
 
         <ConfirmDialog
             open={isLogoutConfirmOpen}

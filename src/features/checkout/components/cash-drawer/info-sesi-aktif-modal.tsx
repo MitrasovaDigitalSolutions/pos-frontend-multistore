@@ -1,7 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+    Dialog,
+    DialogContent,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useCashDrawerDetail } from "../../api/cash-drawer-api";
 import { SessionDetailsView } from "./session-details-view";
@@ -57,7 +60,7 @@ export function InfoSesiAktifModal({
         <Dialog
             open={open}
             onOpenChange={(val) => {
-                // Only allow closing if not loading and currently on "info" view
+                // Only allow closing when on the "info" view and not loading
                 if (val && !isDetailLoading) {
                     onOpenChange(true);
                 } else if (!val && subView === "info") {
@@ -65,10 +68,16 @@ export function InfoSesiAktifModal({
                 }
             }}
         >
-            <DialogContent className={cn(
-                "bg-white rounded-2xl border-slate-100 p-6 shadow-2xl transition-all duration-300",
-                showHistory && subView === "info" ? "max-w-3xl sm:max-w-3xl" : "max-w-lg sm:max-w-lg"
-            )}>
+            <DialogContent
+                className={cn(
+                    "bg-white rounded-2xl border-slate-100 p-6 shadow-2xl transition-all duration-300",
+                    showHistory && subView === "info"
+                        ? "max-w-3xl sm:max-w-3xl"
+                        : "max-w-lg sm:max-w-lg"
+                )}
+                // Let each sub-view own its header — no close button here
+                showCloseButton={false}
+            >
                 {subView === "info" && (
                     <SessionDetailsView
                         activeSession={activeSession}
@@ -76,6 +85,7 @@ export function InfoSesiAktifModal({
                         onAction={(view) => setSubView(view)}
                         showHistory={showHistory}
                         setShowHistory={setShowHistory}
+                        onClose={() => onOpenChange(false)}
                     />
                 )}
 

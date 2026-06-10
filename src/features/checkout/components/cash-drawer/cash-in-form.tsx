@@ -3,14 +3,14 @@
 import React from "react";
 import { useForm, FormProvider, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { IconChevronLeft, IconLoader2, IconArrowDownLeft } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/forms/form-input";
 import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { toast } from "sonner";
 import { useCashIn } from "../../api/cash-drawer-api";
 import { cashInSchema, type CashInInput } from "../../schemas/cash-drawer-schema";
-import { IconChevronLeft, IconLoader2, IconArrowDownLeft } from "@tabler/icons-react";
+
 
 interface CashInFormProps {
     sessionId: number;
@@ -52,19 +52,18 @@ export function CashInForm({ sessionId, token, onSuccess, onCancel }: CashInForm
 
     return (
         <div className="space-y-4">
-            <DialogHeader className="pb-4 border-b border-slate-100">
-                <DialogTitle className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        className="p-1 rounded hover:bg-slate-100 transition-colors border-none bg-transparent cursor-pointer text-slate-500"
-                        disabled={cashInMutation.isPending || isSubmitting}
-                    >
-                        <IconChevronLeft size={18} />
-                    </button>
-                    <span>Pencatatan Cash In (Uang Masuk)</span>
-                </DialogTitle>
-            </DialogHeader>
+            {/* ── Symmetric Header ── */}
+            <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+                <button
+                    type="button"
+                    onClick={onCancel}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer border-none bg-transparent shrink-0"
+                    disabled={cashInMutation.isPending || isSubmitting}
+                >
+                    <IconChevronLeft size={16} />
+                </button>
+                <span className="text-sm font-bold text-slate-900">Cash In &mdash; Uang Masuk</span>
+            </div>
 
             <FormProvider {...methods}>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">

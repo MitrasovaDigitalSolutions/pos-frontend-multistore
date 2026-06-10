@@ -1,7 +1,6 @@
 import { hasPermission, hasRole } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
 import {
-    IconArrowBackUp,
     IconBox,
     IconChartBar,
     IconDatabase,
@@ -14,6 +13,7 @@ import {
     IconUsers,
     IconWallet
 } from "@tabler/icons-react";
+import { ArchiveX } from "lucide-react";
 
 export interface SidebarMenuItem {
     type: "link";
@@ -137,7 +137,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 type: "link",
                 path: ROUTES.ADMIN_PURCHASE_RETURN,
                 label: "Retur",
-                icon: IconArrowBackUp,
+                icon: ArchiveX,
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") ||
                     hasPermission(roles, permissions, "view_purchase") ||
