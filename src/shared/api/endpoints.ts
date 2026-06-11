@@ -90,6 +90,14 @@ export const ENDPOINTS = {
             UPDATE: (id: number) => `/v1/purchase/payment/${id}`,
             DELETE: (id: number) => `/v1/purchase/payment/${id}`,
         },
+        RETURN: {
+            LIST: "/v1/purchase/return",
+            CREATE: "/v1/purchase/return",
+            DETAIL: (id: number) => `/v1/purchase/return/${id}`,
+            UPDATE: (id: number) => `/v1/purchase/return/${id}`,
+            DELETE: (id: number) => `/v1/purchase/return/${id}`,
+            FINALIZE: (id: number) => `/v1/purchase/return/${id}/finalize`,
+        },
     },
 
     // Reports

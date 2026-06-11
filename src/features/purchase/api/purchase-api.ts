@@ -4,10 +4,11 @@ import { apiClient } from "@/shared/api/axios";
 import { queryKeys } from "@/lib/query-keys";
 import { ENDPOINTS } from "@/shared/api/endpoints";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
-import type { Receiving, PurchaseOrder, ReceivingPayment, CashAccount } from "../types";
+import type { Receiving, PurchaseOrder, ReceivingPayment, CashAccount, PurchaseReturn } from "../types";
 import type { ReceivingInput } from "../schemas/receiving-schema";
 import type { PurchaseOrderInput } from "../schemas/order-schema";
 import type { PaymentInput } from "../schemas/payment-schema";
+import type { PurchaseReturnInput } from "../schemas/return-schema";
 
 // ─── Stock Receiving Hooks ────────────────────────────────────────────────────
 
@@ -288,6 +289,101 @@ export function useDeletePayment() {
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.purchase.payments(),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.receivings(),
+            });
+        },
+    });
+}
+
+// ─── Purchase Return Hooks ───────────────────────────────────────────────────
+
+export function usePurchaseReturns(params?: PaginationParams & { search?: string; status?: string; supplier_id?: number; stock_receiving_id?: number; start_date?: string; end_date?: string }) {
+    return useQuery<PaginatedResponse<PurchaseReturn>>({
+        queryKey: [...queryKeys.purchase.returns(), params],
+        queryFn: () => apiGetList<PurchaseReturn>(ENDPOINTS.PURCHASE.RETURN.LIST, params),
+    });
+}
+
+export function usePurchaseReturnDetail(id: number | null) {
+    return useQuery<PurchaseReturn>({
+        queryKey: [...queryKeys.purchase.returnDetail(id || 0)],
+        queryFn: () => apiGetData<PurchaseReturn>(ENDPOINTS.PURCHASE.RETURN.DETAIL(id || 0)),
+        enabled: id !== null && id > 0,
+    });
+}
+
+export function useCreatePurchaseReturn() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<PurchaseReturn>, Error, PurchaseReturnInput>({
+        mutationFn: (data) =>
+            apiPost<ApiResponse<PurchaseReturn>, PurchaseReturnInput>(
+                ENDPOINTS.PURCHASE.RETURN.CREATE,
+                data,
+            ),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.returns(),
+            });
+        },
+    });
+}
+
+export function useUpdatePurchaseReturn() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<PurchaseReturn>, Error, { id: number; data: PurchaseReturnInput }>({
+        mutationFn: ({ id, data }) =>
+            apiPut<ApiResponse<PurchaseReturn>, PurchaseReturnInput>(
+                ENDPOINTS.PURCHASE.RETURN.UPDATE(id),
+                data,
+            ),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.returns(),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.all,
+            });
+        },
+    });
+}
+
+export function useDeletePurchaseReturn() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<void>, Error, number>({
+        mutationFn: (id) => apiDelete<ApiResponse<void>>(ENDPOINTS.PURCHASE.RETURN.DELETE(id)),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.returns(),
+            });
+        },
+    });
+}
+
+export interface FinalizeReturnInput {
+    impact_type: "refund" | "credit";
+    cash_account_id?: number | null;
+    stock_receiving_id?: number | null;
+}
+
+export function useFinalizePurchaseReturn() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<PurchaseReturn>, Error, { id: number; data: FinalizeReturnInput }>({
+        mutationFn: ({ id, data }) =>
+            apiPost<ApiResponse<PurchaseReturn>, FinalizeReturnInput>(
+                ENDPOINTS.PURCHASE.RETURN.FINALIZE(id),
+                data,
+            ),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.returns(),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.products.all,
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.cashAccounts.all,
             });
             queryClient.invalidateQueries({
                 queryKey: queryKeys.purchase.receivings(),

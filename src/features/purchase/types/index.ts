@@ -90,3 +90,34 @@ export interface ReceivingPayment {
     receiving?: Receiving | null;
     cash_account?: CashAccount | null;
 }
+
+export interface PurchaseReturnItem {
+    id: number;
+    purchase_return_id: number;
+    product_id: number;
+    kuantitas: number;
+    harga_beli: number;
+    created_at: string;
+    product?: Product;
+}
+
+export interface PurchaseReturn {
+    id: number;
+    nomor_retur: string;
+    supplier_id: number;
+    supplier?: Supplier | null;
+    stock_receiving_id: number | null;
+    stock_receiving?: Receiving | null;
+    tanggal_retur: string;
+    total_nominal: number;
+    catatan: string | null;
+    status: "draft" | "completed";
+    user_id: number;
+    user?: {
+        id: number;
+        name: string;
+        username?: string;
+    } | null;
+    created_at: string;
+    items?: PurchaseReturnItem[];
+}
