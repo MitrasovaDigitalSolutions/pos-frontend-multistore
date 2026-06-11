@@ -34,7 +34,7 @@ export function PaymentCreatePage() {
     const updatePayment = useUpdatePayment();
     const { data: cashAccounts = [], isLoading: cashAccountsLoading } = useCashAccounts();
     const { data: outstandingReceivings = [], isLoading: receivingsLoading } = useOutstandingReceivings();
-    
+
     // Fetch payment detail if in edit mode
     const { data: editingPayment, isLoading: editingPaymentLoading } = usePaymentDetail(editId);
 
@@ -44,7 +44,7 @@ export function PaymentCreatePage() {
             receiving_id: 0,
             jumlah_bayar: 0,
             tanggal_bayar: new Date().toISOString().split("T")[0],
-            cash_account_id: 0,
+            cash_account_id: 1,
             metode_pembayaran: "Cash",
             nomor_referensi: "",
             catatan: "",
@@ -143,7 +143,7 @@ export function PaymentCreatePage() {
             ...data,
             receiving_id: Number(data.receiving_id),
             jumlah_bayar: Number(data.jumlah_bayar),
-            cash_account_id: Number(data.cash_account_id),
+            cash_account_id: Number(data.cash_account_id) || 1,
         };
 
         if (isEdit && editId) {
@@ -431,18 +431,17 @@ export function PaymentCreatePage() {
                                         </div>
                                         <div className="flex justify-between items-center text-slate-500 pt-2 border-t border-slate-50">
                                             <span>Status Pembayaran:</span>
-                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                                summary.status_pembayaran === "paid"
-                                                    ? "bg-emerald-50 text-emerald-600 border border-emerald-100/30"
-                                                    : summary.status_pembayaran === "partially_paid"
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${summary.status_pembayaran === "paid"
+                                                ? "bg-emerald-50 text-emerald-600 border border-emerald-100/30"
+                                                : summary.status_pembayaran === "partially_paid"
                                                     ? "bg-amber-50 text-amber-600 border border-amber-100/30"
                                                     : "bg-slate-100 text-slate-600 border border-slate-200/30"
-                                            }`}>
+                                                }`}>
                                                 {summary.status_pembayaran === "paid"
                                                     ? "LUNAS"
                                                     : summary.status_pembayaran === "partially_paid"
-                                                    ? "SEBAGIAN"
-                                                    : "TEMPO"}
+                                                        ? "SEBAGIAN"
+                                                        : "TEMPO"}
                                             </span>
                                         </div>
                                     </div>
@@ -460,9 +459,8 @@ export function PaymentCreatePage() {
                                                     return (
                                                         <div
                                                             key={p.id}
-                                                            className={`py-2 text-[11px] flex justify-between items-center ${
-                                                                isCurrentEdit ? "bg-amber-50/50 px-2 rounded-lg" : ""
-                                                            }`}
+                                                            className={`py-2 text-[11px] flex justify-between items-center ${isCurrentEdit ? "bg-amber-50/50 px-2 rounded-lg" : ""
+                                                                }`}
                                                         >
                                                             <div className="space-y-0.5">
                                                                 <div className="font-semibold text-slate-700 flex items-center gap-1">
