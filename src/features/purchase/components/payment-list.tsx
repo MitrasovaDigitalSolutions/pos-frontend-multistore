@@ -10,12 +10,11 @@ import { ColumnDef } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import {
     useDeletePayment,
 } from "../api/purchase-api";
 import type { ReceivingPayment } from "../types";
-import { PaymentDetailDialog } from "./payment-detail-dialog";
-import { PaymentDialog } from "./payment-dialog";
 
 interface PaymentListProps {
     payments: ReceivingPayment[];
@@ -50,11 +49,8 @@ export function PaymentList({
     isFetching = false,
 }: PaymentListProps) {
     const { data: session } = useSession();
+    const router = useRouter();
     const deletePayment = useDeletePayment();
-
-    const [selectedPayment, setSelectedPayment] = useState<ReceivingPayment | null>(null);
-    const [isDetailOpen, setIsDetailOpen] = useState(false);
-    const [isEditOpen, setIsEditOpen] = useState(false);
 
     const [confirmDialog, setConfirmDialog] = useState<{
         open: boolean;
@@ -112,13 +108,11 @@ export function PaymentList({
     };
 
     const handleEditClick = (payment: ReceivingPayment) => {
-        setSelectedPayment(payment);
-        setIsEditOpen(true);
+        router.push(`/admin/purchase/payment/new?edit=${payment.id}`);
     };
 
     const handleDetailClick = (payment: ReceivingPayment) => {
-        setSelectedPayment(payment);
-        setIsDetailOpen(true);
+        router.push(`/admin/purchase/payment/${payment.id}`);
     };
 
     const columns = useMemo<ColumnDef<ReceivingPayment>[]>(
@@ -144,6 +138,24 @@ export function PaymentList({
                 ),
             },
             {
+                id: "nomor_penerimaan",
+                header: "No. Penerimaan",
+                cell: ({ row }) => (
+                    <span className="font-semibold text-slate-700 text-xs font-mono">
+                        {row.original.receiving?.nomor_penerimaan || "-"}
+                    </span>
+                ),
+            },
+            {
+                id: "supplier",
+                header: "Supplier",
+                cell: ({ row }) => (
+                    <span className="text-slate-600 text-xs font-medium">
+                        {row.original.receiving?.supplier_relationship?.nama || row.original.receiving?.supplier || "-"}
+                    </span>
+                ),
+            },
+            {
                 accessorKey: "metode_pembayaran",
                 header: "Metode",
                 cell: ({ row }) => (
@@ -156,7 +168,7 @@ export function PaymentList({
                 accessorKey: "total",
                 header: "Nominal",
                 cell: ({ row }) => (
-                    <span className="text-slate-950 text-xs font-extrabold font-mono">
+                    <span className="text-slate-955 text-xs font-extrabold font-mono">
                         {formatRupiah(row.original.total)}
                     </span>
                 ),
@@ -181,28 +193,6 @@ export function PaymentList({
         ],
         []
     );
-
-    // const filtersBar = (
-    //     <div className="flex flex-wrap gap-2 items-center">
-    //         {/* Date Range Inputs */}
-    //         <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-xl px-2 py-0.5">
-    //             <span className="text-[10px] font-bold text-slate-400">Dari:</span>
-    //             <Input
-    //                 type="date"
-    //                 value={filters.start_date}
-    //                 onChange={(e) => setFilters((prev) => ({ ...prev, start_date: e.target.value }))}
-    //                 className="h-7 w-28 text-[10px] border-none bg-transparent focus-visible:ring-0 p-0"
-    //             />
-    //             <span className="text-[10px] font-bold text-slate-400">S/D:</span>
-    //             <Input
-    //                 type="date"
-    //                 value={filters.end_date}
-    //                 onChange={(e) => setFilters((prev) => ({ ...prev, end_date: e.target.value }))}
-    //                 className="h-7 w-28 text-[10px] border-none bg-transparent focus-visible:ring-0 p-0"
-    //             />
-    //         </div>
-    //     </div>
-    // );
 
     return (
         <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-6">
@@ -242,21 +232,6 @@ export function PaymentList({
                 hideEdit={(p) => !(p.status === "completed" && hasManagePurchase)}
                 onDelete={handleDelete}
                 hideDelete={(p) => !(p.status === "completed" && hasManagePurchase)}
-            // filters={filtersBar}
-            />
-
-            {/* Edit Dialog */}
-            <PaymentDialog
-                open={isEditOpen}
-                onOpenChange={setIsEditOpen}
-                editingPayment={selectedPayment}
-            />
-
-            {/* Details & Logs Dialog */}
-            <PaymentDetailDialog
-                open={isDetailOpen}
-                onOpenChange={setIsDetailOpen}
-                paymentId={selectedPayment?.id || null}
             />
 
             {/* Confirm Dialog */}
@@ -274,3 +249,4 @@ export function PaymentList({
         </section>
     );
 }
+

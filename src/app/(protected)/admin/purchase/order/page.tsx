@@ -1,5 +1,6 @@
-import { PurchaseOrder } from "@/features/purchase/components/purchase-order";
+import { POListPage } from "@/features/purchase/components/po-list-page";
 
 export default function AdminPurchaseOrderPage() {
-    return <PurchaseOrder />;
+    return <POListPage />;
 }
+

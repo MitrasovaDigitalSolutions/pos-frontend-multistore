@@ -15,11 +15,11 @@ export function AdminHeader() {
 
   const getTitle = () => {
     // Search NAVIGATION_CONFIG for matching route
+    // First pass: try exact match
     for (const section of NAVIGATION_CONFIG) {
       for (const item of section.items) {
         if (item.type === "link") {
           if (item.path === pathname) {
-            // If the item specifies a tab, it must match currentTab
             if (item.tab && item.tab !== currentTab) {
               continue;
             }
@@ -28,6 +28,23 @@ export function AdminHeader() {
         } else if (item.type === "submenu") {
           for (const subItem of item.items) {
             if (subItem.path === pathname) {
+              return subItem.label;
+            }
+          }
+        }
+      }
+    }
+
+    // Second pass: try prefix match for nested routes (e.g. /admin/purchase/order/4/items)
+    for (const section of NAVIGATION_CONFIG) {
+      for (const item of section.items) {
+        if (item.type === "link" && item.path !== "/admin" && item.path !== "/checkout") {
+          if (pathname.startsWith(item.path + "/")) {
+            return item.label;
+          }
+        } else if (item.type === "submenu") {
+          for (const subItem of item.items) {
+            if (pathname.startsWith(subItem.path + "/")) {
               return subItem.label;
             }
           }

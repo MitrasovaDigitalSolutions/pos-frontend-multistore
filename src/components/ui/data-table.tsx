@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/incompatible-library */
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
     Pagination,
     PaginationContent,
@@ -177,56 +178,72 @@ export function DataTable<TData, TValue>({
                 return (
                     <div className="flex justify-center gap-1.5 items-center">
                         {onView && !isViewHidden && (
-                            <button
-                                onClick={() => onView(item)}
-                                disabled={isViewDisabled}
-                                className={cn(
-                                    "p-1 text-slate-600 hover:bg-slate-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer",
-                                    isViewDisabled && "opacity-40 cursor-not-allowed hover:bg-transparent"
-                                )}
-                                title="Lihat Detail"
-                            >
-                                <IconEye size={16} />
-                            </button>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button
+                                        onClick={() => onView(item)}
+                                        disabled={isViewDisabled}
+                                        className={cn(
+                                            "p-1 text-slate-600 hover:bg-slate-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer",
+                                            isViewDisabled && "opacity-40 cursor-not-allowed hover:bg-transparent"
+                                        )}
+                                    >
+                                        <IconEye size={16} />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent>Lihat Detail</TooltipContent>
+                            </Tooltip>
                         )}
                         {onEdit && !isEditHidden && (
-                            <button
-                                onClick={() => onEdit(item)}
-                                disabled={isEditDisabled}
-                                className={cn(
-                                    "p-1 text-amber-600 hover:bg-amber-50 rounded transition-colors border-none bg-transparent cursor-pointer",
-                                    isEditDisabled && "opacity-40 cursor-not-allowed hover:bg-transparent"
-                                )}
-                                title="Ubah"
-                            >
-                                <IconEdit size={16} />
-                            </button>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button
+                                        onClick={() => onEdit(item)}
+                                        disabled={isEditDisabled}
+                                        className={cn(
+                                            "p-1 text-amber-600 hover:bg-amber-50 rounded transition-colors border-none bg-transparent cursor-pointer",
+                                            isEditDisabled && "opacity-40 cursor-not-allowed hover:bg-transparent"
+                                        )}
+                                    >
+                                        <IconEdit size={16} />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent>Ubah</TooltipContent>
+                            </Tooltip>
                         )}
                         {onCheck && !isCheckHidden && (
-                            <button
-                                onClick={() => onCheck(item)}
-                                disabled={isCheckDisabled}
-                                className={cn(
-                                    "p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors border-none bg-transparent cursor-pointer",
-                                    isCheckDisabled && "opacity-40 cursor-not-allowed hover:bg-transparent"
-                                )}
-                                title="Finalisasi"
-                            >
-                                <IconCheck size={16} />
-                            </button>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button
+                                        onClick={() => onCheck(item)}
+                                        disabled={isCheckDisabled}
+                                        className={cn(
+                                            "p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors border-none bg-transparent cursor-pointer",
+                                            isCheckDisabled && "opacity-40 cursor-not-allowed hover:bg-transparent"
+                                        )}
+                                    >
+                                        <IconCheck size={16} />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent>Finalisasi</TooltipContent>
+                            </Tooltip>
                         )}
                         {onDelete && !isDeleteHidden && (
-                            <button
-                                onClick={() => onDelete(item)}
-                                disabled={isDeleteDisabled}
-                                className={cn(
-                                    "p-1 text-rose-500 hover:bg-rose-50 rounded transition-colors border-none bg-transparent cursor-pointer",
-                                    isDeleteDisabled && "opacity-40 cursor-not-allowed hover:bg-transparent"
-                                )}
-                                title="Hapus"
-                            >
-                                <IconTrash size={16} />
-                            </button>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button
+                                        onClick={() => onDelete(item)}
+                                        disabled={isDeleteDisabled}
+                                        className={cn(
+                                            "p-1 text-rose-500 hover:bg-rose-50 rounded transition-colors border-none bg-transparent cursor-pointer",
+                                            isDeleteDisabled && "opacity-40 cursor-not-allowed hover:bg-transparent"
+                                        )}
+                                    >
+                                        <IconTrash size={16} />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent>Hapus</TooltipContent>
+                            </Tooltip>
                         )}
                         {extraActions?.(item)}
                     </div>
@@ -359,21 +376,21 @@ export function DataTable<TData, TValue>({
 
             {/* Internal Search and Filter controls bar */}
             {hasTopBar && (
-                <div className="flex flex-col sm:flex-row gap-3 items-center justify-between p-4 border-b border-slate-100 bg-slate-50/20">
+                <div className="flex flex-col gap-4 items-stretch justify-between p-4 border-b border-slate-100 bg-slate-50/10">
                     {onSearchChange !== undefined && (
-                        <div className="relative w-full sm:max-w-sm">
+                        <div className="relative w-full md:max-w-xs">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
                             <Input
                                 type="text"
                                 placeholder={searchPlaceholder}
-                                className="pl-9 h-9 text-[11px] border-slate-200 focus-visible:ring-emerald-600 rounded-xl bg-white w-full"
+                                className="pl-9 h-9 text-xs border-slate-200 focus-visible:ring-emerald-600/30 focus-visible:border-emerald-600 rounded-xl bg-white w-full shadow-sm"
                                 value={search || ""}
                                 onChange={(e) => onSearchChange(e.target.value)}
                             />
                         </div>
                     )}
                     {filters && (
-                        <div className="flex gap-2 items-center w-full sm:w-auto justify-end">
+                        <div className="flex flex-wrap gap-2.5 items-center w-full md:w-auto justify-start md:justify-end">
                             {filters}
                         </div>
                     )}
