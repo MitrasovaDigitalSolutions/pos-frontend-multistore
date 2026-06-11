@@ -57,7 +57,13 @@ export function AdminSidebar() {
         if (path === ROUTES.ADMIN_STOCK) {
             return pathname === path && currentTab !== "receiving";
         }
-        return pathname === path;
+        // Exact match for root admin & checkout to prevent false positives
+        if (path === "/admin" || path === "/checkout") {
+            return pathname === path;
+        }
+        // For all other routes, use prefix matching so nested routes
+        // (e.g. /admin/purchase/order/4/items) highlight the parent menu item
+        return pathname === path || pathname.startsWith(path + "/");
     };
 
     // Helper to get active routes from config mapping

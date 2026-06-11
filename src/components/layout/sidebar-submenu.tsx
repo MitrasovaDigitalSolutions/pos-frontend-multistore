@@ -48,15 +48,13 @@ export function SidebarSubmenu({
     );
 
     const [isMasterOpen, setIsMasterOpen] = useState(() => {
-        const itemPaths = filteredItems.map((i) => i.path);
-        return itemPaths.includes(pathname);
+        return filteredItems.some((i) => pathname === i.path || pathname.startsWith(i.path + "/"));
     });
     const [prevPathname, setPrevPathname] = useState(pathname);
 
     if (pathname !== prevPathname) {
         setPrevPathname(pathname);
-        const itemPaths = filteredItems.map((i) => i.path);
-        if (itemPaths.includes(pathname)) {
+        if (filteredItems.some((i) => pathname === i.path || pathname.startsWith(i.path + "/"))) {
             setIsMasterOpen(true);
         }
     }

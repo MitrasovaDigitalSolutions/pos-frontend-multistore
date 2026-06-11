@@ -20,7 +20,10 @@ export interface Receiving {
     nomor_faktur: string | null;
     nilai_faktur: number | null;
     status: "draft" | "completed";
-    status_pembayaran: "pending" | "paid";
+    status_pembayaran: "pending" | "partially_paid" | "paid";
+    purchase_order_id?: number | null;
+    total_dibayar?: number;
+    sisa_hutang?: number;
     catatan: string | null;
     created_at: string;
     items?: ReceivingItem[];
@@ -31,6 +34,7 @@ export interface PurchaseOrderItem {
     product_id: number;
     kuantitas: number;
     kuantitas_diterima: number;
+    sisa_belum_diterima: number;
     harga_estimasi: number;
     created_at: string;
     product?: Product;
@@ -43,8 +47,10 @@ export interface PurchaseOrder {
     supplier_name: string | null;
     supplier?: Supplier | null;
     tanggal_po: string;
-    status: "draft" | "ordered" | "received" | "cancelled";
+    status: "draft" | "ordered" | "partially_received" | "received" | "closed" | "cancelled";
     nilai_estimasi: number;
+    total_diterima: number;
+    receivings_count: number;
     catatan: string | null;
     user_id: number;
     user?: {
@@ -54,6 +60,17 @@ export interface PurchaseOrder {
     } | null;
     created_at: string;
     items?: PurchaseOrderItem[];
+}
+
+// ─── Local Item (Zustand Persist — sebelum bulk submit ke server) ────────────
+
+export interface PurchaseItemLocal {
+    temp_id: string;
+    product_id: number;
+    barcode: string | null;
+    nama: string;
+    kuantitas: number;
+    harga_estimasi: number;
 }
 
 export interface CashAccount {
@@ -77,6 +94,8 @@ export interface ReceivingPayment {
     total: number;
     status: "completed" | "void";
     metode_pembayaran: string;
+    nomor_referensi?: string | null;
+    catatan?: string | null;
     catatan_void?: string | null;
     void_by?: number | null;
     voided_at?: string | null;
@@ -89,6 +108,21 @@ export interface ReceivingPayment {
     } | null;
     receiving?: Receiving | null;
     cash_account?: CashAccount | null;
+}
+
+export interface PaymentSummary {
+    receiving_id: number;
+    nomor_penerimaan: string;
+    total_faktur: number;
+    total_dibayar: number;
+    sisa_hutang: number;
+    status_pembayaran: "pending" | "partially_paid" | "paid";
+    payments: {
+        id: number;
+        jumlah: number;
+        metode: string;
+        tanggal: string;
+    }[];
 }
 
 export interface PurchaseReturnItem {

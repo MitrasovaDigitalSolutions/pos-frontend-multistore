@@ -1,14 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiGetData, apiGetList, apiPost, apiPut, apiPatch, apiDelete } from "@/shared/api/api-client";
+import { apiGetData, apiGetList, apiPost, apiPut, apiPatch, apiDelete, apiGet } from "@/shared/api/api-client";
 import { apiClient } from "@/shared/api/axios";
 import { queryKeys } from "@/lib/query-keys";
 import { ENDPOINTS } from "@/shared/api/endpoints";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
-import type { Receiving, PurchaseOrder, ReceivingPayment, CashAccount, PurchaseReturn } from "../types";
-import type { ReceivingInput } from "../schemas/receiving-schema";
-import type { PurchaseOrderInput } from "../schemas/order-schema";
+import type { Receiving, PurchaseOrder, ReceivingPayment, CashAccount, PurchaseReturn, PaymentSummary } from "../types";
+import type { ReceivingInput, ReceivingHeaderInput, ReceivingBulkItemsInput } from "../schemas/receiving-schema";
+import type { PurchaseOrderHeaderInput, PurchaseOrderBulkItemsInput } from "../schemas/order-schema";
 import type { PaymentInput } from "../schemas/payment-schema";
 import type { PurchaseReturnInput } from "../schemas/return-schema";
+import type { Product } from "@/features/products/types";
 
 // ─── Stock Receiving Hooks ────────────────────────────────────────────────────
 
@@ -43,6 +44,82 @@ export function useCreateReceiving() {
         },
     });
 }
+
+export function useCreateReceivingHeader() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<Receiving>, Error, ReceivingHeaderInput>({
+        mutationFn: (data) =>
+            apiPost<ApiResponse<Receiving>, ReceivingHeaderInput>(
+                ENDPOINTS.PURCHASE.RECEIVING.CREATE,
+                data,
+            ),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.receivings(),
+            });
+        },
+    });
+}
+
+export function useBulkReplaceReceivingItems() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<Receiving>, Error, { id: number; data: ReceivingBulkItemsInput }>({
+        mutationFn: ({ id, data }) =>
+            apiPut<ApiResponse<Receiving>, ReceivingBulkItemsInput>(
+                ENDPOINTS.PURCHASE.RECEIVING.ITEMS_REPLACE(id),
+                data,
+            ),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.receivings(),
+            });
+            queryClient.invalidateQueries({
+                queryKey: [...queryKeys.purchase.receivings(), "detail", variables.id],
+            });
+        },
+    });
+}
+
+export function useCompleteReceiving() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<Receiving>, Error, number>({
+        mutationFn: (id) =>
+            apiPost<ApiResponse<Receiving>, void>(
+                ENDPOINTS.PURCHASE.RECEIVING.COMPLETE(id),
+            ),
+        onSuccess: (_, id) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.receivings(),
+            });
+            queryClient.invalidateQueries({
+                queryKey: [...queryKeys.purchase.receivings(), "detail", id],
+            });
+            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.purchase.orders() });
+        },
+    });
+}
+
+export interface ReceivingScanResponse {
+    product: Product & { harga_beli_terakhir: number; harga_jual: number };
+    po_item?: {
+        kuantitas_dipesan: number;
+        kuantitas_sudah_diterima: number;
+        sisa: number;
+        harga_estimasi: number;
+    } | null;
+}
+
+export function useScanReceivingProduct() {
+    return useMutation<ApiResponse<ReceivingScanResponse>, Error, { receiving_id: number; barcode: string }>({
+        mutationFn: (data) =>
+            apiPost<ApiResponse<ReceivingScanResponse>, { receiving_id: number; barcode: string }>(
+                ENDPOINTS.PURCHASE.RECEIVING.SCAN,
+                data,
+            ),
+    });
+}
+
 
 export function useUpdateReceiving() {
     const queryClient = useQueryClient();
@@ -135,11 +212,86 @@ export function usePurchaseOrderDetail(id: number | null) {
     });
 }
 
+// Step 1: Create PO Header only (tanpa items)
+export function useCreatePurchaseOrderHeader() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<PurchaseOrder>, Error, PurchaseOrderHeaderInput>({
+        mutationFn: (data) =>
+            apiPost<ApiResponse<PurchaseOrder>, PurchaseOrderHeaderInput>(
+                ENDPOINTS.PURCHASE.ORDER.CREATE,
+                data,
+            ),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.orders(),
+            });
+        },
+    });
+}
+
+// Step 3: Bulk submit items to PO
+export function useBulkSubmitPurchaseOrderItems() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<PurchaseOrder>, Error, { id: number; data: PurchaseOrderBulkItemsInput }>({
+        mutationFn: ({ id, data }) =>
+            apiPost<ApiResponse<PurchaseOrder>, PurchaseOrderBulkItemsInput>(
+                ENDPOINTS.PURCHASE.ORDER.ITEMS_BULK(id),
+                data,
+            ),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.orders(),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.orderDetail(variables.id),
+            });
+        },
+    });
+}
+
+// Replace all items in PO (for editing existing items)
+export function useBulkReplacePurchaseOrderItems() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<PurchaseOrder>, Error, { id: number; data: PurchaseOrderBulkItemsInput }>({
+        mutationFn: ({ id, data }) =>
+            apiPut<ApiResponse<PurchaseOrder>, PurchaseOrderBulkItemsInput>(
+                ENDPOINTS.PURCHASE.ORDER.ITEMS_REPLACE(id),
+                data,
+            ),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.orders(),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.orderDetail(variables.id),
+            });
+        },
+    });
+}
+
+// Outstanding POs (ordered, belum selesai diterima)
+export function useOutstandingPurchaseOrders(params?: PaginationParams) {
+    return useQuery<PaginatedResponse<PurchaseOrder>>({
+        queryKey: [...queryKeys.purchase.outstanding(), params],
+        queryFn: () => apiGetList<PurchaseOrder>(ENDPOINTS.PURCHASE.ORDER.OUTSTANDING, params),
+    });
+}
+
+// Receivings linked to a specific PO
+export function usePurchaseOrderReceivings(poId: number | null, params?: PaginationParams) {
+    return useQuery<PaginatedResponse<Receiving>>({
+        queryKey: [...queryKeys.purchase.orderReceivings(poId || 0), params],
+        queryFn: () => apiGetList<Receiving>(ENDPOINTS.PURCHASE.ORDER.RECEIVINGS(poId || 0), params),
+        enabled: poId !== null && poId > 0,
+    });
+}
+
+// Legacy: Create PO with items (backward compat — kept but not used by new flow)
 export function useCreatePurchaseOrder() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<PurchaseOrder>, Error, PurchaseOrderInput>({
+    return useMutation<ApiResponse<PurchaseOrder>, Error, PurchaseOrderHeaderInput>({
         mutationFn: (data) =>
-            apiPost<ApiResponse<PurchaseOrder>, PurchaseOrderInput>(
+            apiPost<ApiResponse<PurchaseOrder>, PurchaseOrderHeaderInput>(
                 ENDPOINTS.PURCHASE.ORDER.CREATE,
                 data,
             ),
@@ -153,9 +305,9 @@ export function useCreatePurchaseOrder() {
 
 export function useUpdatePurchaseOrder() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<PurchaseOrder>, Error, { id: number; data: PurchaseOrderInput }>({
+    return useMutation<ApiResponse<PurchaseOrder>, Error, { id: number; data: PurchaseOrderHeaderInput }>({
         mutationFn: ({ id, data }) =>
-            apiPut<ApiResponse<PurchaseOrder>, PurchaseOrderInput>(
+            apiPut<ApiResponse<PurchaseOrder>, PurchaseOrderHeaderInput>(
                 ENDPOINTS.PURCHASE.ORDER.UPDATE(id),
                 data,
             ),
@@ -209,6 +361,15 @@ export function useCancelPurchaseOrder() {
     });
 }
 
+// ─── Barcode Lookup ─────────────────────────────────────────────────────────
+
+export async function lookupProductByBarcode(barcode: string): Promise<Product> {
+    const res = await apiGet<ApiResponse<Product>>(
+        ENDPOINTS.PRODUCTS.BARCODE(barcode),
+    );
+    return res.data;
+}
+
 // ─── Cash Accounts Hook ────────────────────────────────────────────────────────
 
 export function useCashAccounts() {
@@ -223,7 +384,7 @@ export function useCashAccounts() {
 
 // ─── Supplier Payment Hooks ───────────────────────────────────────────────────
 
-export function usePayments(params?: PaginationParams & { stock_receiving_id?: number; start_date?: string; end_date?: string }) {
+export function usePayments(params?: PaginationParams & { stock_receiving_id?: number; receiving_id?: number; start_date?: string; end_date?: string }) {
     return useQuery<PaginatedResponse<ReceivingPayment>>({
         queryKey: [...queryKeys.purchase.payments(), params],
         queryFn: () => apiGetList<ReceivingPayment>(ENDPOINTS.PURCHASE.PAYMENT.LIST, params),
@@ -235,6 +396,83 @@ export function usePaymentDetail(id: number | null) {
         queryKey: [...queryKeys.purchase.payments(), "detail", id || 0],
         queryFn: () => apiGetData<ReceivingPayment>(ENDPOINTS.PURCHASE.PAYMENT.DETAIL(id || 0)),
         enabled: id !== null && id > 0,
+    });
+}
+
+export function usePaymentSummary(receivingId: number | null) {
+    return useQuery<PaymentSummary>({
+        queryKey: [...queryKeys.purchase.payments(), "summary", receivingId || 0],
+        queryFn: async () => {
+            if (!receivingId) throw new Error("Receiving ID is required");
+            try {
+                // Try fetching from the summary endpoint first
+                const res = await apiGetData<PaymentSummary>(
+                    ENDPOINTS.PURCHASE.PAYMENT.SUMMARY(receivingId)
+                );
+                return res;
+            } catch (err) {
+                console.warn("Summary endpoint failed or not found, falling back to client-side aggregation:", err);
+                
+                // Fallback: fetch receiving detail and all payments
+                const queryParams: PaginationParams & { stock_receiving_id: number } = {
+                    per_page: 100,
+                    stock_receiving_id: receivingId,
+                };
+                const [receiving, paymentsResponse] = await Promise.all([
+                    apiGetData<Receiving>(ENDPOINTS.PURCHASE.RECEIVING.DETAIL(receivingId)),
+                    apiGetList<ReceivingPayment>(ENDPOINTS.PURCHASE.PAYMENT.LIST, queryParams),
+                ]);
+
+                // Filter payments belonging to this receiving and which are completed (not voided)
+                const completedPayments = (paymentsResponse.data || []).filter(
+                    (p) => (p.referensi_id === receivingId || p.receiving?.id === receivingId) && p.status === "completed"
+                );
+
+                const totalFaktur = receiving.nilai_faktur || 0;
+                const totalDibayar = completedPayments.reduce((sum, p) => sum + p.total, 0);
+                const sisaHutang = Math.max(0, totalFaktur - totalDibayar);
+                
+                let statusPembayaran: "pending" | "partially_paid" | "paid" = "pending";
+                if (totalDibayar >= totalFaktur && totalFaktur > 0) {
+                    statusPembayaran = "paid";
+                } else if (totalDibayar > 0) {
+                    statusPembayaran = "partially_paid";
+                }
+
+                return {
+                    receiving_id: receivingId,
+                    nomor_penerimaan: receiving.nomor_penerimaan,
+                    total_faktur: totalFaktur,
+                    total_dibayar: totalDibayar,
+                    sisa_hutang: sisaHutang,
+                    status_pembayaran: statusPembayaran,
+                    payments: completedPayments.map((p) => ({
+                        id: p.id,
+                        jumlah: p.total,
+                        metode: p.metode_pembayaran,
+                        tanggal: p.created_at,
+                    })),
+                };
+            }
+        },
+        enabled: receivingId !== null && receivingId > 0,
+    });
+}
+
+export function useOutstandingReceivings() {
+    return useQuery<Receiving[]>({
+        queryKey: [...queryKeys.purchase.receivings(), "outstanding"],
+        queryFn: async () => {
+            const queryParams: PaginationParams & { status: string } = {
+                status: "completed",
+                per_page: 100,
+            };
+            const res = await apiGetList<Receiving>(ENDPOINTS.PURCHASE.RECEIVING.LIST, queryParams);
+            // Fallback filtering in case backend doesn't filter status_pembayaran
+            return (res.data || []).filter(
+                (r) => r.status_pembayaran === "pending" || r.status_pembayaran === "partially_paid"
+            );
+        },
     });
 }
 

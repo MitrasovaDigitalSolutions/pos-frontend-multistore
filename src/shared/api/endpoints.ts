@@ -73,6 +73,9 @@ export const ENDPOINTS = {
             DELETE: (id: number) => `/v1/purchase/receiving/${id}`,
             PAYMENT_STATUS: (id: number) => `/v1/purchase/receiving/${id}/payment-status`,
             COMPARE_PRICES: "/v1/purchase/receiving/compare-prices",
+            ITEMS_REPLACE: (id: number) => `/v1/purchase/receiving/${id}/items`,
+            COMPLETE: (id: number) => `/v1/purchase/receiving/${id}/complete`,
+            SCAN: "/v1/purchase/receiving/scan",
         },
         ORDER: {
             LIST: "/v1/purchase/order",
@@ -82,6 +85,10 @@ export const ENDPOINTS = {
             DELETE: (id: number) => `/v1/purchase/order/${id}`,
             FINALIZE: (id: number) => `/v1/purchase/order/${id}/finalize`,
             CANCEL: (id: number) => `/v1/purchase/order/${id}/cancel`,
+            ITEMS_BULK: (id: number) => `/v1/purchase/order/${id}/items`,
+            ITEMS_REPLACE: (id: number) => `/v1/purchase/order/${id}/items`,
+            OUTSTANDING: "/v1/purchase/order/outstanding",
+            RECEIVINGS: (id: number) => `/v1/purchase/order/${id}/receivings`,
         },
         PAYMENT: {
             LIST: "/v1/purchase/payment",
@@ -89,6 +96,8 @@ export const ENDPOINTS = {
             DETAIL: (id: number) => `/v1/purchase/payment/${id}`,
             UPDATE: (id: number) => `/v1/purchase/payment/${id}`,
             DELETE: (id: number) => `/v1/purchase/payment/${id}`,
+            SUMMARY: (receivingId: number) => `/v1/purchase/payment/summary?receiving_id=${receivingId}`,
+            OUTSTANDING_RECEIVINGS: "/v1/purchase/receiving?status=completed&status_pembayaran=pending,partially_paid",
         },
         RETURN: {
             LIST: "/v1/purchase/return",

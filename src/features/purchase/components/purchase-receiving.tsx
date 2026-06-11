@@ -3,14 +3,15 @@
 import { PageLoader } from "@/components/feedback/page-loader";
 import { useProducts } from "@/features/products/api/products-api";
 import { useReceivings } from "@/features/purchase/api/purchase-api";
-import { ReceivingDialog } from "@/features/purchase/components/receiving-dialog";
 import { ReceivingList } from "@/features/purchase/components/receiving-list";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { hasRole, hasPermission } from "@/constants/roles";
+import { useRouter } from "next/navigation";
 
 export function PurchaseReceiving() {
     const { data: session } = useSession();
+    const router = useRouter();
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
 
@@ -20,7 +21,6 @@ export function PurchaseReceiving() {
         hasPermission(userRoles, userPermissions, "manage_purchase");
 
     const [receivingsPage, setReceivingsPage] = useState(1);
-    const [isReceivingModalOpen, setIsReceivingModalOpen] = useState(false);
 
     // Load all products for select dropdowns inside modals
     const { data: productsData, isLoading: productsLoading } = useProducts({
@@ -57,15 +57,9 @@ export function PurchaseReceiving() {
                 meta={receivingsData?.meta}
                 page={receivingsPage}
                 onPageChange={setReceivingsPage}
-                onAddClick={() => setIsReceivingModalOpen(true)}
+                onAddClick={() => router.push("/admin/purchase/receiving/new")}
                 isLoading={receivingsLoading}
                 isFetching={receivingsFetching}
-            />
-
-            <ReceivingDialog
-                open={isReceivingModalOpen}
-                onOpenChange={setIsReceivingModalOpen}
-                products={products || []}
             />
         </div>
     );

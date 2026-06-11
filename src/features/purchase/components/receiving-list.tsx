@@ -1,24 +1,23 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useSession } from "next-auth/react";
-import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { IconPlus } from "@tabler/icons-react";
-import type { Receiving } from "../types";
-import type { Product } from "@/features/products/types";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
+import { hasPermission, hasRole } from "@/constants/roles";
+import type { Product } from "@/features/products/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { hasRole, hasPermission } from "@/constants/roles";
+import { IconPlus } from "@tabler/icons-react";
+import { ColumnDef } from "@tanstack/react-table";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
     useDeleteReceiving,
     useUpdateReceiving,
-    useUpdateReceivingPaymentStatus,
 } from "../api/purchase-api";
-import { ReceivingDialog } from "./receiving-dialog";
+import type { Receiving } from "../types";
 import { ReceivingDetailDialog } from "./receiving-detail-dialog";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface ReceivingListProps {
     receivings: Receiving[];
@@ -38,7 +37,6 @@ interface ReceivingListProps {
 
 export function ReceivingList({
     receivings,
-    products,
     meta,
     page,
     onPageChange,
@@ -46,14 +44,13 @@ export function ReceivingList({
     isLoading = false,
     isFetching = false,
 }: ReceivingListProps) {
+    const router = useRouter();
     const { data: session } = useSession();
     const deleteReceiving = useDeleteReceiving();
     const updateReceiving = useUpdateReceiving();
-    const updatePaymentStatus = useUpdateReceivingPaymentStatus();
 
     const [selectedReceiving, setSelectedReceiving] = useState<Receiving | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
-    const [isEditOpen, setIsEditOpen] = useState(false);
 
     const [confirmDialog, setConfirmDialog] = useState<{
         open: boolean;
@@ -69,7 +66,7 @@ export function ReceivingList({
         description: "",
         confirmText: "",
         variant: "warning",
-        onConfirm: () => {},
+        onConfirm: () => { },
     });
 
     const userRoles = session?.user?.roles || [];
@@ -78,21 +75,6 @@ export function ReceivingList({
         hasRole(userRoles, "admin") ||
         hasPermission(userRoles, userPermissions, "manage_purchase");
     const canDeleteDraft = hasManagePurchase;
-
-    const handleTogglePaymentStatus = (id: number, currentStatus: "pending" | "paid") => {
-        const nextStatus = currentStatus === "paid" ? "pending" : "paid";
-        updatePaymentStatus.mutate(
-            { id, status_pembayaran: nextStatus },
-            {
-                onSuccess: () => {
-                    toast.success("Status pembayaran faktur berhasil diperbarui.");
-                },
-                onError: (err) => {
-                    toast.error(err.message || "Gagal mengubah status pembayaran.");
-                },
-            },
-        );
-    };
 
     const handleFinalize = (receiving: Receiving) => {
         setConfirmDialog({
@@ -162,8 +144,7 @@ export function ReceivingList({
     };
 
     const handleEditClick = (receiving: Receiving) => {
-        setSelectedReceiving(receiving);
-        setIsEditOpen(true);
+        router.push(`/admin/purchase/receiving/${receiving.id}/items`);
     };
 
     const handleDetailClick = (receiving: Receiving) => {
@@ -231,30 +212,21 @@ export function ReceivingList({
                 header: "Pembayaran",
                 cell: ({ row }) => {
                     const status = row.original.status_pembayaran;
-                    if (!hasManagePurchase) {
-                        return (
-                            <span
-                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${status === "paid"
-                                        ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                                        : "bg-rose-50 text-rose-700 border-rose-100"
-                                    }`}
-                            >
-                                {status === "paid" ? "Lunas" : "Pending"}
-                            </span>
-                        );
-                    }
                     return (
-                        <button
-                            onClick={() =>
-                                handleTogglePaymentStatus(row.original.id, status)
-                            }
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold border cursor-pointer transition-colors ${status === "paid"
-                                    ? "bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100"
-                                    : "bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-100"
+                        <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${status === "paid"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                                : status === "partially_paid"
+                                    ? "bg-amber-50 text-amber-700 border-amber-100"
+                                    : "bg-rose-50 text-rose-700 border-rose-100"
                                 }`}
                         >
-                            {status === "paid" ? "Lunas" : "Pending"}
-                        </button>
+                            {status === "paid"
+                                ? "Lunas"
+                                : status === "partially_paid"
+                                    ? "Sebagian"
+                                    : "Pending"}
+                        </span>
                     );
                 },
             },
@@ -266,8 +238,8 @@ export function ReceivingList({
                     return (
                         <span
                             className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${status === "completed"
-                                    ? "bg-blue-50 text-blue-700"
-                                    : "bg-amber-50 text-amber-700"
+                                ? "bg-blue-50 text-blue-700"
+                                : "bg-amber-50 text-amber-700"
                                 }`}
                         >
                             {status === "completed" ? "Selesai" : "Draft"}
@@ -276,7 +248,8 @@ export function ReceivingList({
                 },
             },
         ],
-        [canDeleteDraft, hasManagePurchase, handleTogglePaymentStatus]
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [canDeleteDraft, hasManagePurchase]
     );
 
     return (
@@ -321,13 +294,7 @@ export function ReceivingList({
                 hideDelete={(rec) => !(rec.status === "draft" && canDeleteDraft)}
             />
 
-            {/* Edit Draft Dialog */}
-            <ReceivingDialog
-                open={isEditOpen}
-                onOpenChange={setIsEditOpen}
-                products={products}
-                editingReceiving={selectedReceiving}
-            />
+
 
             {/* Details & Logs Dialog */}
             <ReceivingDetailDialog

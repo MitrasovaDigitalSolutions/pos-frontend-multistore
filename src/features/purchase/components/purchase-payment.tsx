@@ -1,14 +1,15 @@
 "use client";
 
 import { usePayments } from "@/features/purchase/api/purchase-api";
-import { PaymentDialog } from "@/features/purchase/components/payment-dialog";
 import { PaymentList } from "@/features/purchase/components/payment-list";
 import { useState, useDeferredValue } from "react";
 import { useSession } from "next-auth/react";
 import { hasRole, hasPermission } from "@/constants/roles";
+import { useRouter } from "next/navigation";
 
 export function PurchasePayment() {
     const { data: session } = useSession();
+    const router = useRouter();
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
 
@@ -18,7 +19,6 @@ export function PurchasePayment() {
         hasPermission(userRoles, userPermissions, "manage_purchase");
 
     const [paymentPage, setPaymentPage] = useState(1);
-    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
     // Filters state
     const [filters, setFilters] = useState({
@@ -64,17 +64,13 @@ export function PurchasePayment() {
                 meta={paymentsData?.meta}
                 page={paymentPage}
                 onPageChange={setPaymentPage}
-                onAddClick={() => setIsPaymentModalOpen(true)}
+                onAddClick={() => router.push("/admin/purchase/payment/new")}
                 isLoading={paymentsLoading}
                 isFetching={paymentsFetching}
                 filters={filters}
                 setFilters={setFilters}
             />
-
-            <PaymentDialog
-                open={isPaymentModalOpen}
-                onOpenChange={setIsPaymentModalOpen}
-            />
         </div>
     );
 }
+
