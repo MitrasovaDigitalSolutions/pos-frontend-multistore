@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { cn } from "@/lib/utils";
@@ -16,6 +15,7 @@ import {
     IconArrowUpRight,
     IconDoorExit,
     IconLoader2,
+    IconX,
 } from "@tabler/icons-react";
 
 interface SessionDetailsViewProps {
@@ -24,6 +24,7 @@ interface SessionDetailsViewProps {
     onAction: (view: "cash_in" | "cash_out" | "close_shift") => void;
     showHistory: boolean;
     setShowHistory: (show: boolean) => void;
+    onClose: () => void;
 }
 
 export function SessionDetailsView({
@@ -32,6 +33,7 @@ export function SessionDetailsView({
     onAction,
     showHistory,
     setShowHistory,
+    onClose,
 }: SessionDetailsViewProps) {
     const formattedTime = (dateStr?: string) => {
         if (!dateStr) return "-";
@@ -66,40 +68,48 @@ export function SessionDetailsView({
 
     return (
         <div className="space-y-4">
-            <DialogHeader className="pb-4 border-b border-slate-100">
-                <DialogTitle className="text-base font-extrabold text-slate-900 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center">
-                            <IconCash size={18} />
-                        </div>
-                        <div>
-                            <span className="block text-sm font-extrabold">Informasi Laci Kasir (Shift Aktif)</span>
-                            <span className="block text-[11px] font-medium text-slate-400 mt-0.5">
-                                Status: <span className="text-emerald-600 font-bold uppercase">Sesi Terbuka</span>
-                            </span>
-                        </div>
+            {/* ── Symmetric Header ── */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                {/* Left: icon + title */}
+                <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0">
+                        <IconCash size={16} />
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowHistory(!showHistory)}
-                            className={cn(
-                                "h-8 px-2.5 text-xs rounded-lg flex items-center gap-1.5 font-bold cursor-pointer transition-all border",
-                                showHistory
-                                    ? "bg-emerald-50 text-emerald-600 border-emerald-200"
-                                    : "text-emerald-600 hover:text-emerald-600 hover:bg-emerald-50 border-emerald-200 bg-white"
-                            )}
-                        >
-                            <IconHistory size={15} />
-                            <span>{showHistory ? "Sembunyikan Riwayat" : "Riwayat"}</span>
-                        </Button>
-                        <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-1 rounded-full">
-                            ID Sesi: #{activeSession.id}
+                    <div>
+                        <span className="block text-sm font-bold text-slate-900">Laci Kasir — Shift Aktif</span>
+                        <span className="block text-[10px] font-medium text-slate-400 mt-0.5">
+                            Sesi <span className="text-emerald-600 font-bold">#{activeSession.id}</span> &bull; Status:{" "}
+                            <span className="text-emerald-600 font-bold uppercase">Terbuka</span>
                         </span>
                     </div>
-                </DialogTitle>
-            </DialogHeader>
+                </div>
+
+                {/* Right: history toggle + close */}
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowHistory(!showHistory)}
+                        className={cn(
+                            "h-7 px-2.5 text-[10px] rounded-lg flex items-center gap-1.5 font-bold cursor-pointer transition-all border",
+                            showHistory
+                                ? "bg-emerald-50 text-emerald-600 border-emerald-200"
+                                : "text-emerald-600 hover:text-emerald-600 hover:bg-emerald-50 border-emerald-200 bg-white"
+                        )}
+                    >
+                        <IconHistory size={13} />
+                        <span>{showHistory ? "Sembunyikan" : "Riwayat"}</span>
+                    </Button>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer border-none bg-transparent shrink-0"
+                    >
+                        <IconX size={16} />
+                        <span className="sr-only">Tutup</span>
+                    </button>
+                </div>
+            </div>
  
             <div className={cn("grid gap-6 transition-all duration-300", showHistory ? "grid-cols-[1.3fr_1fr]" : "grid-cols-1")}>
                 {/* Left Column (Main details) */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
 import { IconCircleCheck, IconPrinter } from "@tabler/icons-react";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
@@ -23,20 +23,20 @@ export function ReceiptDialog({
     onNewTransaction,
 }: ReceiptDialogProps) {
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md bg-white rounded-2xl border-slate-100 p-6 flex flex-col max-h-[90vh] sm:max-h-[85vh]" showCloseButton={false}>
-                {/* Header Section (Fixed) */}
-                <div className="flex flex-col items-center shrink-0">
-                    <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-2 animate-bounce">
-                        <IconCircleCheck size={24} />
+        <BaseDialog
+            open={open}
+            onOpenChange={onOpenChange}
+            title={
+                <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center animate-bounce">
+                        <IconCircleCheck size={14} />
                     </div>
-                    <DialogTitle className="text-base font-extrabold text-slate-900">
-                        Pembayaran Sukses!
-                    </DialogTitle>
-                    <p className="text-[10px] text-slate-400 mt-0.5 text-center">
-                        Transaksi tercatat dan stok telah diperbarui.
-                    </p>
+                    <span>Pembayaran Sukses!</span>
                 </div>
+            }
+            className="max-w-md flex flex-col max-h-[90vh] sm:max-h-[85vh]"
+            showCloseButton={false}
+        >
 
                 {/* Scrollable Receipt Area (Middle) */}
                 <Scrollable className="flex-1 min-h-0 py-2 my-3 border-y border-slate-50">
@@ -149,8 +149,7 @@ export function ReceiptDialog({
                         <IconPrinter size={16} /> Print Ulang
                     </Button>
                 </div>
-            </DialogContent>
-        </Dialog>
+        </BaseDialog>
     );
 }
 

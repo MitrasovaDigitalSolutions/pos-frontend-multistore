@@ -77,8 +77,8 @@ export function ProductFormDialog({
         if (activeId === "harga_beli" || activeId === "harga") {
             const hBeli = Number(hargaBeli) || 0;
             const hJual = Number(harga) || 0;
-            if (hJual > 0) {
-                const calculatedMargin = ((hJual - hBeli) / hJual) * 100;
+            if (hBeli > 0) {
+                const calculatedMargin = ((hJual - hBeli) / hBeli) * 100;
                 setValue("margin", parseFloat(calculatedMargin.toFixed(2)));
             } else {
                 setValue("margin", 0);
@@ -92,12 +92,11 @@ export function ProductFormDialog({
         if (activeId === "margin") {
             const hBeli = Number(hargaBeli) || 0;
             const mrg = Number(margin) || 0;
-            if (mrg < 100) {
-                const calculatedHarga = hBeli / (1 - mrg / 100);
-                setValue("harga", Math.round(calculatedHarga));
-            }
+            const calculatedHarga = hBeli * (1 + mrg / 100);
+            setValue("harga", Math.round(calculatedHarga));
         }
     }, [margin, hargaBeli, setValue]);
+
 
     const onSubmit = (data: ProductInput) => {
         const formData = new FormData();

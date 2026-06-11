@@ -62,9 +62,7 @@ export function Checkout() {
         setIsInfoSesiOpen(true);
     };
 
-    const handleCloseShiftSuccess = async () => {
-        await state.update({ cashDrawerSessionId: null });
-        refetchCurrentDrawer();
+    const handleCloseShiftSuccess = () => {
         setHasAutoOpened(false);
     };
 
@@ -153,7 +151,11 @@ export function Checkout() {
                 open={isLogoutConfirmOpen}
                 onOpenChange={setIsLogoutConfirmOpen}
                 title="Keluar dari Akun"
-                description="Apakah Anda yakin ingin keluar dari aplikasi? Sesi Anda saat ini akan diakhiri."
+                description={
+                    activeDrawerSession
+                        ? "PERHATIAN: Shift laci kasir Anda masih aktif! Keluar hanya akan log out akun, shift laci kasir TIDAK akan ditutup."
+                        : "Apakah Anda yakin ingin keluar dari aplikasi?"
+                }
                 confirmText="Ya, Keluar"
                 cancelText="Batal"
                 variant="danger"
@@ -173,7 +175,12 @@ export function Checkout() {
                 open={state.isPayModalOpen}
                 onOpenChange={state.setIsPayModalOpen}
                 grandTotal={state.grandTotal}
-                transactionId={state.transactionId}
+                cartItems={state.cart.map((item) => ({
+                    product_id: item.product_id,
+                    quantity: item.qty,
+                }))}
+                discount={0}
+                tax={state.ppn}
                 onPaySuccess={state.handlePaymentSuccess}
             />
 
@@ -182,6 +189,7 @@ export function Checkout() {
                 onOpenChange={state.setIsHoldListOpen}
                 holdList={state.holdList}
                 onRecall={state.handleRecall}
+                onClearAll={state.handleClearHoldList}
                 isProcessing={state.isProcessing}
             />
 

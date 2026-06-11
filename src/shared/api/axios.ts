@@ -1,6 +1,6 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { ApiError, NetworkError } from "@/shared/errors/api-error";
-import { signOut } from "@/lib/auth";
+import { signOut } from "next-auth/react";
 
 // Guard to prevent multiple concurrent signOut calls when several
 // requests simultaneously receive a 401 response.
@@ -58,7 +58,7 @@ apiClient.interceptors.response.use(
                 !isSigningOut
             ) {
                 isSigningOut = true;
-                await signOut({ redirectTo: "/login" });
+                await signOut({ callbackUrl: "/login" });
                 // isSigningOut intentionally stays true until page reload.
             }
         }
