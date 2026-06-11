@@ -62,9 +62,7 @@ export function Checkout() {
         setIsInfoSesiOpen(true);
     };
 
-    const handleCloseShiftSuccess = async () => {
-        await state.update({ cashDrawerSessionId: null });
-        refetchCurrentDrawer();
+    const handleCloseShiftSuccess = () => {
         setHasAutoOpened(false);
     };
 
