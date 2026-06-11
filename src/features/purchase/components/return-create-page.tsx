@@ -1,6 +1,5 @@
 "use client";
 
-import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { FormSelect } from "@/components/forms/form-select";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { Button } from "@/components/ui/button";
@@ -12,14 +11,18 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
-import { useCreateReceivingHeader, useOutstandingPurchaseOrders } from "../api/purchase-api";
-import { receivingHeaderSchema, type ReceivingHeaderInput } from "../schemas/receiving-schema";
+import { useCreatePurchaseReturnHeader, useReceivings } from "../api/purchase-api";
+import { purchaseReturnHeaderSchema, type PurchaseReturnHeaderInput } from "../schemas/return-schema";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
 
-export function ReceivingCreatePage() {
+export function ReturnCreatePage() {
     const router = useRouter();
-    const createHeader = useCreateReceivingHeader();
+    const createHeader = useCreatePurchaseReturnHeader();
     const { data: suppliers = [], isLoading: suppliersLoading } = useAllSuppliers();
-    const { data: outstandingPosData, isLoading: posLoading } = useOutstandingPurchaseOrders({
+    
+    // Fetch completed receivings to return items from
+    const { data: receivingsData, isLoading: receivingsLoading } = useReceivings({
+        status: "completed",
         per_page: 100,
     });
 
@@ -28,23 +31,17 @@ export function ReceivingCreatePage() {
         label: s.nama,
     }));
 
-    const poOptions = [
-        { value: "", label: "-- Tanpa PO (Pembelian Langsung) --" },
-        ...(outstandingPosData?.data || []).map((po) => ({
-            value: String(po.id),
-            label: `${po.nomor_po} - ${po.supplier?.nama || po.supplier_name || "Tanpa Supplier"}`,
-        })),
-    ];
+    const receivingOptions = (receivingsData?.data || []).map((r) => ({
+        value: String(r.id),
+        label: `${r.nomor_penerimaan} - ${r.supplier_relationship?.nama || r.supplier || "Supplier"} (Faktur: ${r.nomor_faktur || "-"}, Total: ${formatRupiah(r.nilai_faktur || 0)})`,
+    }));
 
-    const methods = useForm<ReceivingHeaderInput>({
-        resolver: zodResolver(receivingHeaderSchema) as Resolver<ReceivingHeaderInput>,
+    const methods = useForm<PurchaseReturnHeaderInput>({
+        resolver: zodResolver(purchaseReturnHeaderSchema) as Resolver<PurchaseReturnHeaderInput>,
         defaultValues: {
-            purchase_order_id: null,
-            supplier_id: null,
-            nomor_faktur: "",
-            nilai_faktur: 0,
-            tanggal_terima: new Date().toISOString().split("T")[0],
-            status_pembayaran: "pending",
+            receiving_id: undefined,
+            supplier_id: undefined,
+            tanggal_retur: new Date().toISOString().split("T")[0],
             catatan: "",
         },
     });
@@ -56,38 +53,37 @@ export function ReceivingCreatePage() {
         formState: { errors },
     } = methods;
 
-    const purchaseOrderId = useWatch({ name: "purchase_order_id", control: methods.control });
+    const receivingId = useWatch({ name: "receiving_id", control: methods.control });
 
-    // Auto-select and lock supplier if PO is chosen
+    // Auto-select and lock supplier based on selected receiving
     useEffect(() => {
-        if (purchaseOrderId) {
-            const selectedPo = (outstandingPosData?.data || []).find(
-                (po) => po.id === Number(purchaseOrderId)
+        if (receivingId) {
+            const selectedReceiving = (receivingsData?.data || []).find(
+                (r) => r.id === Number(receivingId)
             );
-            if (selectedPo && selectedPo.supplier_id) {
-                setValue("supplier_id", selectedPo.supplier_id);
+            if (selectedReceiving && selectedReceiving.supplier_id) {
+                setValue("supplier_id", selectedReceiving.supplier_id);
             }
         } else {
-            setValue("supplier_id", null);
+            setValue("supplier_id", undefined as any);
         }
-    }, [purchaseOrderId, outstandingPosData, setValue]);
+    }, [receivingId, receivingsData, setValue]);
 
-    const onSubmit = (data: ReceivingHeaderInput) => {
-        // Prepare payload, convert empty strings to null or correct types
-        const payload: ReceivingHeaderInput = {
+    const onSubmit = (data: PurchaseReturnHeaderInput) => {
+        const payload = {
             ...data,
-            purchase_order_id: data.purchase_order_id ? Number(data.purchase_order_id) : null,
-            supplier_id: data.supplier_id ? Number(data.supplier_id) : null,
+            receiving_id: Number(data.receiving_id),
+            supplier_id: Number(data.supplier_id),
         };
 
         createHeader.mutate(payload, {
             onSuccess: (response) => {
-                toast.success("Header Penerimaan Barang berhasil dibuat!");
+                toast.success("Header Retur Pembelian berhasil dibuat!");
                 // Redirect to Step 2 page
-                router.push(`/admin/purchase/receiving/${response.data.id}/items`);
+                router.push(`/admin/purchase/return/${response.data.id}/items`);
             },
             onError: (err) => {
-                toast.error(err.message || "Gagal membuat penerimaan header.");
+                toast.error(err.message || "Gagal membuat retur header.");
             },
         });
     };
@@ -98,18 +94,18 @@ export function ReceivingCreatePage() {
             <div className="flex items-center gap-4">
                 <Button
                     type="button"
-                    onClick={() => router.push("/admin/purchase/receiving")}
+                    onClick={() => router.push("/admin/purchase/return")}
                     variant="outline"
-                    className="p-2 h-9 w-9 rounded-xl border-slate-200 text-slate-500 hover:text-slate-900 bg-white"
+                    className="p-2 h-9 w-9 rounded-xl border-slate-200 text-slate-500 hover:text-slate-900 bg-white cursor-pointer"
                 >
                     <IconArrowLeft size={18} />
                 </Button>
                 <div>
                     <h2 className="text-base font-bold text-slate-900">
-                        Buat Penerimaan Baru — Langkah 1 dari 2
+                        Buat Retur Pembelian Baru — Langkah 1 dari 2
                     </h2>
                     <p className="text-xs text-slate-400">
-                        Lengkapi informasi faktur dan supplier barang masuk terlebih dahulu.
+                        Lengkapi informasi faktur penerimaan dan detail tanggal retur terlebih dahulu.
                     </p>
                 </div>
             </div>
@@ -121,7 +117,7 @@ export function ReceivingCreatePage() {
                         <IconClipboardPlus size={20} />
                     </div>
                     <div>
-                        <h3 className="text-xs font-bold text-slate-900">Informasi Header Dokumen</h3>
+                        <h3 className="text-xs font-bold text-slate-900">Informasi Header Retur</h3>
                         <p className="text-[10px] text-slate-400">Semua field bertanda bintang (*) wajib diisi.</p>
                     </div>
                 </div>
@@ -129,34 +125,34 @@ export function ReceivingCreatePage() {
                 <FormProvider {...methods}>
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {/* Purchase Order Dropdown */}
+                            {/* Receiving Selector */}
                             <div className="space-y-1.5 sm:col-span-2">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                    Referensi Purchase Order (PO)
+                                    Referensi Faktur Penerimaan *
                                 </label>
-                                <FormSelect<ReceivingHeaderInput>
-                                    name="purchase_order_id"
-                                    options={poOptions}
+                                <FormSelect<PurchaseReturnHeaderInput>
+                                    name="receiving_id"
+                                    options={receivingOptions}
                                     placeholder={
-                                        posLoading
-                                            ? "Memuat daftar PO..."
-                                            : "-- Pilih PO (Kosongkan jika beli langsung) --"
+                                        receivingsLoading
+                                            ? "Memuat daftar penerimaan..."
+                                            : "-- Pilih Faktur Penerimaan (Completed) --"
                                     }
-                                    disabled={createHeader.isPending || posLoading}
+                                    disabled={createHeader.isPending || receivingsLoading}
                                 />
-                                {errors.purchase_order_id && (
+                                {errors.receiving_id && (
                                     <p className="text-[10px] text-rose-500 font-medium">
-                                        {errors.purchase_order_id.message}
+                                        {errors.receiving_id.message}
                                     </p>
                                 )}
                             </div>
 
-                            {/* Supplier Dropdown */}
+                            {/* Supplier Selector */}
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                    Supplier {!purchaseOrderId && " *"}
+                                    Supplier *
                                 </label>
-                                <FormSelect<ReceivingHeaderInput>
+                                <FormSelect<PurchaseReturnHeaderInput>
                                     name="supplier_id"
                                     options={supplierOptions}
                                     placeholder={
@@ -164,7 +160,7 @@ export function ReceivingCreatePage() {
                                             ? "Memuat supplier..."
                                             : "-- Pilih Supplier --"
                                     }
-                                    disabled={createHeader.isPending || suppliersLoading || !!purchaseOrderId}
+                                    disabled={createHeader.isPending || suppliersLoading || !!receivingId}
                                 />
                                 {errors.supplier_id && (
                                     <p className="text-[10px] text-rose-500 font-medium">
@@ -173,37 +169,11 @@ export function ReceivingCreatePage() {
                                 )}
                             </div>
 
-                            {/* Tanggal Terima */}
-                            <FormDatePicker<ReceivingHeaderInput>
-                                name="tanggal_terima"
-                                label="Tanggal Penerimaan *"
-                                disabled={createHeader.isPending}
-                            />
-
-                            {/* No. Faktur */}
+                            {/* Tanggal Retur */}
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                    No. Faktur *
-                                </label>
-                                <Input
-                                    type="text"
-                                    placeholder="FAK-XXXX..."
-                                    className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                                    disabled={createHeader.isPending}
-                                    {...register("nomor_faktur")}
-                                />
-                                {errors.nomor_faktur && (
-                                    <p className="text-[10px] text-rose-500 font-medium">
-                                        {errors.nomor_faktur.message}
-                                    </p>
-                                )}
-                            </div>
-                            {/* Nilai Faktur */}
-                            <div>
-                                <FormNominalInput<ReceivingHeaderInput>
-                                    name="nilai_faktur"
-                                    label="Nilai Total Faktur / Invoice *"
-                                    placeholder="Total tagihan Rp..."
+                                <FormDatePicker<PurchaseReturnHeaderInput>
+                                    name="tanggal_retur"
+                                    label="Tanggal Retur *"
                                     disabled={createHeader.isPending}
                                 />
                             </div>
@@ -212,11 +182,11 @@ export function ReceivingCreatePage() {
                         {/* Catatan */}
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                Catatan / Keterangan tambahan
+                                Catatan / Keterangan Retur
                             </label>
                             <Input
                                 type="text"
-                                placeholder="Misal: Barang diterima dalam kondisi baik, bonus promo 2 pcs..."
+                                placeholder="Misal: Barang rusak saat diterima, pecah kemasan, atau salah spesifikasi..."
                                 className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
                                 disabled={createHeader.isPending}
                                 {...register("catatan")}
@@ -232,7 +202,7 @@ export function ReceivingCreatePage() {
                         <div className="flex justify-end gap-3 pt-4 border-t border-slate-50">
                             <Button
                                 type="button"
-                                onClick={() => router.push("/admin/purchase/receiving")}
+                                onClick={() => router.push("/admin/purchase/return")}
                                 variant="outline"
                                 className="px-6 h-11 border-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center cursor-pointer bg-white"
                                 disabled={createHeader.isPending}

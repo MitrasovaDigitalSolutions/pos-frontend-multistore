@@ -1,6 +1,7 @@
 "use client";
 
 import { FormSelect } from "@/components/forms/form-select";
+import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
@@ -110,22 +111,11 @@ export function POCreatePage() {
                             </div>
 
                             {/* Tanggal PO */}
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                    Tanggal PO *
-                                </label>
-                                <Input
-                                    type="date"
-                                    className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                                    disabled={createHeader.isPending}
-                                    {...register("tanggal_po")}
-                                />
-                                {errors.tanggal_po && (
-                                    <p className="text-[10px] text-rose-500 font-medium">
-                                        {errors.tanggal_po.message}
-                                    </p>
-                                )}
-                            </div>
+                            <FormDatePicker<PurchaseOrderHeaderInput>
+                                name="tanggal_po"
+                                label="Tanggal PO *"
+                                disabled={createHeader.isPending}
+                            />
                         </div>
 
                         {/* Catatan */}

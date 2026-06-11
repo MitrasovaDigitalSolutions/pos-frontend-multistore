@@ -2,6 +2,7 @@
 
 import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { FormSelect } from "@/components/forms/form-select";
+import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -269,20 +270,11 @@ export function PaymentCreatePage() {
 
                                     {/* Payment Date */}
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                            Tanggal Bayar *
-                                        </label>
-                                        <Input
-                                            type="date"
-                                            className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                                        <FormDatePicker<PaymentInput>
+                                            name="tanggal_bayar"
+                                            label="Tanggal Bayar *"
                                             disabled={isPending}
-                                            {...register("tanggal_bayar")}
                                         />
-                                        {errors.tanggal_bayar && (
-                                            <p className="text-[10px] text-rose-500 font-medium">
-                                                {errors.tanggal_bayar.message}
-                                            </p>
-                                        )}
                                     </div>
 
                                     {/* Cash Account */}

@@ -14,8 +14,8 @@ import { toast } from "sonner";
 import { useDeletePurchaseReturn } from "../api/purchase-api";
 import type { PurchaseReturn } from "../types";
 import { ReturnDetailDialog } from "./return-detail-dialog";
-import { ReturnDialog } from "./return-dialog";
 import { ReturnFinalizeDialog } from "./return-finalize-dialog";
+import { useRouter } from "next/navigation";
 
 interface ReturnListProps {
     returns: PurchaseReturn[];
@@ -60,10 +60,10 @@ export function ReturnList({
     setFilters,
 }: ReturnListProps) {
     const { data: session } = useSession();
+    const router = useRouter();
     const deleteReturn = useDeletePurchaseReturn();
     const [selectedReturn, setSelectedReturn] = useState<PurchaseReturn | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
-    const [isEditOpen, setIsEditOpen] = useState(false);
     const [isFinalizeOpen, setIsFinalizeOpen] = useState(false);
 
     const [confirmDialog, setConfirmDialog] = useState<{
@@ -112,8 +112,7 @@ export function ReturnList({
     };
 
     const handleEditClick = (ret: PurchaseReturn) => {
-        setSelectedReturn(ret);
-        setIsEditOpen(true);
+        router.push(`/admin/purchase/return/${ret.id}/items`);
     };
 
     const handleDetailClick = (ret: PurchaseReturn) => {
@@ -294,13 +293,7 @@ export function ReturnList({
             // filters={filtersBar}
             />
 
-            {/* Edit Draft Dialog */}
-            <ReturnDialog
-                open={isEditOpen}
-                onOpenChange={setIsEditOpen}
-                products={products}
-                editingReturn={selectedReturn}
-            />
+
 
             {/* Details & Logs Dialog */}
             <ReturnDetailDialog

@@ -9,6 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconAlertTriangle, IconCircleCheck } from "@tabler/icons-react";
@@ -30,18 +31,19 @@ interface ReturnFinalizeDialogProps {
 }
 
 const returnFinalizeSchema = z.object({
-    impact_type: z.enum(["refund", "credit"]),
+    resolution_type: z.enum(["refund", "credit", "credit_note", "exchange"]),
     cash_account_id: z.coerce.number().nullable().optional(),
     stock_receiving_id: z.coerce.number().nullable().optional(),
+    catatan_penyelesaian: z.string().nullable().optional().transform(v => v || null),
 }).superRefine((data, ctx) => {
-    if (data.impact_type === "refund" && !data.cash_account_id) {
+    if (data.resolution_type === "refund" && !data.cash_account_id) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: "Kas/Rekening wajib dipilih untuk refund dana tunai",
             path: ["cash_account_id"],
         });
     }
-    if (data.impact_type === "credit" && !data.stock_receiving_id) {
+    if (data.resolution_type === "credit" && !data.stock_receiving_id) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: "Faktur Penerimaan wajib dipilih untuk potong utang",
@@ -60,7 +62,7 @@ export function ReturnFinalizeDialog({
     const finalizeReturn = useFinalizePurchaseReturn();
     const { data: cashAccounts = [], isLoading: cashLoading } = useCashAccounts();
 
-    // Fetch receivings for this supplier to reduce outstanding debt
+    // Fetch completed receivings for this supplier to reduce outstanding debt if using "credit"
     const { data: receivingsData, isLoading: receivingsLoading } = useReceivings({
         supplier_id: returnObj?.supplier_id || undefined,
         status: "completed",
@@ -70,26 +72,29 @@ export function ReturnFinalizeDialog({
     const methods = useForm<ReturnFinalizeInput>({
         resolver: zodResolver(returnFinalizeSchema) as Resolver<ReturnFinalizeInput>,
         defaultValues: {
-            impact_type: "refund",
+            resolution_type: "refund",
             cash_account_id: null,
             stock_receiving_id: null,
+            catatan_penyelesaian: "",
         },
     });
 
     const {
+        register,
         handleSubmit,
         reset,
         formState: { errors },
     } = methods;
 
-    const impactType = useWatch({ control: methods.control, name: "impact_type" });
+    const resolutionType = useWatch({ control: methods.control, name: "resolution_type" });
 
     useEffect(() => {
         if (open && returnObj) {
             reset({
-                impact_type: "refund",
+                resolution_type: "refund",
                 cash_account_id: null,
                 stock_receiving_id: returnObj.stock_receiving_id || null,
+                catatan_penyelesaian: "",
             });
         }
     }, [open, returnObj, reset]);
@@ -107,14 +112,19 @@ export function ReturnFinalizeDialog({
     const onSubmit = (data: ReturnFinalizeInput) => {
         if (!returnObj) return;
 
+        // Map resolution_type to both resolution_type & impact_type to guarantee backend compatibility
+        const payload = {
+            resolution_type: data.resolution_type,
+            impact_type: data.resolution_type,
+            cash_account_id: data.resolution_type === "refund" ? Number(data.cash_account_id) : null,
+            stock_receiving_id: data.resolution_type === "credit" ? Number(data.stock_receiving_id) : null,
+            catatan_penyelesaian: data.catatan_penyelesaian,
+        };
+
         finalizeReturn.mutate(
             {
                 id: returnObj.id,
-                data: {
-                    impact_type: data.impact_type,
-                    cash_account_id: data.impact_type === "refund" ? data.cash_account_id : null,
-                    stock_receiving_id: data.impact_type === "credit" ? data.stock_receiving_id : null,
-                },
+                data: payload,
             },
             {
                 onSuccess: () => {
@@ -141,41 +151,43 @@ export function ReturnFinalizeDialog({
                     </DialogDescription>
                 </DialogHeader>
 
-                {/* Custom warning alert banner styled with Tailwind */}
+                {/* Warning Banner */}
                 <div className="mt-4 bg-amber-50/50 border border-amber-100/50 text-amber-800 p-4 rounded-xl flex gap-3 items-start">
                     <IconAlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
                     <div className="space-y-0.5">
                         <p className="text-xs font-bold text-amber-900">Perhatian</p>
                         <p className="text-[11px] text-amber-700/95 leading-relaxed">
-                            Tindakan ini akan **mengurangi stok** produk terkait secara permanen dan mencatat transaksi keuangan. Dokumen yang telah difinalisasi tidak dapat diubah kembali.
+                            Tindakan ini akan **mengurangi stok** produk terkait secara permanen dan mencatat penyelesaian retur di sistem. Dokumen yang telah difinalisasi tidak dapat diubah kembali.
                         </p>
                     </div>
                 </div>
 
                 <FormProvider {...methods}>
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
-                        {/* Impact Type Selector */}
+                        {/* Resolution Type Selector */}
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                Dampak Finansial / Metode Retur
+                                Solusi / Metode Penyelesaian Retur
                             </label>
                             <FormSelect<ReturnFinalizeInput>
-                                name="impact_type"
+                                name="resolution_type"
                                 options={[
                                     { value: "refund", label: "Refund Tunai (Kas Masuk)" },
                                     { value: "credit", label: "Potong Utang (Kredit Faktur Supplier)" },
+                                    { value: "credit_note", label: "Supplier Credit Note (Saldo Kredit)" },
+                                    { value: "exchange", label: "Tukar Barang (Auto-buat Penerimaan Baru)" },
                                 ]}
-                                placeholder="Pilih Dampak"
+                                placeholder="Pilih Solusi"
                             />
-                            {errors.impact_type && (
+                            {errors.resolution_type && (
                                 <p className="text-[10px] text-rose-500 font-medium">
-                                    {errors.impact_type.message}
+                                    {errors.resolution_type.message}
                                 </p>
                             )}
                         </div>
 
                         {/* Cash Account Select if Refund */}
-                        {impactType === "refund" && (
+                        {resolutionType === "refund" && (
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                     Kas / Rekening Penerima Refund *
@@ -197,7 +209,7 @@ export function ReturnFinalizeDialog({
                         )}
 
                         {/* Stock Receiving Select if Credit */}
-                        {impactType === "credit" && (
+                        {resolutionType === "credit" && (
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                     Faktur Pembelian / Penerimaan Barang *
@@ -222,6 +234,26 @@ export function ReturnFinalizeDialog({
                             </div>
                         )}
 
+                        {/* Catatan Penyelesaian */}
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                Keterangan Penyelesaian
+                            </label>
+                            <Input
+                                type="text"
+                                placeholder="Catatan tambahan (misal: uang refund sudah diterima tunai)..."
+                                className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                                disabled={finalizeReturn.isPending}
+                                {...register("catatan_penyelesaian")}
+                            />
+                            {errors.catatan_penyelesaian && (
+                                <p className="text-[10px] text-rose-500 font-medium">
+                                    {errors.catatan_penyelesaian.message}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Actions */}
                         <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 bg-white">
                             <Button
                                 type="button"

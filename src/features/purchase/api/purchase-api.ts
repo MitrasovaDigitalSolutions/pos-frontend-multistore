@@ -8,7 +8,7 @@ import type { Receiving, PurchaseOrder, ReceivingPayment, CashAccount, PurchaseR
 import type { ReceivingInput, ReceivingHeaderInput, ReceivingBulkItemsInput } from "../schemas/receiving-schema";
 import type { PurchaseOrderHeaderInput, PurchaseOrderBulkItemsInput } from "../schemas/order-schema";
 import type { PaymentInput } from "../schemas/payment-schema";
-import type { PurchaseReturnInput } from "../schemas/return-schema";
+import type { PurchaseReturnInput, PurchaseReturnHeaderInput, PurchaseReturnBulkItemsInput } from "../schemas/return-schema";
 import type { Product } from "@/features/products/types";
 
 // ─── Stock Receiving Hooks ────────────────────────────────────────────────────
@@ -568,6 +568,22 @@ export function useCreatePurchaseReturn() {
     });
 }
 
+export function useCreatePurchaseReturnHeader() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<PurchaseReturn>, Error, PurchaseReturnHeaderInput>({
+        mutationFn: (data) =>
+            apiPost<ApiResponse<PurchaseReturn>, PurchaseReturnHeaderInput>(
+                ENDPOINTS.PURCHASE.RETURN.CREATE,
+                data,
+            ),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.returns(),
+            });
+        },
+    });
+}
+
 export function useUpdatePurchaseReturn() {
     const queryClient = useQueryClient();
     return useMutation<ApiResponse<PurchaseReturn>, Error, { id: number; data: PurchaseReturnInput }>({
@@ -587,6 +603,25 @@ export function useUpdatePurchaseReturn() {
     });
 }
 
+export function useBulkReplacePurchaseReturnItems() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<PurchaseReturn>, Error, { id: number; data: PurchaseReturnBulkItemsInput }>({
+        mutationFn: ({ id, data }) =>
+            apiPut<ApiResponse<PurchaseReturn>, PurchaseReturnBulkItemsInput>(
+                ENDPOINTS.PURCHASE.RETURN.ITEMS_REPLACE(id),
+                data,
+            ),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.returns(),
+            });
+            queryClient.invalidateQueries({
+                queryKey: [...queryKeys.purchase.returns(), "detail", variables.id],
+            });
+        },
+    });
+}
+
 export function useDeletePurchaseReturn() {
     const queryClient = useQueryClient();
     return useMutation<ApiResponse<void>, Error, number>({
@@ -600,9 +635,11 @@ export function useDeletePurchaseReturn() {
 }
 
 export interface FinalizeReturnInput {
-    impact_type: "refund" | "credit";
+    impact_type?: "refund" | "credit" | "credit_note" | "exchange" | null;
+    resolution_type?: "refund" | "credit" | "credit_note" | "exchange" | null;
     cash_account_id?: number | null;
     stock_receiving_id?: number | null;
+    catatan_penyelesaian?: string | null;
 }
 
 export function useFinalizePurchaseReturn() {
@@ -627,5 +664,50 @@ export function useFinalizePurchaseReturn() {
                 queryKey: queryKeys.purchase.receivings(),
             });
         },
+    });
+}
+
+export interface ReturnableItem {
+    product_id: number;
+    product: Product;
+    kuantitas_diterima: number;
+    kuantitas_diretur: number;
+    kuantitas_sisa: number;
+    harga_beli: number;
+}
+
+export function useReturnableItems(receivingId: number | null) {
+    return useQuery<ReturnableItem[]>({
+        queryKey: [...queryKeys.purchase.receivings(), "returnable-items", receivingId || 0],
+        queryFn: async () => {
+            if (!receivingId) return [];
+            const res = await apiGetData<ReturnableItem[]>(
+                ENDPOINTS.PURCHASE.RETURN.RETURNABLE_ITEMS(receivingId),
+            );
+            return res;
+        },
+        enabled: receivingId !== null && receivingId > 0,
+    });
+}
+
+export interface ReturnScanResponse {
+    product: {
+        id: number;
+        nama: string;
+        barcode: string;
+        harga_beli: number;
+    };
+    kuantitas_diterima: number;
+    kuantitas_diretur: number;
+    kuantitas_sisa: number;
+}
+
+export function useScanReturnProduct() {
+    return useMutation<ApiResponse<ReturnScanResponse>, Error, { receiving_id: number; barcode: string }>({
+        mutationFn: (data) =>
+            apiPost<ApiResponse<ReturnScanResponse>, { receiving_id: number; barcode: string }>(
+                ENDPOINTS.PURCHASE.RETURN.SCAN,
+                data,
+            ),
     });
 }

@@ -3,11 +3,11 @@
 import { PageLoader } from "@/components/feedback/page-loader";
 import { useProducts } from "@/features/products/api/products-api";
 import { usePurchaseReturns } from "@/features/purchase/api/purchase-api";
-import { ReturnDialog } from "@/features/purchase/components/return-dialog";
-import { ReturnList } from "@/features/purchase/components/return-list";
-import { useState, useDeferredValue } from "react";
 import { useSession } from "next-auth/react";
 import { hasRole, hasPermission } from "@/constants/roles";
+import { useRouter } from "next/navigation";
+import { ReturnList } from "@/features/purchase/components/return-list";
+import { useState, useDeferredValue } from "react";
 
 export function PurchaseReturn() {
     const { data: session } = useSession();
@@ -19,8 +19,8 @@ export function PurchaseReturn() {
         hasPermission(userRoles, userPermissions, "view_purchase") ||
         hasPermission(userRoles, userPermissions, "manage_purchase");
 
+    const router = useRouter();
     const [returnPage, setReturnPage] = useState(1);
-    const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
 
     // Filters state
     const [filters, setFilters] = useState({
@@ -89,17 +89,11 @@ export function PurchaseReturn() {
                 meta={returnsData?.meta}
                 page={returnPage}
                 onPageChange={setReturnPage}
-                onAddClick={() => setIsReturnModalOpen(true)}
+                onAddClick={() => router.push("/admin/purchase/return/new")}
                 isLoading={returnsLoading}
                 isFetching={returnsFetching}
                 filters={filters}
                 setFilters={setFilters}
-            />
-
-            <ReturnDialog
-                open={isReturnModalOpen}
-                onOpenChange={setIsReturnModalOpen}
-                products={products || []}
             />
         </div>
     );

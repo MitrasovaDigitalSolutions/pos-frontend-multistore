@@ -106,6 +106,10 @@ export const ENDPOINTS = {
             UPDATE: (id: number) => `/v1/purchase/return/${id}`,
             DELETE: (id: number) => `/v1/purchase/return/${id}`,
             FINALIZE: (id: number) => `/v1/purchase/return/${id}/finalize`,
+            ITEMS_BULK: (id: number) => `/v1/purchase/return/${id}/items`,
+            ITEMS_REPLACE: (id: number) => `/v1/purchase/return/${id}/items`,
+            RETURNABLE_ITEMS: (receivingId: number) => `/v1/purchase/receiving/${receivingId}/returnable-items`,
+            SCAN: "/v1/purchase/return/scan",
         },
     },
 

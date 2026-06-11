@@ -21,8 +21,9 @@ interface PurchaseItemsState {
         barcode: string | null;
         nama: string;
         harga_estimasi: number;
+        alasan?: string | null;
     }) => void;
-    updateItem: (temp_id: string, data: Partial<Pick<PurchaseItemLocal, "kuantitas" | "harga_estimasi">>) => void;
+    updateItem: (temp_id: string, data: Partial<Pick<PurchaseItemLocal, "kuantitas" | "harga_estimasi" | "alasan">>) => void;
     removeItem: (temp_id: string) => void;
     clearAll: () => void;
     getSubmitPayload: () => {
@@ -30,6 +31,7 @@ interface PurchaseItemsState {
             product_id: number;
             kuantitas: number;
             harga_estimasi: number;
+            alasan?: string | null;
         }[];
     };
 }
@@ -83,6 +85,7 @@ export function createPurchaseItemsStore(parentId: number, parentType: ParentTyp
                                     nama: product.nama,
                                     kuantitas: 1,
                                     harga_estimasi: product.harga_estimasi,
+                                    alasan: product.alasan || null,
                                 },
                             ],
                             lastUpdated: Date.now(),
@@ -116,6 +119,7 @@ export function createPurchaseItemsStore(parentId: number, parentType: ParentTyp
                             product_id: i.product_id,
                             kuantitas: i.kuantitas,
                             harga_estimasi: i.harga_estimasi,
+                            alasan: i.alasan || null,
                         })),
                     };
                 },

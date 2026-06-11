@@ -71,6 +71,7 @@ export interface PurchaseItemLocal {
     nama: string;
     kuantitas: number;
     harga_estimasi: number;
+    alasan?: string | null;
 }
 
 export interface CashAccount {
@@ -131,6 +132,7 @@ export interface PurchaseReturnItem {
     product_id: number;
     kuantitas: number;
     harga_beli: number;
+    alasan?: string | null;
     created_at: string;
     product?: Product;
 }
@@ -146,6 +148,8 @@ export interface PurchaseReturn {
     total_nominal: number;
     catatan: string | null;
     status: "draft" | "completed";
+    resolution_type?: "refund" | "credit" | "credit_note" | "exchange" | null;
+    catatan_penyelesaian?: string | null;
     user_id: number;
     user?: {
         id: number;
