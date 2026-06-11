@@ -10,6 +10,7 @@ interface FormDatePickerProps<T extends FieldValues> {
     disabled?: boolean;
     className?: string;
     clearable?: boolean;
+    size?: "sm" | "md" | "lg";
 }
 
 export function FormDatePicker<T extends FieldValues>({
@@ -19,6 +20,7 @@ export function FormDatePicker<T extends FieldValues>({
     disabled = false,
     className,
     clearable = true,
+    size = "md",
 }: FormDatePickerProps<T>) {
     const {
         control,
@@ -58,6 +60,7 @@ export function FormDatePicker<T extends FieldValues>({
                     error={error?.message}
                     label={label}
                     clearable={clearable}
+                    size={size}
                 />
             )}
         />

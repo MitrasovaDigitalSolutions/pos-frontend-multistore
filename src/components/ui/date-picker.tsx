@@ -23,6 +23,7 @@ export interface DatePickerProps {
   error?: string
   label?: string
   clearable?: boolean
+  size?: "sm" | "md" | "lg"
 }
 
 export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
@@ -36,11 +37,18 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
       error,
       label,
       clearable = true,
+      size = "md",
       ...props
     },
     ref
   ) => {
     const [open, setOpen] = React.useState(false)
+
+    const sizeClasses = {
+      sm: "h-8 text-xs font-bold text-slate-700",
+      md: "h-10 text-xs font-medium text-slate-800",
+      lg: "h-12 text-sm font-medium text-slate-800",
+    }[size]
 
     // Parse value to Date
     const selectedDate = React.useMemo(() => {
@@ -81,7 +89,8 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
                 variant="outline"
                 disabled={disabled}
                 className={cn(
-                  "h-9 w-full justify-start text-left font-normal text-[13px] border-slate-200 bg-white dark:bg-slate-950 hover:border-emerald-500/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:text-emerald-800 rounded-xl relative pr-10 transition-colors focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500",
+                  "w-full justify-start text-left border-slate-200 bg-white dark:bg-slate-950 hover:border-emerald-500/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:text-emerald-800 rounded-xl relative pr-10 transition-colors focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500",
+                  sizeClasses,
                   !selectedDate && "text-slate-400",
                   error && "border-rose-400 focus-visible:ring-rose-500/20",
                   disabled && "opacity-50 pointer-events-none bg-slate-50"
