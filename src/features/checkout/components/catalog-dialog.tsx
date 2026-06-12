@@ -43,7 +43,7 @@ export function CatalogDialog({
                     <span>Katalog Produk</span>
                 </>
             }
-            className="max-w-2xl"
+            className="sm:max-w-2xl"
         >
             <div className="pt-3 space-y-3">
                 <div className="relative">
@@ -60,7 +60,7 @@ export function CatalogDialog({
                 </div>
                 <div className="grid grid-cols-3 gap-3 max-h-87.5 overflow-y-auto pr-1">
                     {filteredProducts.length === 0 ? (
-                        <div className="col-span-3 text-center py-8 text-slate-400 text-xs">
+                        <div className="col-span-full text-center py-8 text-slate-400 text-xs">
                             Tidak ada produk ditemukan.
                         </div>
                     ) : (
@@ -72,11 +72,10 @@ export function CatalogDialog({
                                     await onAddProduct(p);
                                     onOpenChange(false);
                                 }}
-                                className={`border p-4 rounded-xl cursor-pointer text-center group transition-all ${
-                                    p.stok <= 0
-                                        ? "border-slate-100 bg-slate-50 opacity-50 cursor-not-allowed"
-                                        : "bg-slate-50 border-slate-100 hover:border-emerald-400 hover:bg-emerald-50/50"
-                                }`}
+                                className={`border p-4 rounded-xl cursor-pointer text-center group transition-all ${p.stok <= 0
+                                    ? "border-slate-100 bg-slate-50 opacity-50 cursor-not-allowed"
+                                    : "bg-slate-50 border-slate-100 hover:border-emerald-400 hover:bg-emerald-50/50"
+                                    }`}
                             >
                                 <h5 className="font-bold text-slate-800 text-[12px] group-hover:text-emerald-900 line-clamp-2">
                                     {p.nama}
@@ -85,11 +84,10 @@ export function CatalogDialog({
                                     {formatRupiah(p.harga)}
                                 </div>
                                 <div
-                                    className={`text-[9px] font-bold mt-1 ${
-                                        p.stok <= 5
-                                            ? "text-rose-500"
-                                            : "text-slate-400"
-                                    }`}
+                                    className={`text-[9px] font-bold mt-1 ${p.stok <= 5
+                                        ? "text-rose-500"
+                                        : "text-slate-400"
+                                        }`}
                                 >
                                     Stok: {p.stok}
                                 </div>

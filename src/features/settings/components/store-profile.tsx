@@ -33,10 +33,6 @@ export function StoreProfile() {
                         {user?.store_id || "1 (Toko Utama)"}
                     </strong>
                 </p>
-                <p>
-                    Toko ritel terhubung langsung dengan REST API database
-                    terpusat.
-                </p>
             </div>
         </section>
     );

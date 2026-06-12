@@ -10,6 +10,8 @@ import { ProductTable } from "./components/product-table";
 import { ProductFormDialog } from "./components/product-form-dialog";
 import { productSchema, type ProductInput } from "./schemas/product-schema";
 import type { Product } from "./types";
+import { useCategories } from "@/features/categories/api/categories-api";
+import { useBrands } from "@/features/brands/api/brands-api";
 
 export function Products() {
   const { data: session } = useSession();
@@ -24,6 +26,13 @@ export function Products() {
   const [perPage, setPerPage] = useState(10);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [status, setStatus] = useState<string>("all");
+  const [categoryId, setCategoryId] = useState<string>("all");
+  const [brandId, setBrandId] = useState<string>("all");
+
+  // Load categories and brands for the dropdown filter options
+  const { data: categoriesRes } = useCategories({ per_page: 1000 });
+  const { data: brandsRes } = useBrands({ per_page: 1000 });
 
   // Debounce search input to avoid excessive API requests
   useEffect(() => {
@@ -37,10 +46,28 @@ export function Products() {
     };
   }, [search]);
 
+  const handleStatusChange = (newStatus: string) => {
+    setStatus(newStatus);
+    setPage(1); // Reset to first page when status filter changes
+  };
+
+  const handleCategoryChange = (newCategoryId: string) => {
+    setCategoryId(newCategoryId);
+    setPage(1); // Reset to first page when category filter changes
+  };
+
+  const handleBrandChange = (newBrandId: string) => {
+    setBrandId(newBrandId);
+    setPage(1); // Reset to first page when brand filter changes
+  };
+
   const { data: productsData, isLoading, isFetching } = useProducts({
     page,
     per_page: perPage,
     search: debouncedSearch || undefined,
+    status: status !== "all" ? status : undefined,
+    category_id: categoryId !== "all" ? Number(categoryId) : undefined,
+    brand_id: brandId !== "all" ? Number(brandId) : undefined,
   });
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -117,6 +144,14 @@ export function Products() {
           onPerPageChange={setPerPage}
           search={search}
           onSearchChange={setSearch}
+          status={status}
+          onStatusChange={handleStatusChange}
+          categoryId={categoryId}
+          onCategoryChange={handleCategoryChange}
+          brandId={brandId}
+          onBrandChange={handleBrandChange}
+          categories={categoriesRes?.data || []}
+          brands={brandsRes?.data || []}
           onEdit={handleEdit}
           onAddClick={handleAddClick}
           isLoading={isLoading}

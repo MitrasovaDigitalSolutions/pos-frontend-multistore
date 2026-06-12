@@ -9,7 +9,7 @@ import { queryKeys } from "@/lib/query-keys";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
 import type { Product } from "../types";
 
-export function useProducts(params?: PaginationParams) {
+export function useProducts(params?: PaginationParams & { status?: string; category_id?: number; brand_id?: number }) {
     return useQuery<PaginatedResponse<Product>>({
         queryKey: [...queryKeys.products.list(), params],
         queryFn: () => apiGetList<Product>("/v1/products", params),
