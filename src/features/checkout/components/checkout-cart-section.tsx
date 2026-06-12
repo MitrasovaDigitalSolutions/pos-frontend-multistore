@@ -2,7 +2,6 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
     Table,
     TableBody,
@@ -12,55 +11,48 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { IconScan, IconSearch, IconCategory, IconTrash } from "@tabler/icons-react";
+import { IconScan, IconCategory, IconTrash } from "@tabler/icons-react";
 import type { CartItem } from "@/features/checkout/types";
+import { BarcodeInput } from "@/components/shared/barcode-input";
+import { toast } from "sonner";
+import type { Product } from "@/features/products/types";
 
 interface CheckoutCartSectionProps {
-    barcodeInput: string;
-    setBarcodeInput: (val: string) => void;
     isProcessing: boolean;
     cart: CartItem[];
     barcodeInputRef: React.RefObject<HTMLInputElement | null>;
-    onBarcodeSubmit: (e: React.FormEvent) => void;
     onCatalogOpen: () => void;
     onUpdateQty: (item: CartItem, qty: number) => void;
     onRemoveItem: (item: CartItem) => void;
+    onAddProduct: (product: Product) => void;
 }
 
 export function CheckoutCartSection({
-    barcodeInput,
-    setBarcodeInput,
     isProcessing,
     cart,
     barcodeInputRef,
-    onBarcodeSubmit,
     onCatalogOpen,
     onUpdateQty,
     onRemoveItem,
+    onAddProduct,
 }: CheckoutCartSectionProps) {
     return (
         <div className="bg-white border-r border-slate-200 flex flex-col h-full overflow-hidden">
             {/* Scanner / Search */}
             <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex gap-3 items-center">
-                <form onSubmit={onBarcodeSubmit} className="grow relative">
-                    <IconSearch
-                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-500"
-                        size={18}
-                    />
-                    <Input
+                <div className="grow">
+                    <BarcodeInput
                         ref={barcodeInputRef}
-                        type="text"
-                        placeholder="Scan Barcode atau ketik nama produk... (Enter)"
-                        className="w-full h-11 pl-10 pr-4 text-[13px] font-semibold bg-white border-2 border-emerald-500 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-emerald-600 rounded-xl"
-                        value={barcodeInput}
-                        onChange={(e) => setBarcodeInput(e.target.value)}
+                        onProductFound={onAddProduct}
+                        onError={(msg) => toast.error(msg)}
                         disabled={isProcessing}
+                        placeholder="Scan Barcode atau ketik nama produk... (Enter)"
                     />
-                </form>
+                </div>
                 <Button
                     variant="outline"
                     onClick={onCatalogOpen}
-                    className="h-11 border-dashed border-emerald-500 hover:bg-emerald-50 text-emerald-600 font-bold px-4 rounded-xl flex gap-2 cursor-pointer bg-white"
+                    className="h-11 border-dashed border-emerald-500 hover:bg-emerald-50 text-emerald-600 font-bold px-4 rounded-xl flex gap-2 cursor-pointer bg-white shrink-0"
                 >
                     <IconCategory size={18} />
                     <span>Katalog (F2)</span>

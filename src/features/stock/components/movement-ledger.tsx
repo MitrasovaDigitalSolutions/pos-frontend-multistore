@@ -39,6 +39,7 @@ export function MovementLedger({
                         )}
                     </span>
                 ),
+                size: 160,
             },
             {
                 accessorKey: "product.nama",
@@ -48,6 +49,7 @@ export function MovementLedger({
                         {row.original.product?.nama || "-"}
                     </span>
                 ),
+                size: 240,
             },
             {
                 accessorKey: "tipe",
@@ -57,6 +59,7 @@ export function MovementLedger({
                         {row.original.tipe}
                     </span>
                 ),
+                size: 120,
             },
             {
                 accessorKey: "kuantitas",
@@ -80,6 +83,7 @@ export function MovementLedger({
                         </span>
                     );
                 },
+                size: 96,
             },
             {
                 accessorKey: "stok_sebelum",
@@ -89,6 +93,7 @@ export function MovementLedger({
                     cellClassName: "text-right text-slate-500",
                 },
                 cell: ({ row }) => row.original.stok_sebelum,
+                size: 80,
             },
             {
                 accessorKey: "stok_sesudah",
@@ -98,6 +103,7 @@ export function MovementLedger({
                     cellClassName: "text-right text-slate-800 font-bold",
                 },
                 cell: ({ row }) => row.original.stok_sesudah,
+                size: 80,
             },
             {
                 accessorKey: "alasan",
@@ -107,6 +113,7 @@ export function MovementLedger({
                         {row.original.alasan || "-"}
                     </span>
                 ),
+                size: 240,
             },
             {
                 accessorKey: "user",
@@ -116,6 +123,7 @@ export function MovementLedger({
                         {row.original.user?.name || "System"}
                     </span>
                 ),
+                size: 120,
             },
         ],
         [],

@@ -47,7 +47,7 @@ export function LowStockTable({
                     cellClassName: "text-left font-bold text-rose-500",
                 },
                 cell: ({ row }) => `${row.original.stok} pcs`,
-                size: 40,
+                size: 80,
             },
             {
                 id: "status",
@@ -57,7 +57,7 @@ export function LowStockTable({
                         Stok Kritis
                     </span>
                 ),
-                size: 40,
+                size: 120,
             },
         ],
         [],

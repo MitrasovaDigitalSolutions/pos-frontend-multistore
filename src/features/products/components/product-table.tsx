@@ -129,6 +129,7 @@ export function ProductTable({
                             {row.original.barcode || "-"}
                         </span>
                     ),
+                    size: 120,
                 },
                 {
                     accessorKey: "nama",
@@ -138,6 +139,7 @@ export function ProductTable({
                             {row.original.nama}
                         </span>
                     ),
+                    size: 240
                 },
                 {
                     accessorKey: "category",
@@ -147,6 +149,7 @@ export function ProductTable({
                             {row.original.category?.nama || "-"}
                         </span>
                     ),
+                    size: 120
                 },
                 {
                     accessorKey: "merek",
@@ -156,6 +159,7 @@ export function ProductTable({
                             {row.original.brand?.nama || row.original.merek || "-"}
                         </span>
                     ),
+                    size: 120
                 },
                 {
                     accessorKey: "harga_beli",
@@ -164,9 +168,11 @@ export function ProductTable({
                         headerClassName: "text-right",
                         cellClassName: "text-right text-slate-500 text-xs",
                     },
+                    size: 120,
                     cell: ({ row }) => row.original.harga_beli !== null && row.original.harga_beli !== undefined
                         ? formatRupiah(row.original.harga_beli)
                         : "-",
+
                 },
                 {
                     accessorKey: "harga",
@@ -175,6 +181,7 @@ export function ProductTable({
                         headerClassName: "text-right",
                         cellClassName: "text-right font-bold text-slate-800",
                     },
+                    size: 120,
                     cell: ({ row }) => formatRupiah(row.original.harga),
                 },
                 {
@@ -184,6 +191,7 @@ export function ProductTable({
                         headerClassName: "text-right",
                         cellClassName: "text-right text-slate-500 text-xs",
                     },
+                    size: 120,
                     cell: ({ row }) => row.original.margin !== null && row.original.margin !== undefined
                         ? `${row.original.margin}%`
                         : "-",
@@ -195,6 +203,7 @@ export function ProductTable({
                         headerClassName: "text-right",
                         cellClassName: "text-right",
                     },
+                    size: 80,
                     cell: ({ row }) => {
                         const p = row.original;
                         return (
@@ -216,6 +225,7 @@ export function ProductTable({
                         headerClassName: "text-center",
                         cellClassName: "text-center",
                     },
+                    size: 80,
                     cell: ({ row }) => {
                         const p = row.original;
                         if (!hasManageProducts) {

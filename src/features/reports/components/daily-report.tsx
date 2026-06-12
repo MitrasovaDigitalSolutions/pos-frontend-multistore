@@ -182,6 +182,7 @@ export function DailyReportView() {
                                             {row.original.product_name}
                                         </span>
                                     ),
+                                    size: 320,
                                 },
                                 {
                                     accessorKey: "quantity",
@@ -192,6 +193,7 @@ export function DailyReportView() {
                                     },
                                     cell: ({ row }) =>
                                         `${row.original.quantity} pcs`,
+                                    size: 120,
                                 },
                                 {
                                     accessorKey: "revenue",
@@ -203,6 +205,7 @@ export function DailyReportView() {
                                     },
                                     cell: ({ row }) =>
                                         formatRupiah(row.original.revenue),
+                                    size: 160,
                                 },
                             ]}
                             data={dailyReport?.top_products || []}

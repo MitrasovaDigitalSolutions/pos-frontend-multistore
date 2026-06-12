@@ -30,6 +30,7 @@ import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { useSession } from "next-auth/react";
+import { POHeaderDialog } from "./po-header-dialog";
 
 interface PODetailPageProps {
     poId: number;
@@ -39,6 +40,7 @@ export function PODetailPage({ poId }: PODetailPageProps) {
     const { data: session } = useSession();
     const router = useAppRouter();
     const [activeTab, setActiveTab] = useState<"items" | "receivings" | "logs">("items");
+    const [isEditHeaderOpen, setIsEditHeaderOpen] = useState(false);
 
     const { data: order, isLoading: orderLoading, error } = usePurchaseOrderDetail(poId);
     
@@ -249,6 +251,13 @@ export function PODetailPage({ poId }: PODetailPageProps) {
                 <div className="flex flex-wrap gap-2">
                     {isDraft && hasManagePurchase && (
                         <>
+                            <Button
+                                onClick={() => setIsEditHeaderOpen(true)}
+                                variant="outline"
+                                className="border-slate-200 text-slate-700 hover:text-slate-900 bg-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
+                            >
+                                <IconEdit size={16} /> Edit Info PO
+                            </Button>
                             <Button
                                 onClick={() => router.push(`/admin/purchase/order/${poId}/items`)}
                                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
@@ -593,6 +602,13 @@ export function PODetailPage({ poId }: PODetailPageProps) {
                     </div>
                 </div>
             </div>
+
+            {/* Edit Header Dialog */}
+            <POHeaderDialog
+                open={isEditHeaderOpen}
+                onOpenChange={setIsEditHeaderOpen}
+                order={order}
+            />
 
             {/* Confirm Dialog */}
             <ConfirmDialog

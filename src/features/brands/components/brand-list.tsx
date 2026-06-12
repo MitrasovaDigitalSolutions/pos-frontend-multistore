@@ -87,16 +87,8 @@ export function BrandList({
                             {row.original.nama}
                         </span>
                     ),
+                    size: 320,
                 },
-                // {
-                //     accessorKey: "deskripsi",
-                //     header: "Deskripsi",
-                //     cell: ({ row }) => (
-                //         <span className="text-slate-500 text-xs line-clamp-1">
-                //             {row.original.deskripsi || "-"}
-                //         </span>
-                //     ),
-                // },
             ];
 
             return baseColumns;

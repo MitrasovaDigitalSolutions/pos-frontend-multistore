@@ -85,15 +85,13 @@ export function Checkout() {
             <div className="grid grid-cols-[65%_35%] h-[calc(100vh-80px)] overflow-hidden">
                 {/* Left: Cart */}
                 <CheckoutCartSection
-                    barcodeInput={state.barcodeInput}
-                    setBarcodeInput={state.setBarcodeInput}
                     isProcessing={state.isProcessing}
                     cart={state.cart}
                     barcodeInputRef={state.barcodeInputRef}
-                    onBarcodeSubmit={state.handleBarcodeSubmit}
                     onCatalogOpen={() => state.setIsCatalogOpen(true)}
                     onUpdateQty={state.handleUpdateQty}
                     onRemoveItem={state.handleRemoveItem}
+                    onAddProduct={state.handleAddProduct}
                 />
 
                 {/* Right: Totals & Actions */}

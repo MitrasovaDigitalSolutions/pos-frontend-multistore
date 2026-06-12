@@ -133,6 +133,7 @@ export function OpnameList({
                         {row.original.nomor_opname}
                     </span>
                 ),
+                size: 160,
             },
             {
                 accessorKey: "created_at",
@@ -148,6 +149,7 @@ export function OpnameList({
                         )}
                     </span>
                 ),
+                size: 160,
             },
             {
                 accessorKey: "catatan",
@@ -157,6 +159,7 @@ export function OpnameList({
                         {row.original.catatan || "-"}
                     </span>
                 ),
+                size: 320,
             },
             {
                 accessorKey: "status",
@@ -179,6 +182,7 @@ export function OpnameList({
                         </span>
                     );
                 },
+                size: 80,
             },
         ],
         [],

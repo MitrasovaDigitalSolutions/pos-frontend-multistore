@@ -188,6 +188,7 @@ export function POListPage() {
                         })}
                     </span>
                 ),
+                size: 120,
             },
             {
                 accessorKey: "nomor_po",
@@ -197,6 +198,7 @@ export function POListPage() {
                         {row.original.nomor_po}
                     </span>
                 ),
+                size: 160,
             },
             {
                 accessorKey: "supplier",
@@ -209,6 +211,7 @@ export function POListPage() {
                         </span>
                     );
                 },
+                size: 240,
             },
             {
                 accessorKey: "nilai_estimasi",
@@ -218,6 +221,7 @@ export function POListPage() {
                         {formatRupiah(row.original.nilai_estimasi)}
                     </span>
                 ),
+                size: 160,
             },
             {
                 accessorKey: "status",
@@ -250,6 +254,7 @@ export function POListPage() {
                         </span>
                     );
                 },
+                size: 160,
             },
             {
                 id: "actions",
@@ -258,7 +263,7 @@ export function POListPage() {
                     const order = row.original;
                     const isDraft = order.status === "draft";
                     const canCancel = order.status !== "received" && order.status !== "cancelled" && order.status !== "closed" && hasManagePurchase;
-
+ 
                     return (
                         <div className="flex items-center gap-1.5">
                             {/* View Button */}
@@ -273,7 +278,7 @@ export function POListPage() {
                                 </TooltipTrigger>
                                 <TooltipContent>Lihat Detail</TooltipContent>
                             </Tooltip>
-
+ 
                             {/* Edit Button (Only for draft) */}
                             {isDraft && hasManagePurchase && (
                                 <Tooltip>
@@ -288,7 +293,7 @@ export function POListPage() {
                                     <TooltipContent>Edit Draft Items</TooltipContent>
                                 </Tooltip>
                             )}
-
+ 
                             {/* Finalize Button (Only for draft) */}
                             {isDraft && hasManagePurchase && (
                                 <Tooltip>
@@ -303,7 +308,7 @@ export function POListPage() {
                                     <TooltipContent>Finalisasi PO</TooltipContent>
                                 </Tooltip>
                             )}
-
+ 
                             {/* Cancel Button */}
                             {canCancel && (
                                 <Tooltip>
@@ -318,7 +323,7 @@ export function POListPage() {
                                     <TooltipContent>Batalkan PO</TooltipContent>
                                 </Tooltip>
                             )}
-
+ 
                             {/* Delete Button (Only for draft) */}
                             {isDraft && hasManagePurchase && (
                                 <Tooltip>
@@ -336,6 +341,7 @@ export function POListPage() {
                         </div>
                     );
                 },
+                size: 160,
             },
         ],
         // eslint-disable-next-line react-hooks/exhaustive-deps

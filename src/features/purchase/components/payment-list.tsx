@@ -127,6 +127,7 @@ export function PaymentList({
                         })}
                     </span>
                 ),
+                size: 120,
             },
             {
                 accessorKey: "nomor_transaksi",
@@ -136,6 +137,7 @@ export function PaymentList({
                         {row.original.nomor_transaksi}
                     </span>
                 ),
+                size: 160,
             },
             {
                 id: "nomor_penerimaan",
@@ -145,6 +147,7 @@ export function PaymentList({
                         {row.original.receiving?.nomor_penerimaan || "-"}
                     </span>
                 ),
+                size: 160,
             },
             {
                 id: "supplier",
@@ -154,6 +157,7 @@ export function PaymentList({
                         {row.original.receiving?.supplier_relationship?.nama || row.original.receiving?.supplier || "-"}
                     </span>
                 ),
+                size: 240,
             },
             {
                 accessorKey: "metode_pembayaran",
@@ -163,6 +167,7 @@ export function PaymentList({
                         {row.original.metode_pembayaran}
                     </span>
                 ),
+                size: 96,
             },
             {
                 accessorKey: "total",
@@ -172,6 +177,7 @@ export function PaymentList({
                         {formatRupiah(row.original.total)}
                     </span>
                 ),
+                size: 120,
             },
             {
                 accessorKey: "status",
@@ -189,6 +195,7 @@ export function PaymentList({
                         </span>
                     );
                 },
+                size: 120,
             },
         ],
         []
