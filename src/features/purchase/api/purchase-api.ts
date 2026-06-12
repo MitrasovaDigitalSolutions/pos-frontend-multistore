@@ -432,11 +432,11 @@ export function usePaymentSummary(receivingId: number | null) {
                 const totalDibayar = completedPayments.reduce((sum, p) => sum + p.total, 0);
                 const sisaHutang = Math.max(0, totalFaktur - totalDibayar);
 
-                let statusPembayaran: "pending" | "partially_paid" | "paid" = "pending";
+                let statusPembayaran: "pending" | "partial" | "paid" = "pending";
                 if (totalDibayar >= totalFaktur && totalFaktur > 0) {
                     statusPembayaran = "paid";
                 } else if (totalDibayar > 0) {
-                    statusPembayaran = "partially_paid";
+                    statusPembayaran = "partial";
                 }
 
                 return {

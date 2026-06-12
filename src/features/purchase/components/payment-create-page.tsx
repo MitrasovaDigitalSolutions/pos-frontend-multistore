@@ -433,13 +433,13 @@ export function PaymentCreatePage() {
                                             <span>Status Pembayaran:</span>
                                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${summary.status_pembayaran === "paid"
                                                 ? "bg-emerald-50 text-emerald-600 border border-emerald-100/30"
-                                                : summary.status_pembayaran === "partially_paid"
+                                                : summary.status_pembayaran === "partial"
                                                     ? "bg-amber-50 text-amber-600 border border-amber-100/30"
                                                     : "bg-slate-100 text-slate-600 border border-slate-200/30"
                                                 }`}>
                                                 {summary.status_pembayaran === "paid"
                                                     ? "LUNAS"
-                                                    : summary.status_pembayaran === "partially_paid"
+                                                    : summary.status_pembayaran === "partial"
                                                         ? "SEBAGIAN"
                                                         : "TEMPO"}
                                             </span>

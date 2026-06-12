@@ -117,7 +117,7 @@ export interface PaymentSummary {
     total_faktur: number;
     total_dibayar: number;
     sisa_hutang: number;
-    status_pembayaran: "pending" | "partially_paid" | "paid";
+    status_pembayaran: "pending" | "partial" | "paid";
     payments: {
         id: number;
         jumlah: number;
