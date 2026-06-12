@@ -140,8 +140,8 @@ export function AuditLogs() {
 
     return (
         <div className="space-y-6">
-            <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-6">
-                <div className="flex justify-between items-center border-b border-slate-50 pb-4">
+            <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
+                <div className="flex justify-between items-center border-b border-slate-50">
                     <div>
                         <h3 className="text-sm font-bold text-slate-900">
                             Log Aktivitas & Audit Keamanan

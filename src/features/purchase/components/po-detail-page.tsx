@@ -1,14 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { PageLoader } from "@/components/feedback/page-loader";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { toast } from "sonner";
 import {
     IconArrowLeft,
-    IconClipboardCheck,
     IconClock,
     IconFileDescription,
     IconTruckDelivery,
@@ -38,7 +37,7 @@ interface PODetailPageProps {
 
 export function PODetailPage({ poId }: PODetailPageProps) {
     const { data: session } = useSession();
-    const router = useRouter();
+    const router = useAppRouter();
     const [activeTab, setActiveTab] = useState<"items" | "receivings" | "logs">("items");
 
     const { data: order, isLoading: orderLoading, error } = usePurchaseOrderDetail(poId);

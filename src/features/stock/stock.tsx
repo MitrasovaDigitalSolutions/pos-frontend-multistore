@@ -13,14 +13,15 @@ import { OpnameDetailDialog } from "@/features/stock/components/opname-detail-di
 import { OpnameDialog } from "@/features/stock/components/opname-dialog";
 import { OpnameList } from "@/features/stock/components/opname-list";
 import { IconActivity, IconClipboardCheck } from "@tabler/icons-react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { hasRole, hasPermission } from "@/constants/roles";
 
 export function StockManagement() {
     const searchParams = useSearchParams();
-    const router = useRouter();
+    const router = useAppRouter();
     const currentTab = searchParams.get("tab") || "inventory";
 
     // Redirect legacy stock tab=receiving requests to the new purchase route
@@ -95,11 +96,11 @@ export function StockManagement() {
             {currentTab === "inventory" ? (
                 <div className="space-y-6">
                     {/* Stock Levels & Movements */}
-                    <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-6">
+                    <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
                         <div className="flex justify-between items-center border-b border-slate-50 pb-6">
                             <div>
                                 <h3 className="text-sm font-bold text-slate-900">
-                                   Stock Opname & Penyesuaian Stok
+                                    Stock Opname & Penyesuaian Stok
                                 </h3>
                                 <p className="text-[11px] text-slate-400 mt-0.5">
                                     Peninjauan stok real-time, opname fisik, and

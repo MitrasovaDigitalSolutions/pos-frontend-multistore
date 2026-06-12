@@ -33,6 +33,7 @@ export function Users() {
   useEffect(() => {
     const tab = searchParams.get("tab");
     if (tab === "permissions") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveTab("permissions");
     } else if (tab === "users") {
       setActiveTab("users");
@@ -130,21 +131,19 @@ export function Users() {
             <div className="flex bg-slate-200/60 p-1 rounded-xl w-fit border border-slate-200/30">
               <button
                 onClick={() => setActiveTab("users")}
-                className={`px-4 py-2 text-xs font-extrabold rounded-lg transition-all duration-200 cursor-pointer ${
-                  activeTab === "users"
+                className={`px-4 py-2 text-xs font-extrabold rounded-lg transition-all duration-200 cursor-pointer ${activeTab === "users"
                     ? "bg-white text-slate-900 shadow-sm"
                     : "text-slate-500 hover:text-slate-800"
-                }`}
+                  }`}
               >
                 Daftar Pengguna
               </button>
               <button
                 onClick={() => setActiveTab("permissions")}
-                className={`px-4 py-2 text-xs font-extrabold rounded-lg transition-all duration-200 cursor-pointer ${
-                  activeTab === "permissions"
+                className={`px-4 py-2 text-xs font-extrabold rounded-lg transition-all duration-200 cursor-pointer ${activeTab === "permissions"
                     ? "bg-white text-slate-900 shadow-sm"
                     : "text-slate-500 hover:text-slate-800"
-                }`}
+                  }`}
               >
                 Peran & Hak Akses
               </button>

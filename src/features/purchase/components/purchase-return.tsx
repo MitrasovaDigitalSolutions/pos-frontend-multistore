@@ -5,7 +5,7 @@ import { useProducts } from "@/features/products/api/products-api";
 import { usePurchaseReturns } from "@/features/purchase/api/purchase-api";
 import { useSession } from "next-auth/react";
 import { hasRole, hasPermission } from "@/constants/roles";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { ReturnList } from "@/features/purchase/components/return-list";
 import { useState, useDeferredValue } from "react";
 
@@ -19,7 +19,7 @@ export function PurchaseReturn() {
         hasPermission(userRoles, userPermissions, "view_purchase") ||
         hasPermission(userRoles, userPermissions, "manage_purchase");
 
-    const router = useRouter();
+    const router = useAppRouter();
     const [returnPage, setReturnPage] = useState(1);
 
     // Filters state

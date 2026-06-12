@@ -8,13 +8,13 @@ import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { useCreatePurchaseOrderHeader } from "../api/purchase-api";
 import { purchaseOrderHeaderSchema, type PurchaseOrderHeaderInput } from "../schemas/order-schema";
 import { IconArrowLeft, IconClipboardPlus } from "@tabler/icons-react";
 
 export function POCreatePage() {
-    const router = useRouter();
+    const router = useAppRouter();
     const createHeader = useCreatePurchaseOrderHeader();
     const { data: suppliers = [], isLoading: suppliersLoading } = useAllSuppliers();
 

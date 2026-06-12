@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { IconArrowLeft, IconClipboardList, IconClock, IconFileDescription, IconCoins, IconUser, IconCalendar, IconBuildingBank, IconActivity } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { usePaymentDetail, useReceivingDetail, useCashAccounts, usePaymentSummary } from "../api/purchase-api";
 import { useActivityLogs } from "@/features/stock/api/stock-api";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
@@ -14,7 +14,7 @@ interface PaymentDetailPageProps {
 }
 
 export function PaymentDetailPage({ paymentId }: PaymentDetailPageProps) {
-    const router = useRouter();
+    const router = useAppRouter();
     const [activeTab, setActiveTab] = useState<"details" | "logs">("details");
 
     const { data: payment, isLoading: isDetailLoading } = usePaymentDetail(paymentId);
@@ -105,7 +105,7 @@ export function PaymentDetailPage({ paymentId }: PaymentDetailPageProps) {
                 <div className="lg:col-span-2 space-y-6">
                     {/* Main Transaction Card */}
                     <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm space-y-6">
-                        <div className="flex justify-between items-start border-b border-slate-50 pb-4">
+                        <div className="flex justify-between items-start border-b border-slate-50">
                             <div className="flex items-center gap-3">
                                 <div className="bg-emerald-50 text-emerald-600 p-2.5 rounded-xl border border-emerald-100/30">
                                     <IconClipboardList size={22} />
@@ -117,11 +117,10 @@ export function PaymentDetailPage({ paymentId }: PaymentDetailPageProps) {
                             </div>
                             <div>
                                 <span
-                                    className={`px-3 py-1 rounded-full text-xs font-extrabold border ${
-                                        payment.status === "completed"
+                                    className={`px-3 py-1 rounded-full text-xs font-extrabold border ${payment.status === "completed"
                                             ? "bg-emerald-50 text-emerald-700 border-emerald-100"
                                             : "bg-rose-50 text-rose-700 border-rose-100"
-                                    }`}
+                                        }`}
                                 >
                                     {payment.status === "completed" ? "Selesai" : "Batal (Void)"}
                                 </span>
@@ -211,7 +210,7 @@ export function PaymentDetailPage({ paymentId }: PaymentDetailPageProps) {
                                     <div className="col-span-2 space-y-1 pt-1.5 border-t border-rose-100/30">
                                         <span className="text-slate-450 block">Alasan Pembatalan:</span>
                                         <p className="font-semibold text-rose-700 italic">
-                                            "{payment.catatan_void || "Tidak ada alasan tertulis."}"
+                                            &ldquo;{payment.catatan_void || "Tidak ada alasan tertulis."}&rdquo;
                                         </p>
                                     </div>
                                 </div>
@@ -224,22 +223,20 @@ export function PaymentDetailPage({ paymentId }: PaymentDetailPageProps) {
                         <div className="flex border-b border-slate-100 shrink-0">
                             <button
                                 onClick={() => setActiveTab("details")}
-                                className={`px-4 py-2.5 text-xs font-bold border-b-2 flex items-center gap-1.5 cursor-pointer transition-colors ${
-                                    activeTab === "details"
+                                className={`px-4 py-2.5 text-xs font-bold border-b-2 flex items-center gap-1.5 cursor-pointer transition-colors ${activeTab === "details"
                                         ? "border-emerald-600 text-emerald-600"
                                         : "border-transparent text-slate-400 hover:text-slate-600"
-                                }`}
+                                    }`}
                             >
                                 <IconFileDescription size={16} />
                                 Rincian / Catatan
                             </button>
                             <button
                                 onClick={() => setActiveTab("logs")}
-                                className={`px-4 py-2.5 text-xs font-bold border-b-2 flex items-center gap-1.5 cursor-pointer transition-colors ${
-                                    activeTab === "logs"
+                                className={`px-4 py-2.5 text-xs font-bold border-b-2 flex items-center gap-1.5 cursor-pointer transition-colors ${activeTab === "logs"
                                         ? "border-emerald-600 text-emerald-600"
                                         : "border-transparent text-slate-400 hover:text-slate-600"
-                                }`}
+                                    }`}
                             >
                                 <IconClock size={16} />
                                 Log Aktivitas ({logs.length})
@@ -352,18 +349,17 @@ export function PaymentDetailPage({ paymentId }: PaymentDetailPageProps) {
                                         </div>
                                         <div className="flex justify-between items-center pt-1.5">
                                             <span className="text-slate-400">Status Pembayaran:</span>
-                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                                summary.status_pembayaran === "paid"
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${summary.status_pembayaran === "paid"
                                                     ? "bg-emerald-50 text-emerald-600 border border-emerald-100/30"
                                                     : summary.status_pembayaran === "partially_paid"
-                                                    ? "bg-amber-50 text-amber-600 border border-amber-100/30"
-                                                    : "bg-slate-100 text-slate-600 border border-slate-200/30"
-                                            }`}>
+                                                        ? "bg-amber-50 text-amber-600 border border-amber-100/30"
+                                                        : "bg-slate-100 text-slate-600 border border-slate-200/30"
+                                                }`}>
                                                 {summary.status_pembayaran === "paid"
                                                     ? "LUNAS"
                                                     : summary.status_pembayaran === "partially_paid"
-                                                    ? "SEBAGIAN"
-                                                    : "TEMPO"}
+                                                        ? "SEBAGIAN"
+                                                        : "TEMPO"}
                                             </span>
                                         </div>
                                     </div>
@@ -388,9 +384,8 @@ export function PaymentDetailPage({ paymentId }: PaymentDetailPageProps) {
                                     return (
                                         <div
                                             key={p.id}
-                                            className={`py-2 text-[11px] flex justify-between items-center ${
-                                                isCurrentPayment ? "bg-emerald-50/50 px-2.5 rounded-lg -mx-2.5" : ""
-                                            }`}
+                                            className={`py-2 text-[11px] flex justify-between items-center ${isCurrentPayment ? "bg-emerald-50/50 px-2.5 rounded-lg -mx-2.5" : ""
+                                                }`}
                                         >
                                             <div className="space-y-0.5">
                                                 <div className="font-semibold text-slate-700 flex items-center gap-1">

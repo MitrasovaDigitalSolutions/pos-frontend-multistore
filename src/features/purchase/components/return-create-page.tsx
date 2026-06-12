@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconArrowLeft, IconClipboardPlus } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
@@ -16,7 +16,7 @@ import { purchaseReturnHeaderSchema, type PurchaseReturnHeaderInput } from "../s
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 
 export function ReturnCreatePage() {
-    const router = useRouter();
+    const router = useAppRouter();
     const createHeader = useCreatePurchaseReturnHeader();
     const { data: suppliers = [], isLoading: suppliersLoading } = useAllSuppliers();
     
@@ -65,7 +65,7 @@ export function ReturnCreatePage() {
                 setValue("supplier_id", selectedReceiving.supplier_id);
             }
         } else {
-            setValue("supplier_id", undefined as any);
+            setValue("supplier_id", undefined as unknown as number);
         }
     }, [receivingId, receivingsData, setValue]);
 

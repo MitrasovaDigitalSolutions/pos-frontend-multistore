@@ -10,9 +10,9 @@ import { TopSellingWeekly } from "@/features/dashboard/components/top-selling-we
 import { PageLoader } from "@/components/feedback/page-loader";
 
 export function Dashboard() {
-  const [from, setFrom] = useState<string>("");
-  const [to, setTo] = useState<string>("");
-  const [paymentMethod, setPaymentMethod] = useState<string>("");
+  const [from] = useState<string>("");
+  const [to] = useState<string>("");
+  const [paymentMethod] = useState<string>("");
 
   const { data: summary, isLoading } = useDashboardSummary({
     from: from || undefined,

@@ -5,11 +5,11 @@ import { PaymentList } from "@/features/purchase/components/payment-list";
 import { useState, useDeferredValue } from "react";
 import { useSession } from "next-auth/react";
 import { hasRole, hasPermission } from "@/constants/roles";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 
 export function PurchasePayment() {
     const { data: session } = useSession();
-    const router = useRouter();
+    const router = useAppRouter();
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
 

@@ -36,7 +36,7 @@ export function DailyReportView() {
 
     return (
         <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-6">
-            <div className="flex justify-between items-center border-b border-slate-50 pb-4 mb-6">
+            <div className="flex justify-between items-center border-b border-slate-50 mb-6">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">
                         Laporan Penjualan Harian

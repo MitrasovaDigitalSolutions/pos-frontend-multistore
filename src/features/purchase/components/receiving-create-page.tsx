@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconArrowLeft, IconClipboardPlus } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
@@ -16,7 +16,7 @@ import { useCreateReceivingHeader, useOutstandingPurchaseOrders } from "../api/p
 import { receivingHeaderSchema, type ReceivingHeaderInput } from "../schemas/receiving-schema";
 
 export function ReceivingCreatePage() {
-    const router = useRouter();
+    const router = useAppRouter();
     const createHeader = useCreateReceivingHeader();
     const { data: suppliers = [], isLoading: suppliersLoading } = useAllSuppliers();
     const { data: outstandingPosData, isLoading: posLoading } = useOutstandingPurchaseOrders({

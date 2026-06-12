@@ -35,12 +35,22 @@ function buildChartData(summary: DashboardSummary | undefined) {
   });
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    name: string;
+    value: number;
+    color: string;
+  }>;
+  label?: string;
+}
+
+const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 shadow-2xl text-white text-xs space-y-1">
         <div className="font-bold text-slate-300 mb-2">{label}</div>
-        {payload.map((p: any) => (
+        {payload.map((p) => (
           <div key={p.name} className="flex items-center gap-2">
             <span
               className="inline-block w-2.5 h-2.5 rounded-full"

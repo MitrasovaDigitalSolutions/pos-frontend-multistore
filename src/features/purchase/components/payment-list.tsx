@@ -10,7 +10,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 import {
     useDeletePayment,
 } from "../api/purchase-api";
@@ -49,7 +49,7 @@ export function PaymentList({
     isFetching = false,
 }: PaymentListProps) {
     const { data: session } = useSession();
-    const router = useRouter();
+    const router = useAppRouter();
     const deletePayment = useDeletePayment();
 
     const [confirmDialog, setConfirmDialog] = useState<{
@@ -195,8 +195,8 @@ export function PaymentList({
     );
 
     return (
-        <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-6">
-            <div className="flex justify-between items-center border-b border-slate-50 pb-4">
+        <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
+            <div className="flex justify-between items-center border-b border-slate-50">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">
                         Pembayaran Invoices / Penerimaan Supplier
@@ -229,7 +229,7 @@ export function PaymentList({
                 estimateRowHeight={44}
                 onView={handleDetailClick}
                 onEdit={handleEditClick}
-                hideEdit={(p) => !(p.status === "completed" && hasManagePurchase)}
+                hideEdit={() => true}
                 onDelete={handleDelete}
                 hideDelete={(p) => !(p.status === "completed" && hasManagePurchase)}
             />

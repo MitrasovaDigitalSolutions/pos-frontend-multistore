@@ -9,7 +9,7 @@ import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconPlus } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -44,7 +44,7 @@ export function ReceivingList({
     isLoading = false,
     isFetching = false,
 }: ReceivingListProps) {
-    const router = useRouter();
+    const router = useAppRouter();
     const { data: session } = useSession();
     const deleteReceiving = useDeleteReceiving();
     const updateReceiving = useUpdateReceiving();
@@ -253,8 +253,8 @@ export function ReceivingList({
     );
 
     return (
-        <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-6">
-            <div className="flex justify-between items-center border-b border-slate-50 pb-4">
+        <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
+            <div className="flex justify-between items-center border-b border-slate-50">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">
                         Penerimaan Barang Masuk

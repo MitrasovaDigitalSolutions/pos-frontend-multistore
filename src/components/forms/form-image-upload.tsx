@@ -33,6 +33,7 @@ export function FormImageUpload<T extends FieldValues>({
     // Synchronize initialUrl with previewUrl when editing states change
     useEffect(() => {
         if (initialUrl) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setPreviewUrl(initialUrl);
         } else {
             setPreviewUrl(null);
@@ -87,14 +88,14 @@ export function FormImageUpload<T extends FieldValues>({
     const handleRemove = (e: React.MouseEvent, onChange: (val: File | null) => void) => {
         e.stopPropagation();
         e.preventDefault();
-        
+
         if (previewUrl && previewUrl.startsWith("blob:")) {
             URL.revokeObjectURL(previewUrl);
         }
-        
+
         setPreviewUrl(null);
         onChange(null);
-        
+
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
         }
@@ -122,8 +123,8 @@ export function FormImageUpload<T extends FieldValues>({
                             isDragOver
                                 ? "border-emerald-500 bg-emerald-50/20"
                                 : error
-                                ? "border-rose-300 bg-rose-50/10 hover:border-rose-400"
-                                : "border-slate-200 bg-slate-50/20 hover:border-emerald-500 hover:bg-slate-50/50",
+                                    ? "border-rose-300 bg-rose-50/10 hover:border-rose-400"
+                                    : "border-slate-200 bg-slate-50/20 hover:border-emerald-500 hover:bg-slate-50/50",
                             disabled && "opacity-50 cursor-not-allowed",
                             "h-full min-h-[220px] md:min-h-[300px]"
                         )}
