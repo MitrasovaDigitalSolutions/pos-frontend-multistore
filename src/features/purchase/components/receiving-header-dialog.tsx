@@ -245,9 +245,9 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
                                     <FormSelect<ReceivingHeaderInput>
                                         name="status_pembayaran"
                                         options={[
-                                            { value: "pending", label: "Pending / Tempo" },
-                                            { value: "partially_paid", label: "Partially Paid" },
-                                            { value: "paid", label: "Paid / Lunas" },
+                                            { value: "pending", label: "Pending" },
+                                            { value: "partial", label: "Sebagian" },
+                                            { value: "paid", label: "Lunas" },
                                         ]}
                                         placeholder="Pilih status"
                                         disabled={updateReceiving.isPending}

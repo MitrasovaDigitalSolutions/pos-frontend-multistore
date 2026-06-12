@@ -40,7 +40,7 @@ export const receivingSchema = z.object({
         .nullable()
         .optional()
         .transform((val) => (val === undefined || val === null ? null : Number(val))),
-    status_pembayaran: z.enum(["pending", "partially_paid", "paid"]).default("pending"),
+    status_pembayaran: z.enum(["pending", "partial", "paid"]).default("pending"),
     status: z.enum(["draft", "completed"]).default("completed"),
     catatan: z
         .string()
@@ -74,7 +74,7 @@ export const receivingHeaderSchema = z.object({
     nomor_faktur: z.string().min(1, "Nomor faktur wajib diisi"),
     nilai_faktur: z.coerce.number().min(0, "Nilai faktur minimal 0").default(0),
     tanggal_terima: z.string().min(1, "Tanggal terima wajib diisi"),
-    status_pembayaran: z.enum(["pending", "partially_paid", "paid"]).default("pending"),
+    status_pembayaran: z.enum(["pending", "partial", "paid"]).default("pending"),
     catatan: z.string().nullable().optional().transform((val) => val || null),
 }).refine((data) => data.purchase_order_id || data.supplier_id, {
     message: "Supplier wajib dipilih jika tidak menggunakan PO",

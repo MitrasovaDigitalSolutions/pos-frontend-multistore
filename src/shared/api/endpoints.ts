@@ -97,7 +97,7 @@ export const ENDPOINTS = {
             UPDATE: (id: number) => `/v1/purchase/payment/${id}`,
             DELETE: (id: number) => `/v1/purchase/payment/${id}`,
             SUMMARY: (receivingId: number) => `/v1/purchase/payment/summary?receiving_id=${receivingId}`,
-            OUTSTANDING_RECEIVINGS: "/v1/purchase/receiving?status=completed&status_pembayaran=pending,partially_paid",
+            OUTSTANDING_RECEIVINGS: "/v1/purchase/receiving?status=completed&status_pembayaran=pending,partial",
         },
         RETURN: {
             LIST: "/v1/purchase/return",
