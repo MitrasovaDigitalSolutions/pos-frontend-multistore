@@ -4,7 +4,7 @@ import { PageLoader } from "@/components/feedback/page-loader";
 import { Button } from "@/components/ui/button";
 import { getPurchaseItemsStore, selectItemCount, selectTotal } from "@/stores/purchase-items-store";
 import { IconArrowLeft, IconBarcode, IconInfoCircle, IconAlertTriangle, IconCheck } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -35,7 +35,7 @@ interface ReceivingItemsPageProps {
 
 export function ReceivingItemsPage({ receivingId }: ReceivingItemsPageProps) {
     const { data: receiving, isLoading: receivingLoading, error } = useReceivingDetail(receivingId);
-    const router = useRouter();
+    const router = useAppRouter();
 
     if (receivingLoading) {
         return <PageLoader message="Memuat detail Penerimaan Barang..." />;
@@ -79,7 +79,7 @@ export function ReceivingItemsPage({ receivingId }: ReceivingItemsPageProps) {
 }
 
 function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: number; receiving: Receiving }) {
-    const router = useRouter();
+    const router = useAppRouter();
     const store = getPurchaseItemsStore(receivingId, "receiving");
     const items = store((state) => state.items);
     const addItem = store((state) => state.addItem);
@@ -95,8 +95,6 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
     const comparePrices = useComparePrices();
     const scanMutation = useScanReceivingProduct();
 
-    // Fetch PO details if linked to PO
-    const { data: poDetails } = usePurchaseOrderDetail(receiving.supplier_id ? null : Number(receiving.supplier || null) || null); 
     // Wait, the PO ID is stored in purchase_order_id. Let's see if our Receiving type has purchase_order_id.
     // In src/features/purchase/types/index.ts, Receiving doesn't explicitly declare purchase_order_id?
     // Wait, let's verify if receiving has purchase_order_id:

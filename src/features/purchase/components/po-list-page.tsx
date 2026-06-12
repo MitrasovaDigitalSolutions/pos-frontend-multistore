@@ -12,7 +12,7 @@ import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconCheck, IconCircleX, IconEdit, IconEye, IconPlus, IconTrash } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { useDeferredValue, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -25,7 +25,7 @@ import type { PurchaseOrder } from "../types";
 
 export function POListPage() {
     const { data: session } = useSession();
-    const router = useRouter();
+    const router = useAppRouter();
     const deleteOrder = useDeletePurchaseOrder();
     const finalizeOrder = useFinalizePurchaseOrder();
     const cancelOrder = useCancelPurchaseOrder();
@@ -413,8 +413,8 @@ export function POListPage() {
     }
 
     return (
-        <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-6">
-            <div className="flex justify-between items-center border-b border-slate-50 pb-4">
+        <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
+            <div className="flex justify-between items-center border-b border-slate-50">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">
                         Purchase Order (Pemesanan Barang)

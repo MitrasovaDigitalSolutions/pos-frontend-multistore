@@ -10,18 +10,27 @@ import {
     IconKey,
     IconSearch,
     IconLock,
-    IconLoader,
+    IconUsers,
+    IconPackage,
+    IconShoppingCart,
+    IconBox,
+    IconCoin,
+    IconFileText,
+    IconSettings,
+    IconAlertCircle,
 } from "@tabler/icons-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
 import {
     useRolesList,
     usePermissionsList,
     useAssignPermissionToRole,
     useRevokePermissionFromRole,
 } from "../api/roles-permissions-api";
+import { PermissionCategoryType } from "./role-permission-types";
+import { RolePermissionCategory } from "./role-permission-category";
+import { Permission } from "../types";
 
 const ROLE_METADATA: Record<string, { label: string; desc: string }> = {
     admin: {
@@ -116,6 +125,67 @@ const ROLE_ICONS: Record<string, React.ComponentType<{ size?: number; className?
     kasir: IconDeviceLaptop,
 };
 
+// Define Permission Categories for grouped view
+interface StaticPermissionCategory {
+    id: string;
+    label: string;
+    desc: string;
+    icon: React.ComponentType<{ size?: number; className?: string }>;
+    colorClass: string;
+    permissions: string[];
+}
+
+const PERMISSION_CATEGORIES: StaticPermissionCategory[] = [
+    {
+        id: "users",
+        label: "Manajemen Pengguna & Akses",
+        desc: "Mengatur data karyawan, hak akses role, serta menonaktifkan akun karyawan.",
+        icon: IconUsers,
+        colorClass: "text-emerald-600 bg-emerald-50 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/20",
+        permissions: ["manage_users", "view_users"],
+    },
+    {
+        id: "products",
+        label: "Master Produk & Katalog",
+        desc: "Menambah, mengubah, dan menghapus data barang, kategori, serta harga jual.",
+        icon: IconPackage,
+        colorClass: "text-blue-600 bg-blue-50 border-blue-100 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/20",
+        permissions: ["manage_products", "view_products"],
+    },
+    {
+        id: "sales",
+        label: "Transaksi & POS Harian",
+        desc: "Layar kasir checkout POS, pembayaran, dan pencatatan riwayat transaksi penjualan.",
+        icon: IconShoppingCart,
+        colorClass: "text-indigo-600 bg-indigo-50 border-indigo-100 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-900/20",
+        permissions: ["create_sales", "view_sales", "manage_sales"],
+    },
+    {
+        id: "inventory",
+        label: "Stok & Pemasok (Supplier)",
+        desc: "Penerimaan barang, stock opname fisik, penyesuaian stok, serta data distributor.",
+        icon: IconBox,
+        colorClass: "text-amber-600 bg-amber-50 border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/20",
+        permissions: ["manage_inventory", "view_inventory", "manage_suppliers", "view_suppliers"],
+    },
+    {
+        id: "cash_drawer",
+        label: "Laci Kas (Cash Drawer)",
+        desc: "Operasional shift kasir, saldo awal/akhir laci, kas masuk/keluar, dan audit laci kas.",
+        icon: IconCoin,
+        colorClass: "text-teal-600 bg-teal-50 border-teal-100 dark:bg-teal-950/20 dark:text-teal-400 dark:border-teal-900/20",
+        permissions: ["operate_cash_drawer", "manage_cash_drawer", "view_cash_drawer"],
+    },
+    {
+        id: "reports",
+        label: "Laporan & Audit Keamanan",
+        desc: "Mengakses dashboard statistik laporan penjualan, penutupan shift, dan log audit keamanan.",
+        icon: IconFileText,
+        colorClass: "text-violet-600 bg-violet-50 border-violet-100 dark:bg-violet-950/20 dark:text-violet-400 dark:border-violet-900/20",
+        permissions: ["view_reports", "view_audit_logs"],
+    },
+];
+
 export function RolePermissionMapping() {
     const { data: roles, isLoading: rolesLoading, isError: rolesError } = useRolesList();
     const { data: permissions, isLoading: permissionsLoading, isError: permissionsError } = usePermissionsList();
@@ -126,6 +196,8 @@ export function RolePermissionMapping() {
     const [selectedRoleName, setSelectedRoleName] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [pendingToggles, setPendingToggles] = useState<Record<string, boolean>>({});
+    const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+    const [bulkLoadingCategories, setBulkLoadingCategories] = useState<Record<string, boolean>>({});
 
     // Derive activeRoleName: use selectedRoleName if valid, otherwise default to first role name
     const activeRoleName = (roles && roles.some((r) => r.name === selectedRoleName))
@@ -178,19 +250,120 @@ export function RolePermissionMapping() {
         }
     };
 
-    // Filter permissions by search query
-    const filteredPermissions = permissions?.filter((p) => {
-        const meta = PERMISSION_METADATA[p.name];
-        const friendlyLabel = meta?.label || p.name;
-        const description = meta?.desc || "";
-        const query = searchQuery.toLowerCase();
+    // Bulk assign/revoke for a specific category
+    const handleBulkAction = async (
+        catId: string,
+        permissionsInCat: Permission[],
+        action: "assign" | "revoke"
+    ) => {
+        if (!activeRoleName) return;
 
-        return (
-            friendlyLabel.toLowerCase().includes(query) ||
-            p.name.toLowerCase().includes(query) ||
-            description.toLowerCase().includes(query)
-        );
-    });
+        setBulkLoadingCategories((prev) => ({ ...prev, [catId]: true }));
+        const actionLabel = action === "assign" ? "diberikan" : "dicabut";
+
+        try {
+            const targets = permissionsInCat.filter((perm) => {
+                const isAssigned = selectedRole?.permissions.some((p) => p.name === perm.name) || false;
+                return action === "assign" ? !isAssigned : isAssigned;
+            });
+
+            if (targets.length === 0) {
+                toast.info(`Semua hak akses kategori ini sudah dalam kondisi ${actionLabel}.`);
+                return;
+            }
+
+            // Perform updates concurrently
+            await Promise.all(
+                targets.map((perm) => {
+                    const params = { role: activeRoleName, permission: perm.name };
+                    return action === "assign"
+                        ? assignMutation.mutateAsync(params)
+                        : revokeMutation.mutateAsync(params);
+                })
+            );
+
+            toast.success(`Berhasil memperbarui ${targets.length} hak akses pada kategori ini.`);
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Gagal melakukan pembaruan massal.";
+            toast.error(message);
+        } finally {
+            setBulkLoadingCategories((prev) => ({ ...prev, [catId]: false }));
+        }
+    };
+
+    // Expand & Collapse Helpers
+    const handleExpandAll = (categoriesList: PermissionCategoryType[]) => {
+        const expanded: Record<string, boolean> = {};
+        categoriesList.forEach((cat) => {
+            expanded[cat.id] = true;
+        });
+        setExpandedCategories(expanded);
+    };
+
+    const handleCollapseAll = (categoriesList: PermissionCategoryType[]) => {
+        const expanded: Record<string, boolean> = {};
+        categoriesList.forEach((cat) => {
+            expanded[cat.id] = false;
+        });
+        setExpandedCategories(expanded);
+    };
+
+    const isCategoryExpanded = (catId: string) => {
+        return expandedCategories[catId] !== false; // expanded by default
+    };
+
+    const toggleCategory = (catId: string) => {
+        setExpandedCategories((prev) => ({
+            ...prev,
+            [catId]: prev[catId] === false ? true : false,
+        }));
+    };
+
+    // Build categories structure from fetched permissions
+    const mappedPermissionNames = new Set(PERMISSION_CATEGORIES.flatMap((c) => c.permissions));
+    const unmappedPermissions = permissions?.filter((p) => !mappedPermissionNames.has(p.name)) || [];
+
+    const categoriesWithPermissions: PermissionCategoryType[] = [
+        ...PERMISSION_CATEGORIES.map((cat) => ({
+            ...cat,
+            items: permissions?.filter((p) => cat.permissions.includes(p.name)) || [],
+        })),
+    ];
+
+    if (unmappedPermissions.length > 0) {
+        categoriesWithPermissions.push({
+            id: "other",
+            label: "Hak Akses Lainnya",
+            desc: "Hak akses sistem tambahan atau kustom yang terdaftar.",
+            icon: IconSettings,
+            colorClass: "text-slate-600 bg-slate-50 border-slate-100 dark:bg-slate-900/30 dark:text-slate-400 dark:border-slate-800/30",
+            permissions: unmappedPermissions.map((p) => p.name),
+            items: unmappedPermissions,
+        });
+    }
+
+    // Filter categories and permissions inside them based on the search query
+    const filteredCategories = categoriesWithPermissions
+        .map((cat) => {
+            const filteredItems = cat.items.filter((p) => {
+                const meta = PERMISSION_METADATA[p.name];
+                const friendlyLabel = meta?.label || p.name;
+                const description = meta?.desc || "";
+                const query = searchQuery.toLowerCase();
+
+                return (
+                    friendlyLabel.toLowerCase().includes(query) ||
+                    p.name.toLowerCase().includes(query) ||
+                    description.toLowerCase().includes(query)
+                );
+            });
+
+            return {
+                ...cat,
+                items: filteredItems,
+            };
+        })
+        .filter((cat) => cat.items.length > 0);
 
     if (isLoading) {
         return (
@@ -294,7 +467,7 @@ export function RolePermissionMapping() {
                                     <span>
                                         Konfigurasi Hak Akses:{" "}
                                         <span className="text-emerald-600 capitalize">
-                                             {ROLE_METADATA[activeRoleName || ""]?.label || activeRoleName}
+                                            {ROLE_METADATA[activeRoleName || ""]?.label || activeRoleName}
                                         </span>
                                     </span>
                                 </CardTitle>
@@ -318,71 +491,55 @@ export function RolePermissionMapping() {
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent className="p-0">
-                        {filteredPermissions && filteredPermissions.length > 0 ? (
-                            <div className="divide-y divide-slate-50">
-                                {filteredPermissions.map((perm) => {
-                                    const meta = PERMISSION_METADATA[perm.name] || {
-                                        label: perm.name.replace("_", " "),
-                                        desc: "Hak akses sistem tambahan.",
-                                    };
-                                    const isAssigned = selectedRole?.permissions.some(
-                                        (p) => p.name === perm.name
-                                    ) || false;
-                                    const isPending = pendingToggles[perm.name];
 
-                                    return (
-                                        <div
-                                            key={perm.id}
-                                            className={`flex items-center justify-between p-5 transition-colors ${isAssigned ? "bg-slate-50/20" : "bg-transparent"
-                                                }`}
-                                        >
-                                            <div className="flex gap-4 items-start pr-4">
-                                                <div
-                                                    className={`p-2 rounded-lg mt-0.5 ${isAssigned
-                                                        ? "bg-emerald/10 text-emerald"
-                                                        : "bg-slate-50 text-slate-400"
-                                                        }`}
-                                                >
-                                                    <IconKey size={16} />
-                                                </div>
-                                                <div>
-                                                    <h5 className="text-xs font-extrabold text-slate-900">
-                                                        {meta.label}
-                                                    </h5>
-                                                    <span className="text-[9px] text-slate-400 font-mono">
-                                                        Sistem ID: {perm.name}
-                                                    </span>
-                                                    <p className="text-[10px] text-slate-400 mt-1 leading-relaxed max-w-xl">
-                                                        {meta.desc}
-                                                    </p>
-                                                </div>
-                                            </div>
+                    {/* Expand / Collapse All Controls */}
+                    <div className="flex justify-between items-center px-6 py-3 bg-slate-50/50 border-b border-slate-100">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                            Daftar Kategori Modul
+                        </span>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => handleExpandAll(categoriesWithPermissions)}
+                                className="text-[10px] font-bold text-slate-500 hover:text-emerald-600 hover:bg-slate-50 transition-colors flex items-center gap-1 cursor-pointer bg-white px-2 py-1 rounded-lg border border-slate-100 shadow-sm"
+                            >
+                                Buka Semua
+                            </button>
+                            <button
+                                onClick={() => handleCollapseAll(categoriesWithPermissions)}
+                                className="text-[10px] font-bold text-slate-500 hover:text-emerald-600 hover:bg-slate-50 transition-colors flex items-center gap-1 cursor-pointer bg-white px-2 py-1 rounded-lg border border-slate-100 shadow-sm"
+                            >
+                                Tutup Semua
+                            </button>
+                        </div>
+                    </div>
 
-                                            <div className="flex items-center gap-3">
-                                                {isPending && (
-                                                    <IconLoader
-                                                        size={14}
-                                                        className="text-emerald-500 animate-spin"
-                                                    />
-                                                )}
-                                                <Switch
-                                                    checked={isAssigned}
-                                                    onCheckedChange={() => handleToggle(perm.name, isAssigned)}
-                                                    disabled={
-                                                        isPending ||
-                                                        assignMutation.isPending ||
-                                                        revokeMutation.isPending
-                                                    }
-                                                />
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                    <CardContent className="p-0 divide-y divide-slate-100">
+                        {filteredCategories.length > 0 ? (
+                            filteredCategories.map((cat) => {
+                                const isExpanded = searchQuery.trim() !== "" || isCategoryExpanded(cat.id);
+                                const isBulkLoading = bulkLoadingCategories[cat.id];
+
+                                return (
+                                    <RolePermissionCategory
+                                        key={cat.id}
+                                        category={cat}
+                                        selectedRole={selectedRole}
+                                        searchQuery={searchQuery}
+                                        isExpanded={isExpanded}
+                                        isBulkLoading={isBulkLoading}
+                                        pendingToggles={pendingToggles}
+                                        isMutating={assignMutation.isPending || revokeMutation.isPending}
+                                        permissionMetadata={PERMISSION_METADATA}
+                                        onToggleCategory={() => toggleCategory(cat.id)}
+                                        onTogglePermission={handleToggle}
+                                        onBulkAction={(action) => handleBulkAction(cat.id, cat.items, action)}
+                                    />
+                                );
+                            })
                         ) : (
-                            <div className="p-12 text-center text-slate-400">
-                                <p className="text-[11px]">Tidak ada hak akses ditemukan.</p>
+                            <div className="p-12 text-center text-slate-400 flex flex-col items-center justify-center gap-2">
+                                <IconAlertCircle size={28} className="text-slate-300" />
+                                <p className="text-[11px]">Tidak ada hak akses ditemukan untuk pencarian &ldquo;{searchQuery}&rdquo;.</p>
                             </div>
                         )}
                     </CardContent>

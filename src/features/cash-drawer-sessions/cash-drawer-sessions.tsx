@@ -157,8 +157,8 @@ export function CashDrawerSessions() {
 
     return (
         <div className="space-y-6">
-            <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-6">
-                <div className="flex justify-between items-center border-b border-slate-50 pb-4">
+            <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
+                <div className="flex justify-between items-center border-b border-slate-50">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
                             <IconWallet size={20} />

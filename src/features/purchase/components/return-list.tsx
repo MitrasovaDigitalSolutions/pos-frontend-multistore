@@ -15,7 +15,7 @@ import { useDeletePurchaseReturn } from "../api/purchase-api";
 import type { PurchaseReturn } from "../types";
 import { ReturnDetailDialog } from "./return-detail-dialog";
 import { ReturnFinalizeDialog } from "./return-finalize-dialog";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 
 interface ReturnListProps {
     returns: PurchaseReturn[];
@@ -49,7 +49,7 @@ interface ReturnListProps {
 
 export function ReturnList({
     returns,
-    products,
+    products: _products,
     meta,
     page,
     onPageChange,
@@ -60,7 +60,7 @@ export function ReturnList({
     setFilters,
 }: ReturnListProps) {
     const { data: session } = useSession();
-    const router = useRouter();
+    const router = useAppRouter();
     const deleteReturn = useDeletePurchaseReturn();
     const [selectedReturn, setSelectedReturn] = useState<PurchaseReturn | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -248,8 +248,8 @@ export function ReturnList({
     // );
 
     return (
-        <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-6">
-            <div className="flex justify-between items-center border-b border-slate-50 pb-4">
+        <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
+            <div className="flex justify-between items-center border-b border-slate-50">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">
                         Retur Pembelian (Purchase Return)

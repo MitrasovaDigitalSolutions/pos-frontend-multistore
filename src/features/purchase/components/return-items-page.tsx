@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
 import { IconArrowLeft, IconBarcode, IconDeviceFloppy, IconInfoCircle, IconTrash } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import {
@@ -24,7 +24,7 @@ interface ReturnItemsPageProps {
 
 export function ReturnItemsPage({ returnId }: ReturnItemsPageProps) {
     const { data: returnObj, isLoading: returnLoading, error } = usePurchaseReturnDetail(returnId);
-    const router = useRouter();
+    const router = useAppRouter();
 
     if (returnLoading) {
         return <PageLoader message="Memuat detail Dokumen Retur..." />;
@@ -68,7 +68,7 @@ export function ReturnItemsPage({ returnId }: ReturnItemsPageProps) {
 }
 
 function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; returnObj: PurchaseReturn }) {
-    const router = useRouter();
+    const router = useAppRouter();
     const store = getPurchaseItemsStore(returnId, "return");
     const items = store((state) => state.items);
     const addItem = store((state) => state.addItem);

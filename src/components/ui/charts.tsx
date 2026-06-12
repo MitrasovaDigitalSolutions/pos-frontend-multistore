@@ -16,7 +16,7 @@ export function Sparkline({
   width = 100,
   height = 40,
   color = "#4f46e5", // emerald-600
-  fillColor = "rgba(79, 70, 229, 0.1)",
+  fillColor: _fillColor = "rgba(79, 70, 229, 0.1)",
 }: SparklineProps) {
   const points = useMemo(() => {
     if (!data || data.length < 2) return "";
@@ -74,7 +74,7 @@ interface BarChartProps {
   barColor?: string;
 }
 
-export function BarChart({ data, height = 180, barColor = "#0f172a" }: BarChartProps) {
+export function BarChart({ data, height = 180, barColor: _barColor = "#0f172a" }: BarChartProps) {
   const max = useMemo(() => {
     return Math.max(...data.map((d) => d.value)) || 1;
   }, [data]);
@@ -178,15 +178,17 @@ export function DoughnutChart({
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
 
-  // Compute accumulated segments for circular strokes
   const segments = useMemo(() => {
-    let accumulatedAngle = 0;
-    return data.map((seg) => {
+    return data.map((seg, index) => {
       const percentage = seg.value / total;
       const strokeLength = percentage * circumference;
-      const strokeOffset = circumference - strokeLength + accumulatedAngle;
-      accumulatedAngle -= strokeLength;
-
+      
+      const previousTotalLength = data
+        .slice(0, index)
+        .reduce((sum, s) => sum + (s.value / total) * circumference, 0);
+        
+      const strokeOffset = circumference - strokeLength - previousTotalLength;
+ 
       return {
         ...seg,
         strokeLength,

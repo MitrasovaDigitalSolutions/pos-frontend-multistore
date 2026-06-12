@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IconArrowLeft, IconCreditCard, IconCoins, IconReceipt2, IconInfoCircle, IconAlertTriangle } from "@tabler/icons-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
-import { FormProvider, useForm, type Resolver } from "react-hook-form";
+import { IconArrowLeft, IconCreditCard, IconCoins, IconReceipt2, IconInfoCircle } from "@tabler/icons-react";
+import { useSearchParams } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
+import { useEffect, useState } from "react";
+import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import {
     useCreatePayment,
@@ -22,18 +23,31 @@ import {
 } from "../api/purchase-api";
 import { paymentSchema, type PaymentInput } from "../schemas/payment-schema";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export function PaymentCreatePage() {
-    const router = useRouter();
+    const router = useAppRouter();
     const searchParams = useSearchParams();
     const editIdParam = searchParams.get("edit");
     const editId = editIdParam ? Number(editIdParam) : null;
     const isEdit = editId !== null && editId > 0;
 
+    // Block editing completely
+    useEffect(() => {
+        if (isEdit) {
+            toast.error("Pembayaran yang sudah disimpan tidak dapat diubah.");
+            router.push("/admin/purchase/payment");
+        }
+    }, [isEdit, router]);
+
     const createPayment = useCreatePayment();
     const updatePayment = useUpdatePayment();
     const { data: cashAccounts = [], isLoading: cashAccountsLoading } = useCashAccounts();
     const { data: outstandingReceivings = [], isLoading: receivingsLoading } = useOutstandingReceivings();
+
+    // Confirm dialog states
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [pendingData, setPendingData] = useState<PaymentInput | null>(null);
 
     // Fetch payment detail if in edit mode
     const { data: editingPayment, isLoading: editingPaymentLoading } = usePaymentDetail(editId);
@@ -54,13 +68,12 @@ export function PaymentCreatePage() {
     const {
         register,
         handleSubmit,
-        watch,
         setValue,
         reset,
         formState: { errors },
     } = methods;
 
-    const selectedReceivingId = watch("receiving_id");
+    const selectedReceivingId = useWatch({ name: "receiving_id", control: methods.control });
 
     // Fetch summary for selected receiving
     const { data: summary, isLoading: summaryLoading } = usePaymentSummary(
@@ -139,36 +152,28 @@ export function PaymentCreatePage() {
             }
         }
 
+        setPendingData(data);
+        setIsConfirmOpen(true);
+    };
+
+    const handleConfirmSave = async () => {
+        if (!pendingData) return;
+
         const payload = {
-            ...data,
-            receiving_id: Number(data.receiving_id),
-            jumlah_bayar: Number(data.jumlah_bayar),
-            cash_account_id: Number(data.cash_account_id) || 1,
+            ...pendingData,
+            receiving_id: Number(pendingData.receiving_id),
+            jumlah_bayar: Number(pendingData.jumlah_bayar),
+            cash_account_id: Number(pendingData.cash_account_id) || 1,
         };
 
-        if (isEdit && editId) {
-            updatePayment.mutate(
-                { id: editId, data: payload },
-                {
-                    onSuccess: () => {
-                        toast.success("Pembayaran supplier berhasil diperbarui.");
-                        router.push("/admin/purchase/payment");
-                    },
-                    onError: (err) => {
-                        toast.error(err.message || "Gagal memperbarui pembayaran.");
-                    },
-                }
-            );
-        } else {
-            createPayment.mutate(payload, {
-                onSuccess: () => {
-                    toast.success("Pembayaran supplier berhasil dicatat.");
-                    router.push("/admin/purchase/payment");
-                },
-                onError: (err) => {
-                    toast.error(err.message || "Gagal mencatat pembayaran.");
-                },
-            });
+        try {
+            await createPayment.mutateAsync(payload);
+            toast.success("Pembayaran supplier berhasil dicatat.");
+            setIsConfirmOpen(false);
+            router.push("/admin/purchase/payment");
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Gagal mencatat pembayaran.";
+            toast.error(message);
         }
     };
 
@@ -502,6 +507,26 @@ export function PaymentCreatePage() {
                     )}
                 </div>
             </div>
+
+            <ConfirmDialog
+                open={isConfirmOpen}
+                onOpenChange={setIsConfirmOpen}
+                title="Konfirmasi Catat Pembayaran"
+                description={
+                    <span>
+                        Apakah Anda yakin ingin menyimpan pembayaran ini?
+                        <br />
+                        <strong className="text-rose-600 font-bold mt-1 inline-block">
+                            Catatan: Setelah disimpan, data pembayaran tidak dapat diubah kembali.
+                        </strong>
+                    </span>
+                }
+                confirmText="Ya, Simpan"
+                cancelText="Batal"
+                variant="warning"
+                onConfirm={handleConfirmSave}
+                isLoading={createPayment.isPending}
+            />
         </div>
     );
 }

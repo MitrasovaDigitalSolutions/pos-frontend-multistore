@@ -1,16 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-    apiGetData,
     apiGetList,
     apiPost,
-    apiPut,
     apiPatch,
     apiDelete,
 } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
 import type { Product } from "../types";
-import type { ProductInput } from "../schemas/product-schema";
 
 export function useProducts(params?: PaginationParams) {
     return useQuery<PaginatedResponse<Product>>({

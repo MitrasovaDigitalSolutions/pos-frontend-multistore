@@ -1,9 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { CommandSelect } from "@/components/ui/command-select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
 import { hasPermission, hasRole } from "@/constants/roles";
@@ -57,7 +55,6 @@ export function UserTable({
         hasPermission(userRoles, userPermissions, "manage_users");
 
     const deactivateUser = useDeactivateUser();
-    const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
 
     const currentUser = session?.user;
 
@@ -83,12 +80,6 @@ export function UserTable({
         });
     };
 
-    const filteredUsers = useMemo(() => {
-        return users.filter((u) => {
-            if (statusFilter === "all") return true;
-            return u.status === statusFilter;
-        });
-    }, [users, statusFilter]);
 
     const columns = useMemo<ColumnDef<User>[]>(
         () => {
@@ -169,27 +160,12 @@ export function UserTable({
         [hasManageUsers],
     );
 
-    const filtersSlot = (
-        <CommandSelect
-            value={statusFilter}
-            onChange={(val) => setStatusFilter(val as any)}
-            options={[
-                { value: "all", label: "Semua Status" },
-                { value: "active", label: "Aktif" },
-                { value: "inactive", label: "Nonaktif" },
-            ]}
-            wrapperClassName="w-36"
-            searchPlaceholder="Cari status..."
-            placeholder="Pilih status"
-        />
-    );
-
     return (
-        <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-6">
-            <div className="flex justify-between items-center border-b border-slate-50 pb-4">
+        <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
+            <div className="flex justify-between items-center border-b border-slate-50">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">
-                        Kelola Pengguna Sistem
+                        Daftar Pengguna Sistem
                     </h3>
                     <p className="text-[11px] text-slate-400 mt-0.5">
                         Daftar akun kasir, supervisor, dan manajer.
@@ -204,10 +180,9 @@ export function UserTable({
                     </Button>
                 )}
             </div>
-
             <DataTable
                 columns={columns}
-                data={filteredUsers}
+                data={users}
                 isLoading={isLoading}
                 isFetching={isFetching}
                 emptyMessage="Tidak ada pengguna ditemukan."
@@ -220,7 +195,6 @@ export function UserTable({
                 search={search}
                 onSearchChange={onSearchChange}
                 searchPlaceholder="Cari user berdasarkan nama atau username..."
-                filters={filtersSlot}
                 virtualize={true}
                 estimateRowHeight={44}
                 onEdit={hasManageUsers ? onEdit : undefined}

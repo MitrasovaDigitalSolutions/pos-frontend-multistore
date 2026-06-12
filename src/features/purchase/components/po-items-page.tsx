@@ -4,7 +4,7 @@ import { PageLoader } from "@/components/feedback/page-loader";
 import { Button } from "@/components/ui/button";
 import { getPurchaseItemsStore, selectItemCount, selectTotal } from "@/stores/purchase-items-store";
 import { IconArrowLeft, IconBarcode, IconInfoCircle } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { useBulkReplacePurchaseOrderItems, usePurchaseOrderDetail } from "../api/purchase-api";
@@ -20,7 +20,7 @@ interface POItemsPageProps {
 
 export function POItemsPage({ poId }: POItemsPageProps) {
     const { data: order, isLoading: orderLoading, error } = usePurchaseOrderDetail(poId);
-    const router = useRouter();
+    const router = useAppRouter();
 
     if (orderLoading) {
         return <PageLoader message="Memuat detail Purchase Order..." />;
@@ -65,7 +65,7 @@ export function POItemsPage({ poId }: POItemsPageProps) {
 }
 
 function POItemsContainer({ poId, order }: { poId: number; order: PurchaseOrder }) {
-    const router = useRouter();
+    const router = useAppRouter();
     const store = getPurchaseItemsStore(poId, "po");
     const items = store((state) => state.items);
     const addItem = store((state) => state.addItem);

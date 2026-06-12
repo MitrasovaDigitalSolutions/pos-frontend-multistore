@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { IconArrowLeft, IconTools } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 import Link from "next/link";
 
 interface PlaceholderPageProps {
@@ -11,7 +11,7 @@ interface PlaceholderPageProps {
 }
 
 export function PlaceholderPage({ title, description }: PlaceholderPageProps) {
-    const router = useRouter();
+    const router = useAppRouter();
 
     return (
         <div className="min-h-[70vh] flex items-center justify-center p-6">

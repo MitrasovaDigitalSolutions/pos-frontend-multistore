@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { toast } from "sonner";
 import { useProducts } from "@/features/products/api/products-api";
 import { lookupBarcode } from "@/features/checkout/api/checkout-api";
@@ -11,7 +11,7 @@ import type { Product } from "@/features/products/types";
 import { useCheckoutStore } from "@/stores/checkout-store";
 
 export function useCheckoutState() {
-    const router = useRouter();
+    const router = useAppRouter();
     const { data: session, update } = useSession();
     const user = session?.user;
 
@@ -35,12 +35,13 @@ export function useCheckoutState() {
     // Hydration check to prevent Next.js hydration mismatches
     const [mounted, setMounted] = useState(false);
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
     }, []);
 
     // Expose cart & holdList safely
-    const cart = mounted ? storeCart : [];
-    const holdList = mounted ? storeHoldList : [];
+    const cart = useMemo(() => (mounted ? storeCart : []), [mounted, storeCart]);
+    const holdList = useMemo(() => (mounted ? storeHoldList : []), [mounted, storeHoldList]);
 
     // Recalled transaction reference ID (purely for local UI representation)
     const [activeRecallId, setActiveRecallId] = useState<number | null>(null);

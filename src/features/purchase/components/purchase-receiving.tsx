@@ -7,11 +7,11 @@ import { ReceivingList } from "@/features/purchase/components/receiving-list";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { hasRole, hasPermission } from "@/constants/roles";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 
 export function PurchaseReceiving() {
     const { data: session } = useSession();
-    const router = useRouter();
+    const router = useAppRouter();
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
 

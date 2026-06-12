@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { IconBarcode, IconSearch, IconLoader2 } from "@tabler/icons-react";
 import { lookupProductByBarcode } from "../../api/purchase-api";
 import type { Product } from "@/features/products/types";
+import { useQuery } from "@tanstack/react-query";
+import { apiGetList } from "@/shared/api/api-client";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
 interface BarcodeInputProps {
     onProductFound: (product: Product) => void;
@@ -26,6 +29,61 @@ export function BarcodeInput({
     const [flashState, setFlashState] = useState<"success" | "error" | null>(null);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    // Autocomplete states
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [focusedIndex, setFocusedIndex] = useState(-1);
+    const [debouncedValue, setDebouncedValue] = useState("");
+
+    // Debounce input value for search queries
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedValue(value);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [value]);
+
+    // Show/hide dropdown based on input content
+    useEffect(() => {
+        if (value.trim().length >= 2) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setShowDropdown(true);
+        } else {
+            setShowDropdown(false);
+            setFocusedIndex(-1);
+        }
+    }, [value]);
+
+    const isLocalMode = products && products.length > 0;
+
+    // TanStack Query for searching products from API
+    const { data: apiProducts, isLoading: isApiLoading } = useQuery({
+        queryKey: ["products", "autocomplete", debouncedValue],
+        queryFn: async () => {
+            const res = await apiGetList<Product>("/v1/products", {
+                search: debouncedValue,
+                per_page: 8,
+            });
+            return res.data;
+        },
+        enabled: !isLocalMode && debouncedValue.trim().length >= 2,
+        staleTime: 30000,
+    });
+
+    // Compute suggestion list
+    const suggestions = useMemo(() => {
+        if (value.trim().length < 2) return [];
+        if (isLocalMode) {
+            return products
+                .filter(
+                    (p) =>
+                        p.nama.toLowerCase().includes(value.toLowerCase()) ||
+                        (p.barcode && p.barcode.toLowerCase().includes(value.toLowerCase())),
+                )
+                .slice(0, 8);
+        }
+        return apiProducts || [];
+    }, [value, isLocalMode, products, apiProducts]);
+
     // Auto-focus on mount
     useEffect(() => {
         if (!disabled) {
@@ -36,7 +94,9 @@ export function BarcodeInput({
     // Clear flash after animation
     useEffect(() => {
         if (flashState) {
-            const timer = setTimeout(() => setFlashState(null), 600);
+            const timer = setTimeout(() => {
+                setFlashState(null);
+            }, 600);
             return () => clearTimeout(timer);
         }
     }, [flashState]);
@@ -49,10 +109,20 @@ export function BarcodeInput({
         setTimeout(() => inputRef.current?.focus(), 50);
     }, []);
 
+    const handleSelectProduct = (product: Product) => {
+        setValue("");
+        setShowDropdown(false);
+        setFocusedIndex(-1);
+        onProductFound(product);
+        refocusInput();
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const query = value.trim();
         setValue("");
+        setShowDropdown(false);
+        setFocusedIndex(-1);
 
         if (!query) {
             refocusInput();
@@ -100,6 +170,32 @@ export function BarcodeInput({
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (showDropdown && suggestions.length > 0) {
+            if (e.key === "ArrowDown") {
+                e.preventDefault();
+                setFocusedIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : 0));
+                return;
+            }
+            if (e.key === "ArrowUp") {
+                e.preventDefault();
+                setFocusedIndex((prev) => (prev > 0 ? prev - 1 : suggestions.length - 1));
+                return;
+            }
+            if (e.key === "Escape") {
+                e.preventDefault();
+                setShowDropdown(false);
+                setFocusedIndex(-1);
+                return;
+            }
+            if (e.key === "Enter") {
+                if (focusedIndex >= 0 && focusedIndex < suggestions.length) {
+                    e.preventDefault();
+                    handleSelectProduct(suggestions[focusedIndex]);
+                    return;
+                }
+            }
+        }
+
         // Debounce for rapid scanner input
         if (debounceRef.current) {
             clearTimeout(debounceRef.current);
@@ -120,56 +216,132 @@ export function BarcodeInput({
         flashState === "success"
             ? "ring-2 ring-emerald-400 bg-emerald-50/50"
             : flashState === "error"
-              ? "ring-2 ring-rose-400 bg-rose-50/50 animate-shake"
-              : "";
+                ? "ring-2 ring-rose-400 bg-rose-50/50 animate-shake"
+                : "";
 
     return (
         <form onSubmit={handleSubmit} className="relative">
-            <div
-                className={`
-                    relative flex items-center gap-2 rounded-2xl border border-slate-200 
-                    bg-white px-4 py-3 transition-all duration-200
-                    focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-400/20
-                    ${disabled ? "opacity-50 cursor-not-allowed" : ""}
-                    ${flashClasses}
-                `}
-            >
-                {isSearching ? (
-                    <IconLoader2 size={20} className="text-emerald-500 animate-spin shrink-0" />
-                ) : (
-                    <IconBarcode size={20} className="text-slate-400 shrink-0" />
-                )}
-
-                <input
-                    ref={inputRef}
-                    type="text"
-                    value={value}
-                    onChange={(e) => setValue(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder={placeholder}
-                    disabled={disabled || isSearching}
-                    autoComplete="off"
-                    className="
-                        flex-1 bg-transparent border-none outline-none text-sm text-slate-800
-                        placeholder:text-slate-400 font-medium
-                        disabled:cursor-not-allowed
-                    "
-                />
-
-                <button
-                    type="submit"
-                    disabled={disabled || isSearching || !value.trim()}
-                    className="
-                        flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold
-                        bg-emerald-50 text-emerald-600 hover:bg-emerald-100
-                        disabled:opacity-40 disabled:cursor-not-allowed
-                        transition-colors cursor-pointer
-                    "
+            <Popover open={showDropdown} onOpenChange={setShowDropdown}>
+                <div
+                    className={`
+                        relative flex items-center gap-2 rounded-2xl border border-slate-200 
+                        bg-white px-4 py-3 transition-all duration-200
+                        focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-400/20
+                        ${disabled ? "opacity-50 cursor-not-allowed" : ""}
+                        ${flashClasses}
+                    `}
                 >
-                    <IconSearch size={14} />
-                    <span>Cari</span>
-                </button>
-            </div>
+                    {isSearching ? (
+                        <IconLoader2 size={20} className="text-emerald-500 animate-spin shrink-0" />
+                    ) : (
+                        <IconBarcode size={20} className="text-slate-400 shrink-0" />
+                    )}
+
+                    <PopoverTrigger
+                        nativeButton={false}
+                        render={
+                            <input
+                                ref={inputRef}
+                                type="text"
+                                value={value}
+                                onChange={(e) => setValue(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                placeholder={placeholder}
+                                disabled={disabled || isSearching}
+                                autoComplete="off"
+                                className="
+                                    flex-1 bg-transparent border-none outline-none text-sm text-slate-800
+                                    placeholder:text-slate-400 font-medium
+                                    disabled:cursor-not-allowed
+                                "
+                            />
+                        }
+                    />
+
+                    <button
+                        type="submit"
+                        disabled={disabled || isSearching || !value.trim()}
+                        className="
+                            flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold
+                            bg-emerald-50 text-emerald-600 hover:bg-emerald-100
+                            disabled:opacity-40 disabled:cursor-not-allowed
+                            transition-colors cursor-pointer
+                        "
+                    >
+                        <IconSearch size={14} />
+                        <span>Cari</span>
+                    </button>
+                </div>
+                <PopoverContent
+                    className="p-0 w-(--anchor-width) max-h-60 overflow-y-auto overflow-x-hidden min-w-[280px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl outline-none"
+                    align="start"
+                    side="bottom"
+                    sideOffset={4}
+                >
+                    {isApiLoading ? (
+                        <div className="p-4 text-center text-xs text-slate-400 font-medium flex items-center justify-center gap-2">
+                            <IconLoader2 size={16} className="text-emerald-500 animate-spin" />
+                            <span>Mencari produk...</span>
+                        </div>
+                    ) : suggestions.length === 0 ? (
+                        <div className="p-4 text-center text-xs text-slate-400 font-medium">
+                            Tidak ada produk yang cocok.
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-slate-50 dark:divide-slate-800/50">
+                            {suggestions.map((p, index) => {
+                                const isFocused = index === focusedIndex;
+                                return (
+                                    <div
+                                        key={p.id}
+                                        onClick={() => handleSelectProduct(p)}
+                                        onMouseEnter={() => setFocusedIndex(index)}
+                                        className={`
+                                            flex items-center justify-between px-4 py-3 cursor-pointer transition-colors duration-150
+                                            ${isFocused ? "bg-emerald-50/70 dark:bg-emerald-950/20" : "hover:bg-slate-50/50 dark:hover:bg-slate-800/30"}
+                                        `}
+                                    >
+                                        <div className="flex flex-col gap-0.5 text-left">
+                                            <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                                                {p.nama}
+                                            </span>
+                                            <div className="flex items-center gap-2 text-[10px] text-slate-400 font-medium">
+                                                {p.barcode && (
+                                                    <span className="font-mono flex items-center gap-0.5">
+                                                        <IconBarcode size={12} className="opacity-70" />
+                                                        {p.barcode}
+                                                    </span>
+                                                )}
+                                                {p.merek && (
+                                                    <span className="px-1 py-0.2 bg-slate-100 dark:bg-slate-800 rounded text-[9px]">
+                                                        {p.merek}
+                                                    </span>
+                                                )}
+                                                {p.category?.nama && (
+                                                    <span className="text-slate-300">•</span>
+                                                )}
+                                                {p.category?.nama && (
+                                                    <span>{p.category.nama}</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="text-right flex flex-col items-end gap-0.5">
+                                            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 font-mono">
+                                                {p.harga_beli !== undefined && p.harga_beli !== null
+                                                    ? `Rp ${p.harga_beli.toLocaleString("id-ID")}`
+                                                    : `Rp ${p.harga.toLocaleString("id-ID")}`}
+                                            </span>
+                                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${p.stok > 0 ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400" : "bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400"}`}>
+                                                Stok: {p.stok}
+                                            </span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </PopoverContent>
+            </Popover>
 
             {/* Auto-focus indicator */}
             <div className="flex items-center gap-1.5 mt-2 px-1">
@@ -178,7 +350,7 @@ export function BarcodeInput({
                     Scanner aktif — otomatis fokus ke input
                 </span>
             </div>
-
         </form>
     );
 }
+

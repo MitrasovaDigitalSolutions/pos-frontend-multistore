@@ -68,7 +68,7 @@ export function PaymentDialog({
             return;
         }
 
-        const payload: any = {
+        const payload: Record<string, unknown> = {
             metode_pembayaran: payMode,
             items: cartItems,
             diskon: discount,

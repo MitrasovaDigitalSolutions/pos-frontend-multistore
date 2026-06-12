@@ -13,7 +13,7 @@ import { openCashDrawerSchema, type OpenCashDrawerInput } from "../../schemas/ca
 import { IconLock, IconLoader2, IconDeviceFloppy, IconLogout, IconHome } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 import { signOut } from "@/lib/auth-helpers";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { canAccessAdmin } from "@/constants/roles";
 import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -27,7 +27,7 @@ interface BukaShiftModalProps {
 
 export function BukaShiftModal({ open, token, onSuccess, isLoading = false }: BukaShiftModalProps) {
     const { data: session } = useSession();
-    const router = useRouter();
+    const router = useAppRouter();
     const userRoles = session?.user?.roles || [];
     const showAdminBtn = canAccessAdmin(userRoles);
     const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = React.useState(false);

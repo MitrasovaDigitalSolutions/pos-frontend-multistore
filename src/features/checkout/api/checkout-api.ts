@@ -9,7 +9,7 @@ import type { Receipt } from "../types";
 // Sends all checkout items and payment details in a single request to the backend.
 export function useBulkCheckout() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<Receipt>, Error, any>({
+    return useMutation<ApiResponse<Receipt>, Error, unknown>({
         mutationFn: (payload) =>
             apiPost<ApiResponse<Receipt>>("/v1/transactions", payload),
         onSuccess: () => {
