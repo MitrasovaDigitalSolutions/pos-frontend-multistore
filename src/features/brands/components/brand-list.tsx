@@ -110,7 +110,7 @@ export function BrandList({
             <div className="flex justify-between items-center border-b border-slate-50">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">
-                        Kelola Brand / Merek Produk
+                        Daftar Brand / Merek Produk
                     </h3>
                     <p className="text-[11px] text-slate-400 mt-0.5">
                         Daftar brand/merek untuk mengidentifikasi produk dagangan Anda.

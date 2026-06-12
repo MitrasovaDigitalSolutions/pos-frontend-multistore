@@ -80,51 +80,53 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
           </span>
         )}
 
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger
-            render={
-              <Button
-                ref={ref}
-                type="button"
-                variant="outline"
-                disabled={disabled}
-                className={cn(
-                  "w-full justify-start text-left border-slate-200 bg-white dark:bg-slate-950 hover:border-emerald-500/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:text-emerald-800 rounded-xl relative pr-10 transition-colors focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500",
-                  sizeClasses,
-                  !selectedDate && "text-slate-400",
-                  error && "border-rose-400 focus-visible:ring-rose-500/20",
-                  disabled && "opacity-50 pointer-events-none bg-slate-50"
-                )}
-                {...props}
-              >
-                <IconCalendar className={cn("mr-2 h-4 w-4 shrink-0 text-slate-400 transition-colors", selectedDate && "text-emerald-600")} />
-                {selectedDate ? (
-                  format(selectedDate, "dd MMMM yyyy", { locale: id })
-                ) : (
-                  <span>{placeholder}</span>
-                )}
-
-                {clearable && selectedDate && !disabled && (
-                  <button
-                    type="button"
-                    onClick={handleClear}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-                  >
-                    <IconX className="h-3 w-3" />
-                  </button>
-                )}
-              </Button>
-            }
-          />
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={handleSelect}
-              className="p-3"
+        <div className="relative w-full">
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger
+              render={
+                <Button
+                  ref={ref}
+                  type="button"
+                  variant="outline"
+                  disabled={disabled}
+                  className={cn(
+                    "w-full justify-start text-left border-slate-200 bg-white dark:bg-slate-950 hover:border-emerald-500/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:text-emerald-800 rounded-xl relative pr-10 transition-colors focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500",
+                    sizeClasses,
+                    !selectedDate && "text-slate-400",
+                    error && "border-rose-400 focus-visible:ring-rose-500/20",
+                    disabled && "opacity-50 pointer-events-none bg-slate-50"
+                  )}
+                  {...props}
+                >
+                  <IconCalendar className={cn("mr-2 h-4 w-4 shrink-0 text-slate-400 transition-colors", selectedDate && "text-emerald-600")} />
+                  {selectedDate ? (
+                    format(selectedDate, "dd MMMM yyyy", { locale: id })
+                  ) : (
+                    <span>{placeholder}</span>
+                  )}
+                </Button>
+              }
             />
-          </PopoverContent>
-        </Popover>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={handleSelect}
+                className="p-3"
+              />
+            </PopoverContent>
+          </Popover>
+
+          {clearable && selectedDate && !disabled && (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors z-10"
+            >
+              <IconX className="h-3 w-3" />
+            </button>
+          )}
+        </div>
 
         {error && (
           <p className="text-[10px] text-rose-500 font-medium">
