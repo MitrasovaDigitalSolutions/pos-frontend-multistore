@@ -256,11 +256,6 @@ export function PaymentCreatePage() {
                                             }
                                             disabled={isPending || isEdit || receivingsLoading}
                                         />
-                                        {errors.receiving_id && (
-                                            <p className="text-[10px] text-rose-500 font-medium">
-                                                {errors.receiving_id.message}
-                                            </p>
-                                        )}
                                     </div>
 
                                     {/* Nominal Pembayaran */}

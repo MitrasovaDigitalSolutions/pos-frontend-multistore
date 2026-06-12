@@ -20,7 +20,14 @@ export const receivingItemSchema = z.object({
 });
 
 export const receivingSchema = z.object({
-    supplier_id: z.coerce.number().min(1, "Supplier wajib dipilih").nullable().optional(),
+    supplier_id: z.preprocess(
+        (val) => {
+            if (val === "" || val === undefined || val === null || val === "null") return null;
+            const num = Number(val);
+            return isNaN(num) ? null : num;
+        },
+        z.number().min(1, "Supplier wajib dipilih").nullable().optional()
+    ),
     supplier: z.string().nullable().optional(),
     nomor_faktur: z
         .string()
@@ -48,8 +55,22 @@ export const receivingSchema = z.object({
 export type ReceivingInput = z.infer<typeof receivingSchema>;
 
 export const receivingHeaderSchema = z.object({
-    purchase_order_id: z.coerce.number().nullable().optional(),
-    supplier_id: z.coerce.number().nullable().optional(),
+    purchase_order_id: z.preprocess(
+        (val) => {
+            if (val === "" || val === undefined || val === null || val === "null") return null;
+            const num = Number(val);
+            return isNaN(num) ? null : num;
+        },
+        z.number().nullable().optional()
+    ),
+    supplier_id: z.preprocess(
+        (val) => {
+            if (val === "" || val === undefined || val === null || val === "null") return null;
+            const num = Number(val);
+            return isNaN(num) ? null : num;
+        },
+        z.number().nullable().optional()
+    ),
     nomor_faktur: z.string().min(1, "Nomor faktur wajib diisi"),
     nilai_faktur: z.coerce.number().min(0, "Nilai faktur minimal 0").default(0),
     tanggal_terima: z.string().min(1, "Tanggal terima wajib diisi"),

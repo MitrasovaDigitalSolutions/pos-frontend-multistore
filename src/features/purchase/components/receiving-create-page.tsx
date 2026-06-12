@@ -166,11 +166,6 @@ export function ReceivingCreatePage() {
                                     }
                                     disabled={createHeader.isPending || suppliersLoading || !!purchaseOrderId}
                                 />
-                                {errors.supplier_id && (
-                                    <p className="text-[10px] text-rose-500 font-medium">
-                                        {errors.supplier_id.message}
-                                    </p>
-                                )}
                             </div>
 
                             {/* Tanggal Terima */}

@@ -103,11 +103,6 @@ export function POCreatePage() {
                                     }
                                     disabled={createHeader.isPending || suppliersLoading}
                                 />
-                                {errors.supplier_id && (
-                                    <p className="text-[10px] text-rose-500 font-medium">
-                                        {errors.supplier_id.message}
-                                    </p>
-                                )}
                             </div>
 
                             {/* Tanggal PO */}
