@@ -5,7 +5,7 @@ import { queryKeys } from "@/lib/query-keys";
 import { ENDPOINTS } from "@/shared/api/endpoints";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
 import type { Receiving, PurchaseOrder, ReceivingPayment, CashAccount, PurchaseReturn, PaymentSummary } from "../types";
-import type { ReceivingInput, ReceivingHeaderInput, ReceivingBulkItemsInput } from "../schemas/receiving-schema";
+import type { ReceivingInput, ReceivingHeaderInput } from "../schemas/receiving-schema";
 import type { PurchaseOrderHeaderInput, PurchaseOrderBulkItemsInput } from "../schemas/order-schema";
 import type { PaymentInput } from "../schemas/payment-schema";
 import type { PurchaseReturnInput, PurchaseReturnHeaderInput, PurchaseReturnBulkItemsInput } from "../schemas/return-schema";
@@ -63,9 +63,9 @@ export function useCreateReceivingHeader() {
 
 export function useBulkReplaceReceivingItems() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<Receiving>, Error, { id: number; data: ReceivingBulkItemsInput }>({
+    return useMutation<ApiResponse<Receiving>, Error, { id: number; data: unknown }>({
         mutationFn: ({ id, data }) =>
-            apiPut<ApiResponse<Receiving>, ReceivingBulkItemsInput>(
+            apiPut<ApiResponse<Receiving>, unknown>(
                 ENDPOINTS.PURCHASE.RECEIVING.ITEMS_REPLACE(id),
                 data,
             ),
@@ -123,9 +123,9 @@ export function useScanReceivingProduct() {
 
 export function useUpdateReceiving() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<Receiving>, Error, { id: number; data: ReceivingInput }>({
+    return useMutation<ApiResponse<Receiving>, Error, { id: number; data: unknown }>({
         mutationFn: ({ id, data }) =>
-            apiPut<ApiResponse<Receiving>, ReceivingInput>(
+            apiPut<ApiResponse<Receiving>, unknown>(
                 ENDPOINTS.PURCHASE.RECEIVING.UPDATE(id),
                 data,
             ),
@@ -363,8 +363,8 @@ export function useCancelPurchaseOrder() {
 
 // ─── Barcode Lookup ─────────────────────────────────────────────────────────
 
-export async function lookupProductByBarcode(barcode: string): Promise<Product> {
-    const res = await apiGet<ApiResponse<Product>>(
+export async function lookupProductByBarcode(barcode: string): Promise<Product[]> {
+    const res = await apiGet<ApiResponse<Product[]>>(
         ENDPOINTS.PRODUCTS.BARCODE(barcode),
     );
     return res.data;
@@ -586,9 +586,9 @@ export function useCreatePurchaseReturnHeader() {
 
 export function useUpdatePurchaseReturn() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<PurchaseReturn>, Error, { id: number; data: PurchaseReturnInput }>({
+    return useMutation<ApiResponse<PurchaseReturn>, Error, { id: number; data: unknown }>({
         mutationFn: ({ id, data }) =>
-            apiPut<ApiResponse<PurchaseReturn>, PurchaseReturnInput>(
+            apiPut<ApiResponse<PurchaseReturn>, unknown>(
                 ENDPOINTS.PURCHASE.RETURN.UPDATE(id),
                 data,
             ),

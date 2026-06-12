@@ -165,6 +165,7 @@ export function ReceivingList({
                         })}
                     </span>
                 ),
+                size: 160,
             },
             {
                 accessorKey: "nomor_penerimaan",
@@ -174,6 +175,7 @@ export function ReceivingList({
                         {row.original.nomor_penerimaan}
                     </span>
                 ),
+                size: 160,
             },
             {
                 accessorKey: "supplier",
@@ -186,6 +188,7 @@ export function ReceivingList({
                         </span>
                     );
                 },
+                size: 240,
             },
             {
                 accessorKey: "nomor_faktur",
@@ -195,6 +198,7 @@ export function ReceivingList({
                         {row.original.nomor_faktur || "-"}
                     </span>
                 ),
+                size: 160,
             },
             {
                 accessorKey: "nilai_faktur",
@@ -206,6 +210,7 @@ export function ReceivingList({
                             : "-"}
                     </span>
                 ),
+                size: 120,
             },
             {
                 accessorKey: "status_pembayaran",
@@ -229,6 +234,7 @@ export function ReceivingList({
                         </span>
                     );
                 },
+                size: 120,
             },
             {
                 accessorKey: "status",
@@ -246,6 +252,7 @@ export function ReceivingList({
                         </span>
                     );
                 },
+                size: 80,
             },
         ],
         // eslint-disable-next-line react-hooks/exhaustive-deps

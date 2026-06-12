@@ -4,9 +4,10 @@ import { PageLoader } from "@/components/feedback/page-loader";
 import { Button } from "@/components/ui/button";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
-import { IconArrowLeft, IconBarcode, IconDeviceFloppy, IconInfoCircle, IconTrash } from "@tabler/icons-react";
+import { IconArrowLeft, IconBarcode, IconDeviceFloppy, IconInfoCircle, IconTrash, IconEdit } from "@tabler/icons-react";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ReturnHeaderDialog } from "./return-header-dialog";
 import { toast } from "sonner";
 import {
     useBulkReplacePurchaseReturnItems,
@@ -15,7 +16,8 @@ import {
     useScanReturnProduct
 } from "../api/purchase-api";
 import type { PurchaseItemLocal, PurchaseReturn } from "../types";
-import { BarcodeInput } from "./shared/barcode-input";
+import type { Product } from "@/features/products/types";
+import { BarcodeInput } from "@/components/shared/barcode-input";
 import { BulkSubmitBar } from "./shared/bulk-submit-bar";
 
 interface ReturnItemsPageProps {
@@ -68,6 +70,7 @@ export function ReturnItemsPage({ returnId }: ReturnItemsPageProps) {
 }
 
 function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; returnObj: PurchaseReturn }) {
+    const [isEditHeaderOpen, setIsEditHeaderOpen] = useState(false);
     const router = useAppRouter();
     const store = getPurchaseItemsStore(returnId, "return");
     const items = store((state) => state.items);
@@ -135,22 +138,29 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
         }
     }, [returnObj.items, returnableItems, items.length, store]);
 
-    const handleBarcodeSearch = async (barcode: string) => {
-        if (!returnObj.stock_receiving_id) return;
+    const handleProductFound = async (product: Product) => {
+        if (!returnObj.stock_receiving_id) {
+            toast.error("Referensi Penerimaan belum ditentukan.");
+            return;
+        }
 
         try {
             const res = await scanMutation.mutateAsync({
                 receiving_id: returnObj.stock_receiving_id,
-                barcode: barcode,
+                barcode: product.barcode || "",
             });
 
+            if (!res || !res.data || !res.data.product) {
+                toast.error(`Produk "${product.nama}" tidak terdaftar atau tidak valid dalam Penerimaan terkait.`);
+                return;
+            }
+
             const scanResult = res.data;
-            const product = scanResult.product;
+            const maxLimit = scanResult.kuantitas_sisa;
 
             // Find item in Zustand store
             const existingItem = items.find((i) => i.product_id === product.id);
             const currentQty = existingItem ? existingItem.kuantitas : 0;
-            const maxLimit = scanResult.kuantitas_sisa;
 
             if (currentQty >= maxLimit) {
                 toast.error(`Kuantitas retur untuk "${product.nama}" mencapai batas sisa faktur penerimaan (${maxLimit} pcs).`);
@@ -165,14 +175,14 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
                     product_id: product.id,
                     barcode: product.barcode,
                     nama: product.nama,
-                    harga_estimasi: product.harga_beli,
+                    harga_estimasi: product.harga_beli || 0,
                     alasan: "damaged"
                 });
                 toast.success(`"${product.nama}" berhasil ditambahkan ke keranjang retur.`);
             }
         } catch (err: unknown) {
-            const errMsg = err instanceof Error ? err.message : "Produk tidak ditemukan dalam penerimaan barang ini.";
-            toast.error(errMsg);
+            const errorObj = err as { message?: string };
+            toast.error(errorObj.message || `Gagal memverifikasi produk "${product.nama}" pada Penerimaan.`);
         }
     };
 
@@ -260,6 +270,16 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
                         </p>
                     </div>
                 </div>
+
+                <div className="flex items-center gap-3">
+                    <Button
+                        onClick={() => setIsEditHeaderOpen(true)}
+                        variant="outline"
+                        className="border-slate-200 text-slate-700 hover:text-slate-900 bg-white font-bold text-xs h-10 px-4 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0"
+                    >
+                        <IconEdit size={16} /> Edit Info
+                    </Button>
+                </div>
             </div>
 
             {/* Scanning and Info Panel */}
@@ -276,7 +296,7 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
                         </div>
 
                         <BarcodeInput
-                            onProductFound={(p) => handleBarcodeSearch(p.barcode || "")}
+                            onProductFound={handleProductFound}
                             onError={(msg) => toast.error(msg)}
                             disabled={isPending}
                             placeholder="Scan barcode distributor atau masukkan kode produk..."
@@ -437,6 +457,12 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
                 onSubmit={handleSave}
                 onReset={clearAll}
                 isSubmitting={isPending}
+            />
+
+            <ReturnHeaderDialog
+                open={isEditHeaderOpen}
+                onOpenChange={setIsEditHeaderOpen}
+                returnObj={returnObj}
             />
         </div>
     );

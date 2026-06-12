@@ -92,6 +92,7 @@ export function UserTable({
                             {row.original.name}
                         </span>
                     ),
+                    size: 240,
                 },
                 {
                     accessorKey: "username",
@@ -101,6 +102,7 @@ export function UserTable({
                             {row.original.username}
                         </span>
                     ),
+                    size: 160,
                 },
                 {
                     accessorKey: "email",
@@ -110,6 +112,7 @@ export function UserTable({
                             {row.original.email || "-"}
                         </span>
                     ),
+                    size: 240,
                 },
                 {
                     accessorKey: "roles",
@@ -131,6 +134,7 @@ export function UserTable({
                             </span>
                         );
                     },
+                    size: 120,
                 },
                 {
                     accessorKey: "status",
@@ -152,6 +156,7 @@ export function UserTable({
                             </span>
                         );
                     },
+                    size: 80,
                 },
             ];
 

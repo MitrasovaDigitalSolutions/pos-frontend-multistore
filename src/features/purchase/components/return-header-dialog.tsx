@@ -1,0 +1,239 @@
+"use client";
+
+import { useEffect } from "react";
+import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { FormSelect } from "@/components/forms/form-select";
+import { FormDatePicker } from "@/components/forms/form-date-picker";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { IconClipboardPlus } from "@tabler/icons-react";
+import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
+import { useUpdatePurchaseReturn, useReceivings } from "../api/purchase-api";
+import { purchaseReturnHeaderSchema, type PurchaseReturnHeaderInput } from "../schemas/return-schema";
+import type { PurchaseReturn } from "../types";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
+
+interface ReturnHeaderDialogProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    returnObj: PurchaseReturn;
+}
+
+export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHeaderDialogProps) {
+    const updateReturn = useUpdatePurchaseReturn();
+    const { data: suppliers = [], isLoading: suppliersLoading } = useAllSuppliers();
+    const { data: receivingsData, isLoading: receivingsLoading } = useReceivings({
+        status: "completed",
+        per_page: 100,
+    });
+
+    const supplierOptions = suppliers.map((s) => ({
+        value: String(s.id),
+        label: s.nama,
+    }));
+
+    const receivingOptions = (receivingsData?.data || []).map((r) => ({
+        value: String(r.id),
+        label: `${r.nomor_penerimaan} - ${r.supplier_relationship?.nama || r.supplier || "Supplier"} (Faktur: ${r.nomor_faktur || "-"}, Total: ${formatRupiah(r.nilai_faktur || 0)})`,
+    }));
+
+    // In edit mode, if currently linked receiving is not in the list (e.g. because it's not in the first 100 or has another state), make sure it is added.
+    if (returnObj.stock_receiving_id) {
+        const hasCurrentReceiving = (receivingsData?.data || []).some(r => r.id === returnObj.stock_receiving_id);
+        if (!hasCurrentReceiving) {
+            receivingOptions.push({
+                value: String(returnObj.stock_receiving_id),
+                label: `${returnObj.stock_receiving?.nomor_penerimaan || `Penerimaan ID: ${returnObj.stock_receiving_id}`} (Terkait)`,
+            });
+        }
+    }
+
+    const methods = useForm<PurchaseReturnHeaderInput>({
+        resolver: zodResolver(purchaseReturnHeaderSchema) as Resolver<PurchaseReturnHeaderInput>,
+        defaultValues: {
+            receiving_id: undefined,
+            supplier_id: undefined,
+            tanggal_retur: "",
+            catatan: "",
+        },
+    });
+
+    const {
+        register,
+        handleSubmit,
+        reset,
+        setValue,
+        formState: { errors },
+    } = methods;
+
+    const receivingId = useWatch({ name: "receiving_id", control: methods.control });
+
+    // Reset default values when returnObj is loaded or dialog opens
+    useEffect(() => {
+        if (open && returnObj) {
+            reset({
+                receiving_id: returnObj.stock_receiving_id ? String(returnObj.stock_receiving_id) as unknown as number : undefined,
+                supplier_id: returnObj.supplier_id || undefined,
+                tanggal_retur: returnObj.tanggal_retur ? returnObj.tanggal_retur.split("T")[0] : "",
+                catatan: returnObj.catatan || "",
+            });
+        }
+    }, [open, returnObj, reset]);
+
+    // Auto-select and lock supplier based on selected receiving
+    useEffect(() => {
+        if (receivingId) {
+            const selectedReceiving = (receivingsData?.data || []).find(
+                (r) => r.id === Number(receivingId)
+            );
+            if (selectedReceiving && selectedReceiving.supplier_id) {
+                setValue("supplier_id", selectedReceiving.supplier_id);
+            } else if (returnObj && returnObj.stock_receiving_id === Number(receivingId)) {
+                setValue("supplier_id", returnObj.supplier_id);
+            }
+        }
+    }, [receivingId, receivingsData, setValue, returnObj]);
+
+    const onSubmit = (data: PurchaseReturnHeaderInput) => {
+        // Prepare payload including existing items to prevent deletion.
+        const itemsPayload = (returnObj.items || []).map((item) => ({
+            product_id: item.product_id,
+            kuantitas: item.kuantitas,
+            harga_beli: item.harga_beli,
+            alasan: item.alasan || "damaged",
+        }));
+
+        const payload = {
+            receiving_id: Number(data.receiving_id),
+            supplier_id: Number(data.supplier_id),
+            tanggal_retur: data.tanggal_retur,
+            catatan: data.catatan,
+            status: returnObj.status, // Preserve draft status
+            items: itemsPayload,
+        };
+
+        updateReturn.mutate(
+            { id: returnObj.id, data: payload },
+            {
+                onSuccess: () => {
+                    toast.success("Informasi header Retur Pembelian berhasil diperbarui!");
+                    onOpenChange(false);
+                },
+                onError: (err) => {
+                    toast.error(err.message || "Gagal memperbarui informasi header retur.");
+                },
+            }
+        );
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-md bg-white rounded-2xl border-slate-100 p-6 flex flex-col max-h-[90vh]">
+                <DialogHeader className="pb-4 border-b border-slate-100 shrink-0">
+                    <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <IconClipboardPlus size={20} className="text-emerald-500" />
+                        <span>Edit Informasi Retur Pembelian</span>
+                    </DialogTitle>
+                </DialogHeader>
+
+                <FormProvider {...methods}>
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4">
+                        {/* Referensi Faktur Penerimaan */}
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                Referensi Faktur Penerimaan *
+                            </label>
+                            <FormSelect<PurchaseReturnHeaderInput>
+                                name="receiving_id"
+                                options={receivingOptions}
+                                placeholder={
+                                    receivingsLoading ? "Memuat daftar penerimaan..." : "-- Pilih Faktur Penerimaan (Completed) --"
+                                }
+                                disabled={updateReturn.isPending || receivingsLoading}
+                            />
+                            {errors.receiving_id && (
+                                <p className="text-[10px] text-rose-500 font-medium">
+                                    {errors.receiving_id.message}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Supplier Selector */}
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                Supplier *
+                            </label>
+                            <FormSelect<PurchaseReturnHeaderInput>
+                                name="supplier_id"
+                                options={supplierOptions}
+                                placeholder={
+                                    suppliersLoading ? "Memuat supplier..." : "-- Pilih Supplier --"
+                                }
+                                disabled={updateReturn.isPending || suppliersLoading || !!receivingId}
+                            />
+                            {errors.supplier_id && (
+                                <p className="text-[10px] text-rose-500 font-medium">
+                                    {errors.supplier_id.message}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Tanggal Retur */}
+                        <FormDatePicker<PurchaseReturnHeaderInput>
+                            name="tanggal_retur"
+                            label="Tanggal Retur *"
+                            disabled={updateReturn.isPending}
+                        />
+
+                        {/* Catatan */}
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                Catatan / Keterangan
+                            </label>
+                            <Input
+                                type="text"
+                                placeholder="Keterangan tambahan..."
+                                className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                                disabled={updateReturn.isPending}
+                                {...register("catatan")}
+                            />
+                            {errors.catatan && (
+                                <p className="text-[10px] text-rose-500 font-medium">
+                                    {errors.catatan.message}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 shrink-0 bg-white">
+                            <Button
+                                type="button"
+                                onClick={() => onOpenChange(false)}
+                                variant="outline"
+                                className="px-5 h-10 border-slate-200 text-slate-700 font-bold text-xs rounded-xl bg-white"
+                                disabled={updateReturn.isPending}
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                type="submit"
+                                className="px-5 h-10 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl"
+                                disabled={updateReturn.isPending}
+                            >
+                                {updateReturn.isPending ? "Menyimpan..." : "Simpan Perubahan"}
+                            </Button>
+                        </div>
+                    </form>
+                </FormProvider>
+            </DialogContent>
+        </Dialog>
+    );
+}

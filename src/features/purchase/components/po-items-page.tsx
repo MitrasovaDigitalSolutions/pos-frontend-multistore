@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { useBulkReplacePurchaseOrderItems, usePurchaseOrderDetail } from "../api/purchase-api";
 import type { PurchaseItemLocal, PurchaseOrder } from "../types";
 import type { Product } from "@/features/products/types";
-import { BarcodeInput } from "./shared/barcode-input";
+import { BarcodeInput } from "@/components/shared/barcode-input";
 import { BulkSubmitBar } from "./shared/bulk-submit-bar";
 import { ItemsTable } from "./shared/items-table";
 

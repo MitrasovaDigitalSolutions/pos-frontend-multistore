@@ -61,6 +61,7 @@ export function CashDrawerSessions() {
                         </span>
                     </div>
                 ),
+                size: 240,
             },
             {
                 accessorKey: "opened_at",
@@ -73,6 +74,7 @@ export function CashDrawerSessions() {
                         })}
                     </span>
                 ),
+                size: 160,
             },
             {
                 accessorKey: "closed_at",
@@ -89,6 +91,7 @@ export function CashDrawerSessions() {
                         )}
                     </span>
                 ),
+                size: 160,
             },
             {
                 accessorKey: "expected_cash",
@@ -98,6 +101,7 @@ export function CashDrawerSessions() {
                         {formatRupiah(row.original.expected_cash)}
                     </span>
                 ),
+                size: 120,
             },
             {
                 accessorKey: "difference",
@@ -106,7 +110,7 @@ export function CashDrawerSessions() {
                     const diff = row.original.difference;
                     if (row.original.status === "open") return <span className="text-slate-400">-</span>;
                     if (diff === null || diff === undefined) return <span className="text-slate-400">-</span>;
-
+ 
                     if (diff > 0) {
                         return (
                             <span className="bg-teal-50 text-teal-700 text-[10px] font-bold px-2 py-0.5 rounded border border-teal-100 tabular-nums">
@@ -125,6 +129,7 @@ export function CashDrawerSessions() {
                         <span className="text-slate-500 font-bold text-xs tabular-nums">0</span>
                     );
                 },
+                size: 120,
             },
             {
                 accessorKey: "status",
@@ -141,6 +146,7 @@ export function CashDrawerSessions() {
                         </span>
                     );
                 },
+                size: 80,
             },
         ],
         [],

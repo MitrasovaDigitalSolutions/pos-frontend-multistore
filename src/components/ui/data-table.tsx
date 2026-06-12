@@ -142,7 +142,7 @@ export function DataTable<TData, TValue>({
             id: "rowNumber",
             header: "No.",
             enableSorting: false,
-            size: 50,
+            size: 48,
             meta: {
                 headerClassName: "text-center w-12",
                 cellClassName: "text-center text-slate-500 font-medium text-xs font-mono",
@@ -159,9 +159,10 @@ export function DataTable<TData, TValue>({
             id: "actions",
             header: "Aksi",
             enableSorting: false,
+            size: 120,
             meta: {
-                headerClassName: "text-center w-28 sticky right-0 bg-slate-50 z-20 shadow-[-1px_0_0_0_rgba(241,245,249,1)] border-l border-slate-100",
-                cellClassName: "text-center sticky right-0 bg-white group-hover:bg-slate-50/50 z-10 shadow-[-1px_0_0_0_rgba(241,245,249,1)] border-l border-slate-100 transition-colors",
+                headerClassName: "text-center w-28 sticky right-0 top-0 bg-slate-50 z-30 shadow-[-1px_0_0_0_rgba(241,245,249,1)] border-l border-slate-100",
+                cellClassName: "text-center sticky right-0 bg-white group-hover:bg-slate-50 z-10 shadow-[-1px_0_0_0_rgba(241,245,249,1)] border-l border-slate-100 transition-colors",
             },
             cell: ({ row }) => {
                 const item = row.original;
@@ -369,7 +370,7 @@ export function DataTable<TData, TValue>({
         <div className="relative border border-slate-100 rounded-2xl bg-white shadow-sm overflow-hidden flex flex-col">
             {/* Subtle loader bar at the top of the table container for background updates */}
             {isFetching && (
-                <div className="absolute top-0 left-0 right-0 h-0.5 bg-emerald-50/50 overflow-hidden z-20">
+                <div className="absolute top-0 left-0 right-0 h-0.5 bg-emerald-50/50 overflow-hidden z-40">
                     <div className="h-full bg-emerald-500/80 animate-shimmer-loading w-[35%] rounded-full" />
                 </div>
             )}
@@ -401,7 +402,7 @@ export function DataTable<TData, TValue>({
             <div
                 ref={parentRef}
                 className={cn(
-                    "w-full overflow-auto max-h-112.5",
+                    "w-full overflow-auto max-h-112.5 [&_[data-slot=table-container]]:overflow-visible",
                     virtualize &&
                     "scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent",
                     className,
@@ -409,7 +410,7 @@ export function DataTable<TData, TValue>({
                 style={virtualize ? { maxHeight } : undefined}
             >
                 <Table className="w-full border-collapse relative">
-                    <TableHeader className="bg-slate-50 sticky top-0 z-10 shadow-[0_1px_0_0_rgba(241,245,249,1)]">
+                    <TableHeader className="bg-slate-50 sticky top-0 z-20 shadow-[0_1px_0_0_rgba(241,245,249,1)]">
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow
                                 key={headerGroup.id}
@@ -430,8 +431,8 @@ export function DataTable<TData, TValue>({
                                                     ?.headerClassName,
                                             )}
                                             style={{
-                                                width: header.column.columnDef
-                                                    .size,
+                                                width: header.column.columnDef.size,
+                                                minWidth: header.column.columnDef.size,
                                             }}
                                         >
                                             {header.isPlaceholder ? null : (
@@ -545,6 +546,10 @@ export function DataTable<TData, TValue>({
                                                                 .columnDef.meta
                                                                 ?.cellClassName,
                                                         )}
+                                                        style={{
+                                                            width: cell.column.columnDef.size,
+                                                            minWidth: cell.column.columnDef.size,
+                                                        }}
                                                     >
                                                         {flexRender(
                                                             cell.column
@@ -585,6 +590,10 @@ export function DataTable<TData, TValue>({
                                                 cell.column.columnDef.meta
                                                     ?.cellClassName,
                                             )}
+                                            style={{
+                                                width: cell.column.columnDef.size,
+                                                minWidth: cell.column.columnDef.size,
+                                            }}
                                         >
                                             {flexRender(
                                                 cell.column.columnDef.cell,

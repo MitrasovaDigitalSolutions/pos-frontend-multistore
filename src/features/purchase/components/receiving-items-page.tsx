@@ -3,7 +3,7 @@
 import { PageLoader } from "@/components/feedback/page-loader";
 import { Button } from "@/components/ui/button";
 import { getPurchaseItemsStore, selectItemCount, selectTotal } from "@/stores/purchase-items-store";
-import { IconArrowLeft, IconBarcode, IconInfoCircle, IconAlertTriangle, IconCheck } from "@tabler/icons-react";
+import { IconArrowLeft, IconBarcode, IconInfoCircle, IconAlertTriangle, IconCheck, IconEdit } from "@tabler/icons-react";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -17,17 +17,16 @@ import {
     type ComparePricesResult
 } from "../api/purchase-api";
 import type { PurchaseItemLocal, Receiving } from "../types";
-import { BarcodeInput } from "./shared/barcode-input";
+import type { Product } from "@/features/products/types";
+import { BarcodeInput } from "@/components/shared/barcode-input";
 import { BulkSubmitBar } from "./shared/bulk-submit-bar";
 import { ItemsTable } from "./shared/items-table";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter
-} from "@/components/ui/dialog";
+import { BaseDialog } from "@/components/ui/base-dialog";
+import { FormNumberInput } from "@/components/forms/form-number-input";
+import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { ReceivingHeaderDialog } from "./receiving-header-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface ReceivingItemsPageProps {
     receivingId: number;
@@ -79,6 +78,7 @@ export function ReceivingItemsPage({ receivingId }: ReceivingItemsPageProps) {
 }
 
 function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: number; receiving: Receiving }) {
+    const [isEditHeaderOpen, setIsEditHeaderOpen] = useState(false);
     const router = useAppRouter();
     const store = getPurchaseItemsStore(receivingId, "receiving");
     const items = store((state) => state.items);
@@ -124,7 +124,7 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
     useEffect(() => {
         if (isFirstLoad.current) {
             isFirstLoad.current = false;
-            
+
             // 1. If we have existing receiving items in draft, load them
             if (items.length === 0 && receiving.items && receiving.items.length > 0) {
                 const dbItems: PurchaseItemLocal[] = receiving.items.map((item) => ({
@@ -136,7 +136,7 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
                     harga_estimasi: item.harga_beli,
                 }));
                 store.setState({ items: dbItems });
-            } 
+            }
             // 2. Else if it's linked to PO and PO has items, pre-populate with remaining quantities
             else if (items.length === 0 && poData?.items && poData.items.length > 0) {
                 const poItems: PurchaseItemLocal[] = poData.items
@@ -154,30 +154,41 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
         }
     }, [receiving.items, poData?.items, items.length, store]);
 
-    const handleBarcodeSearch = async (barcode: string) => {
-        // Use scan mutation for server-side verification
+    const handleProductFound = async (product: Product) => {
+        // If there is no PO: we bypass scan endpoint and add directly
+        if (!poId) {
+            addItem({
+                product_id: product.id,
+                barcode: product.barcode,
+                nama: product.nama,
+                harga_estimasi: product.harga_beli || 0,
+            });
+            toast.success(`Ditambahkan: ${product.nama}`);
+            return;
+        }
+
+        // If from PO, use scan mutation for verification
         try {
             const res = await scanMutation.mutateAsync({
                 receiving_id: receivingId,
-                barcode: barcode,
+                barcode: product.barcode || "",
             });
 
-            const scanResult = res.data;
-            const product = scanResult.product;
-            const poItem = scanResult.po_item;
-
-            // If from PO, validate that product exists in PO
-            if (poId && !poItem) {
-                toast.error(`Produk "${product.nama}" tidak terdaftar dalam PO referensi.`);
+            if (!res || !res.data || !res.data.product) {
+                toast.error(`Produk "${product.nama}" tidak terdaftar.`);
                 return;
             }
 
-            // Calculate current quantity in Zustand for this product
-            const existingItem = items.find((i) => i.product_id === product.id);
-            const currentQty = existingItem ? existingItem.kuantitas : 0;
+            const scanResult = res.data;
+            const poItem = scanResult.po_item;
 
-            // Qty Limit check
-            if (poId && poItem) {
+            // If it is in the PO, perform the limit warning check
+            if (poItem) {
+                // Calculate current quantity in Zustand for this product
+                const existingItem = items.find((i) => i.product_id === product.id);
+                const currentQty = existingItem ? existingItem.kuantitas : 0;
+
+                // Qty Limit check
                 if (currentQty + 1 > poItem.sisa) {
                     toast.warning(`Peringatan: Kuantitas melebihi sisa PO (${poItem.sisa} pcs).`);
                 }
@@ -187,7 +198,7 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
                 product_id: product.id,
                 barcode: product.barcode,
                 nama: product.nama,
-                harga_estimasi: poItem?.harga_estimasi || product.harga_beli_terakhir || 0,
+                harga_estimasi: poItem?.harga_estimasi || scanResult.product.harga_beli_terakhir || product.harga_beli || 0,
             });
             toast.success(`Ditambahkan: ${product.nama}`);
         } catch (err: unknown) {
@@ -205,12 +216,6 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
                     return {
                         valid: false,
                         message: `Kuantitas untuk "${item.nama}" (${item.kuantitas} pcs) melebihi sisa PO yang belum diterima (${poLimit.sisa} pcs).`,
-                    };
-                }
-                if (!poLimit) {
-                    return {
-                        valid: false,
-                        message: `Produk "${item.nama}" tidak ada di daftar PO.`,
                     };
                 }
             }
@@ -259,11 +264,102 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
         }
     };
 
-    // ─── Price Comparison Dialog Logic ───
+    // ─── Price Comparison & Finalization Logic ───
     const [priceAlerts, setPriceAlerts] = useState<ComparePricesResult[]>([]);
     const [isAlertOpen, setIsAlertOpen] = useState(false);
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [isFinalizing, setIsFinalizing] = useState(false);
 
-    const handleComplete = () => {
+    interface PriceAlertFormInput {
+        items: {
+            product_id: number;
+            update_harga_jual: boolean;
+            margin_baru: number;
+            harga_jual_baru: number;
+        }[];
+    }
+
+    const alertFormMethods = useForm<PriceAlertFormInput>({
+        defaultValues: {
+            items: [],
+        },
+    });
+
+    const formItems = useWatch({ name: "items", control: alertFormMethods.control });
+    const prevItemsRef = useRef<PriceAlertFormInput["items"]>([]);
+
+    useEffect(() => {
+        if (!formItems || formItems.length === 0) return;
+
+        formItems.forEach((item, idx) => {
+            const prev = prevItemsRef.current[idx];
+            if (!prev) return;
+
+            const alert = priceAlerts.find((a) => a.product_id === item.product_id);
+            if (!alert) return;
+
+            const buyPrice = alert.harga_beli_baru;
+
+            // If margin changed
+            if (item.margin_baru !== prev.margin_baru) {
+                const calculatedHargaJual = Math.round(buyPrice * (1 + (item.margin_baru || 0) / 100));
+                if (item.harga_jual_baru !== calculatedHargaJual) {
+                    alertFormMethods.setValue(`items.${idx}.harga_jual_baru`, calculatedHargaJual);
+                }
+            }
+            // If harga jual changed
+            else if (item.harga_jual_baru !== prev.harga_jual_baru) {
+                const calculatedMargin = buyPrice > 0 ? (((item.harga_jual_baru || 0) / buyPrice) - 1) * 100 : 0;
+                const roundedMargin = Math.round(calculatedMargin * 100) / 100;
+                if (item.margin_baru !== roundedMargin) {
+                    alertFormMethods.setValue(`items.${idx}.margin_baru`, roundedMargin);
+                }
+            }
+        });
+
+        prevItemsRef.current = JSON.parse(JSON.stringify(formItems));
+    }, [formItems, priceAlerts, alertFormMethods]);
+
+    const handleUseSaran = (idx: number, alert: ComparePricesResult) => {
+        alertFormMethods.setValue(`items.${idx}.margin_baru`, alert.margin_lama);
+        alertFormMethods.setValue(`items.${idx}.harga_jual_baru`, alert.harga_jual_saran);
+        alertFormMethods.setValue(`items.${idx}.update_harga_jual`, true);
+    };
+
+    const executeFinalizeComplete = async (payload?: {
+        items: Array<{
+            product_id: number;
+            kuantitas: number;
+            harga_beli: number;
+            update_harga_jual: boolean;
+            harga_jual_baru: number | null;
+            margin_baru: number | null;
+        }>;
+    }) => {
+        setIsFinalizing(true);
+        try {
+            if (payload) {
+                // If we have custom pricing parameters to apply, update them first
+                await bulkReplace.mutateAsync({ id: receivingId, data: payload });
+            }
+
+            // Finalize completion
+            await completeReceiving.mutateAsync(receivingId);
+
+            toast.success("Penerimaan barang telah diselesaikan & stok/harga telah diperbarui!");
+            clearAll();
+            router.push("/admin/purchase/receiving");
+        } catch (err: unknown) {
+            const errorObj = err as { message?: string };
+            toast.error(errorObj.message || "Gagal menyelesaikan penerimaan barang.");
+        } finally {
+            setIsFinalizing(false);
+            setIsAlertOpen(false);
+            setIsConfirmOpen(false);
+        }
+    };
+
+    const handleComplete = async () => {
         if (items.length === 0) {
             toast.error("Harap tambahkan minimal 1 barang sebelum menyelesaikan.");
             return;
@@ -275,7 +371,7 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
             return;
         }
 
-        // 1. Submit current items first
+        // Save current items first before checking price changes
         const payload = {
             items: items.map((item) => ({
                 product_id: item.product_id,
@@ -284,55 +380,59 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
             })),
         };
 
-        bulkReplace.mutate(
-            { id: receivingId, data: payload },
-            {
-                onSuccess: () => {
-                    // 2. Call compare prices to check price alerts
-                    comparePrices.mutate(
-                        {
-                            items: items.map((i) => ({
-                                product_id: i.product_id,
-                                harga_beli: i.harga_estimasi,
-                            })),
-                        },
-                        {
-                            onSuccess: (res) => {
-                                const alerts = (res.data || []).filter((r) => r.perlu_alert);
-                                if (alerts.length > 0) {
-                                    setPriceAlerts(alerts);
-                                    setIsAlertOpen(true);
-                                } else {
-                                    // Complete immediately if no alerts
-                                    triggerComplete();
-                                }
-                            },
-                            onError: () => {
-                                // Fallback to direct completion on comparison failure
-                                triggerComplete();
-                            },
-                        }
-                    );
-                },
-                onError: (err) => {
-                    toast.error(err.message || "Gagal menyimpan items sebelum penyelesaian.");
-                },
+        try {
+            await bulkReplace.mutateAsync({ id: receivingId, data: payload });
+
+            // Call compare prices to check price alerts
+            const res = await comparePrices.mutateAsync({
+                items: items.map((i) => ({
+                    product_id: i.product_id,
+                    harga_beli: i.harga_estimasi,
+                })),
+            });
+
+            const alerts = (res.data || []).filter((r) => r.perlu_alert);
+            if (alerts.length > 0) {
+                const initialItems = alerts.map((alert) => ({
+                    product_id: alert.product_id,
+                    update_harga_jual: false,
+                    margin_baru: alert.margin_lama,
+                    harga_jual_baru: alert.harga_jual_saran,
+                }));
+                prevItemsRef.current = JSON.parse(JSON.stringify(initialItems));
+                alertFormMethods.reset({ items: initialItems });
+                setPriceAlerts(alerts);
+                setIsAlertOpen(true);
+            } else {
+                // No alerts, proceed to final confirmation directly
+                setIsConfirmOpen(true);
             }
-        );
+        } catch (err: unknown) {
+            const errorObj = err as { message?: string };
+            toast.error(errorObj.message || "Gagal menyimpan items sebelum penyelesaian.");
+        }
     };
 
-    const triggerComplete = () => {
-        completeReceiving.mutate(receivingId, {
-            onSuccess: () => {
-                toast.success("Penerimaan barang telah diselesaikan & stok telah diperbarui!");
-                clearAll();
-                setIsAlertOpen(false);
-                router.push("/admin/purchase/receiving");
-            },
-            onError: (err) => {
-                toast.error(err.message || "Gagal menyelesaikan penerimaan barang.");
-            },
-        });
+    const handleCompleteWithoutPrices = () => {
+        executeFinalizeComplete();
+    };
+
+    const handleCompleteWithPrices = () => {
+        const formValues = alertFormMethods.getValues();
+        const payload = {
+            items: items.map((item) => {
+                const pricing = formValues.items.find((fit) => fit.product_id === item.product_id);
+                return {
+                    product_id: item.product_id,
+                    kuantitas: item.kuantitas,
+                    harga_beli: item.harga_estimasi,
+                    update_harga_jual: pricing ? pricing.update_harga_jual : false,
+                    harga_jual_baru: pricing && pricing.update_harga_jual ? pricing.harga_jual_baru : null,
+                    margin_baru: pricing && pricing.update_harga_jual ? pricing.margin_baru : null,
+                };
+            }),
+        };
+        executeFinalizeComplete(payload);
     };
 
     const uniqueProductCount = items.length;
@@ -362,7 +462,7 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
                         </p>
                     </div>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                     {poData && (
                         <div className="bg-emerald-50 border border-emerald-100/50 rounded-xl px-4 py-1.5 text-xs text-left">
@@ -370,13 +470,21 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
                             <p className="text-[9px] text-emerald-600 leading-none mt-0.5">Batas qty sesuai sisa PO</p>
                         </div>
                     )}
-                    
+
+                    <Button
+                        onClick={() => setIsEditHeaderOpen(true)}
+                        variant="outline"
+                        className="border-slate-200 text-slate-700 hover:text-slate-900 bg-white font-bold text-xs h-10 px-4 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0"
+                    >
+                        <IconEdit size={16} /> Edit Info
+                    </Button>
+
                     <Button
                         onClick={handleComplete}
-                        disabled={items.length === 0 || bulkReplace.isPending || completeReceiving.isPending}
+                        disabled={items.length === 0 || bulkReplace.isPending || completeReceiving.isPending || isFinalizing}
                         className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs h-10 px-5 shadow-sm rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0"
                     >
-                        {completeReceiving.isPending ? "Memproses..." : (
+                        {isFinalizing || completeReceiving.isPending ? "Memproses..." : (
                             <>
                                 <IconCheck size={16} /> Selesai & Tambah Stok
                             </>
@@ -398,7 +506,7 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
                         </div>
 
                         <BarcodeInput
-                            onProductFound={(p) => handleBarcodeSearch(p.barcode || "")}
+                            onProductFound={handleProductFound}
                             onError={(msg) => toast.error(msg)}
                             disabled={bulkReplace.isPending}
                             placeholder="Scan barcode distributor atau masukkan kode produk..."
@@ -457,65 +565,159 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
                 />
             </div>
 
-            {/* Price comparison alert dialog */}
-            <Dialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
-                <DialogContent className="sm:max-w-2xl bg-white rounded-2xl border-slate-100 p-6">
-                    <DialogHeader>
-                        <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                            <IconAlertTriangle className="text-amber-500" size={20} />
-                            <span>Peringatan Perubahan Harga Beli</span>
-                        </DialogTitle>
-                    </DialogHeader>
+            <ReceivingHeaderDialog
+                open={isEditHeaderOpen}
+                onOpenChange={setIsEditHeaderOpen}
+                receiving={receiving}
+            />
 
+            {/* Confirm Dialog */}
+            <ConfirmDialog
+                open={isConfirmOpen}
+                onOpenChange={setIsConfirmOpen}
+                title="Selesaikan Penerimaan"
+                description="Apakah Anda yakin ingin menyelesaikan penerimaan ini? Stok produk akan langsung ditambahkan ke inventori dan tidak dapat diubah lagi."
+                confirmText="Ya, Selesaikan"
+                cancelText="Batal"
+                variant="warning"
+                onConfirm={() => executeFinalizeComplete()}
+                isLoading={isFinalizing}
+            />
+
+            {/* Price comparison alert dialog */}
+            <BaseDialog
+                open={isAlertOpen}
+                onOpenChange={setIsAlertOpen}
+                title={
+                    <span className="flex items-center gap-2">
+                        <IconAlertTriangle className="text-amber-500" size={20} />
+                        <span>Peringatan Perubahan Harga Beli</span>
+                    </span>
+                }
+                className="sm:max-w-4xl"
+            >
+                <FormProvider {...alertFormMethods}>
                     <div className="space-y-4 my-4">
                         <p className="text-xs text-slate-500 leading-relaxed">
-                            Sistem mendeteksi adanya perubahan harga beli dari supplier dibandingkan dengan harga beli master/PO. Silakan tinjau perubahan berikut:
+                            Sistem mendeteksi adanya perubahan harga beli dari supplier dibandingkan dengan harga beli master/PO. Silakan tinjau perubahan berikut dan Anda dapat memperbarui harga jual atau margin produk secara langsung:
                         </p>
 
-                        <div className="border border-slate-100 rounded-xl overflow-hidden max-h-60 overflow-y-auto">
+                        <div className="border border-slate-100 rounded-xl overflow-x-auto overflow-y-auto max-h-[350px]">
                             <table className="w-full text-left border-collapse text-xs">
                                 <thead>
                                     <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                         <th className="p-3">Nama Produk</th>
-                                        <th className="p-3 text-right">Harga Lama</th>
-                                        <th className="p-3 text-right">Harga Baru</th>
-                                        <th className="p-3 text-right">Selisih</th>
+                                        <th className="p-3 text-right">Harga Beli</th>
+                                        <th className="p-3 text-center w-36">Update Harga Jual?</th>
+                                        <th className="p-3 text-left w-64">Margin & Harga Jual Baru</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50 font-medium">
-                                    {priceAlerts.map((alert) => (
-                                        <tr key={alert.product_id} className="hover:bg-slate-50/50">
-                                            <td className="p-3 font-semibold text-slate-900">{alert.nama}</td>
-                                            <td className="p-3 text-right text-slate-500 font-mono">{formatRupiah(alert.harga_beli_lama)}</td>
-                                            <td className="p-3 text-right text-amber-700 font-bold font-mono">{formatRupiah(alert.harga_beli_baru)}</td>
-                                            <td className="p-3 text-right text-rose-600 font-bold font-mono">
-                                                +{formatRupiah(alert.selisih_harga_beli)}
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {priceAlerts.map((alert, idx) => {
+                                        const isUpdateActive = formItems && formItems[idx]?.update_harga_jual;
+                                        return (
+                                            <tr key={alert.product_id} className="hover:bg-slate-50/50">
+                                                <td className="p-3">
+                                                    <p className="font-semibold text-slate-900">{alert.nama}</p>
+                                                    <p className="text-[10px] text-slate-400 mt-0.5">
+                                                        Jual Lama: {formatRupiah(alert.harga_jual_lama)} (Margin: {alert.margin_lama}%)
+                                                    </p>
+                                                </td>
+                                                <td className="p-3 text-right whitespace-nowrap">
+                                                    <div className="font-mono text-slate-400 line-through text-[10px]">
+                                                        {formatRupiah(alert.harga_beli_lama)}
+                                                    </div>
+                                                    <div className="font-mono font-bold text-amber-700">
+                                                        {formatRupiah(alert.harga_beli_baru)}
+                                                    </div>
+                                                    <div className="text-[10px] text-rose-600 font-bold font-mono">
+                                                        +{formatRupiah(alert.selisih_harga_beli)}
+                                                    </div>
+                                                </td>
+                                                <td className="p-3 text-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`update-price-${alert.product_id}`}
+                                                        {...alertFormMethods.register(`items.${idx}.update_harga_jual`)}
+                                                        className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                                                    />
+                                                </td>
+                                                <td className="p-3">
+                                                    {isUpdateActive ? (
+                                                        <div className="space-y-1.5">
+                                                            <div className="flex gap-2 items-center">
+                                                                <div className="space-y-0.5">
+                                                                    <span className="text-[9px] text-slate-400 font-bold block">Margin %</span>
+                                                                    <FormNumberInput<PriceAlertFormInput>
+                                                                        name={`items.${idx}.margin_baru`}
+                                                                        className="w-16 h-8 text-center"
+                                                                    />
+                                                                </div>
+                                                                <div className="space-y-0.5">
+                                                                    <span className="text-[9px] text-slate-400 font-bold block">Harga Jual (Rp)</span>
+                                                                    <FormNumberInput<PriceAlertFormInput>
+                                                                        name={`items.${idx}.harga_jual_baru`}
+                                                                        className="w-28 h-8 px-2 text-right"
+                                                                    />
+                                                                </div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleUseSaran(idx, alert)}
+                                                                    className="px-2 h-8 text-[9px] font-bold bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg self-end cursor-pointer border border-slate-200"
+                                                                >
+                                                                    Saran
+                                                                </button>
+                                                            </div>
+                                                            <div className="text-[10px] text-emerald-600 font-semibold">
+                                                                Saran: {formatRupiah(alert.harga_jual_saran)} (Margin {alert.margin_lama}%)
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                alertFormMethods.setValue(`items.${idx}.update_harga_jual`, true);
+                                                            }}
+                                                            className="px-3 py-1.5 text-[10px] font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg transition-colors cursor-pointer border border-emerald-100/50"
+                                                        >
+                                                            Ubah Harga Jual
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
-                    <DialogFooter className="flex justify-end gap-3 pt-4 border-t border-slate-50">
+                    <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t border-slate-100 shrink-0 bg-white">
                         <Button
                             variant="outline"
                             onClick={() => setIsAlertOpen(false)}
+                            disabled={isFinalizing}
                             className="px-5 h-10 border-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer bg-white"
                         >
                             Batal & Sesuaikan
                         </Button>
                         <Button
-                            onClick={triggerComplete}
-                            disabled={completeReceiving.isPending}
-                            className="px-5 h-10 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl cursor-pointer"
+                            onClick={handleCompleteWithoutPrices}
+                            disabled={isFinalizing}
+                            className="px-5 h-10 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl cursor-pointer"
                         >
-                            Tetap Selesaikan
+                            {isFinalizing ? "Memproses..." : "Tetap Selesaikan (Tanpa Update Harga Jual)"}
                         </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                        <Button
+                            onClick={handleCompleteWithPrices}
+                            disabled={isFinalizing}
+                            className="px-5 h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl cursor-pointer"
+                        >
+                            {isFinalizing ? "Memproses..." : "Selesaikan & Terapkan Harga Baru"}
+                        </Button>
+                    </div>
+                </FormProvider>
+            </BaseDialog>
         </div>
     );
 }

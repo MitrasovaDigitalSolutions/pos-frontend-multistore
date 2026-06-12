@@ -88,6 +88,7 @@ export function SupplierList({
                             {row.original.nama}
                         </span>
                     ),
+                    size: 240,
                 },
                 {
                     accessorKey: "nomor_telepon",
@@ -97,6 +98,7 @@ export function SupplierList({
                             {row.original.nomor_telepon || "-"}
                         </span>
                     ),
+                    size: 160,
                 },
                 {
                     accessorKey: "email",
@@ -106,6 +108,7 @@ export function SupplierList({
                             {row.original.email || "-"}
                         </span>
                     ),
+                    size: 240,
                 },
                 {
                     accessorKey: "alamat",
@@ -115,6 +118,7 @@ export function SupplierList({
                             {row.original.alamat || "-"}
                         </span>
                     ),
+                    size: 320,
                 },
             ];
 

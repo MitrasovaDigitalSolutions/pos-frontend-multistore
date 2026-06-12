@@ -137,6 +137,7 @@ export function ReturnList({
                         })}
                     </span>
                 ),
+                size: 120,
             },
             {
                 accessorKey: "nomor_retur",
@@ -146,6 +147,7 @@ export function ReturnList({
                         {row.original.nomor_retur}
                     </span>
                 ),
+                size: 160,
             },
             {
                 accessorKey: "supplier",
@@ -158,6 +160,7 @@ export function ReturnList({
                         </span>
                     );
                 },
+                size: 240,
             },
             {
                 accessorKey: "total_nominal",
@@ -167,6 +170,7 @@ export function ReturnList({
                         {formatRupiah(row.original.total_nominal)}
                     </span>
                 ),
+                size: 160,
             },
             {
                 accessorKey: "status",
@@ -187,6 +191,7 @@ export function ReturnList({
                         </span>
                     );
                 },
+                size: 160,
             },
         ],
         []

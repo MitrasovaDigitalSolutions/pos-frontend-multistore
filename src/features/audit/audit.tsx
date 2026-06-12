@@ -71,6 +71,7 @@ export function AuditLogs() {
                         })}
                     </span>
                 ),
+                size: 160,
             },
             {
                 accessorKey: "user",
@@ -90,6 +91,7 @@ export function AuditLogs() {
                         </div>
                     );
                 },
+                size: 160,
             },
             {
                 accessorKey: "action",
@@ -106,6 +108,7 @@ export function AuditLogs() {
                         </span>
                     );
                 },
+                size: 120,
             },
             {
                 accessorKey: "description",
@@ -115,6 +118,7 @@ export function AuditLogs() {
                         {row.original.description}
                     </span>
                 ),
+                size: 320,
             },
             {
                 accessorKey: "ip_address",
@@ -124,6 +128,7 @@ export function AuditLogs() {
                         {row.original.ip_address || "-"}
                     </span>
                 ),
+                size: 120,
             },
         ],
         [],
