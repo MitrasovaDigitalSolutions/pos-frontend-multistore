@@ -11,7 +11,14 @@ export const purchaseOrderItemSchema = z.object({
 // ─── Header Schema (Step 1: Create PO header only) ──────────────────────────
 
 export const purchaseOrderHeaderSchema = z.object({
-    supplier_id: z.coerce.number().min(1, "Supplier wajib dipilih"),
+    supplier_id: z.preprocess(
+        (val) => {
+            if (val === "" || val === undefined || val === null) return undefined;
+            const num = Number(val);
+            return isNaN(num) ? undefined : num;
+        },
+        z.number({ message: "Supplier wajib dipilih" }).min(1, "Supplier wajib dipilih")
+    ),
     tanggal_po: z.string().min(1, "Tanggal PO wajib diisi"),
     catatan: z
         .string()
@@ -35,7 +42,14 @@ export type PurchaseOrderBulkItemsInput = z.infer<typeof purchaseOrderBulkItemsS
 // ─── Legacy Combined Schema (backward compat) ──────────────────────────────
 
 export const purchaseOrderSchema = z.object({
-    supplier_id: z.coerce.number().min(1, "Supplier wajib dipilih").nullable().optional(),
+    supplier_id: z.preprocess(
+        (val) => {
+            if (val === "" || val === undefined || val === null || val === "null") return null;
+            const num = Number(val);
+            return isNaN(num) ? null : num;
+        },
+        z.number().min(1, "Supplier wajib dipilih").nullable().optional()
+    ),
     supplier_name: z.string().nullable().optional(),
     tanggal_po: z.string().min(1, "Tanggal PO wajib diisi"),
     catatan: z

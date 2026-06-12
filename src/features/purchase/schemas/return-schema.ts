@@ -8,8 +8,22 @@ export const purchaseReturnItemSchema = z.object({
 });
 
 export const purchaseReturnHeaderSchema = z.object({
-    receiving_id: z.coerce.number().min(1, "Faktur Penerimaan wajib dipilih"),
-    supplier_id: z.coerce.number().min(1, "Supplier wajib dipilih"),
+    receiving_id: z.preprocess(
+        (val) => {
+            if (val === "" || val === undefined || val === null) return undefined;
+            const num = Number(val);
+            return isNaN(num) ? undefined : num;
+        },
+        z.number({ message: "Faktur Penerimaan wajib dipilih" }).min(1, "Faktur Penerimaan wajib dipilih")
+    ),
+    supplier_id: z.preprocess(
+        (val) => {
+            if (val === "" || val === undefined || val === null) return undefined;
+            const num = Number(val);
+            return isNaN(num) ? undefined : num;
+        },
+        z.number({ message: "Supplier wajib dipilih" }).min(1, "Supplier wajib dipilih")
+    ),
     tanggal_retur: z.string().min(1, "Tanggal retur wajib diisi"),
     catatan: z
         .string()
@@ -26,8 +40,22 @@ export const purchaseReturnBulkItemsSchema = z.object({
 
 // Legacy backward compatibility schema if needed
 export const purchaseReturnSchema = z.object({
-    supplier_id: z.coerce.number().min(1, "Supplier wajib dipilih"),
-    receiving_id: z.coerce.number().min(1, "Faktur Penerimaan wajib dipilih"),
+    supplier_id: z.preprocess(
+        (val) => {
+            if (val === "" || val === undefined || val === null) return undefined;
+            const num = Number(val);
+            return isNaN(num) ? undefined : num;
+        },
+        z.number({ message: "Supplier wajib dipilih" }).min(1, "Supplier wajib dipilih")
+    ),
+    receiving_id: z.preprocess(
+        (val) => {
+            if (val === "" || val === undefined || val === null) return undefined;
+            const num = Number(val);
+            return isNaN(num) ? undefined : num;
+        },
+        z.number({ message: "Faktur Penerimaan wajib dipilih" }).min(1, "Faktur Penerimaan wajib dipilih")
+    ),
     stock_receiving_id: z.coerce
         .number()
         .nullable()

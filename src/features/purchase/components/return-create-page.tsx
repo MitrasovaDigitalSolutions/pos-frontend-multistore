@@ -19,7 +19,7 @@ export function ReturnCreatePage() {
     const router = useAppRouter();
     const createHeader = useCreatePurchaseReturnHeader();
     const { data: suppliers = [], isLoading: suppliersLoading } = useAllSuppliers();
-    
+
     // Fetch completed receivings to return items from
     const { data: receivingsData, isLoading: receivingsLoading } = useReceivings({
         status: "completed",
@@ -140,11 +140,6 @@ export function ReturnCreatePage() {
                                     }
                                     disabled={createHeader.isPending || receivingsLoading}
                                 />
-                                {errors.receiving_id && (
-                                    <p className="text-[10px] text-rose-500 font-medium">
-                                        {errors.receiving_id.message}
-                                    </p>
-                                )}
                             </div>
 
                             {/* Supplier Selector */}
@@ -162,11 +157,6 @@ export function ReturnCreatePage() {
                                     }
                                     disabled={createHeader.isPending || suppliersLoading || !!receivingId}
                                 />
-                                {errors.supplier_id && (
-                                    <p className="text-[10px] text-rose-500 font-medium">
-                                        {errors.supplier_id.message}
-                                    </p>
-                                )}
                             </div>
 
                             {/* Tanggal Retur */}
