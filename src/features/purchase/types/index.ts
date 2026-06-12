@@ -20,7 +20,7 @@ export interface Receiving {
     nomor_faktur: string | null;
     nilai_faktur: number | null;
     status: "draft" | "completed";
-    status_pembayaran: "pending" | "partially_paid" | "paid";
+    status_pembayaran: "pending" | "partial" | "paid";
     purchase_order_id?: number | null;
     total_dibayar?: number;
     sisa_hutang?: number;

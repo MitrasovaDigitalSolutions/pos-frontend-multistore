@@ -412,7 +412,7 @@ export function usePaymentSummary(receivingId: number | null) {
                 return res;
             } catch (err) {
                 console.warn("Summary endpoint failed or not found, falling back to client-side aggregation:", err);
-                
+
                 // Fallback: fetch receiving detail and all payments
                 const queryParams: PaginationParams & { stock_receiving_id: number } = {
                     per_page: 100,
@@ -431,7 +431,7 @@ export function usePaymentSummary(receivingId: number | null) {
                 const totalFaktur = receiving.nilai_faktur || 0;
                 const totalDibayar = completedPayments.reduce((sum, p) => sum + p.total, 0);
                 const sisaHutang = Math.max(0, totalFaktur - totalDibayar);
-                
+
                 let statusPembayaran: "pending" | "partially_paid" | "paid" = "pending";
                 if (totalDibayar >= totalFaktur && totalFaktur > 0) {
                     statusPembayaran = "paid";
@@ -470,7 +470,7 @@ export function useOutstandingReceivings() {
             const res = await apiGetList<Receiving>(ENDPOINTS.PURCHASE.RECEIVING.LIST, queryParams);
             // Fallback filtering in case backend doesn't filter status_pembayaran
             return (res.data || []).filter(
-                (r) => r.status_pembayaran === "pending" || r.status_pembayaran === "partially_paid"
+                (r) => r.status_pembayaran === "pending" || r.status_pembayaran === "partial"
             );
         },
     });
