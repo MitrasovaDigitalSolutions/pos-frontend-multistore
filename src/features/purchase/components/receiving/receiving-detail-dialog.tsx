@@ -58,7 +58,7 @@ export function ReceivingDetailDialog({
             className="sm:max-w-3xl flex flex-col max-h-[90vh]"
         >
             {isDetailLoading || !receiving ? (
-                <div className="space-y-5 pt-4 flex-1 flex flex-col min-h-0 overflow-hidden">
+                <div className="space-y-5 flex-1 flex flex-col min-h-0 overflow-hidden">
                     {/* Header Details Skeleton */}
                     <div className="grid grid-cols-2 gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100 shrink-0">
                         {[...Array(6)].map((_, i) => (
@@ -100,7 +100,7 @@ export function ReceivingDetailDialog({
                     </div>
                 </div>
             ) : (
-                <div className="space-y-5 pt-4 flex-1 flex flex-col min-h-0 overflow-hidden">
+                <div className="space-y-5 flex-1 flex flex-col min-h-0 overflow-hidden">
                     {/* Invoice Header Details */}
                     <div className="grid grid-cols-2 gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100 text-xs shrink-0">
                         <div className="space-y-1">
@@ -138,9 +138,8 @@ export function ReceivingDetailDialog({
                             <span className="text-[10px] font-bold text-slate-400 uppercase">Status Pembayaran</span>
                             <div>
                                 <span
-                                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                                        PAYMENT_STATUS_CLASSES[receiving.status_pembayaran as PaymentStatus] || "bg-slate-50 text-slate-700 border-slate-100"
-                                    }`}
+                                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${PAYMENT_STATUS_CLASSES[receiving.status_pembayaran as PaymentStatus] || "bg-slate-50 text-slate-700 border-slate-100"
+                                        }`}
                                 >
                                     {PAYMENT_STATUS_LABELS[receiving.status_pembayaran as PaymentStatus] || receiving.status_pembayaran}
                                 </span>
@@ -156,22 +155,20 @@ export function ReceivingDetailDialog({
                     <div className="flex border-b border-slate-100 shrink-0">
                         <button
                             onClick={() => setActiveTab("items")}
-                            className={`px-4 py-2 text-xs font-bold border-b-2 flex items-center gap-1.5 cursor-pointer transition-colors ${
-                                activeTab === "items"
-                                    ? "border-emerald-600 text-emerald-600"
-                                    : "border-transparent text-slate-400 hover:text-slate-600"
-                            }`}
+                            className={`px-4 py-2 text-xs font-bold border-b-2 flex items-center gap-1.5 cursor-pointer transition-colors ${activeTab === "items"
+                                ? "border-emerald-600 text-emerald-600"
+                                : "border-transparent text-slate-400 hover:text-slate-600"
+                                }`}
                         >
                             <IconFileDescription size={16} />
                             Daftar Barang ({receiving.items?.length || 0})
                         </button>
                         <button
                             onClick={() => setActiveTab("logs")}
-                            className={`px-4 py-2 text-xs font-bold border-b-2 flex items-center gap-1.5 cursor-pointer transition-colors ${
-                                activeTab === "logs"
-                                    ? "border-emerald-600 text-emerald-600"
-                                    : "border-transparent text-slate-400 hover:text-slate-600"
-                            }`}
+                            className={`px-4 py-2 text-xs font-bold border-b-2 flex items-center gap-1.5 cursor-pointer transition-colors ${activeTab === "logs"
+                                ? "border-emerald-600 text-emerald-600"
+                                : "border-transparent text-slate-400 hover:text-slate-600"
+                                }`}
                         >
                             <IconClock size={16} />
                             Log Aktivitas ({logs.length})

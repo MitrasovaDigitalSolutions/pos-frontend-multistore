@@ -150,7 +150,7 @@ export function PaymentList({
             <div className="flex justify-between items-center border-b border-slate-50">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">
-                        Pembayaran Invoices / Penerimaan Supplier
+                        Pembayaran Invoices
                     </h3>
                     <p className="text-[11px] text-slate-400 mt-0.5">
                         Daftar riwayat pembayaran transaksi pembelian barang masuk ke supplier.

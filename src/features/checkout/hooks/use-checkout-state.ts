@@ -37,6 +37,7 @@ export function useCheckoutState() {
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
+        setTimeout(() => barcodeInputRef.current?.focus(), 100);
     }, []);
 
     // Expose cart & holdList safely
@@ -266,7 +267,6 @@ export function useCheckoutState() {
         };
         updateTime();
         const timer = setInterval(updateTime, 60000);
-        barcodeInputRef.current?.focus();
 
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "F1") {
