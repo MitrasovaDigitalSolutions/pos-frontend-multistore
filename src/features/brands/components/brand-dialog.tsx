@@ -2,12 +2,7 @@
 
 import { FormInput } from "@/components/forms/form-input";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { BaseDialog } from "@/components/ui/base-dialog";
 import { IconTag } from "@tabler/icons-react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
@@ -66,19 +61,22 @@ export function BrandDialog({
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md bg-white rounded-2xl border-slate-100 p-6">
-                <DialogHeader className="pb-4 border-b border-slate-100">
-                    <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                        <IconTag
-                            size={20}
-                            className="text-emerald-500"
-                        />
-                        <span>
-                            {isEdit ? "Ubah Brand / Merek" : "Tambah Brand Baru"}
-                        </span>
-                    </DialogTitle>
-                </DialogHeader>
+        <BaseDialog
+            open={open}
+            onOpenChange={onOpenChange}
+            title={
+                <>
+                    <IconTag
+                        size={20}
+                        className="text-emerald-500"
+                    />
+                    <span>
+                        {isEdit ? "Ubah Brand / Merek" : "Tambah Brand Baru"}
+                    </span>
+                </>
+            }
+            className="max-w-md"
+        >
 
                 <form
                     onSubmit={handleSubmit(onSubmit)}
@@ -109,7 +107,6 @@ export function BrandDialog({
                         {isPending ? "Menyimpan..." : isEdit ? "Simpan Perubahan" : "Buat Brand"}
                     </Button>
                 </form>
-            </DialogContent>
-        </Dialog>
+        </BaseDialog>
     );
 }

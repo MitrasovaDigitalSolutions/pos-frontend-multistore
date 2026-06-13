@@ -2,12 +2,7 @@
 
 import { FormInput } from "@/components/forms/form-input";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { BaseDialog } from "@/components/ui/base-dialog";
 import { IconFolder } from "@tabler/icons-react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
@@ -66,19 +61,22 @@ export function CategoryDialog({
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md bg-white rounded-2xl border-slate-100 p-6">
-                <DialogHeader className="pb-4 border-b border-slate-100">
-                    <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                        <IconFolder
-                            size={20}
-                            className="text-emerald-500"
-                        />
-                        <span>
-                            {isEdit ? "Ubah Kategori Produk" : "Tambah Kategori Baru"}
-                        </span>
-                    </DialogTitle>
-                </DialogHeader>
+        <BaseDialog
+            open={open}
+            onOpenChange={onOpenChange}
+            title={
+                <>
+                    <IconFolder
+                        size={20}
+                        className="text-emerald-500"
+                    />
+                    <span>
+                        {isEdit ? "Ubah Kategori Produk" : "Tambah Kategori Baru"}
+                    </span>
+                </>
+            }
+            className="max-w-md"
+        >
 
                 <form
                     onSubmit={handleSubmit(onSubmit)}
@@ -109,7 +107,6 @@ export function CategoryDialog({
                         {isPending ? "Menyimpan..." : isEdit ? "Simpan Perubahan" : "Buat Kategori"}
                     </Button>
                 </form>
-            </DialogContent>
-        </Dialog>
+        </BaseDialog>
     );
 }

@@ -12,6 +12,7 @@ interface BarcodeInputProps {
     disabled?: boolean;
     placeholder?: string;
     products?: Product[];
+    mode?: "purchase" | "sell";
 }
 
 export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
@@ -21,6 +22,7 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
         disabled = false,
         placeholder = "Scan barcode atau ketik nama produk...",
         products = [],
+        mode = "purchase",
     }: BarcodeInputProps, ref) {
         const localRef = useRef<HTMLInputElement>(null);
         const inputRef = (ref || localRef) as React.MutableRefObject<HTMLInputElement | null>;
@@ -341,9 +343,11 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                                             </div>
                                             <div className="text-right flex flex-col items-end gap-0.5">
                                                 <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 font-mono">
-                                                    {p.harga_beli !== undefined && p.harga_beli !== null
-                                                        ? `Rp ${p.harga_beli.toLocaleString("id-ID")}`
-                                                        : `Rp ${p.harga.toLocaleString("id-ID")}`}
+                                                    {mode === "sell"
+                                                        ? `Rp ${p.harga.toLocaleString("id-ID")}`
+                                                        : p.harga_beli !== undefined && p.harga_beli !== null
+                                                            ? `Rp ${p.harga_beli.toLocaleString("id-ID")}`
+                                                            : `Rp ${p.harga.toLocaleString("id-ID")}`}
                                                 </span>
                                                 <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${p.stok > 0 ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400" : "bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400"}`}>
                                                     Stok: {p.stok}

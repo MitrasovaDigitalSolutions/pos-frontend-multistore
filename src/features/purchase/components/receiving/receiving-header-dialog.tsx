@@ -4,12 +4,7 @@ import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { BaseDialog } from "@/components/ui/base-dialog";
 import { FormSelect } from "@/components/forms/form-select";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { FormNominalInput } from "@/components/forms/form-nominal-input";
@@ -152,160 +147,161 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-xl bg-white rounded-2xl border-slate-100 p-6 flex flex-col max-h-[90vh]">
-                <DialogHeader className="pb-4 border-b border-slate-100 shrink-0">
-                    <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                        <IconClipboardPlus size={20} className="text-emerald-500" />
-                        <span>Edit Informasi Penerimaan Barang</span>
-                    </DialogTitle>
-                </DialogHeader>
-
-                <FormProvider {...methods}>
-                    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden min-h-0 pt-4">
-                        <Scrollable className="flex-1 pr-1 space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {/* Referensi PO */}
-                                <div className="space-y-1.5 sm:col-span-2">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                        Referensi Purchase Order (PO)
-                                    </label>
-                                    <FormSelect<ReceivingHeaderInput>
-                                        name="purchase_order_id"
-                                        options={poOptions}
-                                        placeholder={
-                                            posLoading ? "Memuat daftar PO..." : "-- Pilih PO (Kosongkan jika beli langsung) --"
-                                        }
-                                        disabled={updateReceiving.isPending || posLoading}
-                                    />
-                                    {errors.purchase_order_id && (
-                                        <p className="text-[10px] text-rose-500 font-medium">
-                                            {errors.purchase_order_id.message}
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* Supplier Dropdown */}
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                        Supplier {!purchaseOrderId && " *"}
-                                    </label>
-                                    <FormSelect<ReceivingHeaderInput>
-                                        name="supplier_id"
-                                        options={supplierOptions}
-                                        placeholder={
-                                            suppliersLoading ? "Memuat supplier..." : "-- Pilih Supplier --"
-                                        }
-                                        disabled={updateReceiving.isPending || suppliersLoading || !!purchaseOrderId}
-                                    />
-                                    {errors.supplier_id && (
-                                        <p className="text-[10px] text-rose-500 font-medium">
-                                            {errors.supplier_id.message}
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* Tanggal Terima */}
-                                <FormDatePicker<ReceivingHeaderInput>
-                                    name="tanggal_terima"
-                                    label="Tanggal Penerimaan *"
-                                    disabled={updateReceiving.isPending}
-                                />
-
-                                {/* No. Faktur */}
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                        No. Faktur *
-                                    </label>
-                                    <Input
-                                        type="text"
-                                        placeholder="FAK-XXXX..."
-                                        className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                                        disabled={updateReceiving.isPending}
-                                        {...register("nomor_faktur")}
-                                    />
-                                    {errors.nomor_faktur && (
-                                        <p className="text-[10px] text-rose-500 font-medium">
-                                            {errors.nomor_faktur.message}
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* Nilai Faktur */}
-                                <div>
-                                    <FormNominalInput<ReceivingHeaderInput>
-                                        name="nilai_faktur"
-                                        label="Nilai Total Faktur / Invoice *"
-                                        placeholder="Total tagihan Rp..."
-                                        disabled={updateReceiving.isPending}
-                                    />
-                                </div>
-
-                                {/* Status Pembayaran */}
-                                <div className="space-y-1.5 sm:col-span-2">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                        Status Pembayaran
-                                    </label>
-                                    <FormSelect<ReceivingHeaderInput>
-                                        name="status_pembayaran"
-                                        options={[
-                                            { value: PAYMENT_STATUS.PENDING, label: PAYMENT_STATUS_LABELS[PAYMENT_STATUS.PENDING] },
-                                            { value: PAYMENT_STATUS.PARTIAL, label: PAYMENT_STATUS_LABELS[PAYMENT_STATUS.PARTIAL] },
-                                            { value: PAYMENT_STATUS.PAID, label: PAYMENT_STATUS_LABELS[PAYMENT_STATUS.PAID] },
-                                        ]}
-                                        placeholder="Pilih status"
-                                        disabled={updateReceiving.isPending}
-                                    />
-                                    {errors.status_pembayaran && (
-                                        <p className="text-[10px] text-rose-500 font-medium">
-                                            {errors.status_pembayaran.message}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Catatan */}
-                            <div className="space-y-1.5">
+        <BaseDialog
+            open={open}
+            onOpenChange={onOpenChange}
+            title={
+                <>
+                    <IconClipboardPlus size={20} className="text-emerald-500" />
+                    <span>Edit Informasi Penerimaan Barang</span>
+                </>
+            }
+            className="max-w-xl flex flex-col max-h-[90vh]"
+        >
+            <FormProvider {...methods}>
+                <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden min-h-0 pt-4">
+                    <Scrollable className="flex-1 pr-1 space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {/* Referensi PO */}
+                            <div className="space-y-1.5 sm:col-span-2">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                    Catatan
+                                    Referensi Purchase Order (PO)
                                 </label>
-                                <Input
-                                    type="text"
-                                    placeholder="Keterangan tambahan..."
-                                    className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                                    disabled={updateReceiving.isPending}
-                                    {...register("catatan")}
+                                <FormSelect<ReceivingHeaderInput>
+                                    name="purchase_order_id"
+                                    options={poOptions}
+                                    placeholder={
+                                        posLoading ? "Memuat daftar PO..." : "-- Pilih PO (Kosongkan jika beli langsung) --"
+                                    }
+                                    disabled={updateReceiving.isPending || posLoading}
                                 />
-                                {errors.catatan && (
+                                {errors.purchase_order_id && (
                                     <p className="text-[10px] text-rose-500 font-medium">
-                                        {errors.catatan.message}
+                                        {errors.purchase_order_id.message}
                                     </p>
                                 )}
                             </div>
-                        </Scrollable>
 
-                        {/* Actions */}
-                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 shrink-0 bg-white">
-                            <Button
-                                type="button"
-                                onClick={() => onOpenChange(false)}
-                                variant="outline"
-                                className="px-5 h-10 border-slate-200 text-slate-700 font-bold text-xs rounded-xl bg-white"
+                            {/* Supplier Dropdown */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    Supplier {!purchaseOrderId && " *"}
+                                </label>
+                                <FormSelect<ReceivingHeaderInput>
+                                    name="supplier_id"
+                                    options={supplierOptions}
+                                    placeholder={
+                                        suppliersLoading ? "Memuat supplier..." : "-- Pilih Supplier --"
+                                    }
+                                    disabled={updateReceiving.isPending || suppliersLoading || !!purchaseOrderId}
+                                />
+                                {errors.supplier_id && (
+                                    <p className="text-[10px] text-rose-500 font-medium">
+                                        {errors.supplier_id.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Tanggal Terima */}
+                            <FormDatePicker<ReceivingHeaderInput>
+                                name="tanggal_terima"
+                                label="Tanggal Penerimaan *"
                                 disabled={updateReceiving.isPending}
-                            >
-                                Batal
-                            </Button>
-                            <Button
-                                type="submit"
-                                className="px-5 h-10 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl"
-                                disabled={updateReceiving.isPending}
-                            >
-                                {updateReceiving.isPending ? "Menyimpan..." : "Simpan Perubahan"}
-                            </Button>
+                            />
+
+                            {/* No. Faktur */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    No. Faktur *
+                                </label>
+                                <Input
+                                    type="text"
+                                    placeholder="FAK-XXXX..."
+                                    className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                                    disabled={updateReceiving.isPending}
+                                    {...register("nomor_faktur")}
+                                />
+                                {errors.nomor_faktur && (
+                                    <p className="text-[10px] text-rose-500 font-medium">
+                                        {errors.nomor_faktur.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Nilai Faktur */}
+                            <div>
+                                <FormNominalInput<ReceivingHeaderInput>
+                                    name="nilai_faktur"
+                                    label="Nilai Total Faktur / Invoice *"
+                                    placeholder="Total tagihan Rp..."
+                                    disabled={updateReceiving.isPending}
+                                />
+                            </div>
+
+                            {/* Status Pembayaran */}
+                            <div className="space-y-1.5 sm:col-span-2">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    Status Pembayaran
+                                </label>
+                                <FormSelect<ReceivingHeaderInput>
+                                    name="status_pembayaran"
+                                    options={[
+                                        { value: PAYMENT_STATUS.PENDING, label: PAYMENT_STATUS_LABELS[PAYMENT_STATUS.PENDING] },
+                                        { value: PAYMENT_STATUS.PARTIAL, label: PAYMENT_STATUS_LABELS[PAYMENT_STATUS.PARTIAL] },
+                                        { value: PAYMENT_STATUS.PAID, label: PAYMENT_STATUS_LABELS[PAYMENT_STATUS.PAID] },
+                                    ]}
+                                    placeholder="Pilih status"
+                                    disabled={updateReceiving.isPending}
+                                />
+                                {errors.status_pembayaran && (
+                                    <p className="text-[10px] text-rose-500 font-medium">
+                                        {errors.status_pembayaran.message}
+                                    </p>
+                                )}
+                            </div>
                         </div>
-                    </form>
-                </FormProvider>
-            </DialogContent>
-        </Dialog>
+
+                        {/* Catatan */}
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                Catatan
+                            </label>
+                            <Input
+                                type="text"
+                                placeholder="Keterangan tambahan..."
+                                className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                                disabled={updateReceiving.isPending}
+                                {...register("catatan")}
+                            />
+                            {errors.catatan && (
+                                <p className="text-[10px] text-rose-500 font-medium">
+                                    {errors.catatan.message}
+                                </p>
+                            )}
+                        </div>
+                    </Scrollable>
+
+                    {/* Actions */}
+                    <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 shrink-0 bg-white">
+                        <Button
+                            type="button"
+                            onClick={() => onOpenChange(false)}
+                            variant="outline"
+                            className="px-5 h-10 border-slate-200 text-slate-700 font-bold text-xs rounded-xl bg-white"
+                            disabled={updateReceiving.isPending}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="submit"
+                            className="px-5 h-10 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl"
+                            disabled={updateReceiving.isPending}
+                        >
+                            {updateReceiving.isPending ? "Menyimpan..." : "Simpan Perubahan"}
+                        </Button>
+                    </div>
+                </form>
+            </FormProvider>
+        </BaseDialog>
     );
 }

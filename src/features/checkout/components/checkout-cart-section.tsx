@@ -14,6 +14,7 @@ import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconScan, IconCategory, IconTrash } from "@tabler/icons-react";
 import type { CartItem } from "@/features/checkout/types";
 import { BarcodeInput } from "@/components/shared/barcode-input";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import type { Product } from "@/features/products/types";
 
@@ -47,6 +48,7 @@ export function CheckoutCartSection({
                         onError={(msg) => toast.error(msg)}
                         disabled={isProcessing}
                         placeholder="Scan Barcode atau ketik nama produk... (Enter)"
+                        mode="sell"
                     />
                 </div>
                 <Button
@@ -122,9 +124,34 @@ export function CheckoutCartSection({
                                             >
                                                 -
                                             </button>
-                                            <span className="w-8 text-center text-xs font-bold text-slate-800">
-                                                {item.qty}
-                                            </span>
+                                            <Input
+                                                type="number"
+                                                value={item.qty}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    if (val === "") return;
+                                                    const num = parseInt(val, 10);
+                                                    if (!isNaN(num) && num > 0) {
+                                                        onUpdateQty(item, num);
+                                                    }
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = e.target.value;
+                                                    const num = parseInt(val, 10);
+                                                    if (val === "" || isNaN(num) || num <= 0) {
+                                                        onUpdateQty(item, item.qty);
+                                                    }
+                                                }}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter") {
+                                                        e.preventDefault();
+                                                        e.currentTarget.blur();
+                                                        barcodeInputRef.current?.focus();
+                                                    }
+                                                }}
+                                                className="w-12 h-6 text-center text-xs font-bold text-slate-800 border border-slate-200 rounded-lg outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                disabled={isProcessing}
+                                            />
                                             <button
                                                 type="button"
                                                 onClick={() => onUpdateQty(item, item.qty + 1)}

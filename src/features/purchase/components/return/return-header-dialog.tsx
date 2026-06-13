@@ -4,12 +4,7 @@ import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { BaseDialog } from "@/components/ui/base-dialog";
 import { FormSelect } from "@/components/forms/form-select";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { Input } from "@/components/ui/input";
@@ -136,105 +131,106 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md bg-white rounded-2xl border-slate-100 p-6 flex flex-col max-h-[90vh]">
-                <DialogHeader className="pb-4 border-b border-slate-100 shrink-0">
-                    <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                        <IconClipboardPlus size={20} className="text-emerald-500" />
-                        <span>Edit Informasi Retur Pembelian</span>
-                    </DialogTitle>
-                </DialogHeader>
-
-                <FormProvider {...methods}>
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4">
-                        {/* Referensi Faktur Penerimaan */}
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                Referensi Faktur Penerimaan *
-                            </label>
-                            <FormSelect<PurchaseReturnHeaderInput>
-                                name="receiving_id"
-                                options={receivingOptions}
-                                placeholder={
-                                    receivingsLoading ? "Memuat daftar penerimaan..." : "-- Pilih Faktur Penerimaan (Completed) --"
-                                }
-                                disabled={updateReturn.isPending || receivingsLoading}
-                            />
-                            {errors.receiving_id && (
-                                <p className="text-[10px] text-rose-500 font-medium">
-                                    {errors.receiving_id.message}
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Supplier Selector */}
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                Supplier *
-                            </label>
-                            <FormSelect<PurchaseReturnHeaderInput>
-                                name="supplier_id"
-                                options={supplierOptions}
-                                placeholder={
-                                    suppliersLoading ? "Memuat supplier..." : "-- Pilih Supplier --"
-                                }
-                                disabled={updateReturn.isPending || suppliersLoading || !!receivingId}
-                            />
-                            {errors.supplier_id && (
-                                <p className="text-[10px] text-rose-500 font-medium">
-                                    {errors.supplier_id.message}
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Tanggal Retur */}
-                        <FormDatePicker<PurchaseReturnHeaderInput>
-                            name="tanggal_retur"
-                            label="Tanggal Retur *"
-                            disabled={updateReturn.isPending}
+        <BaseDialog
+            open={open}
+            onOpenChange={onOpenChange}
+            title={
+                <>
+                    <IconClipboardPlus size={20} className="text-emerald-500" />
+                    <span>Edit Informasi Retur Pembelian</span>
+                </>
+            }
+            className="max-w-md flex flex-col max-h-[90vh]"
+        >
+            <FormProvider {...methods}>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4">
+                    {/* Referensi Faktur Penerimaan */}
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                            Referensi Faktur Penerimaan *
+                        </label>
+                        <FormSelect<PurchaseReturnHeaderInput>
+                            name="receiving_id"
+                            options={receivingOptions}
+                            placeholder={
+                                receivingsLoading ? "Memuat daftar penerimaan..." : "-- Pilih Faktur Penerimaan (Completed) --"
+                            }
+                            disabled={updateReturn.isPending || receivingsLoading}
                         />
+                        {errors.receiving_id && (
+                            <p className="text-[10px] text-rose-500 font-medium">
+                                {errors.receiving_id.message}
+                            </p>
+                        )}
+                    </div>
 
-                        {/* Catatan */}
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                Catatan / Keterangan
-                            </label>
-                            <Input
-                                type="text"
-                                placeholder="Keterangan tambahan..."
-                                className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                                disabled={updateReturn.isPending}
-                                {...register("catatan")}
-                            />
-                            {errors.catatan && (
-                                <p className="text-[10px] text-rose-500 font-medium">
-                                    {errors.catatan.message}
-                                </p>
-                            )}
-                        </div>
+                    {/* Supplier Selector */}
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                            Supplier *
+                        </label>
+                        <FormSelect<PurchaseReturnHeaderInput>
+                            name="supplier_id"
+                            options={supplierOptions}
+                            placeholder={
+                                suppliersLoading ? "Memuat supplier..." : "-- Pilih Supplier --"
+                            }
+                            disabled={updateReturn.isPending || suppliersLoading || !!receivingId}
+                        />
+                        {errors.supplier_id && (
+                            <p className="text-[10px] text-rose-500 font-medium">
+                                {errors.supplier_id.message}
+                            </p>
+                        )}
+                    </div>
 
-                        {/* Actions */}
-                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 shrink-0 bg-white">
-                            <Button
-                                type="button"
-                                onClick={() => onOpenChange(false)}
-                                variant="outline"
-                                className="px-5 h-10 border-slate-200 text-slate-700 font-bold text-xs rounded-xl bg-white"
-                                disabled={updateReturn.isPending}
-                            >
-                                Batal
-                            </Button>
-                            <Button
-                                type="submit"
-                                className="px-5 h-10 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl"
-                                disabled={updateReturn.isPending}
-                            >
-                                {updateReturn.isPending ? "Menyimpan..." : "Simpan Perubahan"}
-                            </Button>
-                        </div>
-                    </form>
-                </FormProvider>
-            </DialogContent>
-        </Dialog>
+                    {/* Tanggal Retur */}
+                    <FormDatePicker<PurchaseReturnHeaderInput>
+                        name="tanggal_retur"
+                        label="Tanggal Retur *"
+                        disabled={updateReturn.isPending}
+                    />
+
+                    {/* Catatan */}
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                            Catatan / Keterangan
+                        </label>
+                        <Input
+                            type="text"
+                            placeholder="Keterangan tambahan..."
+                            className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                            disabled={updateReturn.isPending}
+                            {...register("catatan")}
+                        />
+                        {errors.catatan && (
+                            <p className="text-[10px] text-rose-500 font-medium">
+                                {errors.catatan.message}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 shrink-0 bg-white">
+                        <Button
+                            type="button"
+                            onClick={() => onOpenChange(false)}
+                            variant="outline"
+                            className="px-5 h-10 border-slate-200 text-slate-700 font-bold text-xs rounded-xl bg-white"
+                            disabled={updateReturn.isPending}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="submit"
+                            className="px-5 h-10 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl"
+                            disabled={updateReturn.isPending}
+                        >
+                            {updateReturn.isPending ? "Menyimpan..." : "Simpan Perubahan"}
+                        </Button>
+                    </div>
+                </form>
+            </FormProvider>
+        </BaseDialog>
     );
 }
