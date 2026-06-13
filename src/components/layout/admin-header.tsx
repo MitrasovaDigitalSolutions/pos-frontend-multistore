@@ -69,7 +69,7 @@ export function AdminHeader() {
   const userRole = user?.roles?.[0] || "kasir";
 
   return (
-    <header className="flex justify-between items-center mb-6 border-b border-slate-200/60 pb-4">
+    <header className="relative z-10 flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200/60 bg-slate-100">
       <h2 className="text-lg font-extrabold text-slate-900">{getTitle()}</h2>
       <div className="flex items-center gap-4">
         {/* Date Badge */}

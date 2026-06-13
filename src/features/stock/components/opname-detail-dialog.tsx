@@ -61,7 +61,7 @@ export function OpnameDetailDialog({
 
                 {isDetailLoading || !selectedOpname ? (
                     <div className="py-8 flex-1 flex items-center justify-center">
-                        <PageLoader message="Memuat detail opname..." />
+                        <PageLoader message="Memuat detail opname..." variant="compact" />
                     </div>
                 ) : (
                     <div className="space-y-4 pt-4 flex-1 overflow-y-auto pr-1 min-h-0">
@@ -177,7 +177,7 @@ export function OpnameDetailDialog({
                                     </TableBody>
                                 </Table>
                             ) : isLogsLoading ? (
-                                <PageLoader message="Memuat logs..." />
+                                <PageLoader message="Memuat logs..." variant="compact" />
                             ) : (
                                 <div className="space-y-4 pl-3 pr-1 py-1">
                                     {logs.map((log) => (

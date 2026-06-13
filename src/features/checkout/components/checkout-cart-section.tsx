@@ -39,7 +39,7 @@ export function CheckoutCartSection({
     return (
         <div className="bg-white border-r border-slate-200 flex flex-col h-full overflow-hidden">
             {/* Scanner / Search */}
-            <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex gap-3 items-center">
+            <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex gap-3 items-start">
                 <div className="grow">
                     <BarcodeInput
                         ref={barcodeInputRef}
@@ -52,7 +52,7 @@ export function CheckoutCartSection({
                 <Button
                     variant="outline"
                     onClick={onCatalogOpen}
-                    className="h-11 border-dashed border-emerald-500 hover:bg-emerald-50 text-emerald-600 font-bold px-4 rounded-xl flex gap-2 cursor-pointer bg-white shrink-0"
+                    className="h-13 border-dashed border-emerald-500 hover:bg-emerald-50 text-emerald-600 font-bold px-4 rounded-xl flex gap-2 cursor-pointer bg-white shrink-0"
                 >
                     <IconCategory size={18} />
                     <span>Katalog (F2)</span>

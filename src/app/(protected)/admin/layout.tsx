@@ -12,11 +12,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         <div className="grow flex h-screen overflow-hidden bg-slate-100">
             <AdminSidebar />
 
-            <main className="grow p-6 px-8 overflow-y-auto h-full">
+            <div className="grow flex flex-col h-full overflow-hidden">
                 <AdminHeader />
 
-                {children}
-            </main>
+                <main className="grow pt-6 px-8 pb-6 overflow-y-auto">
+                    {children}
+                </main>
+            </div>
         </div>
     );
 }

@@ -21,6 +21,7 @@ interface FormNumberInputProps<T extends FieldValues> extends Omit<
     label?: string;
     helperText?: React.ReactNode;
     allowNegative?: boolean;
+    onValueChange?: (val: number | null) => void;
 }
 
 export function FormNumberInput<T extends FieldValues>({
@@ -30,6 +31,7 @@ export function FormNumberInput<T extends FieldValues>({
     allowNegative = false,
     className,
     disabled,
+    onValueChange,
     ...props
 }: FormNumberInputProps<T>) {
     const {
@@ -149,6 +151,7 @@ export function FormNumberInput<T extends FieldValues>({
                     if (rawValue === "") {
                         setLocalValue("");
                         onChange(null);
+                        onValueChange?.(null);
                         return;
                     }
 
@@ -183,6 +186,7 @@ export function FormNumberInput<T extends FieldValues>({
 
                     // Call the RHF field onChange with the raw numeric parsed float/int
                     onChange(parsed);
+                    onValueChange?.(parsed);
 
                     // Recalculate new selection/cursor position
                     let newSelectionStart = 0;

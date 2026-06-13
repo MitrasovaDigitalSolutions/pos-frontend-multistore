@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const receivingItemSchema = z.object({
     product_id: z.coerce.number().min(1, "Produk wajib dipilih"),
-    kuantitas: z.coerce.number().min(1, "Jumlah minimal 1 pcs"),
+    kuantitas: z.coerce.number().min(0, "Jumlah minimal 0 pcs"),
     harga_beli: z.coerce.number().min(0, "Harga beli minimal 0"),
     update_harga_jual: z.boolean().default(false),
     harga_jual_baru: z.coerce
@@ -87,7 +87,7 @@ export const receivingBulkItemsSchema = z.object({
     items: z.array(
         z.object({
             product_id: z.coerce.number().min(1, "Produk wajib dipilih"),
-            kuantitas: z.coerce.number().min(1, "Jumlah minimal 1 pcs"),
+            kuantitas: z.coerce.number().min(0, "Jumlah minimal 0 pcs"),
             harga_beli: z.coerce.number().min(0, "Harga beli minimal 0"),
         })
     ),
