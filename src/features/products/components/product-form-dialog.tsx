@@ -5,12 +5,7 @@ import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { FormNumberInput } from "@/components/forms/form-number-input";
 import { FormSelect } from "@/components/forms/form-select";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { BaseDialog } from "@/components/ui/base-dialog";
 import { Input } from "@/components/ui/input";
 import { useBrands } from "@/features/brands/api/brands-api";
 import { useCategories } from "@/features/categories/api/categories-api";
@@ -169,20 +164,22 @@ export function ProductFormDialog({
         : null;
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-4xl bg-white rounded-2xl border-slate-100 p-6">
-                <DialogHeader className="pb-4 border-b border-slate-100">
-                    <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                        <IconPackage size={20} className="text-emerald-500" />
-                        <span>
-                            {editingProduct
-                                ? "Edit Detail Produk"
-                                : "Tambah Produk Baru"}
-                        </span>
-                    </DialogTitle>
-                </DialogHeader>
-
-                <form
+        <BaseDialog
+            open={open}
+            onOpenChange={onOpenChange}
+            title={
+                <>
+                    <IconPackage size={20} className="text-emerald-500" />
+                    <span>
+                        {editingProduct
+                            ? "Edit Detail Produk"
+                            : "Tambah Produk Baru"}
+                    </span>
+                </>
+            }
+            className="sm:max-w-4xl"
+        >
+            <form
                     onSubmit={handleSubmit(onSubmit)}
                     className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4"
                 >
@@ -308,7 +305,6 @@ export function ProductFormDialog({
                         </div>
                     </div>
                 </form>
-            </DialogContent>
-        </Dialog>
+        </BaseDialog>
     );
 }

@@ -14,7 +14,7 @@ interface BaseDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     /** Icon + title shown in the header */
-    title: React.ReactNode;
+    title?: React.ReactNode;
     /** Optional extra content to render on the right side of the header (e.g. action buttons) */
     headerRight?: React.ReactNode;
     /** Dialog panel max-width & misc classes */
@@ -44,21 +44,23 @@ export function BaseDialog({
                 showCloseButton={false}
             >
                 {/* ── Symmetric Header ── */}
-                <div className="flex items-center justify-between pb-4 border-b border-slate-100 shrink-0">
-                    <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                        {title}
-                    </DialogTitle>
+                {title && (
+                    <div className="flex items-center justify-between pb-4 border-b border-slate-100 shrink-0">
+                        <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                            {title}
+                        </DialogTitle>
 
-                    <div className="flex items-center gap-2">
-                        {headerRight}
-                        {showCloseButton && (
-                            <DialogClose className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer border-none bg-transparent shrink-0">
-                                <IconX size={16} />
-                                <span className="sr-only">Tutup</span>
-                            </DialogClose>
-                        )}
+                        <div className="flex items-center gap-2">
+                            {headerRight}
+                            {showCloseButton && (
+                                <DialogClose className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer border-none bg-transparent shrink-0">
+                                    <IconX size={16} />
+                                    <span className="sr-only">Tutup</span>
+                                </DialogClose>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* ── Content ── */}
                 {children}

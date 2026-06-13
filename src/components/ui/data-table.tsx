@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/incompatible-library */
 import { Input } from "@/components/ui/input";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
     Pagination,
     PaginationContent,
@@ -26,8 +25,9 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { IconCheck, IconEdit, IconEye, IconTrash } from "@tabler/icons-react";
+import { IconCheck, IconEdit, IconTrash } from "@tabler/icons-react";
 import {
     ColumnDef,
     flexRender,
@@ -37,7 +37,7 @@ import {
     useReactTable,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, InfoIcon, Search } from "lucide-react";
 import * as React from "react";
 
 import "@tanstack/react-table";
@@ -189,7 +189,7 @@ export function DataTable<TData, TValue>({
                                             isViewDisabled && "opacity-40 cursor-not-allowed hover:bg-transparent"
                                         )}
                                     >
-                                        <IconEye size={16} />
+                                        <InfoIcon size={16} />
                                     </button>
                                 </TooltipTrigger>
                                 <TooltipContent>Lihat Detail</TooltipContent>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { BaseDialog } from "@/components/ui/base-dialog";
 import { Scrollable } from "@/components/ui/scrollable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCashDrawerDetail } from "@/features/checkout/api/cash-drawer-api";
@@ -40,26 +40,22 @@ export function SessionDetailDialog({
 
     if (isLoading) {
         return (
-            <Dialog open={open} onOpenChange={onOpenChange}>
-                <DialogContent className="bg-white rounded-2xl p-6 shadow-2xl max-w-lg sm:max-w-lg border-slate-100">
-                    <div className="py-12 flex flex-col items-center justify-center text-slate-400 gap-2">
-                        <IconLoader2 size={32} className="animate-spin text-emerald-500" />
-                        <span className="text-xs font-semibold">Memuat detail sesi...</span>
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <BaseDialog open={open} onOpenChange={onOpenChange} className="max-w-lg sm:max-w-lg">
+                <div className="py-12 flex flex-col items-center justify-center text-slate-400 gap-2">
+                    <IconLoader2 size={32} className="animate-spin text-emerald-500" />
+                    <span className="text-xs font-semibold">Memuat detail sesi...</span>
+                </div>
+            </BaseDialog>
         );
     }
 
     if (!session) {
         return (
-            <Dialog open={open} onOpenChange={onOpenChange}>
-                <DialogContent className="bg-white rounded-2xl p-6 shadow-2xl max-w-lg sm:max-w-lg border-slate-100">
-                    <div className="py-8 text-center text-slate-400 text-xs">
-                        Sesi tidak ditemukan. Silakan muat ulang halaman.
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <BaseDialog open={open} onOpenChange={onOpenChange} className="max-w-lg sm:max-w-lg">
+                <div className="py-8 text-center text-slate-400 text-xs">
+                    Sesi tidak ditemukan. Silakan muat ulang halaman.
+                </div>
+            </BaseDialog>
         );
     }
 
@@ -67,37 +63,40 @@ export function SessionDetailDialog({
     const transactions = session.transactions || [];
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="bg-white rounded-2xl border-slate-100 p-6 shadow-2xl max-w-3xl sm:max-w-3xl flex flex-col max-h-[90vh]">
-                <DialogHeader className="pb-3 border-b border-slate-100 shrink-0">
-                    <DialogTitle className="text-base font-extrabold text-slate-900 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <div className={cn(
-                                "w-8 h-8 rounded-lg text-white flex items-center justify-center",
-                                session.status === "open" ? "bg-emerald-500" : "bg-slate-500"
-                            )}>
-                                <IconCash size={18} />
-                            </div>
-                            <div className="text-left">
-                                <span className="block text-sm font-extrabold">Detail Sesi Kasir #{session.id}</span>
-                                <span className="block text-[11px] font-medium text-slate-400 mt-0.5">
-                                    Kasir: <span className="text-slate-800 font-bold">{session.user?.name || "Kasir"}</span>
-                                </span>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2 mr-6">
-                            {session.status === "open" ? (
-                                <span className="bg-emerald-50 text-emerald-700 text-[9px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-100 uppercase tracking-wider">
-                                    Terbuka
-                                </span>
-                            ) : (
-                                <span className="bg-slate-100 text-slate-700 text-[9px] font-bold px-2.5 py-0.5 rounded-full border border-slate-200 uppercase tracking-wider">
-                                    Ditutup
-                                </span>
-                            )}
-                        </div>
-                    </DialogTitle>
-                </DialogHeader>
+        <BaseDialog
+            open={open}
+            onOpenChange={onOpenChange}
+            title={
+                <div className="flex items-center gap-2">
+                    <div className={cn(
+                        "w-8 h-8 rounded-lg text-white flex items-center justify-center",
+                        session.status === "open" ? "bg-emerald-500" : "bg-slate-500"
+                    )}>
+                        <IconCash size={18} />
+                    </div>
+                    <div className="text-left">
+                        <span className="block text-sm font-extrabold">Detail Sesi Kasir #{session.id}</span>
+                        <span className="block text-[11px] font-medium text-slate-400 mt-0.5">
+                            Kasir: <span className="text-slate-800 font-bold">{session.user?.name || "Kasir"}</span>
+                        </span>
+                    </div>
+                </div>
+            }
+            headerRight={
+                <div className="flex items-center gap-2">
+                    {session.status === "open" ? (
+                        <span className="bg-emerald-50 text-emerald-700 text-[9px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-100 uppercase tracking-wider">
+                            Terbuka
+                        </span>
+                    ) : (
+                        <span className="bg-slate-100 text-slate-700 text-[9px] font-bold px-2.5 py-0.5 rounded-full border border-slate-200 uppercase tracking-wider">
+                            Ditutup
+                        </span>
+                    )}
+                </div>
+            }
+            className="max-w-3xl sm:max-w-3xl flex flex-col max-h-[90vh]"
+        >
 
                 <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as TabType)} className="w-full flex-1 flex flex-col min-h-0">
                     <TabsList className="shrink-0 my-2 border-b border-slate-100 rounded-none w-full justify-start bg-transparent gap-4 h-9 p-0" variant="line">
@@ -136,7 +135,6 @@ export function SessionDetailDialog({
                         </TabsContent>
                     </Scrollable>
                 </Tabs>
-            </DialogContent>
-        </Dialog>
+        </BaseDialog>
     );
 }

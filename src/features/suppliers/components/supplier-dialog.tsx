@@ -1,12 +1,7 @@
 "use client";
 
 import { useFormContext } from "react-hook-form";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { BaseDialog } from "@/components/ui/base-dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FormTextarea } from "@/components/forms/form-textarea";
@@ -69,110 +64,111 @@ export function SupplierDialog({
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md bg-white rounded-2xl border-slate-100 p-6">
-                <DialogHeader className="pb-4 border-b border-slate-100">
-                    <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                        <IconBuildingStore
-                            size={20}
-                            className="text-emerald-500"
-                        />
-                        <span>
-                            {isEdit ? "Ubah Data Supplier" : "Tambah Supplier Baru"}
-                        </span>
-                    </DialogTitle>
-                </DialogHeader>
+        <BaseDialog
+            open={open}
+            onOpenChange={onOpenChange}
+            title={
+                <>
+                    <IconBuildingStore
+                        size={20}
+                        className="text-emerald-500"
+                    />
+                    <span>
+                        {isEdit ? "Ubah Data Supplier" : "Tambah Supplier Baru"}
+                    </span>
+                </>
+            }
+            className="max-w-md"
+        >
+            <form
+                onSubmit={handleSubmit(onSubmit)}
+                className="space-y-4 pt-4"
+            >
+                {/* Nama */}
+                <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                        Nama Supplier *
+                    </label>
+                    <Input
+                        type="text"
+                        placeholder="PT. Distributor Sembako..."
+                        className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                        disabled={isPending}
+                        {...register("nama")}
+                    />
+                    {errors.nama && (
+                        <p className="text-[10px] text-rose-500 font-medium">
+                            {errors.nama.message}
+                        </p>
+                    )}
+                </div>
 
-                <form
-                    onSubmit={handleSubmit(onSubmit)}
-                    className="space-y-4 pt-4"
-                >
-                    {/* Nama */}
+                <div className="grid grid-cols-2 gap-3">
+                    {/* No Telepon */}
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            Nama Supplier *
+                            No. Telepon / HP
                         </label>
                         <Input
                             type="text"
-                            placeholder="PT. Distributor Sembako..."
+                            placeholder="0812XXXXXXXX..."
                             className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
                             disabled={isPending}
-                            {...register("nama")}
+                            {...register("nomor_telepon")}
                         />
-                        {errors.nama && (
+                        {errors.nomor_telepon && (
                             <p className="text-[10px] text-rose-500 font-medium">
-                                {errors.nama.message}
+                                {errors.nomor_telepon.message}
                             </p>
                         )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                        {/* No Telepon */}
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                No. Telepon / HP
-                            </label>
-                            <Input
-                                type="text"
-                                placeholder="0812XXXXXXXX..."
-                                className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                                disabled={isPending}
-                                {...register("nomor_telepon")}
-                            />
-                            {errors.nomor_telepon && (
-                                <p className="text-[10px] text-rose-500 font-medium">
-                                    {errors.nomor_telepon.message}
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Email */}
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                Email
-                            </label>
-                            <Input
-                                type="text"
-                                placeholder="supplier@mail.com..."
-                                className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                                disabled={isPending}
-                                {...register("email")}
-                            />
-                            {errors.email && (
-                                <p className="text-[10px] text-rose-500 font-medium">
-                                    {errors.email.message}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Alamat */}
+                    {/* Email */}
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            Alamat Kantor / Gudang
+                            Email
                         </label>
-                        <FormTextarea
-                            name="alamat"
-                            placeholder="Alamat lengkap distributor..."
-                            className="text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl min-h-16"
+                        <Input
+                            type="text"
+                            placeholder="supplier@mail.com..."
+                            className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
                             disabled={isPending}
+                            {...register("email")}
                         />
-                        {errors.alamat && (
+                        {errors.email && (
                             <p className="text-[10px] text-rose-500 font-medium">
-                                {errors.alamat.message}
+                                {errors.email.message}
                             </p>
                         )}
                     </div>
+                </div>
 
-                    <Button
-                        type="submit"
-                        className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4"
+                {/* Alamat */}
+                <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                        Alamat Kantor / Gudang
+                    </label>
+                    <FormTextarea
+                        name="alamat"
+                        placeholder="Alamat lengkap distributor..."
+                        className="text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl min-h-16"
                         disabled={isPending}
-                    >
-                        {isPending ? "Menyimpan..." : isEdit ? "Simpan Perubahan" : "Daftarkan Supplier"}
-                    </Button>
-                </form>
-            </DialogContent>
-        </Dialog>
+                    />
+                    {errors.alamat && (
+                        <p className="text-[10px] text-rose-500 font-medium">
+                            {errors.alamat.message}
+                        </p>
+                    )}
+                </div>
+
+                <Button
+                    type="submit"
+                    className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4"
+                    disabled={isPending}
+                >
+                    {isPending ? "Menyimpan..." : isEdit ? "Simpan Perubahan" : "Daftarkan Supplier"}
+                </Button>
+            </form>
+        </BaseDialog>
     );
 }

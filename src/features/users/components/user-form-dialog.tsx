@@ -1,12 +1,7 @@
 "use client";
 
 import { useFormContext } from "react-hook-form";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { BaseDialog } from "@/components/ui/base-dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FormSelect } from "@/components/forms/form-select";
@@ -97,116 +92,117 @@ export function UserFormDialog({
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-110 bg-white rounded-2xl border-slate-100 p-6">
-                <DialogHeader className="pb-4 border-b border-slate-100">
-                    <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                        <IconPlus size={20} className="text-emerald-500" />
-                        <span>
-                            {editingUser
-                                ? "Edit Profil Pengguna"
-                                : "Daftarkan Pengguna Baru"}
-                        </span>
-                    </DialogTitle>
-                </DialogHeader>
-
-                <form
-                    onSubmit={handleSubmit(onSubmit)}
-                    className="space-y-4 pt-4"
-                >
-                    {/* Nama Lengkap */}
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            Nama Lengkap
-                        </label>
-                        <Input
-                            type="text"
-                            placeholder="Nama user lengkap..."
-                            className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                            disabled={isPending}
-                            {...register("name")}
-                        />
-                        {errors.name && (
-                            <p className="text-[10px] text-rose-500 font-medium">
-                                {errors.name.message}
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Username */}
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            Username
-                        </label>
-                        <Input
-                            type="text"
-                            placeholder="Username untuk login..."
-                            className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                            disabled={isPending}
-                            {...register("username")}
-                        />
-                        {errors.username && (
-                            <p className="text-[10px] text-rose-500 font-medium">
-                                {errors.username.message}
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Password */}
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            Password{" "}
-                            {editingUser && "(Kosongkan jika tidak diubah)"}
-                        </label>
-                        <Input
-                            type="password"
-                            placeholder="Password minimal 6 karakter..."
-                            className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                            disabled={isPending}
-                            {...register("password")}
-                        />
-                        {errors.password && (
-                            <p className="text-[10px] text-rose-500 font-medium">
-                                {errors.password.message}
-                            </p>
-                        )}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                        {/* Role */}
-                        <FormSelect<UserInput>
-                            name="roles.0"
-                            label="Role Peran"
-                            options={[
-                                { value: "kasir", label: "Kasir" },
-                                { value: "supervisor", label: "Supervisor" },
-                                { value: "manajer_toko", label: "Manajer Toko" },
-                                { value: "admin", label: "Admin" },
-                            ]}
-                            disabled={isPending}
-                        />
-
-                        {/* Status */}
-                        <FormSelect<UserInput>
-                            name="status"
-                            label="Status"
-                            options={[
-                                { value: "active", label: "Aktif" },
-                                { value: "inactive", label: "Nonaktif" },
-                            ]}
-                            disabled={isPending}
-                        />
-                    </div>
-
-                    <Button
-                        type="submit"
-                        className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4"
+        <BaseDialog
+            open={open}
+            onOpenChange={onOpenChange}
+            title={
+                <>
+                    <IconPlus size={20} className="text-emerald-500" />
+                    <span>
+                        {editingUser
+                            ? "Edit Profil Pengguna"
+                            : "Daftarkan Pengguna Baru"}
+                    </span>
+                </>
+            }
+            className="max-w-110"
+        >
+            <form
+                onSubmit={handleSubmit(onSubmit)}
+                className="space-y-4 pt-4"
+            >
+                {/* Nama Lengkap */}
+                <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                        Nama Lengkap
+                    </label>
+                    <Input
+                        type="text"
+                        placeholder="Nama user lengkap..."
+                        className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
                         disabled={isPending}
-                    >
-                        {isPending ? "Menyimpan..." : "Simpan Pengguna"}
-                    </Button>
-                </form>
-            </DialogContent>
-        </Dialog>
+                        {...register("name")}
+                    />
+                    {errors.name && (
+                        <p className="text-[10px] text-rose-500 font-medium">
+                            {errors.name.message}
+                        </p>
+                    )}
+                </div>
+
+                {/* Username */}
+                <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                        Username
+                    </label>
+                    <Input
+                        type="text"
+                        placeholder="Username untuk login..."
+                        className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                        disabled={isPending}
+                        {...register("username")}
+                    />
+                    {errors.username && (
+                        <p className="text-[10px] text-rose-500 font-medium">
+                            {errors.username.message}
+                        </p>
+                    )}
+                </div>
+
+                {/* Password */}
+                <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                        Password{" "}
+                        {editingUser && "(Kosongkan jika tidak diubah)"}
+                    </label>
+                    <Input
+                        type="password"
+                        placeholder="Password minimal 6 karakter..."
+                        className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                        disabled={isPending}
+                        {...register("password")}
+                    />
+                    {errors.password && (
+                        <p className="text-[10px] text-rose-500 font-medium">
+                            {errors.password.message}
+                        </p>
+                    )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                    {/* Role */}
+                    <FormSelect<UserInput>
+                        name="roles.0"
+                        label="Role Peran"
+                        options={[
+                            { value: "kasir", label: "Kasir" },
+                            { value: "supervisor", label: "Supervisor" },
+                            { value: "manajer_toko", label: "Manajer Toko" },
+                            { value: "admin", label: "Admin" },
+                        ]}
+                        disabled={isPending}
+                    />
+
+                    {/* Status */}
+                    <FormSelect<UserInput>
+                        name="status"
+                        label="Status"
+                        options={[
+                            { value: "active", label: "Aktif" },
+                            { value: "inactive", label: "Nonaktif" },
+                        ]}
+                        disabled={isPending}
+                    />
+                </div>
+
+                <Button
+                    type="submit"
+                    className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4"
+                    disabled={isPending}
+                >
+                    {isPending ? "Menyimpan..." : "Simpan Pengguna"}
+                </Button>
+            </form>
+        </BaseDialog>
     );
 }
