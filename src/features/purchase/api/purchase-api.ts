@@ -13,7 +13,7 @@ import type { Product } from "@/features/products/types";
 
 // ─── Stock Receiving Hooks ────────────────────────────────────────────────────
 
-export function useReceivings(params?: PaginationParams & { search?: string; status?: string; supplier_id?: number }) {
+export function useReceivings(params?: PaginationParams & { search?: string; status?: string; supplier_id?: number; start_date?: string; end_date?: string }) {
     return useQuery<PaginatedResponse<Receiving>>({
         queryKey: [...queryKeys.purchase.receivings(), params],
         queryFn: () => apiGetList<Receiving>(ENDPOINTS.PURCHASE.RECEIVING.LIST, params),
@@ -69,12 +69,9 @@ export function useBulkReplaceReceivingItems() {
                 ENDPOINTS.PURCHASE.RECEIVING.ITEMS_REPLACE(id),
                 data,
             ),
-        onSuccess: (_, variables) => {
+        onSuccess: (_, _variables) => {
             queryClient.invalidateQueries({
-                queryKey: queryKeys.purchase.receivings(),
-            });
-            queryClient.invalidateQueries({
-                queryKey: [...queryKeys.purchase.receivings(), "detail", variables.id],
+                queryKey: ["purchase"],
             });
         },
     });
@@ -87,15 +84,11 @@ export function useCompleteReceiving() {
             apiPost<ApiResponse<Receiving>, void>(
                 ENDPOINTS.PURCHASE.RECEIVING.COMPLETE(id),
             ),
-        onSuccess: (_, id) => {
+        onSuccess: (_, _id) => {
             queryClient.invalidateQueries({
-                queryKey: queryKeys.purchase.receivings(),
-            });
-            queryClient.invalidateQueries({
-                queryKey: [...queryKeys.purchase.receivings(), "detail", id],
+                queryKey: ["purchase"],
             });
             queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
-            queryClient.invalidateQueries({ queryKey: queryKeys.purchase.orders() });
         },
     });
 }
@@ -131,7 +124,7 @@ export function useUpdateReceiving() {
             ),
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: queryKeys.purchase.receivings(),
+                queryKey: ["purchase"],
             });
             queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
@@ -144,8 +137,9 @@ export function useDeleteReceiving() {
         mutationFn: (id) => apiDelete<ApiResponse<void>>(ENDPOINTS.PURCHASE.RECEIVING.DELETE(id)),
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: queryKeys.purchase.receivings(),
+                queryKey: ["purchase"],
             });
+            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
     });
 }
@@ -409,6 +403,9 @@ export function usePaymentSummary(receivingId: number | null) {
                 const res = await apiGetData<PaymentSummary>(
                     ENDPOINTS.PURCHASE.PAYMENT.SUMMARY(receivingId)
                 );
+                if (!res) {
+                    throw new Error("Empty summary response");
+                }
                 return res;
             } catch (err) {
                 console.warn("Summary endpoint failed or not found, falling back to client-side aggregation:", err);

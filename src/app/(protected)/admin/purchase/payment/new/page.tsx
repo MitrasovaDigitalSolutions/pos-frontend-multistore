@@ -1,4 +1,4 @@
-import { PaymentCreatePage } from "@/features/purchase/components/payment-create-page";
+import { PaymentCreatePage } from "@/features/purchase/components/payment/payment-create-page";
 import { Suspense } from "react";
 
 export default function AdminPurchasePaymentNewPage() {

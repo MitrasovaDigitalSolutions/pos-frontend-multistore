@@ -1,4 +1,4 @@
-import { POItemsPage } from "@/features/purchase/components/po-items-page";
+import { POItemsPage } from "@/features/purchase/components/purchase-order/po-items-page";
 
 interface PageProps {
     params: Promise<{ id: string }>;

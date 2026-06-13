@@ -3,6 +3,9 @@
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { FormNumberInput } from "@/components/forms/form-number-input";
+import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import type { PurchaseItemLocal } from "../../types";
 
 
@@ -12,6 +15,7 @@ interface ItemsTableProps {
     onRemoveItem: (temp_id: string) => void;
     priceLabel?: string;
     disabled?: boolean;
+    isPriceReadOnly?: boolean;
 }
 
 export function ItemsTable({
@@ -20,7 +24,17 @@ export function ItemsTable({
     onRemoveItem,
     priceLabel = "Harga Estimasi",
     disabled = false,
+    isPriceReadOnly = false,
 }: ItemsTableProps) {
+    const methods = useForm({
+        values: {
+            items: items.map((item) => ({
+                kuantitas: item.kuantitas,
+                harga_estimasi: item.harga_estimasi,
+            })),
+        },
+    });
+
     const [flashId, setFlashId] = useState<string | null>(null);
     const prevLengthRef = useRef(items.length);
     const tableEndRef = useRef<HTMLDivElement>(null);
@@ -58,7 +72,8 @@ export function ItemsTable({
     }
 
     return (
-        <div className="space-y-3">
+        <FormProvider {...methods}>
+            <div className="space-y-3">
             {/* Table */}
             <div className="border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
                 <table className="w-full text-left border-collapse text-xs">
@@ -108,43 +123,32 @@ export function ItemsTable({
                                         )}
                                     </td>
                                     <td className="p-3">
-                                        <input
-                                            type="number"
-                                            min={1}
-                                            value={item.kuantitas}
-                                            onChange={(e) => {
-                                                const val = parseInt(e.target.value) || 1;
-                                                onUpdateItem(item.temp_id, { kuantitas: Math.max(1, val) });
+                                        <FormNumberInput
+                                            name={`items.${idx}.kuantitas`}
+                                            onValueChange={(val) => {
+                                                onUpdateItem(item.temp_id, { kuantitas: val ?? 0 });
                                             }}
                                             disabled={disabled}
-                                            className="
-                                                w-full h-8 text-center text-xs font-bold text-slate-800
-                                                bg-white border border-slate-200 rounded-lg
-                                                focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/20 
-                                                outline-none transition-colors
-                                                disabled:opacity-50 disabled:cursor-not-allowed
-                                                [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
-                                            "
+                                            className="w-full h-8 text-center text-xs font-bold text-slate-800 rounded-lg border-slate-200 focus-visible:ring-emerald-400/20 focus-visible:border-emerald-400"
                                         />
                                     </td>
                                     <td className="p-3">
-                                        <input
-                                            type="text"
-                                            value={item.harga_estimasi.toLocaleString("id-ID")}
-                                            onChange={(e) => {
-                                                const raw = e.target.value.replace(/\D/g, "");
-                                                const val = parseInt(raw) || 0;
-                                                onUpdateItem(item.temp_id, { harga_estimasi: val });
-                                            }}
-                                            disabled={disabled}
-                                            className="
-                                                w-full h-8 text-right text-xs font-bold text-slate-800 font-mono
-                                                bg-white border border-slate-200 rounded-lg px-2
-                                                focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/20
-                                                outline-none transition-colors
-                                                disabled:opacity-50 disabled:cursor-not-allowed
-                                            "
-                                        />
+                                        {isPriceReadOnly ? (
+                                            <div className="text-right pr-2">
+                                                <span className="font-mono font-bold text-slate-500 text-xs whitespace-nowrap">
+                                                    {formatRupiah(item.harga_estimasi)}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <FormNominalInput
+                                                name={`items.${idx}.harga_estimasi`}
+                                                onValueChange={(val) => {
+                                                    onUpdateItem(item.temp_id, { harga_estimasi: val ?? 0 });
+                                                }}
+                                                disabled={disabled}
+                                                className="w-full h-8 text-right text-xs font-bold text-slate-800 font-mono rounded-lg border-slate-200 focus-visible:ring-emerald-400/20 focus-visible:border-emerald-400"
+                                            />
+                                        )}
                                     </td>
                                     <td className="p-3 text-right font-bold text-slate-900 font-mono">
                                         {formatRupiah(subtotal)}
@@ -204,6 +208,7 @@ export function ItemsTable({
             </div>
 
             <div ref={tableEndRef} />
-        </div>
+            </div>
+        </FormProvider>
     );
 }

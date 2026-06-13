@@ -1,4 +1,4 @@
-import { PaymentDetailPage } from "@/features/purchase/components/payment-detail-page";
+import { PaymentDetailPage } from "@/features/purchase/components/payment/payment-detail-page";
 
 interface PageProps {
     params: Promise<{ id: string }>;

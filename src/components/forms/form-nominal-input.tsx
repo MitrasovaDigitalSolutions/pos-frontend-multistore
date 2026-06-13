@@ -18,6 +18,7 @@ interface FormNominalInputProps<T extends FieldValues> extends Omit<
 > {
     name: FieldPath<T>;
     label?: string;
+    onValueChange?: (val: number | null) => void;
 }
 
 export function FormNominalInput<T extends FieldValues>({
@@ -25,6 +26,7 @@ export function FormNominalInput<T extends FieldValues>({
     label,
     className,
     disabled,
+    onValueChange,
     ...props
 }: FormNominalInputProps<T>) {
     const {
@@ -84,6 +86,7 @@ export function FormNominalInput<T extends FieldValues>({
                     // Allow deleting/clearing
                     if (rawValue === "") {
                         onChange(null);
+                        onValueChange?.(null);
                         return;
                     }
 
@@ -112,6 +115,7 @@ export function FormNominalInput<T extends FieldValues>({
 
                     const parsed = cleanValue === "" ? null : Number(cleanValue);
                     onChange(parsed);
+                    onValueChange?.(parsed);
 
                     // Schedule cursor positioning
                     setCursorPosition(newSelectionStart);
