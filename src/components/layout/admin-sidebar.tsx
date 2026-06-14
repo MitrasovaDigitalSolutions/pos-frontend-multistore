@@ -75,7 +75,7 @@ export function AdminSidebar() {
         <TooltipProvider delayDuration={0}>
             <aside
                 className={cn(
-                    "relative bg-gray-950 text-gray-400 flex flex-col justify-between border-r border-gray-900 shrink-0 transition-all duration-300 h-screen select-none",
+                    "relative z-20 bg-gray-950 text-gray-400 flex flex-col justify-between border-r border-gray-900 shrink-0 transition-all duration-300 h-screen select-none",
                     collapsed ? "w-16" : "w-52.5"
                 )}
             >
