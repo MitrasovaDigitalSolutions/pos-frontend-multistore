@@ -28,6 +28,7 @@ export const PERMISSIONS = {
   OPERATE_CASH_DRAWER: "operate_cash_drawer",
   MANAGE_CASH_DRAWER: "manage_cash_drawer",
   VIEW_CASH_DRAWER: "view_cash_drawer",
+  MANAGE_CASH_ACCOUNTS: "manage_cash_accounts",
   MANAGE_PURCHASE: "manage_purchase",
   VIEW_PURCHASE: "view_purchase",
 } as const;
