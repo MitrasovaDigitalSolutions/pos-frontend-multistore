@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiGetData, apiGetList, apiPost, apiPut, apiDelete } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
-import type { StockMovement, Opname } from "../types";
+import type { StockMovement, Opname, OpnameItem } from "../types";
 import type { AdjustmentInput } from "../schemas/adjustment-schema";
 import type { OpnameHeaderInput } from "../schemas/opname-schema";
 
@@ -24,6 +24,14 @@ export function useOpnameDetail(id: number | null) {
     return useQuery<Opname>({
         queryKey: queryKeys.inventory.opnameDetail(id || 0),
         queryFn: () => apiGetData<Opname>(`/v1/inventory/opname/${id}`),
+        enabled: id !== null && id > 0,
+    });
+}
+
+export function useOpnameItems(id: number | null, params?: PaginationParams) {
+    return useQuery<PaginatedResponse<OpnameItem>>({
+        queryKey: [...queryKeys.inventory.opnameDetail(id || 0), "items", params],
+        queryFn: () => apiGetList<OpnameItem>(`/v1/inventory/opname/${id}/items`, params),
         enabled: id !== null && id > 0,
     });
 }

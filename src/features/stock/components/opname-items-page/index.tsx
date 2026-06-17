@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { PageLoader } from "@/components/feedback/page-loader";
-import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/forms/form-input";
 import { FormNumberInput } from "@/components/forms/form-number-input";
+import { BarcodeInput } from "@/components/shared/barcode-input";
+import { BaseDialog } from "@/components/ui/base-dialog";
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
     Table,
     TableBody,
@@ -13,38 +15,37 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
-import { BaseDialog } from "@/components/ui/base-dialog";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { BarcodeInput } from "@/components/shared/barcode-input";
-import { useAppRouter } from "@/hooks/use-app-router";
-import { toast } from "sonner";
-import {
-    useOpnameDetail,
-    useUpdateOpname,
-    useUpdateOpnameItems,
-    useFinalizeOpname,
-} from "../../api/stock-api";
-import { useProducts } from "@/features/products/api/products-api";
-import { getOpnameItemsStore, clearOpnameItemsStore, type OpnameItemLocal } from "@/stores/opname-items-store";
-import type { Product } from "@/features/products/types";
-import type { Opname, OpnameItem } from "../../types";
 import { OPNAME_STATUS, OPNAME_STATUS_CLASSES, OPNAME_STATUS_LABELS } from "@/constants/stock";
+import { useProducts } from "@/features/products/api/products-api";
+import type { Product } from "@/features/products/types";
+import { useAppRouter } from "@/hooks/use-app-router";
+import { cn } from "@/lib/utils";
+import { clearOpnameItemsStore, getOpnameItemsStore, type OpnameItemLocal } from "@/stores/opname-items-store";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
     IconArrowLeft,
+    IconArrowUp,
     IconBarcode,
     IconCheck,
-    IconEdit,
-    IconPlus,
-    IconTrash,
     IconClipboard,
     IconDeviceFloppy,
-    IconArrowUp,
+    IconEdit,
     IconInfoCircle,
+    IconPlus,
+    IconTrash,
 } from "@tabler/icons-react";
+import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import {
+    useFinalizeOpname,
+    useOpnameDetail,
+    useOpnameItems,
+    useUpdateOpname,
+    useUpdateOpnameItems,
+} from "../../api/stock-api";
 import { opnameHeaderSchema, type OpnameHeaderInput } from "../../schemas/opname-schema";
+import type { Opname, OpnameItem } from "../../types";
 
 interface OpnameItemsPageProps {
     opnameId: number;
@@ -107,6 +108,13 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: number; opname: 
     const updateOpnameItems = useUpdateOpnameItems();
     const finalizeOpname = useFinalizeOpname();
 
+    const { data: itemsData, isLoading: itemsLoading } = useOpnameItems(
+        opnameId,
+        opname.status === OPNAME_STATUS.DRAFT ? { per_page: 1000 } : undefined
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const dbItems = itemsData?.data || [];
+
     // Fetch products for local search autocompletion
     const { data: productsData, isLoading: productsLoading } = useProducts({
         per_page: 1000,
@@ -146,15 +154,15 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: number; opname: 
 
     // Load initial items from database draft on mount
     useEffect(() => {
-        if (!isFirstLoad.current) return;
+        if (!isFirstLoad.current || itemsLoading) return;
 
         if (store.getState().items.length > 0) {
             isFirstLoad.current = false;
             return;
         }
 
-        if (opname.items && opname.items.length > 0) {
-            const dbItems: OpnameItemLocal[] = opname.items.map((item: OpnameItem) => ({
+        if (dbItems && dbItems.length > 0) {
+            const initialItems: OpnameItemLocal[] = dbItems.map((item: OpnameItem) => ({
                 temp_id: `${Date.now()}-${item.id}-${Math.random().toString(36).substring(2, 5)}`,
                 product_id: item.product_id,
                 barcode: item.product?.barcode || null,
@@ -163,12 +171,16 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: number; opname: 
                 stok_fisik: item.stok_fisik,
                 alasan: item.alasan || "Opname rutin",
             }));
-            store.setState({ items: dbItems });
+            store.setState({ items: initialItems });
             isFirstLoad.current = false;
         } else {
             isFirstLoad.current = false;
         }
-    }, [opname.items, store]);
+    }, [dbItems, itemsLoading, store]);
+
+    if (itemsLoading) {
+        return <PageLoader message="Memuat item draf Stock Opname..." />;
+    }
 
     const handleProductFound = (product: Product) => {
         addItem({
@@ -186,7 +198,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: number; opname: 
             const rowElement = document.getElementById(`opname-row-${product.id}`);
             if (rowElement) {
                 rowElement.scrollIntoView({ behavior: "smooth", block: "center" });
-                
+
                 // Add a dynamic glowing effect
                 rowElement.classList.add("bg-emerald-50/80", "ring-2", "ring-emerald-500/20");
                 setTimeout(() => {
@@ -531,7 +543,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: number; opname: 
                 cancelText="Batal"
                 variant="warning"
                 onConfirm={handleFinalize}
-                isLoading={finalizeOpname.isPending}
+                isLoading={updateOpnameItems.isPending || finalizeOpname.isPending}
             />
         </div>
     );
@@ -706,13 +718,12 @@ function OpnameItemRow({
                         </button>
                     </div>
                 </TableCell>
-                <TableCell className={`p-4 text-right font-bold font-mono ${
-                    (item.stok_fisik - item.stok_sistem) === 0
-                        ? "text-slate-400"
-                        : (item.stok_fisik - item.stok_sistem) > 0
-                          ? "text-blue-600"
-                          : "text-rose-500"
-                }`}>
+                <TableCell className={`p-4 text-right font-bold font-mono ${(item.stok_fisik - item.stok_sistem) === 0
+                    ? "text-slate-400"
+                    : (item.stok_fisik - item.stok_sistem) > 0
+                        ? "text-blue-600"
+                        : "text-rose-500"
+                    }`}>
                     {(item.stok_fisik - item.stok_sistem) > 0 ? `+${item.stok_fisik - item.stok_sistem}` : item.stok_fisik - item.stok_sistem} pcs
                 </TableCell>
                 <TableCell className="p-4 w-80">
