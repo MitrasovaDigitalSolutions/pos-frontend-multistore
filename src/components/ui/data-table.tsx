@@ -80,6 +80,7 @@ interface DataTableProps<TData, TValue> {
     onSearchChange?: (search: string) => void;
     searchPlaceholder?: string;
     filters?: React.ReactNode;
+    extraToolbarActions?: React.ReactNode;
 
     // Row Actions Props
     onEdit?: (row: TData) => void;
@@ -117,6 +118,7 @@ export function DataTable<TData, TValue>({
     onSearchChange,
     searchPlaceholder = "Cari data...",
     filters,
+    extraToolbarActions,
 
     // Row Actions Props destructured
     onEdit,
@@ -364,7 +366,7 @@ export function DataTable<TData, TValue>({
         });
     };
 
-    const hasTopBar = onSearchChange !== undefined || filters !== undefined;
+    const hasTopBar = onSearchChange !== undefined || filters !== undefined || extraToolbarActions !== undefined;
 
     return (
         <div className="relative border border-slate-100 rounded-2xl bg-white shadow-sm overflow-hidden flex flex-col">
@@ -377,21 +379,30 @@ export function DataTable<TData, TValue>({
 
             {/* Internal Search and Filter controls bar */}
             {hasTopBar && (
-                <div className="flex flex-col gap-4 items-stretch justify-between p-4 border-b border-slate-100 bg-slate-50/10">
-                    {onSearchChange !== undefined && (
-                        <div className="relative w-full md:max-w-xs">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
-                            <Input
-                                type="text"
-                                placeholder={searchPlaceholder}
-                                className="pl-9 h-9 text-xs border-slate-200 focus-visible:ring-emerald-600/30 focus-visible:border-emerald-600 rounded-xl bg-white w-full shadow-sm"
-                                value={search || ""}
-                                onChange={(e) => onSearchChange(e.target.value)}
-                            />
+                <div className="flex flex-col gap-4 p-4 border-b border-slate-100 bg-slate-50/10">
+                    {(onSearchChange !== undefined || extraToolbarActions !== undefined) && (
+                        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
+                            {onSearchChange !== undefined && (
+                                <div className="relative w-full sm:max-w-md">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+                                    <Input
+                                        type="text"
+                                        placeholder={searchPlaceholder}
+                                        className="pl-9 h-9 text-xs border-slate-200 focus-visible:ring-emerald-600/30 focus-visible:border-emerald-600 rounded-xl bg-white w-full shadow-sm"
+                                        value={search || ""}
+                                        onChange={(e) => onSearchChange(e.target.value)}
+                                    />
+                                </div>
+                            )}
+                            {extraToolbarActions && (
+                                <div className="flex items-center gap-2 self-start sm:self-auto ml-auto">
+                                    {extraToolbarActions}
+                                </div>
+                            )}
                         </div>
                     )}
                     {filters && (
-                        <div className="flex flex-wrap gap-2.5 items-center w-full md:w-auto justify-start md:justify-end">
+                        <div className="flex flex-wrap gap-2.5 items-center w-full justify-start">
                             {filters}
                         </div>
                     )}
