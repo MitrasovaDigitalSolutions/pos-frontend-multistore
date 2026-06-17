@@ -15,6 +15,9 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useDeleteProduct, useToggleProductStatus } from "../api/products-api";
 import type { Product } from "../types";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
+import { ProductImportExport } from "./product-import-export";
 
 
 interface ProductTableProps {
@@ -67,12 +70,17 @@ export function ProductTable({
     isLoading = false,
     isFetching = false,
 }: ProductTableProps) {
+    const queryClient = useQueryClient();
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
     const hasManageProducts =
         hasRole(userRoles, "admin") ||
         hasPermission(userRoles, userPermissions, "manage_products");
+
+    const handleImportSuccess = () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+    };
 
     const deleteProduct = useDeleteProduct();
     const toggleStatus = useToggleProductStatus();
@@ -352,6 +360,11 @@ export function ProductTable({
                 onSearchChange={onSearchChange}
                 searchPlaceholder="Cari produk berdasarkan barcode, nama, atau merek..."
                 filters={filtersSlot}
+                extraToolbarActions={
+                    hasManageProducts ? (
+                        <ProductImportExport onImportSuccess={handleImportSuccess} />
+                    ) : null
+                }
                 virtualize={true}
                 estimateRowHeight={44}
                 onEdit={hasManageProducts ? onEdit : undefined}
