@@ -4,7 +4,7 @@ import { queryKeys } from "@/lib/query-keys";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
 import type { StockMovement, Opname } from "../types";
 import type { AdjustmentInput } from "../schemas/adjustment-schema";
-import type { OpnameInput } from "../schemas/opname-schema";
+import type { OpnameHeaderInput } from "../schemas/opname-schema";
 
 export function useStockMovements(params?: PaginationParams) {
     return useQuery<PaginatedResponse<StockMovement>>({
@@ -28,6 +28,28 @@ export function useOpnameDetail(id: number | null) {
     });
 }
 
+export interface OpnameProgress {
+    id: number;
+    status: string;
+    progress: number;
+    total_items: number;
+    processed_items: number;
+    error_message: string | null;
+}
+
+export function useOpnameProgress(id: number | null, enabled = true) {
+    return useQuery<OpnameProgress>({
+        queryKey: [...queryKeys.inventory.opnameDetail(id || 0), "progress"],
+        queryFn: () => apiGetData<OpnameProgress>(`/v1/inventory/opname/${id}/progress`),
+        enabled: id !== null && id > 0 && enabled,
+        refetchInterval: (query) => {
+            const data = query.state.data;
+            if (!data) return 2000;
+            return data.status === "processing" || data.status === "pending" ? 2000 : false;
+        },
+    });
+}
+
 export function useCreateAdjustment() {
     const queryClient = useQueryClient();
     return useMutation<ApiResponse<void>, Error, AdjustmentInput>({
@@ -47,9 +69,9 @@ export function useCreateAdjustment() {
 
 export function useCreateOpname() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<Opname>, Error, OpnameInput>({
+    return useMutation<ApiResponse<Opname>, Error, OpnameHeaderInput>({
         mutationFn: (data) =>
-            apiPost<ApiResponse<Opname>, OpnameInput>(
+            apiPost<ApiResponse<Opname>, OpnameHeaderInput>(
                 "/v1/inventory/opname",
                 data,
             ),
@@ -62,26 +84,77 @@ export function useCreateOpname() {
     });
 }
 
-export function useFinalizeOpname() {
+export function useUpdateOpname() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<Opname>, Error, { id: number; data: OpnameHeaderInput }>({
+        mutationFn: ({ id, data }) =>
+            apiPut<ApiResponse<Opname>, OpnameHeaderInput>(
+                `/v1/inventory/opname/${id}`,
+                data,
+            ),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.inventory.opnames(),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.inventory.opnameDetail(variables.id),
+            });
+        },
+    });
+}
+
+export function useUpdateOpnameItems() {
     const queryClient = useQueryClient();
     return useMutation<
         ApiResponse<Opname>,
         Error,
-        { id: number; data: Omit<OpnameInput, "catatan"> }
+        {
+            id: number;
+            data: {
+                items: Array<{
+                    product_id: number;
+                    stok_fisik: number;
+                    alasan?: string | null;
+                }>;
+            };
+        }
     >({
         mutationFn: ({ id, data }) =>
-            apiPut<ApiResponse<Opname>, Omit<OpnameInput, "catatan">>(
-                `/v1/inventory/opname/${id}`,
+            apiPut<ApiResponse<Opname>, { items: Array<{ product_id: number; stok_fisik: number; alasan?: string | null }> }>(
+                `/v1/inventory/opname/${id}/items`,
                 data,
             ),
-        onSuccess: () => {
+        onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.inventory.opnames(),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.inventory.opnameDetail(variables.id),
+            });
+        },
+    });
+}
+
+export function useFinalizeOpname() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<Opname>, Error, number>({
+        mutationFn: (id) =>
+            apiPost<ApiResponse<Opname>, undefined>(
+                `/v1/inventory/opname/${id}/finalize`,
+                undefined,
+            ),
+        onSuccess: (_, id) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.inventory.opnames(),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.inventory.opnameDetail(id),
             });
             queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
     });
 }
+
 
 // ─── Opname Deletion Hook ────────────────────────────────────────────────────
 

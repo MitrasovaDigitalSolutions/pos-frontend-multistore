@@ -164,7 +164,6 @@ export function StockManagement() {
             <OpnameDialog
                 open={isOpnameModalOpen}
                 onOpenChange={setIsOpnameModalOpen}
-                products={products || []}
             />
 
             <OpnameDetailDialog

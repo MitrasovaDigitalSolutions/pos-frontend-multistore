@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
-import { apiClient } from "@/shared/api/axios";
-import { toast } from "sonner";
 import { ImportExport } from "@/components/shared/import-export";
+import { apiClient } from "@/shared/api/axios";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 interface ProductImportExportProps {
   importUrl?: string;
@@ -24,6 +24,9 @@ export function ProductImportExport({
 }: ProductImportExportProps) {
   const [isImporting, setIsImporting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [importProgress, setImportProgress] = useState<number | null>(null);
+  const [isProgressActive, setIsProgressActive] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -69,6 +72,70 @@ export function ProductImportExport({
     }
   };
 
+  const startPollingProgress = (importId: string) => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
+    setIsProgressActive(true);
+    setImportProgress(0);
+    let errorCount = 0;
+
+    const cleanUp = () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      setIsProgressActive(false);
+      setImportProgress(null);
+      localStorage.removeItem("active_import_product_id");
+    };
+
+    intervalRef.current = setInterval(async () => {
+      try {
+        const url = progressUrlFn(importId);
+        const progressResponse = await apiClient.get(url);
+
+        errorCount = 0; // Reset error count on success
+
+        const resData = progressResponse.data as {
+          data?: { status?: string; progress?: number | string; error?: string; message?: string };
+          status?: string;
+          progress?: number | string;
+          error?: string;
+          message?: string;
+        };
+
+        const progressDetails = resData?.data || resData;
+        const status = progressDetails?.status;
+        const progressPercent = Number(progressDetails?.progress ?? 0);
+
+        setImportProgress(progressPercent);
+
+        if (status === "completed" || progressPercent >= 100) {
+          cleanUp();
+          toast.success("Proses import selesai dengan sukses!");
+          onImportSuccess?.();
+        } else if (status === "failed" || status === "error") {
+          cleanUp();
+          const errorMsg =
+            progressDetails?.error || progressDetails?.message || "Gagal memproses import data.";
+          toast.error(errorMsg);
+        } else if (status !== "processing" && status !== "pending") {
+          cleanUp();
+          onImportSuccess?.();
+        }
+      } catch (err) {
+        console.error("Polling error:", err);
+        errorCount++;
+        if (errorCount >= 3) {
+          cleanUp();
+          toast.error("Gagal menghubungi server import. Proses monitoring dihentikan.");
+        }
+      }
+    }, 3000); // 3 seconds interval
+  };
+
   const handleImport = async (file: File) => {
     setIsImporting(true);
     const formData = new FormData();
@@ -88,7 +155,7 @@ export function ProductImportExport({
         import_id?: string;
         uuid?: string;
       };
-      
+
       const importId =
         responseData?.data?.id ||
         responseData?.id ||
@@ -101,60 +168,43 @@ export function ProductImportExport({
         // If no background job ID is returned, assume it completed instantly
         toast.success("Data produk berhasil diimport!");
         onImportSuccess?.();
+        setIsImporting(false);
         return;
       }
 
-      // 2. Poll progress status using a promise wrapper
-      await new Promise<void>((resolve, reject) => {
-        let interval: NodeJS.Timeout | null = null;
-        
-        const cleanUp = () => {
-          if (interval) clearInterval(interval);
-        };
+      toast.info("Import sedang diproses.");
+      setIsImporting(false);
 
-        interval = setInterval(async () => {
-          try {
-            const progressResponse = await apiClient.get(progressUrlFn(importId));
-            const resData = progressResponse.data as {
-              data?: { status?: string; progress?: number | string; error?: string; message?: string };
-              status?: string;
-              progress?: number | string;
-              error?: string;
-              message?: string;
-            };
+      // Save active import ID to localStorage
+      localStorage.setItem("active_import_product_id", String(importId));
 
-            const progressDetails = resData?.data || resData;
-            const status = progressDetails?.status;
-            const progressPercent = Number(progressDetails?.progress ?? 0);
+      // Start polling asynchronously without awaiting it
+      startPollingProgress(String(importId));
 
-            if (status === "completed" || progressPercent >= 100) {
-              cleanUp();
-              toast.success("Proses import selesai dengan sukses!");
-              onImportSuccess?.();
-              resolve();
-            } else if (status === "failed" || status === "error") {
-              cleanUp();
-              const errorMsg =
-                progressDetails?.error || progressDetails?.message || "Gagal memproses import data.";
-              toast.error(errorMsg);
-              reject(new Error(errorMsg));
-            }
-          } catch (err) {
-            console.error("Polling error:", err);
-            // Don't reject immediately on temporary network issues, keep polling
-          }
-        }, 1500);
-      });
     } catch (error) {
+      setIsImporting(false);
       const err = error as { response?: { data?: { message?: string } }; message?: string };
       console.error("Import error:", err);
       const errorMsg = err.response?.data?.message || err.message || "Gagal mengimpor file data.";
       toast.error(errorMsg);
       throw error;
-    } finally {
-      setIsImporting(false);
     }
   };
+
+  useEffect(() => {
+    const savedImportId = localStorage.getItem("active_import_product_id");
+    if (savedImportId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      startPollingProgress(savedImportId);
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <ImportExport
@@ -167,6 +217,8 @@ export function ProductImportExport({
       isLoadingExport={isExporting}
       showImport={showImport}
       showExport={showExport}
+      importProgress={importProgress}
+      isProgressActive={isProgressActive}
     />
   );
 }
