@@ -44,6 +44,10 @@ export interface ImportExportProps {
   importLabel?: string;
   showExport?: boolean;
   showImport?: boolean;
+
+  // Progress states
+  importProgress?: number | null;
+  isProgressActive?: boolean;
 }
 
 export function ImportExport({
@@ -62,6 +66,8 @@ export function ImportExport({
   importLabel = "Import",
   showExport = true,
   showImport = true,
+  importProgress = null,
+  isProgressActive = false,
 }: ImportExportProps) {
   // Modal state (support both controlled and uncontrolled)
   const isControlled = openProp !== undefined;
@@ -195,39 +201,59 @@ export function ImportExport({
   };
 
   return (
-    <div className="flex items-center gap-2">
-      {showExport && (
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onExportClick}
-          disabled={isExporting || isImporting}
-          className="h-9 px-3 text-xs font-bold border-slate-200 hover:bg-slate-50 text-slate-700 hover:text-emerald-600 rounded-xl flex gap-1.5 cursor-pointer bg-white transition-colors disabled:opacity-50"
-        >
-          {isExporting ? (
-            <IconLoader2 size={16} className="animate-spin text-emerald-600" />
-          ) : (
-            <IconDownload size={16} className="text-slate-500 hover:text-emerald-600" />
-          )}
-          {exportLabel}
-        </Button>
+    <div className="flex flex-col items-end gap-2">
+      {isProgressActive && importProgress !== null && (
+        <div className="w-full sm:w-64 flex flex-col gap-1.5 mb-1 text-left">
+          <div className="flex justify-between items-center text-[10px] font-bold text-slate-500">
+            <span className="flex items-center gap-1">
+              <IconLoader2 size={12} className="animate-spin text-emerald-600" />
+              Mengimpor data...
+            </span>
+            <span className="font-mono">{importProgress}%</span>
+          </div>
+          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+            <div
+              className="bg-emerald-600 h-full transition-all duration-300"
+              style={{ width: `${importProgress}%` }}
+            />
+          </div>
+        </div>
       )}
 
-      {showImport && (
-        <Button
-          type="button"
-          onClick={handleOpenDialog}
-          disabled={isImporting}
-          className="h-9 px-3 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex gap-1.5 cursor-pointer transition-colors disabled:bg-emerald-600/50 disabled:opacity-90"
-        >
-          {isImporting ? (
-            <IconLoader2 size={16} className="animate-spin" />
-          ) : (
-            <IconUpload size={16} />
-          )}
-          {importLabel}
-        </Button>
-      )}
+      <div className="flex items-center gap-2">
+        {showExport && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onExportClick}
+            disabled={isExporting || isImporting || isProgressActive}
+            className="h-9 px-3 text-xs font-bold border-slate-200 hover:bg-slate-50 text-slate-700 hover:text-emerald-600 rounded-xl flex gap-1.5 cursor-pointer bg-white transition-colors disabled:opacity-50"
+          >
+            {isExporting ? (
+              <IconLoader2 size={16} className="animate-spin text-emerald-600" />
+            ) : (
+              <IconDownload size={16} className="text-slate-500 hover:text-emerald-600" />
+            )}
+            {exportLabel}
+          </Button>
+        )}
+
+        {showImport && (
+          <Button
+            type="button"
+            onClick={handleOpenDialog}
+            disabled={isImporting || isProgressActive}
+            className="h-9 px-3 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex gap-1.5 cursor-pointer transition-colors disabled:bg-emerald-600/50 disabled:opacity-90"
+          >
+            {isImporting || isProgressActive ? (
+              <IconLoader2 size={16} className="animate-spin" />
+            ) : (
+              <IconUpload size={16} />
+            )}
+            {importLabel}
+          </Button>
+        )}
+      </div>
 
       {/* Dialog Modal */}
       <Dialog open={isOpen} onOpenChange={handleOpenChange}>

@@ -1,14 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { ColumnDef } from "@tanstack/react-table";
-import { useFinalizeOpname, useDeleteOpname } from "../api/stock-api";
+import { useFinalizeOpname, useDeleteOpname, useOpnameProgress } from "../api/stock-api";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 import type { Opname } from "../types";
 import { DataTable } from "@/components/ui/data-table";
 import { hasRole, hasPermission } from "@/constants/roles";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useAppRouter } from "@/hooks/use-app-router";
+import { OPNAME_STATUS, OPNAME_STATUS_LABELS, OPNAME_STATUS_CLASSES } from "@/constants/stock";
 
 interface OpnameListProps {
     opnames: Opname[];
@@ -34,6 +38,7 @@ export function OpnameList({
     isLoading = false,
     isFetching = false,
 }: OpnameListProps) {
+    const router = useAppRouter();
     const { data: session } = useSession();
     const finalizeOpname = useFinalizeOpname();
     const deleteOpname = useDeleteOpname();
@@ -71,20 +76,8 @@ export function OpnameList({
             cancelText: "Batal",
             variant: "warning",
             onConfirm: () => {
-                const itemsPayload = (op.items || []).map((it) => ({
-                    product_id: it.product_id,
-                    stok_fisik: it.stok_fisik,
-                    alasan: it.alasan || "Finalisasi opname",
-                }));
-
                 finalizeOpname.mutate(
-                    {
-                        id: op.id,
-                        data: {
-                            status: "completed",
-                            items: itemsPayload,
-                        },
-                    },
+                    op.id,
                     {
                         onSuccess: () => {
                             toast.success("Stock opname berhasil difinalisasi!");
@@ -170,15 +163,16 @@ export function OpnameList({
                 },
                 cell: ({ row }) => {
                     const op = row.original;
+                    if (op.status === OPNAME_STATUS.PROCESSING) {
+                        return <OpnameProgressBadge id={op.id} />;
+                    }
+                    const statusClass = OPNAME_STATUS_CLASSES[op.status] || "bg-slate-50 text-slate-700 border-slate-100";
+                    const statusLabel = OPNAME_STATUS_LABELS[op.status] || op.status;
                     return (
                         <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                op.status === "completed"
-                                    ? "bg-emerald-50 text-emerald-700"
-                                    : "bg-amber-50 text-amber-700"
-                            }`}
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusClass}`}
                         >
-                            {op.status === "completed" ? "Selesai" : "Draft"}
+                            {statusLabel}
                         </span>
                     );
                 },
@@ -203,10 +197,12 @@ export function OpnameList({
                 virtualize={true}
                 estimateRowHeight={44}
                 onView={(op) => onViewDetail(op.id)}
+                onEdit={(op) => router.push(`/admin/stock/${op.id}/items`)}
+                hideEdit={(op) => !(op.status === OPNAME_STATUS.DRAFT && hasManageInventory)}
                 onCheck={handleFinalize}
-                hideCheck={(op) => !(op.status === "draft" && hasManageInventory)}
+                hideCheck={(op) => !(op.status === OPNAME_STATUS.DRAFT && hasManageInventory)}
                 onDelete={(op) => handleDelete(op.id)}
-                hideDelete={(op) => !(op.status === "draft" && canDeleteDraft)}
+                hideDelete={(op) => !(op.status === OPNAME_STATUS.DRAFT && canDeleteDraft)}
             />
 
             <ConfirmDialog
@@ -221,5 +217,39 @@ export function OpnameList({
                 isLoading={finalizeOpname.isPending || deleteOpname.isPending}
             />
         </>
+    );
+}
+
+function OpnameProgressBadge({ id }: { id: number }) {
+    const queryClient = useQueryClient();
+    const { data: progressData } = useOpnameProgress(id);
+
+    useEffect(() => {
+        if (progressData?.status === "completed" || progressData?.status === "failed") {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.inventory.opnames(),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.products.all,
+            });
+        }
+    }, [progressData?.status, id, queryClient]);
+
+    const percentage = progressData?.progress ?? 0;
+
+    return (
+        <div className="flex flex-col items-center gap-1.5 min-w-24">
+            <span
+                className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-blue-50 text-blue-700 border-blue-100 animate-pulse animate-transition"
+            >
+                Diproses: {percentage}%
+            </span>
+            <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div
+                    className="h-full bg-blue-600 transition-all duration-500 rounded-full"
+                    style={{ width: `${percentage}%` }}
+                />
+            </div>
+        </div>
     );
 }

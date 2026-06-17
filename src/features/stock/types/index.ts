@@ -43,6 +43,8 @@ export interface Receiving {
     items?: ReceivingItem[];
 }
 
+import type { OpnameStatus } from "@/constants/stock";
+
 export interface OpnameItem {
     id: number;
     opname_id: number;
@@ -59,7 +61,7 @@ export interface Opname {
     id: number;
     nomor_opname: string;
     catatan: string | null;
-    status: "draft" | "completed";
+    status: OpnameStatus;
     created_at: string;
     items?: OpnameItem[];
 }
