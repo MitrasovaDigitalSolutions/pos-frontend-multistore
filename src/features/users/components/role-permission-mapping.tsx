@@ -116,6 +116,10 @@ const PERMISSION_METADATA: Record<string, { label: string; desc: string }> = {
         label: "Lihat Laporan Cash Drawer",
         desc: "Melihat laporan aktivitas, riwayat buka/tutup, dan selisih saldo cash drawer.",
     },
+    manage_cash_accounts: {
+        label: "Kelola Kas & Bank",
+        desc: "Melakukan transfer antar kas, penyesuaian debit manual, dan kredit manual saldo kas.",
+    },
 };
 
 const ROLE_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
@@ -170,11 +174,11 @@ const PERMISSION_CATEGORIES: StaticPermissionCategory[] = [
     },
     {
         id: "cash_drawer",
-        label: "Laci Kas (Cash Drawer)",
-        desc: "Operasional shift kasir, saldo awal/akhir laci, kas masuk/keluar, dan audit laci kas.",
+        label: "Laci Kas & Rekening (Finance)",
+        desc: "Operasional shift kasir, saldo awal/akhir laci, kas masuk/keluar, transfer kas, dan credit/debit kas.",
         icon: IconCoin,
         colorClass: "text-teal-600 bg-teal-50 border-teal-100 dark:bg-teal-950/20 dark:text-teal-400 dark:border-teal-900/20",
-        permissions: ["operate_cash_drawer", "manage_cash_drawer", "view_cash_drawer"],
+        permissions: ["operate_cash_drawer", "manage_cash_drawer", "view_cash_drawer", "manage_cash_accounts"],
     },
     {
         id: "reports",

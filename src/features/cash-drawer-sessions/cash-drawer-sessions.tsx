@@ -5,8 +5,8 @@ import { hasPermission, hasRole } from "@/constants/roles";
 import { useCashDrawerSessions } from "@/features/checkout/api/cash-drawer-api";
 import type { CashDrawerSession } from "@/features/checkout/types/cash-drawer";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { IconWallet } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
+import { Hourglass } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useMemo, useState } from "react";
 import { SessionDetailDialog } from "./components/session-detail-dialog";
@@ -110,7 +110,7 @@ export function CashDrawerSessions() {
                     const diff = row.original.difference;
                     if (row.original.status === "open") return <span className="text-slate-400">-</span>;
                     if (diff === null || diff === undefined) return <span className="text-slate-400">-</span>;
- 
+
                     if (diff > 0) {
                         return (
                             <span className="bg-teal-50 text-teal-700 text-[10px] font-bold px-2 py-0.5 rounded border border-teal-100 tabular-nums">
@@ -167,7 +167,7 @@ export function CashDrawerSessions() {
                 <div className="flex justify-between items-center border-b border-slate-50">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
-                            <IconWallet size={20} />
+                            <Hourglass size={20} />
                         </div>
                         <div>
                             <h3 className="text-sm font-bold text-slate-900">

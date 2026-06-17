@@ -9,7 +9,6 @@ import {
 } from "@/features/stock/api/stock-api";
 import { AdjustmentDialog } from "@/features/stock/components/adjustment-dialog";
 import { MovementLedger } from "@/features/stock/components/movement-ledger";
-import { OpnameDetailDialog } from "@/features/stock/components/opname-detail-dialog";
 import { OpnameDialog } from "@/features/stock/components/opname-dialog";
 import { OpnameList } from "@/features/stock/components/opname-list";
 import { IconActivity, IconClipboardCheck } from "@tabler/icons-react";
@@ -67,10 +66,6 @@ export function StockManagement() {
     // Modals
     const [isAdjustmentOpen, setIsAdjustmentOpen] = useState(false);
     const [isOpnameModalOpen, setIsOpnameModalOpen] = useState(false);
-    const [isDetailOpnameOpen, setIsDetailOpnameOpen] = useState(false);
-    const [selectedOpnameId, setSelectedOpnameId] = useState<number | null>(
-        null,
-    );
 
     if (currentTab === "inventory" && !hasViewInventory) {
         return (
@@ -87,8 +82,7 @@ export function StockManagement() {
     }
 
     const handleViewOpnameDetail = (id: number) => {
-        setSelectedOpnameId(id);
-        setIsDetailOpnameOpen(true);
+        router.push(`/admin/stock/${id}`);
     };
 
     return (
@@ -166,11 +160,6 @@ export function StockManagement() {
                 onOpenChange={setIsOpnameModalOpen}
             />
 
-            <OpnameDetailDialog
-                open={isDetailOpnameOpen}
-                onOpenChange={setIsDetailOpnameOpen}
-                opnameId={selectedOpnameId}
-            />
         </div>
     );
 }

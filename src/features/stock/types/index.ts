@@ -64,4 +64,10 @@ export interface Opname {
     status: OpnameStatus;
     created_at: string;
     items?: OpnameItem[];
+    items_count?: number;
+    user?: {
+        id: number;
+        name: string;
+        username: string;
+    };
 }
