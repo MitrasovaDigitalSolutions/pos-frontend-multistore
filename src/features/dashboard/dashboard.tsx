@@ -1,52 +1,166 @@
 "use client";
 
-import { useState } from "react";
+import { FormDatePicker } from "@/components/forms/form-date-picker";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useDashboardSummary, useSalesHistory } from "@/features/dashboard/api/dashboard-api";
-import { StatMiniCards } from "@/features/dashboard/components/stat-mini-cards";
+import { RecentOrdersTable } from "@/features/dashboard/components/recent-orders-table";
 import { RevenueChart } from "@/features/dashboard/components/revenue-chart";
 import { SalesStatistics } from "@/features/dashboard/components/sales-statistics";
-import { RecentOrdersTable } from "@/features/dashboard/components/recent-orders-table";
+import { StatMiniCards } from "@/features/dashboard/components/stat-mini-cards";
 import { TopSellingWeekly } from "@/features/dashboard/components/top-selling-weekly";
-import { PageLoader } from "@/components/feedback/page-loader";
+import { getDefaultDateRange } from "@/lib/date-utils";
+import { IconFilter } from "@tabler/icons-react";
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
+import { useState } from "react";
+import { FormProvider, useForm, useWatch } from "react-hook-form";
+
+interface DashboardFilterValues {
+  from: string;
+  to: string;
+}
 
 export function Dashboard() {
-  const [from] = useState<string>("");
-  const [to] = useState<string>("");
+  const { from: defaultFrom, to: defaultTo } = getDefaultDateRange();
+
+  const methods = useForm<DashboardFilterValues>({
+    defaultValues: {
+      from: defaultFrom,
+      to: defaultTo,
+    },
+  });
+
+  const { from: watchFrom, to: watchTo } = useWatch({
+    control: methods.control,
+  });
+
   const [paymentMethod] = useState<string>("");
 
-  const { data: summary, isLoading } = useDashboardSummary({
-    from: from || undefined,
-    to: to || undefined,
+  const { data: summary, isLoading: summaryLoading } = useDashboardSummary({
+    from: watchFrom || undefined,
+    to: watchTo || undefined,
     payment_method: paymentMethod || undefined,
   });
 
-  const { data: history } = useSalesHistory({
-    from: from || undefined,
-    to: to || undefined,
+  const { data: history, isLoading: historyLoading } = useSalesHistory({
+    from: watchFrom || undefined,
+    to: watchTo || undefined,
   });
 
-  if (isLoading) {
-    return <PageLoader message="Memuat dashboard admin..." />;
-  }
+  const isLoading = summaryLoading || historyLoading;
+
+  const formatDateRange = () => {
+    if (!watchFrom && !watchTo) return "Semua Waktu";
+    const parseDate = (dStr: string) => {
+      const parts = dStr.split("-");
+      return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    };
+    const fromDate = watchFrom ? parseDate(watchFrom) : null;
+    const toDate = watchTo ? parseDate(watchTo) : null;
+
+    if (fromDate && toDate) {
+      return `${format(fromDate, "dd MMM yyyy", { locale: id })} - ${format(toDate, "dd MMM yyyy", { locale: id })}`;
+    }
+    if (fromDate) {
+      return `Mulai ${format(fromDate, "dd MMM yyyy", { locale: id })}`;
+    }
+    if (toDate) {
+      return `Sampai ${format(toDate, "dd MMM yyyy", { locale: id })}`;
+    }
+    return "Semua Waktu";
+  };
 
   return (
-    <div>
-      <section className="grid gap-4 mb-4" style={{ gridTemplateColumns: "220px 1fr 280px" }}>
-        <StatMiniCards summary={summary} />
+    <FormProvider {...methods}>
+      <div className="space-y-2">
+        {/* Compact Header with Title & Popover Filter Trigger */}
+        <div className="flex items-center justify-between select-none py-1">
+          <div>
+            <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">Ringkasan</h1>
+            <p className="text-[10px] font-extrabold text-slate-400 mt-0.5 uppercase tracking-widest">
+              Rentang: {formatDateRange()}
+            </p>
+          </div>
+          <Popover>
+            <PopoverTrigger
+              render={
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer select-none shadow-sm"
+                >
+                  <IconFilter size={12} className="stroke-[2.5]" />
+                  <span>Filter Tanggal</span>
+                </button>
+              }
+            />
+            <PopoverContent className="w-80 p-4 bg-white rounded-2xl border border-slate-100 shadow-xl" align="end">
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <h4 className="text-xs font-bold text-slate-800">Filter Tanggal</h4>
+                  <p className="text-[9px] text-slate-400">Pilih rentang tanggal summary dan statistik.</p>
+                </div>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Mulai:</span>
+                    <FormDatePicker<DashboardFilterValues>
+                      name="from"
+                      placeholder="Tanggal Awal"
+                      className="w-full"
+                      clearable={true}
+                      size="sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Sampai:</span>
+                    <FormDatePicker<DashboardFilterValues>
+                      name="to"
+                      placeholder="Tanggal Akhir"
+                      className="w-full"
+                      clearable={true}
+                      size="sm"
+                    />
+                  </div>
+                </div>
+                <div className="pt-2.5 border-t border-slate-50 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      methods.reset({
+                        from: defaultFrom,
+                        to: defaultTo,
+                      });
+                    }}
+                    className="text-[10px] font-extrabold text-slate-500 hover:text-rose-600 hover:border-rose-100 hover:bg-rose-50/20 transition-all border border-slate-100 rounded-lg px-2.5 py-1.5 bg-white shadow-sm flex items-center gap-1 cursor-pointer select-none"
+                  >
+                    Reset
+                  </button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
 
-        <RevenueChart summary={summary} history={history} />
+        <section className="grid gap-4 mb-4" style={{ gridTemplateColumns: "220px 1fr 280px" }}>
+          <StatMiniCards summary={summary} isLoading={isLoading} />
 
-        <SalesStatistics summary={summary} />
-      </section>
+          <RevenueChart summary={summary} history={history} isLoading={isLoading} />
 
-      <section className="grid gap-4" style={{ gridTemplateColumns: "1fr 280px" }}>
-        <RecentOrdersTable
-          from={from}
-          to={to}
-          paymentMethod={paymentMethod}
-        />
-        <TopSellingWeekly summary={summary} />
-      </section>
-    </div>
+          <SalesStatistics summary={summary} isLoading={isLoading} />
+        </section>
+
+        <section className="grid gap-4" style={{ gridTemplateColumns: "1fr 280px" }}>
+          <RecentOrdersTable
+            from={watchFrom}
+            to={watchTo}
+            paymentMethod={paymentMethod}
+          />
+          <TopSellingWeekly summary={summary} isLoading={isLoading} />
+        </section>
+      </div>
+    </FormProvider>
   );
 }
+
+
+
+

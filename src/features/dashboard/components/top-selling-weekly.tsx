@@ -1,14 +1,15 @@
 "use client";
 
-import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconTrophy } from "@tabler/icons-react";
 import type { DashboardSummary } from "../types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface TopSellingWeeklyProps {
   summary: DashboardSummary | undefined;
+  isLoading?: boolean;
 }
 
-export function TopSellingWeekly({ summary }: TopSellingWeeklyProps) {
+export function TopSellingWeekly({ summary, isLoading }: TopSellingWeeklyProps) {
   const products = summary?.top_products ?? [];
 
   return (
@@ -25,7 +26,19 @@ export function TopSellingWeekly({ summary }: TopSellingWeeklyProps) {
 
       {/* Product List or empty state */}
       <div className="flex-1 mt-1">
-        {products.length > 0 ? (
+        {isLoading ? (
+          <div className="space-y-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <Skeleton className="w-7 h-7 rounded-lg shrink-0" />
+                <div className="flex-1">
+                  <Skeleton className="h-3.5 w-3/4 rounded" />
+                </div>
+                <Skeleton className="h-5 w-12 rounded shrink-0" />
+              </div>
+            ))}
+          </div>
+        ) : products.length > 0 ? (
           <div className="space-y-3.5">
             {products.slice(0, 4).map((p, i) => {
               const colors = ["indigo", "teal", "amber", "rose"];
@@ -37,28 +50,17 @@ export function TopSellingWeekly({ summary }: TopSellingWeeklyProps) {
                 rose: "bg-rose-50 text-rose-600 border-rose-100/30",
               };
               return (
-                <div key={i} className="flex items-start gap-3 group cursor-pointer hover:bg-slate-50/50 p-1.5 rounded-xl transition-colors">
-                  <div className={`w-7 h-7 rounded-lg ${bgMap[color]} border flex items-center justify-center text-[10px] font-extrabold shrink-0 shadow-sm transition-transform group-hover:scale-105 mt-0.5`}>
+                <div key={i} className="flex items-center gap-3 group cursor-pointer hover:bg-slate-50/50 p-1.5 rounded-xl transition-colors">
+                  <div className={`w-7 h-7 rounded-lg ${bgMap[color]} border flex items-center justify-center text-[10px] font-extrabold shrink-0 shadow-sm transition-transform group-hover:scale-105`}>
                     #{i + 1}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-[11.5px] font-bold text-slate-700 truncate group-hover:text-slate-900 transition-colors">
                       {p.product_name}
                     </div>
-                    <div className="text-[9px] text-slate-400 font-semibold mt-0.5 flex flex-wrap gap-x-1.5 items-center">
-                      <span>{p.quantity} pcs terjual</span>
-                      <span className="text-slate-300">•</span>
-                      <span className="text-blue-600">Laba {formatRupiah(p.profit)}</span>
-                      {p.profit_margin !== undefined && (
-                        <>
-                          <span className="text-slate-300">•</span>
-                          <span className="text-violet-600">{p.profit_margin.toFixed(1)}% margin</span>
-                        </>
-                      )}
-                    </div>
                   </div>
-                  <span className="text-[11px] font-extrabold text-slate-800 tabular-nums shrink-0 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-md mt-0.5">
-                    {formatRupiah(p.revenue)}
+                  <span className="text-[10px] font-extrabold text-indigo-600 bg-indigo-50 border border-indigo-100/30 px-2.5 py-1 rounded-md shrink-0 tabular-nums">
+                    {p.quantity} Pcs
                   </span>
                 </div>
               );
@@ -78,3 +80,4 @@ export function TopSellingWeekly({ summary }: TopSellingWeeklyProps) {
     </div>
   );
 }
+

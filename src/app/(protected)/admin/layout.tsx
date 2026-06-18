@@ -15,7 +15,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <div className="grow flex flex-col h-full overflow-hidden">
                 <AdminHeader />
 
-                <main className="grow pt-6 px-8 pb-6 overflow-y-auto">
+                <main className="grow pt-2 px-8 pb-6 overflow-y-auto">
                     {children}
                 </main>
             </div>
