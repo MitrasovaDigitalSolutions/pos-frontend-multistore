@@ -10,8 +10,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import {
-    IconLogout,
-    IconShoppingCart
+    IconLogout
 } from "@tabler/icons-react";
 import { ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -95,16 +94,18 @@ export function AdminSidebar() {
                 <div
                     className={cn(
                         "py-7 flex items-center gap-2 border-b border-gray-950/20 shrink-0",
-                        collapsed ? "justify-center px-0" : "px-6"
+                        collapsed ? "justify-center px-0" : "px-5"
                     )}
                 >
-                    <IconShoppingCart
-                        size={24}
-                        className="text-emerald-400 shrink-0"
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                        src="/logo/logo.png"
+                        alt="Logo"
+                        className="w-7 h-7 object-contain rounded-md p-0.5 shrink-0"
                     />
                     {!collapsed && (
-                        <span className="font-extrabold text-md text-white tracking-wide">
-                            MSG POS
+                        <span className="font-extrabold text-xs text-white tracking-wider truncate">
+                            Mitra Buana Motor
                         </span>
                     )}
                 </div>

@@ -45,9 +45,9 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
     const [open, setOpen] = React.useState(false)
 
     const sizeClasses = {
-      sm: "h-8 text-xs font-bold text-slate-700",
-      md: "h-10 text-xs font-medium text-slate-800",
-      lg: "h-12 text-sm font-medium text-slate-800",
+      sm: "h-8 text-xs font-normal text-slate-700",
+      md: "h-10 text-xs font-normal text-slate-800",
+      lg: "h-12 text-sm font-normal text-slate-800",
     }[size]
 
     // Parse value to Date
@@ -73,11 +73,11 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
     }
 
     return (
-      <div className={cn("flex flex-col gap-1.5 w-full", className)}>
+      <div className={cn("space-y-1.5 w-full", className)}>
         {label && (
-          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
             {label}
-          </span>
+          </label>
         )}
 
         <div className="relative w-full">

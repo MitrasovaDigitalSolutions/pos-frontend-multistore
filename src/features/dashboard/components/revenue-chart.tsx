@@ -22,16 +22,16 @@ interface RevenueChartProps {
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun"];
 
 function buildData(summary: DashboardSummary | undefined) {
-  const net = summary?.net_sales ?? 0;
   const gross = summary?.gross_sales ?? 0;
-  const demoGross = gross === 0 ? 4000 : gross;
-  const demoNet = net === 0 ? 2500 : net;
+  const profit = summary?.gross_profit ?? 0;
+  const demoGross = gross === 0 ? 40000 : gross;
+  const demoProfit = profit === 0 ? 8000 : profit;
   const grossSeeds = [0.72, 0.52, 0.8, 0.5, 0.9, 1];
-  const netSeeds = [0.6, 0.4, 0.65, 0.35, 0.75, 0.8];
+  const profitSeeds = [0.6, 0.4, 0.65, 0.35, 0.75, 0.8];
   return MONTHS.map((month, i) => ({
     month,
     revenue: Math.round(demoGross * grossSeeds[i]),
-    profit: Math.round(demoNet * netSeeds[i]),
+    profit: Math.round(demoProfit * profitSeeds[i]),
   }));
 }
 
@@ -66,7 +66,7 @@ export function RevenueChart({ summary, history }: RevenueChartProps) {
     ? history.map((item) => ({
         month: item.period,
         revenue: item.gross_sales,
-        profit: item.net_sales,
+        profit: item.net_sales, // fallback to net_sales if history uses it
       }))
     : buildData(summary);
   const gross = summary?.gross_sales ?? 0;

@@ -20,7 +20,7 @@ export function StoreProfile() {
                 <p>
                     Nama Toko:{" "}
                     <strong className="text-slate-800">
-                        MSG POS Swalayan Induk
+                        Mitra Buana Motor
                     </strong>
                 </p>
                 <p>

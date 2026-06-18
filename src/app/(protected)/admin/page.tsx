@@ -1,7 +1,7 @@
 import { Dashboard } from "@/features/dashboard/dashboard";
 
 export const metadata = {
-  title: "Dashboard - MSG POS",
+  title: "Dashboard - Mitra Buana Motor",
 };
 
 export default function AdminDashboardPage() {

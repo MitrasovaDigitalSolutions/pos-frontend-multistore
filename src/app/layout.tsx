@@ -11,8 +11,8 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-    title: "MSG POS — Sistem Point of Sale",
-    description: "Sistem Point of Sale Modern untuk Swalayan / Grocery",
+    title: "Mitra Buana Motor — Sistem Point of Sale",
+    description: "Sistem Point of Sale Modern untuk Mitra Buana Motor",
 };
 
 export default function RootLayout({

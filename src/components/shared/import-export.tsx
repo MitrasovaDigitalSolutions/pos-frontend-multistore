@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,6 +9,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 import {
   IconUpload,
   IconDownload,
@@ -86,6 +91,24 @@ export function ImportExport({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Popover state
+  const [showFinishedState, setShowFinishedState] = useState(false);
+  const [importingFileName, setImportingFileName] = useState<string>("");
+  const prevActiveRef = useRef(false);
+
+  useEffect(() => {
+    const isActive = isImporting || isProgressActive;
+    if (prevActiveRef.current && !isActive) {
+      setShowFinishedState(true);
+      const timer = setTimeout(() => {
+        setShowFinishedState(false);
+        setImportingFileName("");
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+    prevActiveRef.current = isActive;
+  }, [isImporting, isProgressActive]);
 
   const handleOpenDialog = () => {
     if (!isControlled) {
@@ -188,6 +211,7 @@ export function ImportExport({
 
   const onImportConfirm = async () => {
     if (!selectedFile || isImporting) return;
+    setImportingFileName(selectedFile.name);
     setIsImportingInternal(true);
     try {
       await handleImport(selectedFile);
@@ -202,24 +226,6 @@ export function ImportExport({
 
   return (
     <div className="flex flex-col items-end gap-2">
-      {isProgressActive && importProgress !== null && (
-        <div className="w-full sm:w-64 flex flex-col gap-1.5 mb-1 text-left">
-          <div className="flex justify-between items-center text-[10px] font-bold text-slate-500">
-            <span className="flex items-center gap-1">
-              <IconLoader2 size={12} className="animate-spin text-emerald-600" />
-              Mengimpor data...
-            </span>
-            <span className="font-mono">{importProgress}%</span>
-          </div>
-          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-            <div
-              className="bg-emerald-600 h-full transition-all duration-300"
-              style={{ width: `${importProgress}%` }}
-            />
-          </div>
-        </div>
-      )}
-
       <div className="flex items-center gap-2">
         {showExport && (
           <Button
@@ -239,19 +245,85 @@ export function ImportExport({
         )}
 
         {showImport && (
-          <Button
-            type="button"
-            onClick={handleOpenDialog}
-            disabled={isImporting || isProgressActive}
-            className="h-9 px-3 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex gap-1.5 cursor-pointer transition-colors disabled:bg-emerald-600/50 disabled:opacity-90"
-          >
-            {isImporting || isProgressActive ? (
-              <IconLoader2 size={16} className="animate-spin" />
-            ) : (
-              <IconUpload size={16} />
-            )}
-            {importLabel}
-          </Button>
+          <Popover open={isImporting || isProgressActive || showFinishedState}>
+            <PopoverTrigger
+              render={
+                <Button
+                  type="button"
+                  onClick={handleOpenDialog}
+                  disabled={isImporting || isProgressActive}
+                  className="h-9 px-3 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex gap-1.5 cursor-pointer transition-all disabled:bg-emerald-600/50 disabled:opacity-90 relative"
+                >
+                  {isImporting || isProgressActive ? (
+                    <IconLoader2 size={16} className="animate-spin" />
+                  ) : (
+                    <IconUpload size={16} />
+                  )}
+                  {importLabel}
+                </Button>
+              }
+            />
+            <PopoverContent
+              side="top"
+              align="end"
+              sideOffset={8}
+              className="w-72 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xl rounded-2xl p-4 z-50 text-left animate-in fade-in slide-in-from-bottom-2 duration-200"
+            >
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                    {showFinishedState ? (
+                      <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                        <span className="w-5 h-5 rounded-full bg-emerald-50 dark:bg-emerald-950/35 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+                          <IconCheck size={12} className="stroke-[3]" />
+                        </span>
+                        <span>Import Selesai!</span>
+                      </span>
+                    ) : isImporting && !isProgressActive ? (
+                      <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                        <IconLoader2 size={14} className="animate-spin text-emerald-600" />
+                        <span>Mengunggah file...</span>
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                        <IconLoader2 size={14} className="animate-spin text-emerald-600" />
+                        <span>Memproses data...</span>
+                      </span>
+                    )}
+                  </span>
+                  {!showFinishedState && importProgress !== null && (
+                    <span className="text-xs font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
+                      {importProgress}%
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden relative">
+                    {showFinishedState ? (
+                      <div className="bg-emerald-500 h-full w-full transition-all duration-300" />
+                    ) : isImporting && !isProgressActive ? (
+                      <div className="h-full bg-emerald-600/30 rounded-full w-full overflow-hidden relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-600 to-transparent w-1/2 h-full animate-shimmer-loading" />
+                      </div>
+                    ) : (
+                      <div
+                        className="bg-emerald-600 h-full transition-all duration-300 rounded-full relative overflow-hidden"
+                        style={{ width: `${importProgress ?? 0}%` }}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent w-1/2 h-full animate-shimmer-loading" />
+                      </div>
+                    )}
+                  </div>
+                  {importingFileName && (
+                    <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate font-semibold">
+                      File: {importingFileName}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         )}
       </div>
 
@@ -303,7 +375,7 @@ export function ImportExport({
                   className="hidden"
                   disabled={isImporting}
                 />
-                <div className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-emerald-500 transition-colors">
+                <div className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-850 flex items-center justify-center text-slate-400 hover:text-emerald-500 transition-colors">
                   <IconUpload size={20} />
                 </div>
                 <div className="text-center">

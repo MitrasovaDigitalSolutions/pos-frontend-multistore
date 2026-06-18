@@ -2,6 +2,8 @@ export interface TopProduct {
     product_name: string;
     quantity: number;
     revenue: number;
+    profit: number;
+    profit_margin: number;
 }
 
 export interface DashboardSummary {
@@ -11,6 +13,9 @@ export interface DashboardSummary {
     items_sold: number;
     tax_total: number;
     discount_total: number;
+    total_cogs: number;
+    gross_profit: number;
+    profit_margin: number;
     top_products: TopProduct[];
 }
 

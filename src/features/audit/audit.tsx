@@ -1,11 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useForm } from "react-hook-form";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/data-table";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { useActivityLogs, type ActivityLog } from "@/features/stock/api/stock-api";
+import { FilterForm } from "@/components/forms/filter-form";
+import { FormInput } from "@/components/forms/form-input";
+
+interface AuditFilterValues {
+    search: string;
+}
 
 export function AuditLogs() {
     const { data: session } = useSession();
@@ -18,20 +25,24 @@ export function AuditLogs() {
 
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
-    const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
 
-    // Debounce search input to avoid excessive API requests
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedSearch(search);
-            setPage(1); // Reset to first page on search
-        }, 500);
+    const filterMethods = useForm<AuditFilterValues>({
+        defaultValues: {
+            search: "",
+        },
+    });
 
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [search]);
+    const handleFilterSubmit = (data: AuditFilterValues) => {
+        setDebouncedSearch(data.search);
+        setPage(1);
+    };
+
+    const handleFilterReset = () => {
+        filterMethods.reset({ search: "" });
+        setDebouncedSearch("");
+        setPage(1);
+    };
 
     const { data: logsData, isLoading, isFetching } = useActivityLogs({
         page,
@@ -146,7 +157,7 @@ export function AuditLogs() {
     return (
         <div className="space-y-6">
             <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
-                <div className="flex justify-between items-center border-b border-slate-50">
+                <div className="flex justify-between items-center border-b border-slate-50 pb-4">
                     <div>
                         <h3 className="text-sm font-bold text-slate-900">
                             Log Aktivitas & Audit Keamanan
@@ -156,6 +167,18 @@ export function AuditLogs() {
                         </p>
                     </div>
                 </div>
+
+                <FilterForm
+                    methods={filterMethods}
+                    onSubmit={handleFilterSubmit}
+                    onReset={handleFilterReset}
+                >
+                    <FormInput<AuditFilterValues>
+                        name="search"
+                        label="Cari Log Aktivitas"
+                        placeholder="Masukkan kata kunci pencarian..."
+                    />
+                </FilterForm>
 
                 <DataTable
                     columns={columns}
@@ -169,9 +192,6 @@ export function AuditLogs() {
                     onPerPageChange={setPerPage}
                     meta={logsData?.meta}
                     entityName="log aktivitas"
-                    search={search}
-                    onSearchChange={setSearch}
-                    searchPlaceholder="Cari log berdasarkan deskripsi atau user..."
                     virtualize={true}
                     estimateRowHeight={44}
                 />

@@ -6,6 +6,14 @@ import { useState, useDeferredValue } from "react";
 import { useSession } from "next-auth/react";
 import { hasRole, hasPermission } from "@/constants/roles";
 import { useAppRouter } from "@/hooks/use-app-router";
+import { useForm } from "react-hook-form";
+import { FilterForm } from "@/components/forms/filter-form";
+import { FormDatePicker } from "@/components/forms/form-date-picker";
+
+interface PaymentFilterValues {
+    start_date: string;
+    end_date: string;
+}
 
 export function PurchasePayment() {
     const { data: session } = useSession();
@@ -27,6 +35,33 @@ export function PurchasePayment() {
     });
 
     const deferredFilters = useDeferredValue(filters);
+
+    const filterMethods = useForm<PaymentFilterValues>({
+        defaultValues: {
+            start_date: "",
+            end_date: "",
+        },
+    });
+
+    const handleFilterSubmit = (data: PaymentFilterValues) => {
+        setFilters({
+            start_date: data.start_date,
+            end_date: data.end_date,
+        });
+        setPaymentPage(1);
+    };
+
+    const handleFilterReset = () => {
+        filterMethods.reset({
+            start_date: "",
+            end_date: "",
+        });
+        setFilters({
+            start_date: "",
+            end_date: "",
+        });
+        setPaymentPage(1);
+    };
 
     // Prepare API params
     const apiParams: Record<string, unknown> = {
@@ -67,8 +102,24 @@ export function PurchasePayment() {
                 onAddClick={() => router.push("/admin/purchase/payment/new")}
                 isLoading={paymentsLoading}
                 isFetching={paymentsFetching}
-                filters={filters}
-                setFilters={setFilters}
+                filterElement={
+                    <FilterForm
+                        methods={filterMethods}
+                        onSubmit={handleFilterSubmit}
+                        onReset={handleFilterReset}
+                    >
+                        <FormDatePicker<PaymentFilterValues>
+                            name="start_date"
+                            label="Tanggal Awal"
+                            placeholder="Dari Tanggal"
+                        />
+                        <FormDatePicker<PaymentFilterValues>
+                            name="end_date"
+                            label="Tanggal Akhir"
+                            placeholder="Sampai Tanggal"
+                        />
+                    </FilterForm>
+                }
             />
         </div>
     );

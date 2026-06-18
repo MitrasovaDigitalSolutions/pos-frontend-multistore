@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,6 +10,12 @@ import { CategoryList } from "./components/category-list";
 import { CategoryDialog } from "./components/category-dialog";
 import { categorySchema, type CategoryInput } from "./schemas/category-schema";
 import type { Category } from "./types";
+import { FilterForm } from "@/components/forms/filter-form";
+import { FormInput } from "@/components/forms/form-input";
+
+interface CategoryFilterValues {
+    search: string;
+}
 
 export function Categories() {
     const { data: session } = useSession();
@@ -22,20 +28,24 @@ export function Categories() {
 
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
-    const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
 
-    // Debounce search input to avoid excessive API requests
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedSearch(search);
-            setPage(1); // Reset to first page on search
-        }, 500);
+    const filterMethods = useForm<CategoryFilterValues>({
+        defaultValues: {
+            search: "",
+        },
+    });
 
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [search]);
+    const handleFilterSubmit = (data: CategoryFilterValues) => {
+        setDebouncedSearch(data.search);
+        setPage(1);
+    };
+
+    const handleFilterReset = () => {
+        filterMethods.reset({ search: "" });
+        setDebouncedSearch("");
+        setPage(1);
+    };
 
     const { data: categoriesData, isLoading, isFetching } = useCategories({
         page,
@@ -46,7 +56,7 @@ export function Categories() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
-    const methods = useForm<CategoryInput>({
+    const dialogMethods = useForm<CategoryInput>({
         resolver: zodResolver(categorySchema) as Resolver<CategoryInput>,
         defaultValues: {
             nama: "",
@@ -65,7 +75,7 @@ export function Categories() {
 
     const handleEdit = (category: Category) => {
         setEditingCategory(category);
-        methods.reset({
+        dialogMethods.reset({
             nama: category.nama,
             deskripsi: category.deskripsi || "",
         });
@@ -74,7 +84,7 @@ export function Categories() {
 
     const handleAddClick = () => {
         setEditingCategory(null);
-        methods.reset({
+        dialogMethods.reset({
             nama: "",
             deskripsi: "",
         });
@@ -82,8 +92,8 @@ export function Categories() {
     };
 
     return (
-        <FormProvider {...methods}>
-            <div className="space-y-6">
+        <div className="space-y-6">
+            <FormProvider {...dialogMethods}>
                 <CategoryList
                     categories={categoriesData?.data || []}
                     meta={categoriesData?.meta}
@@ -91,12 +101,23 @@ export function Categories() {
                     perPage={perPage}
                     onPageChange={setPage}
                     onPerPageChange={setPerPage}
-                    search={search}
-                    onSearchChange={setSearch}
                     onEdit={handleEdit}
                     onAddClick={handleAddClick}
                     isLoading={isLoading}
                     isFetching={isFetching}
+                    filterElement={
+                        <FilterForm
+                            methods={filterMethods}
+                            onSubmit={handleFilterSubmit}
+                            onReset={handleFilterReset}
+                        >
+                            <FormInput<CategoryFilterValues>
+                                name="search"
+                                label="Cari Kategori"
+                                placeholder="Masukkan nama kategori..."
+                            />
+                        </FilterForm>
+                    }
                 />
 
                 <CategoryDialog
@@ -104,7 +125,7 @@ export function Categories() {
                     onOpenChange={setIsDialogOpen}
                     editingCategory={editingCategory}
                 />
-            </div>
-        </FormProvider>
+            </FormProvider>
+        </div>
     );
 }

@@ -24,12 +24,11 @@ interface BrandListProps {
     perPage: number;
     onPageChange: (page: number) => void;
     onPerPageChange: (perPage: number) => void;
-    search: string;
-    onSearchChange: (search: string) => void;
     onEdit: (brand: Brand) => void;
     onAddClick: () => void;
     isLoading?: boolean;
     isFetching?: boolean;
+    filterElement?: React.ReactNode;
 }
 
 export function BrandList({
@@ -39,12 +38,11 @@ export function BrandList({
     perPage,
     onPageChange,
     onPerPageChange,
-    search,
-    onSearchChange,
     onEdit,
     onAddClick,
     isLoading = false,
     isFetching = false,
+    filterElement,
 }: BrandListProps) {
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
@@ -99,7 +97,7 @@ export function BrandList({
 
     return (
         <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
-            <div className="flex justify-between items-center border-b border-slate-50">
+            <div className="flex justify-between items-center border-b border-slate-50 pb-4">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">
                         Daftar Brand / Merek Produk
@@ -118,21 +116,20 @@ export function BrandList({
                 )}
             </div>
 
+            {filterElement}
+
             <DataTable
                 columns={columns}
                 data={brands}
                 isLoading={isLoading}
                 isFetching={isFetching}
-                emptyMessage="Tidak ada brand ditemukan."
+                emptyMessage="Tidak ada data brand ditemukan."
                 page={page}
                 perPage={perPage}
                 onPageChange={onPageChange}
                 onPerPageChange={onPerPageChange}
                 meta={meta}
                 entityName="brand"
-                search={search}
-                onSearchChange={onSearchChange}
-                searchPlaceholder="Cari brand berdasarkan nama..."
                 virtualize={true}
                 estimateRowHeight={44}
                 onEdit={hasManageProducts ? onEdit : undefined}

@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
-import { DatePicker } from "@/components/ui/date-picker";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconPlus } from "@tabler/icons-react";
@@ -33,14 +32,7 @@ interface PaymentListProps {
     onAddClick: () => void;
     isLoading?: boolean;
     isFetching?: boolean;
-    filters: {
-        start_date: string;
-        end_date: string;
-    };
-    setFilters: React.Dispatch<React.SetStateAction<{
-        start_date: string;
-        end_date: string;
-    }>>;
+    filterElement?: React.ReactNode;
 }
 
 export function PaymentList({
@@ -51,8 +43,7 @@ export function PaymentList({
     onAddClick,
     isLoading = false,
     isFetching = false,
-    filters,
-    setFilters,
+    filterElement,
 }: PaymentListProps) {
     const { data: session } = useSession();
     const router = useAppRouter();
@@ -121,33 +112,14 @@ export function PaymentList({
         router.push(`/admin/purchase/payment/${payment.id}`);
     };
 
-    // Columns are defined in payment-columns.tsx
     const columns = useMemo(
         () => paymentColumns,
         []
     );
 
-    const filtersBar = (
-        <div className="flex items-center gap-2">
-            <DatePicker
-                value={filters.start_date}
-                onChange={(date) => setFilters((prev) => ({ ...prev, start_date: date }))}
-                placeholder="Dari Tanggal"
-                className="w-40"
-            />
-            <span className="text-xs text-slate-400 font-medium">s/d</span>
-            <DatePicker
-                value={filters.end_date}
-                onChange={(date) => setFilters((prev) => ({ ...prev, end_date: date }))}
-                placeholder="Sampai Tanggal"
-                className="w-40"
-            />
-        </div>
-    );
-
     return (
         <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
-            <div className="flex justify-between items-center border-b border-slate-50">
+            <div className="flex justify-between items-center border-b border-slate-50 pb-4">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">
                         Pembayaran Invoices
@@ -166,6 +138,8 @@ export function PaymentList({
                 )}
             </div>
 
+            {filterElement}
+
             <DataTable
                 columns={columns}
                 data={payments}
@@ -183,7 +157,6 @@ export function PaymentList({
                 hideEdit={() => true}
                 onDelete={handleDelete}
                 hideDelete={(p) => !(p.status === PAYMENT_TRANSACTION_STATUS.COMPLETED && hasManagePurchase)}
-                filters={filtersBar}
             />
 
             {/* Confirm Dialog */}
