@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useForm, FormProvider, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { IconCash, IconCirclePlus, IconCircleMinus } from "@tabler/icons-react";
+import { IconCirclePlus, IconCircleMinus } from "@tabler/icons-react";
 
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";

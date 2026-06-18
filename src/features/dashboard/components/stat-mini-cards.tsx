@@ -1,5 +1,6 @@
 "use client";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import {
   IconArrowRight,
@@ -7,40 +8,15 @@ import {
   IconReportMoney,
 } from "@tabler/icons-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import {
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts";
 import type { DashboardSummary } from "../types";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface StatMiniCardsProps {
   summary: DashboardSummary | undefined;
   isLoading?: boolean;
 }
 
-// Simulated sparkline data for visual richness
-const SPARKLINE_DATA_1 = [
-  { v: 30 }, { v: 45 }, { v: 38 }, { v: 52 }, { v: 48 },
-  { v: 61 }, { v: 55 }, { v: 70 }, { v: 65 }, { v: 80 },
-];
-
-const SPARKLINE_DATA_2 = [
-  { v: 20 }, { v: 35 }, { v: 28 }, { v: 42 }, { v: 38 },
-  { v: 55 }, { v: 48 }, { v: 65 }, { v: 60 }, { v: 75 },
-];
 
 export function StatMiniCards({ summary, isLoading }: StatMiniCardsProps) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setMounted(true);
-    }, 0);
-    return () => clearTimeout(timer);
-  }, []);
 
   const netSales = summary?.net_sales ?? 0;
   const grossProfit = summary?.gross_profit ?? 0;
@@ -92,24 +68,7 @@ export function StatMiniCards({ summary, isLoading }: StatMiniCardsProps) {
           >
             Laporan <IconArrowRight size={10} className="transition-transform group-hover:translate-x-0.5" />
           </Link>
-          <div style={{ width: 60, height: 20 }}>
-            {mounted && !isLoading && (
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={SPARKLINE_DATA_1}>
-                  <Line
-                    type="monotone"
-                    dataKey="v"
-                    stroke="#6366f1"
-                    strokeWidth={1.5}
-                    dot={false}
-                    activeDot={{ r: 2 }}
-                  />
-                  <Tooltip content={() => null} />
-                </LineChart>
-              </ResponsiveContainer>
-            )}
-            {isLoading && <Skeleton className="h-full w-full rounded" />}
-          </div>
+
         </div>
       </div>
 
@@ -162,24 +121,7 @@ export function StatMiniCards({ summary, isLoading }: StatMiniCardsProps) {
           >
             Detail <IconArrowRight size={10} className="transition-transform group-hover:translate-x-0.5" />
           </Link>
-          <div style={{ width: 60, height: 20 }}>
-            {mounted && !isLoading && (
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={SPARKLINE_DATA_2}>
-                  <Line
-                    type="monotone"
-                    dataKey="v"
-                    stroke="#10b981"
-                    strokeWidth={1.5}
-                    dot={false}
-                    activeDot={{ r: 2 }}
-                  />
-                  <Tooltip content={() => null} />
-                </LineChart>
-              </ResponsiveContainer>
-            )}
-            {isLoading && <Skeleton className="h-full w-full rounded" />}
-          </div>
+
         </div>
       </div>
     </div>

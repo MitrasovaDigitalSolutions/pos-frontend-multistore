@@ -36,13 +36,20 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
     const queryClient = useQueryClient();
     
     const [itemsPage, setItemsPage] = useState(1);
+    const [sortBy, setSortBy] = useState<string | undefined>(undefined);
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>(undefined);
     const [isConfirmFinalizeOpen, setIsConfirmFinalizeOpen] = useState(false);
 
     const { data: opname, isLoading: isDetailLoading, error } = useOpnameDetail(opnameId);
 
     const { data: itemsData, isLoading: isItemsLoading, isFetching: isItemsFetching } = useOpnameItems(
         opnameId,
-        { page: itemsPage, per_page: 10 }
+        {
+            page: itemsPage,
+            per_page: 10,
+            sort_by: sortBy,
+            sort_order: sortOrder,
+        }
     );
 
     const { data: logsData, isLoading: isLogsLoading } = useActivityLogs({
@@ -75,6 +82,7 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
             {
                 accessorKey: "product.nama",
                 header: "Nama Produk",
+                enableSorting: false,
                 cell: ({ row }) => (
                     <div className="flex flex-col">
                         <span className="text-xs font-bold text-slate-900">
@@ -260,6 +268,13 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                         onPageChange={setItemsPage}
                         meta={itemsData?.meta}
                         entityName="item"
+                        sortBy={sortBy}
+                        sortOrder={sortOrder}
+                        onSortChange={(by, order) => {
+                            setSortBy(by);
+                            setSortOrder(order);
+                            setItemsPage(1);
+                        }}
                         virtualize={false}
                     />
                 </div>

@@ -15,9 +15,9 @@ export function useSalesHistory(params?: DashboardSummaryParams) {
         queryKey: [...queryKeys.dashboard.summary(), "history", params],
         queryFn: async () => {
             try {
-                return await apiGetData<SalesHistoryItem[]>("/v1/reports/sales/history", { params });
+                return await apiGetData<SalesHistoryItem[]>("/v1/reports/chart-histories", { params });
             } catch {
-                console.warn("API /v1/reports/sales/history not implemented yet. Using frontend fallback.");
+                console.warn("API /v1/reports/chart-histories not implemented yet. Using frontend fallback.");
                 return [];
             }
         },
