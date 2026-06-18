@@ -58,6 +58,14 @@ export interface Opname {
     items?: OpnameItem[];
 }
 
+export interface TopCategory {
+    category_name: string;
+    quantity: number;
+    revenue: number;
+    profit: number;
+    profit_margin: number;
+}
+
 export interface DashboardSummary {
     net_sales: number;
     gross_sales: number;
@@ -66,12 +74,17 @@ export interface DashboardSummary {
     tax_total: number;
     discount_total: number;
     top_products: TopProduct[];
+    top_products_by_quantity?: TopProduct[];
+    top_products_by_profit?: TopProduct[];
+    top_categories?: TopCategory[];
 }
 
 export interface TopProduct {
     product_name: string;
     quantity: number;
     revenue: number;
+    profit?: number;
+    profit_margin?: number;
 }
 
 export interface DailyReport {

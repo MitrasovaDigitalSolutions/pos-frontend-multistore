@@ -204,14 +204,14 @@ export function DailyReportView() {
                                         );
                                     },
                                 )
-            )}
+                            )}
                         </div>
                     </div>
 
                     {/* Top Products */}
                     <div>
                         <h4 className="text-xs font-bold text-slate-800 mb-3">
-                            10 Produk Terlaris Hari Ini
+                            10 Produk Terlaris
                         </h4>
                         <DataTable
                             columns={[

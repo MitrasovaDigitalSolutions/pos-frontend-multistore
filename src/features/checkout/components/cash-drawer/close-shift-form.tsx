@@ -3,11 +3,13 @@
 import { FormInput } from "@/components/forms/form-input";
 import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { Button } from "@/components/ui/button";
+import { canAccessAdmin } from "@/constants/roles";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { signOut } from "@/lib/auth-helpers";
 import { useCheckoutStore } from "@/stores/checkout-store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconChevronLeft, IconDoorExit, IconLoader2 } from "@tabler/icons-react";
+import { useSession } from "next-auth/react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { useCloseCashDrawer } from "../../api/cash-drawer-api";
@@ -29,6 +31,8 @@ export function CloseShiftForm({
     onCancel,
 }: CloseShiftFormProps) {
     const closeMutation = useCloseCashDrawer();
+    const { data: session } = useSession();
+    const isAdmin = canAccessAdmin(session?.user?.roles || []);
 
     const methods = useForm<CloseCashDrawerInput>({
         resolver: zodResolver(closeCashDrawerSchema) as Resolver<CloseCashDrawerInput>,
@@ -70,7 +74,9 @@ export function CloseShiftForm({
 
             toast.success("Sesi shift laci kasir berhasil ditutup.");
             onSuccess();
-            await signOut({ callbackUrl: "/login" });
+            if (!isAdmin) {
+                await signOut({ callbackUrl: "/login" });
+            }
         } catch (err) {
             const error = err as Error;
             toast.error(error.message || "Gagal menutup laci kasir.");

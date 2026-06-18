@@ -6,6 +6,14 @@ export interface TopProduct {
     profit_margin: number;
 }
 
+export interface TopCategory {
+    category_name: string;
+    quantity: number;
+    revenue: number;
+    profit: number;
+    profit_margin: number;
+}
+
 export interface DashboardSummary {
     net_sales: number;
     gross_sales: number;
@@ -17,18 +25,22 @@ export interface DashboardSummary {
     gross_profit: number;
     profit_margin: number;
     top_products: TopProduct[];
+    top_products_by_quantity?: TopProduct[];
+    top_products_by_profit?: TopProduct[];
+    top_categories?: TopCategory[];
 }
 
 export interface SalesHistoryItem {
-    period: string;
-    gross_sales: number;
+    date: string;
     net_sales: number;
+    gross_profit: number;
 }
 
 export interface DashboardSummaryParams {
     from?: string;
     to?: string;
     payment_method?: string;
+    interval?: string;
 }
 
 export interface SaleItem {

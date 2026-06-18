@@ -2,7 +2,7 @@
 
 import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useDashboardSummary, useSalesHistory } from "@/features/dashboard/api/dashboard-api";
+import { useDashboardSummary } from "@/features/dashboard/api/dashboard-api";
 import { RecentOrdersTable } from "@/features/dashboard/components/recent-orders-table";
 import { RevenueChart } from "@/features/dashboard/components/revenue-chart";
 import { SalesStatistics } from "@/features/dashboard/components/sales-statistics";
@@ -42,12 +42,7 @@ export function Dashboard() {
     payment_method: paymentMethod || undefined,
   });
 
-  const { data: history, isLoading: historyLoading } = useSalesHistory({
-    from: watchFrom || undefined,
-    to: watchTo || undefined,
-  });
-
-  const isLoading = summaryLoading || historyLoading;
+  const isLoading = summaryLoading;
 
   const formatDateRange = () => {
     if (!watchFrom && !watchTo) return "Semua Waktu";
@@ -143,7 +138,7 @@ export function Dashboard() {
         <section className="grid gap-4 mb-4" style={{ gridTemplateColumns: "220px 1fr 280px" }}>
           <StatMiniCards summary={summary} isLoading={isLoading} />
 
-          <RevenueChart summary={summary} history={history} isLoading={isLoading} />
+          <RevenueChart summary={summary} from={watchFrom || undefined} to={watchTo || undefined} />
 
           <SalesStatistics summary={summary} isLoading={isLoading} />
         </section>
