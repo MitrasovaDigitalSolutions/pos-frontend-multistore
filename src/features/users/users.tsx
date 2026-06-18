@@ -48,6 +48,8 @@ export function Users() {
 
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
+  const [sortBy, setSortBy] = useState<string | undefined>("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("asc");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const filterMethods = useForm<UserFilterValues>({
@@ -70,6 +72,8 @@ export function Users() {
   const { data: usersData, isLoading, isFetching } = useUsers({
     page,
     per_page: perPage,
+    sort_by: sortBy,
+    sort_order: sortOrder,
     search: debouncedSearch || undefined,
   });
 
@@ -174,6 +178,13 @@ export function Users() {
               onAddClick={handleAddClick}
               isLoading={isLoading}
               isFetching={isFetching}
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSortChange={(by, order) => {
+                setSortBy(by);
+                setSortOrder(order);
+                setPage(1);
+              }}
               filterElement={
                 <FilterForm
                   methods={filterMethods}

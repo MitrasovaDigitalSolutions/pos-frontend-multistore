@@ -17,6 +17,9 @@ interface MovementLedgerProps {
     onPageChange: (page: number) => void;
     isLoading?: boolean;
     isFetching?: boolean;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+    onSortChange?: (sortBy: string | undefined, sortOrder: "asc" | "desc" | undefined) => void;
 }
 
 export function MovementLedger({
@@ -26,6 +29,9 @@ export function MovementLedger({
     onPageChange,
     isLoading = false,
     isFetching = false,
+    sortBy,
+    sortOrder,
+    onSortChange,
 }: MovementLedgerProps) {
     const columns = useMemo<ColumnDef<StockMovement>[]>(
         () => [
@@ -44,6 +50,7 @@ export function MovementLedger({
             {
                 accessorKey: "product.nama",
                 header: "Nama Produk",
+                enableSorting: false,
                 cell: ({ row }) => (
                     <span className="font-semibold text-slate-800">
                         {row.original.product?.nama || "-"}
@@ -118,6 +125,7 @@ export function MovementLedger({
             {
                 accessorKey: "user",
                 header: "Petugas",
+                enableSorting: false,
                 cell: ({ row }) => (
                     <span className="text-[11px] font-semibold text-slate-700">
                         {row.original.user?.name || "System"}
@@ -144,6 +152,9 @@ export function MovementLedger({
                 onPageChange={onPageChange}
                 meta={meta}
                 entityName="log"
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortChange={onSortChange}
                 virtualize={true}
                 estimateRowHeight={44}
             />

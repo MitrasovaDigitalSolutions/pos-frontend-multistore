@@ -34,6 +34,8 @@ export function Products() {
 
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
+  const [sortBy, setSortBy] = useState<string | undefined>("nama");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("asc");
   const [appliedFilters, setAppliedFilters] = useState<{
     search?: string;
     status?: string;
@@ -78,6 +80,8 @@ export function Products() {
   const { data: productsData, isLoading, isFetching } = useProducts({
     page,
     per_page: perPage,
+    sort_by: sortBy,
+    sort_order: sortOrder,
     ...appliedFilters,
   });
 
@@ -173,6 +177,13 @@ export function Products() {
           onAddClick={handleAddClick}
           isLoading={isLoading}
           isFetching={isFetching}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={(by, order) => {
+            setSortBy(by);
+            setSortOrder(order);
+            setPage(1);
+          }}
           filterElement={
             <FilterForm
               methods={filterMethods}

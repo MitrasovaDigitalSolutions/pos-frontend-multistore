@@ -33,6 +33,7 @@ export const returnColumns: ColumnDef<PurchaseReturn>[] = [
     {
         accessorKey: "supplier",
         header: "Supplier",
+        enableSorting: false,
         cell: ({ row }) => {
             const supplierObj = row.original.supplier;
             return (

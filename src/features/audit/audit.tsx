@@ -25,6 +25,8 @@ export function AuditLogs() {
 
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
+    const [sortBy, setSortBy] = useState<string | undefined>("created_at");
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("desc");
     const [debouncedSearch, setDebouncedSearch] = useState("");
 
     const filterMethods = useForm<AuditFilterValues>({
@@ -47,6 +49,8 @@ export function AuditLogs() {
     const { data: logsData, isLoading, isFetching } = useActivityLogs({
         page,
         per_page: perPage,
+        sort_by: sortBy,
+        sort_order: sortOrder,
         search: debouncedSearch || undefined,
     });
 
@@ -87,6 +91,7 @@ export function AuditLogs() {
             {
                 accessorKey: "user",
                 header: "Pengguna / Petugas",
+                enableSorting: false,
                 cell: ({ row }) => {
                     const user = row.original.user;
                     return (
@@ -192,6 +197,13 @@ export function AuditLogs() {
                     onPerPageChange={setPerPage}
                     meta={logsData?.meta}
                     entityName="log aktivitas"
+                    sortBy={sortBy}
+                    sortOrder={sortOrder}
+                    onSortChange={(by, order) => {
+                        setSortBy(by);
+                        setSortOrder(order);
+                        setPage(1);
+                    }}
                     virtualize={true}
                     estimateRowHeight={44}
                 />

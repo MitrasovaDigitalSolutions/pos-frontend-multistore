@@ -33,6 +33,9 @@ interface PaymentListProps {
     isLoading?: boolean;
     isFetching?: boolean;
     filterElement?: React.ReactNode;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+    onSortChange?: (sortBy: string | undefined, sortOrder: "asc" | "desc" | undefined) => void;
 }
 
 export function PaymentList({
@@ -44,6 +47,9 @@ export function PaymentList({
     isLoading = false,
     isFetching = false,
     filterElement,
+    sortBy,
+    sortOrder,
+    onSortChange,
 }: PaymentListProps) {
     const { data: session } = useSession();
     const router = useAppRouter();
@@ -150,6 +156,9 @@ export function PaymentList({
                 onPageChange={onPageChange}
                 meta={meta}
                 entityName="transaksi pembayaran"
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortChange={onSortChange}
                 virtualize={true}
                 estimateRowHeight={44}
                 onView={handleDetailClick}

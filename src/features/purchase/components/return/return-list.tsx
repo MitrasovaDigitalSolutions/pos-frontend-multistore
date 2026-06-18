@@ -34,6 +34,9 @@ interface ReturnListProps {
     isLoading?: boolean;
     isFetching?: boolean;
     filterElement?: React.ReactNode;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+    onSortChange?: (sortBy: string | undefined, sortOrder: "asc" | "desc" | undefined) => void;
 }
 
 export function ReturnList({
@@ -46,6 +49,9 @@ export function ReturnList({
     isLoading = false,
     isFetching = false,
     filterElement,
+    sortBy,
+    sortOrder,
+    onSortChange,
 }: ReturnListProps) {
     const { data: session } = useSession();
     const router = useAppRouter();
@@ -146,6 +152,9 @@ export function ReturnList({
                 onPageChange={onPageChange}
                 meta={meta}
                 entityName="dokumen retur"
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortChange={onSortChange}
                 virtualize={true}
                 estimateRowHeight={44}
                 onView={handleDetailClick}

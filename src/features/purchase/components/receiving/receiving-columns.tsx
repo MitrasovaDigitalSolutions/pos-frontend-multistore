@@ -37,6 +37,7 @@ export const receivingColumns: ColumnDef<Receiving>[] = [
     {
         accessorKey: "supplier",
         header: "Supplier",
+        enableSorting: false,
         cell: ({ row }) => {
             const relation = row.original.supplier_relationship;
             return (

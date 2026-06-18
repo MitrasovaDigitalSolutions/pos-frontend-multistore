@@ -29,6 +29,9 @@ interface CategoryListProps {
     isLoading?: boolean;
     isFetching?: boolean;
     filterElement?: React.ReactNode;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+    onSortChange?: (sortBy: string | undefined, sortOrder: "asc" | "desc" | undefined) => void;
 }
 
 export function CategoryList({
@@ -43,6 +46,9 @@ export function CategoryList({
     isLoading = false,
     isFetching = false,
     filterElement,
+    sortBy,
+    sortOrder,
+    onSortChange,
 }: CategoryListProps) {
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
@@ -130,6 +136,9 @@ export function CategoryList({
                 onPerPageChange={onPerPageChange}
                 meta={meta}
                 entityName="kategori"
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortChange={onSortChange}
                 virtualize={true}
                 estimateRowHeight={44}
                 onEdit={hasManageProducts ? onEdit : undefined}

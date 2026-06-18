@@ -35,6 +35,7 @@ export const poColumns: ColumnDef<PurchaseOrder>[] = [
     {
         accessorKey: "supplier",
         header: "Supplier",
+        enableSorting: false,
         cell: ({ row }) => {
             const supplierObj = row.original.supplier;
             return (
