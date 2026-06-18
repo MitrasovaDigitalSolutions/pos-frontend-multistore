@@ -7,7 +7,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "../schemas/login-schema";
 import {
-    IconShoppingCart,
     IconUser,
     IconLock,
     IconEye,
@@ -73,8 +72,8 @@ export function LoginForm() {
                 const errorMessage = res.error === "CredentialsSignin"
                     ? "Username atau password salah."
                     : res.error === "Configuration"
-                    ? "Gagal menghubungkan ke server atau terjadi kesalahan konfigurasi."
-                    : res.error;
+                        ? "Gagal menghubungkan ke server atau terjadi kesalahan konfigurasi."
+                        : res.error;
                 toast.error(errorMessage);
             } else {
                 toast.success("Login berhasil!");
@@ -91,14 +90,18 @@ export function LoginForm() {
         <div className="grow flex items-center justify-center bg-emerald-50/50 p-6 min-h-screen">
             <Card className="w-full max-w-100 shadow-xl border-slate-100 rounded-2xl animate-fade-in">
                 <CardHeader className="text-center pb-8 pt-8">
-                    <div className="mx-auto w-12 h-12 bg-emerald-100/80 text-emerald-600 rounded-xl flex items-center justify-center text-2xl mb-4">
-                        <IconShoppingCart size={24} />
+                    <div className="mx-auto w-16 h-16 bg-white border border-slate-100 shadow-sm rounded-2xl flex items-center justify-center mb-4 overflow-hidden p-2">
+                        <img
+                            src="/logo/logo.png"
+                            alt="Mitra Buana Motor Logo"
+                            className="w-full h-full object-contain"
+                        />
                     </div>
                     <CardTitle className="text-lg font-bold text-slate-900">
-                        MSG POS
+                        Mitra Buana Motor
                     </CardTitle>
                     <CardDescription className="text-xs text-slate-400">
-                        Sistem Point of Sale Swalayan
+                        Sistem Point of Sale
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

@@ -26,7 +26,7 @@ export function CheckoutTopBar({
             <div className="flex items-center gap-3">
                 <IconScan size={20} className="text-emerald-400" />
                 <span className="font-bold text-[13px] tracking-wide">
-                    MSG POS — Cashier Terminal
+                    Mitra Buana Motor — Cashier Terminal
                 </span>
                 {transactionId && (
                     <span className="bg-emerald-700 text-emerald-100 text-[9px] font-bold px-2 py-0.5 rounded-full tracking-wider">
@@ -46,7 +46,7 @@ export function CheckoutTopBar({
                     <span>Info Laci Kasir</span>
                 </Button>
                 <div className="w-px h-4 bg-slate-800" />
-                
+
                 {hasAccessAdmin && (
                     <>
                         <Button
@@ -60,7 +60,7 @@ export function CheckoutTopBar({
                         <div className="w-px h-4 bg-slate-800" />
                     </>
                 )}
-                
+
                 <Button
                     variant="ghost"
                     onClick={onLogout}

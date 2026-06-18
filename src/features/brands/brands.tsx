@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,6 +10,12 @@ import { BrandList } from "./components/brand-list";
 import { BrandDialog } from "./components/brand-dialog";
 import { brandSchema, type BrandInput } from "./schemas/brand-schema";
 import type { Brand } from "./types";
+import { FilterForm } from "@/components/forms/filter-form";
+import { FormInput } from "@/components/forms/form-input";
+
+interface BrandFilterValues {
+    search: string;
+}
 
 export function Brands() {
     const { data: session } = useSession();
@@ -22,20 +28,24 @@ export function Brands() {
 
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
-    const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
 
-    // Debounce search input to avoid excessive API requests
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedSearch(search);
-            setPage(1); // Reset to first page on search
-        }, 500);
+    const filterMethods = useForm<BrandFilterValues>({
+        defaultValues: {
+            search: "",
+        },
+    });
 
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [search]);
+    const handleFilterSubmit = (data: BrandFilterValues) => {
+        setDebouncedSearch(data.search);
+        setPage(1);
+    };
+
+    const handleFilterReset = () => {
+        filterMethods.reset({ search: "" });
+        setDebouncedSearch("");
+        setPage(1);
+    };
 
     const { data: brandsData, isLoading, isFetching } = useBrands({
         page,
@@ -46,7 +56,7 @@ export function Brands() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
 
-    const methods = useForm<BrandInput>({
+    const dialogMethods = useForm<BrandInput>({
         resolver: zodResolver(brandSchema) as Resolver<BrandInput>,
         defaultValues: {
             nama: "",
@@ -65,7 +75,7 @@ export function Brands() {
 
     const handleEdit = (brand: Brand) => {
         setEditingBrand(brand);
-        methods.reset({
+        dialogMethods.reset({
             nama: brand.nama,
             deskripsi: brand.deskripsi || "",
         });
@@ -74,7 +84,7 @@ export function Brands() {
 
     const handleAddClick = () => {
         setEditingBrand(null);
-        methods.reset({
+        dialogMethods.reset({
             nama: "",
             deskripsi: "",
         });
@@ -82,8 +92,8 @@ export function Brands() {
     };
 
     return (
-        <FormProvider {...methods}>
-            <div className="space-y-6">
+        <div className="space-y-6">
+            <FormProvider {...dialogMethods}>
                 <BrandList
                     brands={brandsData?.data || []}
                     meta={brandsData?.meta}
@@ -91,12 +101,23 @@ export function Brands() {
                     perPage={perPage}
                     onPageChange={setPage}
                     onPerPageChange={setPerPage}
-                    search={search}
-                    onSearchChange={setSearch}
                     onEdit={handleEdit}
                     onAddClick={handleAddClick}
                     isLoading={isLoading}
                     isFetching={isFetching}
+                    filterElement={
+                        <FilterForm
+                            methods={filterMethods}
+                            onSubmit={handleFilterSubmit}
+                            onReset={handleFilterReset}
+                        >
+                            <FormInput<BrandFilterValues>
+                                name="search"
+                                label="Cari Brand"
+                                placeholder="Masukkan nama brand..."
+                            />
+                        </FilterForm>
+                    }
                 />
 
                 <BrandDialog
@@ -104,7 +125,7 @@ export function Brands() {
                     onOpenChange={setIsDialogOpen}
                     editingBrand={editingBrand}
                 />
-            </div>
-        </FormProvider>
+            </FormProvider>
+        </div>
     );
 }

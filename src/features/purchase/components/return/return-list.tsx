@@ -3,14 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
-import { CommandSelect } from "@/components/ui/command-select";
-import { DatePicker } from "@/components/ui/date-picker";
-import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
 import { hasPermission, hasRole } from "@/constants/roles";
 import type { Product } from "@/features/products/types";
 import { IconPlus } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { useDeletePurchaseReturn } from "../../api/purchase-api";
 import type { PurchaseReturn } from "../../types";
@@ -19,7 +16,6 @@ import { ReturnFinalizeDialog } from "./return-finalize-dialog";
 import { useAppRouter } from "@/hooks/use-app-router";
 import {
     RETURN_STATUS,
-    RETURN_STATUS_LABELS,
 } from "@/constants/purchase";
 import { returnColumns } from "./return-columns";
 
@@ -37,20 +33,7 @@ interface ReturnListProps {
     onAddClick: () => void;
     isLoading?: boolean;
     isFetching?: boolean;
-    filters: {
-        search: string;
-        status: string;
-        supplier_id: string;
-        start_date: string;
-        end_date: string;
-    };
-    setFilters: React.Dispatch<React.SetStateAction<{
-        search: string;
-        status: string;
-        supplier_id: string;
-        start_date: string;
-        end_date: string;
-    }>>;
+    filterElement?: React.ReactNode;
 }
 
 export function ReturnList({
@@ -62,8 +45,7 @@ export function ReturnList({
     onAddClick,
     isLoading = false,
     isFetching = false,
-    filters,
-    setFilters,
+    filterElement,
 }: ReturnListProps) {
     const { data: session } = useSession();
     const router = useAppRouter();
@@ -71,7 +53,6 @@ export function ReturnList({
     const [selectedReturn, setSelectedReturn] = useState<PurchaseReturn | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isFinalizeOpen, setIsFinalizeOpen] = useState(false);
-    const { data: suppliers = [] } = useAllSuppliers();
 
     const [confirmDialog, setConfirmDialog] = useState<{
         open: boolean;
@@ -132,68 +113,9 @@ export function ReturnList({
         setIsFinalizeOpen(true);
     };
 
-    // Status options for CommandSelect
-    const statusOptions = [
-        { value: "all", label: "Semua Status" },
-        ...Object.values(RETURN_STATUS).map((status) => ({
-            value: status,
-            label: RETURN_STATUS_LABELS[status],
-        })),
-    ];
-
-    // Supplier options for CommandSelect
-    const supplierOptions = useMemo(() => {
-        return [
-            { value: "all", label: "Semua Supplier" },
-            ...suppliers.map((sup) => ({
-                value: String(sup.id),
-                label: sup.nama,
-            })),
-        ];
-    }, [suppliers]);
-
-    const filtersBar = (
-        <div className="grid grid-cols-4 gap-2.5 w-full">
-            {/* Status Select */}
-            <CommandSelect
-                options={statusOptions}
-                value={filters.status}
-                onChange={(val) => setFilters((prev) => ({ ...prev, status: val || "all" }))}
-                placeholder="Semua Status"
-                className="w-full h-9 text-xs"
-            />
-
-            {/* Supplier Select */}
-            <CommandSelect
-                options={supplierOptions}
-                value={filters.supplier_id}
-                onChange={(val) => setFilters((prev) => ({ ...prev, supplier_id: val || "all" }))}
-                placeholder="Semua Supplier"
-                className="w-full h-9 text-xs"
-            />
-
-            {/* Date Range Inputs */}
-            <div className="col-span-2 flex items-center gap-2">
-                <DatePicker
-                    value={filters.start_date}
-                    onChange={(date) => setFilters((prev) => ({ ...prev, start_date: date }))}
-                    placeholder="Dari Tanggal"
-                    className="w-full"
-                />
-                <span className="text-xs text-slate-400 font-medium">s/d</span>
-                <DatePicker
-                    value={filters.end_date}
-                    onChange={(date) => setFilters((prev) => ({ ...prev, end_date: date }))}
-                    placeholder="Sampai Tanggal"
-                    className="w-full"
-                />
-            </div>
-        </div>
-    );
-
     return (
         <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
-            <div className="flex justify-between items-center border-b border-slate-50">
+            <div className="flex justify-between items-center border-b border-slate-50 pb-4">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">
                         Retur Pembelian (Purchase Return)
@@ -211,6 +133,8 @@ export function ReturnList({
                     </Button>
                 )}
             </div>
+
+            {filterElement}
 
             <DataTable
                 columns={returnColumns}
@@ -231,10 +155,6 @@ export function ReturnList({
                 hideCheck={(r) => !(r.status === RETURN_STATUS.DRAFT && hasManagePurchase)}
                 onDelete={(r) => handleDelete(r.id)}
                 hideDelete={(r) => !(r.status === RETURN_STATUS.DRAFT && hasManagePurchase)}
-                search={filters.search}
-                onSearchChange={(searchVal) => setFilters((prev) => ({ ...prev, search: searchVal }))}
-                searchPlaceholder="Cari nomor retur atau nama supplier..."
-                filters={filtersBar}
             />
 
             {/* Details & Logs Dialog */}

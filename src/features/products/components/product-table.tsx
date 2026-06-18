@@ -1,12 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { CommandSelect } from "@/components/ui/command-select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
 import { hasPermission, hasRole } from "@/constants/roles";
-import type { Brand } from "@/features/brands/types";
-import type { Category } from "@/features/categories/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconPlus } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
@@ -18,7 +15,6 @@ import type { Product } from "../types";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import { ProductImportExport } from "./product-import-export";
-
 
 interface ProductTableProps {
     products: Product[];
@@ -32,20 +28,11 @@ interface ProductTableProps {
     perPage: number;
     onPageChange: (page: number) => void;
     onPerPageChange: (perPage: number) => void;
-    search: string;
-    onSearchChange: (search: string) => void;
-    status: string;
-    onStatusChange: (status: string) => void;
-    categoryId: string;
-    onCategoryChange: (categoryId: string) => void;
-    brandId: string;
-    onBrandChange: (brandId: string) => void;
-    categories: Category[];
-    brands: Brand[];
     onEdit: (product: Product) => void;
     onAddClick: () => void;
     isLoading?: boolean;
     isFetching?: boolean;
+    filterElement?: React.ReactNode;
 }
 
 export function ProductTable({
@@ -55,20 +42,11 @@ export function ProductTable({
     perPage,
     onPageChange,
     onPerPageChange,
-    search,
-    onSearchChange,
-    status,
-    onStatusChange,
-    categoryId,
-    onCategoryChange,
-    brandId,
-    onBrandChange,
-    categories,
-    brands,
     onEdit,
     onAddClick,
     isLoading = false,
     isFetching = false,
+    filterElement,
 }: ProductTableProps) {
     const queryClient = useQueryClient();
     const { data: session } = useSession();
@@ -124,8 +102,6 @@ export function ProductTable({
         });
     };
 
-
-
     const columns = useMemo<ColumnDef<Product>[]>(
         () => {
             const baseColumns: ColumnDef<Product>[] = [
@@ -180,7 +156,6 @@ export function ProductTable({
                     cell: ({ row }) => row.original.harga_beli !== null && row.original.harga_beli !== undefined
                         ? formatRupiah(row.original.harga_beli)
                         : "-",
-
                 },
                 {
                     accessorKey: "harga",
@@ -269,63 +244,9 @@ export function ProductTable({
         [hasManageProducts],
     );
 
-    const categoryOptions = useMemo(() => {
-        return [
-            { value: "all", label: "Semua Kategori" },
-            ...categories.map((c) => ({ value: String(c.id), label: c.nama })),
-        ];
-    }, [categories]);
-
-    const brandOptions = useMemo(() => {
-        return [
-            { value: "all", label: "Semua Brand" },
-            ...brands.map((b) => ({ value: String(b.id), label: b.nama })),
-        ];
-    }, [brands]);
-
-    const filtersSlot = (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full">
-
-
-            {/* Kategori Select */}
-            <CommandSelect
-                value={categoryId}
-                onChange={(val) => onCategoryChange(val || "all")}
-                options={categoryOptions}
-                searchPlaceholder="Cari kategori..."
-                placeholder="Semua Kategori"
-                className="w-full h-9 text-xs"
-            />
-
-            {/* Brand/Merek Select */}
-            <CommandSelect
-                value={brandId}
-                onChange={(val) => onBrandChange(val || "all")}
-                options={brandOptions}
-                searchPlaceholder="Cari brand..."
-                placeholder="Semua Brand"
-                className="w-full h-9 text-xs"
-            />
-
-            {/* Status Select */}
-            <CommandSelect
-                value={status}
-                onChange={(val) => onStatusChange(val || "all")}
-                options={[
-                    { value: "all", label: "Semua Status" },
-                    { value: "active", label: "Aktif" },
-                    { value: "inactive", label: "Nonaktif" },
-                ]}
-                searchPlaceholder="Cari status..."
-                placeholder="Pilih status"
-                className="w-full h-9 text-xs"
-            />
-        </div>
-    );
-
     return (
         <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
-            <div className="flex justify-between items-center border-b border-slate-50">
+            <div className="flex justify-between items-center border-b border-slate-50 pb-4">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">
                         Daftar Produk
@@ -344,6 +265,8 @@ export function ProductTable({
                 )}
             </div>
 
+            {filterElement}
+
             <DataTable
                 columns={columns}
                 data={products}
@@ -356,10 +279,6 @@ export function ProductTable({
                 onPerPageChange={onPerPageChange}
                 meta={meta}
                 entityName="produk"
-                search={search}
-                onSearchChange={onSearchChange}
-                searchPlaceholder="Cari produk berdasarkan barcode, nama, atau merek..."
-                filters={filtersSlot}
                 extraToolbarActions={
                     hasManageProducts ? (
                         <ProductImportExport onImportSuccess={handleImportSuccess} />

@@ -10,6 +10,7 @@ import { Hourglass } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useMemo, useState } from "react";
 import { SessionDetailDialog } from "./components/session-detail-dialog";
+import { SessionFilter } from "./components/session-filter";
 
 export function CashDrawerSessions() {
     const { data: session } = useSession();
@@ -22,24 +23,28 @@ export function CashDrawerSessions() {
 
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
-    // const [selectedCashierId, setSelectedCashierId] = useState<string | undefined>(undefined);
-    // const [selectedStatus, setSelectedStatus] = useState<"open" | "closed" | undefined>(undefined);
-    // const [fromDate, setFromDate] = useState<string>("");
-    // const [toDate, setToDate] = useState<string>("");
+    const [filters, setFilters] = useState<{
+        status?: "open" | "closed";
+        user_id?: number;
+        from?: string;
+        to?: string;
+    }>({});
 
     const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
-
-    // Get cashiers for filters
-    // const { data: usersData } = useUsers({ per_page: 100 });
-    // const usersList = usersData?.data || [];
 
     const { data: sessionsData, isLoading, isFetching } = useCashDrawerSessions({
         page,
         per_page: perPage,
         sort_by: "opened_at",
         sort_order: "desc",
+        ...filters,
     });
+
+    const handleFilter = (newFilters: typeof filters) => {
+        setFilters(newFilters);
+        setPage(1);
+    };
 
     const handleView = (s: CashDrawerSession) => {
         setSelectedSessionId(s.id);
@@ -164,7 +169,7 @@ export function CashDrawerSessions() {
     return (
         <div className="space-y-6">
             <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
-                <div className="flex justify-between items-center border-b border-slate-50">
+                <div className="flex justify-between items-center border-b border-slate-50 pb-4">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
                             <Hourglass size={20} />
@@ -179,6 +184,8 @@ export function CashDrawerSessions() {
                         </div>
                     </div>
                 </div>
+
+                <SessionFilter onFilter={handleFilter} />
 
                 <DataTable
                     columns={columns}

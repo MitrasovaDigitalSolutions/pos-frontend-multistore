@@ -12,6 +12,12 @@ import { UserFormDialog } from "./components/user-form-dialog";
 import { RolePermissionMapping } from "./components/role-permission-mapping";
 import { userSchema, type UserInput } from "./schemas/user-schema";
 import type { User } from "./types";
+import { FilterForm } from "@/components/forms/filter-form";
+import { FormInput } from "@/components/forms/form-input";
+
+interface UserFilterValues {
+  search: string;
+}
 
 export function Users() {
   const { data: session } = useSession();
@@ -42,20 +48,24 @@ export function Users() {
 
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
-  const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  // Debounce search input to avoid excessive API requests
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(search);
-      setPage(1); // Reset to first page on search
-    }, 500);
+  const filterMethods = useForm<UserFilterValues>({
+    defaultValues: {
+      search: "",
+    },
+  });
 
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [search]);
+  const handleFilterSubmit = (data: UserFilterValues) => {
+    setDebouncedSearch(data.search);
+    setPage(1);
+  };
+
+  const handleFilterReset = () => {
+    filterMethods.reset({ search: "" });
+    setDebouncedSearch("");
+    setPage(1);
+  };
 
   const { data: usersData, isLoading, isFetching } = useUsers({
     page,
@@ -66,7 +76,7 @@ export function Users() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
-  const methods = useForm<UserInput>({
+  const dialogMethods = useForm<UserInput>({
     resolver: zodResolver(userSchema) as Resolver<UserInput>,
     defaultValues: {
       name: "",
@@ -90,7 +100,7 @@ export function Users() {
 
   const handleEdit = (user: User) => {
     setEditingUser(user);
-    methods.reset({
+    dialogMethods.reset({
       name: user.name,
       username: user.username,
       password: "",
@@ -102,7 +112,7 @@ export function Users() {
 
   const handleAddClick = () => {
     setEditingUser(null);
-    methods.reset({
+    dialogMethods.reset({
       name: "",
       username: "",
       password: "",
@@ -113,46 +123,46 @@ export function Users() {
   };
 
   return (
-    <FormProvider {...methods}>
-      <div className="space-y-6">
-        {/* Top Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
-              Kelola Pengguna & Hak Akses
-            </h2>
-            <p className="text-xs text-slate-400 mt-1">
-              Mengatur akun karyawan POS, tingkat pengawas (supervisor), manajer, dan konfigurasi hak akses masing-masing peran.
-            </p>
-          </div>
-
-          {/* Premium Tab Buttons */}
-          {hasManageUsers && (
-            <div className="flex bg-slate-200/60 p-1 rounded-xl w-fit border border-slate-200/30">
-              <button
-                onClick={() => setActiveTab("users")}
-                className={`px-4 py-2 text-xs font-extrabold rounded-lg transition-all duration-200 cursor-pointer ${activeTab === "users"
-                    ? "bg-white text-slate-900 shadow-sm"
-                    : "text-slate-500 hover:text-slate-800"
-                  }`}
-              >
-                Daftar Pengguna
-              </button>
-              <button
-                onClick={() => setActiveTab("permissions")}
-                className={`px-4 py-2 text-xs font-extrabold rounded-lg transition-all duration-200 cursor-pointer ${activeTab === "permissions"
-                    ? "bg-white text-slate-900 shadow-sm"
-                    : "text-slate-500 hover:text-slate-800"
-                  }`}
-              >
-                Peran & Hak Akses
-              </button>
-            </div>
-          )}
+    <div className="space-y-6">
+      {/* Top Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
+            Kelola Pengguna & Hak Akses
+          </h2>
+          <p className="text-xs text-slate-400 mt-1">
+            Mengatur akun karyawan POS, tingkat pengawas (supervisor), manajer, dan konfigurasi hak akses masing-masing peran.
+          </p>
         </div>
 
-        {!showMapping ? (
-          <div className="space-y-6">
+        {/* Premium Tab Buttons */}
+        {hasManageUsers && (
+          <div className="flex bg-slate-200/60 p-1 rounded-xl w-fit border border-slate-200/30">
+            <button
+              onClick={() => setActiveTab("users")}
+              className={`px-4 py-2 text-xs font-extrabold rounded-lg transition-all duration-200 cursor-pointer ${activeTab === "users"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-800"
+                }`}
+            >
+              Daftar Pengguna
+            </button>
+            <button
+              onClick={() => setActiveTab("permissions")}
+              className={`px-4 py-2 text-xs font-extrabold rounded-lg transition-all duration-200 cursor-pointer ${activeTab === "permissions"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-800"
+                }`}
+            >
+              Peran & Hak Akses
+            </button>
+          </div>
+        )}
+      </div>
+
+      {!showMapping ? (
+        <div className="space-y-6">
+          <FormProvider {...dialogMethods}>
             <UserTable
               users={usersData?.data || []}
               meta={usersData?.meta}
@@ -160,12 +170,23 @@ export function Users() {
               perPage={perPage}
               onPageChange={setPage}
               onPerPageChange={setPerPage}
-              search={search}
-              onSearchChange={setSearch}
               onEdit={handleEdit}
               onAddClick={handleAddClick}
               isLoading={isLoading}
               isFetching={isFetching}
+              filterElement={
+                <FilterForm
+                  methods={filterMethods}
+                  onSubmit={handleFilterSubmit}
+                  onReset={handleFilterReset}
+                >
+                  <FormInput<UserFilterValues>
+                    name="search"
+                    label="Cari Pengguna"
+                    placeholder="Cari berdasarkan nama atau username..."
+                  />
+                </FilterForm>
+              }
             />
 
             <UserFormDialog
@@ -173,11 +194,11 @@ export function Users() {
               onOpenChange={setIsDialogOpen}
               editingUser={editingUser}
             />
-          </div>
-        ) : (
-          <RolePermissionMapping />
-        )}
-      </div>
-    </FormProvider>
+          </FormProvider>
+        </div>
+      ) : (
+        <RolePermissionMapping />
+      )}
+    </div>
   );
 }

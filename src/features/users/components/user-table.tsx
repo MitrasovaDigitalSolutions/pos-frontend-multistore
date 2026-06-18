@@ -25,12 +25,11 @@ interface UserTableProps {
     perPage: number;
     onPageChange: (page: number) => void;
     onPerPageChange: (perPage: number) => void;
-    search: string;
-    onSearchChange: (search: string) => void;
     onEdit: (user: User) => void;
     onAddClick: () => void;
     isLoading?: boolean;
     isFetching?: boolean;
+    filterElement?: React.ReactNode;
 }
 
 export function UserTable({
@@ -40,12 +39,11 @@ export function UserTable({
     perPage,
     onPageChange,
     onPerPageChange,
-    search,
-    onSearchChange,
     onEdit,
     onAddClick,
     isLoading = false,
     isFetching = false,
+    filterElement,
 }: UserTableProps) {
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
@@ -79,7 +77,6 @@ export function UserTable({
             },
         });
     };
-
 
     const columns = useMemo<ColumnDef<User>[]>(
         () => {
@@ -167,7 +164,7 @@ export function UserTable({
 
     return (
         <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
-            <div className="flex justify-between items-center border-b border-slate-50">
+            <div className="flex justify-between items-center border-b border-slate-50 pb-4">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">
                         Daftar Pengguna Sistem
@@ -185,6 +182,9 @@ export function UserTable({
                     </Button>
                 )}
             </div>
+
+            {filterElement}
+
             <DataTable
                 columns={columns}
                 data={users}
@@ -197,9 +197,6 @@ export function UserTable({
                 onPerPageChange={onPerPageChange}
                 meta={meta}
                 entityName="pengguna"
-                search={search}
-                onSearchChange={onSearchChange}
-                searchPlaceholder="Cari user berdasarkan nama atau username..."
                 virtualize={true}
                 estimateRowHeight={44}
                 onEdit={hasManageUsers ? onEdit : undefined}
@@ -226,7 +223,7 @@ export function UserTable({
                 }
                 confirmText="Ya, Nonaktifkan"
                 cancelText="Batal"
-                onConfirm={handleConfirmDeactivate}
+                onConfirm={handleDeactivate}
                 isLoading={deactivateUser.isPending}
                 variant="danger"
             />

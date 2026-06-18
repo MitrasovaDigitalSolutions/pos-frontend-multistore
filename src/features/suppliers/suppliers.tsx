@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,6 +10,12 @@ import { SupplierList } from "./components/supplier-list";
 import { SupplierDialog } from "./components/supplier-dialog";
 import { supplierSchema, type SupplierInput } from "./schemas/supplier-schema";
 import type { Supplier } from "./types";
+import { FilterForm } from "@/components/forms/filter-form";
+import { FormInput } from "@/components/forms/form-input";
+
+interface SupplierFilterValues {
+    search: string;
+}
 
 export function Suppliers() {
     const { data: session } = useSession();
@@ -22,20 +28,24 @@ export function Suppliers() {
 
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
-    const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
 
-    // Debounce search input to avoid excessive API requests
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedSearch(search);
-            setPage(1); // Reset to first page on search
-        }, 500);
+    const filterMethods = useForm<SupplierFilterValues>({
+        defaultValues: {
+            search: "",
+        },
+    });
 
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [search]);
+    const handleFilterSubmit = (data: SupplierFilterValues) => {
+        setDebouncedSearch(data.search);
+        setPage(1);
+    };
+
+    const handleFilterReset = () => {
+        filterMethods.reset({ search: "" });
+        setDebouncedSearch("");
+        setPage(1);
+    };
 
     const { data: suppliersData, isLoading, isFetching } = useSuppliers({
         page,
@@ -46,7 +56,7 @@ export function Suppliers() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
 
-    const methods = useForm<SupplierInput>({
+    const dialogMethods = useForm<SupplierInput>({
         resolver: zodResolver(supplierSchema) as Resolver<SupplierInput>,
         defaultValues: {
             nama: "",
@@ -67,7 +77,7 @@ export function Suppliers() {
 
     const handleEdit = (supplier: Supplier) => {
         setEditingSupplier(supplier);
-        methods.reset({
+        dialogMethods.reset({
             nama: supplier.nama,
             email: supplier.email || "",
             nomor_telepon: supplier.nomor_telepon || "",
@@ -78,7 +88,7 @@ export function Suppliers() {
 
     const handleAddClick = () => {
         setEditingSupplier(null);
-        methods.reset({
+        dialogMethods.reset({
             nama: "",
             email: "",
             nomor_telepon: "",
@@ -88,8 +98,8 @@ export function Suppliers() {
     };
 
     return (
-        <FormProvider {...methods}>
-            <div className="space-y-6">
+        <div className="space-y-6">
+            <FormProvider {...dialogMethods}>
                 <SupplierList
                     suppliers={suppliersData?.data || []}
                     meta={suppliersData?.meta}
@@ -97,12 +107,23 @@ export function Suppliers() {
                     perPage={perPage}
                     onPageChange={setPage}
                     onPerPageChange={setPerPage}
-                    search={search}
-                    onSearchChange={setSearch}
                     onEdit={handleEdit}
                     onAddClick={handleAddClick}
                     isLoading={isLoading}
                     isFetching={isFetching}
+                    filterElement={
+                        <FilterForm
+                            methods={filterMethods}
+                            onSubmit={handleFilterSubmit}
+                            onReset={handleFilterReset}
+                        >
+                            <FormInput<SupplierFilterValues>
+                                name="search"
+                                label="Cari Supplier"
+                                placeholder="Masukkan nama supplier..."
+                            />
+                        </FilterForm>
+                    }
                 />
 
                 <SupplierDialog
@@ -110,7 +131,7 @@ export function Suppliers() {
                     onOpenChange={setIsDialogOpen}
                     editingSupplier={editingSupplier}
                 />
-            </div>
-        </FormProvider>
+            </FormProvider>
+        </div>
     );
 }

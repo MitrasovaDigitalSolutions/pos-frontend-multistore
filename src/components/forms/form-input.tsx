@@ -43,7 +43,7 @@ export function FormInput<T extends FieldValues>({
                 id={name}
                 {...register(name)}
                 className={cn(
-                    "h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl",
+                    "h-10 text-xs bg-white border-slate-200 focus-visible:ring-emerald-600 rounded-xl",
                     error && "border-rose-400 focus-visible:ring-rose-500",
                     className,
                 )}

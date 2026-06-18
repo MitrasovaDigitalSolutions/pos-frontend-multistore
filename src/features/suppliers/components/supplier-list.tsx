@@ -12,7 +12,6 @@ import { DataTable } from "@/components/ui/data-table";
 import { useDeleteSupplier } from "../api/suppliers-api";
 import { toast } from "sonner";
 
-
 interface SupplierListProps {
     suppliers: Supplier[];
     meta?: {
@@ -25,12 +24,11 @@ interface SupplierListProps {
     perPage: number;
     onPageChange: (page: number) => void;
     onPerPageChange: (perPage: number) => void;
-    search: string;
-    onSearchChange: (search: string) => void;
     onEdit: (supplier: Supplier) => void;
     onAddClick: () => void;
     isLoading?: boolean;
     isFetching?: boolean;
+    filterElement?: React.ReactNode;
 }
 
 export function SupplierList({
@@ -40,12 +38,11 @@ export function SupplierList({
     perPage,
     onPageChange,
     onPerPageChange,
-    search,
-    onSearchChange,
     onEdit,
     onAddClick,
     isLoading = false,
     isFetching = false,
+    filterElement,
 }: SupplierListProps) {
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
@@ -56,10 +53,10 @@ export function SupplierList({
 
     const deleteSupplier = useDeleteSupplier();
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-    const [supplierToDelete, setSupplierToDelete] = useState<Supplier | null>(null);
+    const [supplierToDelete, setBrandToDelete] = useState<Supplier | null>(null);
 
     const handleDelete = (s: Supplier) => {
-        setSupplierToDelete(s);
+        setBrandToDelete(s);
         setIsConfirmOpen(true);
     };
 
@@ -69,7 +66,7 @@ export function SupplierList({
             onSuccess: () => {
                 toast.success(`Supplier "${supplierToDelete.nama}" berhasil dihapus.`);
                 setIsConfirmOpen(false);
-                setSupplierToDelete(null);
+                setBrandToDelete(null);
             },
             onError: (err) => {
                 toast.error(err.message || "Gagal menghapus supplier.");
@@ -130,7 +127,7 @@ export function SupplierList({
 
     return (
         <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
-            <div className="flex justify-between items-center border-b border-slate-50">
+            <div className="flex justify-between items-center border-b border-slate-50 pb-4">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">
                         Daftar Supplier
@@ -149,6 +146,8 @@ export function SupplierList({
                 )}
             </div>
 
+            {filterElement}
+
             <DataTable
                 columns={columns}
                 data={suppliers}
@@ -161,9 +160,6 @@ export function SupplierList({
                 onPerPageChange={onPerPageChange}
                 meta={meta}
                 entityName="supplier"
-                search={search}
-                onSearchChange={onSearchChange}
-                searchPlaceholder="Cari supplier berdasarkan nama..."
                 virtualize={true}
                 estimateRowHeight={44}
                 onEdit={hasManageSuppliers ? onEdit : undefined}

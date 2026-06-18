@@ -214,9 +214,9 @@ export function CommandSelect({
   const selectedOption = options.find((opt) => opt.value === value)
 
   const sizeClasses = {
-    sm: "h-8 text-xs font-bold text-slate-700",
-    md: "h-10 text-xs font-medium text-slate-800",
-    lg: "h-12 text-sm font-medium text-slate-800",
+    sm: "h-8 text-xs font-normal text-slate-700",
+    md: "h-10 text-xs font-normal text-slate-800",
+    lg: "h-12 text-sm font-normal text-slate-800",
   }[size]
 
   const handleSelect = (val: string) => {

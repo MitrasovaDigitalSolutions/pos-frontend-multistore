@@ -24,12 +24,11 @@ interface CategoryListProps {
     perPage: number;
     onPageChange: (page: number) => void;
     onPerPageChange: (perPage: number) => void;
-    search: string;
-    onSearchChange: (search: string) => void;
     onEdit: (category: Category) => void;
     onAddClick: () => void;
     isLoading?: boolean;
     isFetching?: boolean;
+    filterElement?: React.ReactNode;
 }
 
 export function CategoryList({
@@ -39,12 +38,11 @@ export function CategoryList({
     perPage,
     onPageChange,
     onPerPageChange,
-    search,
-    onSearchChange,
     onEdit,
     onAddClick,
     isLoading = false,
     isFetching = false,
+    filterElement,
 }: CategoryListProps) {
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
@@ -99,7 +97,7 @@ export function CategoryList({
 
     return (
         <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
-            <div className="flex justify-between items-center border-b border-slate-50">
+            <div className="flex justify-between items-center border-b border-slate-50 pb-4">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">
                         Daftar Kategori Produk
@@ -118,6 +116,8 @@ export function CategoryList({
                 )}
             </div>
 
+            {filterElement}
+
             <DataTable
                 columns={columns}
                 data={categories}
@@ -130,9 +130,6 @@ export function CategoryList({
                 onPerPageChange={onPerPageChange}
                 meta={meta}
                 entityName="kategori"
-                search={search}
-                onSearchChange={onSearchChange}
-                searchPlaceholder="Cari kategori berdasarkan nama..."
                 virtualize={true}
                 estimateRowHeight={44}
                 onEdit={hasManageProducts ? onEdit : undefined}

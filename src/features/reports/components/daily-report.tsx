@@ -66,6 +66,7 @@ export function DailyReportView() {
                 </div>
             ) : (
                 <div className="space-y-6">
+                    {/* Summary Metrics — Row 1 */}
                     <div className="grid grid-cols-4 gap-4">
                         <div className="bg-slate-50 p-4 rounded-xl">
                             <div className="text-[9px] font-bold uppercase text-slate-400">
@@ -119,6 +120,46 @@ export function DailyReportView() {
                         </div>
                     </div>
 
+                    {/* Profit Metrics — Row 2 */}
+                    <div className="grid grid-cols-3 gap-4">
+                        <div className="bg-slate-50 p-4 rounded-xl">
+                            <div className="text-[9px] font-bold uppercase text-slate-400">
+                                Total HPP (COGS)
+                            </div>
+                            <div className="text-lg font-bold text-slate-700 mt-1">
+                                {isLoading ? (
+                                    <Skeleton className="h-6 w-28 mt-1" />
+                                ) : (
+                                    formatRupiah(dailyReport?.total_cogs ?? 0)
+                                )}
+                            </div>
+                        </div>
+                        <div className="bg-slate-50 p-4 rounded-xl">
+                            <div className="text-[9px] font-bold uppercase text-slate-400">
+                                Laba Kotor
+                            </div>
+                            <div className="text-lg font-bold text-blue-600 mt-1">
+                                {isLoading ? (
+                                    <Skeleton className="h-6 w-28 mt-1" />
+                                ) : (
+                                    formatRupiah(dailyReport?.gross_profit ?? 0)
+                                )}
+                            </div>
+                        </div>
+                        <div className="bg-slate-50 p-4 rounded-xl">
+                            <div className="text-[9px] font-bold uppercase text-slate-400">
+                                Margin Laba
+                            </div>
+                            <div className="text-lg font-bold text-violet-600 mt-1">
+                                {isLoading ? (
+                                    <Skeleton className="h-6 w-20 mt-1" />
+                                ) : (
+                                    `${(dailyReport?.profit_margin ?? 0).toFixed(2)}%`
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Payment Breakdown */}
                     <div>
                         <h4 className="text-xs font-bold text-slate-800 mb-3">
@@ -163,7 +204,7 @@ export function DailyReportView() {
                                         );
                                     },
                                 )
-                            )}
+            )}
                         </div>
                     </div>
 
@@ -182,22 +223,22 @@ export function DailyReportView() {
                                             {row.original.product_name}
                                         </span>
                                     ),
-                                    size: 320,
+                                    size: 280,
                                 },
                                 {
                                     accessorKey: "quantity",
-                                    header: "Jumlah Terjual",
+                                    header: "Terjual",
                                     meta: {
                                         headerClassName: "text-right",
                                         cellClassName: "text-right font-bold",
                                     },
                                     cell: ({ row }) =>
                                         `${row.original.quantity} pcs`,
-                                    size: 120,
+                                    size: 90,
                                 },
                                 {
                                     accessorKey: "revenue",
-                                    header: "Total Revenue",
+                                    header: "Revenue",
                                     meta: {
                                         headerClassName: "text-right",
                                         cellClassName:
@@ -205,13 +246,37 @@ export function DailyReportView() {
                                     },
                                     cell: ({ row }) =>
                                         formatRupiah(row.original.revenue),
-                                    size: 160,
+                                    size: 140,
+                                },
+                                {
+                                    accessorKey: "profit",
+                                    header: "Laba",
+                                    meta: {
+                                        headerClassName: "text-right",
+                                        cellClassName:
+                                            "text-right font-bold text-blue-600",
+                                    },
+                                    cell: ({ row }) =>
+                                        formatRupiah(row.original.profit),
+                                    size: 130,
+                                },
+                                {
+                                    accessorKey: "profit_margin",
+                                    header: "Margin",
+                                    meta: {
+                                        headerClassName: "text-right",
+                                        cellClassName:
+                                            "text-right font-bold text-violet-600",
+                                    },
+                                    cell: ({ row }) =>
+                                        `${row.original.profit_margin.toFixed(2)}%`,
+                                    size: 90,
                                 },
                             ]}
                             data={dailyReport?.top_products || []}
                             isLoading={isLoading}
                             emptyMessage="Belum ada item terjual pada tanggal ini."
-                            virtualize={false} // Small list of 10 items, no need to virtualize
+                            virtualize={false}
                         />
                     </div>
                 </div>

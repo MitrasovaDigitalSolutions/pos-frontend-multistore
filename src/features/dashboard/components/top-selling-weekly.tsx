@@ -9,7 +9,6 @@ interface TopSellingWeeklyProps {
 }
 
 export function TopSellingWeekly({ summary }: TopSellingWeeklyProps) {
-
   const products = summary?.top_products ?? [];
 
   return (
@@ -38,17 +37,27 @@ export function TopSellingWeekly({ summary }: TopSellingWeeklyProps) {
                 rose: "bg-rose-50 text-rose-600 border-rose-100/30",
               };
               return (
-                <div key={i} className="flex items-center gap-3 group cursor-pointer hover:bg-slate-50/50 p-1 rounded-xl transition-colors">
-                  <div className={`w-7 h-7 rounded-lg ${bgMap[color]} border flex items-center justify-center text-[10px] font-extrabold shrink-0 shadow-sm transition-transform group-hover:scale-105`}>
+                <div key={i} className="flex items-start gap-3 group cursor-pointer hover:bg-slate-50/50 p-1.5 rounded-xl transition-colors">
+                  <div className={`w-7 h-7 rounded-lg ${bgMap[color]} border flex items-center justify-center text-[10px] font-extrabold shrink-0 shadow-sm transition-transform group-hover:scale-105 mt-0.5`}>
                     #{i + 1}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-[11px] font-bold text-slate-700 truncate group-hover:text-slate-900 transition-colors">
+                    <div className="text-[11.5px] font-bold text-slate-700 truncate group-hover:text-slate-900 transition-colors">
                       {p.product_name}
                     </div>
-                    <div className="text-[9px] text-slate-400 font-semibold mt-0.5">{p.quantity} pcs terjual</div>
+                    <div className="text-[9px] text-slate-400 font-semibold mt-0.5 flex flex-wrap gap-x-1.5 items-center">
+                      <span>{p.quantity} pcs terjual</span>
+                      <span className="text-slate-300">•</span>
+                      <span className="text-blue-600">Laba {formatRupiah(p.profit)}</span>
+                      {p.profit_margin !== undefined && (
+                        <>
+                          <span className="text-slate-300">•</span>
+                          <span className="text-violet-600">{p.profit_margin.toFixed(1)}% margin</span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <span className="text-[11px] font-extrabold text-slate-800 tabular-nums shrink-0 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-md">
+                  <span className="text-[11px] font-extrabold text-slate-800 tabular-nums shrink-0 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-md mt-0.5">
                     {formatRupiah(p.revenue)}
                   </span>
                 </div>

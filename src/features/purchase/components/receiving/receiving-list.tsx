@@ -3,9 +3,6 @@
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
-import { CommandSelect } from "@/components/ui/command-select";
-import { DatePicker } from "@/components/ui/date-picker";
-import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
 import { hasPermission, hasRole } from "@/constants/roles";
 import type { Product } from "@/features/products/types";
 import { IconPlus } from "@tabler/icons-react";
@@ -22,7 +19,6 @@ import { clearPurchaseItemsStore } from "@/stores/purchase-items-store";
 import type { Receiving } from "../../types";
 import {
     RECEIVING_STATUS,
-    RECEIVING_STATUS_LABELS,
 } from "@/constants/purchase";
 import { receivingColumns } from "./receiving-columns";
 
@@ -40,20 +36,7 @@ interface ReceivingListProps {
     onAddClick: () => void;
     isLoading?: boolean;
     isFetching?: boolean;
-    filters: {
-        search: string;
-        status: string;
-        supplier_id: string;
-        start_date: string;
-        end_date: string;
-    };
-    setFilters: React.Dispatch<React.SetStateAction<{
-        search: string;
-        status: string;
-        supplier_id: string;
-        start_date: string;
-        end_date: string;
-    }>>;
+    filterElement?: React.ReactNode;
 }
 
 export function ReceivingList({
@@ -64,14 +47,12 @@ export function ReceivingList({
     onAddClick,
     isLoading = false,
     isFetching = false,
-    filters,
-    setFilters,
+    filterElement,
 }: ReceivingListProps) {
     const router = useAppRouter();
     const { data: session } = useSession();
     const deleteReceiving = useDeleteReceiving();
     const updateReceiving = useUpdateReceiving();
-    const { data: suppliers = [] } = useAllSuppliers();
 
     const [selectedReceiving, setSelectedReceiving] = useState<Receiving | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -178,74 +159,14 @@ export function ReceivingList({
         setIsDetailOpen(true);
     };
 
-    // Columns are defined in receiving-columns.tsx
     const columns = useMemo(
         () => receivingColumns,
         []
     );
 
-    // Status options for CommandSelect
-    const statusOptions = [
-        { value: "all", label: "Semua Status" },
-        ...Object.values(RECEIVING_STATUS).map((status) => ({
-            value: status,
-            label: RECEIVING_STATUS_LABELS[status],
-        })),
-    ];
-
-    // Supplier options for CommandSelect
-    const supplierOptions = useMemo(() => {
-        return [
-            { value: "all", label: "Semua Supplier" },
-            ...suppliers.map((sup) => ({
-                value: String(sup.id),
-                label: sup.nama,
-            })),
-        ];
-    }, [suppliers]);
-
-    const filtersBar = (
-        <div className="grid grid-cols-4 gap-2.5 w-full">
-            {/* Status Select */}
-            <CommandSelect
-                options={statusOptions}
-                value={filters.status}
-                onChange={(val) => setFilters((prev) => ({ ...prev, status: val || "all" }))}
-                placeholder="Semua Status"
-                className="w-full h-9 text-xs"
-            />
-
-            {/* Supplier Select */}
-            <CommandSelect
-                options={supplierOptions}
-                value={filters.supplier_id}
-                onChange={(val) => setFilters((prev) => ({ ...prev, supplier_id: val || "all" }))}
-                placeholder="Semua Supplier"
-                className="w-full h-9 text-xs"
-            />
-
-            {/* Date Range Inputs */}
-            <div className="col-span-2 flex items-center gap-2">
-                <DatePicker
-                    value={filters.start_date}
-                    onChange={(date) => setFilters((prev) => ({ ...prev, start_date: date }))}
-                    placeholder="Dari Tanggal"
-                    className="w-full"
-                />
-                <span className="text-xs text-slate-400 font-medium">s/d</span>
-                <DatePicker
-                    value={filters.end_date}
-                    onChange={(date) => setFilters((prev) => ({ ...prev, end_date: date }))}
-                    placeholder="Sampai Tanggal"
-                    className="w-full"
-                />
-            </div>
-        </div>
-    );
-
     return (
         <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
-            <div className="flex justify-between items-center border-b border-slate-50">
+            <div className="flex justify-between items-center border-b border-slate-50 pb-4">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">
                         Penerimaan Barang Masuk
@@ -263,6 +184,8 @@ export function ReceivingList({
                     </Button>
                 )}
             </div>
+
+            {filterElement}
 
             <DataTable
                 columns={columns}
@@ -283,10 +206,6 @@ export function ReceivingList({
                 hideCheck={(rec) => !(rec.status === RECEIVING_STATUS.DRAFT && hasManagePurchase)}
                 onDelete={(rec) => handleDelete(rec.id)}
                 hideDelete={(rec) => !(rec.status === RECEIVING_STATUS.DRAFT && canDeleteDraft)}
-                search={filters.search}
-                onSearchChange={(searchVal) => setFilters((prev) => ({ ...prev, search: searchVal }))}
-                searchPlaceholder="Cari nomor penerimaan atau nama supplier..."
-                filters={filtersBar}
             />
 
             {/* Details & Logs Dialog */}

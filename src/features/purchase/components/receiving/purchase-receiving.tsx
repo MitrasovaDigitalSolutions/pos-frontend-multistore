@@ -6,12 +6,28 @@ import { useState, useDeferredValue } from "react";
 import { useSession } from "next-auth/react";
 import { hasRole, hasPermission } from "@/constants/roles";
 import { useAppRouter } from "@/hooks/use-app-router";
+import { useForm } from "react-hook-form";
+import { FilterForm } from "@/components/forms/filter-form";
+import { FormInput } from "@/components/forms/form-input";
+import { FormSelect } from "@/components/forms/form-select";
+import { FormDatePicker } from "@/components/forms/form-date-picker";
+import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
+import { RECEIVING_STATUS, RECEIVING_STATUS_LABELS } from "@/constants/purchase";
+
+interface ReceivingFilterValues {
+    search: string;
+    status: string;
+    supplier_id: string;
+    start_date: string;
+    end_date: string;
+}
 
 export function PurchaseReceiving() {
     const { data: session } = useSession();
     const router = useAppRouter();
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
+    const { data: suppliers = [] } = useAllSuppliers();
 
     const hasViewPurchase =
         hasRole(userRoles, "admin") ||
@@ -30,6 +46,45 @@ export function PurchaseReceiving() {
     });
 
     const deferredFilters = useDeferredValue(filters);
+
+    const filterMethods = useForm<ReceivingFilterValues>({
+        defaultValues: {
+            search: "",
+            status: "all",
+            supplier_id: "all",
+            start_date: "",
+            end_date: "",
+        },
+    });
+
+    const handleFilterSubmit = (data: ReceivingFilterValues) => {
+        setFilters({
+            search: data.search,
+            status: data.status,
+            supplier_id: data.supplier_id,
+            start_date: data.start_date,
+            end_date: data.end_date,
+        });
+        setReceivingPage(1);
+    };
+
+    const handleFilterReset = () => {
+        filterMethods.reset({
+            search: "",
+            status: "all",
+            supplier_id: "all",
+            start_date: "",
+            end_date: "",
+        });
+        setFilters({
+            search: "",
+            status: "all",
+            supplier_id: "all",
+            start_date: "",
+            end_date: "",
+        });
+        setReceivingPage(1);
+    };
 
     // Prepare API params
     const apiParams: Record<string, unknown> = {
@@ -60,6 +115,22 @@ export function PurchaseReceiving() {
 
     const receivings = receivingsData?.data || [];
 
+    const statusOptions = [
+        { value: "all", label: "Semua Status" },
+        ...Object.values(RECEIVING_STATUS).map((status) => ({
+            value: status,
+            label: RECEIVING_STATUS_LABELS[status],
+        })),
+    ];
+
+    const supplierOptions = [
+        { value: "all", label: "Semua Supplier" },
+        ...suppliers.map((sup) => ({
+            value: String(sup.id),
+            label: sup.nama,
+        })),
+    ];
+
     if (!hasViewPurchase) {
         return (
             <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm">
@@ -80,8 +151,42 @@ export function PurchaseReceiving() {
                 onAddClick={() => router.push("/admin/purchase/receiving/new")}
                 isLoading={receivingsLoading}
                 isFetching={receivingsFetching}
-                filters={filters}
-                setFilters={setFilters}
+                filterElement={
+                    <FilterForm
+                        methods={filterMethods}
+                        onSubmit={handleFilterSubmit}
+                        onReset={handleFilterReset}
+                    >
+                        <FormInput<ReceivingFilterValues>
+                            name="search"
+                            label="Cari Penerimaan"
+                            placeholder="Cari nomor penerimaan atau nama supplier..."
+                        />
+
+                        <FormSelect<ReceivingFilterValues>
+                            name="supplier_id"
+                            label="Supplier"
+                            options={supplierOptions}
+                            placeholder="Semua Supplier"
+                        />
+                        <FormDatePicker<ReceivingFilterValues>
+                            name="start_date"
+                            label="Tanggal Awal"
+                            placeholder="Dari Tanggal"
+                        />
+                        <FormDatePicker<ReceivingFilterValues>
+                            name="end_date"
+                            label="Tanggal Akhir"
+                            placeholder="Sampai Tanggal"
+                        />
+                        <FormSelect<ReceivingFilterValues>
+                            name="status"
+                            label="Status"
+                            options={statusOptions}
+                            placeholder="Semua Status"
+                        />
+                    </FilterForm>
+                }
             />
         </div>
     );
