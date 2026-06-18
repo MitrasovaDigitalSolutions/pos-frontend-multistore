@@ -223,7 +223,7 @@ export function UserTable({
                 }
                 confirmText="Ya, Nonaktifkan"
                 cancelText="Batal"
-                onConfirm={handleDeactivate}
+                onConfirm={handleConfirmDeactivate}
                 isLoading={deactivateUser.isPending}
                 variant="danger"
             />

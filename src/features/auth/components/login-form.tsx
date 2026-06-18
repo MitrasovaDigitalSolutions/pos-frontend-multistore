@@ -91,6 +91,7 @@ export function LoginForm() {
             <Card className="w-full max-w-100 shadow-xl border-slate-100 rounded-2xl animate-fade-in">
                 <CardHeader className="text-center pb-8 pt-8">
                     <div className="mx-auto w-16 h-16 bg-white border border-slate-100 shadow-sm rounded-2xl flex items-center justify-center mb-4 overflow-hidden p-2">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                             src="/logo/logo.png"
                             alt="Mitra Buana Motor Logo"
