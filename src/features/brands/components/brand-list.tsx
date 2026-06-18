@@ -29,6 +29,9 @@ interface BrandListProps {
     isLoading?: boolean;
     isFetching?: boolean;
     filterElement?: React.ReactNode;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+    onSortChange?: (sortBy: string | undefined, sortOrder: "asc" | "desc" | undefined) => void;
 }
 
 export function BrandList({
@@ -43,6 +46,9 @@ export function BrandList({
     isLoading = false,
     isFetching = false,
     filterElement,
+    sortBy,
+    sortOrder,
+    onSortChange,
 }: BrandListProps) {
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
@@ -130,6 +136,9 @@ export function BrandList({
                 onPerPageChange={onPerPageChange}
                 meta={meta}
                 entityName="brand"
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortChange={onSortChange}
                 virtualize={true}
                 estimateRowHeight={44}
                 onEdit={hasManageProducts ? onEdit : undefined}

@@ -42,7 +42,12 @@ export function StockManagement() {
         hasPermission(userRoles, userPermissions, "manage_inventory");
 
     const [movementsPage, setMovementsPage] = useState(1);
+    const [movementsSortBy, setMovementsSortBy] = useState<string | undefined>("created_at");
+    const [movementsSortOrder, setMovementsSortOrder] = useState<"asc" | "desc" | undefined>("desc");
+
     const [opnamesPage, setOpnamesPage] = useState(1);
+    const [opnamesSortBy, setOpnamesSortBy] = useState<string | undefined>("created_at");
+    const [opnamesSortOrder, setOpnamesSortOrder] = useState<"asc" | "desc" | undefined>("desc");
 
     // Load all products (up to 1000) for local low stock warnings and selection dropdowns in modals
     const { data: productsData, isLoading: productsLoading } = useProducts({
@@ -52,12 +57,22 @@ export function StockManagement() {
         data: movementsData,
         isLoading: movementsLoading,
         isFetching: movementsFetching,
-    } = useStockMovements({ page: movementsPage, per_page: 10 });
+    } = useStockMovements({
+        page: movementsPage,
+        per_page: 10,
+        sort_by: movementsSortBy,
+        sort_order: movementsSortOrder,
+    });
     const {
         data: opnamesData,
         isLoading: opnamesLoading,
         isFetching: opnamesFetching,
-    } = useOpnames({ page: opnamesPage, per_page: 10 });
+    } = useOpnames({
+        page: opnamesPage,
+        per_page: 10,
+        sort_by: opnamesSortBy,
+        sort_order: opnamesSortOrder,
+    });
 
     const products = productsData?.data || [];
     const movements = movementsData?.data || [];
@@ -129,6 +144,13 @@ export function StockManagement() {
                             onViewDetail={handleViewOpnameDetail}
                             isLoading={opnamesLoading}
                             isFetching={opnamesFetching}
+                            sortBy={opnamesSortBy}
+                            sortOrder={opnamesSortOrder}
+                            onSortChange={(by, order) => {
+                                setOpnamesSortBy(by);
+                                setOpnamesSortOrder(order);
+                                setOpnamesPage(1);
+                            }}
                         />
                     </section>
 
@@ -140,6 +162,13 @@ export function StockManagement() {
                         onPageChange={setMovementsPage}
                         isLoading={movementsLoading}
                         isFetching={movementsFetching}
+                        sortBy={movementsSortBy}
+                        sortOrder={movementsSortOrder}
+                        onSortChange={(by, order) => {
+                            setMovementsSortBy(by);
+                            setMovementsSortOrder(order);
+                            setMovementsPage(1);
+                        }}
                     />
                 </div>
             ) : (

@@ -27,6 +27,8 @@ export function PurchasePayment() {
         hasPermission(userRoles, userPermissions, "manage_purchase");
 
     const [paymentPage, setPaymentPage] = useState(1);
+    const [sortBy, setSortBy] = useState<string | undefined>("created_at");
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("desc");
 
     // Filters state
     const [filters, setFilters] = useState({
@@ -67,6 +69,8 @@ export function PurchasePayment() {
     const apiParams: Record<string, unknown> = {
         page: paymentPage,
         per_page: 10,
+        sort_by: sortBy,
+        sort_order: sortOrder,
     };
     if (deferredFilters.start_date) {
         apiParams.start_date = deferredFilters.start_date;
@@ -102,6 +106,13 @@ export function PurchasePayment() {
                 onAddClick={() => router.push("/admin/purchase/payment/new")}
                 isLoading={paymentsLoading}
                 isFetching={paymentsFetching}
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortChange={(by, order) => {
+                    setSortBy(by);
+                    setSortOrder(order);
+                    setPaymentPage(1);
+                }}
                 filterElement={
                     <FilterForm
                         methods={filterMethods}

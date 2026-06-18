@@ -77,6 +77,11 @@ interface DataTableProps<TData, TValue> {
 
     extraToolbarActions?: React.ReactNode;
 
+    // Server Sorting Props
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+    onSortChange?: (sortBy: string | undefined, sortOrder: "asc" | "desc" | undefined) => void;
+
     // Row Actions Props
     onEdit?: (row: TData) => void;
     onDelete?: (row: TData) => void;
@@ -111,6 +116,11 @@ export function DataTable<TData, TValue>({
     entityName = "data",
     extraToolbarActions,
 
+    // Server Sorting Props
+    sortBy,
+    sortOrder,
+    onSortChange,
+
     // Row Actions Props destructured
     onEdit,
     onDelete,
@@ -126,7 +136,30 @@ export function DataTable<TData, TValue>({
     disableCheck,
     extraActions,
 }: DataTableProps<TData, TValue>) {
-    const [sorting, setSorting] = React.useState<SortingState>([]);
+    const [localSorting, setLocalSorting] = React.useState<SortingState>([]);
+
+    const sorting = React.useMemo<SortingState>(() => {
+        if (onSortChange) {
+            if (!sortBy) return [];
+            return [{ id: sortBy, desc: sortOrder === "desc" }];
+        }
+        return localSorting;
+    }, [onSortChange, sortBy, sortOrder, localSorting]);
+
+    const handleSortingChange = (updater: React.SetStateAction<SortingState>) => {
+        if (onSortChange) {
+            const nextSorting = typeof updater === "function" ? updater(sorting) : updater;
+            if (nextSorting.length > 0) {
+                const firstSort = nextSorting[0];
+                onSortChange(firstSort.id, firstSort.desc ? "desc" : "asc");
+            } else {
+                onSortChange(undefined, undefined);
+            }
+        } else {
+            setLocalSorting(updater);
+        }
+    };
+
 
     // Dynamically build column list based on whether actions are provided
     const tableColumns = React.useMemo(() => {
@@ -271,7 +304,7 @@ export function DataTable<TData, TValue>({
         state: {
             sorting,
         },
-        onSortingChange: setSorting,
+        onSortingChange: handleSortingChange,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
     });

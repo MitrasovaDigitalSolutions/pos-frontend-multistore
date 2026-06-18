@@ -23,6 +23,8 @@ export function CashDrawerSessions() {
 
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
+    const [sortBy, setSortBy] = useState<string | undefined>("opened_at");
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("desc");
     const [filters, setFilters] = useState<{
         status?: "open" | "closed";
         user_id?: number;
@@ -36,8 +38,8 @@ export function CashDrawerSessions() {
     const { data: sessionsData, isLoading, isFetching } = useCashDrawerSessions({
         page,
         per_page: perPage,
-        sort_by: "opened_at",
-        sort_order: "desc",
+        sort_by: sortBy,
+        sort_order: sortOrder,
         ...filters,
     });
 
@@ -56,6 +58,7 @@ export function CashDrawerSessions() {
             {
                 accessorKey: "user.name",
                 header: "Operator / Kasir",
+                enableSorting: false,
                 cell: ({ row }) => (
                     <div className="flex flex-col">
                         <span className="font-bold text-slate-800 text-xs">
@@ -101,6 +104,7 @@ export function CashDrawerSessions() {
             {
                 accessorKey: "expected_cash",
                 header: "Expected Cash",
+                enableSorting: false,
                 cell: ({ row }) => (
                     <span className="font-semibold text-slate-700 text-xs tabular-nums">
                         {formatRupiah(row.original.expected_cash)}
@@ -111,6 +115,7 @@ export function CashDrawerSessions() {
             {
                 accessorKey: "difference",
                 header: "Selisih",
+                enableSorting: false,
                 cell: ({ row }) => {
                     const diff = row.original.difference;
                     if (row.original.status === "open") return <span className="text-slate-400">-</span>;
@@ -139,6 +144,7 @@ export function CashDrawerSessions() {
             {
                 accessorKey: "status",
                 header: "Status",
+                enableSorting: false,
                 cell: ({ row }) => {
                     const status = row.original.status;
                     return status === "open" ? (
@@ -199,6 +205,13 @@ export function CashDrawerSessions() {
                     onPerPageChange={setPerPage}
                     meta={sessionsData?.meta}
                     entityName="sesi kasir"
+                    sortBy={sortBy}
+                    sortOrder={sortOrder}
+                    onSortChange={(by, order) => {
+                        setSortBy(by);
+                        setSortOrder(order);
+                        setPage(1);
+                    }}
                     virtualize={true}
                     estimateRowHeight={50}
                     onView={handleView}

@@ -35,6 +35,8 @@ export function PurchaseReceiving() {
         hasPermission(userRoles, userPermissions, "manage_purchase");
 
     const [receivingPage, setReceivingPage] = useState(1);
+    const [sortBy, setSortBy] = useState<string | undefined>("created_at");
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("desc");
 
     // Filters state
     const [filters, setFilters] = useState({
@@ -90,6 +92,8 @@ export function PurchaseReceiving() {
     const apiParams: Record<string, unknown> = {
         page: receivingPage,
         per_page: 10,
+        sort_by: sortBy,
+        sort_order: sortOrder,
     };
     if (deferredFilters.search) {
         apiParams.search = deferredFilters.search;
@@ -151,6 +155,13 @@ export function PurchaseReceiving() {
                 onAddClick={() => router.push("/admin/purchase/receiving/new")}
                 isLoading={receivingsLoading}
                 isFetching={receivingsFetching}
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortChange={(by, order) => {
+                    setSortBy(by);
+                    setSortOrder(order);
+                    setReceivingPage(1);
+                }}
                 filterElement={
                     <FilterForm
                         methods={filterMethods}

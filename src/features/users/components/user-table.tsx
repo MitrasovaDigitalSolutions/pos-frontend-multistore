@@ -30,6 +30,9 @@ interface UserTableProps {
     isLoading?: boolean;
     isFetching?: boolean;
     filterElement?: React.ReactNode;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+    onSortChange?: (sortBy: string | undefined, sortOrder: "asc" | "desc" | undefined) => void;
 }
 
 export function UserTable({
@@ -44,6 +47,9 @@ export function UserTable({
     isLoading = false,
     isFetching = false,
     filterElement,
+    sortBy,
+    sortOrder,
+    onSortChange,
 }: UserTableProps) {
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
@@ -114,6 +120,7 @@ export function UserTable({
                 {
                     accessorKey: "roles",
                     header: "Role Peran",
+                    enableSorting: false,
                     cell: ({ row }) => {
                         const u = row.original;
                         return (
@@ -136,6 +143,7 @@ export function UserTable({
                 {
                     accessorKey: "status",
                     header: "Status",
+                    enableSorting: false,
                     meta: {
                         headerClassName: "text-center",
                         cellClassName: "text-center",
@@ -197,6 +205,9 @@ export function UserTable({
                 onPerPageChange={onPerPageChange}
                 meta={meta}
                 entityName="pengguna"
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortChange={onSortChange}
                 virtualize={true}
                 estimateRowHeight={44}
                 onEdit={hasManageUsers ? onEdit : undefined}

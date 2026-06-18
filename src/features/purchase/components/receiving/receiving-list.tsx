@@ -37,6 +37,9 @@ interface ReceivingListProps {
     isLoading?: boolean;
     isFetching?: boolean;
     filterElement?: React.ReactNode;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+    onSortChange?: (sortBy: string | undefined, sortOrder: "asc" | "desc" | undefined) => void;
 }
 
 export function ReceivingList({
@@ -48,6 +51,9 @@ export function ReceivingList({
     isLoading = false,
     isFetching = false,
     filterElement,
+    sortBy,
+    sortOrder,
+    onSortChange,
 }: ReceivingListProps) {
     const router = useAppRouter();
     const { data: session } = useSession();
@@ -197,6 +203,9 @@ export function ReceivingList({
                 onPageChange={onPageChange}
                 meta={meta}
                 entityName="transaksi masuk"
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortChange={onSortChange}
                 virtualize={true}
                 estimateRowHeight={44}
                 onView={handleDetailClick}

@@ -33,6 +33,9 @@ interface ProductTableProps {
     isLoading?: boolean;
     isFetching?: boolean;
     filterElement?: React.ReactNode;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+    onSortChange?: (sortBy: string | undefined, sortOrder: "asc" | "desc" | undefined) => void;
 }
 
 export function ProductTable({
@@ -47,6 +50,9 @@ export function ProductTable({
     isLoading = false,
     isFetching = false,
     filterElement,
+    sortBy,
+    sortOrder,
+    onSortChange,
 }: ProductTableProps) {
     const queryClient = useQueryClient();
     const { data: session } = useSession();
@@ -108,6 +114,7 @@ export function ProductTable({
                 {
                     accessorKey: "barcode",
                     header: "Barcode / SKU",
+                    enableSorting: false,
                     cell: ({ row }) => (
                         <span className="font-bold text-slate-900">
                             {row.original.barcode || "-"}
@@ -128,6 +135,7 @@ export function ProductTable({
                 {
                     accessorKey: "category",
                     header: "Kategori",
+                    enableSorting: false,
                     cell: ({ row }) => (
                         <span className="text-slate-500 text-xs">
                             {row.original.category?.nama || "-"}
@@ -138,6 +146,7 @@ export function ProductTable({
                 {
                     accessorKey: "merek",
                     header: "Merek/Brand",
+                    enableSorting: false,
                     cell: ({ row }) => (
                         <span className="text-slate-500 text-xs">
                             {row.original.brand?.nama || row.original.merek || "-"}
@@ -148,6 +157,7 @@ export function ProductTable({
                 {
                     accessorKey: "harga_beli",
                     header: "Harga Beli",
+                    enableSorting: false,
                     meta: {
                         headerClassName: "text-right",
                         cellClassName: "text-right text-slate-500 text-xs",
@@ -170,6 +180,7 @@ export function ProductTable({
                 {
                     accessorKey: "margin",
                     header: "Margin",
+                    enableSorting: false,
                     meta: {
                         headerClassName: "text-right",
                         cellClassName: "text-right text-slate-500 text-xs",
@@ -204,6 +215,7 @@ export function ProductTable({
                 {
                     accessorKey: "status",
                     header: "Status",
+                    enableSorting: false,
                     meta: {
                         headerClassName: "text-center",
                         cellClassName: "text-center",
@@ -279,6 +291,9 @@ export function ProductTable({
                 onPerPageChange={onPerPageChange}
                 meta={meta}
                 entityName="produk"
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortChange={onSortChange}
                 extraToolbarActions={
                     hasManageProducts ? (
                         <ProductImportExport onImportSuccess={handleImportSuccess} />

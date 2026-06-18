@@ -13,10 +13,12 @@ import {
   YAxis,
 } from "recharts";
 import type { DashboardSummary, SalesHistoryItem } from "../types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface RevenueChartProps {
   summary: DashboardSummary | undefined;
   history?: SalesHistoryItem[];
+  isLoading?: boolean;
 }
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun"];
@@ -61,7 +63,7 @@ const CustomTooltip = ({
   return null;
 };
 
-export function RevenueChart({ summary, history }: RevenueChartProps) {
+export function RevenueChart({ summary, history, isLoading }: RevenueChartProps) {
   const data = history && history.length > 0
     ? history.map((item) => ({
         month: item.period,
@@ -92,9 +94,13 @@ export function RevenueChart({ summary, history }: RevenueChartProps) {
             </span>
           </div>
           <div className="flex items-center gap-2.5 mt-2">
-            <span className="text-2xl font-black text-slate-800 tabular-nums tracking-tight">
-              {formatRupiah(gross)}
-            </span>
+            {isLoading ? (
+              <Skeleton className="h-8 w-40 mt-1" />
+            ) : (
+              <span className="text-2xl font-black text-slate-800 tabular-nums tracking-tight">
+                {formatRupiah(gross)}
+              </span>
+            )}
           </div>
         </div>
         <button className="text-slate-300 hover:text-slate-500 transition-colors">
@@ -116,46 +122,50 @@ export function RevenueChart({ summary, history }: RevenueChartProps) {
 
       {/* Chart – only render in browser to avoid SSR warning */}
       <div style={{ width: "100%", height: 185 }}>
-        {mounted && (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={data}
-              barCategoryGap="25%"
-              barGap={2}
-              margin={{ top: 4, right: 4, bottom: 0, left: -20 }}
-            >
-              <defs>
-                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#818cf8" stopOpacity={1}/>
-                  <stop offset="100%" stopColor="#4f46e5" stopOpacity={0.8}/>
-                </linearGradient>
-                <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#2dd4bf" stopOpacity={1}/>
-                  <stop offset="100%" stopColor="#0d9488" stopOpacity={0.8}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-              <XAxis
-                dataKey="month"
-                tick={{ fontSize: 9, fill: "#94a3b8", fontWeight: 700 }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 8, fill: "#cbd5e1" }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v) => {
-                  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}jt`;
-                  if (v >= 1_000) return `${(v / 1_000).toFixed(0)}k`;
-                  return `${v}`;
-                }}
-              />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: "#f8fafc" }} />
-              <Bar dataKey="revenue" name="Total Revenue" maxBarSize={16} radius={[3, 3, 0, 0]} fill="url(#colorRevenue)" className="transition-all duration-300 hover:opacity-90" />
-              <Bar dataKey="profit" name="Total Profit" maxBarSize={16} radius={[3, 3, 0, 0]} fill="url(#colorProfit)" className="transition-all duration-300 hover:opacity-90" />
-            </BarChart>
-          </ResponsiveContainer>
+        {isLoading ? (
+          <Skeleton className="w-full h-full rounded-xl" />
+        ) : (
+          mounted && (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={data}
+                barCategoryGap="25%"
+                barGap={2}
+                margin={{ top: 4, right: 4, bottom: 0, left: -20 }}
+              >
+                <defs>
+                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#818cf8" stopOpacity={1}/>
+                    <stop offset="100%" stopColor="#4f46e5" stopOpacity={0.8}/>
+                  </linearGradient>
+                  <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#2dd4bf" stopOpacity={1}/>
+                    <stop offset="100%" stopColor="#0d9488" stopOpacity={0.8}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fontSize: 9, fill: "#94a3b8", fontWeight: 700 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 8, fill: "#cbd5e1" }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) => {
+                    if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}jt`;
+                    if (v >= 1_000) return `${(v / 1_000).toFixed(0)}k`;
+                    return `${v}`;
+                  }}
+                />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: "#f8fafc" }} />
+                <Bar dataKey="revenue" name="Total Revenue" maxBarSize={16} radius={[3, 3, 0, 0]} fill="url(#colorRevenue)" className="transition-all duration-300 hover:opacity-90" />
+                <Bar dataKey="profit" name="Total Profit" maxBarSize={16} radius={[3, 3, 0, 0]} fill="url(#colorProfit)" className="transition-all duration-300 hover:opacity-90" />
+              </BarChart>
+            </ResponsiveContainer>
+          )
         )}
       </div>
     </div>

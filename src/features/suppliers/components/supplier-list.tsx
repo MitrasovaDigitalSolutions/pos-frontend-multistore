@@ -29,6 +29,9 @@ interface SupplierListProps {
     isLoading?: boolean;
     isFetching?: boolean;
     filterElement?: React.ReactNode;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+    onSortChange?: (sortBy: string | undefined, sortOrder: "asc" | "desc" | undefined) => void;
 }
 
 export function SupplierList({
@@ -43,6 +46,9 @@ export function SupplierList({
     isLoading = false,
     isFetching = false,
     filterElement,
+    sortBy,
+    sortOrder,
+    onSortChange,
 }: SupplierListProps) {
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
@@ -160,6 +166,9 @@ export function SupplierList({
                 onPerPageChange={onPerPageChange}
                 meta={meta}
                 entityName="supplier"
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortChange={onSortChange}
                 virtualize={true}
                 estimateRowHeight={44}
                 onEdit={hasManageSuppliers ? onEdit : undefined}

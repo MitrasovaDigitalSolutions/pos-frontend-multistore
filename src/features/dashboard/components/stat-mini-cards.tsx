@@ -15,9 +15,11 @@ import {
   Tooltip,
 } from "recharts";
 import type { DashboardSummary } from "../types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface StatMiniCardsProps {
   summary: DashboardSummary | undefined;
+  isLoading?: boolean;
 }
 
 // Simulated sparkline data for visual richness
@@ -31,7 +33,7 @@ const SPARKLINE_DATA_2 = [
   { v: 55 }, { v: 48 }, { v: 65 }, { v: 60 }, { v: 75 },
 ];
 
-export function StatMiniCards({ summary }: StatMiniCardsProps) {
+export function StatMiniCards({ summary, isLoading }: StatMiniCardsProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -59,19 +61,27 @@ export function StatMiniCards({ summary }: StatMiniCardsProps) {
           </div>
 
           <div className="flex items-center gap-2 mt-1.5">
-            <span className="text-xl font-extrabold text-slate-800 tabular-nums leading-none tracking-tight">
-              {netSales >= 1_000_000
-                ? `${(netSales / 1_000_000).toFixed(2)}jt`
-                : netSales >= 1_000
-                  ? `${(netSales / 1_000).toFixed(0)}k`
-                  : netSales === 0
-                    ? "0"
-                    : formatRupiah(netSales)}
-            </span>
+            {isLoading ? (
+              <Skeleton className="h-6 w-28 mt-0.5" />
+            ) : (
+              <span className="text-xl font-extrabold text-slate-800 tabular-nums leading-none tracking-tight">
+                {netSales >= 1_000_000
+                  ? `${(netSales / 1_000_000).toFixed(2)}jt`
+                  : netSales >= 1_000
+                    ? `${(netSales / 1_000).toFixed(0)}k`
+                    : netSales === 0
+                      ? "0"
+                      : formatRupiah(netSales)}
+              </span>
+            )}
           </div>
-          <p className="text-[9px] text-slate-400 font-semibold mt-1">
-            Omset: {formatRupiah(summary?.gross_sales ?? 0)}
-          </p>
+          {isLoading ? (
+            <Skeleton className="h-3 w-36 mt-1.5" />
+          ) : (
+            <p className="text-[9px] text-slate-400 font-semibold mt-1">
+              Omset: {formatRupiah(summary?.gross_sales ?? 0)}
+            </p>
+          )}
         </div>
 
         {/* Bottom: link + sparkline */}
@@ -83,7 +93,7 @@ export function StatMiniCards({ summary }: StatMiniCardsProps) {
             Laporan <IconArrowRight size={10} className="transition-transform group-hover:translate-x-0.5" />
           </Link>
           <div style={{ width: 60, height: 20 }}>
-            {mounted && (
+            {mounted && !isLoading && (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={SPARKLINE_DATA_1}>
                   <Line
@@ -98,6 +108,7 @@ export function StatMiniCards({ summary }: StatMiniCardsProps) {
                 </LineChart>
               </ResponsiveContainer>
             )}
+            {isLoading && <Skeleton className="h-full w-full rounded" />}
           </div>
         </div>
       </div>
@@ -115,22 +126,32 @@ export function StatMiniCards({ summary }: StatMiniCardsProps) {
           </div>
 
           <div className="flex items-center gap-2 mt-1.5">
-            <span className="text-xl font-extrabold text-slate-800 tabular-nums leading-none tracking-tight">
-              {grossProfit >= 1_000_000
-                ? `${(grossProfit / 1_000_000).toFixed(2)}jt`
-                : grossProfit >= 1_000
-                  ? `${(grossProfit / 1_000).toFixed(0)}k`
-                  : grossProfit === 0
-                    ? "0"
-                    : formatRupiah(grossProfit)}
-            </span>
-            <span className="inline-flex items-center gap-0.5 text-[8px] font-extrabold text-emerald-600 bg-emerald-50 border border-emerald-100/50 px-1 py-0.2 rounded-full select-none">
-              {profitMargin.toFixed(1)}%
-            </span>
+            {isLoading ? (
+              <Skeleton className="h-6 w-28 mt-0.5" />
+            ) : (
+              <>
+                <span className="text-xl font-extrabold text-slate-800 tabular-nums leading-none tracking-tight">
+                  {grossProfit >= 1_000_000
+                    ? `${(grossProfit / 1_000_000).toFixed(2)}jt`
+                    : grossProfit >= 1_000
+                      ? `${(grossProfit / 1_000).toFixed(0)}k`
+                      : grossProfit === 0
+                        ? "0"
+                        : formatRupiah(grossProfit)}
+                </span>
+                <span className="inline-flex items-center gap-0.5 text-[8px] font-extrabold text-emerald-600 bg-emerald-50 border border-emerald-100/50 px-1 py-0.2 rounded-full select-none">
+                  {profitMargin.toFixed(1)}%
+                </span>
+              </>
+            )}
           </div>
-          <p className="text-[9px] text-slate-400 font-semibold mt-1">
-            HPP: {formatRupiah(summary?.total_cogs ?? 0)}
-          </p>
+          {isLoading ? (
+            <Skeleton className="h-3 w-36 mt-1.5" />
+          ) : (
+            <p className="text-[9px] text-slate-400 font-semibold mt-1">
+              HPP: {formatRupiah(summary?.total_cogs ?? 0)}
+            </p>
+          )}
         </div>
 
         {/* Bottom: link + sparkline */}
@@ -142,7 +163,7 @@ export function StatMiniCards({ summary }: StatMiniCardsProps) {
             Detail <IconArrowRight size={10} className="transition-transform group-hover:translate-x-0.5" />
           </Link>
           <div style={{ width: 60, height: 20 }}>
-            {mounted && (
+            {mounted && !isLoading && (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={SPARKLINE_DATA_2}>
                   <Line
@@ -157,6 +178,7 @@ export function StatMiniCards({ summary }: StatMiniCardsProps) {
                 </LineChart>
               </ResponsiveContainer>
             )}
+            {isLoading && <Skeleton className="h-full w-full rounded" />}
           </div>
         </div>
       </div>

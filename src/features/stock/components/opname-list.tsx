@@ -27,6 +27,9 @@ interface OpnameListProps {
     onViewDetail: (id: number) => void;
     isLoading?: boolean;
     isFetching?: boolean;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+    onSortChange?: (sortBy: string | undefined, sortOrder: "asc" | "desc" | undefined) => void;
 }
 
 export function OpnameList({
@@ -37,6 +40,9 @@ export function OpnameList({
     onViewDetail,
     isLoading = false,
     isFetching = false,
+    sortBy,
+    sortOrder,
+    onSortChange,
 }: OpnameListProps) {
     const router = useAppRouter();
     const { data: session } = useSession();
@@ -194,6 +200,9 @@ export function OpnameList({
                 onPageChange={onPageChange}
                 meta={meta}
                 entityName="dokumen"
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortChange={onSortChange}
                 virtualize={true}
                 estimateRowHeight={44}
                 onView={(op) => onViewDetail(op.id)}

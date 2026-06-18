@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import type { DashboardSummary } from "../types";
 import { IconChartPie, IconDeviceAnalytics } from "@tabler/icons-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface SalesStatisticsProps {
   summary: DashboardSummary | undefined;
+  isLoading?: boolean;
 }
 
 const CATEGORIES = [
@@ -31,7 +33,7 @@ const CustomTooltip = ({ active, payload }: {
   return null;
 };
 
-export function SalesStatistics({ summary }: SalesStatisticsProps) {
+export function SalesStatistics({ summary, isLoading }: SalesStatisticsProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -94,58 +96,73 @@ export function SalesStatistics({ summary }: SalesStatisticsProps) {
       <div className="flex flex-col items-center justify-center flex-1 w-full my-auto">
         {/* Donut Container with Absolute Centered Labels */}
         <div className="relative flex items-center justify-center mx-auto" style={{ width: 140, height: 140 }}>
-          {mounted && (
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={45}
-                  outerRadius={65}
-                  paddingAngle={3}
-                  dataKey="value"
-                  startAngle={90}
-                  endAngle={-270}
-                  strokeWidth={0}
-                >
-                  {pieData.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} className="outline-none focus:outline-none transition-all duration-300 hover:opacity-90" />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-              </PieChart>
-            </ResponsiveContainer>
+          {isLoading ? (
+            <Skeleton className="w-[130px] h-[130px] rounded-full absolute" />
+          ) : (
+            mounted && (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={45}
+                    outerRadius={65}
+                    paddingAngle={3}
+                    dataKey="value"
+                    startAngle={90}
+                    endAngle={-270}
+                    strokeWidth={0}
+                  >
+                    {pieData.map((entry, i) => (
+                      <Cell key={i} fill={entry.color} className="outline-none focus:outline-none transition-all duration-300 hover:opacity-90" />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            )
           )}
 
           {/* Centered label inside Donut */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none pointer-events-none">
-            <span className="text-[8px] font-extrabold text-slate-400 uppercase tracking-widest leading-none">Total</span>
-            <span className="text-2xl font-black text-slate-800 mt-1 tracking-tight leading-none tabular-nums">
-              {salesCount}
-            </span>
-            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider mt-0.5 leading-none">Transaksi</span>
-          </div>
+          {!isLoading && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none pointer-events-none">
+              <span className="text-[8px] font-extrabold text-slate-400 uppercase tracking-widest leading-none">Total</span>
+              <span className="text-2xl font-black text-slate-800 mt-1 tracking-tight leading-none tabular-nums">
+                {salesCount}
+              </span>
+              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider mt-0.5 leading-none">Transaksi</span>
+            </div>
+          )}
         </div>
 
         {/* Legend: Stacked & Styled Grid */}
         <div className="grid grid-cols-2 gap-x-5 gap-y-3.5 mt-6 w-full border-t border-slate-50 pt-4">
-          {displayCategories.map((cat, i) => (
-            <div key={i} className="flex flex-col gap-0.5 group cursor-pointer">
-              <div className="flex items-center gap-1.5">
-                <span
-                  className="w-2 h-2 rounded-full shrink-0 transition-transform group-hover:scale-125"
-                  style={{ background: cat.color }}
-                />
-                <span className="text-[10px] font-bold text-slate-500 truncate max-w-[100px] group-hover:text-slate-800 transition-colors" title={cat.name}>
-                  {cat.name}
+          {isLoading ? (
+            Array.from({ length: 4 }).map((_, idx) => (
+              <div key={idx} className="space-y-2">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-4 w-12" />
+              </div>
+            ))
+          ) : (
+            displayCategories.map((cat, i) => (
+              <div key={i} className="flex flex-col gap-0.5 group cursor-pointer">
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0 transition-transform group-hover:scale-125"
+                    style={{ background: cat.color }}
+                  />
+                  <span className="text-[10px] font-bold text-slate-500 truncate max-w-[100px] group-hover:text-slate-800 transition-colors" title={cat.name}>
+                    {cat.name}
+                  </span>
+                </div>
+                <span className="text-[11px] font-extrabold text-slate-800 ml-3.5 tabular-nums">
+                  {cat.value} <span className="text-[9px] text-slate-400 font-medium">pcs</span>
                 </span>
               </div>
-              <span className="text-[11px] font-extrabold text-slate-800 ml-3.5 tabular-nums">
-                {cat.value} <span className="text-[9px] text-slate-400 font-medium">pcs</span>
-              </span>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 

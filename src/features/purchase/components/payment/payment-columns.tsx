@@ -33,6 +33,7 @@ export const paymentColumns: ColumnDef<ReceivingPayment>[] = [
     {
         id: "nomor_penerimaan",
         header: "No. Penerimaan",
+        enableSorting: false,
         cell: ({ row }) => (
             <span className="font-semibold text-slate-700 text-xs font-mono">
                 {row.original.receiving?.nomor_penerimaan || "-"}
@@ -43,6 +44,7 @@ export const paymentColumns: ColumnDef<ReceivingPayment>[] = [
     {
         id: "supplier",
         header: "Supplier",
+        enableSorting: false,
         cell: ({ row }) => (
             <span className="text-slate-600 text-xs font-medium">
                 {row.original.receiving?.supplier_relationship?.nama || row.original.receiving?.supplier || "-"}

@@ -36,6 +36,8 @@ export function PurchaseReturn() {
 
     const router = useAppRouter();
     const [returnPage, setReturnPage] = useState(1);
+    const [sortBy, setSortBy] = useState<string | undefined>("tanggal_retur");
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("desc");
     const { data: suppliers = [] } = useAllSuppliers();
 
     // Filters state
@@ -97,6 +99,8 @@ export function PurchaseReturn() {
     const apiParams: Record<string, unknown> = {
         page: returnPage,
         per_page: 10,
+        sort_by: sortBy,
+        sort_order: sortOrder,
     };
     if (deferredFilters.search) {
         apiParams.search = deferredFilters.search;
@@ -163,6 +167,13 @@ export function PurchaseReturn() {
                 onAddClick={() => router.push("/admin/purchase/return/new")}
                 isLoading={returnsLoading}
                 isFetching={returnsFetching}
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortChange={(by, order) => {
+                    setSortBy(by);
+                    setSortOrder(order);
+                    setReturnPage(1);
+                }}
                 filterElement={
                     <FilterForm
                         methods={filterMethods}

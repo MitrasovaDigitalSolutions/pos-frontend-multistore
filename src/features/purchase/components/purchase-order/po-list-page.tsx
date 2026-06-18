@@ -46,6 +46,8 @@ export function POListPage() {
     const { data: suppliers = [] } = useAllSuppliers();
 
     const [orderPage, setOrderPage] = useState(1);
+    const [sortBy, setSortBy] = useState<string | undefined>("tanggal_po");
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("desc");
 
     // Filters state
     const [filters, setFilters] = useState({
@@ -106,9 +108,13 @@ export function POListPage() {
         supplier_id?: number;
         start_date?: string;
         end_date?: string;
+        sort_by?: string;
+        sort_order?: "asc" | "desc";
     } = {
         page: orderPage,
         per_page: 10,
+        sort_by: sortBy,
+        sort_order: sortOrder,
     };
     if (deferredFilters.search) {
         apiParams.search = deferredFilters.search;
@@ -327,6 +333,13 @@ export function POListPage() {
                     onPageChange={setOrderPage}
                     meta={ordersData?.meta}
                     entityName="dokumen PO"
+                    sortBy={sortBy}
+                    sortOrder={sortOrder}
+                    onSortChange={(by, order) => {
+                        setSortBy(by);
+                        setSortOrder(order);
+                        setOrderPage(1);
+                    }}
                     virtualize={true}
                     estimateRowHeight={44}
                     onView={(order) => router.push(`/admin/purchase/order/${order.id}`)}
