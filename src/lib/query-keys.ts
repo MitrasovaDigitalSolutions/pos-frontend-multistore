@@ -104,4 +104,18 @@ export const queryKeys = {
         all: ["activity-logs"] as const,
         list: () => [...queryKeys.activityLogs.all, "list"] as const,
     },
+
+    // Members
+    members: {
+        all: ["members"] as const,
+        list: () => [...queryKeys.members.all, "list"] as const,
+    },
+
+    // Expenses
+    expenses: {
+        all: ["expenses"] as const,
+        list: () => [...queryKeys.expenses.all, "list"] as const,
+        categories: () => [...queryKeys.expenses.all, "categories"] as const,
+        upcoming: () => [...queryKeys.expenses.all, "upcoming"] as const,
+    },
 } as const;

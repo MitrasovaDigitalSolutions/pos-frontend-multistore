@@ -38,10 +38,10 @@ export function CheckoutCartSection({
     onAddProduct,
 }: CheckoutCartSectionProps) {
     return (
-        <div className="bg-white border-r border-slate-200 flex flex-col h-full overflow-hidden">
+        <div className="bg-white border-r border-slate-200 flex flex-col h-full overflow-hidden min-h-0">
             {/* Scanner / Search */}
-            <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex gap-3 items-start">
-                <div className="grow">
+            <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row gap-3 sm:items-start shrink-0">
+                <div className="grow w-full">
                     <BarcodeInput
                         ref={barcodeInputRef}
                         onProductFound={onAddProduct}
@@ -54,15 +54,15 @@ export function CheckoutCartSection({
                 <Button
                     variant="outline"
                     onClick={onCatalogOpen}
-                    className="h-13 border-dashed border-emerald-500 hover:bg-emerald-50 text-emerald-600 font-bold px-4 rounded-xl flex gap-2 cursor-pointer bg-white shrink-0"
+                    className="h-13 border-dashed border-emerald-500 hover:bg-emerald-50 text-emerald-600 font-bold px-4 rounded-xl flex gap-2 cursor-pointer bg-white shrink-0 w-full sm:w-auto justify-center"
                 >
                     <IconCategory size={18} />
                     <span>Katalog (F2)</span>
                 </Button>
             </div>
 
-            {/* Cart Table */}
-            <div className="grow overflow-y-auto p-4">
+            {/* Cart Items (Table on Desktop, Cards on Mobile) */}
+            <div className="grow overflow-y-auto p-4 min-h-0">
                 {cart.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-slate-400 p-8 text-center">
                         <IconScan size={48} className="text-slate-200 mb-3" />
@@ -74,53 +74,166 @@ export function CheckoutCartSection({
                         </p>
                     </div>
                 ) : (
-                    <Table className="w-full border-collapse">
-                        <TableHeader className="bg-slate-50 border-b border-slate-100">
-                            <TableRow>
-                                <TableHead className="w-12 text-center text-[10px] font-bold text-slate-500">
-                                    #
-                                </TableHead>
-                                <TableHead className="text-[10px] font-bold text-slate-500">
-                                    Nama Produk
-                                </TableHead>
-                                <TableHead className="text-center w-28 text-[10px] font-bold text-slate-500">
-                                    Qty
-                                </TableHead>
-                                <TableHead className="text-right w-24 text-[10px] font-bold text-slate-500">
-                                    Harga
-                                </TableHead>
-                                <TableHead className="text-right w-28 text-[10px] font-bold text-slate-500">
-                                    Total
-                                </TableHead>
-                                <TableHead className="text-center w-12 text-[10px] font-bold text-slate-500" />
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {cart.map((item, idx) => (
-                                <TableRow
+                    <>
+                        {/* Desktop Table View */}
+                        <div className="hidden sm:block">
+                            <Table className="w-full border-collapse">
+                                <TableHeader className="bg-slate-50 border-b border-slate-100">
+                                    <TableRow>
+                                        <TableHead className="w-12 text-center text-[10px] font-bold text-slate-500">
+                                            #
+                                        </TableHead>
+                                        <TableHead className="text-[10px] font-bold text-slate-500">
+                                            Nama Produk
+                                        </TableHead>
+                                        <TableHead className="text-center w-28 text-[10px] font-bold text-slate-500">
+                                            Qty
+                                        </TableHead>
+                                        <TableHead className="text-right w-24 text-[10px] font-bold text-slate-500">
+                                            Harga
+                                        </TableHead>
+                                        <TableHead className="text-right w-28 text-[10px] font-bold text-slate-500">
+                                            Total
+                                        </TableHead>
+                                        <TableHead className="text-center w-12 text-[10px] font-bold text-slate-500" />
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {cart.map((item, idx) => (
+                                        <TableRow
+                                            key={item.itemId ?? item.product_id}
+                                            className="hover:bg-slate-50/50 transition-colors"
+                                        >
+                                            <TableCell className="text-center text-slate-400 font-medium">
+                                                {idx + 1}
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="font-bold text-slate-800 text-[12px]">
+                                                    {item.name}
+                                                </div>
+                                                {item.barcode && (
+                                                    <div className="text-[10px] text-slate-400 font-medium">
+                                                        Barcode: {item.barcode}
+                                                    </div>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => onUpdateQty(item, item.qty - 1)}
+                                                        disabled={isProcessing}
+                                                        className="w-6 h-6 border border-slate-200 rounded flex items-center justify-center hover:bg-emerald-50 text-emerald-600 font-bold disabled:opacity-40 cursor-pointer"
+                                                    >
+                                                        -
+                                                    </button>
+                                                    <Input
+                                                        type="number"
+                                                        value={item.qty}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            if (val === "") return;
+                                                            const num = parseInt(val, 10);
+                                                            if (!isNaN(num) && num > 0) {
+                                                                onUpdateQty(item, num);
+                                                            }
+                                                        }}
+                                                        onBlur={(e) => {
+                                                            const val = e.target.value;
+                                                            const num = parseInt(val, 10);
+                                                            if (val === "" || isNaN(num) || num <= 0) {
+                                                                onUpdateQty(item, item.qty);
+                                                            }
+                                                        }}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === "Enter") {
+                                                                e.preventDefault();
+                                                                e.currentTarget.blur();
+                                                                barcodeInputRef.current?.focus();
+                                                            }
+                                                        }}
+                                                        className="w-12 h-6 text-center text-xs font-bold text-slate-800 border border-slate-200 rounded-lg outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                        disabled={isProcessing}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => onUpdateQty(item, item.qty + 1)}
+                                                        disabled={isProcessing}
+                                                        className="w-6 h-6 border border-slate-200 rounded flex items-center justify-center hover:bg-emerald-50 text-emerald-600 font-bold disabled:opacity-40 cursor-pointer"
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-right text-slate-700 font-medium tabular-nums">
+                                                {formatRupiah(item.price)}
+                                            </TableCell>
+                                            <TableCell className="text-right font-bold text-slate-900 tabular-nums">
+                                                {formatRupiah(item.price * item.qty)}
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onRemoveItem(item)}
+                                                    disabled={isProcessing}
+                                                    className="text-rose-500 hover:bg-rose-50 p-1.5 rounded transition-colors disabled:opacity-40 cursor-pointer border-none bg-transparent"
+                                                >
+                                                    <IconTrash size={16} />
+                                                </button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+
+                        {/* Mobile Card List View */}
+                        <div className="block sm:hidden space-y-3">
+                            {cart.map((item) => (
+                                <div
                                     key={item.itemId ?? item.product_id}
-                                    className="hover:bg-slate-50/50 transition-colors"
+                                    className="bg-white border border-slate-100 rounded-xl p-3.5 shadow-sm flex flex-col gap-3"
                                 >
-                                    <TableCell className="text-center text-slate-400 font-medium">
-                                        {idx + 1}
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="font-bold text-slate-800 text-[12px]">
-                                            {item.name}
-                                        </div>
-                                        {item.barcode && (
-                                            <div className="text-[10px] text-slate-400 font-medium">
-                                                Barcode: {item.barcode}
+                                    <div className="flex justify-between items-start">
+                                        <div className="min-w-0 flex-1 pr-2">
+                                            <div className="font-bold text-slate-800 text-xs break-words">
+                                                {item.name}
                                             </div>
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center justify-center gap-1">
+                                            {item.barcode && (
+                                                <div className="text-[10px] text-slate-400 font-medium mt-0.5">
+                                                    Barcode: {item.barcode}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => onRemoveItem(item)}
+                                            disabled={isProcessing}
+                                            className="text-rose-500 hover:bg-rose-50 p-1.5 rounded transition-colors disabled:opacity-40 cursor-pointer border-none bg-transparent shrink-0"
+                                        >
+                                            <IconTrash size={16} />
+                                        </button>
+                                    </div>
+
+                                    <div className="flex justify-between items-center bg-slate-50/50 p-2 rounded-lg border border-slate-100">
+                                        <div className="text-[10px] font-bold text-slate-400">
+                                            Harga: <span className="text-slate-700 font-semibold ml-1">{formatRupiah(item.price)}</span>
+                                        </div>
+                                        <div className="text-[10px] font-bold text-slate-400">
+                                            Total: <span className="text-emerald-600 font-extrabold ml-1">{formatRupiah(item.price * item.qty)}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                            Jumlah (Qty)
+                                        </span>
+                                        <div className="flex items-center gap-1">
                                             <button
                                                 type="button"
                                                 onClick={() => onUpdateQty(item, item.qty - 1)}
                                                 disabled={isProcessing}
-                                                className="w-6 h-6 border border-slate-200 rounded flex items-center justify-center hover:bg-emerald-50 text-emerald-600 font-bold disabled:opacity-40 cursor-pointer"
+                                                className="w-7 h-7 border border-slate-200 rounded flex items-center justify-center hover:bg-emerald-50 text-emerald-600 font-bold disabled:opacity-40 cursor-pointer"
                                             >
                                                 -
                                             </button>
@@ -142,46 +255,23 @@ export function CheckoutCartSection({
                                                         onUpdateQty(item, item.qty);
                                                     }
                                                 }}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === "Enter") {
-                                                        e.preventDefault();
-                                                        e.currentTarget.blur();
-                                                        barcodeInputRef.current?.focus();
-                                                    }
-                                                }}
-                                                className="w-12 h-6 text-center text-xs font-bold text-slate-800 border border-slate-200 rounded-lg outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                className="w-14 h-7 text-center text-xs font-bold text-slate-800 border border-slate-200 rounded-lg outline-none focus:border-emerald-500 px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                 disabled={isProcessing}
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => onUpdateQty(item, item.qty + 1)}
                                                 disabled={isProcessing}
-                                                className="w-6 h-6 border border-slate-200 rounded flex items-center justify-center hover:bg-emerald-50 text-emerald-600 font-bold disabled:opacity-40 cursor-pointer"
+                                                className="w-7 h-7 border border-slate-200 rounded flex items-center justify-center hover:bg-emerald-50 text-emerald-600 font-bold disabled:opacity-40 cursor-pointer"
                                             >
                                                 +
                                             </button>
                                         </div>
-                                    </TableCell>
-                                    <TableCell className="text-right text-slate-700 font-medium tabular-nums">
-                                        {formatRupiah(item.price)}
-                                    </TableCell>
-                                    <TableCell className="text-right font-bold text-slate-900 tabular-nums">
-                                        {formatRupiah(item.price * item.qty)}
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                        <button
-                                            type="button"
-                                            onClick={() => onRemoveItem(item)}
-                                            disabled={isProcessing}
-                                            className="text-rose-500 hover:bg-rose-50 p-1.5 rounded transition-colors disabled:opacity-40 cursor-pointer border-none bg-transparent"
-                                        >
-                                            <IconTrash size={16} />
-                                        </button>
-                                    </TableCell>
-                                </TableRow>
+                                    </div>
+                                </div>
                             ))}
-                        </TableBody>
-                    </Table>
+                        </div>
+                    </>
                 )}
             </div>
         </div>

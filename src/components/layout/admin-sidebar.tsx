@@ -60,6 +60,10 @@ export function AdminSidebar() {
         if (path === "/admin" || path === "/checkout") {
             return pathname === path;
         }
+        // Prevent "/admin/expenses" from matching when on "/admin/expenses/categories"
+        if (path === "/admin/expenses" && (pathname === "/admin/expenses/categories" || pathname.startsWith("/admin/expenses/categories/"))) {
+            return false;
+        }
         // For all other routes, use prefix matching so nested routes
         // (e.g. /admin/purchase/order/4/items) highlight the parent menu item
         return pathname === path || pathname.startsWith(path + "/");

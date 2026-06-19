@@ -46,7 +46,10 @@ export function PageLoadingTracker() {
                 href.startsWith("mailto:") ||
                 href.startsWith("tel:") ||
                 href.startsWith("#") ||
-                href.startsWith("javascript:")
+                href.startsWith("javascript:") ||
+                href.startsWith("blob:") ||
+                href.startsWith("data:") ||
+                anchor.hasAttribute("download")
             ) {
                 return;
             }

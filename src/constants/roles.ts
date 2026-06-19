@@ -24,6 +24,8 @@ export const PERMISSIONS = {
   VIEW_INVENTORY: "view_inventory",
   MANAGE_SUPPLIERS: "manage_suppliers",
   VIEW_SUPPLIERS: "view_suppliers",
+  MANAGE_MEMBERS: "manage_members",
+  VIEW_MEMBERS: "view_members",
   VIEW_AUDIT_LOGS: "view_audit_logs",
   OPERATE_CASH_DRAWER: "operate_cash_drawer",
   MANAGE_CASH_DRAWER: "manage_cash_drawer",
@@ -31,6 +33,8 @@ export const PERMISSIONS = {
   MANAGE_CASH_ACCOUNTS: "manage_cash_accounts",
   MANAGE_PURCHASE: "manage_purchase",
   VIEW_PURCHASE: "view_purchase",
+  MANAGE_EXPENSES: "manage_expenses",
+  VIEW_EXPENSES: "view_expenses",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

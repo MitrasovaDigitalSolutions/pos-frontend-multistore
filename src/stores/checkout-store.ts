@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { CartItem, HoldTransaction } from "@/features/checkout/types";
+import type { Member } from "@/features/members/types";
 
 // ─── Checkout Zustand Store ──────────────────────────────────────────────────
 // Persists the active cart and offline holdList in sessionStorage to prevent
@@ -9,6 +10,7 @@ import type { CartItem, HoldTransaction } from "@/features/checkout/types";
 interface CheckoutStoreState {
     cart: CartItem[];
     holdList: HoldTransaction[];
+    selectedMember: Member | null;
 
     // Cart Actions
     setCart: (items: CartItem[]) => void;
@@ -16,6 +18,9 @@ interface CheckoutStoreState {
     updateItemQty: (productId: number, qty: number) => void;
     removeItem: (productId: number) => void;
     clearCart: () => void;
+
+    // Member Actions
+    setSelectedMember: (member: Member | null) => void;
 
     // Hold/Recall Actions
     addHoldTransaction: (hold: HoldTransaction) => void;
@@ -28,6 +33,7 @@ export const useCheckoutStore = create<CheckoutStoreState>()(
         (set) => ({
             cart: [],
             holdList: [],
+            selectedMember: null,
 
             setCart: (items) => set({ cart: items }),
 
@@ -60,7 +66,9 @@ export const useCheckoutStore = create<CheckoutStoreState>()(
                     cart: state.cart.filter((i) => i.product_id !== productId),
                 })),
 
-            clearCart: () => set({ cart: [] }),
+            clearCart: () => set({ cart: [], selectedMember: null }),
+
+            setSelectedMember: (member) => set({ selectedMember: member }),
 
             addHoldTransaction: (hold) =>
                 set((state) => ({

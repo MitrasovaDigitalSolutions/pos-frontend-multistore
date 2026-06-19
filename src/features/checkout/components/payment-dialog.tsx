@@ -15,6 +15,7 @@ import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { useBulkCheckout } from "../api/checkout-api";
 import { toast } from "sonner";
 import type { Receipt } from "../types";
+import type { Member } from "@/features/members/types";
 
 interface PaymentDialogProps {
     open: boolean;
@@ -23,6 +24,7 @@ interface PaymentDialogProps {
     cartItems: { product_id: number; quantity: number }[];
     discount: number;
     tax: number;
+    selectedMember: Member | null;
     onPaySuccess: (receipt: Receipt) => void;
 }
 
@@ -33,6 +35,7 @@ export function PaymentDialog({
     cartItems,
     discount,
     tax,
+    selectedMember,
     onPaySuccess,
 }: PaymentDialogProps) {
     const bulkCheckout = useBulkCheckout();
@@ -73,6 +76,7 @@ export function PaymentDialog({
             items: cartItems,
             diskon: discount,
             pajak: tax,
+            member_id: selectedMember?.id || null,
         };
 
         if (payMode === "cash") {
