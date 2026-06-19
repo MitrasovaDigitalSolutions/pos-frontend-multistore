@@ -68,11 +68,11 @@ export function CatalogDialog({
                             <div
                                 key={p.id}
                                 onClick={async () => {
-                                    if (p.stok <= 0) return;
+                                    if (!p.is_jasa && p.stok <= 0) return;
                                     await onAddProduct(p);
                                     onOpenChange(false);
                                 }}
-                                className={`border p-4 rounded-xl cursor-pointer text-center group transition-all ${p.stok <= 0
+                                className={`border p-4 rounded-xl cursor-pointer text-center group transition-all ${!p.is_jasa && p.stok <= 0
                                     ? "border-slate-100 bg-slate-50 opacity-50 cursor-not-allowed"
                                     : "bg-slate-50 border-slate-100 hover:border-emerald-400 hover:bg-emerald-50/50"
                                     }`}
@@ -84,12 +84,15 @@ export function CatalogDialog({
                                     {formatRupiah(p.harga)}
                                 </div>
                                 <div
-                                    className={`text-[9px] font-bold mt-1 ${p.stok <= 5
-                                        ? "text-rose-500"
-                                        : "text-slate-400"
-                                        }`}
+                                    className={`text-[9px] font-bold mt-1 ${
+                                        p.is_jasa
+                                            ? "text-blue-500"
+                                            : p.stok <= 5
+                                            ? "text-rose-500"
+                                            : "text-slate-400"
+                                    }`}
                                 >
-                                    Stok: {p.stok}
+                                    {p.is_jasa ? "Layanan / Jasa" : `Stok: ${p.stok}`}
                                 </div>
                             </div>
                         ))

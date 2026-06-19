@@ -27,6 +27,7 @@ export const productSchema = z.object({
         return Number(val);
     }, z.number().nullable().optional()),
     image: z.any().nullable().optional(),
+    is_jasa: z.boolean().optional().default(false),
 });
 
 export type ProductInput = z.infer<typeof productSchema>;

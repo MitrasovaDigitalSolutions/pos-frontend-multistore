@@ -188,7 +188,7 @@ export function SalesStatistics({ summary, isLoading }: SalesStatisticsProps) {
               ))
             ) : (
               displayCategories.slice(0, 3).map((cat, i) => (
-                <div key={i} className="flex flex-col items-center justify-center text-center min-w-[75px] group cursor-pointer hover:bg-slate-50/50 p-1 rounded-lg transition-colors">
+                <div key={i} className="flex flex-col items-center justify-center text-center min-w-[75px] group hover:bg-slate-50/50 p-1 rounded-lg transition-colors">
                   <div className="flex items-center gap-1.5 justify-center">
                     <span
                       className="w-2 h-2 rounded-full shrink-0 transition-transform group-hover:scale-125 shadow-sm"
@@ -222,7 +222,7 @@ export function SalesStatistics({ summary, isLoading }: SalesStatisticsProps) {
               ))
             ) : (
               displayCategories.slice(3, 5).map((cat, i) => (
-                <div key={i} className="flex flex-col items-center justify-center text-center min-w-[75px] group cursor-pointer hover:bg-slate-50/50 p-1 rounded-lg transition-colors">
+                <div key={i} className="flex flex-col items-center justify-center text-center min-w-[75px] group hover:bg-slate-50/50 p-1 rounded-lg transition-colors">
                   <div className="flex items-center gap-1.5 justify-center">
                     <span
                       className="w-2 h-2 rounded-full shrink-0 transition-transform group-hover:scale-125 shadow-sm"

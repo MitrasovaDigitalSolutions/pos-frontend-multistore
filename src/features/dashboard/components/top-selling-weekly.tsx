@@ -47,7 +47,7 @@ export function TopSellingWeekly({ summary, isLoading }: TopSellingWeeklyProps) 
             violet: "bg-violet-50 text-violet-600 border-violet-100/30",
           };
           return (
-            <div key={i} className="flex items-center gap-2.5 group cursor-pointer hover:bg-slate-50/50 p-1 rounded-lg transition-colors">
+            <div key={i} className="flex items-center gap-2.5 group hover:bg-slate-50/50 p-1 rounded-lg transition-colors">
               <div className={`w-6 h-6 rounded-md ${bgMap[color]} border flex items-center justify-center text-[9px] font-extrabold shrink-0 shadow-sm transition-transform group-hover:scale-105`}>
                 #{i + 1}
               </div>
@@ -103,7 +103,7 @@ export function TopSellingWeekly({ summary, isLoading }: TopSellingWeeklyProps) 
             type="button"
             onClick={() => setActiveTab("quantity")}
             className={cn(
-              "px-2 py-0.5 rounded-sm transition-all cursor-pointer select-none",
+              "px-2 py-0.5 rounded-sm transition-all  select-none",
               activeTab === "quantity"
                 ? "bg-white text-slate-800 shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-slate-200/50"
                 : "text-slate-400 hover:text-slate-600 border border-transparent"
@@ -115,7 +115,7 @@ export function TopSellingWeekly({ summary, isLoading }: TopSellingWeeklyProps) 
             type="button"
             onClick={() => setActiveTab("profit")}
             className={cn(
-              "px-2 py-0.5 rounded-sm transition-all cursor-pointer select-none",
+              "px-2 py-0.5 rounded-sm transition-all select-none",
               activeTab === "profit"
                 ? "bg-white text-slate-800 shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-slate-200/50"
                 : "text-slate-400 hover:text-slate-600 border border-transparent"

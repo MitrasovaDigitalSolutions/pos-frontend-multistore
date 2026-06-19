@@ -4,6 +4,7 @@ import { useTransactions } from "../api/dashboard-api";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconArrowUpRight, IconPackage, IconReceipt } from "@tabler/icons-react";
 import Link from "next/link";
+import { useAppRouter } from "@/hooks/use-app-router";
 
 const STATUS_BADGES: Record<string, string> = {
   completed: "bg-emerald-50 text-emerald-700 border-emerald-100/50",
@@ -18,6 +19,7 @@ interface RecentOrdersTableProps {
 }
 
 export function RecentOrdersTable({ from, to, paymentMethod }: RecentOrdersTableProps) {
+  const router = useAppRouter();
   const { data: response, isLoading } = useTransactions({
     from: from || undefined,
     to: to || undefined,
@@ -100,7 +102,8 @@ export function RecentOrdersTable({ from, to, paymentMethod }: RecentOrdersTable
                 return (
                   <tr
                     key={trx.id}
-                    className="border-b border-slate-50 hover:bg-slate-50/70 transition-colors group"
+                    onClick={() => router.push(`/admin/transactions/${trx.id}`)}
+                    className="border-b border-slate-50 hover:bg-slate-50/70 transition-colors group cursor-pointer"
                   >
                     {/* Order ID */}
                     <td className="py-3 pr-4">
@@ -142,6 +145,13 @@ export function RecentOrdersTable({ from, to, paymentMethod }: RecentOrdersTable
                     <td className="py-3 pr-4">
                       <span className={`text-[9px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded-full border ${badgeClass}`}>
                         {statusLabel}
+                      </span>
+                    </td>
+
+                    {/* Action */}
+                    <td className="py-3 text-right">
+                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-lg text-slate-400 group-hover:text-indigo-600 group-hover:bg-indigo-50 transition-all">
+                        <IconArrowUpRight size={14} className="stroke-[2.5]" />
                       </span>
                     </td>
                   </tr>

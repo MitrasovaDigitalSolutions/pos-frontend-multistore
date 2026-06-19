@@ -16,7 +16,7 @@ export function LowStockTable({
     isLoading = false,
 }: LowStockTableProps) {
     const lowStockProducts = useMemo(() => {
-        return products.filter((p) => p.stok <= 10);
+        return products.filter((p) => !p.is_jasa && p.stok <= 10);
     }, [products]);
 
     const columns = useMemo<ColumnDef<Product>[]>(

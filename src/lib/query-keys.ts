@@ -95,7 +95,7 @@ export const queryKeys = {
     transactions: {
         all: ["transactions"] as const,
         onHold: () => [...queryKeys.transactions.all, "on-hold"] as const,
-        detail: (id: number) =>
+        detail: (id: number | string) =>
             [...queryKeys.transactions.all, "detail", id] as const,
     },
 
