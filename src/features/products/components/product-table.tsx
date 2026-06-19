@@ -126,9 +126,16 @@ export function ProductTable({
                     accessorKey: "nama",
                     header: "Nama Produk",
                     cell: ({ row }) => (
-                        <span className="font-semibold text-slate-800">
-                            {row.original.nama}
-                        </span>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="font-semibold text-slate-800">
+                                {row.original.nama}
+                            </span>
+                            {row.original.is_jasa && (
+                                <span className="badge text-[9px] border-none bg-blue-50 text-blue-700 w-fit px-1.5 py-px rounded font-semibold">
+                                    Jasa
+                                </span>
+                            )}
+                        </div>
                     ),
                     size: 240
                 },

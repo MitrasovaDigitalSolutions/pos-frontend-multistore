@@ -11,7 +11,8 @@ import { useBrands } from "@/features/brands/api/brands-api";
 import { useCategories } from "@/features/categories/api/categories-api";
 import { IconPackage } from "@tabler/icons-react";
 import { useEffect, useMemo } from "react";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, Controller } from "react-hook-form";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useCreateProduct, useUpdateProduct } from "../api/products-api";
 import { type ProductInput } from "../schemas/product-schema";
@@ -36,6 +37,7 @@ export function ProductFormDialog({
         handleSubmit,
         watch,
         setValue,
+        control,
         formState: { errors },
     } = useFormContext<ProductInput>();
 
@@ -65,6 +67,13 @@ export function ProductFormDialog({
     const hargaBeli = watch("harga_beli");
     const harga = watch("harga");
     const margin = watch("margin");
+    const isJasa = watch("is_jasa");
+
+    useEffect(() => {
+        if (isJasa) {
+            setValue("stok", 0);
+        }
+    }, [isJasa, setValue]);
 
     useEffect(() => {
         const activeId = document.activeElement?.id;
@@ -127,6 +136,8 @@ export function ProductFormDialog({
         if (data.image instanceof File) {
             formData.append("image", data.image);
         }
+
+        formData.append("is_jasa", data.is_jasa ? "1" : "0");
 
         if (editingProduct) {
             formData.append("_method", "PUT");
@@ -257,15 +268,42 @@ export function ProductFormDialog({
                             <FormNumberInput<ProductInput>
                                 name="stok"
                                 label="Stok"
-                                placeholder="50"
-                                disabled={isPending || !!editingProduct}
+                                placeholder={isJasa ? "0" : "50"}
+                                disabled={isPending || !!editingProduct || isJasa}
                                 helperText={
-                                    editingProduct ? (
+                                    isJasa ? (
+                                        <p className="text-[9px] text-blue-500 font-semibold mt-0.5 leading-snug">
+                                            Stok produk jasa selalu bernilai 0.
+                                        </p>
+                                    ) : editingProduct ? (
                                         <p className="text-[9px] text-slate-400 font-semibold mt-0.5 leading-snug">
                                             Stok hanya dapat disesuaikan melalui menu stok masuk/keluar.
                                         </p>
                                     ) : undefined
                                 }
+                            />
+                        </div>
+
+                        {/* Status Jasa / Layanan */}
+                        <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                            <div className="space-y-0.5">
+                                <label className="text-xs font-bold text-slate-800">
+                                    Produk Jasa / Layanan
+                                </label>
+                                <p className="text-[10px] text-slate-400">
+                                    Aktifkan jika produk ini berupa layanan atau jasa yang tidak memerlukan stok fisik.
+                                </p>
+                            </div>
+                            <Controller
+                                name="is_jasa"
+                                control={control}
+                                render={({ field }) => (
+                                    <Switch
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                        disabled={isPending}
+                                    />
+                                )}
                             />
                         </div>
 

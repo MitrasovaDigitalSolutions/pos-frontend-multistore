@@ -101,6 +101,7 @@ export function Products() {
       category_id: null,
       brand_id: null,
       image: null,
+      is_jasa: false,
     },
   });
 
@@ -126,6 +127,7 @@ export function Products() {
       category_id: product.category_id ?? null,
       brand_id: product.brand_id ?? null,
       image: null,
+      is_jasa: !!product.is_jasa,
     });
     setIsDialogOpen(true);
   };
@@ -143,6 +145,7 @@ export function Products() {
       category_id: null,
       brand_id: null,
       image: null,
+      is_jasa: false,
     });
     setIsDialogOpen(true);
   };

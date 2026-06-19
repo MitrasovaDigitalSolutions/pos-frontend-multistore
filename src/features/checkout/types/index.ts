@@ -6,6 +6,7 @@ export interface CartItem {
     qty: number;
     stock: number;
     barcode: string | null;
+    is_jasa?: boolean;
 }
 
 export interface HoldTransaction {

@@ -116,13 +116,13 @@ export function useCheckoutState() {
             toast.error("Produk ini tidak aktif.");
             return;
         }
-        if (product.stok <= 0) {
+        if (!product.is_jasa && product.stok <= 0) {
             toast.error(`Stok ${product.nama} habis!`);
             return;
         }
 
         const existing = cart.find((i) => i.product_id === product.id);
-        if (existing && existing.qty >= product.stok) {
+        if (!product.is_jasa && existing && existing.qty >= product.stok) {
             toast.error(`Stok ${product.nama} tidak mencukupi!`);
             return;
         }
@@ -136,6 +136,7 @@ export function useCheckoutState() {
                 qty: 1,
                 stock: product.stok,
                 barcode: product.barcode || null,
+                is_jasa: !!product.is_jasa,
             });
             toast.success(`${product.nama} ditambahkan.`);
             setTimeout(() => barcodeInputRef.current?.focus(), 50);
@@ -151,7 +152,7 @@ export function useCheckoutState() {
             handleRemoveItem(item);
             return;
         }
-        if (newQty > item.stock) {
+        if (!item.is_jasa && newQty > item.stock) {
             toast.error(`Stok ${item.name} tidak mencukupi! Maksimal: ${item.stock}`);
             return;
         }

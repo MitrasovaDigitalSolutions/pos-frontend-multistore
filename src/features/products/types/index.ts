@@ -14,6 +14,7 @@ export interface Product {
     category_id?: number | null;
     brand_id?: number | null;
     image_path?: string | null;
+    is_jasa?: boolean;
     category?: Category | null;
     brand?: Brand | null;
     created_at?: string;
