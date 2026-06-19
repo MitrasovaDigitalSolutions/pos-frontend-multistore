@@ -13,6 +13,7 @@ import { BukaShiftModal, InfoSesiAktifModal } from "@/features/checkout/componen
 import { useCurrentCashDrawer } from "@/features/checkout/api/cash-drawer-api";
 import { signOut } from "@/lib/auth-helpers";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { cn } from "@/lib/utils";
 
 export function Checkout() {
     const state = useCheckoutState();
@@ -21,6 +22,7 @@ export function Checkout() {
     const [isInfoSesiOpen, setIsInfoSesiOpen] = useState(false);
     const [hasAutoOpened, setHasAutoOpened] = useState(false);
     const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+    const [activeMobileTab, setActiveMobileTab] = useState<"cart" | "totals">("cart");
 
     const cashDrawerToken = state.session?.accessToken;
 
@@ -71,7 +73,7 @@ export function Checkout() {
     };
 
     return (
-        <div className="grow flex flex-col h-screen overflow-hidden bg-slate-100 relative pb-8">
+        <div className="grow flex flex-col h-screen overflow-hidden bg-slate-100 relative pb-0 md:pb-8">
             {/* Top Bar */}
             <CheckoutTopBar
                 transactionId={state.transactionId}
@@ -82,39 +84,69 @@ export function Checkout() {
                 onDashboardClick={() => state.router.push("/admin")}
             />
 
-            <div className="grid grid-cols-[65%_35%] h-[calc(100vh-80px)] overflow-hidden">
+            {/* Mobile Tab Switcher */}
+            <div className="flex md:hidden bg-white border-b border-slate-200 shrink-0">
+                <button
+                    onClick={() => setActiveMobileTab("cart")}
+                    className={cn(
+                        "flex-1 py-3 text-xs font-bold text-center border-b-2 transition-all outline-none cursor-pointer",
+                        activeMobileTab === "cart"
+                            ? "border-emerald-600 text-emerald-600"
+                            : "border-transparent text-slate-500 hover:text-slate-700"
+                    )}
+                >
+                    Keranjang ({state.cart.length})
+                </button>
+                <button
+                    onClick={() => setActiveMobileTab("totals")}
+                    className={cn(
+                        "flex-1 py-3 text-xs font-bold text-center border-b-2 transition-all outline-none cursor-pointer",
+                        activeMobileTab === "totals"
+                            ? "border-emerald-600 text-emerald-600"
+                            : "border-transparent text-slate-500 hover:text-slate-700"
+                    )}
+                >
+                    Ringkasan & Bayar
+                </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-[60%_40%] lg:grid-cols-[65%_35%] h-[calc(100vh-92px)] md:h-[calc(100vh-80px)] overflow-hidden">
                 {/* Left: Cart */}
-                <CheckoutCartSection
-                    isProcessing={state.isProcessing}
-                    cart={state.cart}
-                    barcodeInputRef={state.barcodeInputRef}
-                    onCatalogOpen={() => state.setIsCatalogOpen(true)}
-                    onUpdateQty={state.handleUpdateQty}
-                    onRemoveItem={state.handleRemoveItem}
-                    onAddProduct={state.handleAddProduct}
-                />
+                <div className={cn("h-full flex flex-col min-h-0", activeMobileTab !== "cart" && "hidden md:flex")}>
+                    <CheckoutCartSection
+                        isProcessing={state.isProcessing}
+                        cart={state.cart}
+                        barcodeInputRef={state.barcodeInputRef}
+                        onCatalogOpen={() => state.setIsCatalogOpen(true)}
+                        onUpdateQty={state.handleUpdateQty}
+                        onRemoveItem={state.handleRemoveItem}
+                        onAddProduct={state.handleAddProduct}
+                    />
+                </div>
 
                 {/* Right: Totals & Actions */}
-                <CheckoutTotalsSection
-                    transactionId={state.transactionId}
-                    cashierName={state.user?.name || ""}
-                    trxTime={state.trxTime}
-                    subtotal={state.subtotal}
-                    ppn={state.ppn}
-                    grandTotal={state.grandTotal}
-                    cartLength={state.cart.length}
-                    isProcessing={state.isProcessing}
-                    selectedMember={state.selectedMember}
-                    onMemberChange={state.setSelectedMember}
-                    onHold={state.handleHold}
-                    onRecallOpen={state.openHoldList}
-                    onVoid={state.handleVoidDraft}
-                    onPayOpen={() => state.setIsPayModalOpen(true)}
-                />
+                <div className={cn("h-full min-h-0", activeMobileTab !== "totals" && "hidden md:block")}>
+                    <CheckoutTotalsSection
+                        transactionId={state.transactionId}
+                        cashierName={state.user?.name || ""}
+                        trxTime={state.trxTime}
+                        subtotal={state.subtotal}
+                        ppn={state.ppn}
+                        grandTotal={state.grandTotal}
+                        cartLength={state.cart.length}
+                        isProcessing={state.isProcessing}
+                        selectedMember={state.selectedMember}
+                        onMemberChange={state.setSelectedMember}
+                        onHold={state.handleHold}
+                        onRecallOpen={state.openHoldList}
+                        onVoid={state.handleVoidDraft}
+                        onPayOpen={() => state.setIsPayModalOpen(true)}
+                    />
+                </div>
             </div>
 
             {/* Shortcuts Bar */}
-            <div className="absolute left-0 right-0 bottom-0 h-8 bg-slate-900 text-slate-400 flex items-center px-6 text-[10px] gap-6 font-semibold select-none z-10">
+            <div className="hidden md:flex absolute left-0 right-0 bottom-0 h-8 bg-slate-900 text-slate-400 items-center px-6 text-[10px] gap-6 font-semibold select-none z-10">
                 <div className="flex gap-1">
                     <span className="bg-slate-800 text-white px-1.5 py-0.5 rounded font-bold">F1</span> Bayar
                 </div>

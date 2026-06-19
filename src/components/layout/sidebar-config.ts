@@ -64,16 +64,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") || hasPermission(roles, permissions, "create_sales"),
             },
-            {
-                type: "link",
-                path: ROUTES.ADMIN_CASH_ACCOUNTS,
-                label: "Kas & Bank",
-                icon: IconWallet,
-                permission: (roles, permissions) =>
-                    hasRole(roles, "admin") ||
-                    hasPermission(roles, permissions, "manage_cash_accounts") ||
-                    hasPermission(roles, permissions, "view_cash_drawer"),
-            },
+
         ],
     },
 
