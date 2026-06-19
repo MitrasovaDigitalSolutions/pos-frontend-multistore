@@ -92,7 +92,7 @@ export function ExpenseDialog({
                     <span>{isEdit ? "Ubah Catatan Pengeluaran" : "Catat Transaksi Pengeluaran"}</span>
                 </>
             }
-            className="max-w-lg"
+            className="sm:max-w-lg"
         >
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4">
                 <div className="grid grid-cols-2 gap-4">
