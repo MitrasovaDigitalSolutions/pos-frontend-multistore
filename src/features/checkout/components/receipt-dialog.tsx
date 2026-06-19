@@ -64,6 +64,12 @@ export function ReceiptDialog({
                                         {new Date().toLocaleDateString("id-ID")}
                                     </span>
                                 </div>
+                                {receipt?.member && (
+                                    <div className="flex justify-between font-bold text-slate-600">
+                                        <span>Member:</span>
+                                        <span>{receipt.member.nama} ({receipt.member.kode})</span>
+                                    </div>
+                                )}
                             </div>
                             <div className="border-t border-dashed border-slate-300 my-2"></div>
                             

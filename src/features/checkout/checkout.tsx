@@ -104,6 +104,8 @@ export function Checkout() {
                     grandTotal={state.grandTotal}
                     cartLength={state.cart.length}
                     isProcessing={state.isProcessing}
+                    selectedMember={state.selectedMember}
+                    onMemberChange={state.setSelectedMember}
                     onHold={state.handleHold}
                     onRecallOpen={state.openHoldList}
                     onVoid={state.handleVoidDraft}
@@ -179,6 +181,7 @@ export function Checkout() {
                 }))}
                 discount={0}
                 tax={state.ppn}
+                selectedMember={state.selectedMember}
                 onPaySuccess={state.handlePaymentSuccess}
             />
 

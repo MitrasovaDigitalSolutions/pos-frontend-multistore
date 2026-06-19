@@ -24,6 +24,7 @@ export function useCheckoutState() {
     // Connect to local checkout Zustand store
     const storeCart = useCheckoutStore((state) => state.cart);
     const storeHoldList = useCheckoutStore((state) => state.holdList);
+    const storeSelectedMember = useCheckoutStore((state) => state.selectedMember);
     const addItem = useCheckoutStore((state) => state.addItem);
     const updateItemQty = useCheckoutStore((state) => state.updateItemQty);
     const removeItem = useCheckoutStore((state) => state.removeItem);
@@ -31,6 +32,7 @@ export function useCheckoutState() {
     const addHoldTransaction = useCheckoutStore((state) => state.addHoldTransaction);
     const removeHoldTransaction = useCheckoutStore((state) => state.removeHoldTransaction);
     const clearHoldList = useCheckoutStore((state) => state.clearHoldList);
+    const setSelectedMember = useCheckoutStore((state) => state.setSelectedMember);
 
     // Hydration check to prevent Next.js hydration mismatches
     const [mounted, setMounted] = useState(false);
@@ -40,9 +42,10 @@ export function useCheckoutState() {
         setTimeout(() => barcodeInputRef.current?.focus(), 100);
     }, []);
 
-    // Expose cart & holdList safely
+    // Expose cart, holdList & selectedMember safely
     const cart = useMemo(() => (mounted ? storeCart : []), [mounted, storeCart]);
     const holdList = useMemo(() => (mounted ? storeHoldList : []), [mounted, storeHoldList]);
+    const selectedMember = useMemo(() => (mounted ? storeSelectedMember : null), [mounted, storeSelectedMember]);
 
     // Recalled transaction reference ID (purely for local UI representation)
     const [activeRecallId, setActiveRecallId] = useState<number | null>(null);
@@ -80,6 +83,7 @@ export function useCheckoutState() {
                 subtotal,
                 created_at: new Date().toISOString(),
                 items: cart,
+                member: selectedMember,
             };
 
             addHoldTransaction(newHold);
@@ -91,7 +95,7 @@ export function useCheckoutState() {
         } finally {
             setIsProcessing(false);
         }
-    }, [cart, subtotal, addHoldTransaction, clearCart, activeRecallId]);
+    }, [cart, subtotal, addHoldTransaction, clearCart, activeRecallId, selectedMember]);
 
     const openHoldList = useCallback(() => {
         setIsHoldListOpen(true);
@@ -214,6 +218,7 @@ export function useCheckoutState() {
                     subtotal: activeCart.reduce((acc, i) => acc + i.price * i.qty, 0),
                     created_at: new Date().toISOString(),
                     items: activeCart,
+                    member: useCheckoutStore.getState().selectedMember,
                 };
                 addHoldTransaction(autoHoldItem);
                 toast.info("Transaksi sebelumnya otomatis di-hold.");
@@ -221,6 +226,7 @@ export function useCheckoutState() {
 
             // Load items into cart
             useCheckoutStore.getState().setCart(held.items);
+            useCheckoutStore.getState().setSelectedMember(held.member || null);
             setActiveRecallId(held.id);
             // Remove from holdList
             removeHoldTransaction(holdTrxId);
@@ -315,6 +321,8 @@ export function useCheckoutState() {
         transactionId: activeRecallId,
         cart,
         holdList,
+        selectedMember,
+        setSelectedMember,
         barcodeInput,
         setBarcodeInput,
         isCatalogOpen,

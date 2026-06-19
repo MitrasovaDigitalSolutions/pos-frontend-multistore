@@ -13,6 +13,7 @@ export const ROUTES = {
     ADMIN_SUPPLIERS: "/admin/suppliers",
     ADMIN_CATEGORIES: "/admin/categories",
     ADMIN_BRANDS: "/admin/brands",
+    ADMIN_MEMBERS: "/admin/members",
     ADMIN_REPORTS: "/admin/reports",
     ADMIN_USERS: "/admin/users",
     ADMIN_SETTINGS: "/admin/settings",

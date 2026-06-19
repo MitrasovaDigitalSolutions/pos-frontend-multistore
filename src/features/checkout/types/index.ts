@@ -1,3 +1,5 @@
+import type { Member } from "@/features/members/types";
+
 export interface CartItem {
     product_id: number;
     itemId?: number; // backend transaction_item id
@@ -15,6 +17,7 @@ export interface HoldTransaction {
     subtotal: number;
     created_at: string;
     items: CartItem[];
+    member?: Member | null;
 }
 
 export interface ReceiptItem {
@@ -35,6 +38,8 @@ export interface Receipt {
     kembalian?: number;
     jenis_kartu?: string;
     nomor_kartu_akhir?: string;
+    member?: Member | null;
+    member_id?: number | null;
 }
 
 export interface TrxItem {

@@ -11,7 +11,12 @@ import {
     IconPrinter,
     IconLoader2,
     IconCash,
+    IconUser,
+    IconX,
 } from "@tabler/icons-react";
+import { useAllMembers } from "@/features/members/api/members-api";
+import { CommandSelect } from "@/components/ui/command-select";
+import type { Member } from "@/features/members/types";
 
 interface CheckoutTotalsSectionProps {
     transactionId: number | null;
@@ -22,6 +27,8 @@ interface CheckoutTotalsSectionProps {
     grandTotal: number;
     cartLength: number;
     isProcessing: boolean;
+    selectedMember: Member | null;
+    onMemberChange: (member: Member | null) => void;
     onHold: () => void;
     onRecallOpen: () => void;
     onVoid: () => void;
@@ -37,11 +44,22 @@ export function CheckoutTotalsSection({
     grandTotal,
     cartLength,
     isProcessing,
+    selectedMember,
+    onMemberChange,
     onHold,
     onRecallOpen,
     onVoid,
     onPayOpen,
 }: CheckoutTotalsSectionProps) {
+    const { data: members = [], isLoading: isMembersLoading } = useAllMembers();
+
+    const memberOptions = members
+        .filter((m) => m.status === "active")
+        .map((m) => ({
+            value: String(m.id),
+            label: `${m.nama} (${m.kode}) - ${m.poin} Poin`,
+        }));
+
     return (
         <div className="bg-emerald-50/30 p-6 flex flex-col justify-between h-full">
             <div>
@@ -65,6 +83,50 @@ export function CheckoutTotalsSection({
                             {trxTime}
                         </span>
                     </div>
+                </div>
+
+                {/* Member Info */}
+                <div className="bg-white border border-slate-100 rounded-xl p-4 shadow-sm mb-4 space-y-2.5">
+                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        <span>Pelanggan / Member</span>
+                        {selectedMember && (
+                            <button
+                                onClick={() => onMemberChange(null)}
+                                className="text-rose-500 hover:bg-rose-50 p-1 rounded-lg transition-colors cursor-pointer border-none bg-transparent"
+                                title="Hapus Member"
+                            >
+                                <IconX size={14} />
+                            </button>
+                        )}
+                    </div>
+                    {selectedMember ? (
+                        <div className="flex items-center gap-3 bg-emerald-50/50 border border-emerald-100 p-2.5 rounded-xl">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                <IconUser size={16} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <div className="text-xs font-bold text-slate-900 truncate">
+                                    {selectedMember.nama}
+                                </div>
+                                <div className="text-[10px] font-medium text-slate-500 truncate">
+                                    {selectedMember.kode} • <span className="font-bold text-emerald-600">{selectedMember.poin} Poin</span>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <CommandSelect
+                            options={memberOptions}
+                            value=""
+                            onChange={(val) => {
+                                const found = members.find((m) => String(m.id) === val);
+                                if (found) onMemberChange(found);
+                            }}
+                            placeholder="Pilih member loyalitas..."
+                            searchPlaceholder="Cari nama atau kode member..."
+                            isLoading={isMembersLoading}
+                            size="sm"
+                        />
+                    )}
                 </div>
 
                 {/* Totals */}

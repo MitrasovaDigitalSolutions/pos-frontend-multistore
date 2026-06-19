@@ -104,4 +104,10 @@ export const queryKeys = {
         all: ["activity-logs"] as const,
         list: () => [...queryKeys.activityLogs.all, "list"] as const,
     },
+
+    // Members
+    members: {
+        all: ["members"] as const,
+        list: () => [...queryKeys.members.all, "list"] as const,
+    },
 } as const;

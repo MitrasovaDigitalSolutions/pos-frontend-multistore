@@ -169,6 +169,12 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
                         <span>Status:</span>
                         <span className="uppercase font-bold">{transaction.status}</span>
                     </div>
+                    {transaction.member && (
+                        <div className="flex justify-between font-bold">
+                            <span>Member:</span>
+                            <span>{transaction.member.nama} ({transaction.member.kode})</span>
+                        </div>
+                    )}
                     <div className="border-t border-dashed border-gray-400 my-2" />
                 </div>
 
@@ -475,6 +481,16 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
                                         <div className="font-semibold text-slate-100">{formattedDate}</div>
                                     </div>
                                 </div>
+
+                                {transaction.member && (
+                                    <div className="flex items-start gap-3 pt-2 border-t border-slate-800">
+                                        <IconUser size={16} className="text-indigo-400 mt-0.5 shrink-0" />
+                                        <div>
+                                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Member / Pelanggan</div>
+                                            <div className="font-bold text-slate-100">{transaction.member.nama} ({transaction.member.kode})</div>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {transaction.status?.toLowerCase() === "canceled" && (
                                     <div className="flex items-start gap-3 pt-2 border-t border-slate-800">

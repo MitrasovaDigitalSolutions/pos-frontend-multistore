@@ -100,6 +100,14 @@ const PERMISSION_METADATA: Record<string, { label: string; desc: string }> = {
         label: "Lihat Supplier",
         desc: "Melihat daftar supplier dan informasi kontak distributor tanpa hak mengubah.",
     },
+    manage_members: {
+        label: "Kelola Member",
+        desc: "Menambah, mengedit, dan menghapus master data member loyalitas pelanggan.",
+    },
+    view_members: {
+        label: "Lihat Member",
+        desc: "Melihat daftar member dan poin loyalitas pelanggan tanpa hak mengubah.",
+    },
     view_audit_logs: {
         label: "Lihat Audit Logs",
         desc: "Mengakses catatan riwayat log aktivitas sistem dan audit keamanan.",
@@ -119,6 +127,14 @@ const PERMISSION_METADATA: Record<string, { label: string; desc: string }> = {
     manage_cash_accounts: {
         label: "Kelola Kas & Bank",
         desc: "Melakukan transfer antar kas, penyesuaian debit manual, dan kredit manual saldo kas.",
+    },
+    manage_expenses: {
+        label: "Kelola Pengeluaran",
+        desc: "Menambah, mengedit, dan menghapus pengeluaran operasional toko.",
+    },
+    view_expenses: {
+        label: "Lihat Pengeluaran",
+        desc: "Melihat riwayat dan rincian pengeluaran operasional toko tanpa hak mengubah.",
     },
 };
 
@@ -143,10 +159,10 @@ const PERMISSION_CATEGORIES: StaticPermissionCategory[] = [
     {
         id: "users",
         label: "Manajemen Pengguna & Akses",
-        desc: "Mengatur data karyawan, hak akses role, serta menonaktifkan akun karyawan.",
+        desc: "Mengatur data karyawan, member loyalitas pelanggan, hak akses role, serta menonaktifkan akun karyawan.",
         icon: IconUsers,
         colorClass: "text-emerald-600 bg-emerald-50 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/20",
-        permissions: ["manage_users", "view_users"],
+        permissions: ["manage_users", "view_users", "manage_members", "view_members"],
     },
     {
         id: "products",
@@ -175,10 +191,10 @@ const PERMISSION_CATEGORIES: StaticPermissionCategory[] = [
     {
         id: "cash_drawer",
         label: "Laci Kas & Rekening (Finance)",
-        desc: "Operasional shift kasir, saldo awal/akhir laci, kas masuk/keluar, transfer kas, dan credit/debit kas.",
+        desc: "Operasional shift kasir, saldo awal/akhir laci, kas masuk/keluar, transfer kas, credit/debit kas, dan pengeluaran operasional toko.",
         icon: IconCoin,
         colorClass: "text-teal-600 bg-teal-50 border-teal-100 dark:bg-teal-950/20 dark:text-teal-400 dark:border-teal-900/20",
-        permissions: ["operate_cash_drawer", "manage_cash_drawer", "view_cash_drawer", "manage_cash_accounts"],
+        permissions: ["operate_cash_drawer", "manage_cash_drawer", "view_cash_drawer", "manage_cash_accounts", "manage_expenses", "view_expenses"],
     },
     {
         id: "reports",
