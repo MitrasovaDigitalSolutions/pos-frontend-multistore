@@ -11,7 +11,8 @@ import {
     IconShoppingCart,
     IconTruckDelivery,
     IconUsers,
-    IconWallet
+    IconWallet,
+    IconReceipt
 } from "@tabler/icons-react";
 import { ArchiveX, Hourglass } from "lucide-react";
 
@@ -88,6 +89,16 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 icon: IconChartBar,
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+            },
+            {
+                type: "link",
+                path: ROUTES.ADMIN_TRANSACTIONS,
+                label: "Daftar Transaksi",
+                icon: IconReceipt,
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") ||
+                    hasPermission(roles, permissions, "view_sales") ||
+                    hasPermission(roles, permissions, "create_sales"),
             },
         ],
     },
