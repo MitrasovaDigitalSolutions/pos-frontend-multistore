@@ -3,11 +3,10 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import {
-  IconArrowRight,
   IconCash,
   IconReportMoney,
+  IconTrendingDown,
 } from "@tabler/icons-react";
-import Link from "next/link";
 import type { DashboardSummary } from "../types";
 
 interface StatMiniCardsProps {
@@ -15,17 +14,26 @@ interface StatMiniCardsProps {
   isLoading?: boolean;
 }
 
-
 export function StatMiniCards({ summary, isLoading }: StatMiniCardsProps) {
-
   const netSales = summary?.net_sales ?? 0;
-  const grossProfit = summary?.gross_profit ?? 0;
-  const profitMargin = summary?.profit_margin ?? 0;
+  const grossSales = summary?.gross_sales ?? 0;
+  const totalExpenses = summary?.total_expenses ?? 0;
+  const recurringExpenses = summary?.total_recurring_expenses ?? 0;
+  const oneTimeExpenses = summary?.total_one_time_expenses ?? 0;
+  const netProfit = summary?.net_profit ?? 0;
+
+  const netProfitMargin = netSales > 0 ? (netProfit / netSales) * 100 : 0;
+
+  const formatCompact = (val: number) => {
+    if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(2)}jt`;
+    if (val >= 1_000) return `${(val / 1_000).toFixed(0)}k`;
+    return val === 0 ? "0" : formatRupiah(val);
+  };
 
   return (
-    <div className="flex flex-col gap-3.5 h-full">
+    <div className="flex flex-col gap-2 h-full">
       {/* Card 1: Penjualan Bersih */}
-      <div className="flex-1 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-4 flex flex-col justify-between min-h-0">
+      <div className="flex-1 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-3 flex flex-col justify-between min-h-0">
         <div>
           <div className="flex items-center justify-between">
             <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
@@ -36,92 +44,89 @@ export function StatMiniCards({ summary, isLoading }: StatMiniCardsProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 mt-1.5">
+          <div className="flex items-center gap-2 mt-1">
             {isLoading ? (
-              <Skeleton className="h-6 w-28 mt-0.5" />
+              <Skeleton className="h-5 w-28 mt-0.5" />
             ) : (
-              <span className="text-xl font-extrabold text-slate-800 tabular-nums leading-none tracking-tight">
-                {netSales >= 1_000_000
-                  ? `${(netSales / 1_000_000).toFixed(2)}jt`
-                  : netSales >= 1_000
-                    ? `${(netSales / 1_000).toFixed(0)}k`
-                    : netSales === 0
-                      ? "0"
-                      : formatRupiah(netSales)}
+              <span className="text-lg font-extrabold text-slate-800 tabular-nums leading-none tracking-tight">
+                {formatCompact(netSales)}
               </span>
             )}
           </div>
           {isLoading ? (
-            <Skeleton className="h-3 w-36 mt-1.5" />
+            <Skeleton className="h-2.5 w-36 mt-1" />
           ) : (
-            <p className="text-[9px] text-slate-400 font-semibold mt-1">
-              Omset: {formatRupiah(summary?.gross_sales ?? 0)}
+            <p className="text-[8px] text-slate-400 font-semibold mt-0.5">
+              Omset: {formatRupiah(grossSales)}
             </p>
           )}
         </div>
-
-        {/* Bottom: link + sparkline */}
-        <div className="flex items-end justify-between mt-2.5 pt-1.5 border-t border-slate-50">
-          <Link
-            href="/admin/reports"
-            className="text-[9px] font-extrabold text-slate-400 hover:text-indigo-600 transition-colors flex items-center gap-0.5 group"
-          >
-            Laporan <IconArrowRight size={10} className="transition-transform group-hover:translate-x-0.5" />
-          </Link>
-
-        </div>
       </div>
 
-      {/* Card 2: Laba Kotor */}
-      <div className="flex-1 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-4 flex flex-col justify-between min-h-0">
+      {/* Card 2: Pengeluaran */}
+      <div className="flex-1 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-3 flex flex-col justify-between min-h-0">
         <div>
           <div className="flex items-center justify-between">
             <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
-              Laba Kotor
+              Pengeluaran
+            </p>
+            <div className="w-6 h-6 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+              <IconTrendingDown size={14} className="stroke-[2.5]" />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 mt-1">
+            {isLoading ? (
+              <Skeleton className="h-5 w-28 mt-0.5" />
+            ) : (
+              <span className="text-lg font-extrabold text-slate-800 tabular-nums leading-none tracking-tight">
+                {formatCompact(totalExpenses)}
+              </span>
+            )}
+          </div>
+          {isLoading ? (
+            <Skeleton className="h-2.5 w-36 mt-1" />
+          ) : (
+            <p className="text-[8px] text-slate-400 font-semibold mt-0.5">
+              Rutin: {formatCompact(recurringExpenses)} | Sekali: {formatCompact(oneTimeExpenses)}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Card 3: Laba Bersih */}
+      <div className="flex-1 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-3 flex flex-col justify-between min-h-0">
+        <div>
+          <div className="flex items-center justify-between">
+            <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+              Laba Bersih
             </p>
             <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
               <IconReportMoney size={14} className="stroke-[2.5]" />
             </div>
           </div>
 
-          <div className="flex items-center gap-2 mt-1.5">
+          <div className="flex items-center gap-2 mt-1">
             {isLoading ? (
-              <Skeleton className="h-6 w-28 mt-0.5" />
+              <Skeleton className="h-5 w-28 mt-0.5" />
             ) : (
               <>
-                <span className="text-xl font-extrabold text-slate-800 tabular-nums leading-none tracking-tight">
-                  {grossProfit >= 1_000_000
-                    ? `${(grossProfit / 1_000_000).toFixed(2)}jt`
-                    : grossProfit >= 1_000
-                      ? `${(grossProfit / 1_000).toFixed(0)}k`
-                      : grossProfit === 0
-                        ? "0"
-                        : formatRupiah(grossProfit)}
+                <span className="text-lg font-extrabold text-slate-800 tabular-nums leading-none tracking-tight">
+                  {formatCompact(netProfit)}
                 </span>
                 <span className="inline-flex items-center gap-0.5 text-[8px] font-extrabold text-emerald-600 bg-emerald-50 border border-emerald-100/50 px-1 py-0.2 rounded-full select-none">
-                  {profitMargin.toFixed(1)}%
+                  {netProfitMargin.toFixed(1)}%
                 </span>
               </>
             )}
           </div>
           {isLoading ? (
-            <Skeleton className="h-3 w-36 mt-1.5" />
+            <Skeleton className="h-2.5 w-36 mt-1" />
           ) : (
-            <p className="text-[9px] text-slate-400 font-semibold mt-1">
+            <p className="text-[8px] text-slate-400 font-semibold mt-0.5">
               HPP: {formatRupiah(summary?.total_cogs ?? 0)}
             </p>
           )}
-        </div>
-
-        {/* Bottom: link + sparkline */}
-        <div className="flex items-end justify-between mt-2.5 pt-1.5 border-t border-slate-50">
-          <Link
-            href="/admin/reports"
-            className="text-[9px] font-extrabold text-slate-400 hover:text-emerald-600 transition-colors flex items-center gap-0.5 group"
-          >
-            Detail <IconArrowRight size={10} className="transition-transform group-hover:translate-x-0.5" />
-          </Link>
-
         </div>
       </div>
     </div>

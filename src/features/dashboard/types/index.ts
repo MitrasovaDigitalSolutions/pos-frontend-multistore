@@ -24,6 +24,10 @@ export interface DashboardSummary {
     total_cogs: number;
     gross_profit: number;
     profit_margin: number;
+    total_expenses: number;
+    total_recurring_expenses: number;
+    total_one_time_expenses: number;
+    net_profit: number;
     top_products: TopProduct[];
     top_products_by_quantity?: TopProduct[];
     top_products_by_profit?: TopProduct[];
@@ -34,6 +38,7 @@ export interface SalesHistoryItem {
     date: string;
     net_sales: number;
     gross_profit: number;
+    expenses: number;
 }
 
 export interface DashboardSummaryParams {

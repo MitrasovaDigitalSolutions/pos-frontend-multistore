@@ -37,10 +37,12 @@ function buildData(summary: DashboardSummary | undefined) {
   const demoProfit = profit === 0 ? 8000 : profit;
   const grossSeeds = [0.72, 0.52, 0.8, 0.5, 0.9, 1];
   const profitSeeds = [0.6, 0.4, 0.65, 0.35, 0.75, 0.8];
+  const expensesSeeds = [0.1, 0.15, 0.08, 0.12, 0.05, 0.1];
   return MONTHS.map((month, i) => ({
     month,
     revenue: Math.round(demoGross * grossSeeds[i]),
     profit: Math.round(demoProfit * profitSeeds[i]),
+    expenses: Math.round(demoGross * expensesSeeds[i]),
   }));
 }
 
@@ -103,6 +105,7 @@ export function RevenueChart({ summary, from, to }: RevenueChartProps) {
       month: formatDate(item.date),
       revenue: item.net_sales,
       profit: item.gross_profit,
+      expenses: item.expenses || 0,
     }))
     : buildData(summary);
   const gross = summary?.gross_sales ?? 0;
@@ -164,6 +167,10 @@ export function RevenueChart({ summary, from, to }: RevenueChartProps) {
             <span className="w-2.5 h-2 rounded-sm bg-teal-500 inline-block" />
             Laba Kotor
           </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2 rounded-sm bg-rose-500 inline-block" />
+            Pengeluaran
+          </span>
         </div>
 
         {/* Chart – only render in browser to avoid SSR warning */}
@@ -209,6 +216,15 @@ export function RevenueChart({ summary, from, to }: RevenueChartProps) {
                     dataKey="profit"
                     name="Laba Kotor"
                     stroke="#14b8a6"
+                    strokeWidth={2}
+                    dot={{ r: 3, strokeWidth: 1 }}
+                    activeDot={{ r: 5 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="expenses"
+                    name="Pengeluaran"
+                    stroke="#f43f5e"
                     strokeWidth={2}
                     dot={{ r: 3, strokeWidth: 1 }}
                     activeDot={{ r: 5 }}
