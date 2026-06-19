@@ -16,6 +16,7 @@ interface FilterFormProps<T extends FieldValues> {
     submitIcon?: React.ReactNode;
     titleLabel?: string;
     titleIcon?: React.ReactNode;
+    cols?: number;
 }
 
 export function FilterForm<T extends FieldValues>({
@@ -28,6 +29,7 @@ export function FilterForm<T extends FieldValues>({
     submitIcon,
     titleLabel,
     titleIcon,
+    cols,
 }: FilterFormProps<T>) {
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -46,13 +48,13 @@ export function FilterForm<T extends FieldValues>({
     const resolvedSubmitLabel = submitLabel || (isSingleFilter ? "Cari" : "Filter");
 
     // Dynamic grid columns for multi-filter layouts
-    const cols = Math.min(Math.max(childCount, 1), 4);
+    const resolvedCols = cols !== undefined ? cols : Math.min(Math.max(childCount, 1), 4);
     const gridColsClass = {
         1: "md:grid-cols-1",
         2: "md:grid-cols-2",
         3: "md:grid-cols-3",
         4: "md:grid-cols-4",
-    }[cols as 1 | 2 | 3 | 4] || "md:grid-cols-4";
+    }[resolvedCols as 1 | 2 | 3 | 4] || "md:grid-cols-4";
 
     // Optimized layout for single-filter (search-only) forms: render inline in a single row
     if (isSingleFilter) {

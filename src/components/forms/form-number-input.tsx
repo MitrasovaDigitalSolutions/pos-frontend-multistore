@@ -22,6 +22,8 @@ interface FormNumberInputProps<T extends FieldValues> extends Omit<
     helperText?: React.ReactNode;
     allowNegative?: boolean;
     onValueChange?: (val: number | null) => void;
+    min?: number;
+    max?: number;
 }
 
 export function FormNumberInput<T extends FieldValues>({
@@ -32,6 +34,9 @@ export function FormNumberInput<T extends FieldValues>({
     className,
     disabled,
     onValueChange,
+    min,
+    max,
+    onBlur,
     ...props
 }: FormNumberInputProps<T>) {
     const {
@@ -173,7 +178,13 @@ export function FormNumberInput<T extends FieldValues>({
                     }
 
                     // Standardize digits and separator
-                    const parsed = parseNumber(rawValue);
+                    let parsed = parseNumber(rawValue);
+
+                    // Clamp value to max immediately on change if max is defined
+                    if (parsed !== null && max !== undefined && parsed > max) {
+                        parsed = max;
+                        rawValue = String(max);
+                    }
 
                     // Count "content characters" (digits, commas, and minus) before cursor to adjust cursor selection
                     const contentBeforeCursor = rawValue
@@ -204,6 +215,25 @@ export function FormNumberInput<T extends FieldValues>({
                     setCursorPosition(newSelectionStart);
                 };
 
+                const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+                    const parsed = parseNumber(localValue);
+                    if (parsed !== null) {
+                        let adjusted = parsed;
+                        if (min !== undefined && adjusted < min) {
+                            adjusted = min;
+                        }
+                        if (max !== undefined && adjusted > max) {
+                            adjusted = max;
+                        }
+                        if (adjusted !== parsed) {
+                            setLocalValue(formatNumber(adjusted));
+                            onChange(adjusted);
+                            onValueChange?.(adjusted);
+                        }
+                    }
+                    onBlur?.(e);
+                };
+
                 return (
                     <div className="space-y-1.5">
                         {label && (
@@ -223,6 +253,7 @@ export function FormNumberInput<T extends FieldValues>({
                             type="text"
                             value={localValue}
                             onChange={handleChange}
+                            onBlur={handleBlur}
                             disabled={disabled}
                             className={cn(
                                 "h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl disabled:bg-slate-50 disabled:text-slate-400 disabled:border-slate-200",

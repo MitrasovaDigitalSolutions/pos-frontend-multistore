@@ -86,7 +86,7 @@ export function MemberDialog({
                     <span>{isEdit ? "Ubah Data Member" : "Tambah Member Baru"}</span>
                 </>
             }
-            className="max-w-lg"
+            className="sm:max-w-lg"
         >
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4">
                 <div className="grid grid-cols-2 gap-4">

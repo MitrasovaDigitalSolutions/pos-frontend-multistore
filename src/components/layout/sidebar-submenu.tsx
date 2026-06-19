@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
-    IconChevronDown,
     IconChevronRight,
 } from "@tabler/icons-react";
 import Link from "next/link";
@@ -66,10 +65,10 @@ export function SidebarSubmenu({
     const getSubLinkClass = (path: string) => {
         const active = isActive(path);
         return cn(
-            "w-full flex items-center gap-3 px-3 py-2 rounded-lg font-bold text-[11px] transition-all text-left cursor-pointer border-none bg-transparent outline-none",
+            "w-full flex items-center gap-3 px-3 py-2 rounded-lg font-bold text-[11px] transition-all duration-200 text-left cursor-pointer border-none bg-transparent outline-none transform",
             active
                 ? "bg-emerald-600/20 text-emerald-400 font-extrabold"
-                : "text-gray-500 hover:text-gray-200 hover:bg-gray-950"
+                : "text-gray-500 hover:text-gray-200 hover:bg-gray-950 hover:translate-x-0.5"
         );
     };
 
@@ -88,18 +87,27 @@ export function SidebarSubmenu({
             <div className="space-y-1">
                 <button
                     onClick={() => setIsMasterOpen(!isMasterOpen)}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-bold text-xs text-gray-400 hover:text-white hover:bg-gray-900 transition-all text-left cursor-pointer border-none bg-transparent outline-none"
+                    className={cn(
+                        "w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-bold text-xs transition-all duration-200 text-left cursor-pointer border-none bg-transparent outline-none",
+                        isAnyActive
+                            ? "text-emerald-400 bg-emerald-950/30"
+                            : "text-gray-400 hover:text-white hover:bg-gray-900"
+                    )}
                 >
                     <div className="flex items-center gap-3">
-                        <Icon size={18} />
+                        <span className={cn("transition-colors duration-200", isAnyActive && "text-emerald-400")}>
+                            <Icon size={18} />
+                        </span>
                         <span>{label}</span>
                     </div>
                     <div className="text-gray-500">
-                        {isMasterOpen ? (
-                            <IconChevronDown size={14} />
-                        ) : (
-                            <IconChevronRight size={14} />
-                        )}
+                        <IconChevronRight
+                            size={14}
+                            className={cn(
+                                "transition-transform duration-200",
+                                isMasterOpen && "rotate-90 text-emerald-400"
+                            )}
+                        />
                     </div>
                 </button>
                 {isMasterOpen && (

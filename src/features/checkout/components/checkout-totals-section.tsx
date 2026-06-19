@@ -61,7 +61,7 @@ export function CheckoutTotalsSection({
         }));
 
     return (
-        <div className="bg-emerald-50/30 p-6 flex flex-col justify-between h-full">
+        <div className="bg-emerald-50/30 p-4 flex flex-col justify-between h-full">
             <div>
                 {/* Trx Info */}
                 <div className="bg-white border border-slate-100 rounded-xl p-4 space-y-2.5 shadow-sm mb-4">

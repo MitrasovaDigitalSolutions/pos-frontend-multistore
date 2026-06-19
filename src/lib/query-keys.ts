@@ -110,4 +110,12 @@ export const queryKeys = {
         all: ["members"] as const,
         list: () => [...queryKeys.members.all, "list"] as const,
     },
+
+    // Expenses
+    expenses: {
+        all: ["expenses"] as const,
+        list: () => [...queryKeys.expenses.all, "list"] as const,
+        categories: () => [...queryKeys.expenses.all, "categories"] as const,
+        upcoming: () => [...queryKeys.expenses.all, "upcoming"] as const,
+    },
 } as const;

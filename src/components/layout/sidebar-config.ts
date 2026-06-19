@@ -2,19 +2,16 @@ import { hasPermission, hasRole } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
 import {
     IconBox,
-    IconChartBar,
     IconDatabase,
     IconDeviceLaptop,
     IconHome,
     IconSettings,
     IconShieldLock,
     IconShoppingCart,
-    IconTruckDelivery,
-    IconUsers,
     IconWallet,
-    IconReceipt
+    IconReceipt,
+    IconUsers
 } from "@tabler/icons-react";
-import { ArchiveX, Hourglass } from "lucide-react";
 
 export interface SidebarMenuItem {
     type: "link";
@@ -47,7 +44,7 @@ export interface SidebarSectionConfig {
 }
 
 export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
-    // ─── Menu Utama ────────────────────────────────────────────────────────────
+    // ─── Menu Utama (Operasional Harian) ────────────────────────────────────────
     {
         title: "Menu Utama",
         items: [
@@ -67,115 +64,10 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") || hasPermission(roles, permissions, "create_sales"),
             },
-        ],
-    },
-
-    // ─── Penjualan ─────────────────────────────────────────────────────────────
-    {
-        title: "Penjualan",
-        items: [
-            {
-                type: "link",
-                path: ROUTES.ADMIN_CASH_DRAWER,
-                label: "Sesi Kasir",
-                icon: Hourglass,
-                permission: (roles, permissions) =>
-                    hasRole(roles, "admin") || hasPermission(roles, permissions, "view_cash_drawer"),
-            },
-            {
-                type: "link",
-                path: ROUTES.ADMIN_REPORTS,
-                label: "Laporan Penjualan",
-                icon: IconChartBar,
-                permission: (roles, permissions) =>
-                    hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
-            },
-            {
-                type: "link",
-                path: ROUTES.ADMIN_TRANSACTIONS,
-                label: "Daftar Transaksi",
-                icon: IconReceipt,
-                permission: (roles, permissions) =>
-                    hasRole(roles, "admin") ||
-                    hasPermission(roles, permissions, "view_sales") ||
-                    hasPermission(roles, permissions, "create_sales"),
-            },
-        ],
-    },
-
-    // ─── Pembelian ─────────────────────────────────────────────────────────────
-    {
-        title: "Pembelian",
-        items: [
-            {
-                type: "link",
-                path: ROUTES.ADMIN_PURCHASE_ORDER,
-                label: "Pemesanan",
-                icon: IconShoppingCart,
-                permission: (roles, permissions) =>
-                    hasRole(roles, "admin") ||
-                    hasPermission(roles, permissions, "view_purchase") ||
-                    hasPermission(roles, permissions, "manage_purchase"),
-            },
-            {
-                type: "link",
-                path: ROUTES.ADMIN_PURCHASE_RECEIVING,
-                label: "Penerimaan Barang",
-                icon: IconTruckDelivery,
-                permission: (roles, permissions) =>
-                    hasRole(roles, "admin") ||
-                    hasPermission(roles, permissions, "view_purchase") ||
-                    hasPermission(roles, permissions, "manage_purchase"),
-            },
-            {
-                type: "link",
-                path: ROUTES.ADMIN_PURCHASE_PAYMENT,
-                label: "Pembayaran",
-                icon: IconWallet,
-                permission: (roles, permissions) =>
-                    hasRole(roles, "admin") ||
-                    hasPermission(roles, permissions, "view_purchase") ||
-                    hasPermission(roles, permissions, "manage_purchase"),
-            },
-            {
-                type: "link",
-                path: ROUTES.ADMIN_PURCHASE_RETURN,
-                label: "Retur Pembelian",
-                icon: ArchiveX,
-                permission: (roles, permissions) =>
-                    hasRole(roles, "admin") ||
-                    hasPermission(roles, permissions, "view_purchase") ||
-                    hasPermission(roles, permissions, "manage_purchase"),
-            },
-        ],
-    },
-
-    // ─── Inventori ─────────────────────────────────────────────────────────────
-    {
-        title: "Inventori",
-        items: [
-            {
-                type: "link",
-                path: ROUTES.ADMIN_STOCK,
-                label: "Stok Opname",
-                icon: IconBox,
-                tab: "inventory",
-                permission: (roles, permissions) =>
-                    hasRole(roles, "admin") ||
-                    hasPermission(roles, permissions, "view_inventory") ||
-                    hasPermission(roles, permissions, "manage_inventory"),
-            },
-        ],
-    },
-
-    // ─── Keuangan ──────────────────────────────────────────────────────────────
-    {
-        title: "Keuangan",
-        items: [
             {
                 type: "link",
                 path: ROUTES.ADMIN_CASH_ACCOUNTS,
-                label: "Kelola Kas & Bank",
+                label: "Kas & Bank",
                 icon: IconWallet,
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") ||
@@ -185,18 +77,161 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
         ],
     },
 
-    // ─── Data Master ───────────────────────────────────────────────────────────
+    // ─── Transaksi & Inventori (Manajemen & Alur Kerja) ─────────────────────────
     {
-        title: "Data Master",
+        title: "Transaksi & Inventori",
         items: [
             {
                 type: "submenu",
-                label: "Produk & Katalog",
+                label: "Penjualan",
+                icon: IconReceipt,
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") ||
+                    hasPermission(roles, permissions, "view_cash_drawer") ||
+                    hasPermission(roles, permissions, "view_sales") ||
+                    hasPermission(roles, permissions, "create_sales") ||
+                    hasPermission(roles, permissions, "view_reports"),
+                items: [
+                    {
+                        path: ROUTES.ADMIN_CASH_DRAWER,
+                        label: "Sesi Kasir",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_cash_drawer"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_TRANSACTIONS,
+                        label: "Daftar Transaksi",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_sales") ||
+                            hasPermission(roles, permissions, "create_sales"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_REPORTS,
+                        label: "Laporan Penjualan",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                    },
+                ],
+            },
+            {
+                type: "submenu",
+                label: "Pembelian",
+                icon: IconShoppingCart,
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") ||
+                    hasPermission(roles, permissions, "view_purchase") ||
+                    hasPermission(roles, permissions, "manage_purchase"),
+                items: [
+                    {
+                        path: ROUTES.ADMIN_PURCHASE_ORDER,
+                        label: "Pemesanan",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_purchase") ||
+                            hasPermission(roles, permissions, "manage_purchase"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_PURCHASE_RECEIVING,
+                        label: "Penerimaan Barang",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_purchase") ||
+                            hasPermission(roles, permissions, "manage_purchase"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_PURCHASE_PAYMENT,
+                        label: "Pembayaran",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_purchase") ||
+                            hasPermission(roles, permissions, "manage_purchase"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_PURCHASE_RETURN,
+                        label: "Retur Pembelian",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_purchase") ||
+                            hasPermission(roles, permissions, "manage_purchase"),
+                    },
+                ],
+            },
+            {
+                type: "submenu",
+                label: "Inventori",
+                icon: IconBox,
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") ||
+                    hasPermission(roles, permissions, "view_inventory") ||
+                    hasPermission(roles, permissions, "manage_inventory"),
+                items: [
+                    {
+                        path: ROUTES.ADMIN_STOCK,
+                        label: "Stok Opname",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_inventory") ||
+                            hasPermission(roles, permissions, "manage_inventory"),
+                    },
+                ],
+            },
+            {
+                type: "submenu",
+                label: "Pengeluaran",
+                icon: IconReceipt,
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") ||
+                    hasPermission(roles, permissions, "view_expenses") ||
+                    hasPermission(roles, permissions, "manage_expenses"),
+                items: [
+                    {
+                        path: ROUTES.ADMIN_EXPENSES,
+                        label: "Catatan Pengeluaran",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_expenses") ||
+                            hasPermission(roles, permissions, "manage_expenses"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_EXPENSE_CATEGORIES,
+                        label: "Kategori Pengeluaran",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_expenses") ||
+                            hasPermission(roles, permissions, "manage_expenses"),
+                    },
+                ],
+            },
+            {
+                type: "link",
+                path: ROUTES.ADMIN_CASH_ACCOUNTS,
+                label: "Kas & Bank",
+                icon: IconWallet,
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") ||
+                    hasPermission(roles, permissions, "manage_cash_accounts") ||
+                    hasPermission(roles, permissions, "view_cash_drawer"),
+            },
+        ],
+    },
+
+    // ─── Data Master & Sistem (Setup & Konfigurasi) ─────────────────────────────
+    {
+        title: "Data Master & Sistem",
+        items: [
+            {
+                type: "submenu",
+                label: "Data Master",
                 icon: IconDatabase,
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") ||
                     hasPermission(roles, permissions, "view_products") ||
-                    hasPermission(roles, permissions, "manage_products"),
+                    hasPermission(roles, permissions, "manage_products") ||
+                    hasPermission(roles, permissions, "view_suppliers") ||
+                    hasPermission(roles, permissions, "manage_suppliers") ||
+                    hasPermission(roles, permissions, "view_members") ||
+                    hasPermission(roles, permissions, "manage_members"),
                 items: [
                     {
                         path: ROUTES.ADMIN_PRODUCTS,
@@ -222,35 +257,31 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasPermission(roles, permissions, "view_products") ||
                             hasPermission(roles, permissions, "manage_products"),
                     },
+                    {
+                        path: ROUTES.ADMIN_SUPPLIERS,
+                        label: "Supplier",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_suppliers") ||
+                            hasPermission(roles, permissions, "manage_suppliers"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_MEMBERS,
+                        label: "Member / Pelanggan",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_members") ||
+                            hasPermission(roles, permissions, "manage_members"),
+                    },
                 ],
             },
             {
                 type: "link",
-                path: ROUTES.ADMIN_SUPPLIERS,
-                label: "Supplier",
-                icon: IconTruckDelivery,
-                permission: (roles, permissions) =>
-                    hasRole(roles, "admin") ||
-                    hasPermission(roles, permissions, "view_suppliers") ||
-                    hasPermission(roles, permissions, "manage_suppliers"),
+                path: ROUTES.ADMIN_SETTINGS,
+                label: "Pengaturan Toko",
+                icon: IconSettings,
+                permission: (roles) => hasRole(roles, "admin"),
             },
-            {
-                type: "link",
-                path: ROUTES.ADMIN_MEMBERS,
-                label: "Member / Pelanggan",
-                icon: IconUsers,
-                permission: (roles, permissions) =>
-                    hasRole(roles, "admin") ||
-                    hasPermission(roles, permissions, "view_members") ||
-                    hasPermission(roles, permissions, "manage_members"),
-            },
-        ],
-    },
-
-    // ─── Sistem & Admin ────────────────────────────────────────────────────────
-    {
-        title: "Sistem & Admin",
-        items: [
             {
                 type: "link",
                 path: ROUTES.ADMIN_USERS,
@@ -260,13 +291,6 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     hasRole(roles, "admin") ||
                     hasPermission(roles, permissions, "view_users") ||
                     hasPermission(roles, permissions, "manage_users"),
-            },
-            {
-                type: "link",
-                path: ROUTES.ADMIN_SETTINGS,
-                label: "Pengaturan Toko",
-                icon: IconSettings,
-                permission: (roles) => hasRole(roles, "admin"),
             },
             {
                 type: "link",
