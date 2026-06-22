@@ -180,7 +180,7 @@ export function CheckoutTotalsSection({
                         title="Hold Transaksi (F5)"
                     >
                         <IconPlayerPause size={14} className="shrink-0 text-slate-500" />
-                        <span>Hold</span>
+                        <span>Hold (F5)</span>
                     </Button>
                     <Button
                         variant="outline"
@@ -189,7 +189,7 @@ export function CheckoutTotalsSection({
                         title="Recall Transaksi (F6)"
                     >
                         <IconPlayerPlay size={14} className="shrink-0 text-slate-500" />
-                        <span>Recall</span>
+                        <span>Recall (F6)</span>
                     </Button>
                     <Button
                         variant="outline"
@@ -199,7 +199,7 @@ export function CheckoutTotalsSection({
                         title="Batal Transaksi (F10)"
                     >
                         <IconTrash size={14} className="shrink-0" />
-                        <span>Void</span>
+                        <span>Void (F10)</span>
                     </Button>
                     <Button
                         variant="outline"
