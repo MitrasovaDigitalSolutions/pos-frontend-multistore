@@ -63,6 +63,8 @@ interface DataTableProps<TData, TValue> {
     maxHeight?: string;
 
     // Pagination Props
+    paginationMode?: "client" | "server";
+    clientPagination?: boolean;
     page?: number;
     perPage?: number;
     onPageChange?: (page: number) => void;
@@ -77,7 +79,8 @@ interface DataTableProps<TData, TValue> {
 
     extraToolbarActions?: React.ReactNode;
 
-    // Server Sorting Props
+    // Default / Server Sorting Props
+    defaultSorting?: { id: string; desc: boolean }[];
     sortBy?: string;
     sortOrder?: "asc" | "desc";
     onSortChange?: (sortBy: string | undefined, sortOrder: "asc" | "desc" | undefined) => void;
@@ -115,8 +118,11 @@ export function DataTable<TData, TValue>({
     meta,
     entityName = "data",
     extraToolbarActions,
+    clientPagination = false,
+    paginationMode,
 
-    // Server Sorting Props
+    // Default / Server Sorting Props
+    defaultSorting,
     sortBy,
     sortOrder,
     onSortChange,
@@ -136,7 +142,57 @@ export function DataTable<TData, TValue>({
     disableCheck,
     extraActions,
 }: DataTableProps<TData, TValue>) {
-    const [localSorting, setLocalSorting] = React.useState<SortingState>([]);
+    const [localPage, setLocalPage] = React.useState(1);
+    const [localPerPage, setLocalPerPage] = React.useState(perPage ?? 10);
+
+    const isClientPagination = paginationMode === "client" || clientPagination;
+
+    React.useEffect(() => {
+        if (isClientPagination) {
+            setLocalPage(1);
+        }
+    }, [data.length, isClientPagination]);
+
+    const currentPageVal = onPageChange ? page : localPage;
+    const perPageVal = onPerPageChange ? (perPage ?? 10) : localPerPage;
+
+    const paginatedData = React.useMemo(() => {
+        if (!isClientPagination) return data;
+        const start = (currentPageVal - 1) * perPageVal;
+        return data.slice(start, start + perPageVal);
+    }, [data, isClientPagination, currentPageVal, perPageVal]);
+
+    const computedMeta = React.useMemo(() => {
+        if (meta) return meta;
+        if (isClientPagination) {
+            return {
+                current_page: currentPageVal,
+                last_page: Math.ceil(data.length / perPageVal),
+                per_page: perPageVal,
+                total: data.length,
+            };
+        }
+        return undefined;
+    }, [meta, isClientPagination, currentPageVal, perPageVal, data.length]);
+
+    const handlePageChange = (p: number) => {
+        if (onPageChange) {
+            onPageChange(p);
+        } else {
+            setLocalPage(p);
+        }
+    };
+
+    const handlePerPageChange = (pp: number) => {
+        if (onPerPageChange) {
+            onPerPageChange(pp);
+        } else {
+            setLocalPerPage(pp);
+            setLocalPage(1);
+        }
+    };
+
+    const [localSorting, setLocalSorting] = React.useState<SortingState>(defaultSorting ?? []);
 
     const sorting = React.useMemo<SortingState>(() => {
         if (onSortChange) {
@@ -163,7 +219,7 @@ export function DataTable<TData, TValue>({
 
     // Dynamically build column list based on whether actions are provided
     const tableColumns = React.useMemo(() => {
-        const startIndex = (page - 1) * (perPage || 0) + 1;
+        const startIndex = (currentPageVal - 1) * (perPageVal || 0) + 1;
         const noColumn: ColumnDef<TData, unknown> = {
             id: "rowNumber",
             header: "No.",
@@ -173,7 +229,10 @@ export function DataTable<TData, TValue>({
                 headerClassName: "text-center w-12",
                 cellClassName: "text-center text-slate-500 font-medium text-xs font-mono",
             },
-            cell: ({ row }) => startIndex + row.index,
+            cell: ({ row, table }) => {
+                const sortedIndex = table.getRowModel().rows.findIndex((r) => r.id === row.id);
+                return startIndex + (sortedIndex >= 0 ? sortedIndex : 0);
+            },
         };
 
         const baseCols = [noColumn, ...columns];
@@ -281,8 +340,8 @@ export function DataTable<TData, TValue>({
         return [...baseCols, actionColumn];
     }, [
         columns,
-        page,
-        perPage,
+        currentPageVal,
+        perPageVal,
         onEdit,
         onDelete,
         onView,
@@ -299,7 +358,7 @@ export function DataTable<TData, TValue>({
     ]);
 
     const table = useReactTable({
-        data,
+        data: paginatedData,
         columns: tableColumns,
         state: {
             sorting,
@@ -338,18 +397,19 @@ export function DataTable<TData, TValue>({
 
     // Render pagination numbers list
     const renderPaginationItems = () => {
-        if (!meta) return null;
+        const metaToUse = computedMeta;
+        if (!metaToUse) return null;
 
         const pageNumbers: (number | string)[] = [];
         const maxVisiblePages = 5;
 
-        if (meta.last_page <= maxVisiblePages) {
-            for (let i = 1; i <= meta.last_page; i++) {
+        if (metaToUse.last_page <= maxVisiblePages) {
+            for (let i = 1; i <= metaToUse.last_page; i++) {
                 pageNumbers.push(i);
             }
         } else {
-            const startPage = Math.max(1, page - 1);
-            const endPage = Math.min(meta.last_page, page + 1);
+            const startPage = Math.max(1, currentPageVal - 1);
+            const endPage = Math.min(metaToUse.last_page, currentPageVal + 1);
 
             if (startPage > 1) {
                 pageNumbers.push(1);
@@ -357,15 +417,15 @@ export function DataTable<TData, TValue>({
             }
 
             for (let i = startPage; i <= endPage; i++) {
-                if (i !== 1 && i !== meta.last_page) {
+                if (i !== 1 && i !== metaToUse.last_page) {
                     pageNumbers.push(i);
                 }
             }
 
-            if (endPage < meta.last_page) {
-                if (endPage < meta.last_page - 1)
+            if (endPage < metaToUse.last_page) {
+                if (endPage < metaToUse.last_page - 1)
                     pageNumbers.push("ellipsis-end");
-                pageNumbers.push(meta.last_page);
+                pageNumbers.push(metaToUse.last_page);
             }
         }
 
@@ -380,8 +440,8 @@ export function DataTable<TData, TValue>({
             return (
                 <PaginationItem key={p}>
                     <PaginationLink
-                        isActive={p === page}
-                        onClick={() => onPageChange?.(p)}
+                        isActive={p === currentPageVal}
+                        onClick={() => handlePageChange(p)}
                     >
                         {p}
                     </PaginationLink>
@@ -625,30 +685,31 @@ export function DataTable<TData, TValue>({
             </div>
 
             {/* Pagination Controls */}
-            {meta && (
+            {computedMeta && (
                 <div className="flex flex-col sm:flex-row justify-between items-center border-t border-slate-100 p-4 gap-4 text-xs bg-slate-50/30">
                     <div className="flex items-center gap-4 text-slate-500 font-semibold">
                         <span>
                             Menampilkan{" "}
-                            {meta.total > 0
-                                ? (meta.current_page - 1) * meta.per_page + 1
+                            {computedMeta.total > 0
+                                ? (computedMeta.current_page - 1) * computedMeta.per_page + 1
                                 : 0}{" "}
                             -{" "}
                             {Math.min(
-                                meta.current_page * meta.per_page,
-                                meta.total,
+                                computedMeta.current_page * computedMeta.per_page,
+                                computedMeta.total,
                             )}{" "}
-                            dari {meta.total} {entityName}
+                            dari {computedMeta.total} {entityName}
                         </span>
-                        {onPerPageChange && perPage !== undefined && (
+                        {(onPerPageChange || isClientPagination) && perPageVal !== undefined && (
                             <div className="flex items-center gap-1.5">
                                 <span>Tampilkan:</span>
                                 {/* CREATE SELECT PAGINATION */}
                                 <Select
+                                    key={perPageVal}
                                     onValueChange={(value) =>
-                                        onPerPageChange(Number(value))
+                                        handlePerPageChange(Number(value))
                                     }
-                                    defaultValue={perPage.toString()}
+                                    defaultValue={perPageVal.toString()}
                                 >
                                     <SelectTrigger className="h-8 w-24 border-slate-200 focus-visible:ring-emerald-600 rounded-xl bg-white text-xs">
                                         <SelectValue placeholder="Pilih" />
@@ -668,20 +729,20 @@ export function DataTable<TData, TValue>({
                         )}
                     </div>
 
-                    {meta.last_page > 1 && (
+                    {computedMeta.last_page > 1 && (
                         <Pagination className="w-auto mx-0">
                             <PaginationContent>
                                 <PaginationItem>
                                     <PaginationPrevious
-                                        onClick={() => onPageChange?.(page - 1)}
-                                        disabled={page === 1}
+                                        onClick={() => handlePageChange(currentPageVal - 1)}
+                                        disabled={currentPageVal === 1}
                                     />
                                 </PaginationItem>
                                 {renderPaginationItems()}
                                 <PaginationItem>
                                     <PaginationNext
-                                        onClick={() => onPageChange?.(page + 1)}
-                                        disabled={page === meta.last_page}
+                                        onClick={() => handlePageChange(currentPageVal + 1)}
+                                        disabled={currentPageVal === computedMeta.last_page}
                                     />
                                 </PaginationItem>
                             </PaginationContent>

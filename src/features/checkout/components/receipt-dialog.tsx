@@ -149,7 +149,11 @@ export function ReceiptDialog({
                     </Button>
                     <Button
                         variant="outline"
-                        onClick={() => window.print()}
+                        onClick={() => {
+                            if (receipt?.id) {
+                                window.open(`/api/proxy/v1/transactions-print/${receipt.id}`, "_blank");
+                            }
+                        }}
                         className="border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs h-11 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                         <IconPrinter size={16} /> Print Ulang

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Card } from "@/components/ui/card";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
@@ -28,10 +28,13 @@ import {
     IconRefresh,
     IconTrendingDown,
     IconArrowBackUp,
-    IconCoin
+    IconCoin,
+    IconArrowUp,
+    IconArrowDown,
+    IconSelector
 } from "@tabler/icons-react";
 import { PrintConfirmDialog } from "./print-confirm-dialog";
-import { PrintPreviewDialog } from "./print-preview-dialog";
+
 
 interface PembelianFilterValues {
     fromDate: string;
@@ -66,8 +69,6 @@ export function PembelianReportView() {
 
     const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
     const [isPrintDialogOpen, setIsPrintDialogOpen] = useState<boolean>(false);
-    const [previewUrl, setPreviewUrl] = useState<string>("");
-    const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
 
     const { data: reportData, isLoading, isFetching, refetch } = usePembelianReport(
         appliedFilters.fromDate,
@@ -75,6 +76,69 @@ export function PembelianReportView() {
         appliedFilters.includeItems,
         appliedFilters.includePayments,
     );
+
+    const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>({ key: "tanggal", direction: "desc" });
+
+    const sortedReceivings = useMemo(() => {
+        if (!reportData?.receivings) return [];
+        const items = [...reportData.receivings];
+        if (!sortConfig) return items;
+
+        items.sort((a, b) => {
+            let valA: string | number = "";
+            let valB: string | number = "";
+
+            if (sortConfig.key === "tanggal") {
+                valA = a.tanggal_raw || a.tanggal;
+                valB = b.tanggal_raw || b.tanggal;
+            } else if (sortConfig.key === "no_faktur") {
+                valA = a.no_faktur || "";
+                valB = b.no_faktur || "";
+            } else if (sortConfig.key === "supplier") {
+                valA = a.supplier || "";
+                valB = b.supplier || "";
+            } else if (sortConfig.key === "pembayaran") {
+                valA = a.pembayaran || "";
+                valB = b.pembayaran || "";
+            } else if (sortConfig.key === "jumlah") {
+                valA = a.jumlah || 0;
+                valB = b.jumlah || 0;
+            } else if (sortConfig.key === "retur") {
+                valA = a.retur || 0;
+                valB = b.retur || 0;
+            } else if (sortConfig.key === "total_net") {
+                valA = a.total_net || 0;
+                valB = b.total_net || 0;
+            } else if (sortConfig.key === "hutang") {
+                valA = a.hutang || 0;
+                valB = b.hutang || 0;
+            } else if (sortConfig.key === "operator") {
+                valA = a.operator || "";
+                valB = b.operator || "";
+            }
+
+            if (typeof valA === "number" && typeof valB === "number") {
+                return sortConfig.direction === "asc" ? valA - valB : valB - valA;
+            }
+
+            return sortConfig.direction === "asc"
+                ? String(valA).localeCompare(String(valB))
+                : String(valB).localeCompare(String(valA));
+        });
+
+        return items;
+    }, [reportData, sortConfig]);
+
+    const requestSort = (key: string) => {
+        let direction: "asc" | "desc" = "asc";
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
+            direction = "desc";
+        } else if (sortConfig && sortConfig.key === key && sortConfig.direction === "desc") {
+            setSortConfig(null);
+            return;
+        }
+        setSortConfig({ key, direction });
+    };
 
     if (!hasViewReports) {
         return (
@@ -107,10 +171,18 @@ export function PembelianReportView() {
         setAppliedFilters(defaults);
     };
 
-    const handlePrintConfirm = (paperSize: string, orientation: string) => {
-        const url = `/api/proxy/v1/reports/print/pembelian?from=${appliedFilters.fromDate}&to=${appliedFilters.toDate}&include_items=${appliedFilters.includeItems}&include_payments=${appliedFilters.includePayments}&paper_size=${paperSize}&orientation=${orientation}`;
-        setPreviewUrl(url);
-        setIsPreviewOpen(true);
+    interface PembelianPrintFilterValues {
+        paperSize: string;
+        orientation: string;
+        fromDate: string;
+        toDate: string;
+        includeItems: boolean;
+        includePayments: boolean;
+    }
+
+    const handlePrintConfirm = (data: PembelianPrintFilterValues) => {
+        const url = `/api/proxy/v1/reports/print/pembelian?from=${data.fromDate}&to=${data.toDate}&include_items=${data.includeItems}&include_payments=${data.includePayments}&paper_size=${data.paperSize}&orientation=${data.orientation}`;
+        window.open(url, "_blank");
     };
 
     return (
@@ -289,15 +361,123 @@ export function PembelianReportView() {
                             <TableRow className="hover:bg-transparent">
                                 <TableHead className="w-12 text-center"></TableHead>
                                 <TableHead className="w-12 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider py-3">No.</TableHead>
-                                <TableHead className="text-[10px] font-bold text-slate-500 uppercase tracking-wider py-3">Tanggal</TableHead>
-                                <TableHead className="text-[10px] font-bold text-slate-500 uppercase tracking-wider py-3">No. Faktur</TableHead>
-                                <TableHead className="text-[10px] font-bold text-slate-500 uppercase tracking-wider py-3">Supplier</TableHead>
-                                <TableHead className="text-[10px] font-bold text-slate-500 uppercase tracking-wider py-3 text-center">Metode</TableHead>
-                                <TableHead className="text-[10px] font-bold text-slate-500 uppercase tracking-wider py-3 text-right">Faktur (Rp)</TableHead>
-                                <TableHead className="text-[10px] font-bold text-slate-500 uppercase tracking-wider py-3 text-right">Retur (Rp)</TableHead>
-                                <TableHead className="text-[10px] font-bold text-slate-500 uppercase tracking-wider py-3 text-right">Net (Rp)</TableHead>
-                                <TableHead className="text-[10px] font-bold text-slate-500 uppercase tracking-wider py-3 text-right">Sisa Hutang</TableHead>
-                                <TableHead className="text-[10px] font-bold text-slate-500 uppercase tracking-wider py-3">Operator</TableHead>
+                                <TableHead 
+                                    className="text-[10px] font-bold text-slate-500 uppercase tracking-wider py-3 cursor-pointer select-none hover:text-slate-700 transition-colors"
+                                    onClick={() => requestSort("tanggal")}
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        <span>Tanggal</span>
+                                        {sortConfig?.key === "tanggal" ? (
+                                            sortConfig.direction === "asc" ? <IconArrowUp size={12} className="text-emerald-600 font-bold" /> : <IconArrowDown size={12} className="text-emerald-600 font-bold" />
+                                        ) : (
+                                            <IconSelector size={12} className="opacity-40 hover:opacity-100" />
+                                        )}
+                                    </div>
+                                </TableHead>
+                                <TableHead 
+                                    className="text-[10px] font-bold text-slate-500 uppercase tracking-wider py-3 cursor-pointer select-none hover:text-slate-700 transition-colors"
+                                    onClick={() => requestSort("no_faktur")}
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        <span>No. Faktur</span>
+                                        {sortConfig?.key === "no_faktur" ? (
+                                            sortConfig.direction === "asc" ? <IconArrowUp size={12} className="text-emerald-600 font-bold" /> : <IconArrowDown size={12} className="text-emerald-600 font-bold" />
+                                        ) : (
+                                            <IconSelector size={12} className="opacity-40 hover:opacity-100" />
+                                        )}
+                                    </div>
+                                </TableHead>
+                                <TableHead 
+                                    className="text-[10px] font-bold text-slate-500 uppercase tracking-wider py-3 cursor-pointer select-none hover:text-slate-700 transition-colors"
+                                    onClick={() => requestSort("supplier")}
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        <span>Supplier</span>
+                                        {sortConfig?.key === "supplier" ? (
+                                            sortConfig.direction === "asc" ? <IconArrowUp size={12} className="text-emerald-600 font-bold" /> : <IconArrowDown size={12} className="text-emerald-600 font-bold" />
+                                        ) : (
+                                            <IconSelector size={12} className="opacity-40 hover:opacity-100" />
+                                        )}
+                                    </div>
+                                </TableHead>
+                                <TableHead 
+                                    className="text-[10px] font-bold text-slate-500 uppercase tracking-wider py-3 text-center cursor-pointer select-none hover:text-slate-700 transition-colors"
+                                    onClick={() => requestSort("pembayaran")}
+                                >
+                                    <div className="flex items-center justify-center gap-1.5">
+                                        <span>Metode</span>
+                                        {sortConfig?.key === "pembayaran" ? (
+                                            sortConfig.direction === "asc" ? <IconArrowUp size={12} className="text-emerald-600 font-bold" /> : <IconArrowDown size={12} className="text-emerald-600 font-bold" />
+                                        ) : (
+                                            <IconSelector size={12} className="opacity-40 hover:opacity-100" />
+                                        )}
+                                    </div>
+                                </TableHead>
+                                <TableHead 
+                                    className="text-[10px] font-bold text-slate-500 uppercase tracking-wider py-3 text-right cursor-pointer select-none hover:text-slate-700 transition-colors"
+                                    onClick={() => requestSort("jumlah")}
+                                >
+                                    <div className="flex items-center justify-end gap-1.5">
+                                        <span>Faktur (Rp)</span>
+                                        {sortConfig?.key === "jumlah" ? (
+                                            sortConfig.direction === "asc" ? <IconArrowUp size={12} className="text-emerald-600 font-bold" /> : <IconArrowDown size={12} className="text-emerald-600 font-bold" />
+                                        ) : (
+                                            <IconSelector size={12} className="opacity-40 hover:opacity-100" />
+                                        )}
+                                    </div>
+                                </TableHead>
+                                <TableHead 
+                                    className="text-[10px] font-bold text-slate-500 uppercase tracking-wider py-3 text-right cursor-pointer select-none hover:text-slate-700 transition-colors"
+                                    onClick={() => requestSort("retur")}
+                                >
+                                    <div className="flex items-center justify-end gap-1.5">
+                                        <span>Retur (Rp)</span>
+                                        {sortConfig?.key === "retur" ? (
+                                            sortConfig.direction === "asc" ? <IconArrowUp size={12} className="text-emerald-600 font-bold" /> : <IconArrowDown size={12} className="text-emerald-600 font-bold" />
+                                        ) : (
+                                            <IconSelector size={12} className="opacity-40 hover:opacity-100" />
+                                        )}
+                                    </div>
+                                </TableHead>
+                                <TableHead 
+                                    className="text-[10px] font-bold text-slate-500 uppercase tracking-wider py-3 text-right cursor-pointer select-none hover:text-slate-700 transition-colors"
+                                    onClick={() => requestSort("total_net")}
+                                >
+                                    <div className="flex items-center justify-end gap-1.5">
+                                        <span>Net (Rp)</span>
+                                        {sortConfig?.key === "total_net" ? (
+                                            sortConfig.direction === "asc" ? <IconArrowUp size={12} className="text-emerald-600 font-bold" /> : <IconArrowDown size={12} className="text-emerald-600 font-bold" />
+                                        ) : (
+                                            <IconSelector size={12} className="opacity-40 hover:opacity-100" />
+                                        )}
+                                    </div>
+                                </TableHead>
+                                <TableHead 
+                                    className="text-[10px] font-bold text-slate-500 uppercase tracking-wider py-3 text-right cursor-pointer select-none hover:text-slate-700 transition-colors"
+                                    onClick={() => requestSort("hutang")}
+                                >
+                                    <div className="flex items-center justify-end gap-1.5">
+                                        <span>Sisa Hutang</span>
+                                        {sortConfig?.key === "hutang" ? (
+                                            sortConfig.direction === "asc" ? <IconArrowUp size={12} className="text-emerald-600 font-bold" /> : <IconArrowDown size={12} className="text-emerald-600 font-bold" />
+                                        ) : (
+                                            <IconSelector size={12} className="opacity-40 hover:opacity-100" />
+                                        )}
+                                    </div>
+                                </TableHead>
+                                <TableHead 
+                                    className="text-[10px] font-bold text-slate-500 uppercase tracking-wider py-3 cursor-pointer select-none hover:text-slate-700 transition-colors"
+                                    onClick={() => requestSort("operator")}
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        <span>Operator</span>
+                                        {sortConfig?.key === "operator" ? (
+                                            sortConfig.direction === "asc" ? <IconArrowUp size={12} className="text-emerald-600 font-bold" /> : <IconArrowDown size={12} className="text-emerald-600 font-bold" />
+                                        ) : (
+                                            <IconSelector size={12} className="opacity-40 hover:opacity-100" />
+                                        )}
+                                    </div>
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody className="divide-y divide-slate-100">
@@ -318,7 +498,7 @@ export function PembelianReportView() {
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                reportData.receivings.map((row) => {
+                                sortedReceivings.map((row, index) => {
                                     const isExpanded = !!expandedRows[row.no_faktur];
                                     return (
                                         <React.Fragment key={row.no_faktur}>
@@ -331,7 +511,7 @@ export function PembelianReportView() {
                                                         {isExpanded ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />}
                                                     </button>
                                                 </TableCell>
-                                                <TableCell className="text-center text-slate-500 font-medium text-xs font-mono py-3.5 px-3">{row.no}</TableCell>
+                                                <TableCell className="text-center text-slate-500 font-medium text-xs font-mono py-3.5 px-3">{index + 1}</TableCell>
                                                 <TableCell className="text-slate-600 font-semibold text-xs py-3.5 px-3">{row.tanggal}</TableCell>
                                                 <TableCell className="text-slate-800 font-bold text-xs font-mono py-3.5 px-3">{row.no_faktur}</TableCell>
                                                 <TableCell className="text-slate-700 font-bold text-xs py-3.5 px-3">{row.supplier}</TableCell>
@@ -490,18 +670,69 @@ export function PembelianReportView() {
                 </div>
             </Card>
 
-            <PrintConfirmDialog
+            <PrintConfirmDialog<PembelianPrintFilterValues>
                 open={isPrintDialogOpen}
                 onOpenChange={setIsPrintDialogOpen}
                 onConfirm={handlePrintConfirm}
-            />
+                defaultValues={{
+                    paperSize: "A4",
+                    orientation: "portrait",
+                    fromDate: appliedFilters.fromDate,
+                    toDate: appliedFilters.toDate,
+                    includeItems: appliedFilters.includeItems,
+                    includePayments: appliedFilters.includePayments,
+                }}
+            >
+                <div className="grid grid-cols-2 gap-4">
+                    <FormDatePicker<PembelianPrintFilterValues>
+                        name="fromDate"
+                        label="Dari Tanggal"
+                        placeholder="Mulai..."
+                        clearable={false}
+                    />
 
-            <PrintPreviewDialog
-                open={isPreviewOpen}
-                onOpenChange={setIsPreviewOpen}
-                pdfUrl={previewUrl}
-                title="Pratinjau Laporan Pembelian & Hutang Supplier"
-            />
+                    <FormDatePicker<PembelianPrintFilterValues>
+                        name="toDate"
+                        label="Sampai Tanggal"
+                        placeholder="Selesai..."
+                        clearable={false}
+                    />
+                </div>
+
+                <div className="space-y-3">
+                    <Controller
+                        name="includeItems"
+                        render={({ field }) => (
+                            <div className="flex items-center gap-3 border border-slate-100 bg-slate-50/50 p-3 rounded-xl">
+                                <Switch
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                                <div className="flex flex-col text-left">
+                                    <span className="text-xs font-bold text-slate-700">Sertakan Detail Barang</span>
+                                    <span className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">Tampilkan daftar barang di cetakan PDF</span>
+                                </div>
+                            </div>
+                        )}
+                    />
+
+                    <Controller
+                        name="includePayments"
+                        render={({ field }) => (
+                            <div className="flex items-center gap-3 border border-slate-100 bg-slate-50/50 p-3 rounded-xl">
+                                <Switch
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                                <div className="flex flex-col text-left">
+                                    <span className="text-xs font-bold text-slate-700">Sertakan Histori Bayar</span>
+                                    <span className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">Tampilkan riwayat pembayaran & sisa hutang di cetakan PDF</span>
+                                </div>
+                            </div>
+                        )}
+                    />
+                </div>
+            </PrintConfirmDialog>
         </div>
     );
 }

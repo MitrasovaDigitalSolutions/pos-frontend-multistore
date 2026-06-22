@@ -47,10 +47,39 @@ export interface LabaRugiReport {
     total_laba_rugi: number;
 }
 
+export interface ExpenseReportItem {
+    id: number;
+    tanggal: string;
+    nomor_pengeluaran: string;
+    category_id: number;
+    category_name?: string;
+    category?: {
+        id: number;
+        nama: string;
+    };
+    nama: string;
+    catatan?: string;
+    amount: number;
+    cash_account_id: number;
+    cash_account?: {
+        id: number;
+        nama: string;
+    };
+    cashAccount?: {
+        id: number;
+        nama: string;
+    };
+    user_id: number;
+    user?: {
+        id: number;
+        name: string;
+    };
+}
+
 export interface PengeluaranReport {
     from: string;
     to: string;
-    expenses: any[];
+    expenses: ExpenseReportItem[];
     total_amount: number;
 }
 

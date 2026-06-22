@@ -17,6 +17,7 @@ interface FilterFormProps<T extends FieldValues> {
     titleLabel?: string;
     titleIcon?: React.ReactNode;
     cols?: number;
+    defaultExpanded?: boolean;
 }
 
 export function FilterForm<T extends FieldValues>({
@@ -30,8 +31,9 @@ export function FilterForm<T extends FieldValues>({
     titleLabel,
     titleIcon,
     cols,
+    defaultExpanded = true,
 }: FilterFormProps<T>) {
-    const [isExpanded, setIsExpanded] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
     // Count the direct children to determine the grid columns dynamically
     const childCount = React.Children.count(children);

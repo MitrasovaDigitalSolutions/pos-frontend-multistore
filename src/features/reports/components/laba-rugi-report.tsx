@@ -15,7 +15,6 @@ import { useSession } from "next-auth/react";
 import { hasRole, hasPermission } from "@/constants/roles";
 import { IconPrinter, IconTrendingUp, IconTrendingDown, IconCalendar, IconRefresh } from "@tabler/icons-react";
 import { PrintConfirmDialog } from "./print-confirm-dialog";
-import { PrintPreviewDialog } from "./print-preview-dialog";
 
 interface LabaRugiFilterValues {
     fromDate: string;
@@ -47,8 +46,8 @@ export function LabaRugiReportView() {
     });
 
     const [isPrintDialogOpen, setIsPrintDialogOpen] = useState<boolean>(false);
-    const [previewUrl, setPreviewUrl] = useState<string>("");
-    const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
+
+
 
     const { data: reportData, isLoading, isFetching, refetch } = useLabaRugiReport(
         appliedFilters.fromDate,
@@ -79,10 +78,17 @@ export function LabaRugiReportView() {
         setAppliedFilters(defaults);
     };
 
-    const handlePrintConfirm = (paperSize: string, orientation: string) => {
-        const url = `/api/proxy/v1/reports/print/laba-rugi?from=${appliedFilters.fromDate}&to=${appliedFilters.toDate}&interval=${appliedFilters.interval}&paper_size=${paperSize}&orientation=${orientation}`;
-        setPreviewUrl(url);
-        setIsPreviewOpen(true);
+    interface LabaRugiPrintFilterValues {
+        paperSize: string;
+        orientation: string;
+        fromDate: string;
+        toDate: string;
+        interval: string;
+    }
+
+    const handlePrintConfirm = (data: LabaRugiPrintFilterValues) => {
+        const url = `/api/proxy/v1/reports/print/laba-rugi?from=${data.fromDate}&to=${data.toDate}&interval=${data.interval}&paper_size=${data.paperSize}&orientation=${data.orientation}`;
+        window.open(url, "_blank");
     };
 
     const intervalOptions = [
@@ -233,6 +239,7 @@ export function LabaRugiReportView() {
                     Rincian Transaksi
                 </h4>
                 <DataTable
+                    defaultSorting={[{ id: "tanggal", desc: true }]}
                     columns={[
                         {
                             accessorKey: "tanggal",
@@ -345,18 +352,40 @@ export function LabaRugiReportView() {
                 />
             </Card>
 
-            <PrintConfirmDialog
+            <PrintConfirmDialog<LabaRugiPrintFilterValues>
                 open={isPrintDialogOpen}
                 onOpenChange={setIsPrintDialogOpen}
                 onConfirm={handlePrintConfirm}
-            />
+                defaultValues={{
+                    paperSize: "A4",
+                    orientation: "portrait",
+                    fromDate: appliedFilters.fromDate,
+                    toDate: appliedFilters.toDate,
+                    interval: appliedFilters.interval,
+                }}
+            >
+                <div className="grid grid-cols-2 gap-4">
+                    <FormDatePicker<LabaRugiPrintFilterValues>
+                        name="fromDate"
+                        label="Dari Tanggal"
+                        placeholder="Mulai..."
+                        clearable={false}
+                    />
 
-            <PrintPreviewDialog
-                open={isPreviewOpen}
-                onOpenChange={setIsPreviewOpen}
-                pdfUrl={previewUrl}
-                title="Pratinjau Laporan Laba Rugi"
-            />
+                    <FormDatePicker<LabaRugiPrintFilterValues>
+                        name="toDate"
+                        label="Sampai Tanggal"
+                        placeholder="Selesai..."
+                        clearable={false}
+                    />
+                </div>
+                <FormSelect<LabaRugiPrintFilterValues>
+                    name="interval"
+                    label="Interval Analisis"
+                    options={intervalOptions}
+                    placeholder="Pilih Interval"
+                />
+            </PrintConfirmDialog>
         </div>
     );
 }

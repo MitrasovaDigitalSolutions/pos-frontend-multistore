@@ -207,14 +207,14 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                 items: [
                     {
-                        path: ROUTES.ADMIN_REPORTS_SALES,
-                        label: "Laporan Penjualan",
+                        path: ROUTES.ADMIN_REPORTS_LABARUGI,
+                        label: "Laporan Laba Rugi",
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                     },
                     {
-                        path: ROUTES.ADMIN_REPORTS_LABARUGI,
-                        label: "Laporan Laba Rugi",
+                        path: ROUTES.ADMIN_REPORTS_SALES,
+                        label: "Laporan Penjualan",
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                     },
