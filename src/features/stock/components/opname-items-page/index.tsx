@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { OPNAME_STATUS, OPNAME_STATUS_CLASSES, OPNAME_STATUS_LABELS } from "@/constants/stock";
 import { useProducts } from "@/features/products/api/products-api";
+import { ROUTES } from "@/constants/routes";
 import type { Product } from "@/features/products/types";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { cn } from "@/lib/utils";
@@ -67,7 +68,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
                     Stock opname tidak ditemukan atau terjadi kesalahan saat memuat data.
                 </p>
                 <Button
-                    onClick={() => router.push("/admin/stock?tab=inventory")}
+                    onClick={() => router.push(ROUTES.ADMIN_STOCK)}
                     className="mt-4 bg-slate-800 hover:bg-slate-900 text-white text-xs rounded-xl"
                 >
                     Kembali ke Daftar Stock
@@ -84,7 +85,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
                     Hanya Stock Opname berstatus **Draft** yang dapat diubah daftar barangnya.
                 </p>
                 <Button
-                    onClick={() => router.push("/admin/stock?tab=inventory")}
+                    onClick={() => router.push(ROUTES.ADMIN_STOCK)}
                     className="mt-4 bg-slate-800 hover:bg-slate-900 text-white text-xs rounded-xl"
                 >
                     Kembali ke Daftar Stock
@@ -254,7 +255,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: number; opname: 
             toast.success("Proses finalisasi stock opname dimulai di latar belakang!");
             clearAll();
             clearOpnameItemsStore(opnameId);
-            router.push("/admin/stock?tab=inventory");
+            router.push(ROUTES.ADMIN_STOCK);
         } catch (err: unknown) {
             const error = err as { message?: string };
             toast.error(error.message || "Gagal memfinalisasi stock opname.");
@@ -289,7 +290,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: number; opname: 
                 <div className="flex items-center gap-4">
                     <Button
                         type="button"
-                        onClick={() => router.push("/admin/stock?tab=inventory")}
+                        onClick={() => router.push(ROUTES.ADMIN_STOCK)}
                         variant="outline"
                         className="p-2 h-9 w-9 rounded-xl border-slate-200 text-slate-500 hover:text-slate-900 bg-white"
                     >

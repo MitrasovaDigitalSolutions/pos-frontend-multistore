@@ -334,7 +334,11 @@ export function ReceivingDialog({
                                             options={[
                                                 {
                                                     value: PAYMENT_STATUS.PENDING,
-                                                    label: "Pending / Tempo",
+                                                    label: "Pending",
+                                                },
+                                                {
+                                                    value: PAYMENT_STATUS.UNPAID,
+                                                    label: "Belum Dibayar / Tempo",
                                                 },
                                                 {
                                                     value: PAYMENT_STATUS.PAID,

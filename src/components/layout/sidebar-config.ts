@@ -160,6 +160,14 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasPermission(roles, permissions, "view_inventory") ||
                             hasPermission(roles, permissions, "manage_inventory"),
                     },
+                    {
+                        path: ROUTES.ADMIN_STOCK_LEDGER,
+                        label: "Kartu Stok",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_inventory") ||
+                            hasPermission(roles, permissions, "manage_inventory"),
+                    },
                 ],
             },
             {

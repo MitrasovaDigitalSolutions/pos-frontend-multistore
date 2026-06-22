@@ -19,6 +19,7 @@ import {
 } from "@tabler/icons-react";
 import { OPNAME_STATUS, OPNAME_STATUS_CLASSES, OPNAME_STATUS_LABELS } from "@/constants/stock";
 import { useQueryClient } from "@tanstack/react-query";
+import { ROUTES } from "@/constants/routes";
 import { queryKeys } from "@/lib/query-keys";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
@@ -151,7 +152,7 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                     Stock opname tidak ditemukan atau terjadi kesalahan saat memuat data.
                 </p>
                 <Button
-                    onClick={() => router.push("/admin/stock?tab=inventory")}
+                    onClick={() => router.push(ROUTES.ADMIN_STOCK)}
                     className="mt-4 bg-slate-800 hover:bg-slate-900 text-white text-xs rounded-xl"
                 >
                     Kembali ke Daftar Stock
@@ -167,7 +168,7 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                 <div className="flex items-center gap-4">
                     <Button
                         type="button"
-                        onClick={() => router.push("/admin/stock?tab=inventory")}
+                        onClick={() => router.push(ROUTES.ADMIN_STOCK)}
                         variant="outline"
                         className="p-2 h-9 w-9 rounded-xl border-slate-200 text-slate-500 hover:text-slate-900 bg-white"
                     >
@@ -189,7 +190,7 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                 {opname.status === OPNAME_STATUS.DRAFT && (
                     <div className="flex items-center gap-2 shrink-0">
                         <Button
-                            onClick={() => router.push(`/admin/stock/${opname.id}/items`)}
+                            onClick={() => router.push(`/admin/inventory/stock-opname/${opname.id}/items`)}
                             variant="outline"
                             className="border-slate-200 text-slate-700 hover:text-slate-900 bg-white font-bold text-xs h-10 px-4 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0"
                         >

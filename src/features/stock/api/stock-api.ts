@@ -6,7 +6,7 @@ import type { StockMovement, Opname, OpnameItem } from "../types";
 import type { AdjustmentInput } from "../schemas/adjustment-schema";
 import type { OpnameHeaderInput } from "../schemas/opname-schema";
 
-export function useStockMovements(params?: PaginationParams) {
+export function useStockMovements(params?: PaginationParams & { tipe?: string }) {
     return useQuery<PaginatedResponse<StockMovement>>({
         queryKey: [...queryKeys.inventory.movements(), params],
         queryFn: () => apiGetList<StockMovement>("/v1/inventory/movements", params),

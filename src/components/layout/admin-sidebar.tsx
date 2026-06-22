@@ -71,7 +71,7 @@ export function AdminSidebar() {
 
     // Helper to get active routes from config mapping
     const ROUTES = {
-        ADMIN_STOCK: "/admin/stock",
+        ADMIN_STOCK: "/admin/inventory/stock-opname",
     } as const;
 
     return (

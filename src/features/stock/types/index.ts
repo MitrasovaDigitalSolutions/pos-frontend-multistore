@@ -4,7 +4,7 @@ import type { Supplier } from "@/features/suppliers/types";
 export interface StockMovement {
     id: number;
     product_id: number;
-    tipe: "masuk" | "keluar" | "penyesuaian" | "opname";
+    tipe: "receive" | "void" | "sale" | "retur" | "penyesuaian" | "opname" | "adjustment" | "masuk" | "keluar" | "mutasi";
     kuantitas: number;
     stok_sebelum: number;
     stok_sesudah: number;
@@ -37,7 +37,7 @@ export interface Receiving {
     nomor_faktur: string | null;
     nilai_faktur: number | null;
     status: "draft" | "completed";
-    status_pembayaran: "pending" | "paid";
+    status_pembayaran: "pending" | "unpaid" | "partial" | "paid";
     catatan: string | null;
     created_at: string;
     items?: ReceivingItem[];

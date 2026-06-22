@@ -5,10 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useProducts } from "@/features/products/api/products-api";
 import {
     useOpnames,
-    useStockMovements,
 } from "@/features/stock/api/stock-api";
 import { AdjustmentDialog } from "@/features/stock/components/adjustment-dialog";
-import { MovementLedger } from "@/features/stock/components/movement-ledger";
 import { OpnameDialog } from "@/features/stock/components/opname-dialog";
 import { OpnameList } from "@/features/stock/components/opname-list";
 import { IconActivity, IconClipboardCheck } from "@tabler/icons-react";
@@ -41,10 +39,6 @@ export function StockManagement() {
         hasRole(userRoles, "admin") ||
         hasPermission(userRoles, userPermissions, "manage_inventory");
 
-    const [movementsPage, setMovementsPage] = useState(1);
-    const [movementsSortBy, setMovementsSortBy] = useState<string | undefined>("created_at");
-    const [movementsSortOrder, setMovementsSortOrder] = useState<"asc" | "desc" | undefined>("desc");
-
     const [opnamesPage, setOpnamesPage] = useState(1);
     const [opnamesSortBy, setOpnamesSortBy] = useState<string | undefined>("created_at");
     const [opnamesSortOrder, setOpnamesSortOrder] = useState<"asc" | "desc" | undefined>("desc");
@@ -52,16 +46,6 @@ export function StockManagement() {
     // Load all products (up to 1000) for local low stock warnings and selection dropdowns in modals
     const { data: productsData, isLoading: productsLoading } = useProducts({
         per_page: 1000,
-    });
-    const {
-        data: movementsData,
-        isLoading: movementsLoading,
-        isFetching: movementsFetching,
-    } = useStockMovements({
-        page: movementsPage,
-        per_page: 10,
-        sort_by: movementsSortBy,
-        sort_order: movementsSortOrder,
     });
     const {
         data: opnamesData,
@@ -75,7 +59,6 @@ export function StockManagement() {
     });
 
     const products = productsData?.data || [];
-    const movements = movementsData?.data || [];
     const opnames = opnamesData?.data || [];
 
     // Modals
@@ -97,7 +80,7 @@ export function StockManagement() {
     }
 
     const handleViewOpnameDetail = (id: number) => {
-        router.push(`/admin/stock/${id}`);
+        router.push(`/admin/inventory/stock-opname/${id}`);
     };
 
     return (
@@ -153,23 +136,6 @@ export function StockManagement() {
                             }}
                         />
                     </section>
-
-                    {/* Movements Ledger */}
-                    <MovementLedger
-                        movements={movements}
-                        meta={movementsData?.meta}
-                        page={movementsPage}
-                        onPageChange={setMovementsPage}
-                        isLoading={movementsLoading}
-                        isFetching={movementsFetching}
-                        sortBy={movementsSortBy}
-                        sortOrder={movementsSortOrder}
-                        onSortChange={(by, order) => {
-                            setMovementsSortBy(by);
-                            setMovementsSortOrder(order);
-                            setMovementsPage(1);
-                        }}
-                    />
                 </div>
             ) : (
                 <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm">
