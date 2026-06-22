@@ -3,10 +3,11 @@
 import { PageLoader } from "@/components/feedback/page-loader";
 import { Button } from "@/components/ui/button";
 import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
-import { IconArrowLeft, IconBarcode, IconEdit } from "@tabler/icons-react";
+import { IconArrowLeft, IconBarcode, IconEdit, IconCircleCheck } from "@tabler/icons-react";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ReturnHeaderDialog } from "../return-header-dialog";
+import { ReturnFinalizeDialog } from "../return-finalize-dialog";
 import { toast } from "sonner";
 import {
     useBulkReplacePurchaseReturnItems,
@@ -73,6 +74,8 @@ export function ReturnItemsPage({ returnId }: ReturnItemsPageProps) {
 
 function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; returnObj: PurchaseReturn }) {
     const [isEditHeaderOpen, setIsEditHeaderOpen] = useState(false);
+    const [isFinalizeOpen, setIsFinalizeOpen] = useState(false);
+    const [isSavingForFinalize, setIsSavingForFinalize] = useState(false);
     const router = useAppRouter();
     const store = getPurchaseItemsStore(returnId, "return");
     const items = store((state) => state.items);
@@ -244,6 +247,53 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
         );
     };
 
+    const handleFinalizeClick = () => {
+        // Filter out items that have 0 or less quantity (user hasn't returned them)
+        const activeItems = items.filter((i) => i.kuantitas > 0);
+
+        if (activeItems.length === 0) {
+            toast.error("Harap isi kuantitas minimal 1 pcs pada salah satu barang yang ingin diretur.");
+            return;
+        }
+
+        // Validate max return limits
+        for (const item of activeItems) {
+            const limit = returnLimitsMap[item.product_id];
+            if (limit && item.kuantitas > limit.sisa) {
+                toast.error(`Jumlah retur "${item.nama}" (${item.kuantitas} pcs) melebihi batas yang dapat diretur (${limit.sisa} pcs).`);
+                return;
+            }
+            if (!item.alasan) {
+                toast.error(`Harap pilih alasan retur untuk "${item.nama}".`);
+                return;
+            }
+        }
+
+        const payload = {
+            items: activeItems.map((i) => ({
+                product_id: i.product_id,
+                kuantitas: i.kuantitas,
+                harga_beli: i.harga_estimasi,
+                alasan: i.alasan || "damaged",
+            })),
+        };
+
+        setIsSavingForFinalize(true);
+        bulkReplace.mutate(
+            { id: returnId, data: payload },
+            {
+                onSuccess: () => {
+                    setIsSavingForFinalize(false);
+                    setIsFinalizeOpen(true);
+                },
+                onError: (err) => {
+                    setIsSavingForFinalize(false);
+                    toast.error(err.message || "Gagal menyimpan barang retur ke server sebelum finalisasi.");
+                },
+            }
+        );
+    };
+
     const reasons = [
         { value: "damaged", label: "Rusak / Cacat" },
         { value: "expired", label: "Kadaluarsa" },
@@ -266,7 +316,7 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
                         type="button"
                         onClick={() => router.push("/admin/purchase/return")}
                         variant="outline"
-                        className="p-2 h-9 w-9 rounded-xl border-slate-200 text-slate-500 hover:text-slate-900 bg-white cursor-pointer"
+                        className="p-2 h-9 w-9 rounded-xl border-slate-200 text-slate-500 hover:text-slate-900 bg-white cursor-pointer animate-in slide-in-from-left duration-200"
                     >
                         <IconArrowLeft size={18} />
                     </Button>
@@ -287,21 +337,33 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
                     <Button
                         onClick={() => setIsEditHeaderOpen(true)}
                         variant="outline"
-                        className="border-slate-200 text-slate-700 hover:text-slate-900 bg-white font-bold text-xs h-10 px-4 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0"
+                        className="border-slate-200 text-slate-700 hover:text-slate-900 bg-white font-bold text-xs h-10 px-4 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0 transition-all hover:border-slate-300"
                     >
                         <IconEdit size={16} /> Edit Info
+                    </Button>
+
+                    <Button
+                        onClick={handleFinalizeClick}
+                        disabled={items.filter((i) => i.kuantitas > 0).length === 0 || bulkReplace.isPending || isSavingForFinalize}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-10 px-5 shadow-md shadow-emerald-600/10 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0 border-none transition-all hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                        {isSavingForFinalize ? "Memproses..." : (
+                            <>
+                                <IconCircleCheck size={16} /> Finalisasi Retur
+                            </>
+                        )}
                     </Button>
                 </div>
             </div>
 
             {/* Scanning and Info Panel */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-in fade-in duration-300">
                 {/* Scanner and Items Table */}
                 <div className="lg:col-span-8 space-y-6">
                     {/* Barcode scanner box */}
-                    <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
+                    <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4 hover:shadow-md transition-shadow duration-300">
                         <div className="flex items-center gap-2 pb-3 border-b border-slate-50">
-                            <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg">
+                            <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg border border-emerald-100/30">
                                 <IconBarcode size={18} />
                             </div>
                             <h3 className="text-xs font-bold text-slate-900 font-sans">Scan Barcode Retur</h3>
@@ -316,7 +378,7 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
                     </div>
 
                     {/* Table of items */}
-                    <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden pb-24">
+                    <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden pb-24 hover:shadow-md transition-shadow duration-300">
                         <ReturnItemsTable
                             items={items}
                             isPending={isPending}
@@ -330,7 +392,7 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
                 </div>
 
                 {/* Sidebar Info/Instruction */}
-                <div className="lg:col-span-4 space-y-6 font-sans">
+                <div className="lg:col-span-4 space-y-6 font-sans animate-in slide-in-from-right duration-300">
                     <ReturnInstructionPanel />
                 </div>
             </div>
@@ -349,6 +411,16 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
                 open={isEditHeaderOpen}
                 onOpenChange={setIsEditHeaderOpen}
                 returnObj={returnObj}
+            />
+
+            <ReturnFinalizeDialog
+                open={isFinalizeOpen}
+                onOpenChange={setIsFinalizeOpen}
+                returnObj={returnObj}
+                onSuccess={() => {
+                    clearAll();
+                    router.push("/admin/purchase/return");
+                }}
             />
         </div>
     );
