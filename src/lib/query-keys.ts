@@ -37,6 +37,12 @@ export const queryKeys = {
         all: ["reports"] as const,
         daily: (date: string) =>
             [...queryKeys.reports.all, "daily", date] as const,
+        labaRugi: (from: string, to: string, interval: string) =>
+            [...queryKeys.reports.all, "labaRugi", from, to, interval] as const,
+        pengeluaran: (from: string, to: string) =>
+            [...queryKeys.reports.all, "pengeluaran", from, to] as const,
+        pembelian: (from: string, to: string, includeItems: boolean, includePayments: boolean) =>
+            [...queryKeys.reports.all, "pembelian", from, to, includeItems, includePayments] as const,
     },
 
     // Suppliers
