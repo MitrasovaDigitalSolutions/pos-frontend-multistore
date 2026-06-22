@@ -49,6 +49,7 @@ export const RECEIVING_STATUS_CLASSES: Record<ReceivingStatus, string> = {
 
 export const PAYMENT_STATUS = {
     PENDING: "pending",
+    UNPAID: "unpaid",
     PARTIAL: "partial",
     PAID: "paid",
 } as const;
@@ -57,12 +58,14 @@ export type PaymentStatus = typeof PAYMENT_STATUS[keyof typeof PAYMENT_STATUS];
 
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
     [PAYMENT_STATUS.PENDING]: "Pending",
+    [PAYMENT_STATUS.UNPAID]: "Belum Dibayar",
     [PAYMENT_STATUS.PARTIAL]: "Sebagian",
     [PAYMENT_STATUS.PAID]: "Lunas",
 };
 
 export const PAYMENT_STATUS_CLASSES: Record<PaymentStatus, string> = {
-    [PAYMENT_STATUS.PENDING]: "bg-rose-50 text-rose-700 border-rose-100",
+    [PAYMENT_STATUS.PENDING]: "bg-amber-50 text-amber-700 border-amber-100",
+    [PAYMENT_STATUS.UNPAID]: "bg-rose-50 text-rose-700 border-rose-100",
     [PAYMENT_STATUS.PARTIAL]: "bg-amber-50 text-amber-700 border-amber-100",
     [PAYMENT_STATUS.PAID]: "bg-emerald-50 text-emerald-700 border-emerald-100",
 };

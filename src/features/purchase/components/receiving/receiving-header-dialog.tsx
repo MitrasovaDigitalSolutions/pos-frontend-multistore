@@ -247,6 +247,7 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
                                     name="status_pembayaran"
                                     options={[
                                         { value: PAYMENT_STATUS.PENDING, label: PAYMENT_STATUS_LABELS[PAYMENT_STATUS.PENDING] },
+                                        { value: PAYMENT_STATUS.UNPAID, label: PAYMENT_STATUS_LABELS[PAYMENT_STATUS.UNPAID] },
                                         { value: PAYMENT_STATUS.PARTIAL, label: PAYMENT_STATUS_LABELS[PAYMENT_STATUS.PARTIAL] },
                                         { value: PAYMENT_STATUS.PAID, label: PAYMENT_STATUS_LABELS[PAYMENT_STATUS.PAID] },
                                     ]}

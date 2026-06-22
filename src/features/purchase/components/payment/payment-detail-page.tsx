@@ -355,17 +355,19 @@ export function PaymentDetailPage({ paymentId }: PaymentDetailPageProps) {
                                         </div>
                                         <div className="flex justify-between items-center pt-1.5">
                                             <span className="text-slate-400">Status Pembayaran:</span>
-                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${summary.status_pembayaran === PAYMENT_STATUS.PAID
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${summary.status_pembayaran === PAYMENT_STATUS.PAID
                                                     ? "bg-emerald-50 text-emerald-600 border border-emerald-100/30"
                                                     : summary.status_pembayaran === PAYMENT_STATUS.PARTIAL
-                                                        ? "bg-amber-50 text-amber-600 border border-amber-100/30"
-                                                        : "bg-slate-100 text-slate-600 border border-slate-200/30"
+                                                        ? "bg-amber-50 text-amber-700 border-amber-100/30"
+                                                        : "bg-rose-50 text-rose-700 border-rose-100"
                                                 }`}>
                                                 {summary.status_pembayaran === PAYMENT_STATUS.PAID
                                                     ? "LUNAS"
                                                     : summary.status_pembayaran === PAYMENT_STATUS.PARTIAL
                                                         ? "SEBAGIAN"
-                                                        : "TEMPO"}
+                                                        : summary.status_pembayaran === PAYMENT_STATUS.UNPAID
+                                                            ? "BELUM DIBAYAR"
+                                                            : "TEMPO"}
                                             </span>
                                         </div>
                                     </div>

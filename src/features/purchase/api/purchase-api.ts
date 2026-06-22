@@ -146,9 +146,9 @@ export function useDeleteReceiving() {
 
 export function useUpdateReceivingPaymentStatus() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<Receiving>, Error, { id: number; status_pembayaran: "pending" | "paid" }>({
+    return useMutation<ApiResponse<Receiving>, Error, { id: number; status_pembayaran: "pending" | "unpaid" | "partial" | "paid" }>({
         mutationFn: ({ id, status_pembayaran }) =>
-            apiPatch<ApiResponse<Receiving>, { status_pembayaran: "pending" | "paid" }>(
+            apiPatch<ApiResponse<Receiving>, { status_pembayaran: "pending" | "unpaid" | "partial" | "paid" }>(
                 ENDPOINTS.PURCHASE.RECEIVING.PAYMENT_STATUS(id),
                 { status_pembayaran },
             ),
@@ -429,7 +429,7 @@ export function usePaymentSummary(receivingId: number | null) {
                 const totalDibayar = completedPayments.reduce((sum, p) => sum + p.total, 0);
                 const sisaHutang = Math.max(0, totalFaktur - totalDibayar);
 
-                let statusPembayaran: "pending" | "partial" | "paid" = "pending";
+                let statusPembayaran: "pending" | "unpaid" | "partial" | "paid" = receiving.status_pembayaran || "pending";
                 if (totalDibayar >= totalFaktur && totalFaktur > 0) {
                     statusPembayaran = "paid";
                 } else if (totalDibayar > 0) {
@@ -467,7 +467,7 @@ export function useOutstandingReceivings() {
             const res = await apiGetList<Receiving>(ENDPOINTS.PURCHASE.RECEIVING.LIST, queryParams);
             // Fallback filtering in case backend doesn't filter status_pembayaran
             return (res.data || []).filter(
-                (r) => r.status_pembayaran === "pending" || r.status_pembayaran === "partial"
+                (r) => r.status_pembayaran === "pending" || r.status_pembayaran === "unpaid" || r.status_pembayaran === "partial"
             );
         },
     });

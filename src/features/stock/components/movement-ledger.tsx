@@ -5,6 +5,32 @@ import { ColumnDef } from "@tanstack/react-table";
 import type { StockMovement } from "../types";
 import { DataTable } from "@/components/ui/data-table";
 
+const TIPE_CLASSES: Record<string, string> = {
+    receive: "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/30",
+    void: "bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-900/30",
+    sale: "bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900/30",
+    retur: "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/30",
+    penyesuaian: "bg-slate-50 text-slate-700 border-slate-100 dark:bg-slate-900/50 dark:text-slate-400 dark:border-slate-800",
+    adjustment: "bg-slate-50 text-slate-700 border-slate-100 dark:bg-slate-900/50 dark:text-slate-400 dark:border-slate-800",
+    opname: "bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-indigo-950/30 dark:text-indigo-400 dark:border-indigo-900/30",
+    masuk: "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/30",
+    keluar: "bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-900/30",
+    mutasi: "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/30",
+};
+
+const TIPE_LABELS: Record<string, string> = {
+    receive: "Penerimaan",
+    void: "Pembatalan",
+    sale: "Penjualan",
+    retur: "Retur",
+    penyesuaian: "Penyesuaian",
+    adjustment: "Penyesuaian",
+    opname: "Opname",
+    masuk: "Masuk",
+    keluar: "Keluar",
+    mutasi: "Mutasi",
+};
+
 interface MovementLedgerProps {
     movements: StockMovement[];
     meta?: {
@@ -61,12 +87,17 @@ export function MovementLedger({
             {
                 accessorKey: "tipe",
                 header: "Tipe",
-                cell: ({ row }) => (
-                    <span className="capitalize font-medium">
-                        {row.original.tipe}
-                    </span>
-                ),
-                size: 120,
+                cell: ({ row }) => {
+                    const tipe = row.original.tipe;
+                    const label = TIPE_LABELS[tipe] || tipe;
+                    const badgeClass = TIPE_CLASSES[tipe] || "bg-slate-50 text-slate-700 border-slate-100 dark:bg-slate-900/50 dark:text-slate-400 dark:border-slate-800";
+                    return (
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${badgeClass}`}>
+                            {label}
+                        </span>
+                    );
+                },
+                size: 130,
             },
             {
                 accessorKey: "kuantitas",
