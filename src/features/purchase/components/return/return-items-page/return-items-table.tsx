@@ -3,6 +3,7 @@ import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { PurchaseItemLocal } from "../../../types";
 import { FormProvider, useForm } from "react-hook-form";
 import { FormNumberInput } from "@/components/forms/form-number-input";
+import { FormSelect } from "@/components/forms/form-select";
 
 interface ReturnItemsTableProps {
     items: PurchaseItemLocal[];
@@ -55,12 +56,12 @@ export function ReturnItemsTable({
                             <tr className="bg-slate-50/80 border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400 font-sans">
                                 <th className="p-3 w-10">No</th>
                                 <th className="p-3">Barcode</th>
-                                <th className="p-3">Nama Produk</th>
+                                <th className="p-3 min-w-[280px]">Nama Produk</th>
                                 <th className="p-3 text-center w-24">Sisa Penerimaan</th>
                                 <th className="p-3 text-center w-24">Qty Retur</th>
                                 <th className="p-3 text-right w-32">Harga Beli</th>
                                 <th className="p-3 text-right w-32">Subtotal</th>
-                                <th className="p-3 w-40">Alasan Retur</th>
+                                <th className="p-3 w-80">Alasan Retur</th>
                                 <th className="p-3 w-12"></th>
                             </tr>
                         </thead>
@@ -102,20 +103,15 @@ export function ReturnItemsTable({
                                             {formatRupiah(subtotal)}
                                         </td>
                                         <td className="p-3">
-                                            <select
-                                                {...methods.register(`items.${idx}.alasan` as const)}
-                                                onChange={(e) => {
-                                                    updateItem(item.temp_id, { alasan: e.target.value });
-                                                }}
+                                            <FormSelect
+                                                name={`items.${idx}.alasan`}
+                                                options={reasons}
                                                 disabled={isPending || item.kuantitas === 0}
-                                                className="w-full h-8 text-xs bg-white border border-slate-200 rounded-lg px-2 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/20 outline-none disabled:opacity-50"
-                                            >
-                                                {reasons.map((r) => (
-                                                    <option key={r.value} value={r.value}>
-                                                        {r.label}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                                onChange={(val) => {
+                                                    updateItem(item.temp_id, { alasan: val });
+                                                }}
+                                                size="sm"
+                                            />
                                         </td>
                                         <td className="p-3">
                                             {item.kuantitas > 0 && (
