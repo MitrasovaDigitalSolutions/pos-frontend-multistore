@@ -1,23 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
-import { CreateMemberDialog } from "./create-member-dialog";
 import { Button } from "@/components/ui/button";
+import { CommandSelect } from "@/components/ui/command-select";
+import { useAllMembers } from "@/features/members/api/members-api";
+import type { Member } from "@/features/members/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { toast } from "sonner";
 import {
+    IconCash,
+    IconLoader2,
     IconPlayerPause,
     IconPlayerPlay,
-    IconTrash,
     IconPrinter,
-    IconLoader2,
-    IconCash,
+    IconTrash,
     IconUser,
     IconX,
 } from "@tabler/icons-react";
-import { useAllMembers } from "@/features/members/api/members-api";
-import { CommandSelect } from "@/components/ui/command-select";
-import type { Member } from "@/features/members/types";
+import { useState } from "react";
+import { CreateMemberDialog } from "./create-member-dialog";
 
 interface CheckoutTotalsSectionProps {
     transactionId: number | null;
@@ -34,6 +33,7 @@ interface CheckoutTotalsSectionProps {
     onRecallOpen: () => void;
     onVoid: () => void;
     onPayOpen: () => void;
+    onReprint: () => void;
 }
 
 export function CheckoutTotalsSection({
@@ -51,6 +51,7 @@ export function CheckoutTotalsSection({
     onRecallOpen,
     onVoid,
     onPayOpen,
+    onReprint,
 }: CheckoutTotalsSectionProps) {
     const { data: members = [], isLoading: isMembersLoading } = useAllMembers();
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
@@ -203,8 +204,8 @@ export function CheckoutTotalsSection({
                     </Button>
                     <Button
                         variant="outline"
-                        onClick={() => toast.success("Mencetak ulang struk terakhir...")}
-                        className="bg-white hover:bg-slate-50 border-slate-200 text-slate-700 h-10 font-bold text-[9px] rounded-xl flex flex-col justify-center items-center gap-0.5 cursor-pointer px-1 py-1"
+                        onClick={onReprint}
+                        className="bg-white hover:bg-slate-50 border-slate-200 text-slate-750 h-10 font-bold text-[9px] rounded-xl flex flex-col justify-center items-center gap-0.5 cursor-pointer px-1 py-1"
                         title="Cetak Ulang Struk (F4)"
                     >
                         <IconPrinter size={14} className="shrink-0 text-slate-500" />

@@ -141,6 +141,7 @@ export function Checkout() {
                         onRecallOpen={state.openHoldList}
                         onVoid={state.handleVoidDraft}
                         onPayOpen={() => state.setIsPayModalOpen(true)}
+                        onReprint={state.handleReprint}
                     />
                 </div>
             </div>

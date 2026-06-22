@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useSession } from "next-auth/react";
-import { useAppRouter } from "@/hooks/use-app-router";
-import { toast } from "sonner";
-import { useProducts } from "@/features/products/api/products-api";
 import { lookupBarcode } from "@/features/checkout/api/checkout-api";
 import type { CartItem, HoldTransaction, Receipt } from "@/features/checkout/types";
+import { useProducts } from "@/features/products/api/products-api";
 import type { Product } from "@/features/products/types";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { useCheckoutStore } from "@/stores/checkout-store";
+import { useSession } from "next-auth/react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 
 export function useCheckoutState() {
     const router = useAppRouter();
@@ -60,6 +60,15 @@ export function useCheckoutState() {
 
     // Receipt data (after successful payment)
     const [receipt, setReceipt] = useState<Receipt | null>(null);
+    const [lastTransactionId, setLastTransactionId] = useState<number | null>(null);
+
+    useEffect(() => {
+        const stored = localStorage.getItem("lastTransactionId");
+        if (stored) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setLastTransactionId(Number(stored));
+        }
+    }, []);
 
     const [trxTime, setTrxTime] = useState("");
     const barcodeInputRef = useRef<HTMLInputElement>(null);
@@ -76,7 +85,7 @@ export function useCheckoutState() {
         try {
             setIsProcessing(true);
             const holdId = activeRecallId || Date.now();
-            
+
             const newHold: HoldTransaction = {
                 id: holdId,
                 items_count: cart.reduce((acc, item) => acc + item.qty, 0),
@@ -253,12 +262,26 @@ export function useCheckoutState() {
         refetchProducts();
         clearCart();
         setActiveRecallId(null);
+        if (receiptData?.id) {
+            localStorage.setItem("lastTransactionId", String(receiptData.id));
+            setLastTransactionId(receiptData.id);
+            window.open(`/api/proxy/v1/transactions-print/${receiptData.id}`, "_blank");
+        }
     };
 
     const handleClearHoldList = useCallback(() => {
         clearHoldList();
         toast.error("Semua transaksi hold telah dihapus.");
     }, [clearHoldList]);
+
+    const handleReprint = useCallback(() => {
+        if (lastTransactionId) {
+            window.open(`/api/proxy/v1/transactions-print/${lastTransactionId}`, "_blank");
+            toast.success("Mencetak ulang struk terakhir...");
+        } else {
+            toast.error("Tidak ada transaksi terakhir yang dapat dicetak ulang.");
+        }
+    }, [lastTransactionId]);
 
     // ─── Clock & Keyboard Shortcuts ───────────────────────────────────────────
     useEffect(() => {
@@ -282,6 +305,9 @@ export function useCheckoutState() {
             } else if (e.key === "F2") {
                 e.preventDefault();
                 setIsCatalogOpen((p) => !p);
+            } else if (e.key === "F4") {
+                e.preventDefault();
+                handleReprint();
             } else if (e.key === "F5") {
                 e.preventDefault();
                 if (cart.length > 0) handleHold();
@@ -303,7 +329,7 @@ export function useCheckoutState() {
             clearInterval(timer);
             window.removeEventListener("keydown", handleKeyDown);
         };
-    }, [cart, handleHold, openHoldList, handleVoidDraft]);
+    }, [cart, handleHold, openHoldList, handleVoidDraft, handleReprint]);
 
     const hasAccessAdmin = !!(
         user?.roles?.includes("admin") ||
@@ -356,5 +382,7 @@ export function useCheckoutState() {
         handleNewTransaction,
         handlePaymentSuccess,
         handleClearHoldList,
+        handleReprint,
+        lastTransactionId,
     };
 }

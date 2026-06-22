@@ -13,9 +13,8 @@ import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 import { hasRole, hasPermission } from "@/constants/roles";
 import { IconPrinter, IconReceipt, IconRefresh } from "@tabler/icons-react";
-import { format, parseISO } from "date-fns";
 import { PrintConfirmDialog } from "./print-confirm-dialog";
-import { PrintPreviewDialog } from "./print-preview-dialog";
+import { format, parseISO } from "date-fns";
 
 interface PengeluaranFilterValues {
     fromDate: string;
@@ -45,8 +44,8 @@ export function PengeluaranReportView() {
     });
 
     const [isPrintDialogOpen, setIsPrintDialogOpen] = useState<boolean>(false);
-    const [previewUrl, setPreviewUrl] = useState<string>("");
-    const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
+
+
 
     const { data: reportData, isLoading, isFetching, refetch } = usePengeluaranReport(
         appliedFilters.fromDate,
@@ -75,10 +74,16 @@ export function PengeluaranReportView() {
         setAppliedFilters(defaults);
     };
 
-    const handlePrintConfirm = (paperSize: string, orientation: string) => {
-        const url = `/api/proxy/v1/reports/print/pengeluaran?from=${appliedFilters.fromDate}&to=${appliedFilters.toDate}&paper_size=${paperSize}&orientation=${orientation}`;
-        setPreviewUrl(url);
-        setIsPreviewOpen(true);
+    interface PengeluaranPrintFilterValues {
+        paperSize: string;
+        orientation: string;
+        fromDate: string;
+        toDate: string;
+    }
+
+    const handlePrintConfirm = (data: PengeluaranPrintFilterValues) => {
+        const url = `/api/proxy/v1/reports/print/pengeluaran?from=${data.fromDate}&to=${data.toDate}&paper_size=${data.paperSize}&orientation=${data.orientation}`;
+        window.open(url, "_blank");
     };
 
     return (
@@ -179,6 +184,8 @@ export function PengeluaranReportView() {
                     Daftar Pengeluaran
                 </h4>
                 <DataTable
+                    paginationMode="client"
+                    defaultSorting={[{ id: "tanggal", desc: true }]}
                     columns={[
                         {
                             accessorKey: "tanggal",
@@ -272,18 +279,33 @@ export function PengeluaranReportView() {
                 />
             </Card>
 
-            <PrintConfirmDialog
+            <PrintConfirmDialog<PengeluaranPrintFilterValues>
                 open={isPrintDialogOpen}
                 onOpenChange={setIsPrintDialogOpen}
                 onConfirm={handlePrintConfirm}
-            />
+                defaultValues={{
+                    paperSize: "A4",
+                    orientation: "portrait",
+                    fromDate: appliedFilters.fromDate,
+                    toDate: appliedFilters.toDate,
+                }}
+            >
+                <div className="grid grid-cols-2 gap-4">
+                    <FormDatePicker<PengeluaranPrintFilterValues>
+                        name="fromDate"
+                        label="Dari Tanggal"
+                        placeholder="Mulai..."
+                        clearable={false}
+                    />
 
-            <PrintPreviewDialog
-                open={isPreviewOpen}
-                onOpenChange={setIsPreviewOpen}
-                pdfUrl={previewUrl}
-                title="Pratinjau Laporan Pengeluaran"
-            />
+                    <FormDatePicker<PengeluaranPrintFilterValues>
+                        name="toDate"
+                        label="Sampai Tanggal"
+                        placeholder="Selesai..."
+                        clearable={false}
+                    />
+                </div>
+            </PrintConfirmDialog>
         </div>
     );
 }

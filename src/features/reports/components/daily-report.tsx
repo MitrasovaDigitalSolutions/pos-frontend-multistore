@@ -214,6 +214,7 @@ export function DailyReportView() {
                             10 Produk Terlaris
                         </h4>
                         <DataTable
+                            paginationMode="client"
                             columns={[
                                 {
                                     accessorKey: "product_name",

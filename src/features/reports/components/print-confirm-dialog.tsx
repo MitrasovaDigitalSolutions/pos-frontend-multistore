@@ -1,37 +1,44 @@
 "use client";
 
-import React from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import React, { useEffect } from "react";
+import { FormProvider, useForm, type FieldValues, type DefaultValues, type Path } from "react-hook-form";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { FormSelect } from "@/components/forms/form-select";
 import { Button } from "@/components/ui/button";
 import { IconPrinter } from "@tabler/icons-react";
 
-interface PrintConfirmDialogProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    onConfirm: (paperSize: string, orientation: string) => void;
-}
-
-interface PrintFilterValues {
+export interface BasePrintFilterValues {
     paperSize: string;
     orientation: string;
 }
 
-export function PrintConfirmDialog({
+interface PrintConfirmDialogProps<TFieldValues extends FieldValues & BasePrintFilterValues = BasePrintFilterValues> {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    onConfirm: (data: TFieldValues) => void;
+    defaultValues: DefaultValues<TFieldValues>;
+    children?: React.ReactNode;
+}
+
+export function PrintConfirmDialog<TFieldValues extends FieldValues & BasePrintFilterValues = BasePrintFilterValues>({
     open,
     onOpenChange,
     onConfirm,
-}: PrintConfirmDialogProps) {
-    const methods = useForm<PrintFilterValues>({
-        defaultValues: {
-            paperSize: "A4",
-            orientation: "portrait",
-        },
+    defaultValues,
+    children,
+}: PrintConfirmDialogProps<TFieldValues>) {
+    const methods = useForm<TFieldValues>({
+        defaultValues,
     });
 
-    const handleConfirm = (data: PrintFilterValues) => {
-        onConfirm(data.paperSize, data.orientation);
+    useEffect(() => {
+        if (open) {
+            methods.reset(defaultValues);
+        }
+    }, [open, defaultValues, methods]);
+
+    const handleConfirm = (data: TFieldValues) => {
+        onConfirm(data);
         onOpenChange(false);
     };
 
@@ -60,26 +67,35 @@ export function PrintConfirmDialog({
             className="max-w-md sm:max-w-md"
         >
             <FormProvider {...methods}>
-                <form onSubmit={methods.handleSubmit(handleConfirm)} className="space-y-4 py-3 text-slate-800">
+                <form onSubmit={methods.handleSubmit(handleConfirm)} className="space-y-4 text-slate-800">
                     <p className="text-xs text-slate-400">
-                        Silakan tentukan ukuran kertas dan orientasi halaman untuk pencetakan laporan ini.
+                        Silakan tentukan konfigurasi halaman dan filter laporan untuk pencetakan.
                     </p>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
-                        <FormSelect<PrintFilterValues>
-                            name="paperSize"
+                        <FormSelect<TFieldValues>
+                            name={"paperSize" as Path<TFieldValues>}
                             label="Ukuran Kertas"
                             options={paperOptions}
                             placeholder="Pilih Ukuran"
                         />
 
-                        <FormSelect<PrintFilterValues>
-                            name="orientation"
+                        <FormSelect<TFieldValues>
+                            name={"orientation" as Path<TFieldValues>}
                             label="Orientasi Halaman"
                             options={orientationOptions}
                             placeholder="Pilih Orientasi"
                         />
                     </div>
+
+                    {children && (
+                        <div className="border-t border-slate-100 pt-4 space-y-4">
+                            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                Filter Laporan
+                            </h4>
+                            {children}
+                        </div>
+                    )}
 
                     <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
                         <Button
