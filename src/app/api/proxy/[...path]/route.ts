@@ -56,7 +56,7 @@ async function handler(req: NextRequest) {
       body,
     });
 
-    const responseData = await response.text();
+    const responseData = await response.arrayBuffer();
 
     return new NextResponse(responseData, {
       status: response.status,

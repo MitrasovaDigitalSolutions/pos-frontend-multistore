@@ -10,7 +10,8 @@ import {
     IconShoppingCart,
     IconWallet,
     IconReceipt,
-    IconUsers
+    IconUsers,
+    IconChartBar
 } from "@tabler/icons-react";
 
 export interface SidebarMenuItem {
@@ -96,12 +97,6 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasRole(roles, "admin") ||
                             hasPermission(roles, permissions, "view_sales") ||
                             hasPermission(roles, permissions, "create_sales"),
-                    },
-                    {
-                        path: ROUTES.ADMIN_REPORTS,
-                        label: "Laporan Penjualan",
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                     },
                 ],
             },
@@ -203,6 +198,39 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     hasRole(roles, "admin") ||
                     hasPermission(roles, permissions, "manage_cash_accounts") ||
                     hasPermission(roles, permissions, "view_cash_drawer"),
+            },
+            {
+                type: "submenu",
+                label: "Laporan",
+                icon: IconChartBar,
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                items: [
+                    {
+                        path: ROUTES.ADMIN_REPORTS_SALES,
+                        label: "Laporan Penjualan",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_REPORTS_LABARUGI,
+                        label: "Laporan Laba Rugi",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_REPORTS_PEMBELIAN,
+                        label: "Laporan Pembelian",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_REPORTS_PENGELUARAN,
+                        label: "Laporan Pengeluaran",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                    },
+                ],
             },
         ],
     },
