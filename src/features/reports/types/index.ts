@@ -45,6 +45,8 @@ export interface LabaRugiReport {
     total_hpp: number;
     total_diskon: number;
     total_laba_rugi: number;
+    total_laba_penjualan: number;
+    total_pengeluaran: number;
 }
 
 export interface ExpenseReportItem {
