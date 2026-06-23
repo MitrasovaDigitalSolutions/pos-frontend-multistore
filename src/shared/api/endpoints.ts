@@ -34,6 +34,8 @@ export const ENDPOINTS = {
 
     // Cash Accounts
     CASH_ACCOUNTS: "/v1/cash-accounts",
+    CASH_FLOW: "/v1/cash-flow",
+    ACCOUNT_CASH_FLOW: (id: number) => `/v1/cash-accounts/${id}/cashflow`,
 
     // Inventory
     INVENTORY: {

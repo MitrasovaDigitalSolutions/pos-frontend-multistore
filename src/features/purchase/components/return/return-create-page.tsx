@@ -34,7 +34,8 @@ export function ReturnCreatePage() {
 
     const receivingOptions = (receivingsData?.data || []).map((r) => ({
         value: String(r.id),
-        label: `${r.nomor_penerimaan} - ${r.supplier_relationship?.nama || r.supplier || "Supplier"} (Faktur: ${r.nomor_faktur || "-"}, Total: ${formatRupiah(r.nilai_faktur || 0)})`,
+        label: `${r.nomor_penerimaan} - ${r.supplier_relationship?.nama || r.supplier || "Supplier"}`,
+        description: `Faktur: ${r.nomor_faktur || "-"} • Total: ${formatRupiah(r.nilai_faktur || 0)}`,
     }));
 
     const methods = useForm<PurchaseReturnHeaderInput>({

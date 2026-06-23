@@ -7,6 +7,7 @@ export interface CommandOption {
   value: string
   label: string
   disabled?: boolean
+  description?: string
 }
 
 interface CommandSelectProps {
@@ -22,6 +23,7 @@ interface CommandSelectProps {
   wrapperClassName?: string
   disabled?: boolean
   size?: "sm" | "md" | "lg"
+  maxLabelLength?: number
 }
 
 // ─── Command Context ─────────────────────────────────────────────────────────
@@ -191,8 +193,8 @@ export const CommandItem = React.forwardRef<
       onClick={handleSelect}
       {...props}
     >
-      {isSelected && <Check className="mr-2 h-3.5 w-3.5 text-emerald-600" />}
-      <span className={cn(!isSelected && "pl-[22px]")}>{children || value}</span>
+      {isSelected && <Check className="mr-2 h-3.5 w-3.5 text-emerald-600 shrink-0" />}
+      <div className={cn("min-w-0 flex-1 text-left", !isSelected && "pl-[22px]")}>{children || value}</div>
     </div>
   )
 })
@@ -212,6 +214,7 @@ export function CommandSelect({
   wrapperClassName,
   disabled = false,
   size = "sm",
+  maxLabelLength,
 }: CommandSelectProps) {
   const [open, setOpen] = React.useState(false)
 
@@ -229,21 +232,22 @@ export function CommandSelect({
   }
 
   return (
-    <div className={cn("relative w-full", wrapperClassName)}>
+    <div className={cn("relative w-full max-w-full min-w-0", wrapperClassName)}>
       <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
         <PopoverPrimitive.Trigger
           render={
             <button
               type="button"
               disabled={disabled}
+              title={selectedOption ? selectedOption.label : undefined}
               className={cn(
-                "flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-1.5 outline-none transition-all hover:bg-slate-50 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer",
+                "grid grid-cols-[minmax(0,1fr)_auto] w-full max-w-full items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 outline-none transition-all hover:bg-slate-50 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer overflow-hidden",
                 sizeClasses,
                 className
               )}
             >
-              <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
-              <ChevronsUpDown className="ml-1.5 h-3.5 w-3.5 shrink-0 opacity-50" />
+              <span className="truncate text-left">{selectedOption ? selectedOption.label : placeholder}</span>
+              <ChevronsUpDown className="ml-1.5 h-3.5 w-3.5 shrink-0 opacity-50 justify-self-end" />
             </button>
           }
         />
@@ -272,11 +276,28 @@ export function CommandSelect({
                     <CommandEmpty>{emptyMessage}</CommandEmpty>
                   )}
                   {!isLoading &&
-                    options.map((opt) => (
-                      <CommandItem key={opt.value} value={opt.value} disabled={opt.disabled}>
-                        {opt.label}
-                      </CommandItem>
-                    ))}
+                    options.map((opt) => {
+                      const truncatedLabel = 
+                        maxLabelLength && opt.label.length > maxLabelLength
+                          ? opt.label.substring(0, maxLabelLength) + "..."
+                          : opt.label;
+                      return (
+                        <CommandItem 
+                          key={opt.value} 
+                          value={opt.value}
+                          disabled={opt.disabled}
+                          keywords={[opt.label, opt.description || ""]}
+                          title={opt.description ? `${opt.label} (${opt.description})` : opt.label}
+                        >
+                          <div className="flex flex-col gap-0.5 min-w-0">
+                            <span className="font-semibold text-slate-800 truncate block">{truncatedLabel}</span>
+                            {opt.description && (
+                              <span className="text-[10px] text-slate-400 font-normal truncate block">{opt.description}</span>
+                            )}
+                          </div>
+                        </CommandItem>
+                      )
+                    })}
                 </CommandList>
               </Command>
             </PopoverPrimitive.Popup>

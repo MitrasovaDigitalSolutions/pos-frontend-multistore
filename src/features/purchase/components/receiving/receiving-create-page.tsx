@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useCreateReceivingHeader, useOutstandingPurchaseOrders } from "../../api/purchase-api";
 import { receivingHeaderSchema, type ReceivingHeaderInput } from "../../schemas/receiving-schema";
 import { PAYMENT_STATUS } from "@/constants/purchase";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
 
 export function ReceivingCreatePage() {
     const router = useAppRouter();
@@ -34,6 +35,7 @@ export function ReceivingCreatePage() {
         ...(outstandingPosData?.data || []).map((po) => ({
             value: String(po.id),
             label: `${po.nomor_po} - ${po.supplier?.nama || po.supplier_name || "Tanpa Supplier"}`,
+            description: `Estimasi: ${formatRupiah(po.nilai_estimasi || 0)}`,
         })),
     ];
 

@@ -18,6 +18,7 @@ interface FormSelectProps<T extends FieldValues> {
     wrapperClassName?: string;
     disabled?: boolean;
     size?: "sm" | "md" | "lg";
+    maxLabelLength?: number;
 }
 
 export function FormSelect<T extends FieldValues>({
@@ -34,6 +35,7 @@ export function FormSelect<T extends FieldValues>({
     wrapperClassName,
     disabled,
     size = 'md',
+    maxLabelLength,
 }: FormSelectProps<T>) {
     const {
         control,
@@ -98,6 +100,7 @@ export function FormSelect<T extends FieldValues>({
                         )}
                         disabled={disabled}
                         size={size}
+                        maxLabelLength={maxLabelLength}
                     />
                 )}
             />

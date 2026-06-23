@@ -188,8 +188,8 @@ export function PembelianReportView() {
     return (
         <div className="space-y-6">
             {/* Header & Filters */}
-            <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-6">
-                <div className="flex justify-between items-center border-b border-slate-50">
+            <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100/60 mb-4">
                     <div>
                         <h3 className="text-sm font-bold text-slate-900">
                             Laporan Pembelian & Hutang Supplier
@@ -279,7 +279,7 @@ export function PembelianReportView() {
             </Card>
 
             {/* Metrics Row */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Total Pembelian */}
                 <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm relative overflow-hidden">
                     <div className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">
@@ -535,7 +535,7 @@ export function PembelianReportView() {
                                             {/* Sub-row with Details */}
                                             {isExpanded && (
                                                 <TableRow className="bg-slate-50/40 hover:bg-slate-50/40">
-                                                    <TableCell colSpan={11} className="p-5 border-b border-slate-100">
+                                                    <TableCell colSpan={11} className="p-5 border-b border-slate-100 whitespace-normal">
                                                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-in">
                                                             {/* Items Detail */}
                                                             {appliedFilters.includeItems && row.daftar_barang ? (
@@ -575,9 +575,9 @@ export function PembelianReportView() {
                                                                 <div className="lg:col-span-7 p-6 border border-dashed border-slate-200 rounded-xl bg-slate-50/50 text-center flex flex-col items-center justify-center min-h-[140px] select-none">
                                                                     <IconShoppingCart size={24} className="text-slate-400 mb-1.5" />
                                                                     <span className="text-xs font-bold text-slate-700">Rincian Barang Disembunyikan</span>
-                                                                    <span className="text-[10px] text-slate-400 max-w-xs mt-1 leading-normal">
+                                                                    <p className="text-[10px] text-slate-400 max-w-xs mt-1 leading-normal whitespace-normal text-center">
                                                                         Opsi filter &quot;Sertakan Detail Barang&quot; dinonaktifkan. Aktifkan opsi tersebut untuk memuat daftar produk faktur ini.
-                                                                    </span>
+                                                                    </p>
                                                                 </div>
                                                             ) : null}
 
@@ -652,9 +652,9 @@ export function PembelianReportView() {
                                                                 <div className="lg:col-span-5 p-6 border border-dashed border-slate-200 rounded-xl bg-slate-50/50 text-center flex flex-col items-center justify-center min-h-[140px] select-none">
                                                                     <IconCoin size={24} className="text-slate-400 mb-1.5" />
                                                                     <span className="text-xs font-bold text-slate-700">Histori Bayar Disembunyikan</span>
-                                                                    <span className="text-[10px] text-slate-400 max-w-xs mt-1 leading-normal">
+                                                                    <p className="text-[10px] text-slate-400 max-w-xs mt-1 leading-normal whitespace-normal text-center">
                                                                         Opsi filter &quot;Sertakan Histori Bayar&quot; dinonaktifkan. Aktifkan opsi tersebut untuk memuat cicilan & sisa hutang.
-                                                                    </span>
+                                                                    </p>
                                                                 </div>
                                                             ) : null}
                                                         </div>
@@ -683,7 +683,7 @@ export function PembelianReportView() {
                     includePayments: appliedFilters.includePayments,
                 }}
             >
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormDatePicker<PembelianPrintFilterValues>
                         name="fromDate"
                         label="Dari Tanggal"

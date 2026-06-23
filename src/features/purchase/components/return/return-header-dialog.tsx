@@ -38,7 +38,8 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
 
     const receivingOptions = (receivingsData?.data || []).map((r) => ({
         value: String(r.id),
-        label: `${r.nomor_penerimaan} - ${r.supplier_relationship?.nama || r.supplier || "Supplier"} (Faktur: ${r.nomor_faktur || "-"}, Total: ${formatRupiah(r.nilai_faktur || 0)})`,
+        label: `${r.nomor_penerimaan} - ${r.supplier_relationship?.nama || r.supplier || "Supplier"}`,
+        description: `Faktur: ${r.nomor_faktur || "-"} • Total: ${formatRupiah(r.nilai_faktur || 0)}`,
     }));
 
     // In edit mode, if currently linked receiving is not in the list (e.g. because it's not in the first 100 or has another state), make sure it is added.
@@ -47,7 +48,8 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
         if (!hasCurrentReceiving) {
             receivingOptions.push({
                 value: String(returnObj.stock_receiving_id),
-                label: `${returnObj.stock_receiving?.nomor_penerimaan || `Penerimaan ID: ${returnObj.stock_receiving_id}`} (Terkait)`,
+                label: `${returnObj.stock_receiving?.nomor_penerimaan || `Penerimaan ID: ${returnObj.stock_receiving_id}`}`,
+                description: `Terkait`,
             });
         }
     }

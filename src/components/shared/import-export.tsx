@@ -252,7 +252,7 @@ export function ImportExport({
                   type="button"
                   onClick={handleOpenDialog}
                   disabled={isImporting || isProgressActive}
-                  className="h-9 px-3 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex gap-1.5 cursor-pointer transition-all disabled:bg-emerald-600/50 disabled:opacity-90 relative"
+                  className="h-9 px-3 text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white rounded-xl flex gap-1.5 cursor-pointer transition-all disabled:bg-violet-600/50 disabled:opacity-90 relative"
                 >
                   {isImporting || isProgressActive ? (
                     <IconLoader2 size={16} className="animate-spin" />
@@ -273,26 +273,26 @@ export function ImportExport({
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                     {showFinishedState ? (
-                      <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                        <span className="w-5 h-5 rounded-full bg-emerald-50 dark:bg-emerald-950/35 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+                      <span className="flex items-center gap-1.5 text-violet-600 dark:text-violet-400">
+                        <span className="w-5 h-5 rounded-full bg-violet-50 dark:bg-violet-950/35 flex items-center justify-center text-violet-600 dark:text-violet-400 shrink-0">
                           <IconCheck size={12} className="stroke-[3]" />
                         </span>
                         <span>Import Selesai!</span>
                       </span>
                     ) : isImporting && !isProgressActive ? (
                       <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-                        <IconLoader2 size={14} className="animate-spin text-emerald-600" />
+                        <IconLoader2 size={14} className="animate-spin text-violet-600" />
                         <span>Mengunggah file...</span>
                       </span>
                     ) : (
                       <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-                        <IconLoader2 size={14} className="animate-spin text-emerald-600" />
+                        <IconLoader2 size={14} className="animate-spin text-violet-600" />
                         <span>Memproses data...</span>
                       </span>
                     )}
                   </span>
                   {!showFinishedState && importProgress !== null && (
-                    <span className="text-xs font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
+                    <span className="text-xs font-mono font-extrabold text-violet-600 dark:text-violet-400">
                       {importProgress}%
                     </span>
                   )}
@@ -301,14 +301,14 @@ export function ImportExport({
                 <div className="space-y-2">
                   <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden relative">
                     {showFinishedState ? (
-                      <div className="bg-emerald-500 h-full w-full transition-all duration-300" />
+                      <div className="bg-violet-500 h-full w-full transition-all duration-300" />
                     ) : isImporting && !isProgressActive ? (
-                      <div className="h-full bg-emerald-600/30 rounded-full w-full overflow-hidden relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-600 to-transparent w-1/2 h-full animate-shimmer-loading" />
+                      <div className="h-full bg-violet-600/30 rounded-full w-full overflow-hidden relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-violet-600 to-transparent w-1/2 h-full animate-shimmer-loading" />
                       </div>
                     ) : (
                       <div
-                        className="bg-emerald-600 h-full transition-all duration-300 rounded-full relative overflow-hidden"
+                        className="bg-violet-600 h-full transition-all duration-300 rounded-full relative overflow-hidden"
                         style={{ width: `${importProgress ?? 0}%` }}
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent w-1/2 h-full animate-shimmer-loading" />
@@ -335,7 +335,7 @@ export function ImportExport({
         >
           <DialogHeader className="pb-4 border-b border-slate-100 dark:border-slate-800">
             <DialogTitle className="text-sm font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
-              <IconFileSpreadsheet size={18} className="text-emerald-600" />
+              <IconFileSpreadsheet size={18} className="text-violet-600" />
               <span>{title}</span>
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -363,8 +363,8 @@ export function ImportExport({
                 className={cn(
                   "border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all",
                   isDragActive
-                    ? "border-emerald-500 bg-emerald-50/10 dark:bg-emerald-950/10"
-                    : "border-slate-200 dark:border-slate-800 hover:border-emerald-500 hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
+                    ? "border-violet-500 bg-violet-50/10 dark:bg-violet-950/10"
+                    : "border-slate-200 dark:border-slate-800 hover:border-violet-500 hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
                 )}
               >
                 <input
@@ -375,7 +375,7 @@ export function ImportExport({
                   className="hidden"
                   disabled={isImporting}
                 />
-                <div className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-850 flex items-center justify-center text-slate-400 hover:text-emerald-500 transition-colors">
+                <div className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-850 flex items-center justify-center text-slate-400 hover:text-violet-500 transition-colors">
                   <IconUpload size={20} />
                 </div>
                 <div className="text-center">
@@ -390,7 +390,7 @@ export function ImportExport({
             ) : (
               <div className="border border-slate-100 dark:border-slate-800 rounded-xl p-4 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/20">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-lg bg-emerald-55/10 dark:bg-emerald-950/30 text-emerald-600 flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-lg bg-violet-55/10 dark:bg-violet-950/30 text-violet-600 flex items-center justify-center shrink-0">
                     <IconFileSpreadsheet size={20} />
                   </div>
                   <div className="min-w-0">
@@ -429,7 +429,7 @@ export function ImportExport({
             </Button>
             <Button
               type="button"
-              className="flex-1 h-10 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white disabled:bg-emerald-600/50 disabled:opacity-90"
+              className="flex-1 h-10 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer bg-violet-600 hover:bg-violet-700 text-white disabled:bg-violet-600/50 disabled:opacity-90"
               onClick={onImportConfirm}
               disabled={!selectedFile || isImporting}
             >
