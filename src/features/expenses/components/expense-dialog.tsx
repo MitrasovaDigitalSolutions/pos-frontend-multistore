@@ -79,7 +79,8 @@ export function ExpenseDialog({
 
     const accountOptions = cashAccounts.map((a) => ({
         value: String(a.id),
-        label: `${a.nama} (Saldo: ${formatRupiah(a.saldo)})`,
+        label: a.nama,
+        description: `Saldo: ${formatRupiah(a.saldo)}`,
     }));
 
     return (

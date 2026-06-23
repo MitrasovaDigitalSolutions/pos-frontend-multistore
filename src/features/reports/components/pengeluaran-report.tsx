@@ -89,8 +89,8 @@ export function PengeluaranReportView() {
     return (
         <div className="space-y-6">
             {/* Header & Filters */}
-            <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-6">
-                <div className="flex justify-between items-center border-b border-slate-50">
+            <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100/60 mb-4">
                     <div>
                         <h3 className="text-sm font-bold text-slate-900">
                             Laporan Pengeluaran Operasional
@@ -145,9 +145,9 @@ export function PengeluaranReportView() {
             </Card>
 
             {/* Metrics Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Total Pengeluaran */}
-                <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm relative overflow-hidden md:col-span-1">
+                <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm relative overflow-hidden">
                     <div className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">
                         Total Nilai Pengeluaran
                     </div>
@@ -164,7 +164,7 @@ export function PengeluaranReportView() {
                 </div>
 
                 {/* Transaksi Pengeluaran Count */}
-                <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm relative overflow-hidden md:col-span-1">
+                <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm relative overflow-hidden">
                     <div className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">
                         Jumlah Transaksi Pengeluaran
                     </div>
@@ -290,7 +290,7 @@ export function PengeluaranReportView() {
                     toDate: appliedFilters.toDate,
                 }}
             >
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormDatePicker<PengeluaranPrintFilterValues>
                         name="fromDate"
                         label="Dari Tanggal"

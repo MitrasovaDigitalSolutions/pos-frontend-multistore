@@ -399,8 +399,8 @@ export function usePaymentSummary(receivingId: number | null) {
         queryFn: async () => {
             if (!receivingId) throw new Error("Receiving ID is required");
             try {
-                // Try fetching from the summary endpoint first
-                const res = await apiGetData<PaymentSummary>(
+                // Try fetching from the summary endpoint first (which returns flat JSON object)
+                const res = await apiGet<PaymentSummary>(
                     ENDPOINTS.PURCHASE.PAYMENT.SUMMARY(receivingId)
                 );
                 if (!res) {
@@ -427,7 +427,7 @@ export function usePaymentSummary(receivingId: number | null) {
 
                 const totalFaktur = receiving.nilai_faktur || 0;
                 const totalDibayar = completedPayments.reduce((sum, p) => sum + p.total, 0);
-                const sisaHutang = Math.max(0, totalFaktur - totalDibayar);
+                const sisaHutang = receiving.sisa_hutang !== undefined ? receiving.sisa_hutang : Math.max(0, totalFaktur - totalDibayar);
 
                 let statusPembayaran: "pending" | "unpaid" | "partial" | "paid" = receiving.status_pembayaran || "pending";
                 if (totalDibayar >= totalFaktur && totalFaktur > 0) {

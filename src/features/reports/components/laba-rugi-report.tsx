@@ -101,8 +101,8 @@ export function LabaRugiReportView() {
     return (
         <div className="space-y-6">
             {/* Header & Filters */}
-            <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-6">
-                <div className="flex justify-between items-center border-b border-slate-50">
+            <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100/60 mb-4">
                     <div>
                         <h3 className="text-sm font-bold text-slate-900">
                             Laporan Laba Rugi
@@ -163,7 +163,7 @@ export function LabaRugiReportView() {
             </Card>
 
             {/* Metrics Row */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Total Jual */}
                 <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm relative overflow-hidden">
                     <div className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">
@@ -364,7 +364,7 @@ export function LabaRugiReportView() {
                     interval: appliedFilters.interval,
                 }}
             >
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormDatePicker<LabaRugiPrintFilterValues>
                         name="fromDate"
                         label="Dari Tanggal"

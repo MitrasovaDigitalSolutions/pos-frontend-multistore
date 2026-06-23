@@ -2,23 +2,22 @@
 
 import {
     IconArrowsExchange,
+    IconCheck,
     IconLoader2,
     IconMinus,
     IconPlus,
     IconWallet,
-    IconCheck,
     IconX
 } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { FilterForm } from "@/components/forms/filter-form";
+import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
-import { FormDatePicker } from "@/components/forms/form-date-picker";
+import { Button } from "@/components/ui/button";
 import {
     Pagination,
     PaginationContent,
@@ -187,7 +186,7 @@ export function CashAccountsDashboard() {
         const purchaseReturnSettlement = movement.purchaseReturnSettlement || movement.purchase_return_settlement;
         const expense = movement.expense;
         const drawerMovement = movement.cashDrawerMovement || movement.cash_drawer_movement;
-        
+
         if (sale) {
             return (
                 <div className="flex flex-col">
@@ -232,7 +231,7 @@ export function CashAccountsDashboard() {
                 </div>
             );
         }
-        
+
         return (
             <div className="flex flex-col">
                 <span className="font-bold text-slate-800 uppercase tracking-wider text-[10px]">{movement.kategori.replace(/_/g, ' ')}</span>
@@ -309,15 +308,14 @@ export function CashAccountsDashboard() {
                                             page: 1
                                         }));
                                     }}
-                                    className={`bg-white rounded-2xl border transition-all duration-300 hover:shadow-md cursor-pointer relative overflow-hidden flex flex-col justify-between select-none ${
-                                        isSelected
+                                    className={`bg-white rounded-2xl border transition-all duration-300 hover:shadow-md cursor-pointer relative overflow-hidden flex flex-col justify-between select-none ${isSelected
                                             ? isBank
                                                 ? "border-blue-500 ring-2 ring-blue-500/30 shadow-md scale-[1.01]"
                                                 : "border-emerald-500 ring-2 ring-emerald-500/30 shadow-md scale-[1.01]"
                                             : isBank
                                                 ? "border-blue-100/70 hover:border-blue-300/60 hover:-translate-y-0.5"
                                                 : "border-emerald-100/70 hover:border-emerald-300/60 hover:-translate-y-0.5"
-                                    }`}
+                                        }`}
                                 >
                                     {/* Card Header & Details */}
                                     <div className="p-5 space-y-4">
@@ -338,17 +336,15 @@ export function CashAccountsDashboard() {
                                             </div>
 
                                             <div className="flex flex-col items-end gap-1.5 shrink-0">
-                                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                                                    isBank
+                                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${isBank
                                                         ? "bg-blue-50 text-blue-700 border border-blue-100"
                                                         : "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                                                }`}>
+                                                    }`}>
                                                     {account.tipe}
                                                 </span>
                                                 {isSelected && (
-                                                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 ${
-                                                        isBank ? "bg-blue-100 text-blue-800" : "bg-emerald-100 text-emerald-800"
-                                                    }`}>
+                                                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 ${isBank ? "bg-blue-100 text-blue-800" : "bg-emerald-100 text-emerald-800"
+                                                        }`}>
                                                         <IconCheck size={10} strokeWidth={3} />
                                                         Dipilih
                                                     </span>
@@ -405,184 +401,182 @@ export function CashAccountsDashboard() {
 
             {/* Bottom Section: Ledger */}
             <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                {ledgerFilters.cash_account_id
-                                    ? `Jurnal Arus Kas: ${accounts.find(a => a.id === ledgerFilters.cash_account_id)?.nama || ""}`
-                                    : "Semua Jurnal Arus Kas"
-                                }
-                            </h3>
-                            {ledgerFilters.cash_account_id && (
-                                <button
-                                    onClick={() => setLedgerFilters(prev => ({ ...prev, cash_account_id: undefined, page: 1 }))}
-                                    className="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-bold cursor-pointer transition-colors flex items-center gap-1.5 border border-slate-200"
-                                >
-                                    Tampilkan Semua
-                                    <IconX size={10} />
-                                </button>
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            {ledgerFilters.cash_account_id
+                                ? `Jurnal Arus Kas: ${accounts.find(a => a.id === ledgerFilters.cash_account_id)?.nama || ""}`
+                                : "Semua Jurnal Arus Kas"
+                            }
+                        </h3>
+                        {ledgerFilters.cash_account_id && (
+                            <button
+                                onClick={() => setLedgerFilters(prev => ({ ...prev, cash_account_id: undefined, page: 1 }))}
+                                className="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-bold cursor-pointer transition-colors flex items-center gap-1.5 border border-slate-200"
+                            >
+                                Tampilkan Semua
+                                <IconX size={10} />
+                            </button>
+                        )}
+                    </div>
+                    {ledgerFetching && (
+                        <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                            <IconLoader2 className="animate-spin" size={12} />
+                            Sinkronisasi...
+                        </span>
+                    )}
+                </div>
+
+                {/* Filter Bar */}
+                <FilterForm
+                    methods={filterMethods}
+                    onSubmit={handleFilterSubmit}
+                    onReset={handleFilterReset}
+                    cols={3}
+                    className="my-0"
+                >
+                    <FormInput<LedgerFilterValues>
+                        name="search"
+                        label="Cari Transaksi"
+                        placeholder="Cari referensi, catatan..."
+                    />
+                    <FormSelect<LedgerFilterValues>
+                        name="tipe"
+                        label="Tipe Transaksi"
+                        options={tipeOptions}
+                        placeholder="Semua Tipe"
+                    />
+                    <div className="flex gap-2 items-end w-full">
+                        <FormDatePicker<LedgerFilterValues>
+                            name="from"
+                            label="Tanggal Mulai"
+                            placeholder="Tanggal Mulai"
+                        />
+                        <span className="text-slate-400 text-[10px] uppercase font-bold shrink-0 mb-3">s/d</span>
+                        <FormDatePicker<LedgerFilterValues>
+                            name="to"
+                            label="Tanggal Akhir"
+                            placeholder="Tanggal Akhir"
+                        />
+                    </div>
+                </FilterForm>
+
+                {/* Table View */}
+                <div className="border border-slate-100 rounded-2xl bg-white shadow-sm overflow-hidden flex flex-col">
+                    {ledgerFetching && (
+                        <div className="h-0.5 bg-emerald-50 overflow-hidden relative">
+                            <div className="h-full bg-emerald-500 animate-shimmer-loading w-[35%] rounded-full absolute" />
+                        </div>
+                    )}
+
+                    <div className="overflow-x-auto scrollbar-thin">
+                        <table className="w-full border-collapse text-left">
+                            <thead>
+                                <tr className="bg-slate-50/50 border-b border-slate-100">
+                                    <th className="text-[10px] font-bold text-slate-500 py-3 px-4 uppercase tracking-wider">Tanggal & Waktu</th>
+                                    <th className="text-[10px] font-bold text-slate-500 py-3 px-4 uppercase tracking-wider">Akun Kas</th>
+                                    <th className="text-[10px] font-bold text-slate-500 py-3 px-4 uppercase tracking-wider">Referensi / Kategori</th>
+                                    <th className="text-[10px] font-bold text-slate-500 py-3 px-4 uppercase tracking-wider text-center">Tipe</th>
+                                    <th className="text-[10px] font-bold text-slate-500 py-3 px-4 uppercase tracking-wider text-right">Nominal</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {ledgerLoading ? (
+                                    Array.from({ length: 5 }).map((_, i) => (
+                                        <tr key={i} className="animate-pulse">
+                                            <td className="py-4 px-4"><div className="h-4 bg-slate-100 rounded w-24" /></td>
+                                            <td className="py-4 px-4"><div className="h-4 bg-slate-100 rounded w-32" /></td>
+                                            <td className="py-4 px-4"><div className="h-4 bg-slate-100 rounded w-48" /></td>
+                                            <td className="py-4 px-4 flex justify-center"><div className="h-4 bg-slate-100 rounded w-16" /></td>
+                                            <td className="py-4 px-4"><div className="h-4 bg-slate-100 rounded w-24 ml-auto" /></td>
+                                        </tr>
+                                    ))
+                                ) : !ledgerData || ledgerData.data.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="text-center py-12 text-slate-400 text-xs font-medium">
+                                            Tidak ada data arus kas yang ditemukan.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    ledgerData.data.map((movement) => {
+                                        const accountName = movement.cashAccount?.nama || movement.cash_account?.nama || "Akun Kas";
+                                        const amount = movement.amount;
+                                        const isTransfer = movement.tipe === "transfer";
+                                        const isOutflow = movement.tipe === "outflow" || (isTransfer && amount < 0);
+                                        const isInflow = movement.tipe === "inflow" || (isTransfer && amount > 0);
+
+                                        return (
+                                            <tr key={movement.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                <td className="py-3.5 px-4 text-xs font-medium text-slate-500">
+                                                    {new Date(movement.created_at).toLocaleDateString("id-ID", {
+                                                        day: "2-digit",
+                                                        month: "short",
+                                                        year: "numeric"
+                                                    })}
+                                                    <span className="text-[10px] text-slate-400 ml-1.5 block sm:inline font-mono">
+                                                        {new Date(movement.created_at).toLocaleTimeString("id-ID", {
+                                                            hour: "2-digit",
+                                                            minute: "2-digit"
+                                                        })}
+                                                    </span>
+                                                </td>
+                                                <td className="py-3.5 px-4 text-xs font-bold text-slate-800">
+                                                    {accountName}
+                                                </td>
+                                                <td className="py-3.5 px-4 text-xs font-medium">
+                                                    {renderReference(movement)}
+                                                </td>
+                                                <td className="py-3.5 px-4 text-center">
+                                                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${isInflow
+                                                            ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                                            : isOutflow
+                                                                ? "bg-rose-50 text-rose-700 border border-rose-100"
+                                                                : "bg-blue-50 text-blue-700 border border-blue-100"
+                                                        }`}>
+                                                        {movement.tipe}
+                                                    </span>
+                                                </td>
+                                                <td className={`py-3.5 px-4 text-xs font-extrabold text-right tabular-nums ${isInflow ? "text-emerald-600" : "text-rose-600"
+                                                    }`}>
+                                                    {isInflow ? "+" : ""}
+                                                    {formatRupiah(amount)}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Pagination */}
+                    {ledgerData && ledgerData.meta && ledgerData.meta.total > 0 && (
+                        <div className="flex flex-col sm:flex-row justify-between items-center border-t border-slate-100 p-4 gap-4 text-xs bg-slate-50/30">
+                            <span className="text-slate-550 font-semibold">
+                                Menampilkan {((ledgerFilters.page - 1) * ledgerFilters.per_page) + 1} - {Math.min(ledgerFilters.page * ledgerFilters.per_page, ledgerData.meta.total)} dari {ledgerData.meta.total} transaksi
+                            </span>
+                            {ledgerData.meta.last_page > 1 && (
+                                <Pagination className="w-auto mx-0">
+                                    <PaginationContent>
+                                        <PaginationItem>
+                                            <PaginationPrevious
+                                                onClick={() => setLedgerFilters(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
+                                                disabled={ledgerFilters.page === 1}
+                                            />
+                                        </PaginationItem>
+                                        {renderPaginationItemsForLedger(ledgerData.meta)}
+                                        <PaginationItem>
+                                            <PaginationNext
+                                                onClick={() => setLedgerFilters(prev => ({ ...prev, page: Math.min(ledgerData.meta.last_page, prev.page + 1) }))}
+                                                disabled={ledgerFilters.page === ledgerData.meta.last_page}
+                                            />
+                                        </PaginationItem>
+                                    </PaginationContent>
+                                </Pagination>
                             )}
                         </div>
-                        {ledgerFetching && (
-                            <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                                <IconLoader2 className="animate-spin" size={12} />
-                                Sinkronisasi...
-                            </span>
-                        )}
-                    </div>
-
-                    {/* Filter Bar */}
-                    <FilterForm
-                        methods={filterMethods}
-                        onSubmit={handleFilterSubmit}
-                        onReset={handleFilterReset}
-                        cols={3}
-                        className="my-0"
-                    >
-                        <FormInput<LedgerFilterValues>
-                            name="search"
-                            label="Cari Transaksi"
-                            placeholder="Cari referensi, catatan..."
-                        />
-                        <FormSelect<LedgerFilterValues>
-                            name="tipe"
-                            label="Tipe Transaksi"
-                            options={tipeOptions}
-                            placeholder="Semua Tipe"
-                        />
-                        <div className="flex gap-2 items-end w-full">
-                            <FormDatePicker<LedgerFilterValues>
-                                name="from"
-                                label="Tanggal Mulai"
-                                placeholder="Tanggal Mulai"
-                            />
-                            <span className="text-slate-400 text-[10px] uppercase font-bold shrink-0 mb-3">s/d</span>
-                            <FormDatePicker<LedgerFilterValues>
-                                name="to"
-                                label="Tanggal Akhir"
-                                placeholder="Tanggal Akhir"
-                            />
-                        </div>
-                    </FilterForm>
-
-                    {/* Table View */}
-                    <div className="border border-slate-100 rounded-2xl bg-white shadow-sm overflow-hidden flex flex-col">
-                        {ledgerFetching && (
-                            <div className="h-0.5 bg-emerald-50 overflow-hidden relative">
-                                <div className="h-full bg-emerald-500 animate-shimmer-loading w-[35%] rounded-full absolute" />
-                            </div>
-                        )}
-
-                        <div className="overflow-x-auto scrollbar-thin">
-                            <table className="w-full border-collapse text-left">
-                                <thead>
-                                    <tr className="bg-slate-50/50 border-b border-slate-100">
-                                        <th className="text-[10px] font-bold text-slate-500 py-3 px-4 uppercase tracking-wider">Tanggal & Waktu</th>
-                                        <th className="text-[10px] font-bold text-slate-500 py-3 px-4 uppercase tracking-wider">Akun Kas</th>
-                                        <th className="text-[10px] font-bold text-slate-500 py-3 px-4 uppercase tracking-wider">Referensi / Kategori</th>
-                                        <th className="text-[10px] font-bold text-slate-500 py-3 px-4 uppercase tracking-wider text-center">Tipe</th>
-                                        <th className="text-[10px] font-bold text-slate-500 py-3 px-4 uppercase tracking-wider text-right">Nominal</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {ledgerLoading ? (
-                                        Array.from({ length: 5 }).map((_, i) => (
-                                            <tr key={i} className="animate-pulse">
-                                                <td className="py-4 px-4"><div className="h-4 bg-slate-100 rounded w-24" /></td>
-                                                <td className="py-4 px-4"><div className="h-4 bg-slate-100 rounded w-32" /></td>
-                                                <td className="py-4 px-4"><div className="h-4 bg-slate-100 rounded w-48" /></td>
-                                                <td className="py-4 px-4 flex justify-center"><div className="h-4 bg-slate-100 rounded w-16" /></td>
-                                                <td className="py-4 px-4"><div className="h-4 bg-slate-100 rounded w-24 ml-auto" /></td>
-                                            </tr>
-                                        ))
-                                    ) : !ledgerData || ledgerData.data.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={5} className="text-center py-12 text-slate-400 text-xs font-medium">
-                                                Tidak ada data arus kas yang ditemukan.
-                                            </td>
-                                        </tr>
-                                    ) : (
-                                        ledgerData.data.map((movement) => {
-                                            const accountName = movement.cashAccount?.nama || movement.cash_account?.nama || "Akun Kas";
-                                            const amount = movement.amount;
-                                            const isTransfer = movement.tipe === "transfer";
-                                            const isOutflow = movement.tipe === "outflow" || (isTransfer && amount < 0);
-                                            const isInflow = movement.tipe === "inflow" || (isTransfer && amount > 0);
-
-                                            return (
-                                                <tr key={movement.id} className="hover:bg-slate-50/50 transition-colors group">
-                                                    <td className="py-3.5 px-4 text-xs font-medium text-slate-500">
-                                                        {new Date(movement.created_at).toLocaleDateString("id-ID", {
-                                                            day: "2-digit",
-                                                            month: "short",
-                                                            year: "numeric"
-                                                        })}
-                                                        <span className="text-[10px] text-slate-400 ml-1.5 block sm:inline font-mono">
-                                                            {new Date(movement.created_at).toLocaleTimeString("id-ID", {
-                                                                hour: "2-digit",
-                                                                minute: "2-digit"
-                                                            })}
-                                                        </span>
-                                                    </td>
-                                                    <td className="py-3.5 px-4 text-xs font-bold text-slate-800">
-                                                        {accountName}
-                                                    </td>
-                                                    <td className="py-3.5 px-4 text-xs font-medium">
-                                                        {renderReference(movement)}
-                                                    </td>
-                                                    <td className="py-3.5 px-4 text-center">
-                                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                                                            isInflow 
-                                                                ? "bg-emerald-50 text-emerald-700 border border-emerald-100" 
-                                                                : isOutflow 
-                                                                    ? "bg-rose-50 text-rose-700 border border-rose-100"
-                                                                    : "bg-blue-50 text-blue-700 border border-blue-100"
-                                                        }`}>
-                                                            {movement.tipe}
-                                                        </span>
-                                                    </td>
-                                                    <td className={`py-3.5 px-4 text-xs font-extrabold text-right tabular-nums ${
-                                                        isInflow ? "text-emerald-600" : "text-rose-600"
-                                                    }`}>
-                                                        {isInflow ? "+" : ""}
-                                                        {formatRupiah(amount)}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {/* Pagination */}
-                        {ledgerData && ledgerData.meta && ledgerData.meta.total > 0 && (
-                            <div className="flex flex-col sm:flex-row justify-between items-center border-t border-slate-100 p-4 gap-4 text-xs bg-slate-50/30">
-                                <span className="text-slate-550 font-semibold">
-                                    Menampilkan {((ledgerFilters.page - 1) * ledgerFilters.per_page) + 1} - {Math.min(ledgerFilters.page * ledgerFilters.per_page, ledgerData.meta.total)} dari {ledgerData.meta.total} transaksi
-                                </span>
-                                {ledgerData.meta.last_page > 1 && (
-                                    <Pagination className="w-auto mx-0">
-                                        <PaginationContent>
-                                            <PaginationItem>
-                                                <PaginationPrevious
-                                                    onClick={() => setLedgerFilters(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
-                                                    disabled={ledgerFilters.page === 1}
-                                                />
-                                            </PaginationItem>
-                                            {renderPaginationItemsForLedger(ledgerData.meta)}
-                                            <PaginationItem>
-                                                <PaginationNext
-                                                    onClick={() => setLedgerFilters(prev => ({ ...prev, page: Math.min(ledgerData.meta.last_page, prev.page + 1) }))}
-                                                    disabled={ledgerFilters.page === ledgerData.meta.last_page}
-                                                />
-                                            </PaginationItem>
-                                        </PaginationContent>
-                                    </Pagination>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                    )}
+                </div>
             </div>
 
             {/* Mutation Dialog (Debit/Credit) */}

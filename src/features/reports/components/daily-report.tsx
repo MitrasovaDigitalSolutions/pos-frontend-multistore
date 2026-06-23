@@ -35,8 +35,8 @@ export function DailyReportView() {
     }
 
     return (
-        <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-6">
-            <div className="flex justify-between items-center border-b border-slate-50 mb-6">
+        <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100/60 mb-6">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">
                         Laporan Penjualan Harian
@@ -46,13 +46,13 @@ export function DailyReportView() {
                         pembayaran.
                     </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
                     <span className="text-xs font-bold text-slate-600 whitespace-nowrap">
                         Pilih Tanggal:
                     </span>
                     <DatePicker
                         placeholder="Pilih tanggal..."
-                        className="w-48"
+                        className="w-full sm:w-48"
                         clearable={false}
                         value={selectedReportDate}
                         onChange={(val) => setSelectedReportDate(val)}
@@ -67,7 +67,7 @@ export function DailyReportView() {
             ) : (
                 <div className="space-y-6">
                     {/* Summary Metrics — Row 1 */}
-                    <div className="grid grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div className="bg-slate-50 p-4 rounded-xl">
                             <div className="text-[9px] font-bold uppercase text-slate-400">
                                 Total Omset Harian
@@ -121,7 +121,7 @@ export function DailyReportView() {
                     </div>
 
                     {/* Profit Metrics — Row 2 */}
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="bg-slate-50 p-4 rounded-xl">
                             <div className="text-[9px] font-bold uppercase text-slate-400">
                                 Total HPP (COGS)
@@ -165,7 +165,7 @@ export function DailyReportView() {
                         <h4 className="text-xs font-bold text-slate-800 mb-3">
                             Breakdown Metode Pembayaran
                         </h4>
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {isLoading ? (
                                 Array.from({ length: 3 }).map((_, idx) => (
                                     <div

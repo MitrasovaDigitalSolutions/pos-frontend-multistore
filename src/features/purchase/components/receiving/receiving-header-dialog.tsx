@@ -15,6 +15,7 @@ import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
 import { useUpdateReceiving, useOutstandingPurchaseOrders } from "../../api/purchase-api";
 import { receivingHeaderSchema, type ReceivingHeaderInput } from "../../schemas/receiving-schema";
 import type { Receiving } from "../../types";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { Scrollable } from "@/components/ui/scrollable";
 import {
     PAYMENT_STATUS,
@@ -46,6 +47,7 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
         ...(outstandingPosData?.data || []).map((po) => ({
             value: String(po.id),
             label: `${po.nomor_po} - ${po.supplier?.nama || po.supplier_name || "Tanpa Supplier"}`,
+            description: `Estimasi: ${formatRupiah(po.nilai_estimasi || 0)}`,
         })),
     ];
 

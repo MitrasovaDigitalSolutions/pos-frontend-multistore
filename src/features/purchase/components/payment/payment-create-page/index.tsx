@@ -92,16 +92,24 @@ export function PaymentCreatePage() {
     }, [isEdit, editingPayment, reset]);
 
     // Handle outstanding receivings options list
-    const receivingOptions = outstandingReceivings.map((r) => ({
-        value: String(r.id),
-        label: `${r.nomor_penerimaan} - ${r.supplier_relationship?.nama || r.supplier || "Tanpa Supplier"} (Faktur: ${formatRupiah(r.nilai_faktur || 0)})`,
-    }));
+    const receivingOptions = outstandingReceivings.map((r) => {
+        const sisaHutangVal = r.sisa_hutang !== undefined ? r.sisa_hutang : (r.nilai_faktur || 0);
+        return {
+            value: String(r.id),
+            label: `${r.nomor_penerimaan} - ${r.supplier_relationship?.nama || r.supplier || "Tanpa Supplier"}`,
+            description: `Sisa Hutang: ${formatRupiah(sisaHutangVal)}`,
+        };
+    });
 
     // If editing, make sure the current receiving is in options
     if (isEdit && editingPayment && !receivingOptions.some(o => o.value === String(editingPayment.referensi_id))) {
+        const editSisaHutang = editingPayment.receiving?.sisa_hutang !== undefined 
+            ? editingPayment.receiving.sisa_hutang 
+            : (editingPayment.receiving?.nilai_faktur || 0);
         receivingOptions.push({
             value: String(editingPayment.referensi_id),
-            label: `${editingPayment.receiving?.nomor_penerimaan || "Penerimaan"} - ${editingPayment.receiving?.supplier_relationship?.nama || editingPayment.receiving?.supplier || "Supplier"} (Faktur: ${formatRupiah(editingPayment.receiving?.nilai_faktur || 0)})`,
+            label: `${editingPayment.receiving?.nomor_penerimaan || "Penerimaan"} - ${editingPayment.receiving?.supplier_relationship?.nama || editingPayment.receiving?.supplier || "Supplier"}`,
+            description: `Sisa Hutang: ${formatRupiah(editSisaHutang)}`,
         });
     }
 
@@ -133,11 +141,14 @@ export function PaymentCreatePage() {
 
     // Calculate dynamic sisa_hutang for validation
     // If edit: sisa_hutang without current payment = current_sisa_hutang + editingPayment.total
+    const selectedReceiving = outstandingReceivings.find((r) => r.id === Number(selectedReceivingId));
     const sisaHutangLimit = summary
         ? isEdit && editingPayment
             ? summary.sisa_hutang + editingPayment.total
             : summary.sisa_hutang
-        : 0;
+        : (selectedReceiving 
+            ? (selectedReceiving.sisa_hutang !== undefined ? selectedReceiving.sisa_hutang : (selectedReceiving.nilai_faktur || 0))
+            : 0);
 
     const onSubmit = (data: PaymentInput) => {
         // Validate sisa_hutang limit

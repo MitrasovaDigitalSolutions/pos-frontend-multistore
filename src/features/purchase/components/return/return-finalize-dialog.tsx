@@ -72,7 +72,7 @@ export function ReturnFinalizeDialog({
     const methods = useForm<ReturnFinalizeInput>({
         resolver: zodResolver(returnFinalizeSchema) as Resolver<ReturnFinalizeInput>,
         defaultValues: {
-            resolution_type: "refund",
+            resolution_type: "credit",
             cash_account_id: null,
             stock_receiving_id: null,
             catatan_penyelesaian: "",
@@ -91,7 +91,7 @@ export function ReturnFinalizeDialog({
     useEffect(() => {
         if (open && returnObj) {
             reset({
-                resolution_type: "refund",
+                resolution_type: "credit",
                 cash_account_id: null,
                 stock_receiving_id: returnObj.stock_receiving_id || null,
                 catatan_penyelesaian: "",
@@ -101,12 +101,14 @@ export function ReturnFinalizeDialog({
 
     const cashAccountOptions = cashAccounts.map((c) => ({
         value: String(c.id),
-        label: `${c.nama} (Saldo: ${formatRupiah(c.saldo)})`,
+        label: c.nama,
+        description: `Saldo: ${formatRupiah(c.saldo)}`,
     }));
 
     const receivingOptions = (receivingsData?.data || []).map((r) => ({
         value: String(r.id),
-        label: `${r.nomor_penerimaan} (Faktur: ${r.nomor_faktur || "-"}, Total: ${formatRupiah(r.nilai_faktur || 0)}, Status: ${r.status_pembayaran === PAYMENT_STATUS.PAID ? PAYMENT_STATUS_LABELS[PAYMENT_STATUS.PAID] : "Belum Lunas"})`,
+        label: `${r.nomor_penerimaan} (Faktur: ${r.nomor_faktur || "-"})`,
+        description: `Total: ${formatRupiah(r.nilai_faktur || 0)} • Status: ${r.status_pembayaran === PAYMENT_STATUS.PAID ? PAYMENT_STATUS_LABELS[PAYMENT_STATUS.PAID] : "Belum Lunas"}`,
     }));
 
     const onSubmit = (data: ReturnFinalizeInput) => {
@@ -163,7 +165,7 @@ export function ReturnFinalizeDialog({
                         </p>
                     </div>
                 }
-                className="max-w-md"
+                className="sm:max-w-xl"
             >
                 {/* Warning Banner */}
                 <div className="mt-4 bg-amber-50/50 border border-amber-100/50 text-amber-800 p-4 rounded-xl flex gap-3 items-start">
@@ -186,8 +188,8 @@ export function ReturnFinalizeDialog({
                             <FormSelect<ReturnFinalizeInput>
                                 name="resolution_type"
                                 options={[
-                                    { value: "refund", label: "Refund Tunai (Kas Masuk)" },
                                     { value: "credit", label: "Potong Utang (Kredit Faktur Supplier)" },
+                                    { value: "refund", label: "Refund Tunai (Kas Masuk)" },
                                     { value: "credit_note", label: "Supplier Credit Note (Saldo Kredit)" },
                                     { value: "exchange", label: "Tukar Barang (Auto-buat Penerimaan Baru)" },
                                 ]}

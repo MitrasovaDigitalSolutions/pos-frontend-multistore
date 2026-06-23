@@ -88,6 +88,10 @@ export function DebtSummary({
                     <span>Total Sudah Dibayar:</span>
                     <span className="font-semibold text-emerald-600">{formatRupiah(summary.total_dibayar)}</span>
                 </div>
+                <div className="flex justify-between items-center text-slate-500">
+                    <span>Sisa Hutang:</span>
+                    <span className="font-semibold text-rose-600">{formatRupiah(summary.sisa_hutang)}</span>
+                </div>
                 <div className="flex justify-between items-center text-slate-500 pt-2 border-t border-slate-50">
                     <span>Status Pembayaran:</span>
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${summary.status_pembayaran === PAYMENT_STATUS.PAID
