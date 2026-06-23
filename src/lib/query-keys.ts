@@ -95,8 +95,8 @@ export const queryKeys = {
 
     cashAccounts: {
         all: ["cash-accounts"] as const,
-        cashFlow: (filters?: Record<string, unknown>) => ["cash-accounts", "cash-flow", filters] as const,
-        accountCashFlow: (id: number, filters?: Record<string, unknown>) => ["cash-accounts", id, "cash-flow", filters] as const,
+        cashFlow: (filters?: unknown) => ["cash-accounts", "cash-flow", filters] as const,
+        accountCashFlow: (id: number, filters?: unknown) => ["cash-accounts", id, "cash-flow", filters] as const,
     },
 
     // Transactions (checkout)
