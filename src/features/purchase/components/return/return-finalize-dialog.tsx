@@ -59,8 +59,13 @@ export function ReturnFinalizeDialog({
 }: ReturnFinalizeDialogProps) {
     const finalizeReturn = useFinalizePurchaseReturn();
     const { data: cashAccounts = [], isLoading: cashLoading } = useCashAccounts();
+
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [pendingData, setPendingData] = useState<ReturnFinalizeInput | null>(null);
+
+    const isUnpaid = returnObj?.stock_receiving_id !== null &&
+        (returnObj?.stock_receiving?.status_pembayaran === PAYMENT_STATUS.PENDING ||
+            (returnObj?.stock_receiving?.status_pembayaran as string) === "unpaid");
 
     // Fetch completed receivings for this supplier to reduce outstanding debt if using "credit"
     const { data: receivingsData, isLoading: receivingsLoading } = useReceivings({
@@ -72,7 +77,7 @@ export function ReturnFinalizeDialog({
     const methods = useForm<ReturnFinalizeInput>({
         resolver: zodResolver(returnFinalizeSchema) as Resolver<ReturnFinalizeInput>,
         defaultValues: {
-            resolution_type: "credit",
+            resolution_type: isUnpaid ? "credit" : "refund",
             cash_account_id: null,
             stock_receiving_id: null,
             catatan_penyelesaian: "",
@@ -91,13 +96,13 @@ export function ReturnFinalizeDialog({
     useEffect(() => {
         if (open && returnObj) {
             reset({
-                resolution_type: "credit",
+                resolution_type: isUnpaid ? "credit" : "refund",
                 cash_account_id: null,
                 stock_receiving_id: returnObj.stock_receiving_id || null,
                 catatan_penyelesaian: "",
             });
         }
-    }, [open, returnObj, reset]);
+    }, [open, returnObj, reset, isUnpaid]);
 
     const cashAccountOptions = cashAccounts.map((c) => ({
         value: String(c.id),
@@ -188,8 +193,12 @@ export function ReturnFinalizeDialog({
                             <FormSelect<ReturnFinalizeInput>
                                 name="resolution_type"
                                 options={[
+                                    {
+                                        value: "refund",
+                                        label: `Refund Tunai (Kas Masuk)${isUnpaid ? " - Faktur Belum Lunas" : ""}`,
+                                        disabled: isUnpaid
+                                    },
                                     { value: "credit", label: "Potong Utang (Kredit Faktur Supplier)" },
-                                    { value: "refund", label: "Refund Tunai (Kas Masuk)" },
                                     { value: "credit_note", label: "Supplier Credit Note (Saldo Kredit)" },
                                     { value: "exchange", label: "Tukar Barang (Auto-buat Penerimaan Baru)" },
                                 ]}
