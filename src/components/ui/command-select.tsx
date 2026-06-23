@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 export interface CommandOption {
   value: string
   label: string
+  disabled?: boolean
 }
 
 interface CommandSelectProps {
@@ -148,8 +149,9 @@ export const CommandItem = React.forwardRef<
   React.HTMLAttributes<HTMLDivElement> & {
     value: string
     keywords?: string[]
+    disabled?: boolean
   }
->(({ className, value, keywords = [], children, onClick, ...props }, ref) => {
+>(({ className, value, keywords = [], disabled, children, onClick, ...props }, ref) => {
   const { search, selectedValue, onSelect, disableLocalFilter } = React.useContext(CommandContext)
 
   // Local filtering if no remote API search is active
@@ -172,6 +174,7 @@ export const CommandItem = React.forwardRef<
   const isSelected = selectedValue === value
 
   const handleSelect = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (disabled) return
     onSelect?.(value)
     onClick?.(e)
   }
@@ -179,6 +182,7 @@ export const CommandItem = React.forwardRef<
   return (
     <div
       ref={ref}
+      data-disabled={disabled}
       className={cn(
         "relative flex cursor-pointer select-none items-center rounded-lg px-2.5 py-1.5 text-xs outline-none transition-colors hover:bg-slate-50 hover:text-slate-900 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
         isSelected && "bg-emerald-50/50 text-emerald-700 font-bold",
@@ -269,7 +273,7 @@ export function CommandSelect({
                   )}
                   {!isLoading &&
                     options.map((opt) => (
-                      <CommandItem key={opt.value} value={opt.value}>
+                      <CommandItem key={opt.value} value={opt.value} disabled={opt.disabled}>
                         {opt.label}
                       </CommandItem>
                     ))}
