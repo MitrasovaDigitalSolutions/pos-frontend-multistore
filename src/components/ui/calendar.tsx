@@ -5,12 +5,58 @@ import {
   DayPicker,
   getDefaultClassNames,
   type DayButton,
+  type DropdownProps,
   type Locale,
 } from "react-day-picker"
 
-import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
-import { ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { cn } from "@/lib/utils"
+import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
+
+function CalendarDropdown({
+  value,
+  onChange,
+  options,
+}: DropdownProps) {
+  const selectedOption = options?.find((opt) => opt.value === value)
+
+  const handleValueChange = (newValue: string | null) => {
+    if (newValue === null) return
+    const syntheticEvent = {
+      target: {
+        value: newValue,
+      },
+    } as React.ChangeEvent<HTMLSelectElement>
+    onChange?.(syntheticEvent)
+  }
+
+  return (
+    <Select value={value?.toString()} onValueChange={handleValueChange}>
+      <SelectTrigger className="relative z-10 h-7 text-xs font-semibold px-2 py-1 bg-transparent hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-300 border border-slate-200 dark:border-slate-800 flex items-center gap-1 rounded-md transition-colors cursor-pointer select-none">
+        <SelectValue>{selectedOption?.label}</SelectValue>
+      </SelectTrigger>
+      <SelectContent className="max-h-[300px] overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-md z-[100] p-1">
+        {options?.map((option) => (
+          <SelectItem
+            key={option.value}
+            value={option.value.toString()}
+            disabled={option.disabled}
+            className="text-xs hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:text-emerald-800 dark:hover:text-emerald-300 rounded-md cursor-pointer px-2 py-1.5 focus:bg-emerald-50 dark:focus:bg-emerald-950/30"
+          >
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  )
+}
 
 function Calendar({
   className,
@@ -51,17 +97,17 @@ function Calendar({
         ),
         month: cn("flex w-full flex-col gap-4", defaultClassNames.month),
         nav: cn(
-          "absolute inset-x-0 top-0 flex w-full items-center justify-between gap-1",
+          "absolute inset-x-0 top-0 flex w-full items-center justify-between gap-1 pointer-events-none",
           defaultClassNames.nav
         ),
         button_previous: cn(
           buttonVariants({ variant: buttonVariant }),
-          "size-(--cell-size) p-0 select-none aria-disabled:opacity-50 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-300",
+          "size-(--cell-size) p-0 select-none aria-disabled:opacity-50 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-300 pointer-events-auto",
           defaultClassNames.button_previous
         ),
         button_next: cn(
           buttonVariants({ variant: buttonVariant }),
-          "size-(--cell-size) p-0 select-none aria-disabled:opacity-50 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-300",
+          "size-(--cell-size) p-0 select-none aria-disabled:opacity-50 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-300 pointer-events-auto",
           defaultClassNames.button_next
         ),
         month_caption: cn(
@@ -173,6 +219,11 @@ function Calendar({
             </td>
           )
         },
+        CaptionLabel:
+          captionLayout === "dropdown"
+            ? () => <></>
+            : undefined,
+        Dropdown: CalendarDropdown,
         ...components,
       }}
       {...props}
@@ -219,3 +270,4 @@ function CalendarDayButton({
 }
 
 export { Calendar, CalendarDayButton }
+

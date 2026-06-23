@@ -24,6 +24,10 @@ export interface DatePickerProps {
   label?: string
   clearable?: boolean
   size?: "sm" | "md" | "lg"
+  captionLayout?: "label" | "dropdown" | "dropdown-months" | "dropdown-years"
+  startMonth?: Date
+  endMonth?: Date
+  reverseYears?: boolean
 }
 
 export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
@@ -38,6 +42,10 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
       label,
       clearable = true,
       size = "md",
+      captionLayout = "dropdown",
+      startMonth,
+      endMonth,
+      reverseYears,
       ...props
     },
     ref
@@ -57,6 +65,12 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
       const parsed = parse(value, "yyyy-MM-dd", new Date())
       return isValid(parsed) ? parsed : undefined
     }, [value])
+
+    const defaultStartMonth = React.useMemo(() => new Date(new Date().getFullYear() - 100, 0), [])
+    const defaultEndMonth = React.useMemo(() => new Date(new Date().getFullYear() + 20, 11), [])
+
+    const resolvedStartMonth = startMonth || defaultStartMonth
+    const resolvedEndMonth = endMonth || defaultEndMonth
 
     const handleSelect = (date: Date | undefined) => {
       if (!date) {
@@ -113,6 +127,10 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
                 selected={selectedDate}
                 onSelect={handleSelect}
                 className="p-3"
+                captionLayout={captionLayout}
+                startMonth={resolvedStartMonth}
+                endMonth={resolvedEndMonth}
+                reverseYears={reverseYears}
               />
             </PopoverContent>
           </Popover>
