@@ -36,7 +36,16 @@ export function AdminSidebar() {
         const timer = setTimeout(() => {
             setMounted(true);
         }, 0);
-        return () => clearTimeout(timer);
+
+        // Force body and html to be overflow-hidden to prevent second page-level scrollbar
+        document.body.classList.add("overflow-hidden");
+        document.documentElement.classList.add("overflow-hidden");
+
+        return () => {
+            clearTimeout(timer);
+            document.body.classList.remove("overflow-hidden");
+            document.documentElement.classList.remove("overflow-hidden");
+        };
     }, []);
 
     const collapsed = mounted ? isCollapsed : false;
