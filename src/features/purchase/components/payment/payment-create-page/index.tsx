@@ -29,6 +29,7 @@ export function PaymentCreatePage() {
     const editIdParam = searchParams.get("edit");
     const editId = editIdParam ? Number(editIdParam) : null;
     const isEdit = editId !== null && editId > 0;
+    const preselectedReceivingId = searchParams.get("receiving_id");
 
     // Block editing completely
     useEffect(() => {
@@ -90,6 +91,13 @@ export function PaymentCreatePage() {
             });
         }
     }, [isEdit, editingPayment, reset]);
+
+    // Pre-fill receiving_id if provided in query string
+    useEffect(() => {
+        if (!isEdit && preselectedReceivingId) {
+            setValue("receiving_id", Number(preselectedReceivingId));
+        }
+    }, [preselectedReceivingId, isEdit, setValue]);
 
     // Handle outstanding receivings options list
     const receivingOptions = outstandingReceivings.map((r) => {

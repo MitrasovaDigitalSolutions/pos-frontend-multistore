@@ -123,6 +123,17 @@ export function ReceiptDialog({
                                             <span className="tabular-nums">{formatRupiah(receipt?.kembalian ?? 0)}</span>
                                         </div>
                                     </>
+                                ) : receipt?.metode_pembayaran === "debt" ? (
+                                    <>
+                                        <div className="flex justify-between text-slate-500 font-semibold">
+                                            <span>DP Tunai:</span>
+                                            <span className="tabular-nums">{formatRupiah(receipt?.cash_received ?? 0)}</span>
+                                        </div>
+                                        <div className="flex justify-between text-rose-600 font-bold">
+                                            <span>Hutang Baru:</span>
+                                            <span className="tabular-nums">{formatRupiah(receipt?.debt_amount ?? 0)}</span>
+                                        </div>
+                                    </>
                                 ) : (
                                     <div className="flex justify-between capitalize text-slate-500 font-semibold">
                                         <span>Kartu {receipt?.jenis_kartu}:</span>

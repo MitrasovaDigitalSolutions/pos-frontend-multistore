@@ -30,6 +30,8 @@ export const ROUTES = {
     ADMIN_PURCHASE_RECEIVING: "/admin/purchase/receiving",
     ADMIN_PURCHASE_PAYMENT: "/admin/purchase/payment",
     ADMIN_PURCHASE_RETURN: "/admin/purchase/return",
+    ADMIN_DEBTS_MEMBER: "/admin/debts/member",
+    ADMIN_DEBTS_SALES: "/admin/debts/sales",
 
     // Protected - POS
     CHECKOUT: "/checkout",

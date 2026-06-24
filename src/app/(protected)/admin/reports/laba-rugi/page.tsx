@@ -1,4 +1,5 @@
-import { LabaRugiReportView } from "@/features/reports/components/laba-rugi-report";
+import { LabaRugiReportView } from "@/features/reports/components/laba-rugi/laba-rugi-report";
+
 
 export const metadata = {
     title: "Laporan Laba Rugi - Mitra Buana Motor",

@@ -1,4 +1,5 @@
-import { PembelianReportView } from "@/features/reports/components/pembelian-report";
+import { PembelianReportView } from "@/features/reports/components/pembelian/pembelian-report";
+
 
 export const metadata = {
     title: "Laporan Pembelian - Mitra Buana Motor",

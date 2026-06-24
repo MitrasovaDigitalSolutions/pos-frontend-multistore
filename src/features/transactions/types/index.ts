@@ -15,6 +15,8 @@ export interface Transaction extends BaseSale {
     items: TransactionItem[];
     member?: Member | null;
     member_id?: number | null;
+    cash_received?: number | null;
+    debt_amount?: number | null;
 }
 
 export interface TransactionQueryParams extends PaginationParams {

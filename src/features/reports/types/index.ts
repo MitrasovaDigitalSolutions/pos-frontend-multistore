@@ -45,6 +45,8 @@ export interface LabaRugiReport {
     total_hpp: number;
     total_diskon: number;
     total_laba_rugi: number;
+    total_laba_penjualan: number;
+    total_pengeluaran: number;
 }
 
 export interface ExpenseReportItem {
@@ -134,3 +136,76 @@ export interface PurchaseReport {
     include_items: boolean;
     include_payments: boolean;
 }
+
+export interface SalesReportItemDetail {
+    nama_barang: string;
+    satuan: string;
+    qty_beli?: number;
+    qty_retur?: number;
+    net_qty?: number;
+    harga_beli?: number;
+    subtotal_net?: number;
+    qty?: number;
+    harga_jual?: number;
+    subtotal?: number;
+}
+
+export interface SalesPaymentHistory {
+    tanggal: string;
+    no_pembayaran_ref: string;
+    metode_akun: string;
+    keterangan: string;
+    jumlah_bayar: number;
+}
+
+export interface SalesReportItem {
+    no: number;
+    tanggal: string;
+    tanggal_raw: string;
+    no_faktur: string;
+    supplier?: string;
+    operator: string;
+    pembayaran?: string;
+    jumlah: number;
+    retur?: number;
+    total_net?: number;
+    hutang?: number;
+    daftar_barang?: SalesReportItemDetail[];
+    riwayat_pembayaran?: {
+        history: SalesPaymentHistory[];
+        total_dibayar_kotor: number;
+        pengembalian_dana_refund: number;
+        total_dibayar_bersih: number;
+        sisa_hutang: number;
+    };
+}
+
+export interface PenjualanReport {
+    from: string;
+    to: string;
+    sales?: {
+        data: SalesReportItem[];
+        meta: {
+            current_page: number;
+            last_page: number;
+            per_page: number;
+            total: number;
+        };
+    };
+    receivings?: {
+        data: SalesReportItem[];
+        meta: {
+            current_page: number;
+            last_page: number;
+            per_page: number;
+            total: number;
+        };
+    };
+    total_amount: number;
+    total_retur?: number;
+    total_net?: number;
+    total_hutang?: number;
+    include_items: boolean;
+    include_payments?: boolean;
+}
+

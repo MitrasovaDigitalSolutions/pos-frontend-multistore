@@ -78,3 +78,13 @@ export interface Sale {
     created_at: string;
     updated_at: string;
 }
+
+export interface JasaVsProductData {
+    from: string;
+    to: string;
+    total_jasa_sales: number;
+    total_product_sales: number;
+    total_jasa_quantity: number;
+    total_product_quantity: number;
+}
+

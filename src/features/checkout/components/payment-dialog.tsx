@@ -10,6 +10,7 @@ import {
     IconCreditCard,
     IconLoader2,
     IconPrinter,
+    IconNotebook,
 } from "@tabler/icons-react";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { useBulkCheckout } from "../api/checkout-api";
@@ -40,7 +41,7 @@ export function PaymentDialog({
 }: PaymentDialogProps) {
     const bulkCheckout = useBulkCheckout();
 
-    const [payMode, setPayMode] = useState<"cash" | "card">("cash");
+    const [payMode, setPayMode] = useState<"cash" | "card" | "debt">("cash");
     const [cashReceived, setCashReceived] = useState("");
     const [cardType, setCardType] = useState("debit");
     const [cardLast4, setCardLast4] = useState("");
@@ -63,11 +64,22 @@ export function PaymentDialog({
     const changeValue = cashNum - grandTotal;
     const isCashValid = cashNum >= grandTotal && grandTotal > 0;
     const isCardValid = cardLast4.length === 4 && grandTotal > 0;
+    const isDebtValid = !!selectedMember && cashNum < grandTotal && grandTotal > 0;
     const isProcessing = bulkCheckout.isPending;
 
     const handlePaySubmit = () => {
         if (cartItems.length === 0) {
             toast.error("Keranjang belanja kosong.");
+            return;
+        }
+
+        if (payMode === "debt" && !selectedMember) {
+            toast.error("Harap pilih member terlebih dahulu untuk pembayaran hutang.");
+            return;
+        }
+
+        if (payMode === "debt" && cashNum >= grandTotal) {
+            toast.error("Uang muka (DP) tidak boleh melebihi atau sama dengan total belanja. Gunakan pembayaran Tunai.");
             return;
         }
 
@@ -81,10 +93,32 @@ export function PaymentDialog({
 
         if (payMode === "cash") {
             payload.cash_received = cashNum;
-        } else {
+            payload.cash_details = {
+                cash_received: cashNum,
+                nominal_bayar: cashNum,
+            };
+        } else if (payMode === "card") {
+            const finalCardRef = cardRef || `EDC-${Date.now()}`;
             payload.card_type = cardType;
+            payload.jenis_kartu = cardType;
             payload.last_four = cardLast4;
-            payload.reference_number = cardRef || `EDC-${Date.now()}`;
+            payload.nomor_kartu_akhir = cardLast4;
+            payload.reference_number = finalCardRef;
+            payload.referensi_edc = finalCardRef;
+            payload.card_details = {
+                card_type: cardType,
+                jenis_kartu: cardType,
+                last_four: cardLast4,
+                nomor_kartu_akhir: cardLast4,
+                reference_number: finalCardRef,
+                referensi_edc: finalCardRef,
+            };
+        } else if (payMode === "debt") {
+            payload.cash_received = cashNum;
+            payload.debt_details = {
+                cash_received: cashNum,
+                debt_amount: grandTotal - cashNum,
+            };
         }
 
         bulkCheckout.mutate(payload, {
@@ -103,12 +137,12 @@ export function PaymentDialog({
             open={open}
             onOpenChange={onOpenChange}
             title={
-                <>
+                <div className="flex items-center gap-2">
                     <IconCash size={20} className="text-emerald-500" />
                     <span>Metode Pembayaran</span>
-                </>
+                </div>
             }
-            className="max-w-125"
+            className="max-w-135"
         >
             <div className="space-y-5 pt-4">
                 {/* Grand total display */}
@@ -122,28 +156,48 @@ export function PaymentDialog({
                 </div>
 
                 {/* Mode toggle */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-2">
                     <Button
-                        onClick={() => setPayMode("cash")}
-                        className={`h-11 font-bold text-xs rounded-xl flex gap-1.5 cursor-pointer border-none ${
+                        onClick={() => {
+                            setPayMode("cash");
+                            setCashReceived("");
+                        }}
+                        className={`h-11 font-bold text-[10px] rounded-xl flex gap-1 cursor-pointer border-none ${
                             payMode === "cash"
                                 ? "bg-emerald-600 text-white"
                                 : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
                         }`}
                         disabled={isProcessing}
                     >
-                        <IconCash size={16} /> TUNAI (CASH)
+                        <IconCash size={14} /> TUNAI (CASH)
                     </Button>
                     <Button
-                        onClick={() => setPayMode("card")}
-                        className={`h-11 font-bold text-xs rounded-xl flex gap-1.5 cursor-pointer border ${
+                        onClick={() => {
+                            setPayMode("card");
+                            setCashReceived("");
+                        }}
+                        className={`h-11 font-bold text-[10px] rounded-xl flex gap-1 cursor-pointer border ${
                             payMode === "card"
                                 ? "bg-slate-700 text-white border-slate-700"
                                 : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
                         }`}
                         disabled={isProcessing}
                     >
-                        <IconCreditCard size={16} /> KARTU / EDC
+                        <IconCreditCard size={14} /> KARTU / EDC
+                    </Button>
+                    <Button
+                        onClick={() => {
+                            setPayMode("debt");
+                            setCashReceived("");
+                        }}
+                        className={`h-11 font-bold text-[10px] rounded-xl flex gap-1 cursor-pointer border-none ${
+                            payMode === "debt"
+                                ? "bg-rose-600 text-white"
+                                : "bg-rose-50 text-rose-600 hover:bg-rose-100"
+                        }`}
+                        disabled={isProcessing}
+                    >
+                        <IconNotebook size={14} /> HUTANG
                     </Button>
                 </div>
 
@@ -265,11 +319,84 @@ export function PaymentDialog({
                     </div>
                 )}
 
+                {/* Debt fields */}
+                {payMode === "debt" && (
+                    <div className="space-y-4">
+                        {!selectedMember ? (
+                            <div className="bg-rose-50 border border-rose-100 p-4 rounded-xl text-center">
+                                <p className="text-xs font-bold text-rose-800">Member Belum Dipilih</p>
+                                <p className="text-[10px] text-rose-500 mt-1">
+                                    Metode pembayaran hutang hanya tersedia untuk member terdaftar. Silakan pilih member terlebih dahulu di layar kasir.
+                                </p>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Selected Member Info Card */}
+                                <div className="bg-slate-50 border border-slate-100 p-3.5 rounded-xl flex items-center justify-between text-xs">
+                                    <div>
+                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Member</span>
+                                        <h4 className="font-bold text-slate-800 mt-0.5">{selectedMember.nama}</h4>
+                                        <span className="text-[10px] text-slate-500">{selectedMember.kode}</span>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Hutang Aktif</span>
+                                        <h4 className="font-bold text-rose-600 mt-0.5">{formatRupiah(selectedMember.hutang || 0)}</h4>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                                        Uang Muka / DP (Tunai) - Opsional
+                                    </label>
+                                    <div className="relative">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-lg select-none">
+                                            Rp
+                                        </span>
+                                        <Input
+                                            type="text"
+                                            placeholder="0"
+                                            className="h-14 pl-12 pr-4 text-2xl font-extrabold text-slate-950 bg-white border-2 border-emerald-500 focus-visible:ring-emerald-600 rounded-xl"
+                                            value={
+                                                cashReceived
+                                                    ? new Intl.NumberFormat("id-ID").format(Number(cashReceived))
+                                                    : ""
+                                            }
+                                            onChange={(e) => {
+                                                const clean = e.target.value.replace(/\D/g, "");
+                                                if (Number(clean) >= grandTotal) {
+                                                    toast.warning("Uang muka harus kurang dari total tagihan.");
+                                                    return;
+                                                }
+                                                setCashReceived(clean);
+                                            }}
+                                            disabled={isProcessing}
+                                            autoFocus
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="border-t border-dashed border-slate-200 pt-3.5 text-center">
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                        Sisa Hutang Baru Yang Dicatat
+                                    </span>
+                                    <h2 className="text-3xl font-extrabold mt-1 tracking-tight tabular-nums text-rose-500">
+                                        {formatRupiah(grandTotal - cashNum)}
+                                    </h2>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
+
                 <Button
                     onClick={handlePaySubmit}
                     disabled={
                         isProcessing ||
-                        (payMode === "cash" ? !isCashValid : !isCardValid)
+                        (payMode === "cash"
+                            ? !isCashValid
+                            : payMode === "card"
+                              ? !isCardValid
+                              : !isDebtValid)
                     }
                     className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-200 disabled:cursor-not-allowed font-bold text-sm text-white rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-600/10 border-none"
                 >
@@ -278,7 +405,9 @@ export function PaymentDialog({
                     ) : (
                         <IconPrinter size={18} />
                     )}
-                    <span>SELESAI &amp; CETAK STRUK</span>
+                    <span>
+                        {payMode === "debt" ? "SIMPAN HUTANG & CETAK STRUK" : "SELESAI & CETAK STRUK"}
+                    </span>
                 </Button>
             </div>
         </BaseDialog>

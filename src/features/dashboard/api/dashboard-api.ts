@@ -1,7 +1,7 @@
 import { queryKeys } from "@/lib/query-keys";
 import { apiGetData, apiGet } from "@/shared/api/api-client";
 import { useQuery } from "@tanstack/react-query";
-import type { DashboardSummary, DashboardSummaryParams, Sale, SalesHistoryItem } from "../types";
+import type { DashboardSummary, DashboardSummaryParams, Sale, SalesHistoryItem, JasaVsProductData } from "../types";
 
 export function useDashboardSummary(params?: DashboardSummaryParams) {
     return useQuery<DashboardSummary>({
@@ -21,6 +21,13 @@ export function useSalesHistory(params?: DashboardSummaryParams) {
                 return [];
             }
         },
+    });
+}
+
+export function useJasaVsProduct(params?: DashboardSummaryParams) {
+    return useQuery<JasaVsProductData>({
+        queryKey: [...queryKeys.reports.all, "jasaVsProduct", params?.from, params?.to],
+        queryFn: () => apiGetData<JasaVsProductData>("/v1/reports/sales/jasa-vs-product", { params }),
     });
 }
 

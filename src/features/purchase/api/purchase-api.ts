@@ -20,6 +20,13 @@ export function useReceivings(params?: PaginationParams & { search?: string; sta
     });
 }
 
+export function useReceivingDebts(params?: PaginationParams & { search?: string; from?: string; to?: string; tanggal_dari?: string; tanggal_sampai?: string }) {
+    return useQuery<PaginatedResponse<Receiving>>({
+        queryKey: [...queryKeys.purchase.receivings(), "debts", params],
+        queryFn: () => apiGetList<Receiving>(ENDPOINTS.PURCHASE.RECEIVING.DEBTS, params),
+    });
+}
+
 export function useReceivingDetail(id: number | null) {
     return useQuery<Receiving>({
         queryKey: [...queryKeys.purchase.receivings(), "detail", id || 0],

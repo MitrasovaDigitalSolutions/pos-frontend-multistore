@@ -11,6 +11,10 @@ interface FormDatePickerProps<T extends FieldValues> {
     className?: string;
     clearable?: boolean;
     size?: "sm" | "md" | "lg";
+    captionLayout?: "label" | "dropdown" | "dropdown-months" | "dropdown-years";
+    startMonth?: Date;
+    endMonth?: Date;
+    reverseYears?: boolean;
 }
 
 export function FormDatePicker<T extends FieldValues>({
@@ -21,6 +25,10 @@ export function FormDatePicker<T extends FieldValues>({
     className,
     clearable = true,
     size = "md",
+    captionLayout,
+    startMonth,
+    endMonth,
+    reverseYears,
 }: FormDatePickerProps<T>) {
     const {
         control,
@@ -61,6 +69,10 @@ export function FormDatePicker<T extends FieldValues>({
                     label={label}
                     clearable={clearable}
                     size={size}
+                    captionLayout={captionLayout}
+                    startMonth={startMonth}
+                    endMonth={endMonth}
+                    reverseYears={reverseYears}
                 />
             )}
         />

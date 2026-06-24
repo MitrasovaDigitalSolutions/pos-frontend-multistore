@@ -78,6 +78,7 @@ export const ENDPOINTS = {
             ITEMS_REPLACE: (id: number) => `/v1/purchase/receiving/${id}/items`,
             COMPLETE: (id: number) => `/v1/purchase/receiving/${id}/complete`,
             SCAN: "/v1/purchase/receiving/scan",
+            DEBTS: "/v1/purchase/receiving/debts",
         },
         ORDER: {
             LIST: "/v1/purchase/order",
@@ -119,6 +120,7 @@ export const ENDPOINTS = {
     REPORTS: {
         SUMMARY: "/v1/reports/summary",
         DAILY: (date: string) => `/v1/reports/sales/daily?date=${date}`,
+        JASA_VS_PRODUCT: "/v1/reports/sales/jasa-vs-product",
     },
 
     // Transactions (Checkout)
