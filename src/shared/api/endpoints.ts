@@ -78,6 +78,7 @@ export const ENDPOINTS = {
             ITEMS_REPLACE: (id: number) => `/v1/purchase/receiving/${id}/items`,
             COMPLETE: (id: number) => `/v1/purchase/receiving/${id}/complete`,
             SCAN: "/v1/purchase/receiving/scan",
+            DEBTS: "/v1/purchase/receiving/debts",
         },
         ORDER: {
             LIST: "/v1/purchase/order",

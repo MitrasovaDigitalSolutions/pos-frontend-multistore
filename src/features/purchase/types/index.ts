@@ -26,6 +26,7 @@ export interface Receiving {
     sisa_hutang?: number;
     catatan: string | null;
     created_at: string;
+    tanggal_terima: string;
     items?: ReceivingItem[];
 }
 export interface PurchaseOrderItem {

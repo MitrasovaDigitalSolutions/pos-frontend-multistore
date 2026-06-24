@@ -93,12 +93,32 @@ export function PaymentDialog({
 
         if (payMode === "cash") {
             payload.cash_received = cashNum;
+            payload.cash_details = {
+                cash_received: cashNum,
+                nominal_bayar: cashNum,
+            };
         } else if (payMode === "card") {
+            const finalCardRef = cardRef || `EDC-${Date.now()}`;
             payload.card_type = cardType;
+            payload.jenis_kartu = cardType;
             payload.last_four = cardLast4;
-            payload.reference_number = cardRef || `EDC-${Date.now()}`;
+            payload.nomor_kartu_akhir = cardLast4;
+            payload.reference_number = finalCardRef;
+            payload.referensi_edc = finalCardRef;
+            payload.card_details = {
+                card_type: cardType,
+                jenis_kartu: cardType,
+                last_four: cardLast4,
+                nomor_kartu_akhir: cardLast4,
+                reference_number: finalCardRef,
+                referensi_edc: finalCardRef,
+            };
         } else if (payMode === "debt") {
             payload.cash_received = cashNum;
+            payload.debt_details = {
+                cash_received: cashNum,
+                debt_amount: grandTotal - cashNum,
+            };
         }
 
         bulkCheckout.mutate(payload, {
