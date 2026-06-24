@@ -33,7 +33,7 @@ export function useJasaVsProduct(params?: DashboardSummaryParams) {
 
 import type { PaginatedResponse } from "@/types/api";
 
-export function useTransactions(params?: DashboardSummaryParams) {
+export function useTransactions(params?: DashboardSummaryParams & { sort_by?: string; sort_order?: "asc" | "desc" }) {
     return useQuery<PaginatedResponse<Sale>>({
         queryKey: [...queryKeys.transactions.all, "list", params],
         queryFn: () => apiGet<PaginatedResponse<Sale>>("/v1/transactions", { params }),
