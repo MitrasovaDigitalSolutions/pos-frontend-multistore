@@ -46,7 +46,7 @@ export function PayDebtDialog({ open, onOpenChange, member }: PayDebtDialogProps
 
     const currentDebt = member.hutang || 0;
     const payAmountNum = Number(amount) || 0;
-    const cashReceivedNum = Number(cashReceived) || 0;
+    const cashReceivedNum = cashReceived === "" ? payAmountNum : (Number(cashReceived) || 0);
     const changeValue = cashReceivedNum - payAmountNum;
 
     // Validation
@@ -99,9 +99,9 @@ export function PayDebtDialog({ open, onOpenChange, member }: PayDebtDialogProps
                     <span>Catat Pembayaran Hutang</span>
                 </div>
             }
-            className="max-w-md"
+            className="sm:max-w-md"
         >
-            <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Member detail card */}
                 <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2.5">
@@ -175,11 +175,10 @@ export function PayDebtDialog({ open, onOpenChange, member }: PayDebtDialogProps
                                 setPayMethod("cash");
                                 setCashReceived("");
                             }}
-                            className={`h-10 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all border-none ${
-                                payMethod === "cash"
-                                    ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/10"
-                                    : "bg-slate-50 hover:bg-slate-100 text-slate-600"
-                            }`}
+                            className={`h-10 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all border-none ${payMethod === "cash"
+                                ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/10"
+                                : "bg-slate-50 hover:bg-slate-100 text-slate-600"
+                                }`}
                             disabled={isPending}
                         >
                             <IconCash size={15} /> TUNAI (CASH)
@@ -190,11 +189,10 @@ export function PayDebtDialog({ open, onOpenChange, member }: PayDebtDialogProps
                                 setPayMethod("card");
                                 setCashReceived("");
                             }}
-                            className={`h-10 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all border ${
-                                payMethod === "card"
-                                    ? "bg-slate-700 text-white border-slate-700 shadow-md shadow-slate-700/10"
-                                    : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
-                            }`}
+                            className={`h-10 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all border ${payMethod === "card"
+                                ? "bg-slate-700 text-white border-slate-700 shadow-md shadow-slate-700/10"
+                                : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
+                                }`}
                             disabled={isPending}
                         >
                             <IconCreditCard size={15} /> KARTU / EDC
@@ -202,48 +200,6 @@ export function PayDebtDialog({ open, onOpenChange, member }: PayDebtDialogProps
                     </div>
                 </div>
 
-                {/* Conditional Fields: Cash */}
-                {payMethod === "cash" && (
-                    <div className="space-y-3.5 bg-slate-50/50 border border-slate-100 p-4 rounded-xl">
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                Uang Diterima (Tunai)
-                            </label>
-                            <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-semibold text-sm">
-                                    Rp
-                                </span>
-                                <Input
-                                    type="text"
-                                    placeholder="Masukkan uang yang diterima..."
-                                    className="h-10 pl-9 font-semibold text-slate-800 border-slate-200 focus-visible:ring-emerald-500 rounded-xl bg-white"
-                                    value={
-                                        cashReceived
-                                            ? new Intl.NumberFormat("id-ID").format(Number(cashReceived))
-                                            : ""
-                                    }
-                                    onChange={(e) => {
-                                        const clean = e.target.value.replace(/\D/g, "");
-                                        setCashReceived(clean);
-                                    }}
-                                    disabled={isPending}
-                                    required
-                                />
-                            </div>
-                        </div>
-                        
-                        <div className="flex justify-between items-center text-xs pt-1">
-                            <span className="font-medium text-slate-400">Kembalian</span>
-                            <span className={`font-extrabold text-sm tabular-nums ${changeValue < 0 ? "text-rose-500" : "text-emerald-600"}`}>
-                                {changeValue === 0
-                                    ? "Rp 0"
-                                    : changeValue < 0
-                                      ? `Kurang ${formatRupiah(Math.abs(changeValue))}`
-                                      : formatRupiah(changeValue)}
-                            </span>
-                        </div>
-                    </div>
-                )}
 
                 {/* Conditional Fields: Card */}
                 {payMethod === "card" && (

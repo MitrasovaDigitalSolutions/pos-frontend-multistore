@@ -45,9 +45,9 @@ export function DebtHistoryDialog({ open, onOpenChange, member }: DebtHistoryDia
                     <span>Riwayat Hutang &amp; Pembayaran</span>
                 </div>
             }
-            className="max-w-3xl flex flex-col max-h-[85vh]"
+            className="sm:max-w-3xl flex flex-col max-h-[85vh]"
         >
-            <div className="flex-1 min-h-0 flex flex-col space-y-4 pt-4">
+            <div className="flex-1 min-h-0 flex flex-col space-y-4">
                 {/* Member Profile Summary */}
                 <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-3">
@@ -69,21 +69,19 @@ export function DebtHistoryDialog({ open, onOpenChange, member }: DebtHistoryDia
                 <div className="flex border-b border-slate-100 shrink-0">
                     <button
                         onClick={() => setActiveTab("purchases")}
-                        className={`px-5 py-2.5 font-bold text-xs border-b-2 cursor-pointer transition-all outline-none ${
-                            activeTab === "purchases"
-                                ? "border-indigo-600 text-indigo-600"
-                                : "border-transparent text-slate-400 hover:text-slate-600"
-                        }`}
+                        className={`px-5 py-2.5 font-bold text-xs border-b-2 cursor-pointer transition-all outline-none ${activeTab === "purchases"
+                            ? "border-indigo-600 text-indigo-600"
+                            : "border-transparent text-slate-400 hover:text-slate-600"
+                            }`}
                     >
                         Transaksi Belanja (Hutang)
                     </button>
                     <button
                         onClick={() => setActiveTab("payments")}
-                        className={`px-5 py-2.5 font-bold text-xs border-b-2 cursor-pointer transition-all outline-none ${
-                            activeTab === "payments"
-                                ? "border-indigo-600 text-indigo-600"
-                                : "border-transparent text-slate-400 hover:text-slate-600"
-                        }`}
+                        className={`px-5 py-2.5 font-bold text-xs border-b-2 cursor-pointer transition-all outline-none ${activeTab === "payments"
+                            ? "border-indigo-600 text-indigo-600"
+                            : "border-transparent text-slate-400 hover:text-slate-600"
+                            }`}
                     >
                         Riwayat Pembayaran Cicilan
                     </button>
@@ -176,11 +174,10 @@ export function DebtHistoryDialog({ open, onOpenChange, member }: DebtHistoryDia
                                                         {formatDateTime(log.created_at)}
                                                     </td>
                                                     <td className="py-3 px-3">
-                                                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded-lg border ${
-                                                            payload.payment_method === "cash"
-                                                                ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                                                                : "bg-blue-50 text-blue-700 border-blue-100"
-                                                        }`}>
+                                                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded-lg border ${payload.payment_method === "cash"
+                                                            ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                                                            : "bg-blue-50 text-blue-700 border-blue-100"
+                                                            }`}>
                                                             {method}
                                                         </span>
                                                     </td>
