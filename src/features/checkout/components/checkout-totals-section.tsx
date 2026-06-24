@@ -57,18 +57,24 @@ export function CheckoutTotalsSection({
 }: CheckoutTotalsSectionProps) {
     const isOnline = useNetworkStatus();
     const { data: membersData = [], isLoading: isMembersLoading } = useAllMembers();
-    const [members, setMembers] = useState<Member[]>([]);
+    const [localMembers, setLocalMembers] = useState<Member[]>([]);
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
 
     useEffect(() => {
+        let isMounted = true;
         if (!isOnline || membersData.length === 0) {
             db.members.toArray().then((items) => {
-                setMembers(items);
+                if (isMounted) {
+                    setLocalMembers(items);
+                }
             });
-        } else {
-            setMembers(membersData);
         }
+        return () => {
+            isMounted = false;
+        };
     }, [membersData, isOnline]);
+
+    const members = isOnline && membersData.length > 0 ? membersData : localMembers;
 
     const memberOptions = members
         .filter((m) => m.status === "active")

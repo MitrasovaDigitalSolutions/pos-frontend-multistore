@@ -35,13 +35,23 @@ export function useCheckoutState() {
     }, []);
 
     useEffect(() => {
+        let isMounted = true;
         if (productsData?.data) {
             db.products.bulkPut(productsData.data).then(() => {
-                reloadLocalProducts();
+                if (isMounted) {
+                    reloadLocalProducts();
+                }
             });
         } else {
-            reloadLocalProducts();
+            Promise.resolve().then(() => {
+                if (isMounted) {
+                    reloadLocalProducts();
+                }
+            });
         }
+        return () => {
+            isMounted = false;
+        };
     }, [productsData, reloadLocalProducts]);
 
     const products = localProducts;

@@ -191,8 +191,9 @@ export function PaymentDialog({
                 toast.warning("Koneksi offline. Transaksi disimpan secara lokal.");
                 onPaySuccess(mockReceipt);
                 onOpenChange(false);
-            } catch (err: any) {
-                toast.error(`Gagal menyimpan transaksi offline: ${err.message}`);
+            } catch (err) {
+                const message = err instanceof Error ? err.message : String(err);
+                toast.error(`Gagal menyimpan transaksi offline: ${message}`);
             }
         }
     };
