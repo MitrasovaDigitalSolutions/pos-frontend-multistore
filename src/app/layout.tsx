@@ -13,6 +13,7 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
     title: "Mitra Buana Motor — Sistem Point of Sale",
     description: "Sistem Point of Sale Modern untuk Mitra Buana Motor",
+    manifest: "/manifest.json",
 };
 
 export default function RootLayout({

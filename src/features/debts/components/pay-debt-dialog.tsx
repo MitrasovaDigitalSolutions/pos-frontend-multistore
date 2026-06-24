@@ -47,7 +47,6 @@ export function PayDebtDialog({ open, onOpenChange, member }: PayDebtDialogProps
     const currentDebt = member.hutang || 0;
     const payAmountNum = Number(amount) || 0;
     const cashReceivedNum = cashReceived === "" ? payAmountNum : (Number(cashReceived) || 0);
-    const changeValue = cashReceivedNum - payAmountNum;
 
     // Validation
     const isAmountValid = payAmountNum > 0 && payAmountNum <= currentDebt;

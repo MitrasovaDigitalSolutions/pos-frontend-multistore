@@ -15,6 +15,7 @@ interface InfoSesiAktifModalProps {
     sessionId: number | null;
     token?: string;
     onCloseSuccess: () => void;
+    isOnline?: boolean;
 }
 
 type ModalSubView = "info" | "cash_in" | "cash_out" | "close_shift";
@@ -25,6 +26,7 @@ export function InfoSesiAktifModal({
     sessionId,
     token,
     onCloseSuccess,
+    isOnline = true,
 }: InfoSesiAktifModalProps) {
     const [subView, setSubView] = useState<ModalSubView>("info");
     const [showHistory, setShowHistory] = useState(false);
@@ -80,6 +82,7 @@ export function InfoSesiAktifModal({
                         showHistory={showHistory}
                         setShowHistory={setShowHistory}
                         onClose={() => onOpenChange(false)}
+                        isOnline={isOnline}
                     />
                 )}
 

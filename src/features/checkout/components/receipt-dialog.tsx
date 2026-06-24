@@ -162,7 +162,12 @@ export function ReceiptDialog({
                     variant="outline"
                     onClick={() => {
                         if (receipt?.id) {
-                            window.open(`/api/proxy/v1/transactions-print/${receipt.id}`, "_blank");
+                            const isOfflineTx = String(receipt.id).startsWith("OFFLINE") || receipt.id > 1000000000000;
+                            if (isOfflineTx) {
+                                window.print();
+                            } else {
+                                window.open(`/api/proxy/v1/transactions-print/${receipt.id}`, "_blank");
+                            }
                         }
                     }}
                     className="border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs h-11 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
