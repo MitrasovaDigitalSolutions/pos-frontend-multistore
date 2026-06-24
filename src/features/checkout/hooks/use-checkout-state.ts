@@ -9,17 +9,42 @@ import { useCheckoutStore } from "@/stores/checkout-store";
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { db } from "@/lib/db";
+import { useNetworkStatus } from "@/hooks/use-network-status";
 
 export function useCheckoutState() {
     const router = useAppRouter();
     const { data: session, update } = useSession();
     const user = session?.user;
 
+    const isOnline = useNetworkStatus();
     // Products list from API for Catalog & Search
     const { data: productsData, refetch: refetchProducts } = useProducts({
         per_page: 1000,
     });
-    const products = productsData?.data;
+    
+    const [localProducts, setLocalProducts] = useState<Product[]>([]);
+
+    const reloadLocalProducts = useCallback(async () => {
+        try {
+            const items = await db.products.toArray();
+            setLocalProducts(items.filter((item) => item.status === "active"));
+        } catch (err) {
+            console.error("Gagal load produk lokal:", err);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (productsData?.data) {
+            db.products.bulkPut(productsData.data).then(() => {
+                reloadLocalProducts();
+            });
+        } else {
+            reloadLocalProducts();
+        }
+    }, [productsData, reloadLocalProducts]);
+
+    const products = localProducts;
 
     // Connect to local checkout Zustand store
     const storeCart = useCheckoutStore((state) => state.cart);
@@ -192,9 +217,30 @@ export function useCheckoutState() {
             );
         }
 
+        // Search full IndexedDB table if not found in memory state
+        if (!found) {
+            try {
+                const dbProduct = await db.products
+                    .where("barcode")
+                    .equalsIgnoreCase(query)
+                    .first();
+                if (dbProduct) {
+                    found = dbProduct;
+                } else {
+                    const dbProductByName = await db.products
+                        .where("nama")
+                        .equalsIgnoreCase(query)
+                        .first();
+                    if (dbProductByName) found = dbProductByName;
+                }
+            } catch (err) {
+                console.error("Error mencari produk di IndexedDB:", err);
+            }
+        }
+
         if (found) {
             await handleAddProduct(found);
-        } else {
+        } else if (isOnline) {
             try {
                 const prod = await lookupBarcode(query);
                 if (prod) {
@@ -205,6 +251,8 @@ export function useCheckoutState() {
             } catch {
                 toast.error(`Produk "${query}" tidak ditemukan!`);
             }
+        } else {
+            toast.error(`Produk "${query}" tidak ditemukan secara offline!`);
         }
     };
 
@@ -265,7 +313,14 @@ export function useCheckoutState() {
         if (receiptData?.id) {
             localStorage.setItem("lastTransactionId", String(receiptData.id));
             setLastTransactionId(receiptData.id);
-            window.open(`/api/proxy/v1/transactions-print/${receiptData.id}`, "_blank");
+            const isOfflineTx = String(receiptData.id).startsWith("OFFLINE") || receiptData.id > 1000000000000;
+            if (isOfflineTx) {
+                setTimeout(() => {
+                    window.print();
+                }, 250);
+            } else {
+                window.open(`/api/proxy/v1/transactions-print/${receiptData.id}`, "_blank");
+            }
         }
     };
 
@@ -276,7 +331,12 @@ export function useCheckoutState() {
 
     const handleReprint = useCallback(() => {
         if (lastTransactionId) {
-            window.open(`/api/proxy/v1/transactions-print/${lastTransactionId}`, "_blank");
+            const isOfflineTx = String(lastTransactionId).startsWith("OFFLINE") || lastTransactionId > 1000000000000;
+            if (isOfflineTx) {
+                window.print();
+            } else {
+                window.open(`/api/proxy/v1/transactions-print/${lastTransactionId}`, "_blank");
+            }
             toast.success("Mencetak ulang struk terakhir...");
         } else {
             toast.error("Tidak ada transaksi terakhir yang dapat dicetak ulang.");

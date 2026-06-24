@@ -15,8 +15,10 @@ import {
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { useBulkCheckout } from "../api/checkout-api";
 import { toast } from "sonner";
-import type { Receipt } from "../types";
+import type { Receipt, CartItem } from "../types";
 import type { Member } from "@/features/members/types";
+import { db } from "@/lib/db";
+import { useNetworkStatus } from "@/hooks/use-network-status";
 
 interface PaymentDialogProps {
     open: boolean;
@@ -27,6 +29,7 @@ interface PaymentDialogProps {
     tax: number;
     selectedMember: Member | null;
     onPaySuccess: (receipt: Receipt) => void;
+    cartList: CartItem[];
 }
 
 export function PaymentDialog({
@@ -38,8 +41,10 @@ export function PaymentDialog({
     tax,
     selectedMember,
     onPaySuccess,
+    cartList,
 }: PaymentDialogProps) {
     const bulkCheckout = useBulkCheckout();
+    const isOnline = useNetworkStatus();
 
     const [payMode, setPayMode] = useState<"cash" | "card" | "debt">("cash");
     const [cashReceived, setCashReceived] = useState("");
@@ -67,7 +72,7 @@ export function PaymentDialog({
     const isDebtValid = !!selectedMember && cashNum < grandTotal && grandTotal > 0;
     const isProcessing = bulkCheckout.isPending;
 
-    const handlePaySubmit = () => {
+    const handlePaySubmit = async () => {
         if (cartItems.length === 0) {
             toast.error("Keranjang belanja kosong.");
             return;
@@ -83,7 +88,11 @@ export function PaymentDialog({
             return;
         }
 
+        // Generate client-side transaction UID
+        const clientUid = crypto.randomUUID();
+
         const payload: Record<string, unknown> = {
+            uid: clientUid,
             metode_pembayaran: payMode,
             items: cartItems,
             diskon: discount,
@@ -121,15 +130,71 @@ export function PaymentDialog({
             };
         }
 
-        bulkCheckout.mutate(payload, {
-            onSuccess: (res) => {
-                if (res.data) onPaySuccess(res.data);
+        if (isOnline) {
+            bulkCheckout.mutate(payload, {
+                onSuccess: (res) => {
+                    if (res.data) onPaySuccess(res.data);
+                    onOpenChange(false);
+                },
+                onError: (err) => {
+                    toast.error(err.message || "Transaksi gagal diproses.");
+                },
+            });
+        } else {
+            try {
+                // Save transaction to local IndexedDB queue
+                await db.offlineQueue.add({
+                    uid: clientUid,
+                    payload,
+                    timestamp: new Date().toISOString(),
+                    status: "pending",
+                });
+
+                // Deduct stock quantities locally inside IndexedDB products table
+                for (const item of cartList) {
+                    const product = await db.products.get(item.product_id);
+                    if (product && !product.is_jasa) {
+                        const newStock = Math.max(0, product.stok - item.qty);
+                        await db.products.update(item.product_id, { stok: newStock });
+                    }
+                }
+
+                // Update member debt locally in IndexedDB if debt transaction
+                if (payMode === "debt" && selectedMember) {
+                    const newDebt = (selectedMember.hutang || 0) + (grandTotal - cashNum);
+                    await db.members.update(selectedMember.id, { hutang: newDebt });
+                }
+
+                // Generate mock Receipt object
+                const mockReceiptId = Date.now();
+                const mockReceipt: Receipt = {
+                    id: mockReceiptId,
+                    subtotal: grandTotal - tax,
+                    pajak: tax,
+                    total: grandTotal,
+                    metode_pembayaran: payMode,
+                    nominal_bayar: payMode === "cash" ? cashNum : 0,
+                    kembalian: payMode === "cash" ? Math.max(0, changeValue) : 0,
+                    cash_received: payMode === "debt" ? cashNum : 0,
+                    debt_amount: payMode === "debt" ? (grandTotal - cashNum) : 0,
+                    jenis_kartu: payMode === "card" ? cardType : undefined,
+                    nomor_kartu_akhir: payMode === "card" ? cardLast4 : undefined,
+                    member: selectedMember,
+                    items: cartList.map((item) => ({
+                        id: item.product_id,
+                        nama_produk: item.name,
+                        kuantitas: item.qty,
+                        harga_satuan: item.price,
+                    })),
+                };
+
+                toast.warning("Koneksi offline. Transaksi disimpan secara lokal.");
+                onPaySuccess(mockReceipt);
                 onOpenChange(false);
-            },
-            onError: (err) => {
-                toast.error(err.message || "Transaksi gagal diproses.");
-            },
-        });
+            } catch (err: any) {
+                toast.error(`Gagal menyimpan transaksi offline: ${err.message}`);
+            }
+        }
     };
 
     return (

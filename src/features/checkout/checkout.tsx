@@ -14,9 +14,15 @@ import { useCurrentCashDrawer } from "@/features/checkout/api/cash-drawer-api";
 import { signOut } from "@/lib/auth-helpers";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
+import { useNetworkStatus } from "@/hooks/use-network-status";
+import { toast } from "sonner";
+import { useSyncEngine } from "@/features/checkout/hooks/use-sync-engine";
+import { PrintReceiptLayout } from "@/features/checkout/components/print-receipt-layout";
 
 export function Checkout() {
     const state = useCheckoutState();
+    const syncEngine = useSyncEngine();
+    const isOnline = useNetworkStatus();
 
     // Cash Drawer Sesi States
     const [isInfoSesiOpen, setIsInfoSesiOpen] = useState(false);
@@ -69,6 +75,10 @@ export function Checkout() {
     };
 
     const handleLogout = () => {
+        if (!isOnline) {
+            toast.error("Koneksi terputus. Harap sambungkan ke internet sebelum keluar dari akun.");
+            return;
+        }
         setIsLogoutConfirmOpen(true);
     };
 
@@ -82,6 +92,10 @@ export function Checkout() {
                 onInfoSesiClick={() => setIsInfoSesiOpen(true)}
                 onLogout={handleLogout}
                 onDashboardClick={() => state.router.push("/admin")}
+                isOnline={syncEngine.isOnline}
+                pendingCount={syncEngine.pendingCount}
+                isSyncing={syncEngine.isSyncing}
+                onSyncClick={syncEngine.triggerSync}
             />
 
             {/* Mobile Tab Switcher */}
@@ -216,6 +230,7 @@ export function Checkout() {
                 tax={state.ppn}
                 selectedMember={state.selectedMember}
                 onPaySuccess={state.handlePaymentSuccess}
+                cartList={state.cart}
             />
 
             <HoldListDialog
@@ -247,6 +262,7 @@ export function Checkout() {
                 token={cashDrawerToken}
                 onSuccess={handleOpenShiftSuccess}
                 isLoading={isDrawerLoading}
+                isOnline={isOnline}
             />
 
             <InfoSesiAktifModal
@@ -255,6 +271,13 @@ export function Checkout() {
                 sessionId={activeDrawerSession?.id || null}
                 token={cashDrawerToken}
                 onCloseSuccess={handleCloseShiftSuccess}
+                isOnline={isOnline}
+            />
+
+            {/* Hidden Print Receipt container */}
+            <PrintReceiptLayout
+                receipt={state.receipt}
+                cashierName={state.user?.name || ""}
             />
         </div>
     );

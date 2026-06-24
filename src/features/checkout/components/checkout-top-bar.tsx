@@ -11,6 +11,10 @@ interface CheckoutTopBarProps {
     onInfoSesiClick: () => void;
     onLogout: () => void;
     onDashboardClick: () => void;
+    isOnline?: boolean;
+    pendingCount?: number;
+    isSyncing?: boolean;
+    onSyncClick?: () => void;
 }
 
 export function CheckoutTopBar({
@@ -20,6 +24,10 @@ export function CheckoutTopBar({
     onInfoSesiClick,
     onLogout,
     onDashboardClick,
+    isOnline = true,
+    pendingCount = 0,
+    isSyncing = false,
+    onSyncClick,
 }: CheckoutTopBarProps) {
     return (
         <div className="bg-slate-900 text-white h-12 px-4 sm:px-6 flex items-center justify-between border-b border-slate-800">
@@ -73,10 +81,26 @@ export function CheckoutTopBar({
             </div>
 
             <div className="hidden lg:flex items-center gap-6 text-xs font-semibold text-slate-400">
-                <div className="flex items-center gap-1.5 text-emerald-400">
-                    <IconWifi size={16} />
-                    <span>Sistem Online</span>
-                </div>
+                {!isOnline ? (
+                    <div className="flex items-center gap-1.5 text-rose-500 animate-pulse">
+                        <IconWifi size={16} className="opacity-60" />
+                        <span>Sistem Offline {pendingCount > 0 && `(${pendingCount} pending)`}</span>
+                    </div>
+                ) : pendingCount > 0 ? (
+                    <button
+                        onClick={onSyncClick}
+                        disabled={isSyncing}
+                        className="flex items-center gap-1.5 text-amber-500 border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 px-2.5 py-1 rounded-lg transition-all cursor-pointer font-bold disabled:opacity-60 outline-none"
+                    >
+                        <IconWifi size={16} className={isSyncing ? "animate-spin" : ""} />
+                        <span>Sinkronisasi {pendingCount} Transaksi</span>
+                    </button>
+                ) : (
+                    <div className="flex items-center gap-1.5 text-emerald-400">
+                        <IconWifi size={16} />
+                        <span>Sistem Online</span>
+                    </div>
+                )}
                 <div>Terminal: POS-01</div>
             </div>
         </div>

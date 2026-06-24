@@ -23,9 +23,16 @@ interface BukaShiftModalProps {
     token?: string;
     onSuccess: (sessionId: number) => void;
     isLoading?: boolean;
+    isOnline?: boolean;
 }
 
-export function BukaShiftModal({ open, token, onSuccess, isLoading = false }: BukaShiftModalProps) {
+export function BukaShiftModal({
+    open,
+    token,
+    onSuccess,
+    isLoading = false,
+    isOnline = true,
+}: BukaShiftModalProps) {
     const { data: session } = useSession();
     const router = useAppRouter();
     const userRoles = session?.user?.roles || [];
@@ -67,7 +74,7 @@ export function BukaShiftModal({ open, token, onSuccess, isLoading = false }: Bu
         }
     };
 
-    const isFormDisabled = openMutation.isPending || isSubmitting || isLoading;
+    const isFormDisabled = openMutation.isPending || isSubmitting || isLoading || !isOnline;
 
     return (
         <>
@@ -98,6 +105,11 @@ export function BukaShiftModal({ open, token, onSuccess, isLoading = false }: Bu
             >
                 <FormProvider {...methods}>
                     <form onSubmit={handleSubmit(onSubmit)} className="pt-4 space-y-4">
+                        {!isOnline && (
+                            <div className="bg-rose-50 border border-rose-100 text-rose-800 p-3.5 rounded-xl text-xs font-semibold leading-relaxed">
+                                Koneksi internet terputus. Anda harus online untuk dapat membuka shift laci kasir baru. Silakan hubungkan komputer ke jaringan internet.
+                            </div>
+                        )}
                         <FormNominalInput<OpenCashDrawerInput>
                             name="opening_balance"
                             label="Saldo Awal (Rp)"
@@ -137,7 +149,13 @@ export function BukaShiftModal({ open, token, onSuccess, isLoading = false }: Bu
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    onClick={() => setIsLogoutConfirmOpen(true)}
+                                    onClick={() => {
+                                        if (!isOnline) {
+                                            toast.error("Koneksi terputus. Harap sambungkan ke internet sebelum logout.");
+                                            return;
+                                        }
+                                        setIsLogoutConfirmOpen(true);
+                                    }}
                                     className="h-11 border border-rose-200 hover:bg-rose-50 text-rose-600 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer bg-white w-full"
                                     disabled={isFormDisabled}
                                 >

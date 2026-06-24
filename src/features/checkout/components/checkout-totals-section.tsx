@@ -15,8 +15,10 @@ import {
     IconUser,
     IconX,
 } from "@tabler/icons-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CreateMemberDialog } from "./create-member-dialog";
+import { db } from "@/lib/db";
+import { useNetworkStatus } from "@/hooks/use-network-status";
 
 interface CheckoutTotalsSectionProps {
     transactionId: number | null;
@@ -53,8 +55,20 @@ export function CheckoutTotalsSection({
     onPayOpen,
     onReprint,
 }: CheckoutTotalsSectionProps) {
-    const { data: members = [], isLoading: isMembersLoading } = useAllMembers();
+    const isOnline = useNetworkStatus();
+    const { data: membersData = [], isLoading: isMembersLoading } = useAllMembers();
+    const [members, setMembers] = useState<Member[]>([]);
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+
+    useEffect(() => {
+        if (!isOnline || membersData.length === 0) {
+            db.members.toArray().then((items) => {
+                setMembers(items);
+            });
+        } else {
+            setMembers(membersData);
+        }
+    }, [membersData, isOnline]);
 
     const memberOptions = members
         .filter((m) => m.status === "active")

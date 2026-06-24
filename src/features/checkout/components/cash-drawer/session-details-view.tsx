@@ -25,6 +25,7 @@ interface SessionDetailsViewProps {
     showHistory: boolean;
     setShowHistory: (show: boolean) => void;
     onClose: () => void;
+    isOnline?: boolean;
 }
 
 export function SessionDetailsView({
@@ -34,6 +35,7 @@ export function SessionDetailsView({
     showHistory,
     setShowHistory,
     onClose,
+    isOnline = true,
 }: SessionDetailsViewProps) {
     const formattedTime = (dateStr?: string) => {
         if (!dateStr) return "-";
@@ -110,6 +112,12 @@ export function SessionDetailsView({
                     </button>
                 </div>
             </div>
+
+            {!isOnline && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-xl text-xs font-semibold">
+                    Koneksi internet terputus. Penyesuaian kas laci (Cash In/Out) dan Akhiri Shift dinonaktifkan hingga Anda kembali online.
+                </div>
+            )}
  
             <div className={cn("grid gap-6 transition-all duration-300", showHistory ? "grid-cols-[1.3fr_1fr]" : "grid-cols-1")}>
                 {/* Left Column (Main details) */}
@@ -193,7 +201,11 @@ export function SessionDetailsView({
                         <Button
                             variant="outline"
                             onClick={() => onAction("cash_in")}
-                            className="h-11 border-dashed border-emerald-500 hover:bg-emerald-50 text-emerald-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer bg-white"
+                            disabled={!isOnline}
+                            className={cn(
+                                "h-11 border-dashed border-emerald-500 hover:bg-emerald-50 text-emerald-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer bg-white",
+                                !isOnline && "opacity-50 cursor-not-allowed border-slate-200 text-slate-400 hover:bg-white hover:text-slate-400"
+                            )}
                         >
                             <IconArrowDownLeft size={16} />
                             <span>Cash In (Uang Masuk)</span>
@@ -201,7 +213,11 @@ export function SessionDetailsView({
                         <Button
                             variant="outline"
                             onClick={() => onAction("cash_out")}
-                            className="h-11 border-dashed border-rose-500 hover:bg-rose-50 text-rose-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer bg-white"
+                            disabled={!isOnline}
+                            className={cn(
+                                "h-11 border-dashed border-rose-500 hover:bg-rose-50 text-rose-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer bg-white",
+                                !isOnline && "opacity-50 cursor-not-allowed border-slate-200 text-slate-400 hover:bg-white hover:text-slate-400"
+                            )}
                         >
                             <IconArrowUpRight size={16} />
                             <span>Cash Out (Uang Keluar)</span>
@@ -209,7 +225,11 @@ export function SessionDetailsView({
 
                         <Button
                             onClick={() => onAction("close_shift")}
-                            className="col-span-2 h-12 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-rose-600/10 active:scale-[0.99] transition-all border-none"
+                            disabled={!isOnline}
+                            className={cn(
+                                "col-span-2 h-12 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-rose-600/10 active:scale-[0.99] transition-all border-none",
+                                !isOnline && "bg-slate-200 hover:bg-slate-200 text-slate-400 shadow-none cursor-not-allowed"
+                            )}
                         >
                             <IconDoorExit size={16} />
                             <span>Akhiri Shift Kasir</span>
