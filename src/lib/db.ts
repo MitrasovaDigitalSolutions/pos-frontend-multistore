@@ -5,7 +5,7 @@ import type { Member } from "@/features/members/types";
 export interface OfflineTransaction {
     id?: number; // Auto-incremented local primary key
     uid: string; // Client-generated UUID (for idempotency)
-    payload: any; // The request body for /v1/transactions
+    payload: Record<string, unknown>; // The request body for /v1/transactions
     timestamp: string;
     status: "pending" | "syncing" | "failed";
     errorMessage?: string;

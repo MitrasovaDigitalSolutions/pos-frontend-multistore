@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
-import { db, type OfflineTransaction } from "@/lib/db";
-import { useNetworkStatus } from "@/hooks/use-network-status";
-import { apiGetList, apiGetData, apiPost } from "@/shared/api/api-client";
-import type { Product } from "@/features/products/types";
 import type { Member } from "@/features/members/types";
+import type { Product } from "@/features/products/types";
+import { useNetworkStatus } from "@/hooks/use-network-status";
+import type { PaginationParams } from "@/types/api";
+import { db } from "@/lib/db";
+import { apiGetData, apiGetList, apiPost } from "@/shared/api/api-client";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 export function useSyncEngine() {
@@ -17,6 +18,7 @@ export function useSyncEngine() {
     const [syncError, setSyncError] = useState<string | null>(null);
 
     const isSyncingRef = useRef(false);
+    const isCatalogSyncingRef = useRef(false);
 
     // Update the pending transactions count from IndexedDB
     const updatePendingCount = useCallback(async () => {
@@ -71,9 +73,10 @@ export function useSyncEngine() {
                 await db.offlineQueue.where("id").anyOf(ids).delete();
                 setLastSyncedAt(new Date());
                 toast.success(`${pendingTx.length} Transaksi offline berhasil disinkronisasi ke server.`);
-            } catch (apiErr: any) {
+            } catch (apiErr) {
                 // If API fails, mark them as pending again and store the error message
-                const errorMsg = apiErr.message || "Gagal menghubungi server";
+                const error = apiErr as Error;
+                const errorMsg = error.message || "Gagal menghubungi server";
                 await db.offlineQueue.where("id").anyOf(ids).modify({
                     status: "pending",
                     errorMessage: errorMsg,
@@ -81,9 +84,10 @@ export function useSyncEngine() {
                 setSyncError(errorMsg);
                 toast.error(`Sinkronisasi gagal: ${errorMsg}`);
             }
-        } catch (err: any) {
-            console.error("Gagal menjalankan sync engine:", err);
-            setSyncError(err.message || "Unknown error");
+        } catch (err) {
+            const error = err as Error;
+            console.error("Gagal menjalankan sync engine:", error);
+            setSyncError(error.message || "Unknown error");
         } finally {
             isSyncingRef.current = false;
             setIsSyncing(false);
@@ -93,9 +97,10 @@ export function useSyncEngine() {
 
     // ─── Phase 4 & 5: Delta Catalog Syncing ──────────────────────────────────
     const syncCatalog = useCallback(async () => {
-        if (!isOnline || isCatalogSyncing) return;
+        if (!isOnline || isCatalogSyncingRef.current) return;
 
         try {
+            isCatalogSyncingRef.current = true;
             setIsCatalogSyncing(true);
 
             // 1. Sync Products (Incremental Delta Sync)
@@ -111,7 +116,7 @@ export function useSyncEngine() {
 
             // Fetch and merge in pages
             while (currentPage <= lastPage) {
-                const params: Record<string, any> = {
+                const params: PaginationParams & { updated_after?: string } = {
                     page: currentPage,
                     per_page: perPage,
                 };
@@ -144,12 +149,14 @@ export function useSyncEngine() {
         } catch (err) {
             console.error("Gagal sinkronisasi katalog:", err);
         } finally {
+            isCatalogSyncingRef.current = false;
             setIsCatalogSyncing(false);
         }
-    }, [isOnline, isCatalogSyncing]);
+    }, [isOnline]);
 
     // Listen to network status changes and trigger sync when online
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         updatePendingCount();
 
         if (isOnline) {
