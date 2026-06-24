@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiGetData } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
-import type { DailyReport, LabaRugiReport, PengeluaranReport, PurchaseReport } from "../types";
+import type { DailyReport, LabaRugiReport, PengeluaranReport, PurchaseReport, PenjualanReport } from "../types";
 
 export function useDailyReport(date: string) {
     return useQuery<DailyReport>({
@@ -45,5 +45,24 @@ export function usePembelianReport(
                 `/v1/reports/pembelian?from=${from}&to=${to}&include_items=${includeItems}&include_payments=${includePayments}`
             ),
         enabled: !!from && !!to,
+    });
+}
+
+export function usePenjualanReport(
+    from: string,
+    to: string,
+    includeItems: boolean,
+    includePayments: boolean,
+    page: number,
+    perPage: number,
+    sortOrder: "asc" | "desc"
+) {
+    return useQuery<PenjualanReport>({
+        queryKey: queryKeys.reports.penjualan(from, to, includeItems, includePayments, page, perPage, sortOrder),
+        queryFn: () =>
+            apiGetData<PenjualanReport>(
+                `/v1/reports/penjualan?from=${from}&to=${to}&include_items=${includeItems}&include_payments=${includePayments}&page=${page}&per_page=${perPage}&sort_order=${sortOrder}`
+            ),
+        enabled: !!from && !!to && !!page && !!perPage,
     });
 }

@@ -1,4 +1,5 @@
-import { PengeluaranReportView } from "@/features/reports/components/pengeluaran-report";
+import { PengeluaranReportView } from "@/features/reports/components/pengeluaran/pengeluaran-report";
+
 
 export const metadata = {
     title: "Laporan Pengeluaran - Mitra Buana Motor",

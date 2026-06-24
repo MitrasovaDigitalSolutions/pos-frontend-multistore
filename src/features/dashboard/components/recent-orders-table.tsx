@@ -30,9 +30,9 @@ export function RecentOrdersTable({ from, to, paymentMethod }: RecentOrdersTable
   const recentTransactions = Array.isArray(transactions) ? transactions.slice(0, 5) : [];
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col gap-4">
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col gap-4 h-[300px]">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
             <IconReceipt size={16} className="stroke-[2.5]" />
@@ -45,7 +45,7 @@ export function RecentOrdersTable({ from, to, paymentMethod }: RecentOrdersTable
           </div>
         </div>
         <Link
-          href="/admin/reports"
+          href="/admin/transactions"
           className="flex items-center gap-1 text-[10px] font-extrabold text-slate-500 hover:text-indigo-600 transition-colors border border-slate-100 rounded-lg px-2.5 py-1.5 bg-white shadow-sm"
         >
           View All <IconArrowUpRight size={11} />
@@ -53,19 +53,19 @@ export function RecentOrdersTable({ from, to, paymentMethod }: RecentOrdersTable
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
+      <div className="overflow-auto flex-1 pr-1">
+        <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b border-slate-100">
+            <tr className="sticky top-0 z-10">
               {["Order ID", "Nama Produk", "Tanggal", "Pembayaran", "Jumlah", "Status"].map((h) => (
                 <th
                   key={h}
-                  className="text-left text-[8px] font-bold uppercase tracking-widest text-slate-400 pb-2.5 pr-4 last:pr-0 whitespace-nowrap"
+                  className="text-left text-[8px] font-bold uppercase tracking-widest text-slate-400 pb-2 pr-4 last:pr-0 whitespace-nowrap bg-white border-b border-slate-100"
                 >
                   {h}
                 </th>
               ))}
-              <th className="pb-2.5" />
+              <th className="pb-2 bg-white border-b border-slate-100" />
             </tr>
           </thead>
           <tbody>
@@ -107,7 +107,10 @@ export function RecentOrdersTable({ from, to, paymentMethod }: RecentOrdersTable
                   >
                     {/* Order ID */}
                     <td className="py-3 pr-4">
-                      <span className="text-[11px] font-bold text-slate-700">
+                      <span 
+                        className="text-[11px] font-bold text-slate-700 truncate block max-w-[85px]"
+                        title={trx.nomor_transaksi}
+                      >
                         {trx.nomor_transaksi}
                       </span>
                     </td>

@@ -18,13 +18,15 @@ import {
     IconReceiptTax,
     IconTag,
     IconChevronRight,
-    IconPackage
+    IconPackage,
+    IconNotebook
 } from "@tabler/icons-react";
 import { useTransactionDetail } from "../api/transactions-api";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { TransactionItem } from "../types";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface TransactionDetailPageProps {
     transactionId: string;
@@ -49,10 +51,10 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
                     Transaksi tidak ditemukan atau terjadi kesalahan saat memuat data.
                 </p>
                 <Button
-                    onClick={() => router.push("/admin")}
+                    onClick={() => router.push("/admin/transactions")}
                     className="mt-4 bg-slate-800 hover:bg-slate-900 text-white text-xs rounded-xl"
                 >
-                    Kembali ke Dashboard
+                    Kembali ke Daftar Transaksi
                 </Button>
             </div>
         );
@@ -138,7 +140,12 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
     ];
 
     const handlePrint = () => {
-        window.print();
+        if (transaction?.id) {
+            window.open(`/api/proxy/v1/transactions-print/${transaction.id}`, "_blank");
+            toast.success("Mencetak struk...");
+        } else {
+            toast.error("Gagal mencetak struk: ID transaksi tidak ditemukan.");
+        }
     };
 
     return (
@@ -244,6 +251,18 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
                             </div>
                         </>
                     )}
+                    {transaction.metode_pembayaran === "debt" && (
+                        <>
+                            <div className="flex justify-between">
+                                <span>DP Tunai:</span>
+                                <span>{formatRupiah(transaction.cash_received || 0)}</span>
+                            </div>
+                            <div className="flex justify-between font-bold">
+                                <span>Hutang:</span>
+                                <span>{formatRupiah(transaction.debt_amount || 0)}</span>
+                            </div>
+                        </>
+                    )}
                     {transaction.metode_pembayaran === "card" && (
                         <>
                             <div className="flex justify-between">
@@ -271,7 +290,7 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
                     <div className="flex items-center gap-4">
                         <Button
                             type="button"
-                            onClick={() => router.push("/admin")}
+                            onClick={() => router.push("/admin/transactions")}
                             variant="outline"
                             className="p-2 h-9 w-9 rounded-xl border-slate-200 text-slate-500 hover:text-slate-900 bg-white"
                         >
@@ -279,7 +298,7 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
                         </Button>
                         <div>
                             <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                                <span>Dashboard</span>
+                                <span>Daftar Transaksi</span>
                                 <IconChevronRight size={10} className="stroke-[3]" />
                                 <span>Detail Transaksi</span>
                             </div>
@@ -389,6 +408,16 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
                                             <div className="text-[9px] text-slate-400">Menggunakan Mesin EDC</div>
                                         </div>
                                     </>
+                                ) : transaction.metode_pembayaran?.toLowerCase() === "debt" ? (
+                                    <>
+                                        <div className="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                                            <IconNotebook size={16} />
+                                        </div>
+                                        <div>
+                                            <div className="text-[10px] font-bold text-slate-700 uppercase">Hutang Member</div>
+                                            <div className="text-[9px] text-slate-400">Pembayaran Hutang oleh Member</div>
+                                        </div>
+                                    </>
                                 ) : (
                                     <>
                                         <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
@@ -412,6 +441,19 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
                                         <div className="flex justify-between items-center text-slate-600">
                                             <span>Kembalian</span>
                                             <span className="font-bold text-emerald-600 tabular-nums">{formatRupiah(transaction.kembalian || 0)}</span>
+                                        </div>
+                                    </>
+                                )}
+
+                                {transaction.metode_pembayaran?.toLowerCase() === "debt" && (
+                                    <>
+                                        <div className="flex justify-between items-center text-slate-600">
+                                            <span>Uang Muka / DP</span>
+                                            <span className="font-semibold tabular-nums">{formatRupiah(transaction.cash_received || 0)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-slate-600">
+                                            <span>Jumlah Hutang Baru</span>
+                                            <span className="font-bold text-rose-600 tabular-nums">{formatRupiah(transaction.debt_amount || 0)}</span>
                                         </div>
                                     </>
                                 )}

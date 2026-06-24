@@ -119,6 +119,7 @@ export const ENDPOINTS = {
     REPORTS: {
         SUMMARY: "/v1/reports/summary",
         DAILY: (date: string) => `/v1/reports/sales/daily?date=${date}`,
+        JASA_VS_PRODUCT: "/v1/reports/sales/jasa-vs-product",
     },
 
     // Transactions (Checkout)

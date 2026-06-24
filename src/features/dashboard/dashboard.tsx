@@ -2,12 +2,13 @@
 
 import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useDashboardSummary } from "@/features/dashboard/api/dashboard-api";
+import { useDashboardSummary, useJasaVsProduct } from "@/features/dashboard/api/dashboard-api";
 import { RecentOrdersTable } from "@/features/dashboard/components/recent-orders-table";
 import { RevenueChart } from "@/features/dashboard/components/revenue-chart";
 import { SalesStatistics } from "@/features/dashboard/components/sales-statistics";
 import { StatMiniCards } from "@/features/dashboard/components/stat-mini-cards";
 import { TopSellingWeekly } from "@/features/dashboard/components/top-selling-weekly";
+import { JasaVsProductChart } from "@/features/dashboard/components/jasa-vs-product-chart";
 import { getDefaultDateRange } from "@/lib/date-utils";
 import { IconFilter } from "@tabler/icons-react";
 import { format } from "date-fns";
@@ -40,6 +41,11 @@ export function Dashboard() {
     from: watchFrom || undefined,
     to: watchTo || undefined,
     payment_method: paymentMethod || undefined,
+  });
+
+  const { data: jasaVsProduct, isLoading: jasaVsProductLoading } = useJasaVsProduct({
+    from: watchFrom || undefined,
+    to: watchTo || undefined,
   });
 
   const isLoading = summaryLoading;
@@ -135,21 +141,32 @@ export function Dashboard() {
           </Popover>
         </div>
 
-        <section className="grid gap-4 mb-4" style={{ gridTemplateColumns: "220px 1fr 280px" }}>
-          <StatMiniCards summary={summary} isLoading={isLoading} />
-
-          <RevenueChart summary={summary} from={watchFrom || undefined} to={watchTo || undefined} />
-
-          <SalesStatistics summary={summary} isLoading={isLoading} />
+        <section className="grid grid-cols-12 gap-4 mb-4">
+          <div className="col-span-3 h-full">
+            <StatMiniCards summary={summary} isLoading={isLoading} />
+          </div>
+          <div className="col-span-6 h-full">
+            <RevenueChart summary={summary} from={watchFrom || undefined} to={watchTo || undefined} />
+          </div>
+          <div className="col-span-3 h-full">
+            <SalesStatistics summary={summary} isLoading={isLoading} />
+          </div>
         </section>
 
-        <section className="grid gap-4" style={{ gridTemplateColumns: "1fr 280px" }}>
-          <RecentOrdersTable
-            from={watchFrom}
-            to={watchTo}
-            paymentMethod={paymentMethod}
-          />
-          <TopSellingWeekly summary={summary} isLoading={isLoading} />
+        <section className="grid grid-cols-12 gap-4">
+          <div className="col-span-6 h-full">
+            <RecentOrdersTable
+              from={watchFrom}
+              to={watchTo}
+              paymentMethod={paymentMethod}
+            />
+          </div>
+          <div className="col-span-3 h-full">
+            <TopSellingWeekly summary={summary} isLoading={isLoading} />
+          </div>
+          <div className="col-span-3 h-full">
+            <JasaVsProductChart data={jasaVsProduct} isLoading={jasaVsProductLoading} />
+          </div>
         </section>
       </div>
     </FormProvider>

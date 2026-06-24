@@ -9,6 +9,7 @@ export interface Member {
     jenis_kelamin: "L" | "P" | null;
     poin: number;
     status: "active" | "inactive";
+    hutang?: number;
     created_at?: string;
     updated_at?: string;
 }

@@ -33,13 +33,15 @@ export interface Receipt {
     subtotal: number;
     pajak: number;
     total: number;
-    metode_pembayaran: "cash" | "card";
+    metode_pembayaran: "cash" | "card" | "debt";
     nominal_bayar?: number;
     kembalian?: number;
     jenis_kartu?: string;
     nomor_kartu_akhir?: string;
     member?: Member | null;
     member_id?: number | null;
+    cash_received?: number;
+    debt_amount?: number;
 }
 
 export interface TrxItem {

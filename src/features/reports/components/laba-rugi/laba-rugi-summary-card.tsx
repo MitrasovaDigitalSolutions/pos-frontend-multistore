@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import type { LabaRugiReport } from "../types";
+import type { LabaRugiReport } from "../../types";
 
 interface LabaRugiSummaryCardProps {
     reportData: LabaRugiReport | undefined;

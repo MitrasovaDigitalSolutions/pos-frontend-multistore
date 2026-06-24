@@ -1,41 +1,41 @@
 "use client";
 
 import { useState } from "react";
-import { UseFormReturn } from "react-hook-form";
+import { UseFormReturn, Controller } from "react-hook-form";
 import { Card } from "@/components/ui/card";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
-import { FormSelect } from "@/components/forms/form-select";
 import { FilterForm } from "@/components/forms/filter-form";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { IconPrinter, IconRefresh } from "@tabler/icons-react";
-import { PrintConfirmDialog } from "./print-confirm-dialog";
+import { PrintConfirmDialog } from "../print-confirm-dialog";
 
-interface LabaRugiFilterValues {
+interface PenjualanFilterValues {
     fromDate: string;
     toDate: string;
-    interval: string;
+    includeItems: boolean;
 }
 
-interface LabaRugiPrintFilterValues {
+interface PenjualanPrintFilterValues {
     paperSize: string;
     orientation: string;
     fromDate: string;
     toDate: string;
-    interval: string;
+    includeItems: boolean;
 }
 
-interface LabaRugiHeaderFiltersProps {
-    methods: UseFormReturn<LabaRugiFilterValues>;
-    onSubmit: (data: LabaRugiFilterValues) => void;
+interface PenjualanHeaderFiltersProps {
+    methods: UseFormReturn<PenjualanFilterValues>;
+    onSubmit: (data: PenjualanFilterValues) => void;
     onReset: () => void;
     onRefetch: () => void;
     isLoading: boolean;
     isFetching: boolean;
     hasReportData: boolean;
-    appliedFilters: LabaRugiFilterValues;
+    appliedFilters: PenjualanFilterValues;
 }
 
-export function LabaRugiHeaderFilters({
+export function PenjualanHeaderFilters({
     methods,
     onSubmit,
     onReset,
@@ -44,20 +44,13 @@ export function LabaRugiHeaderFilters({
     isFetching,
     hasReportData,
     appliedFilters,
-}: LabaRugiHeaderFiltersProps) {
+}: PenjualanHeaderFiltersProps) {
     const [isPrintDialogOpen, setIsPrintDialogOpen] = useState<boolean>(false);
 
-    const handlePrintConfirm = (data: LabaRugiPrintFilterValues) => {
-        const url = `/api/proxy/v1/reports/print/laba-rugi?from=${data.fromDate}&to=${data.toDate}&interval=${data.interval}&paper_size=${data.paperSize}&orientation=${data.orientation}`;
+    const handlePrintConfirm = (data: PenjualanPrintFilterValues) => {
+        const url = `/api/proxy/v1/reports/print/penjualan?from=${data.fromDate}&to=${data.toDate}&include_items=${data.includeItems}&include_payments=false&paper_size=${data.paperSize}&orientation=${data.orientation}`;
         window.open(url, "_blank");
     };
-
-    const intervalOptions = [
-        { value: "daily", label: "Harian" },
-        { value: "weekly", label: "Mingguan" },
-        { value: "monthly", label: "Bulanan" },
-        { value: "yearly", label: "Tahunan" },
-    ];
 
     return (
         <>
@@ -65,10 +58,10 @@ export function LabaRugiHeaderFilters({
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100/60 mb-4">
                     <div>
                         <h3 className="text-sm font-bold text-slate-900">
-                            Laporan Laba Rugi
+                            Laporan Penjualan
                         </h3>
                         <p className="text-[11px] text-slate-400 mt-0.5">
-                            Analisis pendapatan, HPP (COGS), diskon, dan keuntungan bersih.
+                            Rangkuman faktur penjualan barang keluar beserta detail barang terjual.
                         </p>
                     </div>
 
@@ -98,31 +91,43 @@ export function LabaRugiHeaderFilters({
                     methods={methods}
                     onSubmit={onSubmit}
                     onReset={onReset}
-                    cols={3}
-                    titleLabel="Filter Laporan Laba Rugi"
+                    cols={2}
+                    titleLabel="Filter Laporan Penjualan"
                 >
-                    <FormSelect<LabaRugiFilterValues>
-                        name="interval"
-                        label="Interval"
-                        options={intervalOptions}
-                        placeholder="Pilih Interval"
-                    />
-                    <FormDatePicker<LabaRugiFilterValues>
+                    <FormDatePicker<PenjualanFilterValues>
                         name="fromDate"
                         label="Dari Tanggal"
                         placeholder="Mulai..."
                         clearable={false}
                     />
-                    <FormDatePicker<LabaRugiFilterValues>
+
+                    <FormDatePicker<PenjualanFilterValues>
                         name="toDate"
                         label="Sampai Tanggal"
                         placeholder="Selesai..."
                         clearable={false}
                     />
+
+                    <Controller
+                        name="includeItems"
+                        control={methods.control}
+                        render={({ field }) => (
+                            <div className="flex items-center gap-3 border border-slate-100 bg-white p-3 rounded-xl shadow-xs">
+                                <Switch
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                                <div className="flex flex-col text-left">
+                                    <span className="text-xs font-bold text-slate-700">Sertakan Detail Barang</span>
+                                    <span className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">Tampilkan nama & qty barang terjual saat baris faktur diperluas (diklik) dan di cetakan PDF</span>
+                                </div>
+                            </div>
+                        )}
+                    />
                 </FilterForm>
             </Card>
 
-            <PrintConfirmDialog<LabaRugiPrintFilterValues>
+            <PrintConfirmDialog<PenjualanPrintFilterValues>
                 open={isPrintDialogOpen}
                 onOpenChange={setIsPrintDialogOpen}
                 onConfirm={handlePrintConfirm}
@@ -131,30 +136,42 @@ export function LabaRugiHeaderFilters({
                     orientation: "portrait",
                     fromDate: appliedFilters.fromDate,
                     toDate: appliedFilters.toDate,
-                    interval: appliedFilters.interval,
+                    includeItems: appliedFilters.includeItems,
                 }}
             >
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormDatePicker<LabaRugiPrintFilterValues>
+                    <FormDatePicker<PenjualanPrintFilterValues>
                         name="fromDate"
                         label="Dari Tanggal"
                         placeholder="Mulai..."
                         clearable={false}
                     />
 
-                    <FormDatePicker<LabaRugiPrintFilterValues>
+                    <FormDatePicker<PenjualanPrintFilterValues>
                         name="toDate"
                         label="Sampai Tanggal"
                         placeholder="Selesai..."
                         clearable={false}
                     />
                 </div>
-                <FormSelect<LabaRugiPrintFilterValues>
-                    name="interval"
-                    label="Interval Analisis"
-                    options={intervalOptions}
-                    placeholder="Pilih Interval"
-                />
+
+                <div className="space-y-3">
+                    <Controller
+                        name="includeItems"
+                        render={({ field }) => (
+                            <div className="flex items-center gap-3 border border-slate-100 bg-slate-50/50 p-3 rounded-xl">
+                                <Switch
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                                <div className="flex flex-col text-left">
+                                    <span className="text-xs font-bold text-slate-700">Sertakan Detail Barang</span>
+                                    <span className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">Tampilkan daftar barang di cetakan PDF</span>
+                                </div>
+                            </div>
+                        )}
+                    />
+                </div>
             </PrintConfirmDialog>
         </>
     );

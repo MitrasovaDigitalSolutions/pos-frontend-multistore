@@ -11,7 +11,8 @@ import {
     IconWallet,
     IconReceipt,
     IconUsers,
-    IconChartBar
+    IconChartBar,
+    IconNotebook
 } from "@tabler/icons-react";
 
 export interface SidebarMenuItem {
@@ -206,6 +207,22 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     hasRole(roles, "admin") ||
                     hasPermission(roles, permissions, "manage_cash_accounts") ||
                     hasPermission(roles, permissions, "view_cash_drawer"),
+            },
+            {
+                type: "submenu",
+                label: "Hutang",
+                icon: IconNotebook,
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") ||
+                    hasPermission(roles, permissions, "view_members"),
+                items: [
+                    {
+                        path: ROUTES.ADMIN_DEBTS_MEMBER,
+                        label: "Hutang Member",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_members"),
+                    },
+                ],
             },
             {
                 type: "submenu",

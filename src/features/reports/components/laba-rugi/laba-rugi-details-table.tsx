@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataTable } from "@/components/ui/data-table";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconClipboardList, IconReceipt, IconCreditCard } from "@tabler/icons-react";
-import type { LabaRugiReport } from "../types";
+import type { LabaRugiReport } from "../../types";
 
 interface LabaRugiDetailsTableProps {
     reportData: LabaRugiReport | undefined;
@@ -152,7 +152,7 @@ export function LabaRugiDetailsTable({ reportData, isLoading }: LabaRugiDetailsT
                                 },
                                 size: 90,
                             },
-                        ]}
+                         ]}
                         data={reportData?.report_data || []}
                         isLoading={isLoading}
                         emptyMessage="Tidak ada data rincian laba rugi pada periode ini."

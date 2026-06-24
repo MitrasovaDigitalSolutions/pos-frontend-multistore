@@ -37,12 +37,34 @@ export const queryKeys = {
         all: ["reports"] as const,
         daily: (date: string) =>
             [...queryKeys.reports.all, "daily", date] as const,
+        jasaVsProduct: (from?: string, to?: string) =>
+            [...queryKeys.reports.all, "jasaVsProduct", from, to] as const,
         labaRugi: (from: string, to: string, interval: string) =>
             [...queryKeys.reports.all, "labaRugi", from, to, interval] as const,
         pengeluaran: (from: string, to: string) =>
             [...queryKeys.reports.all, "pengeluaran", from, to] as const,
         pembelian: (from: string, to: string, includeItems: boolean, includePayments: boolean) =>
             [...queryKeys.reports.all, "pembelian", from, to, includeItems, includePayments] as const,
+        penjualan: (
+            from: string,
+            to: string,
+            includeItems: boolean,
+            includePayments: boolean,
+            page: number,
+            perPage: number,
+            sortOrder: "asc" | "desc"
+        ) =>
+            [
+                ...queryKeys.reports.all,
+                "penjualan",
+                from,
+                to,
+                includeItems,
+                includePayments,
+                page,
+                perPage,
+                sortOrder,
+            ] as const,
     },
 
     // Suppliers
