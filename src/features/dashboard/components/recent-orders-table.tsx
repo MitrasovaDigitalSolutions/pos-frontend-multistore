@@ -43,15 +43,15 @@ export function RecentOrdersTable({ from, to, paymentMethod }: RecentOrdersTable
 
   const transactions = response?.data ?? [];
   
-  // Sort by created_at DESC in frontend as a robust fallback, and slice to latest 5 items
+  // Sort by created_at DESC in frontend as a robust fallback, and slice to latest 3 items
   const recentTransactions = Array.isArray(transactions)
     ? [...transactions]
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, 5)
+        .slice(0, 3)
     : [];
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col gap-4 h-[360px]">
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col gap-4 h-[280px]">
       {/* Header */}
       <div className="flex items-start justify-between shrink-0">
         <div className="flex items-center gap-2">
@@ -91,7 +91,7 @@ export function RecentOrdersTable({ from, to, paymentMethod }: RecentOrdersTable
           </thead>
           <tbody>
             {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
+              Array.from({ length: 3 }).map((_, i) => (
                 <tr key={i} className="border-b border-slate-50">
                   <td colSpan={7} className="py-3">
                     <div className="h-4 bg-slate-100 rounded animate-pulse" />

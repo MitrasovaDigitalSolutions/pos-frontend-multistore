@@ -141,8 +141,11 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
 
     const handlePrint = () => {
         if (transaction?.id) {
+            const toastId = toast.success("Mencetak struk...");
             window.open(`/api/proxy/v1/transactions-print/${transaction.id}`, "_blank");
-            toast.success("Mencetak struk...");
+            setTimeout(() => {
+                toast.dismiss(toastId);
+            }, 3000);
         } else {
             toast.error("Gagal mencetak struk: ID transaksi tidak ditemukan.");
         }

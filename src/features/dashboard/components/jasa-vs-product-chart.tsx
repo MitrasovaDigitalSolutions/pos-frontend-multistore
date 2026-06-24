@@ -102,7 +102,7 @@ export function JasaVsProductChart({ data, isLoading }: JasaVsProductChartProps)
       </div>
       
       {/* Chart Skeleton */}
-      <Skeleton className="w-full h-[160px] rounded-xl my-1" />
+      <Skeleton className="w-full h-[120px] rounded-xl my-1" />
 
       {/* Legend Skeleton */}
       <div className="grid grid-cols-2 gap-2.5 border-t border-slate-50 pt-2.5">
@@ -122,14 +122,14 @@ export function JasaVsProductChart({ data, isLoading }: JasaVsProductChartProps)
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 h-full min-h-[360px]">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 h-full min-h-[280px]">
         {renderSkeletons()}
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-4 flex flex-col justify-between h-full min-h-[360px] select-none">
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-4 flex flex-col justify-between h-full min-h-[280px] select-none">
       {/* Header */}
       <div className="flex items-center justify-between pb-2 border-b border-slate-50">
         <div className="flex items-center gap-1.5">
@@ -143,7 +143,7 @@ export function JasaVsProductChart({ data, isLoading }: JasaVsProductChartProps)
       </div>
 
       {/* Main Content: Bar Chart */}
-      <div style={{ width: "100%", height: 160 }} className="my-2">
+      <div style={{ width: "100%", height: 120 }} className="my-2">
         {mounted && (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
