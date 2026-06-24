@@ -130,13 +130,6 @@ export function SalesDebtsPage() {
             ),
         },
         {
-            accessorKey: "nomor_faktur",
-            header: "No. Faktur",
-            cell: ({ row }) => (
-                <span className="text-slate-500 font-medium">{row.original.nomor_faktur || "-"}</span>
-            ),
-        },
-        {
             accessorKey: "nilai_faktur",
             header: "Nilai Faktur",
             meta: {
@@ -169,6 +162,13 @@ export function SalesDebtsPage() {
             },
         },
         {
+            accessorKey: "nomor_faktur",
+            header: "No. Faktur",
+            cell: ({ row }) => (
+                <span className="text-slate-500 font-medium">{row.original.nomor_faktur || "-"}</span>
+            ),
+        },
+        {
             id: "actions",
             header: "Aksi",
             meta: {
@@ -189,26 +189,17 @@ export function SalesDebtsPage() {
 
     return (
         <div className="space-y-6">
-            {/* Header section */}
-            <div>
-                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                    <IconNotebook size={20} className="text-rose-600" />
-                    <span>Daftar Hutang Sales / Supplier</span>
-                </h2>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                    Pantau daftar tagihan hutang pembelian barang ke sales/supplier yang belum lunas, dan lakukan pencatatan pembayaran cicilan atau pelunasan.
-                </p>
-            </div>
-
             {/* List Table & Filter Section */}
             <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4">
-                <div className="flex justify-between items-center border-b border-slate-50 pb-3">
-                    <div>
-                        <h4 className="text-xs font-bold text-slate-800">Tagihan Penerimaan Pending</h4>
-                        <p className="text-[10px] text-slate-400">Gunakan kolom filter untuk mempercepat pencarian transaksi.</p>
-                    </div>
+                <div>
+                    <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <IconNotebook size={20} className="text-rose-600" />
+                        <span>Daftar Hutang Sales</span>
+                    </h2>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                        Pantau daftar tagihan hutang pembelian barang ke sales/supplier yang belum lunas, dan lakukan pencatatan pembayaran cicilan atau pelunasan.
+                    </p>
                 </div>
-
                 <FilterForm
                     methods={filterMethods}
                     onSubmit={handleFilterSubmit}
