@@ -32,23 +32,23 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
     });
 
     const supplierOptions = suppliers.map((s) => ({
-        value: String(s.id),
+        value: String(s.uid),
         label: s.nama,
     }));
 
     const receivingOptions = (receivingsData?.data || []).map((r) => ({
-        value: String(r.id),
+        value: String(r.uid),
         label: `${r.nomor_penerimaan} - ${r.supplier_relationship?.nama || r.supplier || "Supplier"}`,
         description: `Faktur: ${r.nomor_faktur || "-"} • Total: ${formatRupiah(r.nilai_faktur || 0)}`,
     }));
 
     // In edit mode, if currently linked receiving is not in the list (e.g. because it's not in the first 100 or has another state), make sure it is added.
-    if (returnObj.stock_receiving_id) {
-        const hasCurrentReceiving = (receivingsData?.data || []).some(r => r.id === returnObj.stock_receiving_id);
+    if (returnObj.stock_receiving_uid) {
+        const hasCurrentReceiving = (receivingsData?.data || []).some(r => r.uid === returnObj.stock_receiving_uid);
         if (!hasCurrentReceiving) {
             receivingOptions.push({
-                value: String(returnObj.stock_receiving_id),
-                label: `${returnObj.stock_receiving?.nomor_penerimaan || `Penerimaan ID: ${returnObj.stock_receiving_id}`}`,
+                value: String(returnObj.stock_receiving_uid),
+                label: `${returnObj.stock_receiving?.nomor_penerimaan || `Penerimaan ID: ${returnObj.stock_receiving_uid}`}`,
                 description: `Terkait`,
             });
         }
@@ -57,8 +57,8 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
     const methods = useForm<PurchaseReturnHeaderInput>({
         resolver: zodResolver(purchaseReturnHeaderSchema) as Resolver<PurchaseReturnHeaderInput>,
         defaultValues: {
-            receiving_id: undefined,
-            supplier_id: undefined,
+            receiving_uid: undefined,
+            supplier_uid: undefined,
             tanggal_retur: "",
             catatan: "",
         },
@@ -72,14 +72,14 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
         formState: { errors },
     } = methods;
 
-    const receivingId = useWatch({ name: "receiving_id", control: methods.control });
+    const receivingId = useWatch({ name: "receiving_uid", control: methods.control });
 
     // Reset default values when returnObj is loaded or dialog opens
     useEffect(() => {
         if (open && returnObj) {
             reset({
-                receiving_id: returnObj.stock_receiving_id ? String(returnObj.stock_receiving_id) as unknown as number : undefined,
-                supplier_id: returnObj.supplier_id || undefined,
+                receiving_uid: returnObj.stock_receiving_uid || undefined,
+                supplier_uid: returnObj.supplier_uid ? String(returnObj.supplier_uid) : undefined,
                 tanggal_retur: returnObj.tanggal_retur ? returnObj.tanggal_retur.split("T")[0] : "",
                 catatan: returnObj.catatan || "",
             });
@@ -90,12 +90,12 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
     useEffect(() => {
         if (receivingId) {
             const selectedReceiving = (receivingsData?.data || []).find(
-                (r) => r.id === Number(receivingId)
+                (r) => r.uid === receivingId
             );
-            if (selectedReceiving && selectedReceiving.supplier_id) {
-                setValue("supplier_id", selectedReceiving.supplier_id);
-            } else if (returnObj && returnObj.stock_receiving_id === Number(receivingId)) {
-                setValue("supplier_id", returnObj.supplier_id);
+            if (selectedReceiving && selectedReceiving.supplier_uid) {
+                setValue("supplier_uid", String(selectedReceiving.supplier_uid));
+            } else if (returnObj && returnObj.stock_receiving_uid === receivingId) {
+                setValue("supplier_uid", String(returnObj.supplier_uid));
             }
         }
     }, [receivingId, receivingsData, setValue, returnObj]);
@@ -103,15 +103,15 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
     const onSubmit = (data: PurchaseReturnHeaderInput) => {
         // Prepare payload including existing items to prevent deletion.
         const itemsPayload = (returnObj.items || []).map((item) => ({
-            product_id: item.product_id,
+            product_uid: item.product_uid,
             kuantitas: item.kuantitas,
             harga_beli: item.harga_beli,
             alasan: item.alasan || "damaged",
         }));
 
         const payload = {
-            receiving_id: Number(data.receiving_id),
-            supplier_id: Number(data.supplier_id),
+            receiving_uid: data.receiving_uid,
+            supplier_uid: data.supplier_uid,
             tanggal_retur: data.tanggal_retur,
             catatan: data.catatan,
             status: returnObj.status, // Preserve draft status
@@ -119,7 +119,7 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
         };
 
         updateReturn.mutate(
-            { id: returnObj.id, data: payload },
+            { uid: returnObj.uid, data: payload },
             {
                 onSuccess: () => {
                     toast.success("Informasi header Retur Pembelian berhasil diperbarui!");
@@ -152,16 +152,16 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
                             Referensi Faktur Penerimaan *
                         </label>
                         <FormSelect<PurchaseReturnHeaderInput>
-                            name="receiving_id"
+                            name="receiving_uid"
                             options={receivingOptions}
                             placeholder={
                                 receivingsLoading ? "Memuat daftar penerimaan..." : "-- Pilih Faktur Penerimaan (Completed) --"
                             }
                             disabled={updateReturn.isPending || receivingsLoading}
                         />
-                        {errors.receiving_id && (
+                        {errors.receiving_uid && (
                             <p className="text-[10px] text-rose-500 font-medium">
-                                {errors.receiving_id.message}
+                                {errors.receiving_uid.message}
                             </p>
                         )}
                     </div>
@@ -172,16 +172,16 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
                             Supplier *
                         </label>
                         <FormSelect<PurchaseReturnHeaderInput>
-                            name="supplier_id"
+                            name="supplier_uid"
                             options={supplierOptions}
                             placeholder={
                                 suppliersLoading ? "Memuat supplier..." : "-- Pilih Supplier --"
                             }
                             disabled={updateReturn.isPending || suppliersLoading || !!receivingId}
                         />
-                        {errors.supplier_id && (
+                        {errors.supplier_uid && (
                             <p className="text-[10px] text-rose-500 font-medium">
-                                {errors.supplier_id.message}
+                                {errors.supplier_uid.message}
                             </p>
                         )}
                     </div>

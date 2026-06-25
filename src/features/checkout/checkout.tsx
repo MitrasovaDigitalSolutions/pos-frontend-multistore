@@ -50,8 +50,8 @@ export function Checkout() {
 
     useEffect(() => {
         if (activeDrawerSession) {
-            if (state.session && state.session.cashDrawerSessionId !== activeDrawerSession.id) {
-                state.update({ cashDrawerSessionId: activeDrawerSession.id });
+            if (state.session && state.session.cashDrawerSessionId !== activeDrawerSession.uid) {
+                state.update({ cashDrawerSessionId: activeDrawerSession.uid });
             }
             if (!hasAutoOpened) {
                 const timer = setTimeout(() => {
@@ -64,7 +64,7 @@ export function Checkout() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeDrawerSession, state.session, state.update, hasAutoOpened]);
 
-    const handleOpenShiftSuccess = async (sessionId: number) => {
+    const handleOpenShiftSuccess = async (sessionId: string) => {
         await state.update({ cashDrawerSessionId: sessionId });
         refetchCurrentDrawer();
         setIsInfoSesiOpen(true);
@@ -223,7 +223,7 @@ export function Checkout() {
                 onOpenChange={state.setIsPayModalOpen}
                 grandTotal={state.grandTotal}
                 cartItems={state.cart.map((item) => ({
-                    product_id: item.product_id,
+                    product_uid: item.product_uid,
                     quantity: item.qty,
                 }))}
                 discount={0}
@@ -268,7 +268,7 @@ export function Checkout() {
             <InfoSesiAktifModal
                 open={isInfoSesiOpen}
                 onOpenChange={setIsInfoSesiOpen}
-                sessionId={activeDrawerSession?.id || null}
+                sessionId={activeDrawerSession?.uid || null}
                 token={cashDrawerToken}
                 onCloseSuccess={handleCloseShiftSuccess}
                 isOnline={isOnline}

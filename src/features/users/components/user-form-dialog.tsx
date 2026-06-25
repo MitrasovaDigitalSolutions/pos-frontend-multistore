@@ -65,7 +65,7 @@ export function UserFormDialog({
 
         if (editingUser) {
             updateUser.mutate(
-                { id: editingUser.id, data: payload },
+                { uid: editingUser.uid, data: payload },
                 {
                     onSuccess: (res) => {
                         toast.success(

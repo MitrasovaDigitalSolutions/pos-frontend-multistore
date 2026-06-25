@@ -21,7 +21,7 @@ import { db } from "@/lib/db";
 import { useNetworkStatus } from "@/hooks/use-network-status";
 
 interface CheckoutTotalsSectionProps {
-    transactionId: number | null;
+    transactionId: string | null;
     cashierName: string;
     trxTime: string;
     subtotal: number;
@@ -79,7 +79,7 @@ export function CheckoutTotalsSection({
     const memberOptions = members
         .filter((m) => m.status === "active")
         .map((m) => ({
-            value: String(m.id),
+            value: m.uid,
             label: `${m.nama} (${m.kode}) - ${m.poin} Poin`,
         }));
 
@@ -154,7 +154,7 @@ export function CheckoutTotalsSection({
                             options={memberOptions}
                             value=""
                             onChange={(val) => {
-                                const found = members.find((m) => String(m.id) === val);
+                                const found = members.find((m) => m.uid === val);
                                 if (found) onMemberChange(found);
                             }}
                             placeholder="Pilih member loyalitas..."

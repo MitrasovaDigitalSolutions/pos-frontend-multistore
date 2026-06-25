@@ -36,7 +36,7 @@ export function BrandDialog({
     const onSubmit = (data: BrandInput) => {
         if (isEdit && editingBrand) {
             updateBrand.mutate(
-                { id: editingBrand.id, data },
+                { uid: editingBrand.uid, data },
                 {
                     onSuccess: () => {
                         toast.success("Brand berhasil diperbarui.");
@@ -78,19 +78,19 @@ export function BrandDialog({
             className="max-w-md"
         >
 
-                <form
-                    onSubmit={handleSubmit(onSubmit)}
-                    className="space-y-4 pt-4"
-                >
-                    {/* Nama */}
-                    <FormInput<BrandInput>
-                        name="nama"
-                        label="Nama Brand / Merek *"
-                        placeholder="Samsung, Indofood, Unilever..."
-                        disabled={isPending}
-                    />
+            <form
+                onSubmit={handleSubmit(onSubmit)}
+                className="space-y-4 pt-4"
+            >
+                {/* Nama */}
+                <FormInput<BrandInput>
+                    name="nama"
+                    label="Nama Brand / Merek *"
+                    placeholder="Samsung, Indofood, Unilever..."
+                    disabled={isPending}
+                />
 
-                    {/* Deskripsi
+                {/* Deskripsi
                     <FormTextarea
                         name="deskripsi"
                         label="Deskripsi"
@@ -99,14 +99,14 @@ export function BrandDialog({
                         disabled={isPending}
                     /> */}
 
-                    <Button
-                        type="submit"
-                        className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4"
-                        disabled={isPending}
-                    >
-                        {isPending ? "Menyimpan..." : isEdit ? "Simpan Perubahan" : "Buat Brand"}
-                    </Button>
-                </form>
+                <Button
+                    type="submit"
+                    className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4"
+                    disabled={isPending}
+                >
+                    {isPending ? "Menyimpan..." : isEdit ? "Simpan Perubahan" : "Buat Brand"}
+                </Button>
+            </form>
         </BaseDialog>
     );
 }

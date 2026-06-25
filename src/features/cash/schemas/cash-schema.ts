@@ -27,21 +27,21 @@ export type DebitCreditSchemaInput = z.infer<typeof debitCreditSchema>;
 
 export const transferSchema = z
     .object({
-        from_account_id: z.preprocess(
+        from_account_uid: z.preprocess(
             (val) => {
                 if (val === "" || val === undefined || val === null) return undefined;
-                const num = Number(val);
-                return isNaN(num) ? undefined : num;
+                const num = String(val);
+                return num;
             },
-            z.number({ message: "Akun kas asal wajib dipilih" }).min(1, "Akun kas asal wajib dipilih")
+            z.string({ message: "Akun kas asal wajib dipilih" }).min(1, "Akun kas asal wajib dipilih")
         ),
-        to_account_id: z.preprocess(
+        to_account_uid: z.preprocess(
             (val) => {
                 if (val === "" || val === undefined || val === null) return undefined;
-                const num = Number(val);
-                return isNaN(num) ? undefined : num;
+                const num = String(val);
+                return num;
             },
-            z.number({ message: "Akun kas tujuan wajib dipilih" }).min(1, "Akun kas tujuan wajib dipilih")
+            z.string({ message: "Akun kas tujuan wajib dipilih" }).min(1, "Akun kas tujuan wajib dipilih")
         ),
         amount: z.preprocess(
             (val) => {
@@ -58,9 +58,9 @@ export const transferSchema = z
             .nullable()
             .transform((v) => v || null),
     })
-    .refine((data) => data.from_account_id !== data.to_account_id, {
+    .refine((data) => data.from_account_uid !== data.to_account_uid, {
         message: "Akun kas asal dan tujuan tidak boleh sama",
-        path: ["to_account_id"],
+        path: ["to_account_uid"],
     });
 
 export type TransferSchemaInput = z.infer<typeof transferSchema>;

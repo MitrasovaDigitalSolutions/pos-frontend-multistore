@@ -12,7 +12,7 @@ import { CloseShiftForm } from "./close-shift-form";
 interface InfoSesiAktifModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    sessionId: number | null;
+    sessionId: string | null;
     token?: string;
     onCloseSuccess: () => void;
     isOnline?: boolean;
@@ -74,45 +74,45 @@ export function InfoSesiAktifModal({
             )}
             showCloseButton={false}
         >
-                {subView === "info" && (
-                    <SessionDetailsView
-                        activeSession={activeSession}
-                        isLoading={isDetailLoading}
-                        onAction={(view) => setSubView(view)}
-                        showHistory={showHistory}
-                        setShowHistory={setShowHistory}
-                        onClose={() => onOpenChange(false)}
-                        isOnline={isOnline}
-                    />
-                )}
+            {subView === "info" && (
+                <SessionDetailsView
+                    activeSession={activeSession}
+                    isLoading={isDetailLoading}
+                    onAction={(view) => setSubView(view)}
+                    showHistory={showHistory}
+                    setShowHistory={setShowHistory}
+                    onClose={() => onOpenChange(false)}
+                    isOnline={isOnline}
+                />
+            )}
 
-                {subView === "cash_in" && sessionId && (
-                    <CashInForm
-                        sessionId={sessionId}
-                        token={token}
-                        onSuccess={handleActionSuccess}
-                        onCancel={() => setSubView("info")}
-                    />
-                )}
+            {subView === "cash_in" && sessionId && (
+                <CashInForm
+                    sessionId={sessionId}
+                    token={token}
+                    onSuccess={handleActionSuccess}
+                    onCancel={() => setSubView("info")}
+                />
+            )}
 
-                {subView === "cash_out" && sessionId && (
-                    <CashOutForm
-                        sessionId={sessionId}
-                        token={token}
-                        onSuccess={handleActionSuccess}
-                        onCancel={() => setSubView("info")}
-                    />
-                )}
+            {subView === "cash_out" && sessionId && (
+                <CashOutForm
+                    sessionId={sessionId}
+                    token={token}
+                    onSuccess={handleActionSuccess}
+                    onCancel={() => setSubView("info")}
+                />
+            )}
 
-                {subView === "close_shift" && sessionId && activeSession && (
-                    <CloseShiftForm
-                        sessionId={sessionId}
-                        expectedCash={activeSession.expected_cash}
-                        token={token}
-                        onSuccess={handleCloseSuccess}
-                        onCancel={() => setSubView("info")}
-                    />
-                )}
+            {subView === "close_shift" && sessionId && activeSession && (
+                <CloseShiftForm
+                    sessionId={sessionId}
+                    expectedCash={activeSession.expected_cash}
+                    token={token}
+                    onSuccess={handleCloseSuccess}
+                    onCancel={() => setSubView("info")}
+                />
+            )}
         </BaseDialog>
     );
 }

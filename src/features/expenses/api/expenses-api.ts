@@ -30,9 +30,9 @@ export function useCreateExpenseCategory() {
 
 export function useUpdateExpenseCategory() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<ExpenseCategory>, Error, { id: number; data: ExpenseCategoryInput }>({
-        mutationFn: ({ id, data }) =>
-            apiPut<ApiResponse<ExpenseCategory>, ExpenseCategoryInput>(`/v1/expense-categories/${id}`, data),
+    return useMutation<ApiResponse<ExpenseCategory>, Error, { uid: string; data: ExpenseCategoryInput }>({
+        mutationFn: ({ uid, data }) =>
+            apiPut<ApiResponse<ExpenseCategory>, ExpenseCategoryInput>(`/v1/expense-categories/${uid}`, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.expenses.categories() });
         },
@@ -41,8 +41,8 @@ export function useUpdateExpenseCategory() {
 
 export function useDeleteExpenseCategory() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<void>, Error, number>({
-        mutationFn: (id) => apiDelete<ApiResponse<void>>(`/v1/expense-categories/${id}`),
+    return useMutation<ApiResponse<void>, Error, string>({
+        mutationFn: (uid) => apiDelete<ApiResponse<void>>(`/v1/expense-categories/${uid}`),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.expenses.categories() });
         },
@@ -54,8 +54,8 @@ export function useDeleteExpenseCategory() {
 export function useExpenses(params?: PaginationParams & {
     date_start?: string;
     date_end?: string;
-    expense_category_id?: number;
-    cash_account_id?: number;
+    expense_category_uid?: string;
+    cash_account_uid?: string;
     search?: string;
 }) {
     return useQuery<PaginatedResponse<Expense>>({
@@ -89,9 +89,9 @@ export function useCreateExpense() {
 
 export function useUpdateExpense() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<Expense>, Error, { id: number; data: ExpenseInput }>({
-        mutationFn: ({ id, data }) =>
-            apiPut<ApiResponse<Expense>, ExpenseInput>(`/v1/expenses/${id}`, data),
+    return useMutation<ApiResponse<Expense>, Error, { uid: string; data: ExpenseInput }>({
+        mutationFn: ({ uid, data }) =>
+            apiPut<ApiResponse<Expense>, ExpenseInput>(`/v1/expenses/${uid}`, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.expenses.list() });
             queryClient.invalidateQueries({ queryKey: queryKeys.expenses.upcoming() });
@@ -102,8 +102,8 @@ export function useUpdateExpense() {
 
 export function useDeleteExpense() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<void>, Error, number>({
-        mutationFn: (id) => apiDelete<ApiResponse<void>>(`/v1/expenses/${id}`),
+    return useMutation<ApiResponse<void>, Error, string>({
+        mutationFn: (uid) => apiDelete<ApiResponse<void>>(`/v1/expenses/${uid}`),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.expenses.list() });
             queryClient.invalidateQueries({ queryKey: queryKeys.expenses.upcoming() });

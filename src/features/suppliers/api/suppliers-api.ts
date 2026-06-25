@@ -37,10 +37,10 @@ export function useCreateSupplier() {
 
 export function useUpdateSupplier() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<Supplier>, Error, { id: number; data: SupplierInput }>({
-        mutationFn: ({ id, data }) =>
+    return useMutation<ApiResponse<Supplier>, Error, { uid: string; data: SupplierInput }>({
+        mutationFn: ({ uid, data }) =>
             apiPut<ApiResponse<Supplier>, SupplierInput>(
-                `/v1/inventory/suppliers/${id}`,
+                `/v1/inventory/suppliers/${uid}`,
                 data,
             ),
         onSuccess: () => {
@@ -53,8 +53,8 @@ export function useUpdateSupplier() {
 
 export function useDeleteSupplier() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<void>, Error, number>({
-        mutationFn: (id) => apiDelete<ApiResponse<void>>(`/v1/inventory/suppliers/${id}`),
+    return useMutation<ApiResponse<void>, Error, string>({
+        mutationFn: (uid) => apiDelete<ApiResponse<void>>(`/v1/inventory/suppliers/${uid}`),
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.suppliers.all,

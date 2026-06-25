@@ -140,9 +140,9 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
     ];
 
     const handlePrint = () => {
-        if (transaction?.id) {
+        if (transaction?.uid) {
             const toastId = toast.success("Mencetak struk...");
-            window.open(`/api/proxy/v1/transactions-print/${transaction.id}`, "_blank");
+            window.open(`/api/proxy/v1/transactions-print/${transaction.uid}`, "_blank");
             setTimeout(() => {
                 toast.dismiss(toastId);
             }, 3000);
@@ -200,7 +200,7 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
                     </thead>
                     <tbody>
                         {transaction.items.map((item) => (
-                            <tr key={item.id} className="align-top">
+                            <tr key={item.uid} className="align-top">
                                 <td className="py-1 pr-2 truncate max-w-[120px]">{item.nama_produk}</td>
                                 <td className="py-1 text-center">{item.kuantitas}</td>
                                 <td className="py-1 text-right">{formatRupiah(item.harga_satuan)}</td>

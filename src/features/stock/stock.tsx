@@ -79,8 +79,8 @@ export function StockManagement() {
         return <PageLoader message="Memuat inventori & stok..." />;
     }
 
-    const handleViewOpnameDetail = (id: number) => {
-        router.push(`/admin/inventory/stock-opname/${id}`);
+    const handleViewOpnameDetail = (uid: string) => {
+        router.push(`/admin/inventory/stock-opname/${uid}`);
     };
 
     return (

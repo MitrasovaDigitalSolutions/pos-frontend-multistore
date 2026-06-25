@@ -28,7 +28,7 @@ import { PriceAlertDialog, type PriceAlertFormInput } from "./price-alert-dialog
 import { ReceivingInstructionPanel } from "./receiving-instruction-panel";
 
 interface ReceivingItemsPageProps {
-    receivingId: number;
+    receivingId: string;
 }
 
 export function ReceivingItemsPage({ receivingId }: ReceivingItemsPageProps) {
@@ -76,7 +76,7 @@ export function ReceivingItemsPage({ receivingId }: ReceivingItemsPageProps) {
     return <ReceivingItemsContainer receivingId={receivingId} receiving={receiving} />;
 }
 
-function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: number; receiving: Receiving }) {
+function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: string; receiving: Receiving }) {
     const [isEditHeaderOpen, setIsEditHeaderOpen] = useState(false);
     const router = useAppRouter();
     const store = getPurchaseItemsStore(receivingId, "receiving");
@@ -94,18 +94,18 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
     const comparePrices = useComparePrices();
     const scanMutation = useScanReceivingProduct();
 
-    const poId = (receiving as { purchase_order_id?: number | null }).purchase_order_id || null;
+    const poId = receiving.purchase_order_uid || null;
     const { data: poData } = usePurchaseOrderDetail(poId);
 
     const isFirstLoad = useRef(true);
 
     // Build PO sisa reference map for validation
-    const poRemainingMap = useRef<Record<number, { sisa: number; nama: string }>>({});
+    const poRemainingMap = useRef<Record<string, { sisa: number; nama: string }>>({});
     useEffect(() => {
         if (poData?.items) {
-            const map: Record<number, { sisa: number; nama: string }> = {};
+            const map: Record<string, { sisa: number; nama: string }> = {};
             poData.items.forEach((item) => {
-                map[item.product_id] = {
+                map[String(item.product_uid)] = {
                     sisa: item.sisa_belum_diterima,
                     nama: item.product?.nama || "Produk",
                 };
@@ -114,11 +114,12 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
         }
     }, [poData]);
 
-    const getProductInfo = (productId: number) => {
-        const recItem = receiving.items?.find((item) => item.product_id === productId);
+    const getProductInfo = (productId: string | number) => {
+        const targetId = (productId);
+        const recItem = receiving.items?.find((item) => item.product_uid === targetId);
         if (recItem?.product) return recItem.product;
 
-        const poItem = poData?.items?.find((item) => item.product_id === productId);
+        const poItem = poData?.items?.find((item) => item.product_uid === targetId);
         if (poItem?.product) return poItem.product;
 
         return null;
@@ -136,8 +137,8 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
         // 1. If we have existing receiving items in draft, load them
         if (receiving.items && receiving.items.length > 0) {
             const dbItems: PurchaseItemLocal[] = receiving.items.map((item) => ({
-                temp_id: `${Date.now()}-${item.id}-${Math.random().toString(36).substring(2, 5)}`,
-                product_id: item.product_id,
+                temp_uid: `${Date.now()}-${item.uid}-${Math.random().toString(36).substring(2, 5)}`,
+                product_uid: String(item.product_uid),
                 barcode: item.product?.barcode || null,
                 nama: item.product?.nama || "Produk Tanpa Nama",
                 kuantitas: item.kuantitas,
@@ -152,8 +153,8 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
                 const poItems: PurchaseItemLocal[] = poData.items
                     .filter((item) => item.sisa_belum_diterima > 0)
                     .map((item) => ({
-                        temp_id: `${Date.now()}-${item.id}-${Math.random().toString(36).substring(2, 5)}`,
-                        product_id: item.product_id,
+                        temp_uid: `${Date.now()}-${item.uid}-${Math.random().toString(36).substring(2, 5)}`,
+                        product_uid: String(item.product_uid),
                         barcode: item.product?.barcode || null,
                         nama: item.product?.nama || "Produk Tanpa Nama",
                         kuantitas: item.sisa_belum_diterima,
@@ -173,7 +174,7 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
         // If there is no PO: we bypass scan endpoint and add directly
         if (!poId) {
             addItem({
-                product_id: product.id,
+                product_uid: product.uid,
                 barcode: product.barcode,
                 nama: product.nama,
                 harga_estimasi: product.harga_beli || 0,
@@ -185,14 +186,14 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
         // If from PO, use scan mutation for verification
         try {
             const res = await scanMutation.mutateAsync({
-                receiving_id: receivingId,
+                receiving_uid: receivingId,
                 barcode: product.barcode || "",
             });
 
             if (!res || !res.data || !res.data.product) {
                 // Fallback: Add directly if valid product but scan endpoint didn't return product info
                 addItem({
-                    product_id: product.id,
+                    product_uid: product.uid,
                     barcode: product.barcode,
                     nama: product.nama,
                     harga_estimasi: product.harga_beli || 0,
@@ -207,7 +208,7 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
             // If it is in the PO, perform the limit warning check
             if (poItem) {
                 // Calculate current quantity in Zustand for this product
-                const existingItem = items.find((i) => i.product_id === product.id);
+                const existingItem = items.find((i) => i.product_uid === product.uid);
                 const currentQty = existingItem ? existingItem.kuantitas : 0;
 
                 // Qty Limit check
@@ -217,7 +218,7 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
             }
 
             addItem({
-                product_id: product.id,
+                product_uid: product.uid,
                 barcode: product.barcode,
                 nama: product.nama,
                 harga_estimasi: product.harga_beli || scanResult.product.harga_beli || scanResult.product.harga_beli_terakhir || poItem?.harga_estimasi || 0,
@@ -225,7 +226,7 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
             toast.success(`Ditambahkan: ${product.nama}`);
         } catch {
             addItem({
-                product_id: product.id,
+                product_uid: product.uid,
                 barcode: product.barcode,
                 nama: product.nama,
                 harga_estimasi: product.harga_beli || 0,
@@ -238,7 +239,7 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
     const validateQuantities = () => {
         if (poId) {
             for (const item of items) {
-                const poLimit = poRemainingMap.current[item.product_id];
+                const poLimit = poRemainingMap.current[item.product_uid];
                 if (poLimit && item.kuantitas > poLimit.sisa) {
                     return {
                         valid: false,
@@ -262,17 +263,17 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
             return;
         }
 
-        // Format payload to match ReceivingBulkItemsInput: { items: [{ product_id, kuantitas, harga_beli }] }
+        // Format payload to match ReceivingBulkItemsInput: { items: [{ product_uid, kuantitas, harga_beli }] }
         const payload = {
             items: items.map((item) => ({
-                product_id: item.product_id,
+                product_uid: item.product_uid,
                 kuantitas: item.kuantitas,
                 harga_beli: item.harga_estimasi,
             })),
         };
 
         bulkReplace.mutate(
-            { id: receivingId, data: payload },
+            { uid: receivingId, data: payload },
             {
                 onSuccess: () => {
                     toast.success("Daftar barang penerimaan berhasil disimpan.");
@@ -299,7 +300,7 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
 
     const executeFinalizeComplete = async (payload?: {
         items: Array<{
-            product_id: number;
+            product_uid: string;
             kuantitas: number;
             harga_beli: number;
             update_harga_jual: boolean;
@@ -311,7 +312,7 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
         try {
             if (payload) {
                 // If we have custom pricing parameters to apply, update them first
-                await bulkReplace.mutateAsync({ id: receivingId, data: payload });
+                await bulkReplace.mutateAsync({ uid: receivingId, data: payload });
             }
 
             // Finalize completion
@@ -346,19 +347,19 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
         // Save current items first before checking price changes
         const payload = {
             items: items.map((item) => ({
-                product_id: item.product_id,
+                product_uid: item.product_uid,
                 kuantitas: item.kuantitas,
                 harga_beli: item.harga_estimasi,
             })),
         };
 
         try {
-            await bulkReplace.mutateAsync({ id: receivingId, data: payload });
+            await bulkReplace.mutateAsync({ uid: receivingId, data: payload });
 
             // Call compare prices to check price alerts
             const res = await comparePrices.mutateAsync({
                 items: items.map((i) => ({
-                    product_id: i.product_id,
+                    product_uid: i.product_uid,
                     harga_beli: i.harga_estimasi,
                 })),
             });
@@ -384,9 +385,9 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
     const handleCompleteWithPrices = (formValues: PriceAlertFormInput) => {
         const payload = {
             items: items.map((item) => {
-                const pricing = formValues.items.find((fit) => fit.product_id === item.product_id);
+                const pricing = formValues.items.find((fit) => fit.product_uid === item.product_uid);
                 return {
-                    product_id: item.product_id,
+                    product_uid: item.product_uid,
                     kuantitas: item.kuantitas,
                     harga_beli: item.harga_estimasi,
                     update_harga_jual: pricing ? pricing.update_harga_jual : false,
@@ -481,16 +482,16 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: numb
                         <ItemsTable
                             items={items}
                             priceLabel="Harga Beli"
-                            onUpdateItem={(temp_id, data) => {
+                            onUpdateItem={(temp_uid, data) => {
                                 // Qty Limit warning check on adjustment
-                                const item = items.find((i) => i.temp_id === temp_id);
+                                const item = items.find((i) => i.temp_uid === temp_uid);
                                 if (item && data.kuantitas && poId) {
-                                    const poLimit = poRemainingMap.current[item.product_id];
+                                    const poLimit = poRemainingMap.current[item.product_uid];
                                     if (poLimit && data.kuantitas > poLimit.sisa) {
                                         toast.warning(`Peringatan: Kuantitas melebihi sisa PO (${poLimit.sisa} pcs).`);
                                     }
                                 }
-                                updateItem(temp_id, data);
+                                updateItem(temp_uid, data);
                             }}
                             onRemoveItem={removeItem}
                             disabled={bulkReplace.isPending}

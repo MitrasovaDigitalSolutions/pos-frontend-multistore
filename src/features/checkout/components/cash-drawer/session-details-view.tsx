@@ -66,6 +66,7 @@ export function SessionDetailsView({
         );
     }
 
+
     const movements = activeSession.movements || [];
 
     return (
@@ -80,7 +81,7 @@ export function SessionDetailsView({
                     <div>
                         <span className="block text-sm font-bold text-slate-900">Laci Kasir — Shift Aktif</span>
                         <span className="block text-[10px] font-medium text-slate-400 mt-0.5">
-                            Sesi <span className="text-emerald-600 font-bold">#{activeSession.id}</span> &bull; Status:{" "}
+                            Sesi <span className="text-emerald-600 font-bold">#{activeSession.uid}</span> &bull; Status:{" "}
                             <span className="text-emerald-600 font-bold uppercase">Terbuka</span>
                         </span>
                     </div>
@@ -118,7 +119,7 @@ export function SessionDetailsView({
                     Koneksi internet terputus. Penyesuaian kas laci (Cash In/Out) dan Akhiri Shift dinonaktifkan hingga Anda kembali online.
                 </div>
             )}
- 
+
             <div className={cn("grid gap-6 transition-all duration-300", showHistory ? "grid-cols-[1.3fr_1fr]" : "grid-cols-1")}>
                 {/* Left Column (Main details) */}
                 <div className="space-y-4">
@@ -249,7 +250,7 @@ export function SessionDetailsView({
                                     {movements.map((movement) => {
                                         const isOutflow = movement.type === "cash_out" || movement.type === "cash_refund";
                                         return (
-                                            <div key={movement.id} className="p-2.5 flex justify-between items-center text-xs">
+                                            <div key={movement.uid} className="p-2.5 flex justify-between items-center text-xs">
                                                 <div className="space-y-0.5">
                                                     <div className="font-bold text-slate-700 flex items-center gap-1">
                                                         {(movement.type === "opening" || movement.type === "initial") && (

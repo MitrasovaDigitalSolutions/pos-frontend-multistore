@@ -31,8 +31,8 @@ export function CashTransferDialog({
     const methods = useForm<TransferSchemaInput>({
         resolver: zodResolver(transferSchema) as Resolver<TransferSchemaInput>,
         defaultValues: {
-            from_account_id: 0,
-            to_account_id: 0,
+            from_account_uid: "",
+            to_account_uid: "",
             amount: 0,
             catatan: "",
         },
@@ -46,15 +46,15 @@ export function CashTransferDialog({
         formState: { isSubmitting },
     } = methods;
 
-    // Watch from_account_id to show balance
-    const fromAccountId = useWatch({ name: "from_account_id", control });
-    const fromAccount = accounts.find((a) => a.id === fromAccountId);
+    // Watch from_account_uid to show balance
+    const fromAccountId = useWatch({ name: "from_account_uid", control });
+    const fromAccount = accounts.find((a) => a.uid === fromAccountId);
 
     useEffect(() => {
         if (open) {
             reset({
-                from_account_id: 0,
-                to_account_id: 0,
+                from_account_uid: "",
+                to_account_uid: "",
                 amount: 0,
                 catatan: "",
             });
@@ -63,8 +63,8 @@ export function CashTransferDialog({
 
     const onSubmit = async (data: TransferSchemaInput) => {
         // Validate from/to diff
-        if (data.from_account_id === data.to_account_id) {
-            setError("to_account_id", {
+        if (data.from_account_uid === data.to_account_uid) {
+            setError("to_account_uid", {
                 type: "manual",
                 message: "Akun asal dan tujuan transfer tidak boleh sama.",
             });
@@ -72,9 +72,9 @@ export function CashTransferDialog({
         }
 
         // Validate source account balance
-        const sourceAcc = accounts.find((a) => a.id === data.from_account_id);
+        const sourceAcc = accounts.find((a) => a.uid === data.from_account_uid);
         if (!sourceAcc) {
-            setError("from_account_id", {
+            setError("from_account_uid", {
                 type: "manual",
                 message: "Akun asal tidak valid.",
             });
@@ -91,7 +91,7 @@ export function CashTransferDialog({
 
         try {
             await transferMutation.mutateAsync(data);
-            const targetAcc = accounts.find((a) => a.id === data.to_account_id);
+            const targetAcc = accounts.find((a) => a.uid === data.to_account_uid);
             toast.success(`Transfer saldo sebesar ${formatRupiah(data.amount)} dari ${sourceAcc.nama} ke ${targetAcc?.nama || "Tujuan"} berhasil.`);
             onOpenChange(false);
         } catch (err: unknown) {
@@ -102,13 +102,13 @@ export function CashTransferDialog({
 
     // Prepare dropdown options
     const fromOptions = accounts.map((acc) => ({
-        value: String(acc.id),
+        value: String(acc.uid),
         label: `${acc.nama} (${formatRupiah(acc.saldo)})`,
     }));
 
     // Filter target options to avoid picking same account in UI selection
     const toOptions = accounts.map((acc) => ({
-        value: String(acc.id),
+        value: String(acc.uid),
         label: `${acc.nama} (${formatRupiah(acc.saldo)})`,
     }));
 
@@ -133,7 +133,7 @@ export function CashTransferDialog({
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                         {/* Source Account */}
                         <FormSelect<TransferSchemaInput>
-                            name="from_account_id"
+                            name="from_account_uid"
                             label="Dari Akun Kas (Asal) *"
                             placeholder="-- Pilih Akun Kas Asal --"
                             options={fromOptions}
@@ -155,7 +155,7 @@ export function CashTransferDialog({
 
                         {/* Target Account */}
                         <FormSelect<TransferSchemaInput>
-                            name="to_account_id"
+                            name="to_account_uid"
                             label="Ke Akun Kas (Tujuan) *"
                             placeholder="-- Pilih Akun Kas Tujuan --"
                             options={toOptions}

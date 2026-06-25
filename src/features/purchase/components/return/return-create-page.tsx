@@ -28,12 +28,12 @@ export function ReturnCreatePage() {
     });
 
     const supplierOptions = suppliers.map((s) => ({
-        value: String(s.id),
+        value: String(s.uid),
         label: s.nama,
     }));
 
     const receivingOptions = (receivingsData?.data || []).map((r) => ({
-        value: String(r.id),
+        value: String(r.uid),
         label: `${r.nomor_penerimaan} - ${r.supplier_relationship?.nama || r.supplier || "Supplier"}`,
         description: `Faktur: ${r.nomor_faktur || "-"} • Total: ${formatRupiah(r.nilai_faktur || 0)}`,
     }));
@@ -41,8 +41,8 @@ export function ReturnCreatePage() {
     const methods = useForm<PurchaseReturnHeaderInput>({
         resolver: zodResolver(purchaseReturnHeaderSchema) as Resolver<PurchaseReturnHeaderInput>,
         defaultValues: {
-            receiving_id: undefined,
-            supplier_id: undefined,
+            receiving_uid: undefined,
+            supplier_uid: undefined,
             tanggal_retur: new Date().toISOString().split("T")[0],
             catatan: "",
         },
@@ -55,34 +55,28 @@ export function ReturnCreatePage() {
         formState: { errors },
     } = methods;
 
-    const receivingId = useWatch({ name: "receiving_id", control: methods.control });
+    const receivingId = useWatch({ name: "receiving_uid", control: methods.control });
 
     // Auto-select and lock supplier based on selected receiving
     useEffect(() => {
         if (receivingId) {
             const selectedReceiving = (receivingsData?.data || []).find(
-                (r) => r.id === Number(receivingId)
+                (r) => r.uid === receivingId
             );
-            if (selectedReceiving && selectedReceiving.supplier_id) {
-                setValue("supplier_id", selectedReceiving.supplier_id);
+            if (selectedReceiving && selectedReceiving.supplier_uid) {
+                setValue("supplier_uid", String(selectedReceiving.supplier_uid));
             }
         } else {
-            setValue("supplier_id", undefined as unknown as number);
+            setValue("supplier_uid", undefined as unknown as string);
         }
     }, [receivingId, receivingsData, setValue]);
 
     const onSubmit = (data: PurchaseReturnHeaderInput) => {
-        const payload = {
-            ...data,
-            receiving_id: Number(data.receiving_id),
-            supplier_id: Number(data.supplier_id),
-        };
-
-        createHeader.mutate(payload, {
+        createHeader.mutate(data, {
             onSuccess: (response) => {
                 toast.success("Header Retur Pembelian berhasil dibuat!");
                 // Redirect to Step 2 page
-                router.push(`/admin/purchase/return/${response.data.id}/items`);
+                router.push(`/admin/purchase/return/${response.data.uid}/items`);
             },
             onError: (err) => {
                 toast.error(err.message || "Gagal membuat retur header.");
@@ -133,7 +127,7 @@ export function ReturnCreatePage() {
                                     Referensi Faktur Penerimaan *
                                 </label>
                                 <FormSelect<PurchaseReturnHeaderInput>
-                                    name="receiving_id"
+                                    name="receiving_uid"
                                     options={receivingOptions}
                                     placeholder={
                                         receivingsLoading
@@ -150,7 +144,7 @@ export function ReturnCreatePage() {
                                     Supplier *
                                 </label>
                                 <FormSelect<PurchaseReturnHeaderInput>
-                                    name="supplier_id"
+                                    name="supplier_uid"
                                     options={supplierOptions}
                                     placeholder={
                                         suppliersLoading

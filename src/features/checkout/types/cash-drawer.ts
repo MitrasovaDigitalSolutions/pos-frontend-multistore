@@ -1,25 +1,25 @@
 import type { Transaction } from "@/types/common";
 
 export interface CashDrawerMovement {
-    id: number;
-    cash_drawer_session_id: number;
-    user_id: number;
+    uid: string;
+    cash_drawer_session_uid: string;
+    user_uid: string;
     type: "opening" | "cash_sale" | "cash_in" | "cash_out" | "cash_refund" | string;
     amount: number;
     balance_before: number;
     balance_after: number;
-    reference_id: number | null;
+    reference_uid: string | null;
     reference_type: string | null;
     note: string | null;
     created_at: string;
     updated_at: string;
     user?: {
-        id: number;
+        uid: string;
         name: string;
         username: string;
         email: string;
         email_verified_at: string | null;
-        store_id: number | null;
+        store_uid: string | null;
         status: string;
         created_at: string;
         updated_at: string;
@@ -27,9 +27,9 @@ export interface CashDrawerMovement {
 }
 
 export interface CashDrawerSession {
-    id: number;
-    store_id: number | null;
-    user_id: number;
+    uid: string;
+    store_uid: string | null;
+    user_uid: string;
     opening_balance: number;
     expected_cash: number;
     actual_closing_balance: number | null;
@@ -43,13 +43,13 @@ export interface CashDrawerSession {
     closing_note: string | null;
     opened_at: string;
     closed_at: string | null;
-    closed_by: number | null | {
-        id: number;
+    closed_by: string | null | {
+        uid: string;
         name: string;
         username: string;
         email: string;
         email_verified_at: string | null;
-        store_id: number | null;
+        store_uid: string | null;
         status: string;
         created_at: string;
         updated_at: string;
@@ -58,12 +58,12 @@ export interface CashDrawerSession {
     updated_at: string;
     transactions?: Transaction[];
     user?: {
-        id: number;
+        uid: string;
         name: string;
         username: string;
         email: string;
         email_verified_at: string | null;
-        store_id: number | null;
+        store_uid: string | null;
         status: string;
         created_at: string;
         updated_at: string;

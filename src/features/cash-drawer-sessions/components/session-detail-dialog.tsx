@@ -14,7 +14,7 @@ import { SessionTransactionsTab } from "./session-transactions-tab";
 interface SessionDetailDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    sessionId: number | null;
+    sessionId: string | null;
 }
 
 type TabType = "summary" | "movements" | "transactions";
@@ -75,7 +75,7 @@ export function SessionDetailDialog({
                         <IconCash size={18} />
                     </div>
                     <div className="text-left">
-                        <span className="block text-sm font-extrabold">Detail Sesi Kasir #{session.id}</span>
+                        <span className="block text-sm font-extrabold">Detail Sesi Kasir #{session.uid}</span>
                         <span className="block text-[11px] font-medium text-slate-400 mt-0.5">
                             Kasir: <span className="text-slate-800 font-bold">{session.user?.name || "Kasir"}</span>
                         </span>
@@ -98,43 +98,43 @@ export function SessionDetailDialog({
             className="max-w-3xl sm:max-w-3xl flex flex-col max-h-[90vh]"
         >
 
-                <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as TabType)} className="w-full flex-1 flex flex-col min-h-0">
-                    <TabsList className="shrink-0 my-2 border-b border-slate-100 rounded-none w-full justify-start bg-transparent gap-4 h-9 p-0" variant="line">
-                        <TabsTrigger
-                            value="summary"
-                            className="px-4 py-2 text-xs font-bold transition-all data-active:text-emerald-600 after:bg-emerald-600 rounded-none h-full bg-transparent shadow-none cursor-pointer"
-                        >
-                            Ringkasan
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="movements"
-                            className="px-4 py-2 text-xs font-bold transition-all data-active:text-emerald-600 after:bg-emerald-600 rounded-none h-full bg-transparent shadow-none cursor-pointer"
-                        >
-                            Riwayat Arus Kas ({movements.length})
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="transactions"
-                            className="px-4 py-2 text-xs font-bold transition-all data-active:text-emerald-600 after:bg-emerald-600 rounded-none h-full bg-transparent shadow-none cursor-pointer"
-                        >
-                            Daftar Penjualan ({transactions.length})
-                        </TabsTrigger>
-                    </TabsList>
+            <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as TabType)} className="w-full flex-1 flex flex-col min-h-0">
+                <TabsList className="shrink-0 my-2 border-b border-slate-100 rounded-none w-full justify-start bg-transparent gap-4 h-9 p-0" variant="line">
+                    <TabsTrigger
+                        value="summary"
+                        className="px-4 py-2 text-xs font-bold transition-all data-active:text-emerald-600 after:bg-emerald-600 rounded-none h-full bg-transparent shadow-none cursor-pointer"
+                    >
+                        Ringkasan
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="movements"
+                        className="px-4 py-2 text-xs font-bold transition-all data-active:text-emerald-600 after:bg-emerald-600 rounded-none h-full bg-transparent shadow-none cursor-pointer"
+                    >
+                        Riwayat Arus Kas ({movements.length})
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="transactions"
+                        className="px-4 py-2 text-xs font-bold transition-all data-active:text-emerald-600 after:bg-emerald-600 rounded-none h-full bg-transparent shadow-none cursor-pointer"
+                    >
+                        Daftar Penjualan ({transactions.length})
+                    </TabsTrigger>
+                </TabsList>
 
-                    {/* Tab content area - Scrollable */}
-                    <Scrollable className="flex-1 pr-1 py-2">
-                        <TabsContent value="summary" className="outline-none">
-                            <SessionSummaryTab session={session} />
-                        </TabsContent>
+                {/* Tab content area - Scrollable */}
+                <Scrollable className="flex-1 pr-1 py-2">
+                    <TabsContent value="summary" className="outline-none">
+                        <SessionSummaryTab session={session} />
+                    </TabsContent>
 
-                        <TabsContent value="movements" className="outline-none">
-                            <SessionMovementsTab movements={movements} />
-                        </TabsContent>
+                    <TabsContent value="movements" className="outline-none">
+                        <SessionMovementsTab movements={movements} />
+                    </TabsContent>
 
-                        <TabsContent value="transactions" className="outline-none">
-                            <SessionTransactionsTab transactions={transactions} />
-                        </TabsContent>
-                    </Scrollable>
-                </Tabs>
+                    <TabsContent value="transactions" className="outline-none">
+                        <SessionTransactionsTab transactions={transactions} />
+                    </TabsContent>
+                </Scrollable>
+            </Tabs>
         </BaseDialog>
     );
 }

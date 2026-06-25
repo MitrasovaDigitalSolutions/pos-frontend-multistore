@@ -21,7 +21,7 @@ import {
 } from "@/constants/purchase";
 
 interface POItemsPageProps {
-    poId: number;
+    poId: string;
 }
 
 export function POItemsPage({ poId }: POItemsPageProps) {
@@ -70,7 +70,7 @@ export function POItemsPage({ poId }: POItemsPageProps) {
     return <POItemsContainer poId={poId} order={order} />;
 }
 
-function POItemsContainer({ poId, order }: { poId: number; order: PurchaseOrder }) {
+function POItemsContainer({ poId, order }: { poId: string; order: PurchaseOrder }) {
     const router = useAppRouter();
     const store = getPurchaseItemsStore(poId, "po");
     const items = store((state) => state.items);
@@ -96,8 +96,8 @@ function POItemsContainer({ poId, order }: { poId: number; order: PurchaseOrder 
 
         if (order.items && order.items.length > 0) {
             const dbItems: PurchaseItemLocal[] = order.items.map((item) => ({
-                temp_id: `${Date.now()}-${item.id}-${Math.random().toString(36).substring(2, 5)}`,
-                product_id: item.product_id,
+                temp_uid: `${Date.now()}-${item.uid}-${Math.random().toString(36).substring(2, 5)}`,
+                product_uid: item.product_uid,
                 barcode: item.product?.barcode || null,
                 nama: item.product?.nama || "Produk Tanpa Nama",
                 kuantitas: item.kuantitas,
@@ -112,7 +112,7 @@ function POItemsContainer({ poId, order }: { poId: number; order: PurchaseOrder 
 
     const handleProductFound = (product: Product) => {
         addItem({
-            product_id: product.id,
+            product_uid: product.uid,
             barcode: product.barcode,
             nama: product.nama,
             harga_estimasi: product.harga_beli || 0, // default to buy price as estimation
@@ -133,7 +133,7 @@ function POItemsContainer({ poId, order }: { poId: number; order: PurchaseOrder 
         const payload = store.getState().getSubmitPayload();
 
         bulkReplace.mutate(
-            { id: poId, data: payload },
+            { uid: poId, data: payload },
             {
                 onSuccess: () => {
                     toast.success("Daftar barang Purchase Order berhasil disimpan ke database!");

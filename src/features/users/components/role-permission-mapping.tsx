@@ -219,7 +219,7 @@ export function RolePermissionMapping() {
     const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
     const [bulkLoadingCategories, setBulkLoadingCategories] = useState<Record<string, boolean>>({});
 
-    // Derive activeRoleName: use selectedRoleName if valid, otherwise default to first role name
+    // Derive activeRoleName: use selectedRoleName if valuid, otherwise default to first role name
     const activeRoleName = (roles && roles.some((r) => r.name === selectedRoleName))
         ? selectedRoleName
         : (roles && roles.length > 0 ? roles[0].name : null);
@@ -432,7 +432,7 @@ export function RolePermissionMapping() {
 
                         return (
                             <button
-                                key={role.id}
+                                key={role.uid}
                                 onClick={() => setSelectedRoleName(role.name)}
                                 className={`w-full text-left p-4 rounded-2xl border transition-all duration-200 cursor-pointer ${isSelected
                                     ? "bg-white border-emerald-500 shadow-md ring-1 ring-emerald-500/20"

@@ -49,9 +49,9 @@ export interface DashboardSummaryParams {
 }
 
 export interface SaleItem {
-    id: number;
-    transaction_id: number;
-    product_id: number | null;
+    uid: string;
+    transaction_uid: string;
+    product_uid: string | null;
     nama_produk: string;
     barcode: string | null;
     harga_satuan: number;
@@ -60,9 +60,9 @@ export interface SaleItem {
 }
 
 export interface Sale {
-    id: number;
-    store_id: number | null;
-    user_id: number;
+    uid: string;
+    store_uid: string | null;
+    user_uid: string;
     nomor_transaksi: string;
     subtotal: number;
     pajak: number;

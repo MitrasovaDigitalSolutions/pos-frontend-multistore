@@ -6,5 +6,5 @@ interface PageProps {
 
 export default async function AdminOpnameItemsPage({ params }: PageProps) {
     const { id } = await params;
-    return <OpnameItemsPage opnameId={Number(id)} />;
+    return <OpnameItemsPage opnameId={id} />;
 }

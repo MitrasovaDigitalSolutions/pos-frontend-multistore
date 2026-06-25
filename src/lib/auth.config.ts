@@ -42,7 +42,7 @@ export default {
           }
 
           return {
-            id: String(data.user.id),
+            id: String(data.user.uid),
             name: data.user.name,
             email: data.user.email,
             accessToken: data.access_token,
@@ -116,7 +116,7 @@ export default {
         session.user = token.user as typeof session.user;
       }
       session.accessToken = token.accessToken as string;
-      session.cashDrawerSessionId = token.cashDrawerSessionId as number | null | undefined;
+      session.cashDrawerSessionId = token.cashDrawerSessionId as string | null | undefined;
       if (token.error) {
         session.error = token.error as "RefreshTokenError";
       }

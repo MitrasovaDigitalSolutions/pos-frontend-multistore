@@ -66,7 +66,7 @@ export function CatalogDialog({
                     ) : (
                         filteredProducts.map((p) => (
                             <div
-                                key={p.id}
+                                key={p.uid}
                                 onClick={async () => {
                                     if (!p.is_jasa && p.stok <= 0) return;
                                     await onAddProduct(p);

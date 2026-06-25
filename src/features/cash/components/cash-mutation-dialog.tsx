@@ -73,7 +73,7 @@ export function CashMutationDialog({
 
         try {
             const payload = {
-                id: account.id,
+                uid: account.uid,
                 data: {
                     amount: data.amount,
                     kategori: data.kategori || (isDebit ? "debit_manual" : "credit_manual"),
@@ -98,11 +98,10 @@ export function CashMutationDialog({
 
     const dialogTitle = (
         <div className="flex items-center gap-2">
-            <div className={`p-1.5 rounded-lg border ${
-                isDebit 
-                    ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
-                    : "bg-rose-50 text-rose-600 border-rose-100"
-            }`}>
+            <div className={`p-1.5 rounded-lg border ${isDebit
+                ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                : "bg-rose-50 text-rose-600 border-rose-100"
+                }`}>
                 {isDebit ? <IconCirclePlus size={18} /> : <IconCircleMinus size={18} />}
             </div>
             <span>
@@ -171,9 +170,8 @@ export function CashMutationDialog({
                             </Button>
                             <Button
                                 type="submit"
-                                className={`h-10 text-xs font-bold text-white rounded-xl ${
-                                    isDebit ? "bg-emerald-600 hover:bg-emerald-700" : "bg-rose-600 hover:bg-rose-700"
-                                }`}
+                                className={`h-10 text-xs font-bold text-white rounded-xl ${isDebit ? "bg-emerald-600 hover:bg-emerald-700" : "bg-rose-600 hover:bg-rose-700"
+                                    }`}
                                 disabled={isSubmitting}
                             >
                                 {isSubmitting ? "Memproses..." : isDebit ? "Catat Debit" : "Catat Kredit"}

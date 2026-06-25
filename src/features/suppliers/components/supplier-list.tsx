@@ -68,7 +68,7 @@ export function SupplierList({
 
     const handleConfirmDelete = () => {
         if (!supplierToDelete) return;
-        deleteSupplier.mutate(supplierToDelete.id, {
+        deleteSupplier.mutate(supplierToDelete.uid, {
             onSuccess: () => {
                 toast.success(`Supplier "${supplierToDelete.nama}" berhasil dihapus.`);
                 setIsConfirmOpen(false);

@@ -1,7 +1,7 @@
 import type { Member } from "@/features/members/types";
 
 export interface CartItem {
-    product_id: number;
+    product_uid: string;
     itemId?: number; // backend transaction_item id
     name: string;
     price: number;
@@ -12,7 +12,7 @@ export interface CartItem {
 }
 
 export interface HoldTransaction {
-    id: number;
+    uid: string;
     items_count: number;
     subtotal: number;
     created_at: string;
@@ -21,14 +21,14 @@ export interface HoldTransaction {
 }
 
 export interface ReceiptItem {
-    id: number;
+    uid: string;
     nama_produk: string;
     kuantitas: number;
     harga_satuan: number;
 }
 
 export interface Receipt {
-    id: number;
+    uid: string;
     items: ReceiptItem[];
     subtotal: number;
     pajak: number;
@@ -39,14 +39,14 @@ export interface Receipt {
     jenis_kartu?: string;
     nomor_kartu_akhir?: string;
     member?: Member | null;
-    member_id?: number | null;
+    member_uid?: string | null;
     cash_received?: number;
     debt_amount?: number;
 }
 
 export interface TrxItem {
-    id: number;
-    product_id: number;
+    uid: string;
+    product_uid: string;
     nama_produk: string;
     harga_satuan: number;
     kuantitas: number;

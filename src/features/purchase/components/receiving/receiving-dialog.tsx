@@ -57,30 +57,30 @@ export function ReceivingDialog({
     const isEdit = !!editingReceiving;
 
     const { data: detailData, isLoading: detailLoading } = useReceivingDetail(
-        editingReceiving?.id || null,
+        editingReceiving?.uid || null,
     );
 
     const productOptions = products.map((p) => ({
-        value: String(p.id),
+        value: p.uid,
         label: p.nama,
     }));
 
     const supplierOptions = suppliers.map((s) => ({
-        value: String(s.id),
+        value: String(s.uid),
         label: s.nama,
     }));
 
     const methods = useForm<ReceivingInput>({
         resolver: zodResolver(receivingSchema) as Resolver<ReceivingInput>,
         defaultValues: {
-            supplier_id: null,
+            supplier_uid: null,
             supplier: "",
             nomor_faktur: "",
             nilai_faktur: null,
             status_pembayaran: PAYMENT_STATUS.PENDING,
             status: RECEIVING_STATUS.COMPLETED,
             catatan: "",
-            items: [{ product_id: 0, kuantitas: 0, harga_beli: 0, update_harga_jual: false, harga_jual_baru: null, margin_baru: null }],
+            items: [{ product_uid: "", kuantitas: 0, harga_beli: 0, update_harga_jual: false, harga_jual_baru: null, margin_baru: null }],
         },
     });
 
@@ -103,7 +103,7 @@ export function ReceivingDialog({
             if (editingReceiving) {
                 const currentData = detailData || editingReceiving;
                 reset({
-                    supplier_id: currentData.supplier_id,
+                    supplier_uid: currentData.supplier_uid ? String(currentData.supplier_uid) : null,
                     supplier: currentData.supplier || "",
                     nomor_faktur: currentData.nomor_faktur || "",
                     nilai_faktur: currentData.nilai_faktur,
@@ -111,24 +111,24 @@ export function ReceivingDialog({
                     status: currentData.status,
                     catatan: currentData.catatan || "",
                     items: currentData.items?.map((item) => ({
-                        product_id: item.product_id,
+                        product_uid: String(item.product_uid),
                         kuantitas: item.kuantitas,
                         harga_beli: item.product?.harga_beli ?? item.harga_beli ?? 0,
                         update_harga_jual: false,
                         harga_jual_baru: null,
                         margin_baru: null,
-                     })) || [{ product_id: 0, kuantitas: 0, harga_beli: 0, update_harga_jual: false, harga_jual_baru: null, margin_baru: null }],
+                    })) || [{ product_uid: "", kuantitas: 0, harga_beli: 0, update_harga_jual: false, harga_jual_baru: null, margin_baru: null }],
                 });
             } else {
                 reset({
-                    supplier_id: null,
+                    supplier_uid: null,
                     supplier: "",
                     nomor_faktur: "",
                     nilai_faktur: null,
                     status_pembayaran: PAYMENT_STATUS.PENDING,
                     status: RECEIVING_STATUS.COMPLETED,
                     catatan: "",
-                    items: [{ product_id: 0, kuantitas: 0, harga_beli: 0, update_harga_jual: false, harga_jual_baru: null, margin_baru: null }],
+                    items: [{ product_uid: "", kuantitas: 0, harga_beli: 0, update_harga_jual: false, harga_jual_baru: null, margin_baru: null }],
                 });
             }
         }
@@ -139,9 +139,9 @@ export function ReceivingDialog({
 
     const onSubmit = (data: ReceivingInput) => {
         // Find corresponding supplier name from selected id
-        if (data.supplier_id) {
+        if (data.supplier_uid) {
             const selectedSup = suppliers.find(
-                (s) => s.id === Number(data.supplier_id),
+                (s) => s.uid === data.supplier_uid,
             );
             if (selectedSup) {
                 data.supplier = selectedSup.nama;
@@ -150,7 +150,7 @@ export function ReceivingDialog({
 
         if (isEdit && editingReceiving) {
             updateReceiving.mutate(
-                { id: editingReceiving.id, data },
+                { uid: editingReceiving.uid, data },
                 {
                     onSuccess: () => {
                         toast.success("Penerimaan barang berhasil diperbarui.");
@@ -277,7 +277,7 @@ export function ReceivingDialog({
                                             Supplier *
                                         </label>
                                         <FormSelect<ReceivingInput>
-                                            name="supplier_id"
+                                            name="supplier_uid"
                                             options={supplierOptions}
                                             placeholder={
                                                 suppliersLoading
@@ -286,9 +286,9 @@ export function ReceivingDialog({
                                             }
                                             disabled={isPending || suppliersLoading}
                                         />
-                                        {errors.supplier_id && (
+                                        {errors.supplier_uid && (
                                             <p className="text-[10px] text-rose-500 font-medium">
-                                                {errors.supplier_id.message}
+                                                {errors.supplier_uid.message}
                                             </p>
                                         )}
                                     </div>
@@ -401,7 +401,7 @@ export function ReceivingDialog({
                                         type="button"
                                         onClick={() =>
                                             append({
-                                                product_id: 0,
+                                                product_uid: "",
                                                 kuantitas: 0,
                                                 harga_beli: 0,
                                                 update_harga_jual: false,

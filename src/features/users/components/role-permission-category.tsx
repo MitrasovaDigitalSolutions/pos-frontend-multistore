@@ -136,7 +136,7 @@ export function RolePermissionCategory({
 
                         return (
                             <RolePermissionItem
-                                key={perm.id}
+                                key={perm.uid}
                                 permission={perm}
                                 label={meta.label}
                                 desc={meta.desc}

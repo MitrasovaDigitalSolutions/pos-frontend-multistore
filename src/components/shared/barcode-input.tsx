@@ -309,7 +309,7 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                                     const isFocused = index === focusedIndex;
                                     return (
                                         <div
-                                            key={p.id}
+                                            key={p.uid}
                                             onClick={() => handleSelectProduct(p)}
                                             onMouseEnter={() => setFocusedIndex(index)}
                                             className={`

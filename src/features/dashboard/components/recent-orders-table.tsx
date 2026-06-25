@@ -133,8 +133,8 @@ export function RecentOrdersTable({ from, to, paymentMethod }: RecentOrdersTable
 
                 return (
                   <tr
-                    key={trx.id}
-                    onClick={() => router.push(`/admin/transactions/${trx.id}`)}
+                    key={trx.uid}
+                    onClick={() => router.push(`/admin/transactions/${trx.uid}`)}
                     className="border-b border-slate-50 hover:bg-slate-50/70 transition-colors group cursor-pointer"
                   >
                     {/* Order ID */}

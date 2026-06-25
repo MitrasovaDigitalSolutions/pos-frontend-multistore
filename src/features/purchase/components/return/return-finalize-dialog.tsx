@@ -29,22 +29,22 @@ interface ReturnFinalizeDialogProps {
 
 const returnFinalizeSchema = z.object({
     resolution_type: z.enum(["refund", "credit", "credit_note", "exchange"]),
-    cash_account_id: z.coerce.number().nullable().optional(),
-    stock_receiving_id: z.coerce.number().nullable().optional(),
+    cash_account_uid: z.string().nullable().optional(),
+    stock_receiving_uid: z.string().nullable().optional(),
     catatan_penyelesaian: z.string().nullable().optional().transform(v => v || null),
 }).superRefine((data, ctx) => {
-    if (data.resolution_type === "refund" && !data.cash_account_id) {
+    if (data.resolution_type === "refund" && !data.cash_account_uid) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: "Kas/Rekening wajib dipilih untuk refund dana tunai",
-            path: ["cash_account_id"],
+            path: ["cash_account_uid"],
         });
     }
-    if (data.resolution_type === "credit" && !data.stock_receiving_id) {
+    if (data.resolution_type === "credit" && !data.stock_receiving_uid) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: "Faktur Penerimaan wajib dipilih untuk potong utang",
-            path: ["stock_receiving_id"],
+            path: ["stock_receiving_uid"],
         });
     }
 });
@@ -63,13 +63,13 @@ export function ReturnFinalizeDialog({
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [pendingData, setPendingData] = useState<ReturnFinalizeInput | null>(null);
 
-    const isUnpaid = returnObj?.stock_receiving_id !== null &&
+    const isUnpaid = returnObj?.stock_receiving_uid !== null &&
         (returnObj?.stock_receiving?.status_pembayaran === PAYMENT_STATUS.PENDING ||
             (returnObj?.stock_receiving?.status_pembayaran as string) === "unpaid");
 
     // Fetch completed receivings for this supplier to reduce outstanding debt if using "credit"
     const { data: receivingsData, isLoading: receivingsLoading } = useReceivings({
-        supplier_id: returnObj?.supplier_id || undefined,
+        supplier_uid: returnObj?.supplier_uid || undefined,
         status: RECEIVING_STATUS.COMPLETED,
         per_page: 100,
     });
@@ -78,8 +78,8 @@ export function ReturnFinalizeDialog({
         resolver: zodResolver(returnFinalizeSchema) as Resolver<ReturnFinalizeInput>,
         defaultValues: {
             resolution_type: isUnpaid ? "credit" : "refund",
-            cash_account_id: null,
-            stock_receiving_id: null,
+            cash_account_uid: null,
+            stock_receiving_uid: null,
             catatan_penyelesaian: "",
         },
     });
@@ -97,21 +97,21 @@ export function ReturnFinalizeDialog({
         if (open && returnObj) {
             reset({
                 resolution_type: isUnpaid ? "credit" : "refund",
-                cash_account_id: null,
-                stock_receiving_id: returnObj.stock_receiving_id || null,
+                cash_account_uid: null,
+                stock_receiving_uid: returnObj.stock_receiving_uid || null,
                 catatan_penyelesaian: "",
             });
         }
     }, [open, returnObj, reset, isUnpaid]);
 
     const cashAccountOptions = cashAccounts.map((c) => ({
-        value: String(c.id),
+        value: String(c.uid),
         label: c.nama,
         description: `Saldo: ${formatRupiah(c.saldo)}`,
     }));
 
     const receivingOptions = (receivingsData?.data || []).map((r) => ({
-        value: String(r.id),
+        value: String(r.uid),
         label: `${r.nomor_penerimaan} (Faktur: ${r.nomor_faktur || "-"})`,
         description: `Total: ${formatRupiah(r.nilai_faktur || 0)} • Status: ${r.status_pembayaran === PAYMENT_STATUS.PAID ? PAYMENT_STATUS_LABELS[PAYMENT_STATUS.PAID] : "Belum Lunas"}`,
     }));
@@ -127,14 +127,14 @@ export function ReturnFinalizeDialog({
         const payload = {
             resolution_type: pendingData.resolution_type,
             impact_type: pendingData.resolution_type,
-            cash_account_id: pendingData.resolution_type === "refund" ? Number(pendingData.cash_account_id) : null,
-            stock_receiving_id: pendingData.resolution_type === "credit" ? Number(pendingData.stock_receiving_id) : null,
+            cash_account_uid: pendingData.resolution_type === "refund" ? pendingData.cash_account_uid : null,
+            stock_receiving_uid: pendingData.resolution_type === "credit" ? pendingData.stock_receiving_uid : null,
             catatan_penyelesaian: pendingData.catatan_penyelesaian,
         };
 
         finalizeReturn.mutate(
             {
-                id: returnObj.id,
+                uid: returnObj.uid,
                 data: payload,
             },
             {
@@ -218,16 +218,16 @@ export function ReturnFinalizeDialog({
                                     Kas / Rekening Penerima Refund *
                                 </label>
                                 <FormSelect<ReturnFinalizeInput>
-                                    name="cash_account_id"
+                                    name="cash_account_uid"
                                     options={cashAccountOptions}
                                     placeholder={
                                         cashLoading ? "Memuat rekening..." : "-- Pilih Rekening --"
                                     }
                                     disabled={cashLoading}
                                 />
-                                {errors.cash_account_id && (
+                                {errors.cash_account_uid && (
                                     <p className="text-[10px] text-rose-500 font-medium">
-                                        {errors.cash_account_id.message}
+                                        {errors.cash_account_uid.message}
                                     </p>
                                 )}
                             </div>
@@ -240,7 +240,7 @@ export function ReturnFinalizeDialog({
                                     Faktur Pembelian / Penerimaan Barang *
                                 </label>
                                 <FormSelect<ReturnFinalizeInput>
-                                    name="stock_receiving_id"
+                                    name="stock_receiving_uid"
                                     options={receivingOptions}
                                     placeholder={
                                         receivingsLoading
@@ -251,9 +251,9 @@ export function ReturnFinalizeDialog({
                                     }
                                     disabled={receivingsLoading || receivingOptions.length === 0}
                                 />
-                                {errors.stock_receiving_id && (
+                                {errors.stock_receiving_uid && (
                                     <p className="text-[10px] text-rose-500 font-medium">
-                                        {errors.stock_receiving_id.message}
+                                        {errors.stock_receiving_uid.message}
                                     </p>
                                 )}
                             </div>

@@ -52,7 +52,7 @@ export function OpnameDialog({
                 toast.success("Draft stock opname berhasil dibuat!");
                 onOpenChange(false);
                 // Redirect immediately to the items editor page
-                router.push(`/admin/inventory/stock-opname/${res.data.id}/items`);
+                router.push(`/admin/inventory/stock-opname/${res.data.uid}/items`);
             },
             onError: (err) => {
                 toast.error(err.message || "Gagal membuat stock opname.");

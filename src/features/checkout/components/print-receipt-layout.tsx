@@ -13,7 +13,7 @@ export function PrintReceiptLayout({ receipt, cashierName }: PrintReceiptLayoutP
     if (!receipt) return null;
 
     const items = receipt.items || [];
-    const isOffline = String(receipt.id).startsWith("OFFLINE") || receipt.id > 1000000000000;
+    const isOffline = String(receipt.uid).startsWith("OFFLINE")
 
     return (
         <div id="print-receipt-area" className="hidden print:block print:w-[58mm] print:font-mono print:text-[9px] print:leading-tight print:text-black print:bg-white print:p-1 print:m-0">
@@ -67,7 +67,7 @@ export function PrintReceiptLayout({ receipt, cashierName }: PrintReceiptLayoutP
                     <span>POS-01</span>
                 </div>
                 <div className="flex justify-between">
-                    <span>TRX #{receipt.id}</span>
+                    <span>TRX #{receipt.uid}</span>
                     <span>
                         {new Date().toLocaleDateString("id-ID")} {new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
                     </span>
@@ -85,7 +85,7 @@ export function PrintReceiptLayout({ receipt, cashierName }: PrintReceiptLayoutP
             {/* Items List */}
             <div className="space-y-1">
                 {items.map((item) => (
-                    <div key={item.id} className="space-y-0.5">
+                    <div key={item.uid} className="space-y-0.5">
                         <div className="flex justify-between">
                             <span>{item.nama_produk}</span>
                         </div>

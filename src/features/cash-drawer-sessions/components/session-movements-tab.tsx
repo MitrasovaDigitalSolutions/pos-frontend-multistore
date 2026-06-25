@@ -20,7 +20,7 @@ export function SessionMovementsTab({ movements }: SessionMovementsTabProps) {
                             movement.type === "cash_out" ||
                             movement.type === "cash_refund";
                         return (
-                            <div key={movement.id} className="p-3.5 flex justify-between items-center text-xs hover:bg-slate-50/50 transition-colors">
+                            <div key={movement.uid} className="p-3.5 flex justify-between items-center text-xs hover:bg-slate-50/50 transition-colors">
                                 <div className="space-y-1">
                                     <div className="font-bold text-slate-700 flex items-center gap-2">
                                         {(movement.type === "opening" || movement.type === "initial") && (

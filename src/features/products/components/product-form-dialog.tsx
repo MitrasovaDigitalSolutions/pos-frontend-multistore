@@ -51,7 +51,7 @@ export function ProductFormDialog({
         const list = categoriesRes?.data || [];
         return [
             { value: "", label: "Tanpa Kategori" },
-            ...list.map((c) => ({ value: String(c.id), label: c.nama }))
+            ...list.map((c) => ({ value: String(c.uid), label: c.nama }))
         ];
     }, [categoriesRes]);
 
@@ -59,7 +59,7 @@ export function ProductFormDialog({
         const list = brandsRes?.data || [];
         return [
             { value: "", label: "Tanpa Brand" },
-            ...list.map((b) => ({ value: String(b.id), label: b.nama }))
+            ...list.map((b) => ({ value: String(b.uid), label: b.nama }))
         ];
     }, [brandsRes]);
 
@@ -106,8 +106,8 @@ export function ProductFormDialog({
         const formData = new FormData();
         formData.append("nama", data.nama);
 
-        const selectedBrandOption = brandOptions.find((b) => b.value === String(data.brand_id));
-        const brandName = selectedBrandOption && data.brand_id ? selectedBrandOption.label : "Umum";
+        const selectedBrandOption = brandOptions.find((b) => b.value === String(data.brand_uid));
+        const brandName = selectedBrandOption && data.brand_uid ? selectedBrandOption.label : "Umum";
         formData.append("merek", brandName);
 
         if (data.barcode) {
@@ -125,12 +125,12 @@ export function ProductFormDialog({
             formData.append("margin", String(data.margin));
         }
 
-        if (data.category_id !== null && data.category_id !== undefined) {
-            formData.append("category_id", String(data.category_id));
+        if (data.category_uid !== null && data.category_uid !== undefined) {
+            formData.append("category_uid", String(data.category_uid));
         }
 
-        if (data.brand_id !== null && data.brand_id !== undefined) {
-            formData.append("brand_id", String(data.brand_id));
+        if (data.brand_uid !== null && data.brand_uid !== undefined) {
+            formData.append("brand_uid", String(data.brand_uid));
         }
 
         if (data.image instanceof File) {
@@ -142,7 +142,7 @@ export function ProductFormDialog({
         if (editingProduct) {
             formData.append("_method", "PUT");
             updateProduct.mutate(
-                { id: editingProduct.id, data: formData },
+                { uid: editingProduct.uid, data: formData },
                 {
                     onSuccess: (res) => {
                         toast.success(
@@ -191,158 +191,158 @@ export function ProductFormDialog({
             className="sm:max-w-4xl"
         >
             <form
-                    onSubmit={handleSubmit(onSubmit)}
-                    className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4"
-                >
-                    {/* Kolom Kiri: Upload Gambar */}
-                    <div className="md:col-span-1">
-                        <FormImageUpload<ProductInput>
-                            name="image"
-                            label="Gambar Produk"
+                onSubmit={handleSubmit(onSubmit)}
+                className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4"
+            >
+                {/* Kolom Kiri: Upload Gambar */}
+                <div className="md:col-span-1">
+                    <FormImageUpload<ProductInput>
+                        name="image"
+                        label="Gambar Produk"
+                        disabled={isPending}
+                        initialUrl={initialImageUrl}
+                    />
+                </div>
+
+                {/* Kolom Kanan: Detail & Informasi Produk */}
+                <div className="md:col-span-2 space-y-4">
+                    {/* Barcode & Nama Produk */}
+                    <div className="grid grid-cols-3 gap-3">
+                        <div className="col-span-1 space-y-1.5">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                Barcode / SKU
+                            </label>
+                            <Input
+                                type="text"
+                                placeholder="Contoh: 8990002004"
+                                className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                                disabled={isPending}
+                                {...register("barcode")}
+                            />
+                            {errors.barcode && (
+                                <p className="text-[10px] text-rose-500 font-medium">
+                                    {errors.barcode.message}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="col-span-2 space-y-1.5">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                Nama Produk
+                            </label>
+                            <Input
+                                type="text"
+                                placeholder="Nama produk lengkap..."
+                                className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                                disabled={isPending}
+                                {...register("nama")}
+                            />
+                            {errors.nama && (
+                                <p className="text-[10px] text-rose-500 font-medium">
+                                    {errors.nama.message}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Kategori, Brand & Stok */}
+                    <div className="grid grid-cols-3 gap-3">
+                        <FormSelect<ProductInput>
+                            name="category_uid"
+                            label="Kategori"
+                            options={categoryOptions}
+                            placeholder="Pilih Kategori"
+                            searchPlaceholder="Cari kategori..."
                             disabled={isPending}
-                            initialUrl={initialImageUrl}
+                            size="md"
+                        />
+                        <FormSelect<ProductInput>
+                            name="brand_uid"
+                            label="Brand"
+                            options={brandOptions}
+                            placeholder="Pilih Brand"
+                            searchPlaceholder="Cari brand..."
+                            disabled={isPending}
+                            size="md"
+                        />
+                        <FormNumberInput<ProductInput>
+                            name="stok"
+                            label="Stok"
+                            placeholder={isJasa ? "0" : "50"}
+                            disabled={isPending || !!editingProduct || isJasa}
+                            helperText={
+                                isJasa ? (
+                                    <p className="text-[9px] text-blue-500 font-semibold mt-0.5 leading-snug">
+                                        Stok produk jasa selalu bernilai 0.
+                                    </p>
+                                ) : editingProduct ? (
+                                    <p className="text-[9px] text-slate-400 font-semibold mt-0.5 leading-snug">
+                                        Stok hanya dapat disesuaikan melalui menu stok masuk/keluar.
+                                    </p>
+                                ) : undefined
+                            }
                         />
                     </div>
 
-                    {/* Kolom Kanan: Detail & Informasi Produk */}
-                    <div className="md:col-span-2 space-y-4">
-                        {/* Barcode & Nama Produk */}
-                        <div className="grid grid-cols-3 gap-3">
-                            <div className="col-span-1 space-y-1.5">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                    Barcode / SKU
-                                </label>
-                                <Input
-                                    type="text"
-                                    placeholder="Contoh: 8990002004"
-                                    className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                    {/* Status Jasa / Layanan */}
+                    <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                        <div className="space-y-0.5">
+                            <label className="text-xs font-bold text-slate-800">
+                                Produk Jasa / Layanan
+                            </label>
+                            <p className="text-[10px] text-slate-400">
+                                Aktifkan jika produk ini berupa layanan atau jasa yang tidak memerlukan stok fisik.
+                            </p>
+                        </div>
+                        <Controller
+                            name="is_jasa"
+                            control={control}
+                            render={({ field }) => (
+                                <Switch
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
                                     disabled={isPending}
-                                    {...register("barcode")}
                                 />
-                                {errors.barcode && (
-                                    <p className="text-[10px] text-rose-500 font-medium">
-                                        {errors.barcode.message}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="col-span-2 space-y-1.5">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                    Nama Produk
-                                </label>
-                                <Input
-                                    type="text"
-                                    placeholder="Nama produk lengkap..."
-                                    className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                                    disabled={isPending}
-                                    {...register("nama")}
-                                />
-                                {errors.nama && (
-                                    <p className="text-[10px] text-rose-500 font-medium">
-                                        {errors.nama.message}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Kategori, Brand & Stok */}
-                        <div className="grid grid-cols-3 gap-3">
-                            <FormSelect<ProductInput>
-                                name="category_id"
-                                label="Kategori"
-                                options={categoryOptions}
-                                placeholder="Pilih Kategori"
-                                searchPlaceholder="Cari kategori..."
-                                disabled={isPending}
-                                size="md"
-                            />
-                            <FormSelect<ProductInput>
-                                name="brand_id"
-                                label="Brand"
-                                options={brandOptions}
-                                placeholder="Pilih Brand"
-                                searchPlaceholder="Cari brand..."
-                                disabled={isPending}
-                                size="md"
-                            />
-                            <FormNumberInput<ProductInput>
-                                name="stok"
-                                label="Stok"
-                                placeholder={isJasa ? "0" : "50"}
-                                disabled={isPending || !!editingProduct || isJasa}
-                                helperText={
-                                    isJasa ? (
-                                        <p className="text-[9px] text-blue-500 font-semibold mt-0.5 leading-snug">
-                                            Stok produk jasa selalu bernilai 0.
-                                        </p>
-                                    ) : editingProduct ? (
-                                        <p className="text-[9px] text-slate-400 font-semibold mt-0.5 leading-snug">
-                                            Stok hanya dapat disesuaikan melalui menu stok masuk/keluar.
-                                        </p>
-                                    ) : undefined
-                                }
-                            />
-                        </div>
-
-                        {/* Status Jasa / Layanan */}
-                        <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                            <div className="space-y-0.5">
-                                <label className="text-xs font-bold text-slate-800">
-                                    Produk Jasa / Layanan
-                                </label>
-                                <p className="text-[10px] text-slate-400">
-                                    Aktifkan jika produk ini berupa layanan atau jasa yang tidak memerlukan stok fisik.
-                                </p>
-                            </div>
-                            <Controller
-                                name="is_jasa"
-                                control={control}
-                                render={({ field }) => (
-                                    <Switch
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                        disabled={isPending}
-                                    />
-                                )}
-                            />
-                        </div>
-
-                        {/* Keuangan: Harga Beli, Harga Jual, Margin */}
-                        <div className="grid grid-cols-3 gap-3">
-                            <FormNominalInput<ProductInput>
-                                name="harga_beli"
-                                label="Harga Beli (Rp)"
-                                placeholder="Contoh: 8.000"
-                                disabled={isPending}
-                            />
-
-                            <FormNominalInput<ProductInput>
-                                name="harga"
-                                label="Harga Jual (Rp)"
-                                placeholder="Contoh: 10.000"
-                                disabled={isPending}
-                            />
-
-                            <FormNumberInput<ProductInput>
-                                name="margin"
-                                label="Margin (%)"
-                                placeholder="Contoh: 20"
-                                disabled={isPending}
-                            />
-                        </div>
-
-                        {/* Submit Button */}
-                        <div className="pt-2">
-                            <Button
-                                type="submit"
-                                className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
-                                disabled={isPending}
-                            >
-                                {isPending ? "Menyimpan..." : "Simpan Produk"}
-                            </Button>
-                        </div>
+                            )}
+                        />
                     </div>
-                </form>
+
+                    {/* Keuangan: Harga Beli, Harga Jual, Margin */}
+                    <div className="grid grid-cols-3 gap-3">
+                        <FormNominalInput<ProductInput>
+                            name="harga_beli"
+                            label="Harga Beli (Rp)"
+                            placeholder="Contoh: 8.000"
+                            disabled={isPending}
+                        />
+
+                        <FormNominalInput<ProductInput>
+                            name="harga"
+                            label="Harga Jual (Rp)"
+                            placeholder="Contoh: 10.000"
+                            disabled={isPending}
+                        />
+
+                        <FormNumberInput<ProductInput>
+                            name="margin"
+                            label="Margin (%)"
+                            placeholder="Contoh: 20"
+                            disabled={isPending}
+                        />
+                    </div>
+
+                    {/* Submit Button */}
+                    <div className="pt-2">
+                        <Button
+                            type="submit"
+                            className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
+                            disabled={isPending}
+                        >
+                            {isPending ? "Menyimpan..." : "Simpan Produk"}
+                        </Button>
+                    </div>
+                </div>
+            </form>
         </BaseDialog>
     );
 }

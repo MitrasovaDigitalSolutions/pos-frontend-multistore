@@ -28,11 +28,11 @@ export const expenseCategorySchema = z.object({
 export type ExpenseCategoryInput = z.infer<typeof expenseCategorySchema>;
 
 export const expenseSchema = z.object({
-    expense_category_id: z
-        .number({ message: "Kategori pengeluaran wajib dipilih" })
+    expense_category_uid: z
+        .string({ message: "Kategori pengeluaran wajib dipilih" })
         .min(1, "Kategori pengeluaran wajib dipilih"),
-    cash_account_id: z
-        .number({ message: "Akun kas wajib dipilih" })
+    cash_account_uid: z
+        .string({ message: "Akun kas wajib dipilih" })
         .min(1, "Akun kas wajib dipilih"),
     amount: z
         .number({ message: "Jumlah pengeluaran wajib diisi" })

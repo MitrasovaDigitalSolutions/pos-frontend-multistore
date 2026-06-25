@@ -75,7 +75,7 @@ export function PayDebtDialog({ open, onOpenChange, member }: PayDebtDialogProps
         }
 
         payDebtMutation.mutate(
-            { id: member.id, data: payload },
+            { uid: member.uid, data: payload },
             {
                 onSuccess: () => {
                     toast.success(`Pembayaran hutang member ${member.nama} berhasil dicatat.`);

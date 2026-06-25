@@ -17,7 +17,7 @@ import {
 interface ReceivingDetailDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    receivingId: number | null;
+    receivingId: string | null;
 }
 
 export function ReceivingDetailDialog({
@@ -192,7 +192,7 @@ export function ReceivingDetailDialog({
                                         {receiving.items?.map((item) => {
                                             const subtotal = (item.harga_beli || 0) * (item.kuantitas || 0);
                                             return (
-                                                <tr key={item.id} className="hover:bg-slate-50/50">
+                                                <tr key={item.uid} className="hover:bg-slate-50/50">
                                                     <td className="p-3 font-semibold text-slate-900">
                                                         {item.product?.nama || "Produk dihapus"}
                                                     </td>
@@ -233,7 +233,7 @@ export function ReceivingDetailDialog({
                         ) : (
                             <div className="space-y-4 pl-3 pr-1 py-1">
                                 {logs.map((log) => (
-                                    <div key={log.id} className="relative flex gap-3 pb-4 last:pb-0 border-l border-slate-100 pl-4">
+                                    <div key={log.uid} className="relative flex gap-3 pb-4 last:pb-0 border-l border-slate-100 pl-4">
                                         {/* Dot */}
                                         <div className="absolute -left-1.5 top-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
                                         <div className="space-y-0.5 text-xs">

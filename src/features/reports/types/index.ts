@@ -50,30 +50,30 @@ export interface LabaRugiReport {
 }
 
 export interface ExpenseReportItem {
-    id: number;
+    uid: string;
     tanggal: string;
     nomor_pengeluaran: string;
-    category_id: number;
+    category_uid: string;
     category_name?: string;
     category?: {
-        id: number;
+        uid: string;
         nama: string;
     };
     nama: string;
     catatan?: string;
     amount: number;
-    cash_account_id: number;
+    cash_account_uid: string;
     cash_account?: {
-        id: number;
+        uid: string;
         nama: string;
     };
     cashAccount?: {
-        id: number;
+        uid: string;
         nama: string;
     };
-    user_id: number;
+    user_uid: string;
     user?: {
-        id: number;
+        uid: string;
         name: string;
     };
 }

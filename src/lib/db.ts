@@ -12,16 +12,16 @@ export interface OfflineTransaction {
 }
 
 class POSDatabase extends Dexie {
-    products!: Table<Product, number>;
-    members!: Table<Member, number>;
+    products!: Table<Product, string>;
+    members!: Table<Member, string>;
     offlineQueue!: Table<OfflineTransaction, number>;
 
     constructor() {
         super("POSDatabase");
         this.version(1).stores({
-            products: "id, nama, barcode, status, updated_at",
-            members: "id, nama, kode, updated_at",
-            offlineQueue: "++id, uid, timestamp, status",
+            products: "uid, nama, barcode, status, updated_at",
+            members: "uid, nama, kode, updated_at",
+            offlineQueue: "++uid, uid, timestamp, status",
         });
     }
 }

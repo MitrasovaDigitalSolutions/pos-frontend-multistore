@@ -19,8 +19,8 @@ interface DebtHistoryDialogProps {
 export function DebtHistoryDialog({ open, onOpenChange, member }: DebtHistoryDialogProps) {
     const [activeTab, setActiveTab] = useState<"purchases" | "payments">("purchases");
 
-    const memberId = member?.id || 0;
-    const { data: history, isLoading, error } = useMemberDebtHistory(memberId);
+    const memberUid = member?.uid || "";
+    const { data: history, isLoading, error } = useMemberDebtHistory(memberUid);
 
     if (!member) return null;
 
@@ -118,7 +118,7 @@ export function DebtHistoryDialog({ open, onOpenChange, member }: DebtHistoryDia
                                     </thead>
                                     <tbody>
                                         {purchases.map((sale) => (
-                                            <tr key={sale.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                                            <tr key={sale.uid} className="border-b border-slate-50 hover:bg-slate-50/50">
                                                 <td className="py-3 px-3 text-slate-500 font-medium">
                                                     {formatDateTime(sale.created_at)}
                                                 </td>
@@ -169,7 +169,7 @@ export function DebtHistoryDialog({ open, onOpenChange, member }: DebtHistoryDia
                                             const amount = payload.amount || 0;
                                             const method = payload.payment_method === "cash" ? "Tunai" : "Kartu/EDC";
                                             return (
-                                                <tr key={log.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                                                <tr key={log.uid} className="border-b border-slate-50 hover:bg-slate-50/50">
                                                     <td className="py-3 px-3 text-slate-500 font-medium">
                                                         {formatDateTime(log.created_at)}
                                                     </td>

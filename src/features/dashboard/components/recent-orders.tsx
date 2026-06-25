@@ -91,12 +91,12 @@ export function RecentOrders() {
                 });
                 return (
                   <tr
-                    key={trx.id}
+                    key={trx.uid}
                     className="border-b border-slate-50 hover:bg-slate-50/60 transition-colors"
                   >
                     <td className="py-2.5 pr-2">
                       <span className="font-bold text-slate-700">
-                        #{String(trx.id).slice(-7)}
+                        #{String(trx.uid).slice(-7)}
                       </span>
                     </td>
                     <td className="py-2.5 pr-2 text-right">

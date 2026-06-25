@@ -9,7 +9,7 @@ import { queryKeys } from "@/lib/query-keys";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
 import type { Product } from "../types";
 
-export function useProducts(params?: PaginationParams & { status?: string; category_id?: number; brand_id?: number }) {
+export function useProducts(params?: PaginationParams & { status?: string; category_uid?: string; brand_uid?: string }) {
     return useQuery<PaginatedResponse<Product>>({
         queryKey: [...queryKeys.products.list(), params],
         queryFn: () => apiGetList<Product>("/v1/products", params),
@@ -35,11 +35,11 @@ export function useUpdateProduct() {
     return useMutation<
         ApiResponse<Product>,
         Error,
-        { id: number; data: FormData }
+        { uid: string; data: FormData }
     >({
-        mutationFn: ({ id, data }) =>
+        mutationFn: ({ uid, data }) =>
             apiPost<ApiResponse<Product>, FormData>(
-                `/v1/products/${id}`,
+                `/v1/products/${uid}`,
                 data,
             ),
         onSuccess: () => {
@@ -53,11 +53,11 @@ export function useToggleProductStatus() {
     return useMutation<
         ApiResponse<Product>,
         Error,
-        { id: number; status: "active" | "inactive" }
+        { uid: string; status: "active" | "inactive" }
     >({
-        mutationFn: ({ id, status }) =>
+        mutationFn: ({ uid, status }) =>
             apiPatch<ApiResponse<Product>, { status: "active" | "inactive" }>(
-                `/v1/products/${id}/status`,
+                `/v1/products/${uid}/status`,
                 { status },
             ),
         onSuccess: () => {
@@ -68,8 +68,8 @@ export function useToggleProductStatus() {
 
 export function useDeleteProduct() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<void>, Error, number>({
-        mutationFn: (id) => apiDelete<ApiResponse<void>>(`/v1/products/${id}`),
+    return useMutation<ApiResponse<void>, Error, string>({
+        mutationFn: (uid) => apiDelete<ApiResponse<void>>(`/v1/products/${uid}`),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },

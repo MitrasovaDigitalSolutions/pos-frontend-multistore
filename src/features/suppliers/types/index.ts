@@ -1,5 +1,5 @@
 export interface Supplier {
-    id: number;
+    uid: string;
     nama: string;
     email: string | null;
     nomor_telepon: string | null;

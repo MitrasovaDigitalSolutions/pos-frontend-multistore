@@ -18,8 +18,8 @@ import { FormSelect } from "@/components/forms/form-select";
 
 interface ProductFilterValues {
   search: string;
-  category_id: string;
-  brand_id: string;
+  category_uid: string;
+  brand_uid: string;
   status: string;
 }
 
@@ -27,7 +27,7 @@ export function Products() {
   const { data: session } = useSession();
   const userRoles = session?.user?.roles || [];
   const userPermissions = session?.user?.permissions || [];
-  
+
   const hasViewProducts =
     hasRole(userRoles, "admin") ||
     hasPermission(userRoles, userPermissions, "view_products");
@@ -39,8 +39,8 @@ export function Products() {
   const [appliedFilters, setAppliedFilters] = useState<{
     search?: string;
     status?: string;
-    category_id?: number;
-    brand_id?: number;
+    category_uid?: string;
+    brand_uid?: string;
   }>({});
 
   // Load categories and brands for the dropdown filter options
@@ -50,8 +50,8 @@ export function Products() {
   const filterMethods = useForm<ProductFilterValues>({
     defaultValues: {
       search: "",
-      category_id: "all",
-      brand_id: "all",
+      category_uid: "all",
+      brand_uid: "all",
       status: "all",
     },
   });
@@ -60,8 +60,8 @@ export function Products() {
     setAppliedFilters({
       search: data.search || undefined,
       status: data.status !== "all" ? data.status : undefined,
-      category_id: data.category_id !== "all" ? Number(data.category_id) : undefined,
-      brand_id: data.brand_id !== "all" ? Number(data.brand_id) : undefined,
+      category_uid: data.category_uid !== "all" ? (data.category_uid) : undefined,
+      brand_uid: data.brand_uid !== "all" ? (data.brand_uid) : undefined,
     });
     setPage(1);
   };
@@ -69,8 +69,8 @@ export function Products() {
   const handleFilterReset = () => {
     filterMethods.reset({
       search: "",
-      category_id: "all",
-      brand_id: "all",
+      category_uid: "all",
+      brand_uid: "all",
       status: "all",
     });
     setAppliedFilters({});
@@ -98,8 +98,8 @@ export function Products() {
       stok: 0,
       harga_beli: 0,
       margin: 0,
-      category_id: null,
-      brand_id: null,
+      category_uid: null,
+      brand_uid: null,
       image: null,
       is_jasa: false,
     },
@@ -124,8 +124,8 @@ export function Products() {
       stok: product.stok,
       harga_beli: product.harga_beli ?? 0,
       margin: product.margin ?? 0,
-      category_id: product.category_id ?? null,
-      brand_id: product.brand_id ?? null,
+      category_uid: product.category_uid ?? null,
+      brand_uid: product.brand_uid ?? null,
       image: null,
       is_jasa: !!product.is_jasa,
     });
@@ -142,8 +142,8 @@ export function Products() {
       stok: 0,
       harga_beli: 0,
       margin: 0,
-      category_id: null,
-      brand_id: null,
+      category_uid: null,
+      brand_uid: null,
       image: null,
       is_jasa: false,
     });
@@ -152,12 +152,12 @@ export function Products() {
 
   const categoryOptions = [
     { value: "all", label: "Semua Kategori" },
-    ...(categoriesRes?.data || []).map((c) => ({ value: String(c.id), label: c.nama })),
+    ...(categoriesRes?.data || []).map((c) => ({ value: String(c.uid), label: c.nama })),
   ];
 
   const brandOptions = [
     { value: "all", label: "Semua Brand" },
-    ...(brandsRes?.data || []).map((b) => ({ value: String(b.id), label: b.nama })),
+    ...(brandsRes?.data || []).map((b) => ({ value: String(b.uid), label: b.nama })),
   ];
 
   const statusOptions = [
@@ -199,13 +199,13 @@ export function Products() {
                 placeholder="Cari barcode, nama, atau merek..."
               />
               <FormSelect<ProductFilterValues>
-                name="category_id"
+                name="category_uid"
                 label="Kategori"
                 options={categoryOptions}
                 placeholder="Semua Kategori"
               />
               <FormSelect<ProductFilterValues>
-                name="brand_id"
+                name="brand_uid"
                 label="Brand"
                 options={brandOptions}
                 placeholder="Semua Brand"

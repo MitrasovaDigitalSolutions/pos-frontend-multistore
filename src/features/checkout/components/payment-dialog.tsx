@@ -24,7 +24,7 @@ interface PaymentDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     grandTotal: number;
-    cartItems: { product_id: number; quantity: number }[];
+    cartItems: { product_uid: string; quantity: number }[];
     discount: number;
     tax: number;
     selectedMember: Member | null;
@@ -97,7 +97,7 @@ export function PaymentDialog({
             items: cartItems,
             diskon: discount,
             pajak: tax,
-            member_id: selectedMember?.id || null,
+            member_uid: selectedMember?.uid || null,
         };
 
         if (payMode === "cash") {
@@ -152,23 +152,23 @@ export function PaymentDialog({
 
                 // Deduct stock quantities locally inside IndexedDB products table
                 for (const item of cartList) {
-                    const product = await db.products.get(item.product_id);
+                    const product = await db.products.get(item.product_uid);
                     if (product && !product.is_jasa) {
                         const newStock = Math.max(0, product.stok - item.qty);
-                        await db.products.update(item.product_id, { stok: newStock });
+                        await db.products.update(item.product_uid, { stok: newStock });
                     }
                 }
 
                 // Update member debt locally in IndexedDB if debt transaction
                 if (payMode === "debt" && selectedMember) {
                     const newDebt = (selectedMember.hutang || 0) + (grandTotal - cashNum);
-                    await db.members.update(selectedMember.id, { hutang: newDebt });
+                    await db.members.update(selectedMember.uid, { hutang: newDebt });
                 }
 
                 // Generate mock Receipt object
-                const mockReceiptId = Date.now();
+                const mockReceiptId = Date.now().toString();
                 const mockReceipt: Receipt = {
-                    id: mockReceiptId,
+                    uid: mockReceiptId,
                     subtotal: grandTotal - tax,
                     pajak: tax,
                     total: grandTotal,
@@ -181,7 +181,7 @@ export function PaymentDialog({
                     nomor_kartu_akhir: payMode === "card" ? cardLast4 : undefined,
                     member: selectedMember,
                     items: cartList.map((item) => ({
-                        id: item.product_id,
+                        uid: item.product_uid,
                         nama_produk: item.name,
                         kuantitas: item.qty,
                         harga_satuan: item.price,
@@ -228,11 +228,10 @@ export function PaymentDialog({
                             setPayMode("cash");
                             setCashReceived("");
                         }}
-                        className={`h-11 font-bold text-[10px] rounded-xl flex gap-1 cursor-pointer border-none ${
-                            payMode === "cash"
-                                ? "bg-emerald-600 text-white"
-                                : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
-                        }`}
+                        className={`h-11 font-bold text-[10px] rounded-xl flex gap-1 cursor-pointer border-none ${payMode === "cash"
+                            ? "bg-emerald-600 text-white"
+                            : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+                            }`}
                         disabled={isProcessing}
                     >
                         <IconCash size={14} /> TUNAI (CASH)
@@ -242,11 +241,10 @@ export function PaymentDialog({
                             setPayMode("card");
                             setCashReceived("");
                         }}
-                        className={`h-11 font-bold text-[10px] rounded-xl flex gap-1 cursor-pointer border ${
-                            payMode === "card"
-                                ? "bg-slate-700 text-white border-slate-700"
-                                : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
-                        }`}
+                        className={`h-11 font-bold text-[10px] rounded-xl flex gap-1 cursor-pointer border ${payMode === "card"
+                            ? "bg-slate-700 text-white border-slate-700"
+                            : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
+                            }`}
                         disabled={isProcessing}
                     >
                         <IconCreditCard size={14} /> KARTU / EDC
@@ -256,11 +254,10 @@ export function PaymentDialog({
                             setPayMode("debt");
                             setCashReceived("");
                         }}
-                        className={`h-11 font-bold text-[10px] rounded-xl flex gap-1 cursor-pointer border-none ${
-                            payMode === "debt"
-                                ? "bg-rose-600 text-white"
-                                : "bg-rose-50 text-rose-600 hover:bg-rose-100"
-                        }`}
+                        className={`h-11 font-bold text-[10px] rounded-xl flex gap-1 cursor-pointer border-none ${payMode === "debt"
+                            ? "bg-rose-600 text-white"
+                            : "bg-rose-50 text-rose-600 hover:bg-rose-100"
+                            }`}
                         disabled={isProcessing}
                     >
                         <IconNotebook size={14} /> HUTANG
@@ -320,15 +317,14 @@ export function PaymentDialog({
                                 Kembalian
                             </span>
                             <h2
-                                className={`text-3xl font-extrabold mt-1 tracking-tight tabular-nums ${
-                                    changeValue < 0 ? "text-rose-500" : "text-emerald-500"
-                                }`}
+                                className={`text-3xl font-extrabold mt-1 tracking-tight tabular-nums ${changeValue < 0 ? "text-rose-500" : "text-emerald-500"
+                                    }`}
                             >
                                 {changeValue === 0
                                     ? "Rp 0"
                                     : changeValue < 0
-                                      ? `Kurang ${formatRupiah(Math.abs(changeValue))}`
-                                      : formatRupiah(changeValue)}
+                                        ? `Kurang ${formatRupiah(Math.abs(changeValue))}`
+                                        : formatRupiah(changeValue)}
                             </h2>
                         </div>
                     </>
@@ -461,8 +457,8 @@ export function PaymentDialog({
                         (payMode === "cash"
                             ? !isCashValid
                             : payMode === "card"
-                              ? !isCardValid
-                              : !isDebtValid)
+                                ? !isCardValid
+                                : !isDebtValid)
                     }
                     className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-200 disabled:cursor-not-allowed font-bold text-sm text-white rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-600/10 border-none"
                 >

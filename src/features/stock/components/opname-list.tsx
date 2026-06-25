@@ -24,7 +24,7 @@ interface OpnameListProps {
     };
     page: number;
     onPageChange: (page: number) => void;
-    onViewDetail: (id: number) => void;
+    onViewDetail: (uid: string) => void;
     isLoading?: boolean;
     isFetching?: boolean;
     sortBy?: string;
@@ -70,7 +70,7 @@ export function OpnameList({
         description: "",
         confirmText: "",
         variant: "warning",
-        onConfirm: () => {},
+        onConfirm: () => { },
     });
 
     const handleFinalize = (op: Opname) => {
@@ -83,7 +83,7 @@ export function OpnameList({
             variant: "warning",
             onConfirm: () => {
                 finalizeOpname.mutate(
-                    op.id,
+                    op.uid,
                     {
                         onSuccess: () => {
                             toast.success("Stock opname berhasil difinalisasi!");
@@ -100,7 +100,7 @@ export function OpnameList({
         });
     };
 
-    const handleDelete = (id: number) => {
+    const handleDelete = (uid: string) => {
         setConfirmDialog({
             open: true,
             title: "Hapus Draft Opname",
@@ -109,7 +109,7 @@ export function OpnameList({
             cancelText: "Batal",
             variant: "danger",
             onConfirm: () => {
-                deleteOpname.mutate(id, {
+                deleteOpname.mutate(uid, {
                     onSuccess: () => {
                         toast.success("Draft opname berhasil dihapus.");
                         setConfirmDialog((prev) => ({ ...prev, open: false }));
@@ -170,7 +170,7 @@ export function OpnameList({
                 cell: ({ row }) => {
                     const op = row.original;
                     if (op.status === OPNAME_STATUS.PROCESSING) {
-                        return <OpnameProgressBadge id={op.id} />;
+                        return <OpnameProgressBadge uid={op.uid} />;
                     }
                     const statusClass = OPNAME_STATUS_CLASSES[op.status] || "bg-slate-50 text-slate-700 border-slate-100";
                     const statusLabel = OPNAME_STATUS_LABELS[op.status] || op.status;
@@ -205,12 +205,12 @@ export function OpnameList({
                 onSortChange={onSortChange}
                 virtualize={true}
                 estimateRowHeight={44}
-                onView={(op) => onViewDetail(op.id)}
-                onEdit={(op) => router.push(`/admin/inventory/stock-opname/${op.id}/items`)}
+                onView={(op) => onViewDetail(op.uid)}
+                onEdit={(op) => router.push(`/admin/inventory/stock-opname/${op.uid}/items`)}
                 hideEdit={(op) => !(op.status === OPNAME_STATUS.DRAFT && hasManageInventory)}
                 onCheck={handleFinalize}
                 hideCheck={(op) => !(op.status === OPNAME_STATUS.DRAFT && hasManageInventory)}
-                onDelete={(op) => handleDelete(op.id)}
+                onDelete={(op) => handleDelete(op.uid)}
                 hideDelete={(op) => !(op.status === OPNAME_STATUS.DRAFT && canDeleteDraft)}
             />
 
@@ -229,9 +229,9 @@ export function OpnameList({
     );
 }
 
-function OpnameProgressBadge({ id }: { id: number }) {
+function OpnameProgressBadge({ uid }: { uid: string }) {
     const queryClient = useQueryClient();
-    const { data: progressData } = useOpnameProgress(id);
+    const { data: progressData } = useOpnameProgress(uid);
 
     useEffect(() => {
         if (progressData?.status === "completed" || progressData?.status === "failed") {
@@ -242,7 +242,7 @@ function OpnameProgressBadge({ id }: { id: number }) {
                 queryKey: queryKeys.products.all,
             });
         }
-    }, [progressData?.status, id, queryClient]);
+    }, [progressData?.status, uid, queryClient]);
 
     const percentage = progressData?.progress ?? 0;
 

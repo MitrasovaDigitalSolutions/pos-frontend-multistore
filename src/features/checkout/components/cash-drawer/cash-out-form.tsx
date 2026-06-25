@@ -13,7 +13,7 @@ import { cashOutSchema, type CashOutInput } from "../../schemas/cash-drawer-sche
 
 
 interface CashOutFormProps {
-    sessionId: number;
+    sessionId: string;
     token?: string;
     onSuccess: () => void;
     onCancel: () => void;

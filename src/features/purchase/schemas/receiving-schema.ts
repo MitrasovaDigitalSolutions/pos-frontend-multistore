@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const receivingItemSchema = z.object({
-    product_id: z.coerce.number().min(1, "Produk wajib dipilih"),
+    product_uid: z.string().min(1, "Produk wajib dipilih"),
     kuantitas: z.coerce.number().min(0, "Jumlah minimal 0 pcs"),
     harga_beli: z.coerce.number().min(0, "Harga beli minimal 0"),
     update_harga_jual: z.boolean().default(false),
@@ -20,14 +20,7 @@ export const receivingItemSchema = z.object({
 });
 
 export const receivingSchema = z.object({
-    supplier_id: z.preprocess(
-        (val) => {
-            if (val === "" || val === undefined || val === null || val === "null") return null;
-            const num = Number(val);
-            return isNaN(num) ? null : num;
-        },
-        z.number().min(1, "Supplier wajib dipilih").nullable().optional()
-    ),
+    supplier_uid: z.string().min(1, "Supplier wajib dipilih").nullable().optional(),
     supplier: z.string().nullable().optional(),
     nomor_faktur: z
         .string()
@@ -55,30 +48,16 @@ export const receivingSchema = z.object({
 export type ReceivingInput = z.infer<typeof receivingSchema>;
 
 export const receivingHeaderSchema = z.object({
-    purchase_order_id: z.preprocess(
-        (val) => {
-            if (val === "" || val === undefined || val === null || val === "null") return null;
-            const num = Number(val);
-            return isNaN(num) ? null : num;
-        },
-        z.number().nullable().optional()
-    ),
-    supplier_id: z.preprocess(
-        (val) => {
-            if (val === "" || val === undefined || val === null || val === "null") return null;
-            const num = Number(val);
-            return isNaN(num) ? null : num;
-        },
-        z.number().nullable().optional()
-    ),
+    purchase_order_uid: z.string().nullable().optional(),
+    supplier_uid: z.string().nullable().optional(),
     nomor_faktur: z.string().min(1, "Nomor faktur wajib diisi"),
     nilai_faktur: z.coerce.number().min(0, "Nilai faktur minimal 0").default(0),
     tanggal_terima: z.string().min(1, "Tanggal terima wajib diisi"),
     status_pembayaran: z.enum(["pending", "unpaid", "partial", "paid"]).default("pending"),
     catatan: z.string().nullable().optional().transform((val) => val || null),
-}).refine((data) => data.purchase_order_id || data.supplier_id, {
+}).refine((data) => data.purchase_order_uid || data.supplier_uid, {
     message: "Supplier wajib dipilih jika tidak menggunakan PO",
-    path: ["supplier_id"],
+    path: ["supplier_uid"],
 });
 
 export type ReceivingHeaderInput = z.infer<typeof receivingHeaderSchema>;
@@ -86,7 +65,7 @@ export type ReceivingHeaderInput = z.infer<typeof receivingHeaderSchema>;
 export const receivingBulkItemsSchema = z.object({
     items: z.array(
         z.object({
-            product_id: z.coerce.number().min(1, "Produk wajib dipilih"),
+            product_uid: z.string().min(1, "Produk wajib dipilih"),
             kuantitas: z.coerce.number().min(0, "Jumlah minimal 0 pcs"),
             harga_beli: z.coerce.number().min(0, "Harga beli minimal 0"),
         })

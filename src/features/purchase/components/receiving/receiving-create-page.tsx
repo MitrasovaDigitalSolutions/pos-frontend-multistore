@@ -26,14 +26,14 @@ export function ReceivingCreatePage() {
     });
 
     const supplierOptions = suppliers.map((s) => ({
-        value: String(s.id),
+        value: s.uid,
         label: s.nama,
     }));
 
     const poOptions = [
         { value: "", label: "-- Tanpa PO (Pembelian Langsung) --" },
         ...(outstandingPosData?.data || []).map((po) => ({
-            value: String(po.id),
+            value: String(po.uid),
             label: `${po.nomor_po} - ${po.supplier?.nama || po.supplier_name || "Tanpa Supplier"}`,
             description: `Estimasi: ${formatRupiah(po.nilai_estimasi || 0)}`,
         })),
@@ -42,8 +42,8 @@ export function ReceivingCreatePage() {
     const methods = useForm<ReceivingHeaderInput>({
         resolver: zodResolver(receivingHeaderSchema) as Resolver<ReceivingHeaderInput>,
         defaultValues: {
-            purchase_order_id: null,
-            supplier_id: null,
+            purchase_order_uid: null,
+            supplier_uid: null,
             nomor_faktur: "",
             nilai_faktur: 0,
             tanggal_terima: new Date().toISOString().split("T")[0],
@@ -59,19 +59,19 @@ export function ReceivingCreatePage() {
         formState: { errors },
     } = methods;
 
-    const purchaseOrderId = useWatch({ name: "purchase_order_id", control: methods.control });
+    const purchaseOrderId = useWatch({ name: "purchase_order_uid", control: methods.control });
 
     // Auto-select and lock supplier if PO is chosen
     useEffect(() => {
         if (purchaseOrderId) {
             const selectedPo = (outstandingPosData?.data || []).find(
-                (po) => po.id === Number(purchaseOrderId)
+                (po) => po.uid === purchaseOrderId
             );
-            if (selectedPo && selectedPo.supplier_id) {
-                setValue("supplier_id", selectedPo.supplier_id);
+            if (selectedPo && selectedPo.supplier_uid) {
+                setValue("supplier_uid", selectedPo.supplier_uid);
             }
         } else {
-            setValue("supplier_id", null);
+            setValue("supplier_uid", null);
         }
     }, [purchaseOrderId, outstandingPosData, setValue]);
 
@@ -79,15 +79,15 @@ export function ReceivingCreatePage() {
         // Prepare payload, convert empty strings to null or correct types
         const payload: ReceivingHeaderInput = {
             ...data,
-            purchase_order_id: data.purchase_order_id ? Number(data.purchase_order_id) : null,
-            supplier_id: data.supplier_id ? Number(data.supplier_id) : null,
+            purchase_order_uid: data.purchase_order_uid || null,
+            supplier_uid: data.supplier_uid || null,
         };
 
         createHeader.mutate(payload, {
             onSuccess: (response) => {
                 toast.success("Header Penerimaan Barang berhasil dibuat!");
                 // Redirect to Step 2 page
-                router.push(`/admin/purchase/receiving/${response.data.id}/items`);
+                router.push(`/admin/purchase/receiving/${response.data.uid}/items`);
             },
             onError: (err) => {
                 toast.error(err.message || "Gagal membuat penerimaan header.");
@@ -138,7 +138,7 @@ export function ReceivingCreatePage() {
                                     Referensi Purchase Order (PO)
                                 </label>
                                 <FormSelect<ReceivingHeaderInput>
-                                    name="purchase_order_id"
+                                    name="purchase_order_uid"
                                     options={poOptions}
                                     placeholder={
                                         posLoading
@@ -147,9 +147,9 @@ export function ReceivingCreatePage() {
                                     }
                                     disabled={createHeader.isPending || posLoading}
                                 />
-                                {errors.purchase_order_id && (
+                                {errors.purchase_order_uid && (
                                     <p className="text-[10px] text-rose-500 font-medium">
-                                        {errors.purchase_order_id.message}
+                                        {errors.purchase_order_uid.message}
                                     </p>
                                 )}
                             </div>
@@ -160,7 +160,7 @@ export function ReceivingCreatePage() {
                                     Supplier {!purchaseOrderId && " *"}
                                 </label>
                                 <FormSelect<ReceivingHeaderInput>
-                                    name="supplier_id"
+                                    name="supplier_uid"
                                     options={supplierOptions}
                                     placeholder={
                                         suppliersLoading

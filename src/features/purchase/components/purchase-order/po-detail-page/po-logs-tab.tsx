@@ -1,11 +1,4 @@
-interface ActivityLog {
-    id: number;
-    description: string;
-    created_at: string;
-    user?: {
-        name: string;
-    } | null;
-}
+import type { ActivityLog } from "@/features/stock/api/stock-api";
 
 interface POLogsTabProps {
     logs: ActivityLog[];
@@ -16,7 +9,7 @@ export function POLogsTab({ logs, logsLoading }: POLogsTabProps) {
     return (
         <div className="space-y-4 pl-3 py-1">
             {logs.map((log) => (
-                <div key={log.id} className="relative flex gap-3 pb-4 last:pb-0 border-l border-slate-100 pl-4">
+                <div key={log.uid} className="relative flex gap-3 pb-4 last:pb-0 border-l border-slate-100 pl-4">
                     <div className="absolute -left-1.5 top-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
                     <div className="space-y-0.5 text-xs">
                         <p className="font-semibold text-slate-800">

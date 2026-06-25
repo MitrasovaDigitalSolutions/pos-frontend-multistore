@@ -15,8 +15,8 @@ interface CheckoutStoreState {
     // Cart Actions
     setCart: (items: CartItem[]) => void;
     addItem: (item: CartItem) => void;
-    updateItemQty: (productId: number, qty: number) => void;
-    removeItem: (productId: number) => void;
+    updateItemQty: (productId: string, qty: number) => void;
+    removeItem: (productId: string) => void;
     clearCart: () => void;
 
     // Member Actions
@@ -24,7 +24,7 @@ interface CheckoutStoreState {
 
     // Hold/Recall Actions
     addHoldTransaction: (hold: HoldTransaction) => void;
-    removeHoldTransaction: (id: number) => void;
+    removeHoldTransaction: (uid: string) => void;
     clearHoldList: () => void;
 }
 
@@ -40,12 +40,12 @@ export const useCheckoutStore = create<CheckoutStoreState>()(
             addItem: (item) =>
                 set((state) => {
                     const existing = state.cart.find(
-                        (i) => i.product_id === item.product_id,
+                        (i) => i.product_uid === item.product_uid,
                     );
                     if (existing) {
                         return {
                             cart: state.cart.map((i) =>
-                                i.product_id === item.product_id
+                                i.product_uid === item.product_uid
                                     ? { ...i, qty: i.qty + item.qty }
                                     : i
                             ),
@@ -57,13 +57,13 @@ export const useCheckoutStore = create<CheckoutStoreState>()(
             updateItemQty: (productId, qty) =>
                 set((state) => ({
                     cart: state.cart.map((i) =>
-                        i.product_id === productId ? { ...i, qty } : i
+                        i.product_uid === productId ? { ...i, qty } : i
                     ),
                 })),
 
             removeItem: (productId) =>
                 set((state) => ({
-                    cart: state.cart.filter((i) => i.product_id !== productId),
+                    cart: state.cart.filter((i) => i.product_uid !== productId),
                 })),
 
             clearCart: () => set({ cart: [], selectedMember: null }),
@@ -77,7 +77,7 @@ export const useCheckoutStore = create<CheckoutStoreState>()(
 
             removeHoldTransaction: (id) =>
                 set((state) => ({
-                    holdList: state.holdList.filter((h) => h.id !== id),
+                    holdList: state.holdList.filter((h) => h.uid !== id),
                 })),
 
             clearHoldList: () => set({ holdList: [] }),

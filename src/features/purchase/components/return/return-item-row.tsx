@@ -30,8 +30,8 @@ export function ReturnItemRow({
 }: ReturnItemRowProps) {
     const { watch, setValue, getValues } = useFormContext<PurchaseReturnInput>();
 
-    const productId = watch(`items.${idx}.product_id`);
-    const selectedProduct = products.find((p) => p.id === Number(productId));
+    const productId = watch(`items.${idx}.product_uid`);
+    const selectedProduct = products.find((p) => p.uid === productId);
 
     const currentQty = watch(`items.${idx}.kuantitas`) || 0;
     const currentPrice = watch(`items.${idx}.harga_beli`) || 0;
@@ -43,13 +43,13 @@ export function ReturnItemRow({
                 {/* Product Select */}
                 <div className="col-span-12 sm:col-span-5">
                     <FormSelect<PurchaseReturnInput>
-                        name={`items.${idx}.product_id` as FieldPath<PurchaseReturnInput>}
+                        name={`items.${idx}.product_uid` as FieldPath<PurchaseReturnInput>}
                         options={productOptions}
                         placeholder="-- Pilih Produk --"
                         disabled={isPending}
                         label="Produk"
                         onChange={(val) => {
-                            const prod = products.find((p) => p.id === Number(val));
+                            const prod = products.find((p) => p.uid === val);
                             if (prod) {
                                 // Default unit price to purchase price (harga_beli) of product
                                 setValue(`items.${idx}.harga_beli` as FieldPath<PurchaseReturnInput>, prod.harga_beli ?? 0);

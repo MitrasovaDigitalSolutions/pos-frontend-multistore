@@ -27,12 +27,12 @@ export function CashDrawerSessions() {
     const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("desc");
     const [filters, setFilters] = useState<{
         status?: "open" | "closed";
-        user_id?: number;
+        user_uid?: string;
         from?: string;
         to?: string;
     }>({});
 
-    const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
+    const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
 
     const { data: sessionsData, isLoading, isFetching } = useCashDrawerSessions({
@@ -40,6 +40,7 @@ export function CashDrawerSessions() {
         per_page: perPage,
         sort_by: sortBy,
         sort_order: sortOrder,
+
         ...filters,
     });
 
@@ -49,7 +50,7 @@ export function CashDrawerSessions() {
     };
 
     const handleView = (s: CashDrawerSession) => {
-        setSelectedSessionId(s.id);
+        setSelectedSessionId(s.uid);
         setIsDetailOpen(true);
     };
 

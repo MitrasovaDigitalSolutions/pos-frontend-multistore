@@ -6,5 +6,5 @@ interface PageProps {
 
 export default async function AdminReturnItemsPage({ params }: PageProps) {
     const { id } = await params;
-    return <ReturnItemsPage returnId={Number(id)} />;
+    return <ReturnItemsPage returnId={id} />;
 }

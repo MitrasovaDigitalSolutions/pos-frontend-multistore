@@ -16,7 +16,7 @@ import { useCloseCashDrawer } from "../../api/cash-drawer-api";
 import { closeCashDrawerSchema, type CloseCashDrawerInput } from "../../schemas/cash-drawer-schema";
 
 interface CloseShiftFormProps {
-    sessionId: number;
+    sessionId: string;
     expectedCash: number;
     token?: string;
     onSuccess: () => void;

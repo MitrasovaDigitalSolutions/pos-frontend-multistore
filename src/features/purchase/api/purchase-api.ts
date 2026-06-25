@@ -13,7 +13,7 @@ import type { Product } from "@/features/products/types";
 
 // ─── Stock Receiving Hooks ────────────────────────────────────────────────────
 
-export function useReceivings(params?: PaginationParams & { search?: string; status?: string; supplier_id?: number; start_date?: string; end_date?: string }) {
+export function useReceivings(params?: PaginationParams & { search?: string; status?: string; supplier_uid?: string; start_date?: string; end_date?: string }) {
     return useQuery<PaginatedResponse<Receiving>>({
         queryKey: [...queryKeys.purchase.receivings(), params],
         queryFn: () => apiGetList<Receiving>(ENDPOINTS.PURCHASE.RECEIVING.LIST, params),
@@ -27,11 +27,11 @@ export function useReceivingDebts(params?: PaginationParams & { search?: string;
     });
 }
 
-export function useReceivingDetail(id: number | null) {
+export function useReceivingDetail(uid: string | null) {
     return useQuery<Receiving>({
-        queryKey: [...queryKeys.purchase.receivings(), "detail", id || 0],
-        queryFn: () => apiGetData<Receiving>(ENDPOINTS.PURCHASE.RECEIVING.DETAIL(id || 0)),
-        enabled: id !== null && id > 0,
+        queryKey: [...queryKeys.purchase.receivings(), "detail", uid || ""],
+        queryFn: () => apiGetData<Receiving>(ENDPOINTS.PURCHASE.RECEIVING.DETAIL(uid || "")),
+        enabled: uid !== null && uid !== "",
     });
 }
 
@@ -70,10 +70,10 @@ export function useCreateReceivingHeader() {
 
 export function useBulkReplaceReceivingItems() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<Receiving>, Error, { id: number; data: unknown }>({
-        mutationFn: ({ id, data }) =>
+    return useMutation<ApiResponse<Receiving>, Error, { uid: string; data: unknown }>({
+        mutationFn: ({ uid, data }) =>
             apiPut<ApiResponse<Receiving>, unknown>(
-                ENDPOINTS.PURCHASE.RECEIVING.ITEMS_REPLACE(id),
+                ENDPOINTS.PURCHASE.RECEIVING.ITEMS_REPLACE(uid),
                 data,
             ),
         onSuccess: (_, _variables) => {
@@ -86,12 +86,12 @@ export function useBulkReplaceReceivingItems() {
 
 export function useCompleteReceiving() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<Receiving>, Error, number>({
-        mutationFn: (id) =>
+    return useMutation<ApiResponse<Receiving>, Error, string>({
+        mutationFn: (uid) =>
             apiPost<ApiResponse<Receiving>, void>(
-                ENDPOINTS.PURCHASE.RECEIVING.COMPLETE(id),
+                ENDPOINTS.PURCHASE.RECEIVING.COMPLETE(uid),
             ),
-        onSuccess: (_, _id) => {
+        onSuccess: (_, _uid) => {
             queryClient.invalidateQueries({
                 queryKey: ["purchase"],
             });
@@ -111,9 +111,9 @@ export interface ReceivingScanResponse {
 }
 
 export function useScanReceivingProduct() {
-    return useMutation<ApiResponse<ReceivingScanResponse>, Error, { receiving_id: number; barcode: string }>({
+    return useMutation<ApiResponse<ReceivingScanResponse>, Error, { receiving_uid: string; barcode: string }>({
         mutationFn: (data) =>
-            apiPost<ApiResponse<ReceivingScanResponse>, { receiving_id: number; barcode: string }>(
+            apiPost<ApiResponse<ReceivingScanResponse>, { receiving_uid: string; barcode: string }>(
                 ENDPOINTS.PURCHASE.RECEIVING.SCAN,
                 data,
             ),
@@ -123,10 +123,10 @@ export function useScanReceivingProduct() {
 
 export function useUpdateReceiving() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<Receiving>, Error, { id: number; data: unknown }>({
-        mutationFn: ({ id, data }) =>
+    return useMutation<ApiResponse<Receiving>, Error, { uid: string; data: unknown }>({
+        mutationFn: ({ uid, data }) =>
             apiPut<ApiResponse<Receiving>, unknown>(
-                ENDPOINTS.PURCHASE.RECEIVING.UPDATE(id),
+                ENDPOINTS.PURCHASE.RECEIVING.UPDATE(uid),
                 data,
             ),
         onSuccess: () => {
@@ -140,8 +140,8 @@ export function useUpdateReceiving() {
 
 export function useDeleteReceiving() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<void>, Error, number>({
-        mutationFn: (id) => apiDelete<ApiResponse<void>>(ENDPOINTS.PURCHASE.RECEIVING.DELETE(id)),
+    return useMutation<ApiResponse<void>, Error, string>({
+        mutationFn: (uid) => apiDelete<ApiResponse<void>>(ENDPOINTS.PURCHASE.RECEIVING.DELETE(uid)),
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: ["purchase"],
@@ -153,10 +153,10 @@ export function useDeleteReceiving() {
 
 export function useUpdateReceivingPaymentStatus() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<Receiving>, Error, { id: number; status_pembayaran: "pending" | "unpaid" | "partial" | "paid" }>({
-        mutationFn: ({ id, status_pembayaran }) =>
+    return useMutation<ApiResponse<Receiving>, Error, { uid: string; status_pembayaran: "pending" | "unpaid" | "partial" | "paid" }>({
+        mutationFn: ({ uid, status_pembayaran }) =>
             apiPatch<ApiResponse<Receiving>, { status_pembayaran: "pending" | "unpaid" | "partial" | "paid" }>(
-                ENDPOINTS.PURCHASE.RECEIVING.PAYMENT_STATUS(id),
+                ENDPOINTS.PURCHASE.RECEIVING.PAYMENT_STATUS(uid),
                 { status_pembayaran },
             ),
         onSuccess: () => {
@@ -169,13 +169,13 @@ export function useUpdateReceivingPaymentStatus() {
 
 export interface ComparePricesInput {
     items: {
-        product_id: number;
+        product_uid: string;
         harga_beli: number;
     }[];
 }
 
 export interface ComparePricesResult {
-    product_id: number;
+    product_uid: string;
     nama: string;
     harga_beli_lama: number;
     harga_beli_baru: number;
@@ -198,18 +198,18 @@ export function useComparePrices() {
 
 // ─── Purchase Order Hooks ─────────────────────────────────────────────────────
 
-export function usePurchaseOrders(params?: PaginationParams & { search?: string; status?: string; supplier_id?: number; start_date?: string; end_date?: string }) {
+export function usePurchaseOrders(params?: PaginationParams & { search?: string; status?: string; supplier_uid?: string; start_date?: string; end_date?: string }) {
     return useQuery<PaginatedResponse<PurchaseOrder>>({
         queryKey: [...queryKeys.purchase.orders(), params],
         queryFn: () => apiGetList<PurchaseOrder>(ENDPOINTS.PURCHASE.ORDER.LIST, params),
     });
 }
 
-export function usePurchaseOrderDetail(id: number | null) {
+export function usePurchaseOrderDetail(uid: string | null) {
     return useQuery<PurchaseOrder>({
-        queryKey: [...queryKeys.purchase.orders(), "detail", id || 0],
-        queryFn: () => apiGetData<PurchaseOrder>(ENDPOINTS.PURCHASE.ORDER.DETAIL(id || 0)),
-        enabled: id !== null && id > 0,
+        queryKey: [...queryKeys.purchase.orders(), "detail", uid || ""],
+        queryFn: () => apiGetData<PurchaseOrder>(ENDPOINTS.PURCHASE.ORDER.DETAIL(uid || "")),
+        enabled: uid !== null && uid !== "",
     });
 }
 
@@ -233,10 +233,10 @@ export function useCreatePurchaseOrderHeader() {
 // Step 3: Bulk submit items to PO
 export function useBulkSubmitPurchaseOrderItems() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<PurchaseOrder>, Error, { id: number; data: PurchaseOrderBulkItemsInput }>({
-        mutationFn: ({ id, data }) =>
+    return useMutation<ApiResponse<PurchaseOrder>, Error, { uid: string; data: PurchaseOrderBulkItemsInput }>({
+        mutationFn: ({ uid, data }) =>
             apiPost<ApiResponse<PurchaseOrder>, PurchaseOrderBulkItemsInput>(
-                ENDPOINTS.PURCHASE.ORDER.ITEMS_BULK(id),
+                ENDPOINTS.PURCHASE.ORDER.ITEMS_BULK(uid),
                 data,
             ),
         onSuccess: (_, variables) => {
@@ -244,7 +244,7 @@ export function useBulkSubmitPurchaseOrderItems() {
                 queryKey: queryKeys.purchase.orders(),
             });
             queryClient.invalidateQueries({
-                queryKey: queryKeys.purchase.orderDetail(variables.id),
+                queryKey: queryKeys.purchase.orderDetail(variables.uid),
             });
         },
     });
@@ -253,10 +253,10 @@ export function useBulkSubmitPurchaseOrderItems() {
 // Replace all items in PO (for editing existing items)
 export function useBulkReplacePurchaseOrderItems() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<PurchaseOrder>, Error, { id: number; data: PurchaseOrderBulkItemsInput }>({
-        mutationFn: ({ id, data }) =>
+    return useMutation<ApiResponse<PurchaseOrder>, Error, { uid: string; data: PurchaseOrderBulkItemsInput }>({
+        mutationFn: ({ uid, data }) =>
             apiPut<ApiResponse<PurchaseOrder>, PurchaseOrderBulkItemsInput>(
-                ENDPOINTS.PURCHASE.ORDER.ITEMS_REPLACE(id),
+                ENDPOINTS.PURCHASE.ORDER.ITEMS_REPLACE(uid),
                 data,
             ),
         onSuccess: (_, variables) => {
@@ -264,7 +264,7 @@ export function useBulkReplacePurchaseOrderItems() {
                 queryKey: queryKeys.purchase.orders(),
             });
             queryClient.invalidateQueries({
-                queryKey: queryKeys.purchase.orderDetail(variables.id),
+                queryKey: queryKeys.purchase.orderDetail(variables.uid),
             });
         },
     });
@@ -279,11 +279,11 @@ export function useOutstandingPurchaseOrders(params?: PaginationParams) {
 }
 
 // Receivings linked to a specific PO
-export function usePurchaseOrderReceivings(poId: number | null, params?: PaginationParams) {
+export function usePurchaseOrderReceivings(poUid: string | null, params?: PaginationParams) {
     return useQuery<PaginatedResponse<Receiving>>({
-        queryKey: [...queryKeys.purchase.orderReceivings(poId || 0), params],
-        queryFn: () => apiGetList<Receiving>(ENDPOINTS.PURCHASE.ORDER.RECEIVINGS(poId || 0), params),
-        enabled: poId !== null && poId > 0,
+        queryKey: [...queryKeys.purchase.orderReceivings(poUid || ""), params],
+        queryFn: () => apiGetList<Receiving>(ENDPOINTS.PURCHASE.ORDER.RECEIVINGS(poUid || ""), params),
+        enabled: poUid !== null && poUid !== "",
     });
 }
 
@@ -306,10 +306,10 @@ export function useCreatePurchaseOrder() {
 
 export function useUpdatePurchaseOrder() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<PurchaseOrder>, Error, { id: number; data: PurchaseOrderHeaderInput }>({
-        mutationFn: ({ id, data }) =>
+    return useMutation<ApiResponse<PurchaseOrder>, Error, { uid: string; data: PurchaseOrderHeaderInput }>({
+        mutationFn: ({ uid, data }) =>
             apiPut<ApiResponse<PurchaseOrder>, PurchaseOrderHeaderInput>(
-                ENDPOINTS.PURCHASE.ORDER.UPDATE(id),
+                ENDPOINTS.PURCHASE.ORDER.UPDATE(uid),
                 data,
             ),
         onSuccess: () => {
@@ -322,8 +322,8 @@ export function useUpdatePurchaseOrder() {
 
 export function useDeletePurchaseOrder() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<void>, Error, number>({
-        mutationFn: (id) => apiDelete<ApiResponse<void>>(ENDPOINTS.PURCHASE.ORDER.DELETE(id)),
+    return useMutation<ApiResponse<void>, Error, string>({
+        mutationFn: (uid) => apiDelete<ApiResponse<void>>(ENDPOINTS.PURCHASE.ORDER.DELETE(uid)),
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.purchase.orders(),
@@ -334,10 +334,10 @@ export function useDeletePurchaseOrder() {
 
 export function useFinalizePurchaseOrder() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<PurchaseOrder>, Error, number>({
-        mutationFn: (id) =>
+    return useMutation<ApiResponse<PurchaseOrder>, Error, string>({
+        mutationFn: (uid) =>
             apiPost<ApiResponse<PurchaseOrder>, void>(
-                ENDPOINTS.PURCHASE.ORDER.FINALIZE(id),
+                ENDPOINTS.PURCHASE.ORDER.FINALIZE(uid),
             ),
         onSuccess: () => {
             queryClient.invalidateQueries({
@@ -349,10 +349,10 @@ export function useFinalizePurchaseOrder() {
 
 export function useCancelPurchaseOrder() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<PurchaseOrder>, Error, number>({
-        mutationFn: (id) =>
+    return useMutation<ApiResponse<PurchaseOrder>, Error, string>({
+        mutationFn: (uid) =>
             apiPost<ApiResponse<PurchaseOrder>, void>(
-                ENDPOINTS.PURCHASE.ORDER.CANCEL(id),
+                ENDPOINTS.PURCHASE.ORDER.CANCEL(uid),
             ),
         onSuccess: () => {
             queryClient.invalidateQueries({
@@ -385,30 +385,30 @@ export function useCashAccounts() {
 
 // ─── Supplier Payment Hooks ───────────────────────────────────────────────────
 
-export function usePayments(params?: PaginationParams & { stock_receiving_id?: number; receiving_id?: number; start_date?: string; end_date?: string }) {
+export function usePayments(params?: PaginationParams & { stock_receiving_uid?: string; receiving_uid?: string; start_date?: string; end_date?: string }) {
     return useQuery<PaginatedResponse<ReceivingPayment>>({
         queryKey: [...queryKeys.purchase.payments(), params],
         queryFn: () => apiGetList<ReceivingPayment>(ENDPOINTS.PURCHASE.PAYMENT.LIST, params),
     });
 }
 
-export function usePaymentDetail(id: number | null) {
+export function usePaymentDetail(uid: string | null) {
     return useQuery<ReceivingPayment>({
-        queryKey: [...queryKeys.purchase.payments(), "detail", id || 0],
-        queryFn: () => apiGetData<ReceivingPayment>(ENDPOINTS.PURCHASE.PAYMENT.DETAIL(id || 0)),
-        enabled: id !== null && id > 0,
+        queryKey: [...queryKeys.purchase.payments(), "detail", uid || ""],
+        queryFn: () => apiGetData<ReceivingPayment>(ENDPOINTS.PURCHASE.PAYMENT.DETAIL(uid || "")),
+        enabled: uid !== null && uid !== "",
     });
 }
 
-export function usePaymentSummary(receivingId: number | null) {
+export function usePaymentSummary(receivingUid: string | null) {
     return useQuery<PaymentSummary>({
-        queryKey: [...queryKeys.purchase.payments(), "summary", receivingId || 0],
+        queryKey: [...queryKeys.purchase.payments(), "summary", receivingUid || ""],
         queryFn: async () => {
-            if (!receivingId) throw new Error("Receiving ID is required");
+            if (!receivingUid) throw new Error("Receiving UID is required");
             try {
                 // Try fetching from the summary endpoint first (which returns flat JSON object)
                 const res = await apiGet<PaymentSummary>(
-                    ENDPOINTS.PURCHASE.PAYMENT.SUMMARY(receivingId)
+                    ENDPOINTS.PURCHASE.PAYMENT.SUMMARY(receivingUid)
                 );
                 if (!res) {
                     throw new Error("Empty summary response");
@@ -418,18 +418,18 @@ export function usePaymentSummary(receivingId: number | null) {
                 console.warn("Summary endpoint failed or not found, falling back to client-side aggregation:", err);
 
                 // Fallback: fetch receiving detail and all payments
-                const queryParams: PaginationParams & { stock_receiving_id: number } = {
+                const queryParams: PaginationParams & { stock_receiving_uid: string } = {
                     per_page: 100,
-                    stock_receiving_id: receivingId,
+                    stock_receiving_uid: receivingUid,
                 };
                 const [receiving, paymentsResponse] = await Promise.all([
-                    apiGetData<Receiving>(ENDPOINTS.PURCHASE.RECEIVING.DETAIL(receivingId)),
+                    apiGetData<Receiving>(ENDPOINTS.PURCHASE.RECEIVING.DETAIL(receivingUid)),
                     apiGetList<ReceivingPayment>(ENDPOINTS.PURCHASE.PAYMENT.LIST, queryParams),
                 ]);
 
                 // Filter payments belonging to this receiving and which are completed (not voided)
                 const completedPayments = (paymentsResponse.data || []).filter(
-                    (p) => (p.referensi_id === receivingId || p.receiving?.id === receivingId) && p.status === "completed"
+                    (p) => (p.referensi_uid === receivingUid || p.receiving?.uid === receivingUid) && p.status === "completed"
                 );
 
                 const totalFaktur = receiving.nilai_faktur || 0;
@@ -444,14 +444,14 @@ export function usePaymentSummary(receivingId: number | null) {
                 }
 
                 return {
-                    receiving_id: receivingId,
+                    receiving_uid: receivingUid,
                     nomor_penerimaan: receiving.nomor_penerimaan,
                     total_faktur: totalFaktur,
                     total_dibayar: totalDibayar,
                     sisa_hutang: sisaHutang,
                     status_pembayaran: statusPembayaran,
                     payments: completedPayments.map((p) => ({
-                        id: p.id,
+                        uid: p.uid,
                         jumlah: p.total,
                         metode: p.metode_pembayaran,
                         tanggal: p.created_at,
@@ -459,7 +459,7 @@ export function usePaymentSummary(receivingId: number | null) {
                 };
             }
         },
-        enabled: receivingId !== null && receivingId > 0,
+        enabled: receivingUid !== null && receivingUid !== "",
     });
 }
 
@@ -501,10 +501,10 @@ export function useCreatePayment() {
 
 export function useUpdatePayment() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<ReceivingPayment>, Error, { id: number; data: PaymentInput }>({
-        mutationFn: ({ id, data }) =>
+    return useMutation<ApiResponse<ReceivingPayment>, Error, { uid: string; data: PaymentInput }>({
+        mutationFn: ({ uid, data }) =>
             apiPut<ApiResponse<ReceivingPayment>, PaymentInput>(
-                ENDPOINTS.PURCHASE.PAYMENT.UPDATE(id),
+                ENDPOINTS.PURCHASE.PAYMENT.UPDATE(uid),
                 data,
             ),
         onSuccess: () => {
@@ -520,10 +520,10 @@ export function useUpdatePayment() {
 
 export function useDeletePayment() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<ReceivingPayment>, Error, { id: number; alasan?: string }>({
-        mutationFn: async ({ id, alasan }) => {
+    return useMutation<ApiResponse<ReceivingPayment>, Error, { uid: string; alasan?: string }>({
+        mutationFn: async ({ uid, alasan }) => {
             const { data } = await apiClient.delete<ApiResponse<ReceivingPayment>>(
-                ENDPOINTS.PURCHASE.PAYMENT.DELETE(id),
+                ENDPOINTS.PURCHASE.PAYMENT.DELETE(uid),
                 { data: { alasan } }
             );
             return data;
@@ -541,18 +541,18 @@ export function useDeletePayment() {
 
 // ─── Purchase Return Hooks ───────────────────────────────────────────────────
 
-export function usePurchaseReturns(params?: PaginationParams & { search?: string; status?: string; supplier_id?: number; stock_receiving_id?: number; start_date?: string; end_date?: string }) {
+export function usePurchaseReturns(params?: PaginationParams & { search?: string; status?: string; supplier_uid?: string; stock_receiving_uid?: string; start_date?: string; end_date?: string }) {
     return useQuery<PaginatedResponse<PurchaseReturn>>({
         queryKey: [...queryKeys.purchase.returns(), params],
         queryFn: () => apiGetList<PurchaseReturn>(ENDPOINTS.PURCHASE.RETURN.LIST, params),
     });
 }
 
-export function usePurchaseReturnDetail(id: number | null) {
+export function usePurchaseReturnDetail(uid: string | null) {
     return useQuery<PurchaseReturn>({
-        queryKey: [...queryKeys.purchase.returnDetail(id || 0)],
-        queryFn: () => apiGetData<PurchaseReturn>(ENDPOINTS.PURCHASE.RETURN.DETAIL(id || 0)),
-        enabled: id !== null && id > 0,
+        queryKey: [...queryKeys.purchase.returnDetail(uid || "")],
+        queryFn: () => apiGetData<PurchaseReturn>(ENDPOINTS.PURCHASE.RETURN.DETAIL(uid || "")),
+        enabled: uid !== null && uid !== "",
     });
 }
 
@@ -590,10 +590,10 @@ export function useCreatePurchaseReturnHeader() {
 
 export function useUpdatePurchaseReturn() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<PurchaseReturn>, Error, { id: number; data: unknown }>({
-        mutationFn: ({ id, data }) =>
+    return useMutation<ApiResponse<PurchaseReturn>, Error, { uid: string; data: unknown }>({
+        mutationFn: ({ uid, data }) =>
             apiPut<ApiResponse<PurchaseReturn>, unknown>(
-                ENDPOINTS.PURCHASE.RETURN.UPDATE(id),
+                ENDPOINTS.PURCHASE.RETURN.UPDATE(uid),
                 data,
             ),
         onSuccess: () => {
@@ -609,10 +609,10 @@ export function useUpdatePurchaseReturn() {
 
 export function useBulkReplacePurchaseReturnItems() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<PurchaseReturn>, Error, { id: number; data: PurchaseReturnBulkItemsInput }>({
-        mutationFn: ({ id, data }) =>
+    return useMutation<ApiResponse<PurchaseReturn>, Error, { uid: string; data: PurchaseReturnBulkItemsInput }>({
+        mutationFn: ({ uid, data }) =>
             apiPut<ApiResponse<PurchaseReturn>, PurchaseReturnBulkItemsInput>(
-                ENDPOINTS.PURCHASE.RETURN.ITEMS_REPLACE(id),
+                ENDPOINTS.PURCHASE.RETURN.ITEMS_REPLACE(uid),
                 data,
             ),
         onSuccess: (_, variables) => {
@@ -620,7 +620,7 @@ export function useBulkReplacePurchaseReturnItems() {
                 queryKey: queryKeys.purchase.returns(),
             });
             queryClient.invalidateQueries({
-                queryKey: [...queryKeys.purchase.returns(), "detail", variables.id],
+                queryKey: [...queryKeys.purchase.returns(), "detail", variables.uid],
             });
         },
     });
@@ -628,8 +628,8 @@ export function useBulkReplacePurchaseReturnItems() {
 
 export function useDeletePurchaseReturn() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<void>, Error, number>({
-        mutationFn: (id) => apiDelete<ApiResponse<void>>(ENDPOINTS.PURCHASE.RETURN.DELETE(id)),
+    return useMutation<ApiResponse<void>, Error, string>({
+        mutationFn: (uid) => apiDelete<ApiResponse<void>>(ENDPOINTS.PURCHASE.RETURN.DELETE(uid)),
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.purchase.returns(),
@@ -641,17 +641,17 @@ export function useDeletePurchaseReturn() {
 export interface FinalizeReturnInput {
     impact_type?: "refund" | "credit" | "credit_note" | "exchange" | null;
     resolution_type?: "refund" | "credit" | "credit_note" | "exchange" | null;
-    cash_account_id?: number | null;
-    stock_receiving_id?: number | null;
+    cash_account_uid?: string | null;
+    stock_receiving_uid?: string | null;
     catatan_penyelesaian?: string | null;
 }
 
 export function useFinalizePurchaseReturn() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<PurchaseReturn>, Error, { id: number; data: FinalizeReturnInput }>({
-        mutationFn: ({ id, data }) =>
+    return useMutation<ApiResponse<PurchaseReturn>, Error, { uid: string; data: FinalizeReturnInput }>({
+        mutationFn: ({ uid, data }) =>
             apiPost<ApiResponse<PurchaseReturn>, FinalizeReturnInput>(
-                ENDPOINTS.PURCHASE.RETURN.FINALIZE(id),
+                ENDPOINTS.PURCHASE.RETURN.FINALIZE(uid),
                 data,
             ),
         onSuccess: () => {
@@ -672,7 +672,7 @@ export function useFinalizePurchaseReturn() {
 }
 
 export interface ReturnableItem {
-    product_id: number;
+    product_uid: string;
     product: Product;
     kuantitas_diterima: number;
     kuantitas_diretur: number;
@@ -680,23 +680,23 @@ export interface ReturnableItem {
     harga_beli: number;
 }
 
-export function useReturnableItems(receivingId: number | null) {
+export function useReturnableItems(receivingUid: string | null) {
     return useQuery<ReturnableItem[]>({
-        queryKey: [...queryKeys.purchase.receivings(), "returnable-items", receivingId || 0],
+        queryKey: [...queryKeys.purchase.receivings(), "returnable-items", receivingUid || ""],
         queryFn: async () => {
-            if (!receivingId) return [];
+            if (!receivingUid) return [];
             const res = await apiGetData<ReturnableItem[]>(
-                ENDPOINTS.PURCHASE.RETURN.RETURNABLE_ITEMS(receivingId),
+                ENDPOINTS.PURCHASE.RETURN.RETURNABLE_ITEMS(receivingUid),
             );
             return res;
         },
-        enabled: receivingId !== null && receivingId > 0,
+        enabled: receivingUid !== null && receivingUid !== "",
     });
 }
 
 export interface ReturnScanResponse {
     product: {
-        id: number;
+        uid: string;
         nama: string;
         barcode: string;
         harga_beli: number;
@@ -707,9 +707,9 @@ export interface ReturnScanResponse {
 }
 
 export function useScanReturnProduct() {
-    return useMutation<ApiResponse<ReturnScanResponse>, Error, { receiving_id: number; barcode: string }>({
+    return useMutation<ApiResponse<ReturnScanResponse>, Error, { receiving_uid: string; barcode: string }>({
         mutationFn: (data) =>
-            apiPost<ApiResponse<ReturnScanResponse>, { receiving_id: number; barcode: string }>(
+            apiPost<ApiResponse<ReturnScanResponse>, { receiving_uid: string; barcode: string }>(
                 ENDPOINTS.PURCHASE.RETURN.SCAN,
                 data,
             ),

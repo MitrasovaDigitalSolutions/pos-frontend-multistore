@@ -9,26 +9,26 @@ import type { PurchaseItemLocal } from "@/features/purchase/types";
 export type ParentType = "po" | "receiving" | "return";
 
 interface PurchaseItemsState {
-    parentId: number | null;
+    parentId: string | null;
     parentType: ParentType | null;
     items: PurchaseItemLocal[];
     lastUpdated: number;
 
     // Actions
-    setParent: (id: number, type: ParentType) => void;
+    setParent: (uid: string, type: ParentType) => void;
     addItem: (product: {
-        product_id: number;
+        product_uid: string;
         barcode: string | null;
         nama: string;
         harga_estimasi: number;
         alasan?: string | null;
     }) => void;
-    updateItem: (temp_id: string, data: Partial<Pick<PurchaseItemLocal, "kuantitas" | "harga_estimasi" | "alasan">>) => void;
-    removeItem: (temp_id: string) => void;
+    updateItem: (temp_uid: string, data: Partial<Pick<PurchaseItemLocal, "kuantitas" | "harga_estimasi" | "alasan">>) => void;
+    removeItem: (temp_uid: string) => void;
     clearAll: () => void;
     getSubmitPayload: () => {
         items: {
-            product_id: number;
+            product_uid: string;
             kuantitas: number;
             harga_estimasi: number;
             alasan?: string | null;
@@ -42,7 +42,7 @@ function generateTempId(): string {
 }
 
 // Factory function to create a store for a specific parent
-export function createPurchaseItemsStore(parentId: number, parentType: ParentType) {
+export function createPurchaseItemsStore(parentId: string, parentType: ParentType) {
     const storageKey = `purchase-items-${parentType}-${parentId}`;
 
     return create<PurchaseItemsState>()(
@@ -53,9 +53,9 @@ export function createPurchaseItemsStore(parentId: number, parentType: ParentTyp
                 items: [],
                 lastUpdated: Date.now(),
 
-                setParent: (id, type) =>
+                setParent: (uid, type) =>
                     set({
-                        parentId: id,
+                        parentId: uid,
                         parentType: type,
                         lastUpdated: Date.now(),
                     }),
@@ -63,12 +63,12 @@ export function createPurchaseItemsStore(parentId: number, parentType: ParentTyp
                 addItem: (product) =>
                     set((state) => {
                         const existing = state.items.find(
-                            (i) => i.product_id === product.product_id,
+                            (i) => i.product_uid === product.product_uid,
                         );
                         if (existing) {
                             return {
                                 items: state.items.map((i) =>
-                                    i.product_id === product.product_id
+                                    i.product_uid === product.product_uid
                                         ? { ...i, kuantitas: i.kuantitas + 1 }
                                         : i,
                                 ),
@@ -79,8 +79,8 @@ export function createPurchaseItemsStore(parentId: number, parentType: ParentTyp
                             items: [
                                 ...state.items,
                                 {
-                                    temp_id: generateTempId(),
-                                    product_id: product.product_id,
+                                    temp_uid: generateTempId(),
+                                    product_uid: product.product_uid,
                                     barcode: product.barcode,
                                     nama: product.nama,
                                     kuantitas: 1,
@@ -92,17 +92,17 @@ export function createPurchaseItemsStore(parentId: number, parentType: ParentTyp
                         };
                     }),
 
-                updateItem: (temp_id, data) =>
+                updateItem: (temp_uid, data) =>
                     set((state) => ({
                         items: state.items.map((i) =>
-                            i.temp_id === temp_id ? { ...i, ...data } : i,
+                            i.temp_uid === temp_uid ? { ...i, ...data } : i,
                         ),
                         lastUpdated: Date.now(),
                     })),
 
-                removeItem: (temp_id) =>
+                removeItem: (temp_uid) =>
                     set((state) => ({
-                        items: state.items.filter((i) => i.temp_id !== temp_id),
+                        items: state.items.filter((i) => i.temp_uid !== temp_uid),
                         lastUpdated: Date.now(),
                     })),
 
@@ -116,7 +116,7 @@ export function createPurchaseItemsStore(parentId: number, parentType: ParentTyp
                     const { items } = get();
                     return {
                         items: items.map((i) => ({
-                            product_id: i.product_id,
+                            product_uid: i.product_uid,
                             kuantitas: i.kuantitas,
                             harga_estimasi: i.harga_estimasi,
                             alasan: i.alasan || null,
@@ -139,7 +139,7 @@ type StoreInstance = ReturnType<typeof createPurchaseItemsStore>;
 
 const storeRegistry = new Map<string, StoreInstance>();
 
-export function getPurchaseItemsStore(parentId: number, parentType: ParentType): StoreInstance {
+export function getPurchaseItemsStore(parentId: string, parentType: ParentType): StoreInstance {
     const key = `${parentType}-${parentId}`;
     if (!storeRegistry.has(key)) {
         storeRegistry.set(key, createPurchaseItemsStore(parentId, parentType));
@@ -148,7 +148,7 @@ export function getPurchaseItemsStore(parentId: number, parentType: ParentType):
 }
 
 // Cleanup a store instance and its localStorage data
-export function clearPurchaseItemsStore(parentId: number, parentType: ParentType): void {
+export function clearPurchaseItemsStore(parentId: string, parentType: ParentType): void {
     const key = `${parentType}-${parentId}`;
     const storageKey = `purchase-items-${parentType}-${parentId}`;
 

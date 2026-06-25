@@ -42,7 +42,7 @@ export function MemberDialog({
 
         if (isEdit && editingMember) {
             updateMember.mutate(
-                { id: editingMember.id, data: formattedData },
+                { uid: editingMember.uid, data: formattedData },
                 {
                     onSuccess: () => {
                         toast.success("Member berhasil diperbarui.");

@@ -14,7 +14,7 @@ import type { Product } from "@/features/products/types";
 
 export interface PriceAlertFormInput {
     items: {
-        product_id: number;
+        product_uid: string;
         update_harga_jual: boolean;
         margin_baru: number;
         harga_jual_baru: number;
@@ -26,7 +26,7 @@ interface PriceAlertDialogProps {
     onOpenChange: (open: boolean) => void;
     priceAlerts: ComparePricesResult[];
     isFinalizing: boolean;
-    getProductInfo: (productId: number) => Product | null;
+    getProductInfo: (productId: string | number) => Product | null;
     onCompleteWithoutPrices: () => void;
     onCompleteWithPrices: (formValues: PriceAlertFormInput) => void;
 }
@@ -52,13 +52,13 @@ export function PriceAlertDialog({
     useEffect(() => {
         if (open && priceAlerts.length > 0) {
             const initialItems = priceAlerts.map((alert) => {
-                const productInfo = getProductInfo(alert.product_id);
+                const productInfo = getProductInfo(alert.product_uid);
                 const marginLama = productInfo?.margin ?? alert.margin_lama;
                 const buyPriceNew = alert.harga_beli_baru;
                 const calculatedHargaJualSaran = Math.round(buyPriceNew * (1 + (marginLama || 0) / 100));
 
                 return {
-                    product_id: alert.product_id,
+                    product_uid: alert.product_uid,
                     update_harga_jual: false,
                     margin_baru: marginLama,
                     harga_jual_baru: calculatedHargaJualSaran,
@@ -78,7 +78,7 @@ export function PriceAlertDialog({
             const prev = prevItemsRef.current[idx];
             if (!prev) return;
 
-            const alert = priceAlerts.find((a) => a.product_id === item.product_id);
+            const alert = priceAlerts.find((a) => a.product_uid === item.product_uid);
             if (!alert) return;
 
             const buyPrice = alert.harga_beli_baru;
@@ -105,7 +105,7 @@ export function PriceAlertDialog({
     }, [formItems, priceAlerts, alertFormMethods]);
 
     const handleUseSaran = (idx: number, alert: ComparePricesResult) => {
-        const productInfo = getProductInfo(alert.product_id);
+        const productInfo = getProductInfo(alert.product_uid);
         const marginLama = productInfo?.margin ?? alert.margin_lama;
         const buyPriceNew = alert.harga_beli_baru;
         const calculatedHargaJualSaran = Math.round(buyPriceNew * (1 + (marginLama || 0) / 100));
@@ -151,7 +151,7 @@ export function PriceAlertDialog({
                             <tbody className="divide-y divide-slate-50 font-medium">
                                 {priceAlerts.map((alert, idx) => {
                                     const isUpdateActive = formItems && formItems[idx]?.update_harga_jual;
-                                    const productInfo = getProductInfo(alert.product_id);
+                                    const productInfo = getProductInfo(alert.product_uid);
                                     const hargaBeliLama = productInfo?.harga_beli ?? alert.harga_beli_lama;
                                     const hargaJualLama = productInfo?.harga ?? alert.harga_jual_lama;
                                     const marginLama = productInfo?.margin ?? alert.margin_lama;
@@ -160,7 +160,7 @@ export function PriceAlertDialog({
                                     const calculatedHargaJualSaran = Math.round(buyPriceNew * (1 + (marginLama || 0) / 100));
 
                                     return (
-                                        <tr key={alert.product_id} className="hover:bg-slate-50/50">
+                                        <tr key={alert.product_uid} className="hover:bg-slate-50/50">
                                             <td className="p-3">
                                                 <p className="font-semibold text-slate-900">{alert.nama}</p>
                                                 <p className="text-[10px] text-slate-400 mt-0.5">
@@ -181,7 +181,7 @@ export function PriceAlertDialog({
                                             <td className="p-3 text-center">
                                                 <input
                                                     type="checkbox"
-                                                    id={`update-price-${alert.product_id}`}
+                                                    id={`update-price-${alert.product_uid}`}
                                                     {...alertFormMethods.register(`items.${idx}.update_harga_jual`)}
                                                     className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                                                 />

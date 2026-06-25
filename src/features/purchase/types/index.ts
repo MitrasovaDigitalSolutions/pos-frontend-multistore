@@ -2,9 +2,9 @@ import type { Product } from "@/features/products/types";
 import type { Supplier } from "@/features/suppliers/types";
 
 export interface ReceivingItem {
-    id: number;
-    receiving_id: number;
-    product_id: number;
+    uid: string;
+    receiving_uid: string;
+    product_uid: string;
     kuantitas: number;
     harga_beli: number;
     created_at: string;
@@ -12,16 +12,16 @@ export interface ReceivingItem {
 }
 
 export interface Receiving {
-    id: number;
+    uid: string;
     nomor_penerimaan: string;
-    supplier_id: number | null;
+    supplier_uid: string | null;
     supplier_relationship?: Supplier | null;
     supplier: string | null;
     nomor_faktur: string | null;
     nilai_faktur: number | null;
     status: "draft" | "completed";
     status_pembayaran: "pending" | "unpaid" | "partial" | "paid";
-    purchase_order_id?: number | null;
+    purchase_order_uid?: string | null;
     total_dibayar?: number;
     sisa_hutang?: number;
     catatan: string | null;
@@ -30,9 +30,9 @@ export interface Receiving {
     items?: ReceivingItem[];
 }
 export interface PurchaseOrderItem {
-    id: number;
-    purchase_order_id: number;
-    product_id: number;
+    uid: string;
+    purchase_order_uid: string;
+    product_uid: string;
     kuantitas: number;
     kuantitas_diterima: number;
     sisa_belum_diterima: number;
@@ -42,9 +42,9 @@ export interface PurchaseOrderItem {
 }
 
 export interface PurchaseOrder {
-    id: number;
+    uid: string;
     nomor_po: string;
-    supplier_id: number | null;
+    supplier_uid: string | null;
     supplier_name: string | null;
     supplier?: Supplier | null;
     tanggal_po: string;
@@ -53,9 +53,9 @@ export interface PurchaseOrder {
     total_diterima: number;
     receivings_count: number;
     catatan: string | null;
-    user_id: number;
+    user_uid: string;
     user?: {
-        id: number;
+        uid: string;
         name: string;
         username?: string;
     } | null;
@@ -66,8 +66,8 @@ export interface PurchaseOrder {
 // ─── Local Item (Zustand Persist — sebelum bulk submit ke server) ────────────
 
 export interface PurchaseItemLocal {
-    temp_id: string;
-    product_id: number;
+    temp_uid: string;
+    product_uid: string;
     barcode: string | null;
     nama: string;
     kuantitas: number;
@@ -76,7 +76,7 @@ export interface PurchaseItemLocal {
 }
 
 export interface CashAccount {
-    id: number;
+    uid: string;
     nama: string;
     tipe: string;
     nomor_rekening?: string | null;
@@ -84,14 +84,14 @@ export interface CashAccount {
 }
 
 export interface ReceivingPayment {
-    id: number;
-    store_id: number;
-    user_id: number;
+    uid: string;
+    store_uid: string;
+    user_uid: string;
     nomor_transaksi: string;
     tipe: "supplier_payment";
-    cash_account_id: number;
+    cash_account_uid: string;
     kategori: "pembelian_supplier";
-    referensi_id: number;
+    referensi_uid: string;
     referensi_tipe: "receiving";
     total: number;
     status: "completed" | "void";
@@ -104,7 +104,7 @@ export interface ReceivingPayment {
     created_at: string;
     updated_at?: string | null;
     user?: {
-        id: number;
+        uid: string;
         name: string;
         username?: string;
     } | null;
@@ -113,14 +113,14 @@ export interface ReceivingPayment {
 }
 
 export interface PaymentSummary {
-    receiving_id: number;
+    receiving_uid: string;
     nomor_penerimaan: string;
     total_faktur: number;
     total_dibayar: number;
     sisa_hutang: number;
     status_pembayaran: "pending" | "unpaid" | "partial" | "paid";
     payments: {
-        id: number;
+        uid: string;
         jumlah: number;
         metode: string;
         tanggal: string;
@@ -128,9 +128,9 @@ export interface PaymentSummary {
 }
 
 export interface PurchaseReturnItem {
-    id: number;
-    purchase_return_id: number;
-    product_id: number;
+    uid: string;
+    purchase_return_uid: string;
+    product_uid: string;
     kuantitas: number;
     harga_beli: number;
     alasan?: string | null;
@@ -139,11 +139,11 @@ export interface PurchaseReturnItem {
 }
 
 export interface PurchaseReturn {
-    id: number;
+    uid: string;
     nomor_retur: string;
-    supplier_id: number;
+    supplier_uid: string;
     supplier?: Supplier | null;
-    stock_receiving_id: number | null;
+    stock_receiving_uid: string | null;
     stock_receiving?: Receiving | null;
     tanggal_retur: string;
     total_nominal: number;
@@ -151,9 +151,9 @@ export interface PurchaseReturn {
     status: "draft" | "completed";
     resolution_type?: "refund" | "credit" | "credit_note" | "exchange" | null;
     catatan_penyelesaian?: string | null;
-    user_id: number;
+    user_uid: string;
     user?: {
-        id: number;
+        uid: string;
         name: string;
         username?: string;
     } | null;

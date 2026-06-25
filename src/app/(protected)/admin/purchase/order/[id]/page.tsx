@@ -6,5 +6,5 @@ interface PageProps {
 
 export default async function AdminPurchaseOrderDetailPage({ params }: PageProps) {
     const { id } = await params;
-    return <PODetailPage poId={Number(id)} />;
+    return <PODetailPage poId={id} />;
 }

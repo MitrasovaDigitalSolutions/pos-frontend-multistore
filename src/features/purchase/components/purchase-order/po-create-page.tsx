@@ -19,14 +19,14 @@ export function POCreatePage() {
     const { data: suppliers = [], isLoading: suppliersLoading } = useAllSuppliers();
 
     const supplierOptions = suppliers.map((s) => ({
-        value: String(s.id),
+        value: s.uid,
         label: s.nama,
     }));
 
     const methods = useForm<PurchaseOrderHeaderInput>({
         resolver: zodResolver(purchaseOrderHeaderSchema) as Resolver<PurchaseOrderHeaderInput>,
         defaultValues: {
-            supplier_id: undefined,
+            supplier_uid: undefined,
             tanggal_po: new Date().toISOString().split("T")[0],
             catatan: "",
         },
@@ -43,7 +43,7 @@ export function POCreatePage() {
             onSuccess: (response) => {
                 toast.success("Header Purchase Order berhasil dibuat!");
                 // Redirect to the items input page (Step 2)
-                router.push(`/admin/purchase/order/${response.data.id}/items`);
+                router.push(`/admin/purchase/order/${response.data.uid}/items`);
             },
             onError: (err) => {
                 toast.error(err.message || "Gagal membuat Purchase Order header.");
@@ -94,7 +94,7 @@ export function POCreatePage() {
                                     Supplier *
                                 </label>
                                 <FormSelect<PurchaseOrderHeaderInput>
-                                    name="supplier_id"
+                                    name="supplier_uid"
                                     options={supplierOptions}
                                     placeholder={
                                         suppliersLoading
