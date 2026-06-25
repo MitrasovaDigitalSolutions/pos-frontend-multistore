@@ -47,10 +47,10 @@ export function LabaRugiDetailsTable({ reportData, isLoading }: LabaRugiDetailsT
 
                 <TabsContent value="all" className="outline-none mt-0">
                     <DataTable
-                        defaultSorting={[{ id: "tanggal", desc: true }]}
+                        defaultSorting={[{ id: "date_raw", desc: true }]}
                         columns={[
                             {
-                                accessorKey: "tanggal",
+                                accessorKey: "date_raw",
                                 header: "Tanggal",
                                 cell: ({ row }) => (
                                     <span className="text-slate-600 font-medium">
@@ -162,10 +162,10 @@ export function LabaRugiDetailsTable({ reportData, isLoading }: LabaRugiDetailsT
 
                 <TabsContent value="sale" className="outline-none mt-0">
                     <DataTable
-                        defaultSorting={[{ id: "tanggal", desc: true }]}
+                        defaultSorting={[{ id: "date_raw", desc: true }]}
                         columns={[
                             {
-                                accessorKey: "tanggal",
+                                accessorKey: "date_raw",
                                 header: "Tanggal",
                                 cell: ({ row }) => (
                                     <span className="text-slate-600 font-medium">
@@ -260,10 +260,10 @@ export function LabaRugiDetailsTable({ reportData, isLoading }: LabaRugiDetailsT
 
                 <TabsContent value="expense" className="outline-none mt-0">
                     <DataTable
-                        defaultSorting={[{ id: "tanggal", desc: true }]}
+                        defaultSorting={[{ id: "date_raw", desc: true }]}
                         columns={[
                             {
-                                accessorKey: "tanggal",
+                                accessorKey: "date_raw",
                                 header: "Tanggal",
                                 cell: ({ row }) => (
                                     <span className="text-slate-600 font-medium">
