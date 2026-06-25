@@ -27,3 +27,15 @@ class POSDatabase extends Dexie {
 }
 
 export const db = new POSDatabase();
+
+if (typeof window !== "undefined") {
+    // Auto-recovery for database upgrade schema changes (e.g. changing primary key)
+    db.open().catch((err) => {
+        console.warn("Gagal membuka database, menghapus dan membuat ulang database lokal:", err);
+        Dexie.delete("POSDatabase").then(() => {
+            db.open().catch((err2) => {
+                console.error("Gagal membuka database baru setelah pembuatan ulang:", err2);
+            });
+        });
+    });
+}
