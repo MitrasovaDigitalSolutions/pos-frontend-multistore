@@ -18,6 +18,7 @@ import { useNetworkStatus } from "@/hooks/use-network-status";
 import { toast } from "sonner";
 import { useSyncEngine } from "@/features/checkout/hooks/use-sync-engine";
 import { PrintReceiptLayout } from "@/features/checkout/components/print-receipt-layout";
+import type { CashDrawerSession } from "@/features/checkout/types";
 
 export function Checkout() {
     const state = useCheckoutState();
@@ -39,7 +40,11 @@ export function Checkout() {
         refetch: refetchCurrentDrawer,
     } = useCurrentCashDrawer(cashDrawerToken);
 
-    const activeDrawerSession = currentDrawerData?.data;
+    const activeDrawerSession = currentDrawerData?.data || (
+        !isOnline && state.session?.cashDrawerSessionId
+            ? { uid: state.session.cashDrawerSessionId } as CashDrawerSession
+            : null
+    );
 
     const isSessionLoaded = state.session !== undefined;
     const hasCashDrawerSession = !!state.session?.cashDrawerSessionId;

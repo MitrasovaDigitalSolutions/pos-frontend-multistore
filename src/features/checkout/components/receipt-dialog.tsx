@@ -99,10 +99,6 @@ export function ReceiptDialog({
                                 <span>Subtotal:</span>
                                 <span className="tabular-nums font-semibold">{formatRupiah(receipt?.subtotal ?? 0)}</span>
                             </div>
-                            <div className="flex justify-between">
-                                <span>PPN (11%):</span>
-                                <span className="tabular-nums font-semibold">{formatRupiah(receipt?.pajak ?? 0)}</span>
-                            </div>
                             <div className="flex justify-between font-extrabold text-[11px] text-slate-900 pt-0.5">
                                 <span>TOTAL:</span>
                                 <span className="tabular-nums">{formatRupiah(receipt?.total ?? 0)}</span>

@@ -61,7 +61,7 @@ export function ReturnItemsTable({
                                 <th className="p-3 text-center w-24">Qty Retur</th>
                                 <th className="p-3 text-right w-32">Harga Beli</th>
                                 <th className="p-3 text-right w-32">Subtotal</th>
-                                <th className="p-3 w-80">Alasan Retur</th>
+                                <th className="p-3 min-w-40">Alasan Retur</th>
                                 <th className="p-3 w-12"></th>
                             </tr>
                         </thead>
