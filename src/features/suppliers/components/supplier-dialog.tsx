@@ -39,7 +39,7 @@ export function SupplierDialog({
     const onSubmit = (data: SupplierInput) => {
         if (isEdit && editingSupplier) {
             updateSupplier.mutate(
-                { id: editingSupplier.id, data },
+                { uid: editingSupplier.uid, data },
                 {
                     onSuccess: () => {
                         toast.success("Supplier berhasil diperbarui.");

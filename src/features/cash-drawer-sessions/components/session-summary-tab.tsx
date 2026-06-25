@@ -30,7 +30,7 @@ export function SessionSummaryTab({ session }: SessionSummaryTabProps) {
         if (typeof s.closed_by === "object" && s.closed_by !== null) {
             return s.closed_by.name;
         }
-        if (s.closed_by === s.user_id && s.user) {
+        if (s.closed_by === s.user_uid && s.user) {
             return s.user.name;
         }
         return `Petugas #${s.closed_by}`;

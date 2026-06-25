@@ -83,7 +83,7 @@ export function ReturnList({
         hasRole(userRoles, "admin") ||
         hasPermission(userRoles, userPermissions, "manage_purchase");
 
-    const handleDelete = (id: number) => {
+    const handleDelete = (uid: string) => {
         setConfirmDialog({
             open: true,
             title: "Hapus Draft Retur Pembelian",
@@ -92,7 +92,7 @@ export function ReturnList({
             cancelText: "Batal",
             variant: "danger",
             onConfirm: () => {
-                deleteReturn.mutate(id, {
+                deleteReturn.mutate(uid, {
                     onSuccess: () => {
                         toast.success("Draft retur pembelian berhasil dihapus.");
                         setConfirmDialog((prev) => ({ ...prev, open: false }));
@@ -106,7 +106,7 @@ export function ReturnList({
     };
 
     const handleEditClick = (ret: PurchaseReturn) => {
-        router.push(`/admin/purchase/return/${ret.id}/items`);
+        router.push(`/admin/purchase/return/${ret.uid}/items`);
     };
 
     const handleDetailClick = (ret: PurchaseReturn) => {
@@ -162,7 +162,7 @@ export function ReturnList({
                 hideEdit={(r) => !(r.status === RETURN_STATUS.DRAFT && hasManagePurchase)}
                 onCheck={handleFinalizeClick}
                 hideCheck={(r) => !(r.status === RETURN_STATUS.DRAFT && hasManagePurchase)}
-                onDelete={(r) => handleDelete(r.id)}
+                onDelete={(r) => handleDelete(r.uid)}
                 hideDelete={(r) => !(r.status === RETURN_STATUS.DRAFT && hasManagePurchase)}
             />
 
@@ -170,7 +170,7 @@ export function ReturnList({
             <ReturnDetailDialog
                 open={isDetailOpen}
                 onOpenChange={setIsDetailOpen}
-                returnId={selectedReturn?.id || null}
+                returnId={selectedReturn?.uid || null}
             />
 
             {/* Finalize Dialog */}

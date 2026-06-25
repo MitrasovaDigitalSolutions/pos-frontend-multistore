@@ -2,8 +2,8 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 export interface OpnameItemLocal {
-    temp_id: string;
-    product_id: number;
+    temp_uid: string;
+    product_uid: string;
     barcode: string | null;
     nama: string;
     stok_sistem: number;
@@ -12,22 +12,22 @@ export interface OpnameItemLocal {
 }
 
 interface OpnameItemsState {
-    opnameId: number | null;
+    opnameId: string | null;
     items: OpnameItemLocal[];
     lastUpdated: number;
 
     // Actions
-    setOpnameId: (id: number) => void;
+    setOpnameId: (uid: string) => void;
     addItem: (product: {
-        product_id: number;
+        product_uid: string;
         barcode: string | null;
         nama: string;
         stok_sistem: number;
         stok_fisik?: number;
         alasan?: string;
     }) => void;
-    updateItem: (temp_id: string, data: Partial<Pick<OpnameItemLocal, "stok_fisik" | "alasan">>) => void;
-    removeItem: (temp_id: string) => void;
+    updateItem: (temp_uid: string, data: Partial<Pick<OpnameItemLocal, "stok_fisik" | "alasan">>) => void;
+    removeItem: (temp_uid: string) => void;
     clearAll: () => void;
     setItems: (items: OpnameItemLocal[]) => void;
 }
@@ -36,7 +36,7 @@ function generateTempId(): string {
     return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 }
 
-export function createOpnameItemsStore(opnameId: number) {
+export function createOpnameItemsStore(opnameId: string) {
     const storageKey = `opname-items-${opnameId}`;
 
     return create<OpnameItemsState>()(
@@ -55,12 +55,12 @@ export function createOpnameItemsStore(opnameId: number) {
                 addItem: (product) =>
                     set((state) => {
                         const existing = state.items.find(
-                            (i) => i.product_id === product.product_id,
+                            (i) => i.product_uid === product.product_uid,
                         );
                         if (existing) {
                             return {
                                 items: state.items.map((i) =>
-                                    i.product_id === product.product_id
+                                    i.product_uid === product.product_uid
                                         ? { ...i, stok_fisik: i.stok_fisik + 1 }
                                         : i,
                                 ),
@@ -71,8 +71,8 @@ export function createOpnameItemsStore(opnameId: number) {
                             items: [
                                 ...state.items,
                                 {
-                                    temp_id: generateTempId(),
-                                    product_id: product.product_id,
+                                    temp_uid: generateTempId(),
+                                    product_uid: product.product_uid,
                                     barcode: product.barcode,
                                     nama: product.nama,
                                     stok_sistem: product.stok_sistem,
@@ -84,17 +84,17 @@ export function createOpnameItemsStore(opnameId: number) {
                         };
                     }),
 
-                updateItem: (temp_id, data) =>
+                updateItem: (temp_uid, data) =>
                     set((state) => ({
                         items: state.items.map((i) =>
-                            i.temp_id === temp_id ? { ...i, ...data } : i,
+                            i.temp_uid === temp_uid ? { ...i, ...data } : i,
                         ),
                         lastUpdated: Date.now(),
                     })),
 
-                removeItem: (temp_id) =>
+                removeItem: (temp_uid) =>
                     set((state) => ({
-                        items: state.items.filter((i) => i.temp_id !== temp_id),
+                        items: state.items.filter((i) => i.temp_uid !== temp_uid),
                         lastUpdated: Date.now(),
                     })),
 
@@ -119,16 +119,16 @@ export function createOpnameItemsStore(opnameId: number) {
 }
 
 type StoreInstance = ReturnType<typeof createOpnameItemsStore>;
-const storeRegistry = new Map<number, StoreInstance>();
+const storeRegistry = new Map<string, StoreInstance>();
 
-export function getOpnameItemsStore(opnameId: number): StoreInstance {
+export function getOpnameItemsStore(opnameId: string): StoreInstance {
     if (!storeRegistry.has(opnameId)) {
         storeRegistry.set(opnameId, createOpnameItemsStore(opnameId));
     }
     return storeRegistry.get(opnameId)!;
 }
 
-export function clearOpnameItemsStore(opnameId: number): void {
+export function clearOpnameItemsStore(opnameId: string): void {
     const storageKey = `opname-items-${opnameId}`;
     try {
         localStorage.removeItem(storageKey);

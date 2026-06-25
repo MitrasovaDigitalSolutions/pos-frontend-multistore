@@ -27,9 +27,9 @@ export function PaymentCreatePage() {
     const router = useAppRouter();
     const searchParams = useSearchParams();
     const editIdParam = searchParams.get("edit");
-    const editId = editIdParam ? Number(editIdParam) : null;
-    const isEdit = editId !== null && editId > 0;
-    const preselectedReceivingId = searchParams.get("receiving_id");
+    const editId = editIdParam || null;
+    const isEdit = editId !== null && editId !== "";
+    const preselectedReceivingId = searchParams.get("receiving_uid");
 
     // Block editing completely
     useEffect(() => {
@@ -54,10 +54,10 @@ export function PaymentCreatePage() {
     const methods = useForm<PaymentInput>({
         resolver: zodResolver(paymentSchema) as Resolver<PaymentInput>,
         defaultValues: {
-            receiving_id: 0,
+            receiving_uid: "",
             jumlah_bayar: 0,
             tanggal_bayar: new Date().toISOString().split("T")[0],
-            cash_account_id: 1,
+            cash_account_uid: "",
             metode_pembayaran: "Cash",
             nomor_referensi: "",
             catatan: "",
@@ -70,21 +70,21 @@ export function PaymentCreatePage() {
         reset,
     } = methods;
 
-    const selectedReceivingId = useWatch({ name: "receiving_id", control: methods.control });
+    const selectedReceivingId = useWatch({ name: "receiving_uid", control: methods.control });
 
     // Fetch summary for selected receiving
     const { data: summary, isLoading: summaryLoading } = usePaymentSummary(
-        selectedReceivingId ? Number(selectedReceivingId) : null
+        selectedReceivingId || null
     );
 
     // Sync editing payment data into form defaults
     useEffect(() => {
         if (isEdit && editingPayment) {
             reset({
-                receiving_id: editingPayment.referensi_id,
+                receiving_uid: editingPayment.referensi_uid,
                 jumlah_bayar: editingPayment.total,
                 tanggal_bayar: editingPayment.created_at.split("T")[0] || editingPayment.created_at.split(" ")[0],
-                cash_account_id: editingPayment.cash_account_id,
+                cash_account_uid: editingPayment.cash_account_uid,
                 metode_pembayaran: editingPayment.metode_pembayaran,
                 nomor_referensi: editingPayment.nomor_referensi || "",
                 catatan: editingPayment.catatan || "",
@@ -92,10 +92,10 @@ export function PaymentCreatePage() {
         }
     }, [isEdit, editingPayment, reset]);
 
-    // Pre-fill receiving_id if provided in query string
+    // Pre-fill receiving_uid if provided in query string
     useEffect(() => {
         if (!isEdit && preselectedReceivingId) {
-            setValue("receiving_id", Number(preselectedReceivingId));
+            setValue("receiving_uid", preselectedReceivingId);
         }
     }, [preselectedReceivingId, isEdit, setValue]);
 
@@ -103,26 +103,26 @@ export function PaymentCreatePage() {
     const receivingOptions = outstandingReceivings.map((r) => {
         const sisaHutangVal = r.sisa_hutang !== undefined ? r.sisa_hutang : (r.nilai_faktur || 0);
         return {
-            value: String(r.id),
+            value: r.uid,
             label: `${r.nomor_penerimaan} - ${r.supplier_relationship?.nama || r.supplier || "Tanpa Supplier"}`,
             description: `Sisa Hutang: ${formatRupiah(sisaHutangVal)}`,
         };
     });
 
     // If editing, make sure the current receiving is in options
-    if (isEdit && editingPayment && !receivingOptions.some(o => o.value === String(editingPayment.referensi_id))) {
-        const editSisaHutang = editingPayment.receiving?.sisa_hutang !== undefined 
-            ? editingPayment.receiving.sisa_hutang 
+    if (isEdit && editingPayment && !receivingOptions.some(o => o.value === editingPayment.referensi_uid)) {
+        const editSisaHutang = editingPayment.receiving?.sisa_hutang !== undefined
+            ? editingPayment.receiving.sisa_hutang
             : (editingPayment.receiving?.nilai_faktur || 0);
         receivingOptions.push({
-            value: String(editingPayment.referensi_id),
+            value: editingPayment.referensi_uid,
             label: `${editingPayment.receiving?.nomor_penerimaan || "Penerimaan"} - ${editingPayment.receiving?.supplier_relationship?.nama || editingPayment.receiving?.supplier || "Supplier"}`,
             description: `Sisa Hutang: ${formatRupiah(editSisaHutang)}`,
         });
     }
 
     const cashAccountOptions = cashAccounts.map((acc) => ({
-        value: String(acc.id),
+        value: acc.uid,
         label: `${acc.nama} (${formatRupiah(acc.saldo)})`,
     }));
 
@@ -135,7 +135,7 @@ export function PaymentCreatePage() {
     // Auto fill nominal when receiving is selected (only for create mode)
     useEffect(() => {
         if (!isEdit && selectedReceivingId) {
-            const rec = outstandingReceivings.find((r) => r.id === Number(selectedReceivingId));
+            const rec = outstandingReceivings.find((r) => r.uid === selectedReceivingId);
             if (rec) {
                 // Default to remaining debt if sisa_hutang is available, otherwise nilai_faktur
                 const defaultAmount = rec.sisa_hutang !== undefined ? rec.sisa_hutang : (rec.nilai_faktur || 0);
@@ -149,12 +149,12 @@ export function PaymentCreatePage() {
 
     // Calculate dynamic sisa_hutang for validation
     // If edit: sisa_hutang without current payment = current_sisa_hutang + editingPayment.total
-    const selectedReceiving = outstandingReceivings.find((r) => r.id === Number(selectedReceivingId));
+    const selectedReceiving = outstandingReceivings.find((r) => r.uid === selectedReceivingId);
     const sisaHutangLimit = summary
         ? isEdit && editingPayment
             ? summary.sisa_hutang + editingPayment.total
             : summary.sisa_hutang
-        : (selectedReceiving 
+        : (selectedReceiving
             ? (selectedReceiving.sisa_hutang !== undefined ? selectedReceiving.sisa_hutang : (selectedReceiving.nilai_faktur || 0))
             : 0);
 
@@ -176,9 +176,9 @@ export function PaymentCreatePage() {
 
         const payload = {
             ...pendingData,
-            receiving_id: Number(pendingData.receiving_id),
+            receiving_uid: pendingData.receiving_uid,
             jumlah_bayar: Number(pendingData.jumlah_bayar),
-            cash_account_id: Number(pendingData.cash_account_id) || 1,
+            cash_account_uid: pendingData.cash_account_uid,
         };
 
         try {

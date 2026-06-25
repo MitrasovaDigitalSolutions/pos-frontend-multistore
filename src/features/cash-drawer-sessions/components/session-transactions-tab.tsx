@@ -27,9 +27,9 @@ export function SessionTransactionsTab({ transactions }: SessionTransactionsTabP
                             {transactions.map((tx) => {
                                 const itemsCount = tx.items?.reduce((acc, item) => acc + item.kuantitas, 0) || 0;
                                 return (
-                                    <tr key={tx.id} className="hover:bg-slate-50/50 transition-colors font-medium">
+                                    <tr key={tx.uid} className="hover:bg-slate-50/50 transition-colors font-medium">
                                         <td className="py-3 px-4 font-bold text-slate-900 font-mono">
-                                            #{tx.id}
+                                            {tx.nomor_transaksi}
                                         </td>
                                         <td className="py-3 px-4 text-slate-500">
                                             {new Date(tx.created_at).toLocaleTimeString("id-ID", {

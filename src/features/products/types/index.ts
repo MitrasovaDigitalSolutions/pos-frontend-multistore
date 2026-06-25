@@ -2,7 +2,7 @@ import type { Category } from "@/features/categories/types";
 import type { Brand } from "@/features/brands/types";
 
 export interface Product {
-    id: number;
+    uid: string;
     nama: string;
     merek: string;
     barcode: string | null;
@@ -11,8 +11,8 @@ export interface Product {
     status: "active" | "inactive";
     harga_beli?: number | null;
     margin?: number | null;
-    category_id?: number | null;
-    brand_id?: number | null;
+    category_uid?: string | null;
+    brand_uid?: string | null;
     image_path?: string | null;
     is_jasa?: boolean;
     category?: Category | null;

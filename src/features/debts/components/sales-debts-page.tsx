@@ -177,7 +177,7 @@ export function SalesDebtsPage() {
             },
             cell: ({ row }) => (
                 <button
-                    onClick={() => router.push(`/admin/purchase/payment/new?receiving_id=${row.original.id}`)}
+                    onClick={() => router.push(`/admin/purchase/payment/new?receiving_uid=${row.original.uid}`)}
                     className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 hover:text-emerald-800 border border-emerald-100 rounded-lg text-[10px] font-extrabold flex items-center gap-1 cursor-pointer transition-all active:scale-[0.98] mx-auto"
                     title="Bayar Hutang"
                 >

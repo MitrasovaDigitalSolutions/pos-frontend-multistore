@@ -42,7 +42,7 @@ export function FormSelect<T extends FieldValues>({
         formState: { errors },
     } = useFormContext<T>();
 
-    // Helper to resolve nested errors, e.g. "items.0.product_id" -> errors.items[0].product_id
+    // Helper to resolve nested errors, e.g. "items.0.product_uid" -> errors.items[0].product_uid
     const getNestedValue = (
         obj: FieldErrors<T>,
         path: string,

@@ -317,7 +317,7 @@ export function TransactionsListPage() {
                     }}
                     virtualize={true}
                     estimateRowHeight={44}
-                    onView={(trx) => router.push(`/admin/transactions/${trx.id}`)}
+                    onView={(trx) => router.push(`/admin/transactions/${trx.uid}`)}
                 />
             </section>
         </div>

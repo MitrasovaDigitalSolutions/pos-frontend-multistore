@@ -26,14 +26,14 @@ export function POHeaderDialog({ open, onOpenChange, order }: POHeaderDialogProp
     const { data: suppliers = [], isLoading: suppliersLoading } = useAllSuppliers();
 
     const supplierOptions = suppliers.map((s) => ({
-        value: String(s.id),
+        value: s.uid,
         label: s.nama,
     }));
 
     const methods = useForm<PurchaseOrderHeaderInput>({
         resolver: zodResolver(purchaseOrderHeaderSchema) as Resolver<PurchaseOrderHeaderInput>,
         defaultValues: {
-            supplier_id: undefined,
+            supplier_uid: undefined,
             tanggal_po: "",
             catatan: "",
         },
@@ -50,7 +50,7 @@ export function POHeaderDialog({ open, onOpenChange, order }: POHeaderDialogProp
     useEffect(() => {
         if (open && order) {
             reset({
-                supplier_id: order.supplier_id || undefined,
+                supplier_uid: order.supplier_uid || undefined,
                 tanggal_po: order.tanggal_po ? order.tanggal_po.split("T")[0] : "",
                 catatan: order.catatan || "",
             });
@@ -59,7 +59,7 @@ export function POHeaderDialog({ open, onOpenChange, order }: POHeaderDialogProp
 
     const onSubmit = (data: PurchaseOrderHeaderInput) => {
         updateHeader.mutate(
-            { id: order.id, data },
+            { uid: order.uid, data },
             {
                 onSuccess: () => {
                     toast.success("Informasi header Purchase Order berhasil diperbarui!");
@@ -92,7 +92,7 @@ export function POHeaderDialog({ open, onOpenChange, order }: POHeaderDialogProp
                             Supplier *
                         </label>
                         <FormSelect<PurchaseOrderHeaderInput>
-                            name="supplier_id"
+                            name="supplier_uid"
                             options={supplierOptions}
                             placeholder={
                                 suppliersLoading
@@ -101,9 +101,9 @@ export function POHeaderDialog({ open, onOpenChange, order }: POHeaderDialogProp
                             }
                             disabled={updateHeader.isPending || suppliersLoading}
                         />
-                        {errors.supplier_id && (
+                        {errors.supplier_uid && (
                             <p className="text-[10px] text-rose-500 font-medium">
-                                {errors.supplier_id.message}
+                                {errors.supplier_uid.message}
                             </p>
                         )}
                     </div>

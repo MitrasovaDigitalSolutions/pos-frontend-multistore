@@ -29,13 +29,13 @@ import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface OpnameDetailPageProps {
-    opnameId: number;
+    opnameId: string;
 }
 
 export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
     const router = useAppRouter();
     const queryClient = useQueryClient();
-    
+
     const [itemsPage, setItemsPage] = useState(1);
     const [sortBy, setSortBy] = useState<string | undefined>(undefined);
     const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>(undefined);
@@ -87,7 +87,7 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                 cell: ({ row }) => (
                     <div className="flex flex-col">
                         <span className="text-xs font-bold text-slate-900">
-                            {row.original.product?.nama || `Produk ID: ${row.original.product_id}`}
+                            {row.original.product?.nama || `Produk ID: ${row.original.product_uid}`}
                         </span>
                         {row.original.product?.barcode && (
                             <span className="text-[10px] font-mono text-slate-400 mt-0.5">
@@ -124,10 +124,10 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                 },
                 cell: ({ row }) => {
                     const selisih = row.original.selisih;
-                    const colorClass = selisih === 0 
-                        ? "text-slate-400" 
-                        : selisih > 0 
-                            ? "text-blue-600" 
+                    const colorClass = selisih === 0
+                        ? "text-slate-400"
+                        : selisih > 0
+                            ? "text-blue-600"
                             : "text-rose-500";
                     return (
                         <span className={colorClass}>
@@ -182,7 +182,7 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                             </span>
                         </h2>
                         <p className="text-xs text-slate-400">
-                            ID Dokumen: <span className="font-semibold text-slate-600">{opname.id}</span>
+                            ID Dokumen: <span className="font-semibold text-slate-600">{opname.uid}</span>
                         </p>
                     </div>
                 </div>
@@ -190,7 +190,7 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                 {opname.status === OPNAME_STATUS.DRAFT && (
                     <div className="flex items-center gap-2 shrink-0">
                         <Button
-                            onClick={() => router.push(`/admin/inventory/stock-opname/${opname.id}/items`)}
+                            onClick={() => router.push(`/admin/inventory/stock-opname/${opname.uid}/items`)}
                             variant="outline"
                             className="border-slate-200 text-slate-700 hover:text-slate-900 bg-white font-bold text-xs h-10 px-4 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0"
                         >
@@ -247,7 +247,7 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
 
             {/* Processing State Progress Card */}
             {opname.status === OPNAME_STATUS.PROCESSING && (
-                <OpnameProgressCard id={opname.id} />
+                <OpnameProgressCard uid={opname.uid} />
             )}
 
             {/* Core Interaction Grid */}
@@ -294,7 +294,7 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                     ) : (
                         <div className="space-y-4 pl-3 pr-1 py-1 max-h-112 overflow-y-auto scrollbar-thin">
                             {logs.map((log) => (
-                                <div key={log.id} className="relative flex gap-3 pb-4 last:pb-0 border-l border-slate-100 pl-4">
+                                <div key={log.uid} className="relative flex gap-3 pb-4 last:pb-0 border-l border-slate-100 pl-4">
                                     <div className="absolute -left-1.5 top-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
                                     <div className="space-y-0.5 text-xs">
                                         <p className="font-semibold text-slate-800">
@@ -336,9 +336,9 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
     );
 }
 
-function OpnameProgressCard({ id }: { id: number }) {
+function OpnameProgressCard({ uid }: { uid: string }) {
     const queryClient = useQueryClient();
-    const { data: progressData } = useOpnameProgress(id);
+    const { data: progressData } = useOpnameProgress(uid);
 
     useEffect(() => {
         if (progressData?.status === "completed" || progressData?.status === "failed") {
@@ -346,13 +346,13 @@ function OpnameProgressCard({ id }: { id: number }) {
                 queryKey: queryKeys.inventory.opnames(),
             });
             queryClient.invalidateQueries({
-                queryKey: queryKeys.inventory.opnameDetail(id),
+                queryKey: queryKeys.inventory.opnameDetail(uid),
             });
             queryClient.invalidateQueries({
                 queryKey: queryKeys.products.all,
             });
         }
-    }, [progressData?.status, id, queryClient]);
+    }, [progressData?.status, uid, queryClient]);
 
     const percentage = progressData?.progress ?? 0;
     const processed = progressData?.processed_items ?? 0;
@@ -368,14 +368,14 @@ function OpnameProgressCard({ id }: { id: number }) {
                 </span>
                 <span className="font-mono text-sm">{percentage}%</span>
             </div>
-            
+
             <div className="w-full h-2 bg-blue-100 rounded-full overflow-hidden">
                 <div
                     className="h-full bg-blue-600 transition-all duration-500 rounded-full"
                     style={{ width: `${percentage}%` }}
                 />
             </div>
-            
+
             <div className="flex justify-between items-center text-[10px] text-blue-600 font-medium">
                 <span>Item diproses: {processed} dari {total}</span>
                 {errMessage && (

@@ -48,7 +48,7 @@ export function CategoryDialog({
 
         if (isEdit && editingCategory) {
             updateCategory.mutate(
-                { id: editingCategory.id, data: payload },
+                { uid: editingCategory.uid, data: payload },
                 {
                     onSuccess: () => {
                         toast.success("Kategori pengeluaran berhasil diperbarui.");

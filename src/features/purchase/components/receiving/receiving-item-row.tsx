@@ -34,13 +34,13 @@ export function ReceivingItemRow({
     const { watch, setValue, getValues } = useFormContext<ReceivingInput>();
 
     // Watch fields locally inside this component for precise, optimal re-rendering
-    const productId = watch(`items.${idx}.product_id`);
+    const productId = watch(`items.${idx}.product_uid`);
     const hargaBeliBaru = watch(`items.${idx}.harga_beli`) || 0;
     const updateHargaJual = watch(`items.${idx}.update_harga_jual`);
     const hargaJualBaru = watch(`items.${idx}.harga_jual_baru`);
     const marginBaru = watch(`items.${idx}.margin_baru`);
 
-    const selectedProduct = products.find((p) => p.id === Number(productId));
+    const selectedProduct = products.find((p) => p.uid === productId);
 
     const hargaBeliLama = selectedProduct?.harga_beli ?? 0;
     const hargaJualLama = selectedProduct?.harga ?? 0;
@@ -88,13 +88,13 @@ export function ReceivingItemRow({
                 {/* Product Select */}
                 <div className="col-span-12 sm:col-span-4">
                     <FormSelect<ReceivingInput>
-                        name={`items.${idx}.product_id` as FieldPath<ReceivingInput>}
+                        name={`items.${idx}.product_uid` as FieldPath<ReceivingInput>}
                         options={productOptions}
                         placeholder="-- Pilih Produk --"
                         disabled={isPending}
                         label="Produk"
                         onChange={(val) => {
-                            const prod = products.find((p) => p.id === Number(val));
+                            const prod = products.find((p) => p.uid === val);
                             if (prod) {
                                 setValue(`items.${idx}.harga_beli` as FieldPath<ReceivingInput>, prod.harga_beli ?? 0);
 

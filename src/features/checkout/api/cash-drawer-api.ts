@@ -58,7 +58,7 @@ export function useOpenCashDrawer() {
 }
 
 // 3. Hook to get details of a specific cash drawer session
-export function useCashDrawerDetail(session: number | null, token?: string) {
+export function useCashDrawerDetail(session: string | null, token?: string) {
     return useQuery<ApiResponse<CashDrawerSession>>({
         queryKey: ["cash-drawer", "detail", session, token],
         queryFn: async () => {
@@ -79,7 +79,7 @@ export function useCashIn() {
     return useMutation<
         ApiResponse<unknown>,
         Error,
-        { session: number; payload: CashInPayload; token?: string }
+        { session: string; payload: CashInPayload; token?: string }
     >({
         mutationFn: async ({ session, payload, token }) => {
             const { data } = await apiClient.post<ApiResponse<unknown>>(
@@ -102,7 +102,7 @@ export function useCashOut() {
     return useMutation<
         ApiResponse<unknown>,
         Error,
-        { session: number; payload: CashOutPayload; token?: string }
+        { session: string; payload: CashOutPayload; token?: string }
     >({
         mutationFn: async ({ session, payload, token }) => {
             const { data } = await apiClient.post<ApiResponse<unknown>>(
@@ -125,7 +125,7 @@ export function useCloseCashDrawer() {
     return useMutation<
         ApiResponse<unknown>,
         Error,
-        { session: number; payload: CloseCashDrawerPayload; token?: string }
+        { session: string; payload: CloseCashDrawerPayload; token?: string }
     >({
         mutationFn: async ({ session, payload, token }) => {
             const { data } = await apiClient.post<ApiResponse<unknown>>(
@@ -146,7 +146,7 @@ export interface CashDrawerSessionsParams {
     page?: number;
     per_page?: number;
     status?: "open" | "closed";
-    user_id?: number;
+    user_uid?: string;
     from?: string;
     to?: string;
     sort_by?: string;

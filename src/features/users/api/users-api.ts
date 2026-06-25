@@ -33,10 +33,10 @@ export function useUpdateUser() {
     return useMutation<
         ApiResponse<User>,
         Error,
-        { id: number; data: UserInput }
+        { uid: string; data: UserInput }
     >({
-        mutationFn: ({ id, data }) =>
-            apiPut<ApiResponse<User>, UserInput>(`/v1/users/${id}`, data),
+        mutationFn: ({ uid, data }) =>
+            apiPut<ApiResponse<User>, UserInput>(`/v1/users/${uid}`, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
         },
@@ -45,8 +45,8 @@ export function useUpdateUser() {
 
 export function useDeactivateUser() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<void>, Error, number>({
-        mutationFn: (id) => apiDelete<ApiResponse<void>>(`/v1/users/${id}`),
+    return useMutation<ApiResponse<void>, Error, string>({
+        mutationFn: (uid) => apiDelete<ApiResponse<void>>(`/v1/users/${uid}`),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
         },

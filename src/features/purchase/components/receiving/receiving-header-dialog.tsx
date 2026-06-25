@@ -36,28 +36,28 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
     });
 
     const supplierOptions = suppliers.map((s) => ({
-        value: String(s.id),
+        value: String(s.uid),
         label: s.nama,
     }));
 
     // In edit mode, we want to allow selecting the currently linked PO as well.
-    // If the receiving already has a purchase_order_id, let's make sure it is in options.
+    // If the receiving already has a purchase_order_uid, let's make sure it is in options.
     const poOptions = [
         { value: "", label: "-- Tanpa PO (Pembelian Langsung) --" },
         ...(outstandingPosData?.data || []).map((po) => ({
-            value: String(po.id),
+            value: String(po.uid),
             label: `${po.nomor_po} - ${po.supplier?.nama || po.supplier_name || "Tanpa Supplier"}`,
             description: `Estimasi: ${formatRupiah(po.nilai_estimasi || 0)}`,
         })),
     ];
 
     // Ensure currently selected PO is added if it isn't already in list
-    if (receiving.purchase_order_id) {
-        const hasCurrentPo = (outstandingPosData?.data || []).some(po => po.id === receiving.purchase_order_id);
+    if (receiving.purchase_order_uid) {
+        const hasCurrentPo = (outstandingPosData?.data || []).some(po => po.uid === receiving.purchase_order_uid);
         if (!hasCurrentPo) {
             poOptions.push({
-                value: String(receiving.purchase_order_id),
-                label: `PO ID: ${receiving.purchase_order_id} (Terkait)`,
+                value: String(receiving.purchase_order_uid),
+                label: `PO ID: ${receiving.purchase_order_uid} (Terkait)`,
             });
         }
     }
@@ -65,8 +65,8 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
     const methods = useForm<ReceivingHeaderInput>({
         resolver: zodResolver(receivingHeaderSchema) as Resolver<ReceivingHeaderInput>,
         defaultValues: {
-            purchase_order_id: null,
-            supplier_id: null,
+            purchase_order_uid: null,
+            supplier_uid: null,
             nomor_faktur: "",
             nilai_faktur: 0,
             tanggal_terima: "",
@@ -83,14 +83,14 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
         formState: { errors },
     } = methods;
 
-    const purchaseOrderId = useWatch({ name: "purchase_order_id", control: methods.control });
+    const purchaseOrderId = useWatch({ name: "purchase_order_uid", control: methods.control });
 
     // Reset default values when receiving is loaded or dialog opens
     useEffect(() => {
         if (open && receiving) {
             reset({
-                purchase_order_id: receiving.purchase_order_id ? String(receiving.purchase_order_id) as unknown as number : null,
-                supplier_id: receiving.supplier_id,
+                purchase_order_uid: receiving.purchase_order_uid || null,
+                supplier_uid: receiving.supplier_uid ? String(receiving.supplier_uid) : null,
                 nomor_faktur: receiving.nomor_faktur || "",
                 nilai_faktur: receiving.nilai_faktur || 0,
                 tanggal_terima: receiving.created_at ? receiving.created_at.split("T")[0] : "",
@@ -104,12 +104,12 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
     useEffect(() => {
         if (purchaseOrderId) {
             const selectedPo = (outstandingPosData?.data || []).find(
-                (po) => po.id === Number(purchaseOrderId)
+                (po) => po.uid === purchaseOrderId
             );
-            if (selectedPo && selectedPo.supplier_id) {
-                setValue("supplier_id", selectedPo.supplier_id);
-            } else if (receiving && receiving.purchase_order_id === Number(purchaseOrderId)) {
-                setValue("supplier_id", receiving.supplier_id);
+            if (selectedPo && selectedPo.supplier_uid) {
+                setValue("supplier_uid", String(selectedPo.supplier_uid));
+            } else if (receiving && receiving.purchase_order_uid === purchaseOrderId) {
+                setValue("supplier_uid", receiving.supplier_uid ? String(receiving.supplier_uid) : null);
             }
         }
     }, [purchaseOrderId, outstandingPosData, setValue, receiving]);
@@ -117,14 +117,14 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
     const onSubmit = (data: ReceivingHeaderInput) => {
         // Send the update. We must also include existing items to avoid deletion.
         const itemsPayload = (receiving.items || []).map((item) => ({
-            product_id: item.product_id,
+            product_uid: item.product_uid,
             kuantitas: item.kuantitas,
             harga_beli: item.harga_beli,
         }));
 
         const payload = {
-            purchase_order_id: data.purchase_order_id ? Number(data.purchase_order_id) : null,
-            supplier_id: data.supplier_id ? Number(data.supplier_id) : null,
+            purchase_order_uid: data.purchase_order_uid ? Number(data.purchase_order_uid) : null,
+            supplier_uid: data.supplier_uid ? Number(data.supplier_uid) : null,
             nomor_faktur: data.nomor_faktur,
             nilai_faktur: Number(data.nilai_faktur),
             tanggal_terima: data.tanggal_terima,
@@ -135,7 +135,7 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
         };
 
         updateReceiving.mutate(
-            { id: receiving.id, data: payload },
+            { uid: receiving.uid, data: payload },
             {
                 onSuccess: () => {
                     toast.success("Informasi header Penerimaan Barang berhasil diperbarui!");
@@ -170,16 +170,16 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
                                     Referensi Purchase Order (PO)
                                 </label>
                                 <FormSelect<ReceivingHeaderInput>
-                                    name="purchase_order_id"
+                                    name="purchase_order_uid"
                                     options={poOptions}
                                     placeholder={
                                         posLoading ? "Memuat daftar PO..." : "-- Pilih PO (Kosongkan jika beli langsung) --"
                                     }
                                     disabled={updateReceiving.isPending || posLoading}
                                 />
-                                {errors.purchase_order_id && (
+                                {errors.purchase_order_uid && (
                                     <p className="text-[10px] text-rose-500 font-medium">
-                                        {errors.purchase_order_id.message}
+                                        {errors.purchase_order_uid.message}
                                     </p>
                                 )}
                             </div>
@@ -190,16 +190,16 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
                                     Supplier {!purchaseOrderId && " *"}
                                 </label>
                                 <FormSelect<ReceivingHeaderInput>
-                                    name="supplier_id"
+                                    name="supplier_uid"
                                     options={supplierOptions}
                                     placeholder={
                                         suppliersLoading ? "Memuat supplier..." : "-- Pilih Supplier --"
                                     }
                                     disabled={updateReceiving.isPending || suppliersLoading || !!purchaseOrderId}
                                 />
-                                {errors.supplier_id && (
+                                {errors.supplier_uid && (
                                     <p className="text-[10px] text-rose-500 font-medium">
-                                        {errors.supplier_id.message}
+                                        {errors.supplier_uid.message}
                                     </p>
                                 )}
                             </div>

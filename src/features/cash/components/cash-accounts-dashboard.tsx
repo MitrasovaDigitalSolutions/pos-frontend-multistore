@@ -55,7 +55,7 @@ export function CashAccountsDashboard() {
     const [ledgerFilters, setLedgerFilters] = useState({
         page: 1,
         per_page: 15,
-        cash_account_id: undefined as number | undefined,
+        cash_account_uid: undefined as string | undefined,
         tipe: "" as string,
         search: "" as string,
         from: "" as string,
@@ -116,7 +116,7 @@ export function CashAccountsDashboard() {
     const { data: ledgerData, isLoading: ledgerLoading, isFetching: ledgerFetching } = useCashFlow({
         page: ledgerFilters.page,
         per_page: ledgerFilters.per_page,
-        cash_account_id: ledgerFilters.cash_account_id || undefined,
+        cash_account_uid: ledgerFilters.cash_account_uid || undefined,
         tipe: ledgerFilters.tipe || undefined,
         search: ledgerFilters.search || undefined,
         from: ledgerFilters.from || undefined,
@@ -296,25 +296,25 @@ export function CashAccountsDashboard() {
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {accounts.map((account) => {
-                            const isSelected = ledgerFilters.cash_account_id === account.id;
+                            const isSelected = ledgerFilters.cash_account_uid === account.uid;
                             const isBank = account.tipe.toLowerCase() === "bank" || account.tipe.toLowerCase() === "edc";
                             return (
                                 <div
-                                    key={account.id}
+                                    key={account.uid}
                                     onClick={() => {
                                         setLedgerFilters(prev => ({
                                             ...prev,
-                                            cash_account_id: isSelected ? undefined : account.id,
+                                            cash_account_uid: isSelected ? undefined : account.uid,
                                             page: 1
                                         }));
                                     }}
                                     className={`bg-white rounded-2xl border transition-all duration-300 hover:shadow-md cursor-pointer relative overflow-hidden flex flex-col justify-between select-none ${isSelected
-                                            ? isBank
-                                                ? "border-blue-500 ring-2 ring-blue-500/30 shadow-md scale-[1.01]"
-                                                : "border-emerald-500 ring-2 ring-emerald-500/30 shadow-md scale-[1.01]"
-                                            : isBank
-                                                ? "border-blue-100/70 hover:border-blue-300/60 hover:-translate-y-0.5"
-                                                : "border-emerald-100/70 hover:border-emerald-300/60 hover:-translate-y-0.5"
+                                        ? isBank
+                                            ? "border-blue-500 ring-2 ring-blue-500/30 shadow-md scale-[1.01]"
+                                            : "border-emerald-500 ring-2 ring-emerald-500/30 shadow-md scale-[1.01]"
+                                        : isBank
+                                            ? "border-blue-100/70 hover:border-blue-300/60 hover:-translate-y-0.5"
+                                            : "border-emerald-100/70 hover:border-emerald-300/60 hover:-translate-y-0.5"
                                         }`}
                                 >
                                     {/* Card Header & Details */}
@@ -337,8 +337,8 @@ export function CashAccountsDashboard() {
 
                                             <div className="flex flex-col items-end gap-1.5 shrink-0">
                                                 <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${isBank
-                                                        ? "bg-blue-50 text-blue-700 border border-blue-100"
-                                                        : "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                                    ? "bg-blue-50 text-blue-700 border border-blue-100"
+                                                    : "bg-emerald-50 text-emerald-700 border border-emerald-100"
                                                     }`}>
                                                     {account.tipe}
                                                 </span>
@@ -404,14 +404,14 @@ export function CashAccountsDashboard() {
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
                         <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                            {ledgerFilters.cash_account_id
-                                ? `Jurnal Arus Kas: ${accounts.find(a => a.id === ledgerFilters.cash_account_id)?.nama || ""}`
+                            {ledgerFilters.cash_account_uid
+                                ? `Jurnal Arus Kas: ${accounts.find(a => a.uid === ledgerFilters.cash_account_uid)?.nama || ""}`
                                 : "Semua Jurnal Arus Kas"
                             }
                         </h3>
-                        {ledgerFilters.cash_account_id && (
+                        {ledgerFilters.cash_account_uid && (
                             <button
-                                onClick={() => setLedgerFilters(prev => ({ ...prev, cash_account_id: undefined, page: 1 }))}
+                                onClick={() => setLedgerFilters(prev => ({ ...prev, cash_account_uid: undefined, page: 1 }))}
                                 className="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-bold cursor-pointer transition-colors flex items-center gap-1.5 border border-slate-200"
                             >
                                 Tampilkan Semua
@@ -506,7 +506,7 @@ export function CashAccountsDashboard() {
                                         const isInflow = movement.tipe === "inflow" || (isTransfer && amount > 0);
 
                                         return (
-                                            <tr key={movement.id} className="hover:bg-slate-50/50 transition-colors group">
+                                            <tr key={movement.uid} className="hover:bg-slate-50/50 transition-colors group">
                                                 <td className="py-3.5 px-4 text-xs font-medium text-slate-500">
                                                     {new Date(movement.created_at).toLocaleDateString("id-ID", {
                                                         day: "2-digit",
@@ -528,10 +528,10 @@ export function CashAccountsDashboard() {
                                                 </td>
                                                 <td className="py-3.5 px-4 text-center">
                                                     <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${isInflow
-                                                            ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                                                            : isOutflow
-                                                                ? "bg-rose-50 text-rose-700 border border-rose-100"
-                                                                : "bg-blue-50 text-blue-700 border border-blue-100"
+                                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                                        : isOutflow
+                                                            ? "bg-rose-50 text-rose-700 border border-rose-100"
+                                                            : "bg-blue-50 text-blue-700 border border-blue-100"
                                                         }`}>
                                                         {movement.tipe}
                                                     </span>

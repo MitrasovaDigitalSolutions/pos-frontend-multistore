@@ -2,8 +2,8 @@ import type { Product } from "@/features/products/types";
 import type { Supplier } from "@/features/suppliers/types";
 
 export interface StockMovement {
-    id: number;
-    product_id: number;
+    uid: string;
+    product_uid: string;
     tipe: "receive" | "void" | "sale" | "retur" | "penyesuaian" | "opname" | "adjustment" | "masuk" | "keluar" | "mutasi";
     kuantitas: number;
     stok_sebelum: number;
@@ -12,16 +12,16 @@ export interface StockMovement {
     created_at: string;
     product?: Product;
     user?: {
-        id: number;
+        uid: string;
         name: string;
         username: string;
     };
 }
 
 export interface ReceivingItem {
-    id: number;
-    receiving_id: number;
-    product_id: number;
+    uid: string;
+    receiving_uid: string;
+    product_uid: string;
     kuantitas: number;
     harga_beli: number;
     created_at: string;
@@ -29,9 +29,9 @@ export interface ReceivingItem {
 }
 
 export interface Receiving {
-    id: number;
+    uid: string;
     nomor_penerimaan: string;
-    supplier_id: number | null;
+    supplier_uid: string | null;
     supplier_relationship?: Supplier | null;
     supplier: string | null;
     nomor_faktur: string | null;
@@ -46,9 +46,9 @@ export interface Receiving {
 import type { OpnameStatus } from "@/constants/stock";
 
 export interface OpnameItem {
-    id: number;
-    opname_id: number;
-    product_id: number;
+    uid: string;
+    opname_uid: string;
+    product_uid: string;
     stok_sistem: number;
     stok_fisik: number;
     selisih: number;
@@ -58,7 +58,7 @@ export interface OpnameItem {
 }
 
 export interface Opname {
-    id: number;
+    uid: string;
     nomor_opname: string;
     catatan: string | null;
     status: OpnameStatus;
@@ -66,7 +66,7 @@ export interface Opname {
     items?: OpnameItem[];
     items_count?: number;
     user?: {
-        id: number;
+        uid: string;
         name: string;
         username: string;
     };

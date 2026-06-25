@@ -18,8 +18,8 @@ import { useCashAccounts } from "@/features/cash/api/cash-api";
 
 interface ExpenseFilterValues {
     search: string;
-    expense_category_id: string;
-    cash_account_id: string;
+    expense_category_uid: string;
+    cash_account_uid: string;
     date_start: string;
     date_end: string;
 }
@@ -29,8 +29,8 @@ export function Expenses() {
     const [perPage, setPerPage] = useState(10);
     const [appliedFilters, setAppliedFilters] = useState<{
         search?: string;
-        expense_category_id?: number;
-        cash_account_id?: number;
+        expense_category_uid?: string;
+        cash_account_uid?: string;
         date_start?: string;
         date_end?: string;
     }>({});
@@ -41,8 +41,8 @@ export function Expenses() {
     const filterMethods = useForm<ExpenseFilterValues>({
         defaultValues: {
             search: "",
-            expense_category_id: "all",
-            cash_account_id: "all",
+            expense_category_uid: "all",
+            cash_account_uid: "all",
             date_start: "",
             date_end: "",
         },
@@ -51,8 +51,8 @@ export function Expenses() {
     const handleFilterSubmit = (data: ExpenseFilterValues) => {
         setAppliedFilters({
             search: data.search || undefined,
-            expense_category_id: data.expense_category_id !== "all" ? Number(data.expense_category_id) : undefined,
-            cash_account_id: data.cash_account_id !== "all" ? Number(data.cash_account_id) : undefined,
+            expense_category_uid: data.expense_category_uid !== "all" ? data.expense_category_uid : undefined,
+            cash_account_uid: data.cash_account_uid !== "all" ? data.cash_account_uid : undefined,
             date_start: data.date_start || undefined,
             date_end: data.date_end || undefined,
         });
@@ -62,8 +62,8 @@ export function Expenses() {
     const handleFilterReset = () => {
         filterMethods.reset({
             search: "",
-            expense_category_id: "all",
-            cash_account_id: "all",
+            expense_category_uid: "all",
+            cash_account_uid: "all",
             date_start: "",
             date_end: "",
         });
@@ -83,8 +83,8 @@ export function Expenses() {
     const dialogMethods = useForm<ExpenseInput>({
         resolver: zodResolver(expenseSchema) as Resolver<ExpenseInput>,
         defaultValues: {
-            expense_category_id: 0,
-            cash_account_id: 0,
+            expense_category_uid: "",
+            cash_account_uid: "",
             amount: 0,
             nama: "",
             catatan: "",
@@ -95,8 +95,8 @@ export function Expenses() {
     const handleEdit = (expense: Expense) => {
         setEditingExpense(expense);
         dialogMethods.reset({
-            expense_category_id: expense.expense_category_id,
-            cash_account_id: expense.cash_account_id,
+            expense_category_uid: expense.expense_category_uid,
+            cash_account_uid: expense.cash_account_uid,
             amount: expense.amount,
             nama: expense.nama || "",
             catatan: expense.catatan || "",
@@ -108,8 +108,8 @@ export function Expenses() {
     const handleAddClick = () => {
         setEditingExpense(null);
         dialogMethods.reset({
-            expense_category_id: 0,
-            cash_account_id: 0,
+            expense_category_uid: "",
+            cash_account_uid: "",
             amount: 0,
             nama: "",
             catatan: "",
@@ -119,11 +119,11 @@ export function Expenses() {
     };
 
     // Quick payment trigger from Upcoming dues sidebar
-    const handlePayCategory = (catId: number, catName: string) => {
+    const handlePayCategory = (catUid: string, catName: string) => {
         setEditingExpense(null);
         dialogMethods.reset({
-            expense_category_id: catId,
-            cash_account_id: 0,
+            expense_category_uid: catUid,
+            cash_account_uid: "",
             amount: 0,
             nama: `Pembayaran ${catName}`,
             catatan: "",
@@ -134,12 +134,12 @@ export function Expenses() {
 
     const categoryOptions = [
         { value: "all", label: "Semua Kategori" },
-        ...categories.map((c) => ({ value: String(c.id), label: c.nama })),
+        ...categories.map((c) => ({ value: String(c.uid), label: c.nama })),
     ];
 
     const accountOptions = [
         { value: "all", label: "Semua Akun" },
-        ...cashAccounts.map((a) => ({ value: String(a.id), label: a.nama })),
+        ...cashAccounts.map((a) => ({ value: String(a.uid), label: a.nama })),
     ];
 
     return (
@@ -180,13 +180,13 @@ export function Expenses() {
                                     placeholder="Tanggal akhir"
                                 />
                                 <FormSelect<ExpenseFilterValues>
-                                    name="expense_category_id"
+                                    name="expense_category_uid"
                                     label="Kategori"
                                     options={categoryOptions}
                                     placeholder="Semua Kategori"
                                 />
                                 <FormSelect<ExpenseFilterValues>
-                                    name="cash_account_id"
+                                    name="cash_account_uid"
                                     label="Sumber Kas"
                                     options={accountOptions}
                                     placeholder="Semua Akun"

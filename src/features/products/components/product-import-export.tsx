@@ -8,7 +8,7 @@ import { toast } from "sonner";
 interface ProductImportExportProps {
   importUrl?: string;
   exportUrl?: string;
-  progressUrlFn?: (id: string) => string;
+  progressUrlFn?: (uid: string) => string;
   onImportSuccess?: () => void;
   showImport?: boolean;
   showExport?: boolean;
@@ -17,7 +17,7 @@ interface ProductImportExportProps {
 export function ProductImportExport({
   importUrl = "/v1/template-product/import",
   exportUrl = "/v1/template-product/export",
-  progressUrlFn = (id) => `/v1/template-product/import/progress/${id}`,
+  progressUrlFn = (uid) => `/v1/template-product/import/progress/${uid}`,
   onImportSuccess,
   showImport = true,
   showExport = true,
@@ -88,7 +88,7 @@ export function ProductImportExport({
       }
       setIsProgressActive(false);
       setImportProgress(null);
-      localStorage.removeItem("active_import_product_id");
+      localStorage.removeItem("active_import_product_uid");
     };
 
     intervalRef.current = setInterval(async () => {
@@ -150,19 +150,19 @@ export function ProductImportExport({
       });
 
       const responseData = response.data as {
-        data?: { id?: string; import_id?: string; uuid?: string };
+        data?: { id?: string; import_uid?: string; uid?: string };
         id?: string;
-        import_id?: string;
-        uuid?: string;
+        import_uid?: string;
+        uid?: string;
       };
 
       const importId =
         responseData?.data?.id ||
         responseData?.id ||
-        responseData?.data?.import_id ||
-        responseData?.import_id ||
-        responseData?.data?.uuid ||
-        responseData?.uuid;
+        responseData?.data?.import_uid ||
+        responseData?.import_uid ||
+        responseData?.data?.uid ||
+        responseData?.uid;
 
       if (!importId) {
         // If no background job ID is returned, assume it completed instantly
@@ -176,7 +176,7 @@ export function ProductImportExport({
       setIsImporting(false);
 
       // Save active import ID to localStorage
-      localStorage.setItem("active_import_product_id", String(importId));
+      localStorage.setItem("active_import_product_uid", String(importId));
 
       // Start polling asynchronously without awaiting it
       startPollingProgress(String(importId));
@@ -192,7 +192,7 @@ export function ProductImportExport({
   };
 
   useEffect(() => {
-    const savedImportId = localStorage.getItem("active_import_product_id");
+    const savedImportId = localStorage.getItem("active_import_product_uid");
     if (savedImportId) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       startPollingProgress(savedImportId);

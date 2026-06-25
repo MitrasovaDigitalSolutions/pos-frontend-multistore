@@ -5,11 +5,11 @@ import "next-auth/jwt";
 // ─── User Types ─────────────────────────────────────────────────────────────
 
 export interface User {
-    id: number;
+    uid: string;
     name: string;
     username: string;
     email: string | null;
-    store_id: number | null;
+    store_uid: string | null;
     status: "active" | "inactive";
     roles: Role[];
     permissions: Permission[];
@@ -34,7 +34,7 @@ declare module "next-auth" {
     interface Session {
         user: User;
         accessToken: string;
-        cashDrawerSessionId?: number | null;
+        cashDrawerSessionId?: string | null;
         error?: "RefreshTokenError";
     }
 }

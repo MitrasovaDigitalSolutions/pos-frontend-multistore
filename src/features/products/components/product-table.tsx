@@ -75,7 +75,7 @@ export function ProductTable({
     const handleToggleStatus = (p: Product) => {
         const nextStatus = p.status === "active" ? "inactive" : "active";
         toggleStatus.mutate(
-            { id: p.id, status: nextStatus },
+            { uid: p.uid, status: nextStatus },
             {
                 onSuccess: () => {
                     toast.success(
@@ -96,7 +96,7 @@ export function ProductTable({
 
     const handleConfirmDelete = () => {
         if (!productToDelete) return;
-        deleteProduct.mutate(productToDelete.id, {
+        deleteProduct.mutate(productToDelete.uid, {
             onSuccess: () => {
                 toast.success(`Produk "${productToDelete.nama}" berhasil dihapus.`);
                 setIsConfirmOpen(false);

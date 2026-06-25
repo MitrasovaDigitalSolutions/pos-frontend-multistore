@@ -68,7 +68,7 @@ export function MemberList({
 
     const handleConfirmDelete = () => {
         if (!memberToDelete) return;
-        deleteMember.mutate(memberToDelete.id, {
+        deleteMember.mutate(memberToDelete.uid, {
             onSuccess: () => {
                 toast.success(`Member "${memberToDelete.nama}" berhasil dihapus.`);
                 setIsConfirmOpen(false);

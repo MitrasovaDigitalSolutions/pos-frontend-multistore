@@ -13,7 +13,7 @@ import type { Receiving } from "../../../types";
 interface POReceivingsTabProps {
     receivings: Receiving[];
     receivingsLoading: boolean;
-    onViewDetail: (id: number) => void;
+    onViewDetail: (uid: string) => void;
 }
 
 export function POReceivingsTab({ receivings, receivingsLoading, onViewDetail }: POReceivingsTabProps) {
@@ -31,7 +31,7 @@ export function POReceivingsTab({ receivings, receivingsLoading, onViewDetail }:
             </thead>
             <tbody className="divide-y divide-slate-50 font-medium">
                 {receivings.map((rec) => (
-                    <tr key={rec.id} className="hover:bg-slate-50/50">
+                    <tr key={rec.uid} className="hover:bg-slate-50/50">
                         <td className="p-3 font-semibold text-slate-900">
                             {rec.nomor_penerimaan}
                         </td>
@@ -62,8 +62,8 @@ export function POReceivingsTab({ receivings, receivingsLoading, onViewDetail }:
                             </span>
                         </td>
                         <td className="p-3 text-center">
-                            <Button
-                                onClick={() => onViewDetail(rec.id)}
+                             <Button
+                                onClick={() => onViewDetail(rec.uid)}
                                 variant="outline"
                                 className="h-7 px-2.5 text-[10px] border-slate-200 text-slate-600 rounded-lg hover:text-slate-900 bg-white"
                             >

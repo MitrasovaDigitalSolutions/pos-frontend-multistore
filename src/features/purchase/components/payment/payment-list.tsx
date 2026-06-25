@@ -95,7 +95,7 @@ export function PaymentList({
             variant: "danger",
             onConfirm: () => {
                 deletePayment.mutate(
-                    { id: payment.id, alasan },
+                    { uid: payment.uid, alasan },
                     {
                         onSuccess: () => {
                             toast.success("Transaksi pembayaran berhasil dibatalkan (void).");
@@ -111,11 +111,11 @@ export function PaymentList({
     };
 
     const handleEditClick = (payment: ReceivingPayment) => {
-        router.push(`/admin/purchase/payment/new?edit=${payment.id}`);
+        router.push(`/admin/purchase/payment/new?edit=${payment.uid}`);
     };
 
     const handleDetailClick = (payment: ReceivingPayment) => {
-        router.push(`/admin/purchase/payment/${payment.id}`);
+        router.push(`/admin/purchase/payment/${payment.uid}`);
     };
 
     const columns = useMemo(

@@ -21,7 +21,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 interface BukaShiftModalProps {
     open: boolean;
     token?: string;
-    onSuccess: (sessionId: number) => void;
+    onSuccess: (sessionId: string) => void;
     isLoading?: boolean;
     isOnline?: boolean;
 }
@@ -61,9 +61,9 @@ export function BukaShiftModal({
                 token,
             });
 
-            if (res?.data?.id) {
+            if (res?.data?.uid) {
                 toast.success("Shift kasir berhasil dibuka!");
-                onSuccess(res.data.id);
+                onSuccess(res.data.uid);
             } else {
                 toast.error("Gagal mendapatkan ID sesi laci kasir.");
             }
@@ -80,7 +80,7 @@ export function BukaShiftModal({
         <>
             <BaseDialog
                 open={open}
-                onOpenChange={() => {}}
+                onOpenChange={() => { }}
                 title={
                     <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
@@ -181,18 +181,18 @@ export function BukaShiftModal({
                 </FormProvider>
             </BaseDialog>
 
-        <ConfirmDialog
-            open={isLogoutConfirmOpen}
-            onOpenChange={setIsLogoutConfirmOpen}
-            title="Keluar dari Akun"
-            description="Apakah Anda yakin ingin keluar dari aplikasi? Sesi Anda saat ini akan diakhiri."
-            confirmText="Ya, Keluar"
-            cancelText="Batal"
-            variant="danger"
-            onConfirm={async () => {
-                await signOut({ callbackUrl: "/login" });
-            }}
-        />
-    </>
-);
+            <ConfirmDialog
+                open={isLogoutConfirmOpen}
+                onOpenChange={setIsLogoutConfirmOpen}
+                title="Keluar dari Akun"
+                description="Apakah Anda yakin ingin keluar dari aplikasi? Sesi Anda saat ini akan diakhiri."
+                confirmText="Ya, Keluar"
+                cancelText="Batal"
+                variant="danger"
+                onConfirm={async () => {
+                    await signOut({ callbackUrl: "/login" });
+                }}
+            />
+        </>
+    );
 }

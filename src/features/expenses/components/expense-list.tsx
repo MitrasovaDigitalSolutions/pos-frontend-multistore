@@ -65,7 +65,7 @@ export function ExpenseList({
 
     const handleConfirmDelete = () => {
         if (!expenseToDelete) return;
-        deleteExpense.mutate(expenseToDelete.id, {
+        deleteExpense.mutate(expenseToDelete.uid, {
             onSuccess: () => {
                 toast.success(`Catatan pengeluaran "${expenseToDelete.nomor_pengeluaran}" berhasil dihapus.`);
                 setIsConfirmOpen(false);

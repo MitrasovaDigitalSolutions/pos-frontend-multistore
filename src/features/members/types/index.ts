@@ -1,5 +1,5 @@
 export interface Member {
-    id: number;
+    uid: string;
     kode: string;
     nama: string;
     email: string | null;

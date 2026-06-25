@@ -7,10 +7,10 @@ import type { CartItem } from "@/types/common";
 
 interface CartState {
     items: CartItem[];
-    transactionId: number | null;
+    transactionId: string | null;
 
     // Actions
-    setTransactionId: (id: number | null) => void;
+    setTransactionId: (uid: string | null) => void;
     setItems: (items: CartItem[]) => void;
     addItem: (item: CartItem) => void;
     updateItemQty: (itemId: number, qty: number) => void;
@@ -38,7 +38,7 @@ export const useCartStore = create<CartState>()(
         addItem: (item) =>
             set((state) => {
                 const existing = state.items.find(
-                    (i) => i.product_id === item.product_id,
+                    (i) => i.product_uid === item.product_uid,
                 );
                 if (existing) {
                     existing.qty += item.qty;

@@ -10,7 +10,7 @@ interface HoldListDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     holdList: HoldTransaction[];
-    onRecall: (id: number) => void;
+    onRecall: (uid: string) => void;
     onClearAll: () => void;
     isProcessing: boolean;
 }
@@ -56,12 +56,12 @@ export function HoldListDialog({
                     ) : (
                         holdList.map((h) => (
                             <div
-                                key={h.id}
+                                key={h.uid}
                                 className="flex items-center justify-between border border-slate-100 rounded-xl p-4 bg-slate-50/50"
                             >
                                 <div>
                                     <div className="font-bold text-slate-800 text-xs font-mono">
-                                        TRX #{String(h.id).slice(-8)}
+                                        TRX #{String(h.uid).slice(-8)}
                                     </div>
                                     <div className="text-[10px] text-slate-400 mt-1">
                                         {h.items_count} item ·{" "}
@@ -69,7 +69,7 @@ export function HoldListDialog({
                                     </div>
                                 </div>
                                 <Button
-                                    onClick={() => onRecall(h.id)}
+                                    onClick={() => onRecall(h.uid)}
                                     disabled={isProcessing}
                                     className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold h-8 rounded-lg px-3 cursor-pointer border-none"
                                 >

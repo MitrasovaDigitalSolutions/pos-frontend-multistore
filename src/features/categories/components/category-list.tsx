@@ -68,7 +68,7 @@ export function CategoryList({
 
     const handleConfirmDelete = () => {
         if (!categoryToDelete) return;
-        deleteCategory.mutate(categoryToDelete.id, {
+        deleteCategory.mutate(categoryToDelete.uid, {
             onSuccess: () => {
                 toast.success(`Kategori "${categoryToDelete.nama}" berhasil dihapus.`);
                 setIsConfirmOpen(false);

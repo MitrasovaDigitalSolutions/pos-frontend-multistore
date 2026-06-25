@@ -5,100 +5,100 @@ import { ENDPOINTS } from "@/shared/api/endpoints";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
 
 export interface CashLedger {
-    id: number;
-    cash_account_id: number;
+    uid: string;
+    cash_account_uid: string;
     amount: number;
     tipe: "inflow" | "outflow" | "transfer";
     kategori: string;
-    sale_id?: number | null;
-    supplier_payment_id?: number | null;
-    purchase_return_settlement_id?: number | null;
-    expense_id?: number | null;
-    cash_drawer_movement_id?: number | null;
-    cash_drawer_session_id?: number | null;
+    sale_uid?: string | null;
+    supplier_payment_uid?: string | null;
+    purchase_return_settlement_uid?: string | null;
+    expense_uid?: string | null;
+    cash_drawer_movement_uid?: string | null;
+    cash_drawer_session_uid?: string | null;
     created_at: string;
     updated_at?: string;
 
     // Relations (Laravel camelCase / snake_case relations)
     cashAccount?: CashAccount | null;
     cash_account?: CashAccount | null;
-    
+
     sale?: {
-        id: number;
+        uid: string;
         nomor_transaksi: string;
         total?: number;
     } | null;
 
     supplierPayment?: {
-        id: number;
+        uid: string;
         nomor_pembayaran: string;
         catatan?: string | null;
     } | null;
     supplier_payment?: {
-        id: number;
+        uid: string;
         nomor_pembayaran: string;
         catatan?: string | null;
     } | null;
 
     purchaseReturnSettlement?: {
-        id: number;
+        uid: string;
         nomor_transaksi: string;
         purchase_return?: {
-            id: number;
+            uid: string;
             nomor_transaksi: string;
         } | null;
         purchaseReturn?: {
-            id: number;
+            uid: string;
             nomor_transaksi: string;
         } | null;
     } | null;
     purchase_return_settlement?: {
-        id: number;
+        uid: string;
         nomor_transaksi: string;
         purchase_return?: {
-            id: number;
+            uid: string;
             nomor_transaksi: string;
         } | null;
         purchaseReturn?: {
-            id: number;
+            uid: string;
             nomor_transaksi: string;
         } | null;
     } | null;
 
     expense?: {
-        id: number;
+        uid: string;
         nomor_pengeluaran?: string;
         nama?: string | null;
         catatan?: string | null;
         category?: {
-            id: number;
+            uid: string;
             nama: string;
         } | null;
     } | null;
 
     cashDrawerMovement?: {
-        id: number;
+        uid: string;
         note?: string | null;
     } | null;
     cash_drawer_movement?: {
-        id: number;
+        uid: string;
         note?: string | null;
     } | null;
 
     cashDrawerSession?: {
-        id: number;
+        uid: string;
         opened_at?: string;
         closed_at?: string | null;
     } | null;
     cash_drawer_session?: {
-        id: number;
+        uid: string;
         opened_at?: string;
         closed_at?: string | null;
     } | null;
 }
 
 export interface CashFlowFilters extends PaginationParams {
-    cash_account_id?: number;
+    cash_account_uid?: string;
     tipe?: string;
     kategori?: string;
     from?: string;
@@ -109,7 +109,7 @@ export interface CashFlowFilters extends PaginationParams {
 
 
 export interface CashAccount {
-    id: number;
+    uid: string;
     nama: string;
     tipe: string;
     nomor_rekening?: string | null;
@@ -125,8 +125,8 @@ export interface DebitCreditInput {
 }
 
 export interface TransferInput {
-    from_account_id: number;
-    to_account_id: number;
+    from_account_uid: string;
+    to_account_uid: string;
     amount: number;
     catatan?: string | null;
 }
@@ -145,10 +145,10 @@ export function useCashAccounts() {
 
 export function useDebitCashAccount() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<CashAccount>, Error, { id: number; data: DebitCreditInput }>({
-        mutationFn: ({ id, data }) =>
+    return useMutation<ApiResponse<CashAccount>, Error, { uid: string; data: DebitCreditInput }>({
+        mutationFn: ({ uid, data }) =>
             apiPost<ApiResponse<CashAccount>, DebitCreditInput>(
-                `${ENDPOINTS.CASH_ACCOUNTS}/${id}/debit`,
+                `${ENDPOINTS.CASH_ACCOUNTS}/${uid}/debit`,
                 data,
             ),
         onSuccess: () => {
@@ -161,10 +161,10 @@ export function useDebitCashAccount() {
 
 export function useCreditCashAccount() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<CashAccount>, Error, { id: number; data: DebitCreditInput }>({
-        mutationFn: ({ id, data }) =>
+    return useMutation<ApiResponse<CashAccount>, Error, { uid: string; data: DebitCreditInput }>({
+        mutationFn: ({ uid, data }) =>
             apiPost<ApiResponse<CashAccount>, DebitCreditInput>(
-                `${ENDPOINTS.CASH_ACCOUNTS}/${id}/credit`,
+                `${ENDPOINTS.CASH_ACCOUNTS}/${uid}/credit`,
                 data,
             ),
         onSuccess: () => {
@@ -196,11 +196,11 @@ export function useCashFlow(filters?: CashFlowFilters) {
     });
 }
 
-export function useAccountCashFlow(id: number, filters?: CashFlowFilters) {
+export function useAccountCashFlow(uid: string, filters?: CashFlowFilters) {
     return useQuery<PaginatedResponse<CashLedger>>({
-        queryKey: queryKeys.cashAccounts.accountCashFlow(id, filters),
-        queryFn: () => apiGetList<CashLedger>(ENDPOINTS.ACCOUNT_CASH_FLOW(id), filters),
-        enabled: !!id,
+        queryKey: queryKeys.cashAccounts.accountCashFlow(uid, filters),
+        queryFn: () => apiGetList<CashLedger>(ENDPOINTS.ACCOUNT_CASH_FLOW(uid), filters),
+        enabled: !!uid,
     });
 }
 

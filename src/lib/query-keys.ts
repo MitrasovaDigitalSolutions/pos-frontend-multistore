@@ -6,8 +6,8 @@ export const queryKeys = {
     products: {
         all: ["products"] as const,
         list: () => [...queryKeys.products.all, "list"] as const,
-        detail: (id: number) =>
-            [...queryKeys.products.all, "detail", id] as const,
+        detail: (uid: string) =>
+            [...queryKeys.products.all, "detail", uid] as const,
     },
 
     // Users
@@ -88,45 +88,45 @@ export const queryKeys = {
         movements: () => [...queryKeys.inventory.all, "movements"] as const,
         receivings: () => [...queryKeys.inventory.all, "receivings"] as const,
         opnames: () => [...queryKeys.inventory.all, "opnames"] as const,
-        opnameDetail: (id: number) =>
-            [...queryKeys.inventory.all, "opname", id] as const,
+        opnameDetail: (uid: string) =>
+            [...queryKeys.inventory.all, "opname", uid] as const,
     },
 
     // Purchase
     purchase: {
         all: ["purchase"] as const,
         receivings: () => [...queryKeys.purchase.all, "receivings"] as const,
-        receivingDetail: (id: number) =>
-            [...queryKeys.purchase.all, "receiving", id] as const,
+        receivingDetail: (uid: string) =>
+            [...queryKeys.purchase.all, "receiving", uid] as const,
         orders: () => [...queryKeys.purchase.all, "orders"] as const,
-        orderDetail: (id: number) =>
-            [...queryKeys.purchase.all, "order", id] as const,
-        orderItems: (id: number) =>
-            [...queryKeys.purchase.all, "order", id, "items"] as const,
+        orderDetail: (uid: string) =>
+            [...queryKeys.purchase.all, "order", uid] as const,
+        orderItems: (uid: string) =>
+            [...queryKeys.purchase.all, "order", uid, "items"] as const,
         outstanding: () =>
             [...queryKeys.purchase.all, "orders", "outstanding"] as const,
-        orderReceivings: (id: number) =>
-            [...queryKeys.purchase.all, "order", id, "receivings"] as const,
+        orderReceivings: (uid: string) =>
+            [...queryKeys.purchase.all, "order", uid, "receivings"] as const,
         payments: () => [...queryKeys.purchase.all, "payments"] as const,
-        paymentDetail: (id: number) =>
-            [...queryKeys.purchase.all, "payment", id] as const,
+        paymentDetail: (uid: string) =>
+            [...queryKeys.purchase.all, "payment", uid] as const,
         returns: () => [...queryKeys.purchase.all, "returns"] as const,
-        returnDetail: (id: number) =>
-            [...queryKeys.purchase.all, "return", id] as const,
+        returnDetail: (uid: string) =>
+            [...queryKeys.purchase.all, "return", uid] as const,
     },
 
     cashAccounts: {
         all: ["cash-accounts"] as const,
         cashFlow: (filters?: unknown) => ["cash-accounts", "cash-flow", filters] as const,
-        accountCashFlow: (id: number, filters?: unknown) => ["cash-accounts", id, "cash-flow", filters] as const,
+        accountCashFlow: (uid: string, filters?: unknown) => ["cash-accounts", uid, "cash-flow", filters] as const,
     },
 
     // Transactions (checkout)
     transactions: {
         all: ["transactions"] as const,
         onHold: () => [...queryKeys.transactions.all, "on-hold"] as const,
-        detail: (id: number | string) =>
-            [...queryKeys.transactions.all, "detail", id] as const,
+        detail: (uid: string | string) =>
+            [...queryKeys.transactions.all, "detail", uid] as const,
     },
 
     // Activity Logs

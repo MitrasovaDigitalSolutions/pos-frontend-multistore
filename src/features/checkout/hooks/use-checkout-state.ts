@@ -22,7 +22,7 @@ export function useCheckoutState() {
     const { data: productsData, refetch: refetchProducts } = useProducts({
         per_page: 1000,
     });
-    
+
     const [localProducts, setLocalProducts] = useState<Product[]>([]);
 
     const reloadLocalProducts = useCallback(async () => {
@@ -83,7 +83,7 @@ export function useCheckoutState() {
     const selectedMember = useMemo(() => (mounted ? storeSelectedMember : null), [mounted, storeSelectedMember]);
 
     // Recalled transaction reference ID (purely for local UI representation)
-    const [activeRecallId, setActiveRecallId] = useState<number | null>(null);
+    const [activeRecallId, setActiveRecallId] = useState<string | null>(null);
 
     // UI state
     const [barcodeInput, setBarcodeInput] = useState("");
@@ -119,10 +119,10 @@ export function useCheckoutState() {
         if (cart.length === 0) return;
         try {
             setIsProcessing(true);
-            const holdId = activeRecallId || Date.now();
+            const holdId = activeRecallId || Date.now() as unknown as string;
 
             const newHold: HoldTransaction = {
-                id: holdId,
+                uid: holdId as string,
                 items_count: cart.reduce((acc, item) => acc + item.qty, 0),
                 subtotal,
                 created_at: new Date().toISOString(),
@@ -169,7 +169,7 @@ export function useCheckoutState() {
             return;
         }
 
-        const existing = cart.find((i) => i.product_id === product.id);
+        const existing = cart.find((i) => i.product_uid === product.uid);
         if (!product.is_jasa && existing && existing.qty >= product.stok) {
             toast.error(`Stok ${product.nama} tidak mencukupi!`);
             return;
@@ -178,7 +178,7 @@ export function useCheckoutState() {
         try {
             setIsProcessing(true);
             addItem({
-                product_id: product.id,
+                product_uid: product.uid,
                 name: product.nama,
                 price: product.harga,
                 qty: 1,
@@ -204,11 +204,11 @@ export function useCheckoutState() {
             toast.error(`Stok ${item.name} tidak mencukupi! Maksimal: ${item.stock}`);
             return;
         }
-        updateItemQty(item.product_id, newQty);
+        updateItemQty(item.product_uid, newQty);
     };
 
     const handleRemoveItem = async (item: CartItem) => {
-        removeItem(item.product_id);
+        removeItem(item.product_uid);
         toast.error(`${item.name} dihapus.`);
     };
 
@@ -266,10 +266,10 @@ export function useCheckoutState() {
         }
     };
 
-    const handleRecall = useCallback((holdTrxId: number) => {
+    const handleRecall = useCallback((holdTrxId: string) => {
         try {
             setIsProcessing(true);
-            const held = storeHoldList.find((h) => h.id === holdTrxId);
+            const held = storeHoldList.find((h) => h.uid === holdTrxId);
             if (!held) {
                 toast.error("Transaksi hold tidak ditemukan.");
                 return;
@@ -278,9 +278,9 @@ export function useCheckoutState() {
             // Auto-hold active cart if not empty
             const activeCart = useCheckoutStore.getState().cart;
             if (activeCart.length > 0) {
-                const currentHoldId = activeRecallId || Date.now();
+                const currentHoldId = activeRecallId || Date.now().toString();
                 const autoHoldItem: HoldTransaction = {
-                    id: currentHoldId,
+                    uid: currentHoldId,
                     items_count: activeCart.reduce((acc, item) => acc + item.qty, 0),
                     subtotal: activeCart.reduce((acc, i) => acc + i.price * i.qty, 0),
                     created_at: new Date().toISOString(),
@@ -294,7 +294,7 @@ export function useCheckoutState() {
             // Load items into cart
             useCheckoutStore.getState().setCart(held.items);
             useCheckoutStore.getState().setSelectedMember(held.member || null);
-            setActiveRecallId(held.id);
+            setActiveRecallId(held.uid);
             // Remove from holdList
             removeHoldTransaction(holdTrxId);
             setIsHoldListOpen(false);
@@ -320,16 +320,16 @@ export function useCheckoutState() {
         refetchProducts();
         clearCart();
         setActiveRecallId(null);
-        if (receiptData?.id) {
-            localStorage.setItem("lastTransactionId", String(receiptData.id));
-            setLastTransactionId(receiptData.id);
-            const isOfflineTx = String(receiptData.id).startsWith("OFFLINE") || receiptData.id > 1000000000000;
+        if (receiptData?.uid) {
+            localStorage.setItem("lastTransactionId", String(receiptData.uid));
+            setLastTransactionId(Number(receiptData.uid));
+            const isOfflineTx = String(receiptData.uid).startsWith("OFFLINE") || Number(receiptData.uid) > 1000000000000;
             if (isOfflineTx) {
                 setTimeout(() => {
                     window.print();
                 }, 250);
             } else {
-                window.open(`/api/proxy/v1/transactions-print/${receiptData.id}`, "_blank");
+                window.open(`/api/proxy/v1/transactions-print/${receiptData.uid}`, "_blank");
             }
         }
     };

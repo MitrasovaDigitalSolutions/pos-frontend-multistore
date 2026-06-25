@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { IconScan, IconHome, IconLogout, IconWifi, IconCash } from "@tabler/icons-react";
 
 interface CheckoutTopBarProps {
-    transactionId: number | null;
-    activeDrawerSession: { id: number } | null | undefined;
+    transactionId: string | null;
+    activeDrawerSession: { uid: string } | null | undefined;
     hasAccessAdmin: boolean;
     onInfoSesiClick: () => void;
     onLogout: () => void;

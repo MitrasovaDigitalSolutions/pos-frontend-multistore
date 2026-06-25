@@ -8,7 +8,7 @@ import { useUsers } from "@/features/users/api/users-api";
 
 export interface SessionFilterValues {
     status: "all" | "open" | "closed";
-    user_id: string;
+    user_uid: string;
     from: string;
     to: string;
 }
@@ -16,7 +16,7 @@ export interface SessionFilterValues {
 interface SessionFilterProps {
     onFilter: (filters: {
         status?: "open" | "closed";
-        user_id?: number;
+        user_uid?: string;
         from?: string;
         to?: string;
     }) => void;
@@ -26,7 +26,7 @@ export function SessionFilter({ onFilter }: SessionFilterProps) {
     const methods = useForm<SessionFilterValues>({
         defaultValues: {
             status: "all",
-            user_id: "",
+            user_uid: "",
             from: "",
             to: "",
         },
@@ -36,7 +36,7 @@ export function SessionFilter({ onFilter }: SessionFilterProps) {
     const userOptions = [
         { value: "", label: "Semua Kasir" },
         ...(usersData?.data || []).map((u) => ({
-            value: String(u.id),
+            value: u.uid,
             label: u.name,
         })),
     ];
@@ -49,17 +49,17 @@ export function SessionFilter({ onFilter }: SessionFilterProps) {
 
     const onSubmit = (data: SessionFilterValues) => {
         const status = data.status === "all" ? undefined : data.status;
-        const user_id = data.user_id ? Number(data.user_id) : undefined;
+        const user_uid = data.user_uid ? (data.user_uid) : undefined;
         const from = data.from || undefined;
         const to = data.to || undefined;
 
-        onFilter({ status, user_id, from, to });
+        onFilter({ status, user_uid, from, to });
     };
 
     const handleReset = () => {
         methods.reset({
             status: "all",
-            user_id: "",
+            user_uid: "",
             from: "",
             to: "",
         });
@@ -74,7 +74,7 @@ export function SessionFilter({ onFilter }: SessionFilterProps) {
         >
             {/* Field 1: Operator/Kasir Filter */}
             <FormSelect<SessionFilterValues>
-                name="user_id"
+                name="user_uid"
                 label="Operator / Kasir"
                 options={userOptions}
                 placeholder={isLoadingUsers ? "Memuat kasir..." : "Semua Kasir"}

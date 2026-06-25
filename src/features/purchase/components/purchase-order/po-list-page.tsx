@@ -32,7 +32,7 @@ import { FormDatePicker } from "@/components/forms/form-date-picker";
 interface POFilterValues {
     search: string;
     status: string;
-    supplier_id: string;
+    supplier_uid: string;
     start_date: string;
     end_date: string;
 }
@@ -53,7 +53,7 @@ export function POListPage() {
     const [filters, setFilters] = useState({
         search: "",
         status: "all",
-        supplier_id: "all",
+        supplier_uid: "all",
         start_date: "",
         end_date: "",
     });
@@ -64,7 +64,7 @@ export function POListPage() {
         defaultValues: {
             search: "",
             status: "all",
-            supplier_id: "all",
+            supplier_uid: "all",
             start_date: "",
             end_date: "",
         },
@@ -74,7 +74,7 @@ export function POListPage() {
         setFilters({
             search: data.search,
             status: data.status,
-            supplier_id: data.supplier_id,
+            supplier_uid: data.supplier_uid,
             start_date: data.start_date,
             end_date: data.end_date,
         });
@@ -85,14 +85,14 @@ export function POListPage() {
         filterMethods.reset({
             search: "",
             status: "all",
-            supplier_id: "all",
+            supplier_uid: "all",
             start_date: "",
             end_date: "",
         });
         setFilters({
             search: "",
             status: "all",
-            supplier_id: "all",
+            supplier_uid: "all",
             start_date: "",
             end_date: "",
         });
@@ -105,7 +105,7 @@ export function POListPage() {
         per_page: number;
         search?: string;
         status?: string;
-        supplier_id?: number;
+        supplier_uid?: string;
         start_date?: string;
         end_date?: string;
         sort_by?: string;
@@ -122,8 +122,8 @@ export function POListPage() {
     if (deferredFilters.status && deferredFilters.status !== "all") {
         apiParams.status = deferredFilters.status;
     }
-    if (deferredFilters.supplier_id && deferredFilters.supplier_id !== "all") {
-        apiParams.supplier_id = Number(deferredFilters.supplier_id);
+    if (deferredFilters.supplier_uid && deferredFilters.supplier_uid !== "all") {
+        apiParams.supplier_uid = deferredFilters.supplier_uid;
     }
     if (deferredFilters.start_date) {
         apiParams.start_date = deferredFilters.start_date;
@@ -178,7 +178,7 @@ export function POListPage() {
             cancelText: "Batal",
             variant: "success",
             onConfirm: () => {
-                finalizeOrder.mutate(order.id, {
+                finalizeOrder.mutate(order.uid, {
                     onSuccess: () => {
                         toast.success("Purchase Order berhasil difinalisasi.");
                         setConfirmDialog((prev) => ({ ...prev, open: false }));
@@ -200,7 +200,7 @@ export function POListPage() {
             cancelText: "Batal",
             variant: "danger",
             onConfirm: () => {
-                cancelOrder.mutate(order.id, {
+                cancelOrder.mutate(order.uid, {
                     onSuccess: () => {
                         toast.success("Purchase Order berhasil dibatalkan.");
                         setConfirmDialog((prev) => ({ ...prev, open: false }));
@@ -213,7 +213,7 @@ export function POListPage() {
         });
     };
 
-    const handleDelete = (id: number) => {
+    const handleDelete = (uid: string) => {
         setConfirmDialog({
             open: true,
             title: "Hapus Draft Purchase Order",
@@ -222,7 +222,7 @@ export function POListPage() {
             cancelText: "Batal",
             variant: "danger",
             onConfirm: () => {
-                deleteOrder.mutate(id, {
+                deleteOrder.mutate(uid, {
                     onSuccess: () => {
                         toast.success("Draft Purchase Order berhasil dihapus.");
                         setConfirmDialog((prev) => ({ ...prev, open: false }));
@@ -251,7 +251,7 @@ export function POListPage() {
         return [
             { value: "all", label: "Semua Supplier" },
             ...suppliers.map((sup) => ({
-                value: String(sup.id),
+                value: sup.uid,
                 label: sup.nama,
             })),
         ];
@@ -300,7 +300,7 @@ export function POListPage() {
                     />
 
                     <FormSelect<POFilterValues>
-                        name="supplier_id"
+                        name="supplier_uid"
                         label="Supplier"
                         options={supplierOptions}
                         placeholder="Semua Supplier"
@@ -342,12 +342,12 @@ export function POListPage() {
                     }}
                     virtualize={true}
                     estimateRowHeight={44}
-                    onView={(order) => router.push(`/admin/purchase/order/${order.id}`)}
-                    onEdit={(order) => router.push(`/admin/purchase/order/${order.id}/items`)}
+                    onView={(order) => router.push(`/admin/purchase/order/${order.uid}`)}
+                    onEdit={(order) => router.push(`/admin/purchase/order/${order.uid}/items`)}
                     hideEdit={(order) => !(order.status === PO_STATUS.DRAFT && hasManagePurchase)}
                     onCheck={handleFinalize}
                     hideCheck={(order) => !(order.status === PO_STATUS.DRAFT && hasManagePurchase)}
-                    onDelete={(order) => handleDelete(order.id)}
+                    onDelete={(order) => handleDelete(order.uid)}
                     hideDelete={(order) => !(order.status === PO_STATUS.DRAFT && hasManagePurchase)}
                     extraActions={(order) => {
                         const canCancel = order.status !== PO_STATUS.RECEIVED &&

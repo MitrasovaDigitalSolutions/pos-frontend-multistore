@@ -1,7 +1,7 @@
 import { IconInfoCircle } from "@tabler/icons-react";
 
 interface ReceivingInstructionPanelProps {
-    poId: number | null;
+    poId: string | null;
 }
 
 export function ReceivingInstructionPanel({ poId }: ReceivingInstructionPanelProps) {

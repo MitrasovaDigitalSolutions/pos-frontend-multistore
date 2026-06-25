@@ -14,7 +14,7 @@ export interface Transaction extends BaseSale {
     voidBy?: User | null;
     items: TransactionItem[];
     member?: Member | null;
-    member_id?: number | null;
+    member_uid?: string | null;
     cash_received?: number | null;
     debt_amount?: number | null;
 }

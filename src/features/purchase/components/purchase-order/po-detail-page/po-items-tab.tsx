@@ -27,7 +27,7 @@ export function POItemsTab({ items }: POItemsTabProps) {
                     );
 
                     return (
-                        <tr key={item.id} className="hover:bg-slate-50/50">
+                        <tr key={item.uid} className="hover:bg-slate-50/50">
                             <td className="p-3">
                                 <p className="font-semibold text-slate-900">
                                     {item.product?.nama || "Produk dihapus"}

@@ -8,8 +8,8 @@ import { FormSelect } from "@/components/forms/form-select";
 interface ReturnItemsTableProps {
     items: PurchaseItemLocal[];
     isPending: boolean;
-    updateItem: (temp_id: string, updates: Partial<PurchaseItemLocal>) => void;
-    returnLimitsMap: Record<number, { sisa: number; nama: string; harga: number }>;
+    updateItem: (temp_uid: string, updates: Partial<PurchaseItemLocal>) => void;
+    returnLimitsMap: Record<string, { sisa: number; nama: string; harga: number }>;
     reasons: { value: string; label: string }[];
     activeItems: PurchaseItemLocal[];
     activeTotalValue: number;
@@ -67,12 +67,12 @@ export function ReturnItemsTable({
                         </thead>
                         <tbody className="divide-y divide-slate-50 font-medium">
                             {items.map((item, idx) => {
-                                const limit = returnLimitsMap[item.product_id];
+                                const limit = returnLimitsMap[item.product_uid];
                                 const maxReturnable = limit ? limit.sisa : 0;
                                 const subtotal = item.kuantitas * item.harga_estimasi;
 
                                 return (
-                                    <tr key={item.temp_id} className="hover:bg-slate-50/50 transition-colors">
+                                    <tr key={item.temp_uid} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="p-3 text-slate-400 font-mono font-bold">{idx + 1}</td>
                                         <td className="p-3">
                                             <span className="font-mono text-slate-500 text-[11px]">
@@ -90,7 +90,7 @@ export function ReturnItemsTable({
                                                 max={maxReturnable}
                                                 onValueChange={(val) => {
                                                     const checkedVal = Math.min(maxReturnable, Math.max(0, val ?? 0));
-                                                    updateItem(item.temp_id, { kuantitas: checkedVal });
+                                                    updateItem(item.temp_uid, { kuantitas: checkedVal });
                                                 }}
                                                 disabled={isPending}
                                                 className="w-full h-8 text-center text-xs font-bold text-slate-800 rounded-lg border-slate-200 focus-visible:ring-emerald-400/20 focus-visible:border-emerald-400"
@@ -108,7 +108,7 @@ export function ReturnItemsTable({
                                                 options={reasons}
                                                 disabled={isPending || item.kuantitas === 0}
                                                 onChange={(val) => {
-                                                    updateItem(item.temp_id, { alasan: val });
+                                                    updateItem(item.temp_uid, { alasan: val });
                                                 }}
                                                 size="sm"
                                             />
@@ -117,7 +117,7 @@ export function ReturnItemsTable({
                                             {item.kuantitas > 0 && (
                                                 <button
                                                     type="button"
-                                                    onClick={() => updateItem(item.temp_id, { kuantitas: 0 })}
+                                                    onClick={() => updateItem(item.temp_uid, { kuantitas: 0 })}
                                                     disabled={isPending}
                                                     className="p-1.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                                                     title="Kosongkan item"

@@ -97,7 +97,7 @@ export function ReceivingList({
             variant: "warning",
             onConfirm: () => {
                 const itemsInput = (receiving.items || []).map((item) => ({
-                    product_id: item.product_id,
+                    product_uid: item.product_uid,
                     kuantitas: item.kuantitas,
                     harga_beli: item.harga_beli || 0,
                     update_harga_jual: false,
@@ -107,9 +107,9 @@ export function ReceivingList({
 
                 updateReceiving.mutate(
                     {
-                        id: receiving.id,
+                        uid: receiving.uid,
                         data: {
-                            supplier_id: receiving.supplier_id,
+                            supplier_uid: receiving.supplier_uid,
                             nomor_faktur: receiving.nomor_faktur,
                             nilai_faktur: receiving.nilai_faktur,
                             status_pembayaran: receiving.status_pembayaran,
@@ -121,7 +121,7 @@ export function ReceivingList({
                     {
                         onSuccess: () => {
                             toast.success("Penerimaan barang berhasil diselesaikan.");
-                            clearPurchaseItemsStore(receiving.id, "receiving");
+                            clearPurchaseItemsStore(receiving.uid, "receiving");
                             setConfirmDialog((prev) => ({ ...prev, open: false }));
                         },
                         onError: (err) => {
@@ -133,7 +133,7 @@ export function ReceivingList({
         });
     };
 
-    const handleDelete = (id: number) => {
+    const handleDelete = (uid: string) => {
         setConfirmDialog({
             open: true,
             title: "Hapus Draft Penerimaan",
@@ -142,10 +142,10 @@ export function ReceivingList({
             cancelText: "Batal",
             variant: "danger",
             onConfirm: () => {
-                deleteReceiving.mutate(id, {
+                deleteReceiving.mutate(uid, {
                     onSuccess: () => {
                         toast.success("Draft penerimaan berhasil dihapus.");
-                        clearPurchaseItemsStore(id, "receiving");
+                        clearPurchaseItemsStore(uid, "receiving");
                         setConfirmDialog((prev) => ({ ...prev, open: false }));
                     },
                     onError: (err) => {
@@ -157,7 +157,7 @@ export function ReceivingList({
     };
 
     const handleEditClick = (receiving: Receiving) => {
-        router.push(`/admin/purchase/receiving/${receiving.id}/items`);
+        router.push(`/admin/purchase/receiving/${receiving.uid}/items`);
     };
 
     const handleDetailClick = (receiving: Receiving) => {
@@ -213,7 +213,7 @@ export function ReceivingList({
                 hideEdit={(rec) => !(rec.status === RECEIVING_STATUS.DRAFT && hasManagePurchase)}
                 onCheck={handleFinalize}
                 hideCheck={(rec) => !(rec.status === RECEIVING_STATUS.DRAFT && hasManagePurchase)}
-                onDelete={(rec) => handleDelete(rec.id)}
+                onDelete={(rec) => handleDelete(rec.uid)}
                 hideDelete={(rec) => !(rec.status === RECEIVING_STATUS.DRAFT && canDeleteDraft)}
             />
 
@@ -221,7 +221,7 @@ export function ReceivingList({
             <ReceivingDetailDialog
                 open={isDetailOpen}
                 onOpenChange={setIsDetailOpen}
-                receivingId={selectedReceiving?.id || null}
+                receivingId={selectedReceiving?.uid || null}
             />
 
             {/* Confirm Dialog */}

@@ -32,9 +32,9 @@ export function useCreateMember() {
 
 export function useUpdateMember() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<Member>, Error, { id: number; data: MemberInput }>({
-        mutationFn: ({ id, data }) =>
-            apiPut<ApiResponse<Member>, MemberInput>(`/v1/members/${id}`, data),
+    return useMutation<ApiResponse<Member>, Error, { uid: string; data: MemberInput }>({
+        mutationFn: ({ uid, data }) =>
+            apiPut<ApiResponse<Member>, MemberInput>(`/v1/members/${uid}`, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
         },
@@ -43,8 +43,8 @@ export function useUpdateMember() {
 
 export function useDeleteMember() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<void>, Error, number>({
-        mutationFn: (id) => apiDelete<ApiResponse<void>>(`/v1/members/${id}`),
+    return useMutation<ApiResponse<void>, Error, string>({
+        mutationFn: (uid) => apiDelete<ApiResponse<void>>(`/v1/members/${uid}`),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
         },
@@ -82,15 +82,15 @@ export interface PayDebtPayload {
 }
 
 export interface DebtTransactionItem {
-    id: number;
-    sale_id: number;
-    product_id: number;
+    uid: string;
+    sale_uid: string;
+    product_uid: string;
     nama_produk: string;
     kuantitas: number;
     harga_satuan: number;
     subtotal: number;
     product?: {
-        id: number;
+        uid: string;
         nama: string;
         harga: number;
         barcode?: string;
@@ -99,7 +99,7 @@ export interface DebtTransactionItem {
 }
 
 export interface DebtTransaction {
-    id: number;
+    uid: string;
     nomor_transaksi: string;
     total: number;
     cash_received: number;
@@ -112,7 +112,7 @@ export interface DebtTransaction {
 }
 
 export interface DebtPayment {
-    id: number;
+    uid: string;
     action: string;
     description: string;
     created_at: string;
@@ -157,21 +157,21 @@ export function useMemberDebts(params?: PaginationParams & { search?: string; st
 
 export function usePayMemberDebt() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<{ member: Member; payment: unknown }>, Error, { id: number; data: PayDebtPayload }>({
-        mutationFn: ({ id, data }) =>
-            apiPatch<ApiResponse<{ member: Member; payment: unknown }>, PayDebtPayload>(`/v1/members/pay-debt/${id}`, data),
+    return useMutation<ApiResponse<{ member: Member; payment: unknown }>, Error, { uid: string; data: PayDebtPayload }>({
+        mutationFn: ({ uid, data }) =>
+            apiPatch<ApiResponse<{ member: Member; payment: unknown }>, PayDebtPayload>(`/v1/members/pay-debt/${uid}`, data),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
             queryClient.invalidateQueries({ queryKey: ["cash-drawer"] });
-            queryClient.invalidateQueries({ queryKey: [...queryKeys.members.all, "debt-history", variables.id] });
+            queryClient.invalidateQueries({ queryKey: [...queryKeys.members.all, "debt-history", variables.uid] });
         },
     });
 }
 
-export function useMemberDebtHistory(memberId: number) {
+export function useMemberDebtHistory(memberUid: string) {
     return useQuery<DebtHistoryResponse>({
-        queryKey: [...queryKeys.members.all, "debt-history", memberId],
-        queryFn: () => apiGetData<DebtHistoryResponse>(`/v1/members/debt-history/${memberId}`),
-        enabled: !!memberId,
+        queryKey: [...queryKeys.members.all, "debt-history", memberUid],
+        queryFn: () => apiGetData<DebtHistoryResponse>(`/v1/members/debt-history/${memberUid}`),
+        enabled: !!memberUid,
     });
 }

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { OPNAME_STATUS } from "@/constants/stock";
 
 export const opnameItemSchema = z.object({
-    product_id: z.coerce.number().min(1),
+    product_uid: z.coerce.number().min(1),
     stok_fisik: z.coerce
         .number()
         .min(0, "Stok fisik tidak boleh kurang dari 0"),

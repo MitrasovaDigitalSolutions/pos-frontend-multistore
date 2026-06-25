@@ -24,7 +24,7 @@ import { ReturnItemsTable } from "./return-items-table";
 import { ReturnInstructionPanel } from "./return-instruction-panel";
 
 interface ReturnItemsPageProps {
-    returnId: number;
+    returnId: string;
 }
 
 export function ReturnItemsPage({ returnId }: ReturnItemsPageProps) {
@@ -72,7 +72,7 @@ export function ReturnItemsPage({ returnId }: ReturnItemsPageProps) {
     return <ReturnItemsContainer returnId={returnId} returnObj={returnObj} />;
 }
 
-function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; returnObj: PurchaseReturn }) {
+function ReturnItemsContainer({ returnId, returnObj }: { returnId: string; returnObj: PurchaseReturn }) {
     const [isEditHeaderOpen, setIsEditHeaderOpen] = useState(false);
     const [isFinalizeOpen, setIsFinalizeOpen] = useState(false);
     const [isSavingForFinalize, setIsSavingForFinalize] = useState(false);
@@ -88,17 +88,17 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
 
     // Fetch returnable items for the linked receiving doc
     const { data: returnableItems = [] } = useReturnableItems(
-        returnObj.stock_receiving_id
+        returnObj.stock_receiving_uid
     );
 
     const isFirstLoad = useRef(true);
 
     // Build returnable limits map for validation
     const returnLimitsMap = useMemo(() => {
-        const map: Record<number, { sisa: number; nama: string; harga: number }> = {};
+        const map: Record<string, { sisa: number; nama: string; harga: number }> = {};
         if (returnableItems) {
             returnableItems.forEach((item) => {
-                map[item.product_id] = {
+                map[String(item.product_uid)] = {
                     sisa: item.kuantitas_sisa,
                     nama: item.product?.nama || "Produk",
                     harga: item.harga_beli,
@@ -120,8 +120,8 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
         // 1. If we have existing return items in draft, load them
         if (returnObj.items && returnObj.items.length > 0) {
             const dbItems: PurchaseItemLocal[] = returnObj.items.map((item) => ({
-                temp_id: `${Date.now()}-${item.id}-${Math.random().toString(36).substring(2, 5)}`,
-                product_id: item.product_id,
+                temp_uid: `${Date.now()}-${item.uid}-${Math.random().toString(36).substring(2, 5)}`,
+                product_uid: String(item.product_uid),
                 barcode: item.product?.barcode || null,
                 nama: item.product?.nama || "Produk Tanpa Nama",
                 kuantitas: item.kuantitas,
@@ -132,11 +132,11 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
             isFirstLoad.current = false;
         }
         // 2. Else pre-populate items with returnable items from receiving (start with 0 qty)
-        else if (returnObj.stock_receiving_id) {
+        else if (returnObj.stock_receiving_uid) {
             if (returnableItems && returnableItems.length > 0) {
                 const initItems: PurchaseItemLocal[] = returnableItems.map((item) => ({
-                    temp_id: `${Date.now()}-${item.product_id}-${Math.random().toString(36).substring(2, 5)}`,
-                    product_id: item.product_id,
+                    temp_uid: `${Date.now()}-${item.product_uid}-${Math.random().toString(36).substring(2, 5)}`,
+                    product_uid: String(item.product_uid),
                     barcode: item.product?.barcode || null,
                     nama: item.product?.nama || "Produk Tanpa Nama",
                     kuantitas: 0,
@@ -151,17 +151,17 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
         else {
             isFirstLoad.current = false;
         }
-    }, [returnObj.items, returnObj.stock_receiving_id, returnableItems, store]);
+    }, [returnObj.items, returnObj.stock_receiving_uid, returnableItems, store]);
 
     const handleProductFound = async (product: Product) => {
-        if (!returnObj.stock_receiving_id) {
+        if (!returnObj.stock_receiving_uid) {
             toast.error("Referensi Penerimaan belum ditentukan.");
             return;
         }
 
         try {
             const res = await scanMutation.mutateAsync({
-                receiving_id: returnObj.stock_receiving_id,
+                receiving_uid: returnObj.stock_receiving_uid,
                 barcode: product.barcode || "",
             });
 
@@ -174,7 +174,7 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
             const maxLimit = scanResult.kuantitas_sisa;
 
             // Find item in Zustand store
-            const existingItem = items.find((i) => i.product_id === product.id);
+            const existingItem = items.find((i) => i.product_uid === product.uid);
             const currentQty = existingItem ? existingItem.kuantitas : 0;
 
             if (currentQty >= maxLimit) {
@@ -183,11 +183,11 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
             }
 
             if (existingItem) {
-                updateItem(existingItem.temp_id, { kuantitas: currentQty + 1 });
+                updateItem(existingItem.temp_uid, { kuantitas: currentQty + 1 });
                 toast.success(`Menambahkan 1 pcs "${product.nama}".`);
             } else {
                 addItem({
-                    product_id: product.id,
+                    product_uid: product.uid,
                     barcode: product.barcode,
                     nama: product.nama,
                     harga_estimasi: product.harga_beli || 0,
@@ -212,7 +212,7 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
 
         // Validate max return limits
         for (const item of activeItems) {
-            const limit = returnLimitsMap[item.product_id];
+            const limit = returnLimitsMap[item.product_uid];
             if (limit && item.kuantitas > limit.sisa) {
                 toast.error(`Jumlah retur "${item.nama}" (${item.kuantitas} pcs) melebihi batas yang dapat diretur (${limit.sisa} pcs).`);
                 return;
@@ -225,7 +225,7 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
 
         const payload = {
             items: activeItems.map((i) => ({
-                product_id: i.product_id,
+                product_uid: i.product_uid,
                 kuantitas: i.kuantitas,
                 harga_beli: i.harga_estimasi,
                 alasan: i.alasan || "damaged",
@@ -233,7 +233,7 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
         };
 
         bulkReplace.mutate(
-            { id: returnId, data: payload },
+            { uid: returnId, data: payload },
             {
                 onSuccess: () => {
                     toast.success("Daftar barang retur berhasil disimpan ke server!");
@@ -258,7 +258,7 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
 
         // Validate max return limits
         for (const item of activeItems) {
-            const limit = returnLimitsMap[item.product_id];
+            const limit = returnLimitsMap[item.product_uid];
             if (limit && item.kuantitas > limit.sisa) {
                 toast.error(`Jumlah retur "${item.nama}" (${item.kuantitas} pcs) melebihi batas yang dapat diretur (${limit.sisa} pcs).`);
                 return;
@@ -271,7 +271,7 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
 
         const payload = {
             items: activeItems.map((i) => ({
-                product_id: i.product_id,
+                product_uid: i.product_uid,
                 kuantitas: i.kuantitas,
                 harga_beli: i.harga_estimasi,
                 alasan: i.alasan || "damaged",
@@ -280,7 +280,7 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: number; retur
 
         setIsSavingForFinalize(true);
         bulkReplace.mutate(
-            { id: returnId, data: payload },
+            { uid: returnId, data: payload },
             {
                 onSuccess: () => {
                     setIsSavingForFinalize(false);

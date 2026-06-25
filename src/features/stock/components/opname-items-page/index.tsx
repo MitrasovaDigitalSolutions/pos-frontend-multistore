@@ -49,7 +49,7 @@ import { opnameHeaderSchema, type OpnameHeaderInput } from "../../schemas/opname
 import type { Opname, OpnameItem } from "../../types";
 
 interface OpnameItemsPageProps {
-    opnameId: number;
+    opnameId: string;
 }
 
 export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
@@ -97,7 +97,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
     return <OpnameItemsContainer opnameId={opnameId} opname={opname} />;
 }
 
-function OpnameItemsContainer({ opnameId, opname }: { opnameId: number; opname: Opname }) {
+function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: Opname }) {
     const router = useAppRouter();
     const store = getOpnameItemsStore(opnameId);
     const items = store((state) => state.items);
@@ -164,8 +164,8 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: number; opname: 
 
         if (dbItems && dbItems.length > 0) {
             const initialItems: OpnameItemLocal[] = dbItems.map((item: OpnameItem) => ({
-                temp_id: `${Date.now()}-${item.id}-${Math.random().toString(36).substring(2, 5)}`,
-                product_id: item.product_id,
+                temp_uid: `${Date.now()}-${item.uid}-${Math.random().toString(36).substring(2, 5)}`,
+                product_uid: String(item.product_uid),
                 barcode: item.product?.barcode || null,
                 nama: item.product?.nama || "Produk Tanpa Nama",
                 stok_sistem: item.stok_sistem,
@@ -185,7 +185,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: number; opname: 
 
     const handleProductFound = (product: Product) => {
         addItem({
-            product_id: product.id,
+            product_uid: product.uid,
             barcode: product.barcode,
             nama: product.nama,
             stok_sistem: product.stok,
@@ -196,7 +196,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: number; opname: 
 
         // Scroll and highlight the added product
         setTimeout(() => {
-            const rowElement = document.getElementById(`opname-row-${product.id}`);
+            const rowElement = document.getElementById(`opname-row-${product.uid}`);
             if (rowElement) {
                 rowElement.scrollIntoView({ behavior: "smooth", block: "center" });
 
@@ -217,7 +217,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: number; opname: 
 
         const payload = {
             items: items.map((item) => ({
-                product_id: item.product_id,
+                product_uid: item.product_uid,
                 stok_fisik: item.stok_fisik,
                 alasan: item.alasan || "Opname rutin",
             })),
@@ -225,7 +225,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: number; opname: 
 
         try {
             await updateOpnameItems.mutateAsync({
-                id: opnameId,
+                uid: opnameId,
                 data: payload,
             });
             if (showToast) toast.success("Daftar barang stock opname berhasil disimpan sebagai draf.");
@@ -452,7 +452,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: number; opname: 
                                 <TableBody className="divide-y divide-slate-100">
                                     {items.map((item) => (
                                         <OpnameItemRow
-                                            key={item.temp_id}
+                                            key={item.temp_uid}
                                             item={item}
                                             updateItem={updateItem}
                                             removeItem={removeItem}
@@ -558,7 +558,7 @@ function EditHeaderDialog({
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    opnameId: number;
+    opnameId: string;
     initialCatatan: string;
 }) {
     const updateOpname = useUpdateOpname();
@@ -583,7 +583,7 @@ function EditHeaderDialog({
 
     const onSubmit = (data: OpnameHeaderInput) => {
         updateOpname.mutate(
-            { id: opnameId, data },
+            { uid: opnameId, data },
             {
                 onSuccess: () => {
                     toast.success("Catatan stock opname berhasil diperbarui.");
@@ -654,8 +654,8 @@ function OpnameItemRow({
     removeItem,
 }: {
     item: OpnameItemLocal;
-    updateItem: (temp_id: string, data: Partial<Pick<OpnameItemLocal, "stok_fisik" | "alasan">>) => void;
-    removeItem: (temp_id: string) => void;
+    updateItem: (temp_uid: string, data: Partial<Pick<OpnameItemLocal, "stok_fisik" | "alasan">>) => void;
+    removeItem: (temp_uid: string) => void;
 }) {
     const methods = useForm<RowInput>({
         defaultValues: {
@@ -677,7 +677,7 @@ function OpnameItemRow({
     return (
         <FormProvider {...methods}>
             <TableRow
-                id={`opname-row-${item.product_id}`}
+                id={`opname-row-${item.product_uid}`}
                 className="hover:bg-slate-50/30 transition-all duration-500 text-xs font-medium text-slate-700"
             >
                 <TableCell className="p-4">
@@ -696,7 +696,7 @@ function OpnameItemRow({
                     <div className="flex items-center justify-center gap-1">
                         <button
                             type="button"
-                            onClick={() => updateItem(item.temp_id, { stok_fisik: Math.max(0, item.stok_fisik - 1) })}
+                            onClick={() => updateItem(item.temp_uid, { stok_fisik: Math.max(0, item.stok_fisik - 1) })}
                             className="w-7 h-7 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg cursor-pointer border-none font-bold animate-transition"
                         >
                             -
@@ -705,14 +705,14 @@ function OpnameItemRow({
                             <FormNumberInput<RowInput>
                                 name="stok_fisik"
                                 onValueChange={(val) => {
-                                    updateItem(item.temp_id, { stok_fisik: val || 0 });
+                                    updateItem(item.temp_uid, { stok_fisik: val || 0 });
                                 }}
                                 className="h-8 text-center rounded-lg border-slate-200 p-0 text-xs font-bold"
                             />
                         </div>
                         <button
                             type="button"
-                            onClick={() => updateItem(item.temp_id, { stok_fisik: item.stok_fisik + 1 })}
+                            onClick={() => updateItem(item.temp_uid, { stok_fisik: item.stok_fisik + 1 })}
                             className="w-7 h-7 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg cursor-pointer border-none font-bold animate-transition"
                         >
                             +
@@ -732,7 +732,7 @@ function OpnameItemRow({
                         name="alasan"
                         placeholder="Alasan selisih..."
                         onChange={(e) => {
-                            updateItem(item.temp_id, { alasan: e.target.value });
+                            updateItem(item.temp_uid, { alasan: e.target.value });
                         }}
                         className="h-8 border-slate-200 focus-visible:ring-emerald-600 rounded-lg text-xs"
                     />
@@ -740,7 +740,7 @@ function OpnameItemRow({
                 <TableCell className="p-4 text-center">
                     <button
                         type="button"
-                        onClick={() => removeItem(item.temp_id)}
+                        onClick={() => removeItem(item.temp_uid)}
                         className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
                     >
                         <IconTrash size={16} />

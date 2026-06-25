@@ -55,7 +55,7 @@ export function PaymentForm({
                             Faktur Penerimaan *
                         </label>
                         <FormSelect<PaymentInput>
-                            name="receiving_id"
+                            name="receiving_uid"
                             options={receivingOptions}
                             placeholder={
                                 receivingsLoading
@@ -91,7 +91,7 @@ export function PaymentForm({
                             Bayar Dari Akun/Kas *
                         </label>
                         <FormSelect<PaymentInput>
-                            name="cash_account_id"
+                            name="cash_account_uid"
                             options={cashAccountOptions}
                             placeholder={
                                 cashAccountsLoading
@@ -100,9 +100,9 @@ export function PaymentForm({
                             }
                             disabled={isPending || cashAccountsLoading}
                         />
-                        {errors.cash_account_id && (
+                        {errors.cash_account_uid && (
                             <p className="text-[10px] text-rose-500 font-medium">
-                                {errors.cash_account_id.message}
+                                {errors.cash_account_uid.message}
                             </p>
                         )}
                     </div>

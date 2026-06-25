@@ -30,7 +30,7 @@ export function StoreProfile() {
                 <p className="mt-1">
                     ID Store Terdaftar:{" "}
                     <strong className="font-mono">
-                        {user?.store_id || "1 (Toko Utama)"}
+                        {user?.store_uid || "1 (Toko Utama)"}
                     </strong>
                 </p>
             </div>

@@ -27,9 +27,9 @@ export function useCreateCategory() {
 
 export function useUpdateCategory() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<Category>, Error, { id: number; data: CategoryInput }>({
-        mutationFn: ({ id, data }) =>
-            apiPut<ApiResponse<Category>, CategoryInput>(`/v1/categories/${id}`, data),
+    return useMutation<ApiResponse<Category>, Error, { uid: string; data: CategoryInput }>({
+        mutationFn: ({ uid, data }) =>
+            apiPut<ApiResponse<Category>, CategoryInput>(`/v1/categories/${uid}`, data),
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.categories.all,
@@ -40,8 +40,8 @@ export function useUpdateCategory() {
 
 export function useDeleteCategory() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<void>, Error, number>({
-        mutationFn: (id) => apiDelete<ApiResponse<void>>(`/v1/categories/${id}`),
+    return useMutation<ApiResponse<void>, Error, string>({
+        mutationFn: (uid) => apiDelete<ApiResponse<void>>(`/v1/categories/${uid}`),
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.categories.all,

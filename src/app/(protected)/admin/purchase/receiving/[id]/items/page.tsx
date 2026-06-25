@@ -6,5 +6,5 @@ interface PageProps {
 
 export default async function AdminReceivingItemsPage({ params }: PageProps) {
     const { id } = await params;
-    return <ReceivingItemsPage receivingId={Number(id)} />;
+    return <ReceivingItemsPage receivingId={id} />;
 }

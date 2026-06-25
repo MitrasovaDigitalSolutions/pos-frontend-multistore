@@ -1,29 +1,15 @@
 import { z } from "zod";
 
 export const purchaseReturnItemSchema = z.object({
-    product_id: z.coerce.number().min(1, "Produk wajib dipilih"),
+    product_uid: z.string().min(1, "Produk wajib dipilih"),
     kuantitas: z.coerce.number().min(1, "Jumlah minimal 1 pcs"),
     harga_beli: z.coerce.number().min(0, "Harga beli minimal 0"),
     alasan: z.string().min(1, "Alasan retur wajib diisi/dipilih"),
 });
 
 export const purchaseReturnHeaderSchema = z.object({
-    receiving_id: z.preprocess(
-        (val) => {
-            if (val === "" || val === undefined || val === null) return undefined;
-            const num = Number(val);
-            return isNaN(num) ? undefined : num;
-        },
-        z.number({ message: "Faktur Penerimaan wajib dipilih" }).min(1, "Faktur Penerimaan wajib dipilih")
-    ),
-    supplier_id: z.preprocess(
-        (val) => {
-            if (val === "" || val === undefined || val === null) return undefined;
-            const num = Number(val);
-            return isNaN(num) ? undefined : num;
-        },
-        z.number({ message: "Supplier wajib dipilih" }).min(1, "Supplier wajib dipilih")
-    ),
+    receiving_uid: z.string().min(1, "Faktur Penerimaan wajib dipilih"),
+    supplier_uid: z.string().min(1, "Supplier wajib dipilih"),
     tanggal_retur: z.string().min(1, "Tanggal retur wajib diisi"),
     catatan: z
         .string()
@@ -40,27 +26,9 @@ export const purchaseReturnBulkItemsSchema = z.object({
 
 // Legacy backward compatibility schema if needed
 export const purchaseReturnSchema = z.object({
-    supplier_id: z.preprocess(
-        (val) => {
-            if (val === "" || val === undefined || val === null) return undefined;
-            const num = Number(val);
-            return isNaN(num) ? undefined : num;
-        },
-        z.number({ message: "Supplier wajib dipilih" }).min(1, "Supplier wajib dipilih")
-    ),
-    receiving_id: z.preprocess(
-        (val) => {
-            if (val === "" || val === undefined || val === null) return undefined;
-            const num = Number(val);
-            return isNaN(num) ? undefined : num;
-        },
-        z.number({ message: "Faktur Penerimaan wajib dipilih" }).min(1, "Faktur Penerimaan wajib dipilih")
-    ),
-    stock_receiving_id: z.coerce
-        .number()
-        .nullable()
-        .optional()
-        .transform((val) => (val === 0 || !val ? null : Number(val))),
+    supplier_uid: z.string().min(1, "Supplier wajib dipilih"),
+    receiving_uid: z.string().min(1, "Faktur Penerimaan wajib dipilih"),
+    stock_receiving_uid: z.string().nullable().optional(),
     tanggal_retur: z.string().min(1, "Tanggal retur wajib diisi"),
     catatan: z
         .string()

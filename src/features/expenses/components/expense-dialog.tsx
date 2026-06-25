@@ -48,7 +48,7 @@ export function ExpenseDialog({
 
         if (isEdit && editingExpense) {
             updateExpense.mutate(
-                { id: editingExpense.id, data: formattedData },
+                { uid: editingExpense.uid, data: formattedData },
                 {
                     onSuccess: () => {
                         toast.success("Catatan pengeluaran berhasil diperbarui.");
@@ -73,12 +73,12 @@ export function ExpenseDialog({
     };
 
     const categoryOptions = categories.map((c) => ({
-        value: String(c.id),
+        value: String(c.uid),
         label: c.nama + (c.is_recurring ? " (Berulang)" : ""),
     }));
 
     const accountOptions = cashAccounts.map((a) => ({
-        value: String(a.id),
+        value: String(a.uid),
         label: a.nama,
         description: `Saldo: ${formatRupiah(a.saldo)}`,
     }));
@@ -99,7 +99,7 @@ export function ExpenseDialog({
                 <div className="grid grid-cols-2 gap-4">
                     {/* Kategori Pengeluaran */}
                     <FormSelect<ExpenseInput>
-                        name="expense_category_id"
+                        name="expense_category_uid"
                         label="Kategori Pengeluaran *"
                         options={categoryOptions}
                         placeholder="Pilih kategori..."
@@ -109,7 +109,7 @@ export function ExpenseDialog({
 
                     {/* Akun Sumber Kas */}
                     <FormSelect<ExpenseInput>
-                        name="cash_account_id"
+                        name="cash_account_uid"
                         label="Sumber Kas (Akun) *"
                         options={accountOptions}
                         placeholder="Pilih sumber dana kas..."

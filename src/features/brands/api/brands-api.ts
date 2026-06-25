@@ -25,9 +25,9 @@ export function useCreateBrand() {
 
 export function useUpdateBrand() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<Brand>, Error, { id: number; data: BrandInput }>({
-        mutationFn: ({ id, data }) =>
-            apiPut<ApiResponse<Brand>, BrandInput>(`/v1/brands/${id}`, data),
+    return useMutation<ApiResponse<Brand>, Error, { uid: string; data: BrandInput }>({
+        mutationFn: ({ uid, data }) =>
+            apiPut<ApiResponse<Brand>, BrandInput>(`/v1/brands/${uid}`, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.brands.all });
         },
@@ -36,8 +36,8 @@ export function useUpdateBrand() {
 
 export function useDeleteBrand() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<void>, Error, number>({
-        mutationFn: (id) => apiDelete<ApiResponse<void>>(`/v1/brands/${id}`),
+    return useMutation<ApiResponse<void>, Error, string>({
+        mutationFn: (uid) => apiDelete<ApiResponse<void>>(`/v1/brands/${uid}`),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.brands.all });
         },

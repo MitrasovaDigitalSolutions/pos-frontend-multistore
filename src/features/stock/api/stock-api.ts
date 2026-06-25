@@ -20,24 +20,24 @@ export function useOpnames(params?: PaginationParams) {
     });
 }
 
-export function useOpnameDetail(id: number | null) {
+export function useOpnameDetail(uid: string | null) {
     return useQuery<Opname>({
-        queryKey: queryKeys.inventory.opnameDetail(id || 0),
-        queryFn: () => apiGetData<Opname>(`/v1/inventory/opname/${id}`),
-        enabled: id !== null && id > 0,
+        queryKey: queryKeys.inventory.opnameDetail(uid || ""),
+        queryFn: () => apiGetData<Opname>(`/v1/inventory/opname/${uid}`),
+        enabled: uid !== null && uid !== "",
     });
 }
 
-export function useOpnameItems(id: number | null, params?: PaginationParams) {
+export function useOpnameItems(uid: string | null, params?: PaginationParams) {
     return useQuery<PaginatedResponse<OpnameItem>>({
-        queryKey: [...queryKeys.inventory.opnameDetail(id || 0), "items", params],
-        queryFn: () => apiGetList<OpnameItem>(`/v1/inventory/opname/${id}/items`, params),
-        enabled: id !== null && id > 0,
+        queryKey: [...queryKeys.inventory.opnameDetail(uid || ""), "items", params],
+        queryFn: () => apiGetList<OpnameItem>(`/v1/inventory/opname/${uid}/items`, params),
+        enabled: uid !== null && uid !== "",
     });
 }
 
 export interface OpnameProgress {
-    id: number;
+    uid: string;
     status: string;
     progress: number;
     total_items: number;
@@ -45,11 +45,11 @@ export interface OpnameProgress {
     error_message: string | null;
 }
 
-export function useOpnameProgress(id: number | null, enabled = true) {
+export function useOpnameProgress(uid: string | null, enabled = true) {
     return useQuery<OpnameProgress>({
-        queryKey: [...queryKeys.inventory.opnameDetail(id || 0), "progress"],
-        queryFn: () => apiGetData<OpnameProgress>(`/v1/inventory/opname/${id}/progress`),
-        enabled: id !== null && id > 0 && enabled,
+        queryKey: [...queryKeys.inventory.opnameDetail(uid || ""), "progress"],
+        queryFn: () => apiGetData<OpnameProgress>(`/v1/inventory/opname/${uid}/progress`),
+        enabled: uid !== null && uid !== "" && enabled,
         refetchInterval: (query) => {
             const data = query.state.data;
             if (!data) return 2000;
@@ -94,10 +94,10 @@ export function useCreateOpname() {
 
 export function useUpdateOpname() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<Opname>, Error, { id: number; data: OpnameHeaderInput }>({
-        mutationFn: ({ id, data }) =>
+    return useMutation<ApiResponse<Opname>, Error, { uid: string; data: OpnameHeaderInput }>({
+        mutationFn: ({ uid, data }) =>
             apiPut<ApiResponse<Opname>, OpnameHeaderInput>(
-                `/v1/inventory/opname/${id}`,
+                `/v1/inventory/opname/${uid}`,
                 data,
             ),
         onSuccess: (_, variables) => {
@@ -105,7 +105,7 @@ export function useUpdateOpname() {
                 queryKey: queryKeys.inventory.opnames(),
             });
             queryClient.invalidateQueries({
-                queryKey: queryKeys.inventory.opnameDetail(variables.id),
+                queryKey: queryKeys.inventory.opnameDetail(variables.uid),
             });
         },
     });
@@ -117,19 +117,19 @@ export function useUpdateOpnameItems() {
         ApiResponse<Opname>,
         Error,
         {
-            id: number;
+            uid: string;
             data: {
                 items: Array<{
-                    product_id: number;
+                    product_uid: string;
                     stok_fisik: number;
                     alasan?: string | null;
                 }>;
             };
         }
     >({
-        mutationFn: ({ id, data }) =>
-            apiPut<ApiResponse<Opname>, { items: Array<{ product_id: number; stok_fisik: number; alasan?: string | null }> }>(
-                `/v1/inventory/opname/${id}/items`,
+        mutationFn: ({ uid, data }) =>
+            apiPut<ApiResponse<Opname>, { items: Array<{ product_uid: string; stok_fisik: number; alasan?: string | null }> }>(
+                `/v1/inventory/opname/${uid}/items`,
                 data,
             ),
         onSuccess: (_, variables) => {
@@ -137,7 +137,7 @@ export function useUpdateOpnameItems() {
                 queryKey: queryKeys.inventory.opnames(),
             });
             queryClient.invalidateQueries({
-                queryKey: queryKeys.inventory.opnameDetail(variables.id),
+                queryKey: queryKeys.inventory.opnameDetail(variables.uid),
             });
         },
     });
@@ -145,18 +145,18 @@ export function useUpdateOpnameItems() {
 
 export function useFinalizeOpname() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<Opname>, Error, number>({
-        mutationFn: (id) =>
+    return useMutation<ApiResponse<Opname>, Error, string>({
+        mutationFn: (uid) =>
             apiPost<ApiResponse<Opname>, undefined>(
-                `/v1/inventory/opname/${id}/finalize`,
+                `/v1/inventory/opname/${uid}/finalize`,
                 undefined,
             ),
-        onSuccess: (_, id) => {
+        onSuccess: (_, uid) => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.inventory.opnames(),
             });
             queryClient.invalidateQueries({
-                queryKey: queryKeys.inventory.opnameDetail(id),
+                queryKey: queryKeys.inventory.opnameDetail(uid),
             });
             queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
@@ -168,8 +168,8 @@ export function useFinalizeOpname() {
 
 export function useDeleteOpname() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<void>, Error, number>({
-        mutationFn: (id) => apiDelete<ApiResponse<void>>(`/v1/inventory/opname/${id}`),
+    return useMutation<ApiResponse<void>, Error, string>({
+        mutationFn: (uid) => apiDelete<ApiResponse<void>>(`/v1/inventory/opname/${uid}`),
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.inventory.opnames(),
@@ -181,18 +181,18 @@ export function useDeleteOpname() {
 // ─── Audit / Activity Logs Hooks ─────────────────────────────────────────────
 
 export interface ActivityLog {
-    id: number;
-    user_id: number | null;
+    uid: string;
+    user_uid: string | null;
     action: string;
     model_type: string | null;
-    model_id: number | null;
+    model_uid: string | null;
     description: string;
     ip_address: string | null;
     user_agent: string | null;
     properties: Record<string, unknown> | null;
     created_at: string;
     user?: {
-        id: number;
+        uid: string;
         name: string;
         username: string;
     };

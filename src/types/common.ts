@@ -9,7 +9,7 @@ export interface ChildrenProps {
 // ─── Common Entity Types ────────────────────────────────────────────────────
 
 export interface Product {
-    id: number;
+    uid: string;
     nama: string;
     merek: string;
     barcode: string | null;
@@ -19,8 +19,8 @@ export interface Product {
 }
 
 export interface StockMovement {
-    id: number;
-    product_id: number;
+    uid: string;
+    product_uid: string;
     tipe: string;
     kuantitas: number;
     stok_sebelum: number;
@@ -31,7 +31,7 @@ export interface StockMovement {
 }
 
 export interface Receiving {
-    id: number;
+    uid: string;
     nomor_penerimaan: string;
     supplier: string | null;
     nomor_faktur: string | null;
@@ -40,8 +40,8 @@ export interface Receiving {
 }
 
 export interface OpnameItem {
-    id: number;
-    product_id: number;
+    uid: string;
+    product_uid: string;
     stok_sistem: number;
     stok_fisik: number;
     selisih: number;
@@ -50,7 +50,7 @@ export interface OpnameItem {
 }
 
 export interface Opname {
-    id: number;
+    uid: string;
     nomor_opname: string;
     catatan: string | null;
     status: "draft" | "completed";
@@ -97,11 +97,11 @@ export interface DailyReport {
 }
 
 export interface SystemUser {
-    id: number;
+    uid: string;
     name: string;
     username: string;
     email: string | null;
-    store_id: number | null;
+    store_uid: string | null;
     status: "active" | "inactive";
     roles: string[];
     permissions: string[];
@@ -110,7 +110,7 @@ export interface SystemUser {
 // ─── Cart Types ─────────────────────────────────────────────────────────────
 
 export interface CartItem {
-    product_id: number;
+    product_uid: string;
     itemId?: number;
     name: string;
     price: number;
@@ -120,7 +120,7 @@ export interface CartItem {
 }
 
 export interface HoldTransaction {
-    id: number;
+    uid: string;
     items_count: number;
     subtotal: number;
     created_at: string;
@@ -129,8 +129,8 @@ export interface HoldTransaction {
 // ─── Transaction Types ──────────────────────────────────────────────────────
 
 export interface TransactionItem {
-    id: number;
-    product_id: number;
+    uid: string;
+    product_uid: string;
     nama_produk: string;
     harga_satuan: number;
     kuantitas: number;
@@ -139,7 +139,7 @@ export interface TransactionItem {
 }
 
 export interface Transaction {
-    id: number;
+    uid: string;
     status: string;
     subtotal: number;
     pajak: number;
@@ -151,4 +151,5 @@ export interface Transaction {
     nomor_kartu_akhir?: string;
     items: TransactionItem[];
     created_at: string;
+    nomor_transaksi: string
 }

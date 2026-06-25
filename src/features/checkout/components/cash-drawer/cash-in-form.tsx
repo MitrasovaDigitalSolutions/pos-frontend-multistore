@@ -13,7 +13,7 @@ import { cashInSchema, type CashInInput } from "../../schemas/cash-drawer-schema
 
 
 interface CashInFormProps {
-    sessionId: number;
+    sessionId: string;
     token?: string;
     onSuccess: () => void;
     onCancel: () => void;

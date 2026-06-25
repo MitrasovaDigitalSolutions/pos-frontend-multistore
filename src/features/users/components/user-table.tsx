@@ -72,7 +72,7 @@ export function UserTable({
 
     const handleConfirmDeactivate = () => {
         if (!userToDeactivate) return;
-        deactivateUser.mutate(userToDeactivate.id, {
+        deactivateUser.mutate(userToDeactivate.uid, {
             onSuccess: () => {
                 toast.success(`Pengguna "${userToDeactivate.name}" berhasil dinonaktifkan.`);
                 setIsConfirmOpen(false);
@@ -212,7 +212,7 @@ export function UserTable({
                 estimateRowHeight={44}
                 onEdit={hasManageUsers ? onEdit : undefined}
                 onDelete={hasManageUsers ? handleDeactivate : undefined}
-                hideDelete={(u) => !(currentUser && u.id !== currentUser.id && u.status === "active")}
+                hideDelete={(u) => !(currentUser && u.uid !== currentUser.uid && u.status === "active")}
             />
 
             <ConfirmDialog

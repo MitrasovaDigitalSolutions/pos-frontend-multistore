@@ -107,10 +107,10 @@ export function PembelianDetailsTable({
         setSortConfig({ key, direction });
     };
 
-    const toggleRow = (id: string) => {
+    const toggleRow = (uid: string) => {
         setExpandedRows((prev) => ({
             ...prev,
-            [id]: !prev[id],
+            [uid]: !prev[uid],
         }));
     };
 

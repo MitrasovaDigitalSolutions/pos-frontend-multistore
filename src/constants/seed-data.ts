@@ -2,7 +2,7 @@ import type { Category } from "@/features/categories/types";
 import type { Brand } from "@/features/brands/types";
 import type { Supplier } from "@/features/suppliers/types";
 
-export const SEED_CATEGORIES: Omit<Category, "id">[] = [
+export const SEED_CATEGORIES: Omit<Category, "uid">[] = [
     { nama: "Makanan Ringan", deskripsi: "Camilan, biskuit, keripik, dan makanan ringan lainnya" },
     { nama: "Minuman", deskripsi: "Air mineral, soft drink, jus, teh, dan kopi kemasan" },
     { nama: "Sembako", deskripsi: "Bahan makanan pokok seperti beras, minyak goreng, gula, dan telur" },
@@ -12,7 +12,7 @@ export const SEED_CATEGORIES: Omit<Category, "id">[] = [
     { nama: "Alat Tulis Kantor", deskripsi: "Buku tulis, pulpen, pensil, map, dan peralatan tulis lainnya" }
 ];
 
-export const SEED_BRANDS: Omit<Brand, "id">[] = [
+export const SEED_BRANDS: Omit<Brand, "uid">[] = [
     { nama: "Indofood", deskripsi: "Produk makanan dari Indofood Group" },
     { nama: "Unilever", deskripsi: "Produk perawatan tubuh dan rumah tangga Unilever" },
     { nama: "Aqua", deskripsi: "Air minum dalam kemasan Aqua" },
@@ -25,7 +25,7 @@ export const SEED_BRANDS: Omit<Brand, "id">[] = [
     { nama: "Kapal Api", deskripsi: "Kopi Kapal Api dan variannya" }
 ];
 
-export const SEED_SUPPLIERS: Omit<Supplier, "id" | "created_at">[] = [
+export const SEED_SUPPLIERS: Omit<Supplier, "uid" | "created_at">[] = [
     {
         nama: "PT. Sumber Alfaria Trijaya",
         email: "info@alfamart.co.id",

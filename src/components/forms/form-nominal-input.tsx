@@ -34,7 +34,7 @@ export function FormNominalInput<T extends FieldValues>({
         formState: { errors },
     } = useFormContext<T>();
 
-    // Helper to resolve nested errors, e.g. "items.0.product_id" -> errors.items[0].product_id
+    // Helper to resolve nested errors, e.g. "items.0.product_uid" -> errors.items[0].product_uid
     const getNestedValue = (
         obj: FieldErrors<T>,
         path: string,
@@ -82,7 +82,7 @@ export function FormNominalInput<T extends FieldValues>({
                 const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                     const input = e.target;
                     const rawValue = input.value;
-                    
+
                     // Allow deleting/clearing
                     if (rawValue === "") {
                         onChange(null);
@@ -91,7 +91,7 @@ export function FormNominalInput<T extends FieldValues>({
                     }
 
                     const cleanValue = rawValue.replace(/\D/g, "");
-                    
+
                     // Capture cursor position details
                     const selectionStart = input.selectionStart || 0;
                     const digitsBeforeCursor = rawValue
@@ -100,7 +100,7 @@ export function FormNominalInput<T extends FieldValues>({
 
                     // Compute what the formatted value will be to determine new cursor position
                     const newFormatted = formatNumber(cleanValue);
-                    
+
                     let newSelectionStart = 0;
                     let digitsCount = 0;
                     for (let i = 0; i < newFormatted.length; i++) {

@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
 interface UpcomingExpensesProps {
-    onPayCategory: (categoryId: number, categoryName: string) => void;
+    onPayCategory: (categoryUid: string, categoryName: string) => void;
 }
 
 export function UpcomingExpenses({ onPayCategory }: UpcomingExpensesProps) {
@@ -61,12 +61,11 @@ export function UpcomingExpenses({ onPayCategory }: UpcomingExpensesProps) {
 
                         return (
                             <div
-                                key={due.expense_category_id}
-                                className={`flex justify-between items-center p-3 rounded-xl border transition-all ${
-                                    isOverdue
-                                        ? "bg-rose-50/30 border-rose-100 hover:bg-rose-50/50"
-                                        : "bg-slate-50/50 border-slate-100 hover:bg-slate-50"
-                                }`}
+                                key={due.expense_category_uid}
+                                className={`flex justify-between items-center p-3 rounded-xl border transition-all ${isOverdue
+                                    ? "bg-rose-50/30 border-rose-100 hover:bg-rose-50/50"
+                                    : "bg-slate-50/50 border-slate-100 hover:bg-slate-50"
+                                    }`}
                             >
                                 <div className="min-w-0">
                                     <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
@@ -93,12 +92,11 @@ export function UpcomingExpenses({ onPayCategory }: UpcomingExpensesProps) {
 
                                 {hasManageExpenses && (
                                     <button
-                                        onClick={() => onPayCategory(due.expense_category_id, due.category_name)}
-                                        className={`px-3 py-1.5 rounded-lg text-[9px] font-bold flex items-center gap-1 cursor-pointer transition-all border-none ${
-                                            isOverdue
-                                                ? "bg-rose-600 hover:bg-rose-700 text-white shadow-sm"
-                                                : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
-                                        }`}
+                                        onClick={() => onPayCategory(due.expense_category_uid, due.category_name)}
+                                        className={`px-3 py-1.5 rounded-lg text-[9px] font-bold flex items-center gap-1 cursor-pointer transition-all border-none ${isOverdue
+                                            ? "bg-rose-600 hover:bg-rose-700 text-white shadow-sm"
+                                            : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                                            }`}
                                     >
                                         <IconCoins size={10} />
                                         <span>Catat Bayar</span>

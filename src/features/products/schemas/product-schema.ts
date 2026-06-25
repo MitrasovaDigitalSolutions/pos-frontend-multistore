@@ -18,14 +18,14 @@ export const productSchema = z.object({
         if (val === "" || val === null || val === undefined) return null;
         return Number(val);
     }, z.number().min(0, "Margin tidak boleh kurang dari 0").max(100, "Margin tidak boleh lebih dari 100").nullable().optional()),
-    category_id: z.preprocess((val) => {
+    category_uid: z.preprocess((val) => {
         if (val === "" || val === null || val === undefined) return null;
-        return Number(val);
-    }, z.number().nullable().optional()),
-    brand_id: z.preprocess((val) => {
+        return String(val);
+    }, z.string().nullable().optional()),
+    brand_uid: z.preprocess((val) => {
         if (val === "" || val === null || val === undefined) return null;
-        return Number(val);
-    }, z.number().nullable().optional()),
+        return String(val);
+    }, z.string().nullable().optional()),
     image: z.any().nullable().optional(),
     is_jasa: z.boolean().optional().default(false),
 });

@@ -9,7 +9,7 @@ interface DebtSummaryProps {
     summaryLoading: boolean;
     summary: PaymentSummary | undefined;
     isEdit: boolean;
-    editId: number | null;
+    editId: string | null;
     sisaHutangLimit: number;
 }
 
@@ -120,10 +120,10 @@ export function DebtSummary({
                     </div>
                     <div className="divide-y divide-slate-50 max-h-[160px] overflow-y-auto pr-1">
                         {summary.payments.map((p) => {
-                            const isCurrentEdit = isEdit && p.id === editId;
+                            const isCurrentEdit = isEdit && p.uid === editId;
                             return (
                                 <div
-                                    key={p.id}
+                                    key={p.uid}
                                     className={`py-2 text-[11px] flex justify-between items-center ${isCurrentEdit ? "bg-amber-50/50 px-2 rounded-lg" : ""
                                         }`}
                                 >

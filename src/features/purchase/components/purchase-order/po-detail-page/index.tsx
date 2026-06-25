@@ -43,7 +43,7 @@ import { POReceivingsTab } from "./po-receivings-tab";
 import { POLogsTab } from "./po-logs-tab";
 
 interface PODetailPageProps {
-    poId: number;
+    poId: string;
 }
 
 export function PODetailPage({ poId }: PODetailPageProps) {
@@ -51,7 +51,7 @@ export function PODetailPage({ poId }: PODetailPageProps) {
     const router = useAppRouter();
     const [activeTab, setActiveTab] = useState<"items" | "receivings" | "logs">("items");
     const [isEditHeaderOpen, setIsEditHeaderOpen] = useState(false);
-    const [selectedReceivingId, setSelectedReceivingId] = useState<number | null>(null);
+    const [selectedReceivingId, setSelectedReceivingId] = useState<string | null>(null);
     const [isReceivingDetailOpen, setIsReceivingDetailOpen] = useState(false);
 
     const { data: order, isLoading: orderLoading, error } = usePurchaseOrderDetail(poId);
@@ -199,8 +199,8 @@ export function PODetailPage({ poId }: PODetailPageProps) {
     const isDraft = order.status === PO_STATUS.DRAFT;
     const canCancel = order.status !== PO_STATUS.RECEIVED && order.status !== PO_STATUS.CANCELLED && order.status !== PO_STATUS.CLOSED && hasManagePurchase;
 
-    const handleViewReceivingDetail = (id: number) => {
-        setSelectedReceivingId(id);
+    const handleViewReceivingDetail = (uid: string) => {
+        setSelectedReceivingId(uid);
         setIsReceivingDetailOpen(true);
     };
 
@@ -280,7 +280,7 @@ export function PODetailPage({ poId }: PODetailPageProps) {
                     {/* Link to create receiving from this PO */}
                     {(order.status === PO_STATUS.ORDERED || order.status === PO_STATUS.PARTIALLY_RECEIVED) && hasManagePurchase && (
                         <Button
-                            onClick={() => router.push(`/admin/purchase/receiving/new?po_id=${poId}`)}
+                            onClick={() => router.push(`/admin/purchase/receiving/new?po_uid=${poId}`)}
                             className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
                         >
                             <IconTruckDelivery size={16} /> Proses Penerimaan Barang
@@ -327,33 +327,30 @@ export function PODetailPage({ poId }: PODetailPageProps) {
                     <div className="flex border-b border-slate-100 bg-slate-50/30 px-4 pt-2 shrink-0">
                         <button
                             onClick={() => setActiveTab("items")}
-                            className={`px-4 py-3 text-xs font-bold border-b-2 flex items-center gap-1.5 cursor-pointer transition-all ${
-                                activeTab === "items"
+                            className={`px-4 py-3 text-xs font-bold border-b-2 flex items-center gap-1.5 cursor-pointer transition-all ${activeTab === "items"
                                     ? "border-emerald-600 text-emerald-600 font-extrabold"
                                     : "border-transparent text-slate-400 hover:text-slate-600"
-                            }`}
+                                }`}
                         >
                             <IconFileDescription size={16} />
                             Daftar Barang ({order.items?.length || 0})
                         </button>
                         <button
                             onClick={() => setActiveTab("receivings")}
-                            className={`px-4 py-3 text-xs font-bold border-b-2 flex items-center gap-1.5 cursor-pointer transition-all ${
-                                activeTab === "receivings"
+                            className={`px-4 py-3 text-xs font-bold border-b-2 flex items-center gap-1.5 cursor-pointer transition-all ${activeTab === "receivings"
                                     ? "border-emerald-600 text-emerald-600 font-extrabold"
                                     : "border-transparent text-slate-400 hover:text-slate-600"
-                            }`}
+                                }`}
                         >
                             <IconTruckDelivery size={16} />
                             Penerimaan Terkait ({receivings.length})
                         </button>
                         <button
                             onClick={() => setActiveTab("logs")}
-                            className={`px-4 py-3 text-xs font-bold border-b-2 flex items-center gap-1.5 cursor-pointer transition-all ${
-                                activeTab === "logs"
+                            className={`px-4 py-3 text-xs font-bold border-b-2 flex items-center gap-1.5 cursor-pointer transition-all ${activeTab === "logs"
                                     ? "border-emerald-600 text-emerald-600 font-extrabold"
                                     : "border-transparent text-slate-400 hover:text-slate-600"
-                            }`}
+                                }`}
                         >
                             <IconClock size={16} />
                             Log Aktivitas ({logs.length})

@@ -59,7 +59,7 @@ export function ReceiptDialog({
                                 <span>POS-01</span>
                             </div>
                             <div className="flex justify-between">
-                                <span>TRX #{receipt?.id}</span>
+                                <span>TRX #{receipt?.uid}</span>
                                 <span>
                                     {new Date().toLocaleDateString("id-ID")}
                                 </span>
@@ -78,7 +78,7 @@ export function ReceiptDialog({
                             <div className="space-y-1.5 pb-1">
                                 {(receipt?.items || []).map((item) => (
                                     <div
-                                        key={item.id}
+                                        key={item.uid}
                                         className="flex justify-between text-[10px] text-slate-600"
                                     >
                                         <span className="truncate max-w-[170px]" title={item.nama_produk}>
@@ -161,12 +161,12 @@ export function ReceiptDialog({
                 <Button
                     variant="outline"
                     onClick={() => {
-                        if (receipt?.id) {
-                            const isOfflineTx = String(receipt.id).startsWith("OFFLINE") || receipt.id > 1000000000000;
+                        if (receipt?.uid) {
+                            const isOfflineTx = String(receipt.uid).startsWith("OFFLINE");
                             if (isOfflineTx) {
                                 window.print();
                             } else {
-                                window.open(`/api/proxy/v1/transactions-print/${receipt.id}`, "_blank");
+                                window.open(`/api/proxy/v1/transactions-print/${receipt.uid}`, "_blank");
                             }
                         }
                     }}

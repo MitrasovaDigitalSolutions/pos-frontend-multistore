@@ -68,7 +68,7 @@ export function BrandList({
 
     const handleConfirmDelete = () => {
         if (!brandToDelete) return;
-        deleteBrand.mutate(brandToDelete.id, {
+        deleteBrand.mutate(brandToDelete.uid, {
             onSuccess: () => {
                 toast.success(`Brand "${brandToDelete.nama}" berhasil dihapus.`);
                 setIsConfirmOpen(false);

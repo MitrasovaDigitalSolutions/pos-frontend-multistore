@@ -101,7 +101,7 @@ export function CheckoutCartSection({
                                 <TableBody>
                                     {cart.map((item, idx) => (
                                         <TableRow
-                                            key={item.itemId ?? item.product_id}
+                                            key={item.itemId ?? item.product_uid}
                                             className="hover:bg-slate-50/50 transition-colors"
                                         >
                                             <TableCell className="text-center text-slate-400 font-medium">
@@ -191,7 +191,7 @@ export function CheckoutCartSection({
                         <div className="block sm:hidden space-y-3">
                             {cart.map((item) => (
                                 <div
-                                    key={item.itemId ?? item.product_id}
+                                    key={item.itemId ?? item.product_uid}
                                     className="bg-white border border-slate-100 rounded-xl p-3.5 shadow-sm flex flex-col gap-3"
                                 >
                                     <div className="flex justify-between items-start">

@@ -29,16 +29,16 @@ export function AdjustmentDialog({
     products,
 }: AdjustmentDialogProps) {
     const createAdjustment = useCreateAdjustment();
-    
+
     const productOptions = products.map((p) => ({
-        value: String(p.id),
+        value: p.uid,
         label: `${p.nama} (Stok: ${p.stok})`,
     }));
 
     const methods = useForm<AdjustmentInput>({
         resolver: zodResolver(adjustmentSchema) as Resolver<AdjustmentInput>,
         defaultValues: {
-            product_id: 0,
+            product_uid: 0,
             kuantitas: 0,
             alasan: "",
         },
@@ -54,7 +54,7 @@ export function AdjustmentDialog({
     useEffect(() => {
         if (open) {
             reset({
-                product_id: 0,
+                product_uid: 0,
                 kuantitas: 0,
                 alasan: "",
             });
@@ -94,7 +94,7 @@ export function AdjustmentDialog({
                 >
                     {/* Pilih Produk */}
                     <FormSelect<AdjustmentInput>
-                        name="product_id"
+                        name="product_uid"
                         label="Pilih Produk"
                         options={productOptions}
                         placeholder="-- Pilih Produk --"
