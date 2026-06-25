@@ -51,14 +51,15 @@ export function CatalogDialog({
                         onChange={(e) => setCatalogSearch(e.target.value)}
                     />
                 </div> */}
-                <div className="grid grid-cols-3 gap-3 max-h-87.5 overflow-y-auto pr-1">
-                    {filteredProducts.length === 0 ? (
-                        <div className="col-span-full text-center py-8 text-slate-400 text-xs">
-                            Tidak ada produk ditemukan.
-                        </div>
-                    ) : (
-                        <Scrollable>
-                            {filteredProducts.map((p) => (
+                <Scrollable>
+
+                    <div className="grid grid-cols-3 gap-3 max-h-87.5 overflow-y-auto pr-1">
+                        {filteredProducts.length === 0 ? (
+                            <div className="col-span-full text-center py-8 text-slate-400 text-xs">
+                                Tidak ada produk ditemukan.
+                            </div>
+                        ) : (
+                            filteredProducts.map((p) => (
                                 <div
                                     key={p.uid}
                                     onClick={async () => {
@@ -88,10 +89,10 @@ export function CatalogDialog({
                                         {p.is_jasa ? "Layanan / Jasa" : `Stok: ${p.stok}`}
                                     </div>
                                 </div>
-                            ))}
-                        </Scrollable>
-                    )}
-                </div>
+                            ))
+                        )}
+                    </div>
+                </Scrollable>
             </div>
         </BaseDialog>
     );
