@@ -48,7 +48,7 @@ export function SalesByCategoryView() {
 
   const categoryData = useMemo(() => {
     const rawData = data?.data ?? [];
-    
+
     // Fallback if category list hasn't loaded yet
     if (categories.length === 0) {
       return rawData;
@@ -130,7 +130,7 @@ export function SalesByCategoryView() {
     <div className="space-y-5">
       {/* Header Card */}
       <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100/60 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100/60">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
               <IconChartBar size={17} />
