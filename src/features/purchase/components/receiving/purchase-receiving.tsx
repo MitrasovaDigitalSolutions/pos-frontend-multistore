@@ -17,7 +17,7 @@ import { RECEIVING_STATUS, RECEIVING_STATUS_LABELS } from "@/constants/purchase"
 interface ReceivingFilterValues {
     search: string;
     status: string;
-    supplier_uid: string;
+    supplier_id: string;
     start_date: string;
     end_date: string;
 }
@@ -42,7 +42,7 @@ export function PurchaseReceiving() {
     const [filters, setFilters] = useState({
         search: "",
         status: "all",
-        supplier_uid: "all",
+        supplier_id: "all",
         start_date: "",
         end_date: "",
     });
@@ -53,7 +53,7 @@ export function PurchaseReceiving() {
         defaultValues: {
             search: "",
             status: "all",
-            supplier_uid: "all",
+            supplier_id: "all",
             start_date: "",
             end_date: "",
         },
@@ -63,7 +63,7 @@ export function PurchaseReceiving() {
         setFilters({
             search: data.search,
             status: data.status,
-            supplier_uid: data.supplier_uid,
+            supplier_id: data.supplier_id,
             start_date: data.start_date,
             end_date: data.end_date,
         });
@@ -74,14 +74,14 @@ export function PurchaseReceiving() {
         filterMethods.reset({
             search: "",
             status: "all",
-            supplier_uid: "all",
+            supplier_id: "all",
             start_date: "",
             end_date: "",
         });
         setFilters({
             search: "",
             status: "all",
-            supplier_uid: "all",
+            supplier_id: "all",
             start_date: "",
             end_date: "",
         });
@@ -101,8 +101,8 @@ export function PurchaseReceiving() {
     if (deferredFilters.status && deferredFilters.status !== "all") {
         apiParams.status = deferredFilters.status;
     }
-    if (deferredFilters.supplier_uid && deferredFilters.supplier_uid !== "all") {
-        apiParams.supplier_uid = Number(deferredFilters.supplier_uid);
+    if (deferredFilters.supplier_id && deferredFilters.supplier_id !== "all") {
+        apiParams.supplier_id = Number(deferredFilters.supplier_id);
     }
     if (deferredFilters.start_date) {
         apiParams.start_date = deferredFilters.start_date;
@@ -175,7 +175,7 @@ export function PurchaseReceiving() {
                         />
 
                         <FormSelect<ReceivingFilterValues>
-                            name="supplier_uid"
+                            name="supplier_id"
                             label="Supplier"
                             options={supplierOptions}
                             placeholder="Semua Supplier"

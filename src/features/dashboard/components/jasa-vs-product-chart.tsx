@@ -80,7 +80,7 @@ export function JasaVsProductChart({ data, isLoading }: JasaVsProductChartProps)
       Omset: total_product_sales,
       percentage: productPct,
       quantity: total_product_quantity,
-      unit: "Pcs",
+      unit: "Item",
       color: "#6366f1", // Indigo
     },
     {
@@ -88,7 +88,7 @@ export function JasaVsProductChart({ data, isLoading }: JasaVsProductChartProps)
       Omset: total_jasa_sales,
       percentage: jasaPct,
       quantity: total_jasa_quantity,
-      unit: "Transaksi",
+      unit: "Jasa",
       color: "#14b8a6", // Teal
     },
   ];
@@ -100,7 +100,7 @@ export function JasaVsProductChart({ data, isLoading }: JasaVsProductChartProps)
         <Skeleton className="w-5 h-5 rounded" />
         <Skeleton className="h-3.5 w-24" />
       </div>
-      
+
       {/* Chart Skeleton */}
       <Skeleton className="w-full h-[120px] rounded-xl my-1" />
 
@@ -200,7 +200,7 @@ export function JasaVsProductChart({ data, isLoading }: JasaVsProductChartProps)
             {formatRupiah(total_product_sales)}
           </div>
           <div className="text-[8px] font-semibold text-slate-400">
-            {productPct.toFixed(0)}% | {total_product_quantity} Pcs
+            {productPct.toFixed(0)}% | {total_product_quantity} Item
           </div>
         </div>
 

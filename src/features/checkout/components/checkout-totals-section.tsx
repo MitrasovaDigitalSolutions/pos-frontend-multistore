@@ -249,12 +249,6 @@ export function CheckoutTotalsSection({
                             - Rp 0
                         </span>
                     </div>
-                    <div className="flex justify-between">
-                        <span>PPN (11%)</span>
-                        <span className="text-slate-800 tabular-nums font-bold">
-                            {formatRupiah(ppn)}
-                        </span>
-                    </div>
                 </div>
 
                 <div className="border-t border-dashed border-slate-200 pt-3 flex justify-between items-center gap-3">

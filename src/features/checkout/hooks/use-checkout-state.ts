@@ -110,8 +110,8 @@ export function useCheckoutState() {
 
     // ─── Calculations ─────────────────────────────────────────────────────────
     const subtotal = cart.reduce((acc, i) => acc + i.price * i.qty, 0);
-    const ppn = Math.round(subtotal * 0.11);
-    const grandTotal = subtotal + ppn;
+    const ppn = 0;
+    const grandTotal = subtotal;
 
     // ─── Handlers ─────────────────────────────────────────────────────────────
 

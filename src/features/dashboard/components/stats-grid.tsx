@@ -1,7 +1,7 @@
 "use client";
 
-import { IconCash, IconReceipt, IconChartPie, IconTag, IconTrendingUp, IconTrendingDown } from "@tabler/icons-react";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { IconCash, IconReceipt, IconTag, IconTrendingDown, IconTrendingUp } from "@tabler/icons-react";
 import type { DashboardSummary } from "../types";
 
 interface StatsGridProps {
@@ -34,18 +34,6 @@ const cards = [
     trendUp: true,
   },
   {
-    key: "tax_total" as const,
-    label: "PPN Terkumpul",
-    sub: "PPN 11%",
-    icon: IconChartPie,
-    gradient: "from-amber-400 to-amber-600",
-    glow: "shadow-amber-400/40",
-    iconBg: "bg-white/20",
-    format: (v: number) => formatRupiah(v),
-    trend: "+5%",
-    trendUp: true,
-  },
-  {
     key: "discount_total" as const,
     label: "Potongan Diskon",
     sub: "Total diskon transaksi",
@@ -61,7 +49,7 @@ const cards = [
 
 export function StatsGrid({ summary }: StatsGridProps) {
   return (
-    <section className="grid grid-cols-4 gap-4">
+    <section className="grid grid-cols-3 gap-4">
       {cards.map((card) => {
         const Icon = card.icon;
         const TrendIcon = card.trendUp ? IconTrendingUp : IconTrendingDown;

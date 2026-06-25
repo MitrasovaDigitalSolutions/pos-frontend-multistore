@@ -18,10 +18,10 @@ class POSDatabase extends Dexie {
 
     constructor() {
         super("POSDatabase");
-        this.version(1).stores({
+        this.version(2).stores({
             products: "uid, nama, barcode, status, updated_at",
-            members: "uid, nama, kode, updated_at",
-            offlineQueue: "++uid, uid, timestamp, status",
+            members: "uid, nama, kode, status, updated_at",
+            offlineQueue: "++id, uid, timestamp, status",
         });
     }
 }

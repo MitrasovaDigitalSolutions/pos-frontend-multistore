@@ -107,10 +107,6 @@ export function PrintReceiptLayout({ receipt, cashierName }: PrintReceiptLayoutP
                     <span>Subtotal:</span>
                     <span className="tabular-nums">{formatRupiah(receipt.subtotal ?? 0)}</span>
                 </div>
-                <div className="flex justify-between">
-                    <span>PPN (11%):</span>
-                    <span className="tabular-nums">{formatRupiah(receipt.pajak ?? 0)}</span>
-                </div>
                 <div className="flex justify-between font-extrabold text-[10px] pt-0.5 border-t border-dotted border-black">
                     <span>TOTAL:</span>
                     <span className="tabular-nums">{formatRupiah(receipt.total ?? 0)}</span>
