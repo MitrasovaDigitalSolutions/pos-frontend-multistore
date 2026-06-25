@@ -1,8 +1,9 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { IconChartPie } from "@tabler/icons-react";
+import { IconArrowRight, IconChartPie } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import type { DashboardSummary } from "../types";
 
@@ -126,6 +127,13 @@ export function SalesStatistics({ summary, isLoading }: SalesStatisticsProps) {
             Kategori Terlaris
           </span>
         </div>
+        <Link
+          href="/admin/reports/sales/by-category"
+          className="flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-1 transition-all"
+        >
+          Detail
+          <IconArrowRight size={10} className="stroke-[2.5]" />
+        </Link>
       </div>
 
       {/* Main Content (Donut + Legend) */}

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiGetData } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
-import type { DailyReport, LabaRugiReport, PengeluaranReport, PurchaseReport, PenjualanReport } from "../types";
+import type { DailyReport, LabaRugiReport, PengeluaranReport, PurchaseReport, PenjualanReport, SalesByCategoryResponse } from "../types";
 
 export function useDailyReport(date: string) {
     return useQuery<DailyReport>({
@@ -64,5 +64,19 @@ export function usePenjualanReport(
                 `/v1/reports/penjualan?from=${from}&to=${to}&include_items=${includeItems}&include_payments=${includePayments}&page=${page}&per_page=${perPage}&sort_order=${sortOrder}`
             ),
         enabled: !!from && !!to && !!page && !!perPage,
+    });
+}
+
+export function useSalesByCategory(from: string, to: string, categoryIds?: string[]) {
+    const categoryParam = categoryIds && categoryIds.length > 0 
+        ? `&category_ids=${categoryIds.join(",")}` 
+        : "";
+    return useQuery<SalesByCategoryResponse>({
+        queryKey: queryKeys.reports.salesByCategory(from, to, categoryIds),
+        queryFn: () =>
+            apiGetData<SalesByCategoryResponse>(
+                `/v1/reports/sales/by-category?from=${from}&to=${to}${categoryParam}`
+            ),
+        enabled: !!from && !!to,
     });
 }

@@ -209,3 +209,17 @@ export interface PenjualanReport {
     include_payments?: boolean;
 }
 
+export interface SalesByCategoryItem {
+    category_uid: string | null;
+    category: string;
+    total_sales: number;
+    total_quantity: number;
+    percentage_sales: number;
+}
+
+export interface SalesByCategoryResponse {
+    from: string;
+    to: string;
+    data: SalesByCategoryItem[];
+}
+

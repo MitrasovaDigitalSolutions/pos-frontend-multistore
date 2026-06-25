@@ -65,6 +65,8 @@ export const queryKeys = {
                 perPage,
                 sortOrder,
             ] as const,
+        salesByCategory: (from: string, to: string, categoryIds?: string[]) =>
+            [...queryKeys.reports.all, "salesByCategory", from, to, categoryIds] as const,
     },
 
     // Suppliers
