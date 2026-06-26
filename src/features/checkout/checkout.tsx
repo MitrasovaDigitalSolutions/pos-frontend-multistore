@@ -15,6 +15,7 @@ import { signOut } from "@/lib/auth-helpers";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
 import { useNetworkStatus } from "@/hooks/use-network-status";
+import { useOfflineReadiness } from "@/hooks/use-offline-readiness";
 import { toast } from "sonner";
 import { useSyncEngine } from "@/features/checkout/hooks/use-sync-engine";
 import { PrintReceiptLayout } from "@/features/checkout/components/print-receipt-layout";
@@ -24,6 +25,7 @@ export function Checkout() {
     const state = useCheckoutState();
     const syncEngine = useSyncEngine();
     const isOnline = useNetworkStatus();
+    const offlineReadiness = useOfflineReadiness();
 
     // Cash Drawer Sesi States
     const [isInfoSesiOpen, setIsInfoSesiOpen] = useState(false);
@@ -101,6 +103,8 @@ export function Checkout() {
                 pendingCount={syncEngine.pendingCount}
                 isSyncing={syncEngine.isSyncing}
                 onSyncClick={syncEngine.triggerSync}
+                offlineReadiness={offlineReadiness}
+                onCatalogSyncRequest={syncEngine.triggerCatalogSync}
             />
 
             {/* Mobile Tab Switcher */}
