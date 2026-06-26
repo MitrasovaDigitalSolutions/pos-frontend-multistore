@@ -3,6 +3,8 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { IconScan, IconHome, IconLogout, IconWifi, IconCash } from "@tabler/icons-react";
+import { OfflineReadinessBadge } from "@/features/checkout/components/offline-readiness-badge";
+import type { OfflineReadinessState } from "@/hooks/use-offline-readiness";
 
 interface CheckoutTopBarProps {
     transactionId: string | null;
@@ -15,6 +17,8 @@ interface CheckoutTopBarProps {
     pendingCount?: number;
     isSyncing?: boolean;
     onSyncClick?: () => void;
+    offlineReadiness?: OfflineReadinessState;
+    onCatalogSyncRequest?: () => void;
 }
 
 export function CheckoutTopBar({
@@ -28,6 +32,8 @@ export function CheckoutTopBar({
     pendingCount = 0,
     isSyncing = false,
     onSyncClick,
+    offlineReadiness,
+    onCatalogSyncRequest,
 }: CheckoutTopBarProps) {
     return (
         <div className="bg-slate-900 text-white h-12 px-4 sm:px-6 flex items-center justify-between border-b border-slate-800">
@@ -80,11 +86,22 @@ export function CheckoutTopBar({
                 </Button>
             </div>
 
-            <div className="hidden lg:flex items-center gap-6 text-xs font-semibold text-slate-400">
+            <div className="hidden lg:flex items-center gap-3 text-xs font-semibold text-slate-400">
+                {/* Offline Readiness Badge */}
+                {offlineReadiness && (
+                    <OfflineReadinessBadge
+                        state={offlineReadiness}
+                        onRefreshRequest={onCatalogSyncRequest}
+                    />
+                )}
+
+                <div className="w-px h-4 bg-slate-800" />
+
+                {/* Network / Sync Status */}
                 {!isOnline ? (
                     <div className="flex items-center gap-1.5 text-rose-500 animate-pulse">
                         <IconWifi size={16} className="opacity-60" />
-                        <span>Sistem Offline {pendingCount > 0 && `(${pendingCount} pending)`}</span>
+                        <span>Offline {pendingCount > 0 && `(${pendingCount} pending)`}</span>
                     </div>
                 ) : pendingCount > 0 ? (
                     <button
@@ -98,9 +115,10 @@ export function CheckoutTopBar({
                 ) : (
                     <div className="flex items-center gap-1.5 text-emerald-400">
                         <IconWifi size={16} />
-                        <span>Sistem Online</span>
+                        <span>Online</span>
                     </div>
                 )}
+                <div className="w-px h-4 bg-slate-800" />
                 <div>Terminal: POS-01</div>
             </div>
         </div>
