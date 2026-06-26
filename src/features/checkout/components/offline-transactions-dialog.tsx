@@ -157,7 +157,7 @@ export function OfflineTransactionsDialog({ open, onOpenChange }: OfflineTransac
                     <span>Daftar Transaksi Offline</span>
                 </div>
             }
-            className="max-w-4xl w-full flex flex-col max-h-[90vh]"
+            className="sm:max-w-4xl w-full flex flex-col max-h-[90vh]"
         >
             <div className="space-y-4 pt-3 flex-1 flex flex-col overflow-hidden min-h-0">
                 {/* Network Status Banner */}
