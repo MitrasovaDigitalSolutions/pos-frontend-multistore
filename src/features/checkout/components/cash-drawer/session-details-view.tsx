@@ -17,6 +17,7 @@ import {
     IconLoader2,
     IconX,
 } from "@tabler/icons-react";
+import { Scrollable } from "@/components/ui/scrollable";
 
 interface SessionDetailsViewProps {
     activeSession: CashDrawerSession | undefined;
@@ -81,7 +82,7 @@ export function SessionDetailsView({
                     <div>
                         <span className="block text-sm font-bold text-slate-900">Laci Kasir — Shift Aktif</span>
                         <span className="block text-[10px] font-medium text-slate-400 mt-0.5">
-                            Sesi <span className="text-emerald-600 font-bold">#{activeSession.uid}</span> &bull; Status:{" "}
+                            Sesi <span className="text-emerald-600 font-bold">#{activeSession.user?.username}</span> &bull; Status:{" "}
                             <span className="text-emerald-600 font-bold uppercase">Terbuka</span>
                         </span>
                     </div>
@@ -240,72 +241,72 @@ export function SessionDetailsView({
 
                 {/* Right Column (History) */}
                 {showHistory && (
-                    <div className="space-y-3 border-l border-slate-100 pl-6 flex flex-col h-full">
-                        <div className="space-y-3 grow">
-                            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                                <IconHistory size={12} /> Riwayat Arus Kas Shift
-                            </span>
+                    <div className="border-l border-slate-100 pl-6 flex flex-col max-h-[420px]">
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1 shrink-0 mb-3">
+                            <IconHistory size={12} /> Riwayat Arus Kas Shift
+                        </span>
+                        <Scrollable className="flex-1 min-h-0">
                             {movements.length > 0 ? (
-                                <div className="border border-slate-100 rounded-xl divide-y divide-slate-100 overflow-y-auto bg-white pr-1 max-h-[300px]">
-                                    {movements.map((movement) => {
-                                        const isOutflow = movement.type === "cash_out" || movement.type === "cash_refund";
-                                        return (
-                                            <div key={movement.uid} className="p-2.5 flex justify-between items-center text-xs">
-                                                <div className="space-y-0.5">
-                                                    <div className="font-bold text-slate-700 flex items-center gap-1">
-                                                        {(movement.type === "opening" || movement.type === "initial") && (
-                                                            <span className="bg-slate-100 text-slate-600 text-[8px] font-extrabold px-1 py-0.5 rounded">
-                                                                Mulai
+                                    <div className="flex flex-col border border-slate-100 rounded-xl divide-y divide-slate-100 bg-white pr-1">
+                                        {movements.map((movement) => {
+                                            const isOutflow = movement.type === "cash_out" || movement.type === "cash_refund";
+                                            return (
+                                                <div key={movement.uid} className="p-2.5 flex justify-between items-center text-xs">
+                                                    <div className="space-y-0.5">
+                                                        <div className="font-bold text-slate-700 flex items-center gap-1">
+                                                            {(movement.type === "opening" || movement.type === "initial") && (
+                                                                <span className="bg-slate-100 text-slate-600 text-[8px] font-extrabold px-1 py-0.5 rounded">
+                                                                    Mulai
+                                                                </span>
+                                                            )}
+                                                            {movement.type === "cash_sale" && (
+                                                                <span className="bg-indigo-50 text-indigo-700 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-indigo-100">
+                                                                    <IconCash size={8} /> Penjualan
+                                                                </span>
+                                                            )}
+                                                            {movement.type === "cash_in" && (
+                                                                <span className="bg-emerald-50 text-emerald-700 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-emerald-100">
+                                                                    <IconArrowDownLeft size={8} /> Masuk
+                                                                </span>
+                                                            )}
+                                                            {movement.type === "cash_out" && (
+                                                                <span className="bg-rose-50 text-rose-700 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-rose-100">
+                                                                    <IconArrowUpRight size={8} /> Keluar
+                                                                </span>
+                                                            )}
+                                                            {movement.type === "cash_refund" && (
+                                                                <span className="bg-amber-50 text-amber-700 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-amber-100">
+                                                                    <IconArrowUpRight size={8} /> Refund
+                                                                </span>
+                                                            )}
+                                                            <span className="truncate max-w-[130px]" title={movement.note || ""}>
+                                                                {movement.note || "Arus kas laci"}
                                                             </span>
-                                                        )}
-                                                        {movement.type === "cash_sale" && (
-                                                            <span className="bg-indigo-50 text-indigo-700 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-indigo-100">
-                                                                <IconCash size={8} /> Penjualan
-                                                            </span>
-                                                        )}
-                                                        {movement.type === "cash_in" && (
-                                                            <span className="bg-emerald-50 text-emerald-700 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-emerald-100">
-                                                                <IconArrowDownLeft size={8} /> Masuk
-                                                            </span>
-                                                        )}
-                                                        {movement.type === "cash_out" && (
-                                                            <span className="bg-rose-50 text-rose-700 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-rose-100">
-                                                                <IconArrowUpRight size={8} /> Keluar
-                                                            </span>
-                                                        )}
-                                                        {movement.type === "cash_refund" && (
-                                                            <span className="bg-amber-50 text-amber-700 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-amber-100">
-                                                                <IconArrowUpRight size={8} /> Refund
-                                                            </span>
-                                                        )}
-                                                        <span className="truncate max-w-[130px]" title={movement.note || ""}>
-                                                            {movement.note || "Arus kas laci"}
-                                                        </span>
+                                                        </div>
+                                                        <div className="text-[9px] text-slate-400 font-medium">
+                                                            {new Date(movement.created_at).toLocaleTimeString("id-ID", {
+                                                                hour: "2-digit",
+                                                                minute: "2-digit",
+                                                                hour12: false,
+                                                            })}
+                                                        </div>
                                                     </div>
-                                                    <div className="text-[9px] text-slate-400 font-medium">
-                                                        {new Date(movement.created_at).toLocaleTimeString("id-ID", {
-                                                            hour: "2-digit",
-                                                            minute: "2-digit",
-                                                            hour12: false,
-                                                        })}
-                                                    </div>
+                                                    <span className={cn(
+                                                        "font-bold tabular-nums",
+                                                        isOutflow ? "text-rose-500" : "text-emerald-600"
+                                                    )}>
+                                                        {isOutflow ? "-" : "+"} {formatRupiah(movement.amount)}
+                                                    </span>
                                                 </div>
-                                                <span className={cn(
-                                                    "font-bold tabular-nums",
-                                                    isOutflow ? "text-rose-500" : "text-emerald-600"
-                                                )}>
-                                                    {isOutflow ? "-" : "+"} {formatRupiah(movement.amount)}
-                                                </span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            ) : (
-                                <div className="border border-dashed border-slate-200 rounded-xl p-8 text-center text-slate-400 text-xs">
-                                    Belum ada riwayat arus kas shift ini.
-                                </div>
-                            )}
-                        </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="border border-dashed border-slate-200 rounded-xl p-8 text-center text-slate-400 text-xs">
+                                        Belum ada riwayat arus kas shift ini.
+                                    </div>
+                                )}
+                        </Scrollable>
                     </div>
                 )}
             </div>

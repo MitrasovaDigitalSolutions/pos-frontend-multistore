@@ -105,6 +105,11 @@ export function useOfflineReadiness(): OfflineReadinessState {
         let serwistCleanup: (() => void) | null = null;
         let active = true;
 
+        // Track if SW was already controlling when page loaded.
+        // If it was, no need to refresh (SW was already set up from a previous visit).
+        // If not, this is a first install — we must refresh so the SW can take control.
+        const wasAlreadyControlled = !!navigator.serviceWorker.controller;
+
         const initSerwist = async () => {
             const { Serwist } = await import("@serwist/window");
             if (!active) return;
@@ -131,7 +136,19 @@ export function useOfflineReadiness(): OfflineReadinessState {
             const onInstalled = () => handleSwStatus("installed");
             const onActivating = () => handleSwStatus("activating");
             const onActivated = () => handleSwStatus("activated");
-            const onControlling = () => handleSwStatus("controlling");
+            const onControlling = () => {
+                handleSwStatus("controlling");
+
+                // Auto-refresh only on first install (SW was not controlling before).
+                // This ensures the SW actually starts intercepting fetch requests
+                // so the app can work offline after a single reload.
+                if (!wasAlreadyControlled) {
+                    // Small delay so the "controlling" state renders briefly before reload.
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 800);
+                }
+            };
             const onRedundant = () => handleSwStatus("none");
 
             serwist.addEventListener("installing", onInstalling);
@@ -141,8 +158,8 @@ export function useOfflineReadiness(): OfflineReadinessState {
             serwist.addEventListener("controlling", onControlling);
             serwist.addEventListener("redundant", onRedundant);
 
-            // If SW is already controlling, resolve immediately
-            if (navigator.serviceWorker.controller) {
+            // If SW is already controlling, resolve immediately (no reload needed)
+            if (wasAlreadyControlled) {
                 handleSwStatus("controlling");
             }
 

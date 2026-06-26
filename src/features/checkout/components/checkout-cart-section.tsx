@@ -26,6 +26,7 @@ interface CheckoutCartSectionProps {
     onUpdateQty: (item: CartItem, qty: number) => void;
     onRemoveItem: (item: CartItem) => void;
     onAddProduct: (product: Product) => void;
+    products?: Product[];
 }
 
 export function CheckoutCartSection({
@@ -36,6 +37,7 @@ export function CheckoutCartSection({
     onUpdateQty,
     onRemoveItem,
     onAddProduct,
+    products = [],
 }: CheckoutCartSectionProps) {
     return (
         <div className="bg-white border-r border-slate-200 flex flex-col h-full overflow-hidden min-h-0">
@@ -49,6 +51,7 @@ export function CheckoutCartSection({
                         disabled={isProcessing}
                         placeholder="Scan Barcode atau ketik nama produk... (Enter)"
                         mode="sell"
+                        products={products}
                     />
                 </div>
                 <Button
