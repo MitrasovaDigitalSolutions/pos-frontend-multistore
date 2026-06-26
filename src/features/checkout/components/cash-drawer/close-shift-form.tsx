@@ -14,6 +14,7 @@ import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form"
 import { toast } from "sonner";
 import { useCloseCashDrawer } from "../../api/cash-drawer-api";
 import { closeCashDrawerSchema, type CloseCashDrawerInput } from "../../schemas/cash-drawer-schema";
+import { db } from "@/lib/db";
 
 interface CloseShiftFormProps {
     sessionId: string;
@@ -56,6 +57,23 @@ export function CloseShiftForm({
                 "Tidak dapat menutup shift! Masih terdapat transaksi gantung (keranjang belanja aktif atau transaksi hold). Selesaikan atau batalkan (void) transaksi tersebut terlebih dahulu."
             );
             return;
+        }
+
+        // Check for unsynced offline transactions
+        try {
+            const pendingCount = await db.offlineTransactions
+                .where("status")
+                .equals("pending")
+                .count();
+
+            if (pendingCount > 0) {
+                toast.error(
+                    `Tidak dapat menutup shift! Masih terdapat ${pendingCount} transaksi offline yang belum disinkronisasi ke server. Silakan kirimkan transaksi tersebut terlebih dahulu.`
+                );
+                return;
+            }
+        } catch (dbErr) {
+            console.error("Gagal memeriksa transaksi offline pending:", dbErr);
         }
 
         try {

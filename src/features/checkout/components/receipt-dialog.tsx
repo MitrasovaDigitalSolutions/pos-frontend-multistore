@@ -158,7 +158,7 @@ export function ReceiptDialog({
                     variant="outline"
                     onClick={() => {
                         if (receipt?.uid) {
-                            const isOfflineTx = String(receipt.uid).startsWith("OFFLINE");
+                            const isOfflineTx = String(receipt.uid).startsWith("OFFLINE-");
                             if (isOfflineTx) {
                                 window.print();
                             } else {

@@ -95,13 +95,13 @@ export function useCheckoutState() {
 
     // Receipt data (after successful payment)
     const [receipt, setReceipt] = useState<Receipt | null>(null);
-    const [lastTransactionId, setLastTransactionId] = useState<number | null>(null);
+    const [lastTransactionId, setLastTransactionId] = useState<string | null>(null);
 
     useEffect(() => {
         const stored = localStorage.getItem("lastTransactionId");
         if (stored) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
-            setLastTransactionId(Number(stored));
+            setLastTransactionId(stored);
         }
     }, []);
 
@@ -322,8 +322,8 @@ export function useCheckoutState() {
         setActiveRecallId(null);
         if (receiptData?.uid) {
             localStorage.setItem("lastTransactionId", String(receiptData.uid));
-            setLastTransactionId(Number(receiptData.uid));
-            const isOfflineTx = String(receiptData.uid).startsWith("OFFLINE") || Number(receiptData.uid) > 1000000000000;
+            setLastTransactionId(String(receiptData.uid));
+            const isOfflineTx = String(receiptData.uid).startsWith("OFFLINE-");
             if (isOfflineTx) {
                 setTimeout(() => {
                     window.print();
@@ -341,7 +341,7 @@ export function useCheckoutState() {
 
     const handleReprint = useCallback(() => {
         if (lastTransactionId) {
-            const isOfflineTx = String(lastTransactionId).startsWith("OFFLINE") || lastTransactionId > 1000000000000;
+            const isOfflineTx = String(lastTransactionId).startsWith("OFFLINE-");
             if (isOfflineTx) {
                 window.print();
             } else {
@@ -414,6 +414,7 @@ export function useCheckoutState() {
         user,
         products,
         refetchProducts,
+        reloadLocalProducts,
         transactionId: activeRecallId,
         cart,
         holdList,

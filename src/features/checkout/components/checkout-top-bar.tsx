@@ -99,10 +99,13 @@ export function CheckoutTopBar({
 
                 {/* Network / Sync Status */}
                 {!isOnline ? (
-                    <div className="flex items-center gap-1.5 text-rose-500 animate-pulse">
+                    <button
+                        onClick={onSyncClick}
+                        className="flex items-center gap-1.5 text-rose-500 hover:text-rose-400 px-2 py-1 rounded-lg transition-all cursor-pointer font-bold outline-none border-none bg-transparent"
+                    >
                         <IconWifi size={16} className="opacity-60" />
-                        <span>Offline {pendingCount > 0 && `(${pendingCount} pending)`}</span>
-                    </div>
+                        <span>Offline {pendingCount > 0 ? `(${pendingCount} pending)` : "(Ready)"}</span>
+                    </button>
                 ) : pendingCount > 0 ? (
                     <button
                         onClick={onSyncClick}
@@ -113,10 +116,13 @@ export function CheckoutTopBar({
                         <span>Sinkronisasi {pendingCount} Transaksi</span>
                     </button>
                 ) : (
-                    <div className="flex items-center gap-1.5 text-emerald-400">
+                    <button
+                        onClick={onSyncClick}
+                        className="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 px-2 py-1 rounded-lg transition-all cursor-pointer font-bold outline-none border-none bg-transparent"
+                    >
                         <IconWifi size={16} />
                         <span>Online</span>
-                    </div>
+                    </button>
                 )}
                 <div className="w-px h-4 bg-slate-800" />
                 <div>Terminal: POS-01</div>

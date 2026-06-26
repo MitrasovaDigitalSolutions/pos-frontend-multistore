@@ -9,6 +9,7 @@ import { CatalogDialog } from "@/features/checkout/components/catalog-dialog";
 import { PaymentDialog } from "@/features/checkout/components/payment-dialog";
 import { HoldListDialog } from "@/features/checkout/components/hold-list-dialog";
 import { ReceiptDialog } from "@/features/checkout/components/receipt-dialog";
+import { OfflineTransactionsDialog } from "@/features/checkout/components/offline-transactions-dialog";
 import { BukaShiftModal, InfoSesiAktifModal } from "@/features/checkout/components/cash-drawer";
 import { useCurrentCashDrawer } from "@/features/checkout/api/cash-drawer-api";
 import { signOut } from "@/lib/auth-helpers";
@@ -31,6 +32,7 @@ export function Checkout() {
     const [isInfoSesiOpen, setIsInfoSesiOpen] = useState(false);
     const [hasAutoOpened, setHasAutoOpened] = useState(false);
     const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+    const [isOfflineTransactionsOpen, setIsOfflineTransactionsOpen] = useState(false);
     const [activeMobileTab, setActiveMobileTab] = useState<"cart" | "totals">("cart");
 
     const cashDrawerToken = state.session?.accessToken;
@@ -102,7 +104,7 @@ export function Checkout() {
                 isOnline={syncEngine.isOnline}
                 pendingCount={syncEngine.pendingCount}
                 isSyncing={syncEngine.isSyncing}
-                onSyncClick={syncEngine.triggerSync}
+                onSyncClick={() => setIsOfflineTransactionsOpen(true)}
                 offlineReadiness={offlineReadiness}
                 onCatalogSyncRequest={syncEngine.triggerCatalogSync}
             />
@@ -241,6 +243,7 @@ export function Checkout() {
                 selectedMember={state.selectedMember}
                 onPaySuccess={state.handlePaymentSuccess}
                 cartList={state.cart}
+                onLocalProductsReload={state.reloadLocalProducts}
             />
 
             <HoldListDialog
@@ -282,6 +285,11 @@ export function Checkout() {
                 token={cashDrawerToken}
                 onCloseSuccess={handleCloseShiftSuccess}
                 isOnline={isOnline}
+            />
+
+            <OfflineTransactionsDialog
+                open={isOfflineTransactionsOpen}
+                onOpenChange={setIsOfflineTransactionsOpen}
             />
 
             {/* Hidden Print Receipt container */}

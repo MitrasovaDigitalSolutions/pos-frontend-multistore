@@ -13,7 +13,7 @@ export function PrintReceiptLayout({ receipt, cashierName }: PrintReceiptLayoutP
     if (!receipt) return null;
 
     const items = receipt.items || [];
-    const isOffline = String(receipt.uid).startsWith("OFFLINE")
+    const isOffline = String(receipt.uid).startsWith("OFFLINE-")
 
     return (
         <div id="print-receipt-area" className="hidden print:block print:w-[58mm] print:font-mono print:text-[9px] print:leading-tight print:text-black print:bg-white print:p-1 print:m-0">

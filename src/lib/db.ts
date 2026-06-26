@@ -1,6 +1,7 @@
 import Dexie, { type Table } from "dexie";
 import type { Product } from "@/features/products/types";
 import type { Member } from "@/features/members/types";
+import type { Receipt } from "@/features/checkout/types";
 
 export interface OfflineTransaction {
     id?: number; // Auto-incremented local primary key
@@ -11,10 +12,22 @@ export interface OfflineTransaction {
     errorMessage?: string;
 }
 
+// Permanent offline transaction history (for monitoring)
+export interface OfflineTransactionRecord {
+    uid: string;              // Client-generated UUID (matches offlineQueue.uid)
+    payload: Record<string, unknown>;
+    receiptData: Receipt;     // Snapshot receipt for display
+    status: "pending" | "synced" | "failed";
+    timestamp: string;        // created_at (ISO string)
+    syncedAt?: string;        // When it was successfully synced
+    errorMessage?: string;
+}
+
 class POSDatabase extends Dexie {
     products!: Table<Product, string>;
     members!: Table<Member, string>;
     offlineQueue!: Table<OfflineTransaction, number>;
+    offlineTransactions!: Table<OfflineTransactionRecord, string>;
 
     constructor() {
         super("POSDatabase");
@@ -22,6 +35,12 @@ class POSDatabase extends Dexie {
             products: "uid, nama, barcode, status, updated_at",
             members: "uid, nama, kode, status, updated_at",
             offlineQueue: "++id, uid, timestamp, status",
+        });
+        this.version(3).stores({
+            products: "uid, nama, barcode, status, updated_at",
+            members: "uid, nama, kode, status, updated_at",
+            offlineQueue: "++id, uid, timestamp, status",
+            offlineTransactions: "uid, timestamp, status",
         });
     }
 }

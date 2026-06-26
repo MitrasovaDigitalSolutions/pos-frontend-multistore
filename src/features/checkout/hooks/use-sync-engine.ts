@@ -9,6 +9,9 @@ import { apiGetData, apiGetList, apiPost } from "@/shared/api/api-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+// Catalog auto-sync interval: every 30 minutes when online
+const CATALOG_SYNC_INTERVAL_MS = 30 * 60 * 1000;
+
 export function useSyncEngine() {
     const isOnline = useNetworkStatus();
     const [isSyncing, setIsSyncing] = useState(false);
@@ -23,7 +26,7 @@ export function useSyncEngine() {
     // Update the pending transactions count from IndexedDB
     const updatePendingCount = useCallback(async () => {
         try {
-            const count = await db.offlineQueue
+            const count = await db.offlineTransactions
                 .where("status")
                 .equals("pending")
                 .count();
@@ -33,7 +36,54 @@ export function useSyncEngine() {
         }
     }, []);
 
-    // ─── Phase 5: Replay Offline Queue to Bulk Endpoint ─────────────────────
+    // ─── Sync a Single Offline Transaction to /v1/transactions ──────────────────
+    // Sends each transaction individually with uid, created_at, updated_at fields.
+    // Does NOT auto-trigger — must be called manually from the monitoring page.
+    const syncSingleTransaction = useCallback(async (uid: string): Promise<"success" | "failed"> => {
+        if (!isOnline) return "failed";
+
+        try {
+            const record = await db.offlineTransactions.get(uid);
+            if (!record) return "failed";
+
+            const now = new Date().toISOString();
+            const syncPayload = {
+                ...record.payload,
+                uid: record.uid,
+                created_at: record.timestamp,
+                updated_at: now,
+            };
+
+            await apiPost("/v1/transactions", syncPayload);
+
+            // Mark as synced in offlineTransactions
+            await db.offlineTransactions.update(uid, {
+                status: "synced",
+                syncedAt: now,
+                errorMessage: undefined,
+            });
+
+            // Remove from offlineQueue (if still present)
+            await db.offlineQueue.where("uid").equals(uid).delete();
+
+            setLastSyncedAt(new Date());
+            await updatePendingCount();
+            return "success";
+        } catch (err) {
+            const error = err as Error;
+            const errorMsg = error.message || "Gagal menghubungi server";
+
+            await db.offlineTransactions.update(uid, {
+                status: "failed",
+                errorMessage: errorMsg,
+            });
+
+            await updatePendingCount();
+            return "failed";
+        }
+    }, [isOnline, updatePendingCount]);
+
+    // ─── Sync ALL Pending Transactions (manual trigger) ──────────────────────────
     const syncOfflineTransactions = useCallback(async () => {
         if (!isOnline || isSyncingRef.current) return;
 
@@ -42,47 +92,33 @@ export function useSyncEngine() {
             setIsSyncing(true);
             setSyncError(null);
 
-            // Fetch all pending offline transactions
-            const pendingTx = await db.offlineQueue
+            const pendingRecords = await db.offlineTransactions
                 .where("status")
                 .equals("pending")
-                .sortBy("id");
+                .sortBy("timestamp");
 
-            if (pendingTx.length === 0) {
+            if (pendingRecords.length === 0) {
                 isSyncingRef.current = false;
                 setIsSyncing(false);
                 return;
             }
 
-            // Mark transactions as syncing
-            const ids = pendingTx.map((tx) => tx.id!);
-            await db.offlineQueue.where("id").anyOf(ids).modify({ status: "syncing" });
+            let successCount = 0;
+            let failCount = 0;
 
-            // Prepare the bulk transaction payload
-            const payloads = pendingTx.map((tx) => ({
-                uid: tx.uid,
-                ...tx.payload,
-                created_at: tx.timestamp, // Maintain the original offline transaction time
-            }));
+            for (const record of pendingRecords) {
+                const result = await syncSingleTransaction(record.uid);
+                if (result === "success") successCount++;
+                else failCount++;
+            }
 
-            try {
-                // Post bulk transactions to the backend bulk endpoint
-                await apiPost("/v1/transactions/bulk", { transactions: payloads });
-
-                // Delete synced transactions from IndexedDB
-                await db.offlineQueue.where("id").anyOf(ids).delete();
-                setLastSyncedAt(new Date());
-                toast.success(`${pendingTx.length} Transaksi offline berhasil disinkronisasi ke server.`);
-            } catch (apiErr) {
-                // If API fails, mark them as pending again and store the error message
-                const error = apiErr as Error;
-                const errorMsg = error.message || "Gagal menghubungi server";
-                await db.offlineQueue.where("id").anyOf(ids).modify({
-                    status: "pending",
-                    errorMessage: errorMsg,
-                });
-                setSyncError(errorMsg);
-                toast.error(`Sinkronisasi gagal: ${errorMsg}`);
+            if (successCount > 0) {
+                toast.success(`${successCount} transaksi offline berhasil disinkronisasi.`);
+            }
+            if (failCount > 0) {
+                const msg = `${failCount} transaksi gagal disinkronisasi.`;
+                setSyncError(msg);
+                toast.error(msg);
             }
         } catch (err) {
             const error = err as Error;
@@ -91,11 +127,49 @@ export function useSyncEngine() {
         } finally {
             isSyncingRef.current = false;
             setIsSyncing(false);
-            updatePendingCount();
+            await updatePendingCount();
         }
-    }, [isOnline, updatePendingCount]);
+    }, [isOnline, syncSingleTransaction, updatePendingCount]);
 
-    // ─── Phase 4 & 5: Delta Catalog Syncing ──────────────────────────────────
+    // ─── Sync SELECTED Pending Transactions (manual checkbox trigger) ─────────────
+    const syncSelectedTransactions = useCallback(async (uids: string[]) => {
+        if (!isOnline || isSyncingRef.current || uids.length === 0) return;
+
+        try {
+            isSyncingRef.current = true;
+            setIsSyncing(true);
+            setSyncError(null);
+
+            let successCount = 0;
+            let failCount = 0;
+
+            for (const uid of uids) {
+                const result = await syncSingleTransaction(uid);
+                if (result === "success") successCount++;
+                else failCount++;
+            }
+
+            if (successCount > 0) {
+                toast.success(`${successCount} transaksi offline berhasil disinkronisasi.`);
+            }
+            if (failCount > 0) {
+                const msg = `${failCount} transaksi gagal disinkronisasi.`;
+                setSyncError(msg);
+                toast.error(msg);
+            }
+        } catch (err) {
+            const error = err as Error;
+            console.error("Gagal menjalankan sync terpilih:", error);
+            setSyncError(error.message || "Unknown error");
+        } finally {
+            isSyncingRef.current = false;
+            setIsSyncing(false);
+            await updatePendingCount();
+        }
+    }, [isOnline, syncSingleTransaction, updatePendingCount]);
+
+
+    // ─── Delta Catalog Syncing ────────────────────────────────────────────────────
     const syncCatalog = useCallback(async () => {
         if (!isOnline || isCatalogSyncingRef.current) return;
 
@@ -114,7 +188,6 @@ export function useSyncEngine() {
             let lastPage = 1;
             const perPage = 250;
 
-            // Fetch and merge in pages
             while (currentPage <= lastPage) {
                 const params: PaginationParams & { updated_after?: string } = {
                     page: currentPage,
@@ -126,7 +199,6 @@ export function useSyncEngine() {
 
                 const res = await apiGetList<Product>("/v1/products", params);
                 if (res.data && res.data.length > 0) {
-                    // Filter active items and upsert them into local IndexedDB products store
                     await db.products.bulkPut(res.data);
                 }
 
@@ -154,28 +226,33 @@ export function useSyncEngine() {
         }
     }, [isOnline]);
 
-    // Listen to network status changes and trigger sync when online
+    // Initialize pending count on mount
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         updatePendingCount();
+    }, [updatePendingCount]);
 
+    // Sync catalog when coming back online (one-time trigger)
+    useEffect(() => {
         if (isOnline) {
-            syncOfflineTransactions();
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             syncCatalog();
         }
-    }, [isOnline, syncOfflineTransactions, syncCatalog, updatePendingCount]);
+        // NOTE: syncOfflineTransactions is intentionally NOT called here.
+        // Offline transactions must be synced manually from the monitoring page.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOnline]);
 
-    // Setup periodic sync checks (every 45 seconds)
+    // Periodic catalog sync every 30 minutes while online
     useEffect(() => {
+        if (!isOnline) return;
+
         const interval = setInterval(() => {
-            if (isOnline) {
-                syncOfflineTransactions();
-                updatePendingCount();
-            }
-        }, 45000);
+            syncCatalog();
+        }, CATALOG_SYNC_INTERVAL_MS);
 
         return () => clearInterval(interval);
-    }, [isOnline, syncOfflineTransactions, updatePendingCount]);
+    }, [isOnline, syncCatalog]);
 
     return {
         isSyncing,
@@ -185,6 +262,9 @@ export function useSyncEngine() {
         syncError,
         isOnline,
         triggerSync: syncOfflineTransactions,
+        triggerSingleSync: syncSingleTransaction,
+        triggerSelectedSync: syncSelectedTransactions,
         triggerCatalogSync: syncCatalog,
+        updatePendingCount,
     };
 }
