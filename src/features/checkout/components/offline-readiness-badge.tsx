@@ -36,32 +36,32 @@ function getStatusConfig(status: OfflineReadinessStatus): StatusConfig {
             return {
                 icon: <IconLoader2 size={13} className="animate-spin" />,
                 label: "Memeriksa...",
-                badgeClass: "text-slate-400 hover:bg-slate-800",
-                dotClass: "bg-slate-500",
+                badgeClass: "text-slate-400 hover:bg-slate-800 hover:text-slate-200",
+                dotClass: "bg-slate-500 hover:bg-slate-200",
                 pulse: false,
             };
         case "ready":
             return {
                 icon: <IconShieldCheck size={13} />,
                 label: "Offline Siap",
-                badgeClass: "text-emerald-400 hover:bg-emerald-950/30",
-                dotClass: "bg-emerald-400",
+                badgeClass: "text-emerald-400 hover:bg-emerald-700 hover:text-emerald-200",
+                dotClass: "bg-emerald-400 hover:bg-emerald-200",
                 pulse: false,
             };
         case "partial":
             return {
                 icon: <IconShield size={13} />,
                 label: "Offline Parsial",
-                badgeClass: "text-amber-400 hover:bg-amber-950/30",
-                dotClass: "bg-amber-400",
+                badgeClass: "text-amber-400 hover:bg-amber-700 hover:text-amber-200",
+                dotClass: "bg-amber-400 hover:bg-amber-200",
                 pulse: true,
             };
         case "not-ready":
             return {
                 icon: <IconShieldOff size={13} />,
                 label: "Offline Belum Siap",
-                badgeClass: "text-rose-400 hover:bg-rose-950/30",
-                dotClass: "bg-rose-500",
+                badgeClass: "text-rose-400 hover:bg-rose-700 hover:text-rose-200",
+                dotClass: "bg-rose-500 hover:bg-rose-200",
                 pulse: true,
             };
         case "dev-mode":
