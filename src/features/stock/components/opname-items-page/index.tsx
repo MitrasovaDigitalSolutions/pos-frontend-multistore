@@ -189,7 +189,6 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
             barcode: product.barcode,
             nama: product.nama,
             stok_sistem: product.stok,
-            stok_fisik: product.stok, // default physical stock to system stock
             alasan: "Opname rutin",
         });
         toast.success(`Ditambahkan: ${product.nama}`);
@@ -445,7 +444,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
                                         <TableHead className="p-4 text-right font-bold text-slate-500 uppercase tracking-wider">Stok Sistem</TableHead>
                                         <TableHead className="p-4 text-center w-36 font-bold text-slate-500 uppercase tracking-wider">Stok Fisik</TableHead>
                                         <TableHead className="p-4 text-right font-bold text-slate-500 uppercase tracking-wider">Selisih</TableHead>
-                                        <TableHead className="p-4 font-bold text-slate-500 uppercase tracking-wider w-80">Alasan Selisih</TableHead>
+                                        <TableHead className="p-4 font-bold text-slate-500 uppercase tracking-wider sm:min-w-60">Alasan Selisih</TableHead>
                                         <TableHead className="p-4 text-center w-16 font-bold text-slate-500 uppercase tracking-wider">Aksi</TableHead>
                                     </TableRow>
                                 </TableHeader>

@@ -15,16 +15,18 @@ export function PageLoadingTracker() {
         stopLoading();
     }, [pathname, searchParams, stopLoading]);
 
-    // Handle back/forward browser buttons
+    // Handle page restore from back-forward cache (bfcache) to prevent stuck loading state
     useEffect(() => {
-        const handlePopState = () => {
-            startLoading();
+        const handlePageShow = (event: PageTransitionEvent) => {
+            if (event.persisted) {
+                stopLoading();
+            }
         };
-        window.addEventListener("popstate", handlePopState);
+        window.addEventListener("pageshow", handlePageShow);
         return () => {
-            window.removeEventListener("popstate", handlePopState);
+            window.removeEventListener("pageshow", handlePageShow);
         };
-    }, [startLoading]);
+    }, [stopLoading]);
 
     // Intercept clicks on local links
     useEffect(() => {

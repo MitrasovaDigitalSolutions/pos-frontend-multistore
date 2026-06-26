@@ -76,7 +76,7 @@ export function createOpnameItemsStore(opnameId: string) {
                                     barcode: product.barcode,
                                     nama: product.nama,
                                     stok_sistem: product.stok_sistem,
-                                    stok_fisik: product.stok_fisik ?? product.stok_sistem,
+                                    stok_fisik: product.stok_fisik ?? 1,
                                     alasan: product.alasan || "Opname rutin",
                                 },
                             ],
