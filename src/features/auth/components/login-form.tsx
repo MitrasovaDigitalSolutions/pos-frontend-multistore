@@ -1,29 +1,28 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useAppRouter } from "@/hooks/use-app-router";
-import { useSession, signIn } from "next-auth/react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, type LoginInput } from "../schemas/login-schema";
-import {
-    IconUser,
-    IconLock,
-    IconEye,
-    IconEyeOff,
-    IconLoader2,
-} from "@tabler/icons-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
     Card,
     CardContent,
     CardDescription,
-    CardFooter,
     CardHeader,
-    CardTitle,
+    CardTitle
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { useAppRouter } from "@/hooks/use-app-router";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+    IconEye,
+    IconEyeOff,
+    IconLoader2,
+    IconLock,
+    IconUser,
+} from "@tabler/icons-react";
+import { signIn, useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { loginSchema, type LoginInput } from "../schemas/login-schema";
 
 export function LoginForm() {
     const router = useAppRouter();
@@ -38,8 +37,8 @@ export function LoginForm() {
     } = useForm<LoginInput>({
         resolver: zodResolver(loginSchema),
         defaultValues: {
-            username: "admin_pos",
-            password: "password",
+            username: "",
+            password: "",
         },
     });
 
@@ -191,18 +190,6 @@ export function LoginForm() {
                         </Button>
                     </form>
                 </CardContent>
-                <CardFooter className="flex flex-col items-center border-t border-slate-50 pt-6 pb-6 bg-slate-50/30 rounded-b-2xl">
-                    <div className="text-[11px] text-slate-400 text-center">
-                        Default Akun:{" "}
-                        <code className="bg-slate-100 px-1.5 py-0.5 rounded text-emerald-600 font-bold">
-                            admin_pos
-                        </code>{" "}
-                        /{" "}
-                        <code className="bg-slate-100 px-1.5 py-0.5 rounded text-emerald-600 font-bold">
-                            password
-                        </code>
-                    </div>
-                </CardFooter>
             </Card>
         </div>
     );
