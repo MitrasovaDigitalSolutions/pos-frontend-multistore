@@ -30,6 +30,7 @@ interface PaymentDialogProps {
     selectedMember: Member | null;
     onPaySuccess: (receipt: Receipt) => void;
     cartList: CartItem[];
+    onLocalProductsReload?: () => void;
 }
 
 export function PaymentDialog({
@@ -42,6 +43,7 @@ export function PaymentDialog({
     selectedMember,
     onPaySuccess,
     cartList,
+    onLocalProductsReload,
 }: PaymentDialogProps) {
     const bulkCheckout = useBulkCheckout();
     const isOnline = useNetworkStatus();
@@ -90,6 +92,7 @@ export function PaymentDialog({
 
         // Generate client-side transaction UID
         const clientUid = crypto.randomUUID();
+        const now = new Date().toISOString();
 
         const payload: Record<string, unknown> = {
             uid: clientUid,
@@ -142,40 +145,19 @@ export function PaymentDialog({
             });
         } else {
             try {
-                // Save transaction to local IndexedDB queue
-                await db.offlineQueue.add({
-                    uid: clientUid,
-                    payload,
-                    timestamp: new Date().toISOString(),
-                    status: "pending",
-                });
+                // Build mock receipt — uid uses OFFLINE- prefix for easy identification
+                const offlineReceiptUid = `OFFLINE-${clientUid}`;
 
-                // Deduct stock quantities locally inside IndexedDB products table
-                for (const item of cartList) {
-                    const product = await db.products.get(item.product_uid);
-                    if (product && !product.is_jasa) {
-                        const newStock = Math.max(0, product.stok - item.qty);
-                        await db.products.update(item.product_uid, { stok: newStock });
-                    }
-                }
-
-                // Update member debt locally in IndexedDB if debt transaction
-                if (payMode === "debt" && selectedMember) {
-                    const newDebt = (selectedMember.hutang || 0) + (grandTotal - cashNum);
-                    await db.members.update(selectedMember.uid, { hutang: newDebt });
-                }
-
-                // Generate mock Receipt object
-                const mockReceiptId = Date.now().toString();
                 const mockReceipt: Receipt = {
-                    uid: mockReceiptId,
+                    uid: offlineReceiptUid,
                     subtotal: grandTotal - tax,
                     pajak: tax,
                     total: grandTotal,
                     metode_pembayaran: payMode,
+                    // FIX: nominal_bayar & cash_received correctly set for each mode
                     nominal_bayar: payMode === "cash" ? cashNum : 0,
                     kembalian: payMode === "cash" ? Math.max(0, changeValue) : 0,
-                    cash_received: payMode === "debt" ? cashNum : 0,
+                    cash_received: payMode === "debt" ? cashNum : (payMode === "cash" ? cashNum : 0),
                     debt_amount: payMode === "debt" ? (grandTotal - cashNum) : 0,
                     jenis_kartu: payMode === "card" ? cardType : undefined,
                     nomor_kartu_akhir: payMode === "card" ? cardLast4 : undefined,
@@ -187,6 +169,58 @@ export function PaymentDialog({
                         harga_satuan: item.price,
                     })),
                 };
+
+                // Save to offlineQueue (for future sync to server)
+                await db.offlineQueue.add({
+                    uid: clientUid,
+                    payload: {
+                        ...payload,
+                        created_at: now,
+                        updated_at: now,
+                    },
+                    timestamp: now,
+                    status: "pending",
+                });
+
+                // Save to offlineTransactions (permanent history for monitoring)
+                await db.offlineTransactions.add({
+                    uid: clientUid,
+                    payload: {
+                        ...payload,
+                        created_at: now,
+                        updated_at: now,
+                    },
+                    receiptData: mockReceipt,
+                    status: "pending",
+                    timestamp: now,
+                });
+
+                // Deduct stock quantities locally inside IndexedDB products table
+                for (const item of cartList) {
+                    if (item.is_jasa) continue;
+                    try {
+                        const product = await db.products.get(item.product_uid);
+                        if (product) {
+                            const newStock = Math.max(0, product.stok - item.qty);
+                            await db.products.update(item.product_uid, { stok: newStock });
+                        }
+                    } catch (stockErr) {
+                        console.warn(`Gagal mengurangi stok produk ${item.product_uid}:`, stockErr);
+                    }
+                }
+
+                // Reload local products so the updated stock is reflected in the UI
+                onLocalProductsReload?.();
+
+                // Update member debt locally in IndexedDB if debt transaction
+                if (payMode === "debt" && selectedMember) {
+                    try {
+                        const newDebt = (selectedMember.hutang || 0) + (grandTotal - cashNum);
+                        await db.members.update(selectedMember.uid, { hutang: newDebt });
+                    } catch (debtErr) {
+                        console.warn("Gagal memperbarui hutang member lokal:", debtErr);
+                    }
+                }
 
                 toast.warning("Koneksi offline. Transaksi disimpan secara lokal.");
                 onPaySuccess(mockReceipt);
