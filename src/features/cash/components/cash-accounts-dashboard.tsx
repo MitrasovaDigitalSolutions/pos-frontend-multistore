@@ -295,7 +295,7 @@ export function CashAccountsDashboard() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {accounts.map((account) => {
+                        {[...accounts].sort((a, b) => a.nama.localeCompare(b.nama, "id")).map((account) => {
                             const isSelected = ledgerFilters.cash_account_uid === account.uid;
                             const isBank = account.tipe.toLowerCase() === "bank" || account.tipe.toLowerCase() === "edc";
                             return (

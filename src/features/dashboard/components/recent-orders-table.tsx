@@ -5,6 +5,7 @@ import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconArrowUpRight, IconPackage, IconReceipt } from "@tabler/icons-react";
 import Link from "next/link";
 import { useAppRouter } from "@/hooks/use-app-router";
+import { Scrollable } from "@/components/ui/scrollable";
 
 const STATUS_BADGES: Record<string, string> = {
   completed: "bg-emerald-50 text-emerald-700 border-emerald-100/50",
@@ -74,7 +75,7 @@ export function RecentOrdersTable({ from, to, paymentMethod }: RecentOrdersTable
       </div>
 
       {/* Table */}
-      <div className="overflow-auto flex-1 pr-1">
+      <Scrollable className="flex-1 min-h-0" orientation="both">
         <table className="w-full border-collapse">
           <thead>
             <tr className="sticky top-0 z-10">
@@ -198,7 +199,7 @@ export function RecentOrdersTable({ from, to, paymentMethod }: RecentOrdersTable
             )}
           </tbody>
         </table>
-      </div>
+      </Scrollable>
     </div>
   );
 }
