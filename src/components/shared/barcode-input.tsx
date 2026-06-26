@@ -158,8 +158,8 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                     );
                 }
 
-                // 3. Try API barcode lookup
-                if (!found) {
+                // 3. Try API barcode lookup (only when not in local/offline mode)
+                if (!found && !isLocalMode) {
                     try {
                         const results = await lookupProductByBarcode(query);
                         if (results && results.length > 0) {

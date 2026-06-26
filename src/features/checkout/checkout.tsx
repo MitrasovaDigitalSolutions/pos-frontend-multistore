@@ -144,6 +144,7 @@ export function Checkout() {
                         onUpdateQty={state.handleUpdateQty}
                         onRemoveItem={state.handleRemoveItem}
                         onAddProduct={state.handleAddProduct}
+                        products={state.products}
                     />
                 </div>
 
