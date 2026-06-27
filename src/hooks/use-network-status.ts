@@ -58,11 +58,16 @@ async function runHeartbeat() {
         });
         clearTimeout(timer);
 
-        if (res.ok) {
-            consecutiveFailures = 0;
-            setOnline(true);
+        // 502/503/504 from the Next proxy mean the backend itself is unreachable
+        // (the proxy returns 502 when it cannot reach the Laravel server) -> treat
+        // as a connectivity failure even though the proxy responded.
+        if (res.status === 502 || res.status === 503 || res.status === 504) {
+            consecutiveFailures += 1;
+            if (consecutiveFailures >= FAILURE_THRESHOLD) {
+                setOnline(false);
+            }
         } else {
-            // A reachable backend returning an error still means we have connectivity.
+            // Any other response (200, 404, 401, ...) means the backend is reachable.
             consecutiveFailures = 0;
             setOnline(true);
         }
