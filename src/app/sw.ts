@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 import { defaultCache } from "@serwist/next/worker";
-import { Serwist, NetworkFirst, StaleWhileRevalidate, type PrecacheEntry, type SerwistGlobalConfig } from "serwist";
+import { Serwist, NetworkFirst, NetworkOnly, StaleWhileRevalidate, type PrecacheEntry, type SerwistGlobalConfig } from "serwist";
 
 declare global {
     interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -19,6 +19,12 @@ const serwist = new Serwist({
     clientsClaim: true,
     navigationPreload: true,
     runtimeCaching: [
+        {
+            // Connectivity heartbeat must always hit the network, never the cache,
+            // otherwise a stale cached 200 would mask a real outage.
+            matcher: ({ url, sameOrigin }) => sameOrigin && url.pathname === "/api/proxy/v1/health",
+            handler: new NetworkOnly(),
+        },
         {
             matcher: ({ url, sameOrigin }) => url.pathname === "/api/auth/session" && sameOrigin,
             handler: new NetworkFirst({
