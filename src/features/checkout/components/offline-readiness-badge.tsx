@@ -2,17 +2,21 @@
 
 import React, { useState } from "react";
 import {
-    IconShieldCheck,
-    IconShieldOff,
-    IconShield,
-    IconCode,
-    IconLoader2,
-    IconCloudOff,
-    IconDatabase,
-    IconUsers,
-    IconRefresh,
-    IconX,
-} from "@tabler/icons-react";
+    ShieldCheck,
+    ShieldAlert,
+    Shield,
+    Code,
+    Loader2,
+    CloudOff,
+    Database,
+    Users,
+    RefreshCw,
+    X,
+    CheckCircle2,
+    XCircle,
+    AlertTriangle,
+    Lightbulb,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { OfflineReadinessState, OfflineReadinessStatus } from "@/hooks/use-offline-readiness";
 import { Button } from "@/components/ui/button";
@@ -34,42 +38,42 @@ function getStatusConfig(status: OfflineReadinessStatus): StatusConfig {
     switch (status) {
         case "checking":
             return {
-                icon: <IconLoader2 size={13} className="animate-spin" />,
+                icon: <Loader2 size={13} className="animate-spin" />,
                 label: "Memeriksa...",
-                badgeClass: "text-slate-400 hover:bg-slate-800 hover:text-slate-200",
-                dotClass: "bg-slate-500 hover:bg-slate-200",
+                badgeClass: "bg-slate-800/80 border border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200",
+                dotClass: "bg-slate-500",
                 pulse: false,
             };
         case "ready":
             return {
-                icon: <IconShieldCheck size={13} />,
+                icon: <ShieldCheck size={13} />,
                 label: "Offline Siap",
-                badgeClass: "text-emerald-400 hover:bg-emerald-700 hover:text-emerald-200",
-                dotClass: "bg-emerald-400 hover:bg-emerald-200",
+                badgeClass: "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300",
+                dotClass: "bg-emerald-400",
                 pulse: false,
             };
         case "partial":
             return {
-                icon: <IconShield size={13} />,
+                icon: <Shield size={13} className="animate-pulse" />,
                 label: "Offline Parsial",
-                badgeClass: "text-amber-400 hover:bg-amber-700 hover:text-amber-200",
-                dotClass: "bg-amber-400 hover:bg-amber-200",
+                badgeClass: "bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 hover:text-amber-300",
+                dotClass: "bg-amber-400",
                 pulse: true,
             };
         case "not-ready":
             return {
-                icon: <IconShieldOff size={13} />,
+                icon: <ShieldAlert size={13} />,
                 label: "Offline Belum Siap",
-                badgeClass: "text-rose-400 hover:bg-rose-700 hover:text-rose-200",
-                dotClass: "bg-rose-500 hover:bg-rose-200",
+                badgeClass: "bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 hover:text-rose-300",
+                dotClass: "bg-rose-500",
                 pulse: true,
             };
         case "dev-mode":
             return {
-                icon: <IconCode size={13} />,
+                icon: <Code size={13} />,
                 label: "Dev Mode",
-                badgeClass: "text-slate-500 hover:bg-slate-600 hover:text-slate-200",
-                dotClass: "bg-slate-600 hover:bg-slate-200",
+                badgeClass: "bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300",
+                dotClass: "bg-blue-400",
                 pulse: false,
             };
     }
@@ -104,7 +108,7 @@ export function OfflineReadinessBadge({
                 size="xs"
                 onClick={() => setIsOpen((v) => !v)}
                 className={cn(
-                    "font-semibold text-[11px] h-7 cursor-pointer",
+                    "font-semibold text-[11px] h-7 cursor-pointer gap-1.5 px-2.5 rounded-full transition-all duration-200",
                     config.badgeClass
                 )}
                 title="Status Kesiapan Offline"
@@ -138,33 +142,36 @@ export function OfflineReadinessBadge({
                         onClick={() => setIsOpen(false)}
                     />
                     {/* Panel */}
-                    <div className="absolute right-0 top-full mt-2 z-50 w-72 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl shadow-black/40 p-4 text-xs">
+                    <div className="absolute right-0 top-full mt-2 z-50 w-72 bg-slate-900/95 backdrop-blur-md border border-slate-800 rounded-xl shadow-2xl shadow-black/50 p-4 text-xs animate-in fade-in slide-in-from-top-1 duration-150">
                         {/* Header */}
-                        <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center justify-between mb-3 border-b border-slate-800/80 pb-2">
                             <span className="font-bold text-slate-200 text-[13px]">
                                 Status Offline Mode
                             </span>
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="text-slate-500 hover:text-slate-300 transition-colors outline-none cursor-pointer"
+                                className="text-slate-500 hover:text-slate-350 transition-colors outline-none cursor-pointer p-0.5 rounded-md hover:bg-slate-800"
                             >
-                                <IconX size={14} />
+                                <X size={14} />
                             </button>
                         </div>
 
                         {/* Status Items */}
-                        <div className="space-y-2.5">
+                        <div className="space-y-3">
                             {/* Dev Mode Notice */}
                             {state.isDevMode && (
-                                <div className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-400 text-[11px] leading-snug">
-                                    ⚠️ Service Worker <span className="text-amber-400 font-semibold">dinonaktifkan</span> di development mode. Jalankan production build untuk menguji offline sepenuhnya.
+                                <div className="bg-slate-800/60 border border-slate-800 rounded-lg px-3 py-2 text-slate-400 text-[11px] leading-snug flex items-start gap-2">
+                                    <AlertTriangle size={15} className="text-amber-400 shrink-0 mt-0.5" />
+                                    <span>
+                                        Service Worker <span className="text-amber-400 font-semibold">dinonaktifkan</span> di development mode. Jalankan production build untuk menguji offline sepenuhnya.
+                                    </span>
                                 </div>
                             )}
 
                             {/* Service Worker */}
                             {!state.isDevMode && (
                                 <CheckItem
-                                    icon={<IconCloudOff size={13} />}
+                                    icon={<CloudOff size={13} />}
                                     label="Service Worker"
                                     ok={state.swStatus === "controlling" || state.swStatus === "activated"}
                                     okText={`Aktif (${state.swStatus})`}
@@ -179,7 +186,7 @@ export function OfflineReadinessBadge({
 
                             {/* Products */}
                             <CheckItem
-                                icon={<IconDatabase size={13} />}
+                                icon={<Database size={13} />}
                                 label="Katalog Produk"
                                 ok={state.productsCount > 0}
                                 okText={`${state.productsCount.toLocaleString("id-ID")} produk tersimpan lokal`}
@@ -188,7 +195,7 @@ export function OfflineReadinessBadge({
 
                             {/* Members */}
                             <CheckItem
-                                icon={<IconUsers size={13} />}
+                                icon={<Users size={13} />}
                                 label="Data Member"
                                 ok={state.membersCount > 0}
                                 okText={`${state.membersCount.toLocaleString("id-ID")} member tersimpan lokal`}
@@ -197,29 +204,32 @@ export function OfflineReadinessBadge({
                         </div>
 
                         {/* Divider */}
-                        <div className="border-t border-slate-800 my-3" />
+                        <div className="border-t border-slate-800/80 my-3" />
 
                         {/* Last Synced */}
-                        <div className="flex items-center justify-between text-slate-500">
+                        <div className="flex items-center justify-between text-slate-500 text-[11px]">
                             <span>Terakhir sinkronisasi:</span>
-                            <span className="text-slate-300 font-medium">
+                            <span className="text-slate-350 font-semibold">
                                 {formatLastSynced(state.lastSyncedAt)}
                             </span>
                         </div>
 
                         {/* Advice */}
                         {(state.status === "partial" || state.status === "not-ready") && !state.isDevMode && (
-                            <div className="mt-3 bg-amber-950/30 border border-amber-800/40 rounded-lg px-3 py-2 text-amber-300/90 text-[11px] leading-snug">
-                                💡 Pastikan terhubung ke internet dan buka halaman checkout agar sistem dapat mengunduh data untuk offline.
+                            <div className="mt-3 bg-amber-950/20 border border-amber-900/30 rounded-lg px-3 py-2 text-amber-300/90 text-[11px] leading-snug flex flex-col gap-2">
+                                <div className="flex items-start gap-1.5">
+                                    <Lightbulb size={14} className="text-amber-400 shrink-0 mt-0.5" />
+                                    <span>Pastikan terhubung ke internet dan buka halaman checkout agar sistem dapat mengunduh data untuk offline.</span>
+                                </div>
                                 {onRefreshRequest && (
                                     <button
                                         onClick={() => {
                                             onRefreshRequest();
                                             setIsOpen(false);
                                         }}
-                                        className="mt-2 flex items-center gap-1 text-amber-400 hover:text-amber-300 font-semibold transition-colors cursor-pointer outline-none"
+                                        className="flex items-center gap-1 text-amber-400 hover:text-amber-350 font-semibold transition-colors cursor-pointer outline-none self-start bg-amber-500/10 hover:bg-amber-500/20 px-2.5 py-1 rounded-md border border-amber-500/20"
                                     >
-                                        <IconRefresh size={12} />
+                                        <RefreshCw size={12} />
                                         Sinkronisasi Sekarang
                                     </button>
                                 )}
@@ -227,8 +237,9 @@ export function OfflineReadinessBadge({
                         )}
 
                         {state.status === "ready" && (
-                            <div className="mt-3 bg-emerald-950/30 border border-emerald-800/40 rounded-lg px-3 py-2 text-emerald-300/90 text-[11px] leading-snug">
-                                ✅ Sistem siap digunakan secara offline. Transaksi akan disimpan lokal dan disinkronisasi otomatis saat kembali online.
+                            <div className="mt-3 bg-emerald-950/20 border border-emerald-900/30 rounded-lg px-3 py-2 text-emerald-300/90 text-[11px] leading-snug flex items-start gap-1.5">
+                                <CheckCircle2 size={14} className="text-emerald-400 shrink-0 mt-0.5" />
+                                <span>Sistem siap digunakan secara offline. Transaksi akan disimpan lokal dan disinkronisasi otomatis saat kembali online.</span>
                             </div>
                         )}
                     </div>
@@ -260,23 +271,29 @@ function CheckItem({
             : "text-rose-400";
 
     return (
-        <div className="flex items-start gap-2.5">
-            <span className={cn("mt-0.5 shrink-0", colorClass)}>{icon}</span>
+        <div className="flex items-start gap-2.5 bg-slate-950/30 border border-slate-800/40 p-2 rounded-lg">
+            <span className={cn("mt-0.5 shrink-0 p-1 bg-slate-900 rounded-md border border-slate-800", colorClass)}>{icon}</span>
             <div className="flex-1 min-w-0">
                 <div
                     className={cn(
-                        "font-semibold",
+                        "font-semibold text-slate-350",
                         ok ? "text-slate-200" : "text-slate-400"
                     )}
                 >
                     {label}
                 </div>
-                <div className={cn("text-[11px] leading-snug", colorClass + "/80")}>
+                <div className={cn("text-[10px] leading-snug mt-0.5", colorClass + "/80")}>
                     {ok ? okText : failText}
                 </div>
             </div>
-            <span className="shrink-0 mt-0.5 text-base">
-                {ok ? "✅" : inProgress ? "⏳" : "❌"}
+            <span className="shrink-0 mt-0.5">
+                {ok ? (
+                    <CheckCircle2 size={15} className="text-emerald-400" />
+                ) : inProgress ? (
+                    <Loader2 size={15} className="text-amber-400 animate-spin" />
+                ) : (
+                    <XCircle size={15} className="text-rose-400" />
+                )}
             </span>
         </div>
     );
