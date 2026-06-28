@@ -6,7 +6,7 @@ import { CheckoutTopBar } from "@/features/checkout/components/checkout-top-bar"
 import { CheckoutCartSection } from "@/features/checkout/components/checkout-cart-section";
 import { CheckoutTotalsSection } from "@/features/checkout/components/checkout-totals-section";
 import { CatalogDialog } from "@/features/checkout/components/catalog-dialog";
-import { PaymentDialog } from "@/features/checkout/components/payment-dialog";
+import { PaymentDialog } from "@/features/checkout/components/payment/payment-dialog";
 import { HoldListDialog } from "@/features/checkout/components/hold-list-dialog";
 import { ReceiptDialog } from "@/features/checkout/components/receipt-dialog";
 import { OfflineTransactionsDialog } from "@/features/checkout/components/offline-transactions-dialog";
