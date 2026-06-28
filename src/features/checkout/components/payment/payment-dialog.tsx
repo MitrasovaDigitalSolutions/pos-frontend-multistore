@@ -17,6 +17,7 @@ import type { Receipt, CartItem } from "@/features/checkout/types";
 import type { Member } from "@/features/members/types";
 import { db } from "@/lib/db";
 import { useNetworkStatus } from "@/hooks/use-network-status";
+import { NetworkError } from "@/shared/errors/api-error";
 
 // Sub-components
 import { CashPaymentForm } from "./cash-payment-form";
@@ -135,17 +136,7 @@ export function PaymentDialog({
             };
         }
 
-        if (isOnline) {
-            bulkCheckout.mutate(payload, {
-                onSuccess: (res) => {
-                    if (res.data) onPaySuccess(res.data);
-                    onOpenChange(false);
-                },
-                onError: (err) => {
-                    toast.error(err.message || "Transaksi gagal diproses.");
-                },
-            });
-        } else {
+        const saveOffline = async (notice: string) => {
             try {
                 const offlineReceiptUid = `OFFLINE-${clientUid}`;
 
@@ -170,60 +161,81 @@ export function PaymentDialog({
                     })),
                 };
 
-                await db.offlineQueue.add({
-                    uid: clientUid,
-                    payload: {
-                        ...payload,
-                        created_at: now,
-                        updated_at: now,
-                    },
-                    timestamp: now,
-                    status: "pending",
-                });
+                const existing = await db.offlineQueue.where("uid").equals(clientUid).count();
+                if (existing === 0) {
+                    await db.offlineQueue.add({
+                        uid: clientUid,
+                        payload: {
+                            ...payload,
+                            created_at: now,
+                            updated_at: now,
+                        },
+                        timestamp: now,
+                        status: "pending",
+                    });
 
-                await db.offlineTransactions.add({
-                    uid: clientUid,
-                    payload: {
-                        ...payload,
-                        created_at: now,
-                        updated_at: now,
-                    },
-                    receiptData: mockReceipt,
-                    status: "pending",
-                    timestamp: now,
-                });
+                    await db.offlineTransactions.add({
+                        uid: clientUid,
+                        payload: {
+                            ...payload,
+                            created_at: now,
+                            updated_at: now,
+                        },
+                        receiptData: mockReceipt,
+                        status: "pending",
+                        timestamp: now,
+                    });
 
-                for (const item of cartList) {
-                    if (item.is_jasa) continue;
-                    try {
-                        const product = await db.products.get(item.product_uid);
-                        if (product) {
-                            const newStock = Math.max(0, product.stok - item.qty);
-                            await db.products.update(item.product_uid, { stok: newStock });
+                    for (const item of cartList) {
+                        if (item.is_jasa) continue;
+                        try {
+                            const product = await db.products.get(item.product_uid);
+                            if (product) {
+                                const newStock = Math.max(0, product.stok - item.qty);
+                                await db.products.update(item.product_uid, { stok: newStock });
+                            }
+                        } catch (stockErr) {
+                            console.warn(`Gagal mengurangi stok produk ${item.product_uid}:`, stockErr);
                         }
-                    } catch (stockErr) {
-                        console.warn(`Gagal mengurangi stok produk ${item.product_uid}:`, stockErr);
+                    }
+
+                    onLocalProductsReload?.();
+
+                    if (payMode === "debt" && selectedMember) {
+                        try {
+                            const newDebt = (selectedMember.hutang || 0) + (grandTotal - cashNum);
+                            await db.members.update(selectedMember.uid, { hutang: newDebt });
+                        } catch (debtErr) {
+                            console.warn("Gagal memperbarui hutang member lokal:", debtErr);
+                        }
                     }
                 }
 
-                onLocalProductsReload?.();
-
-                if (payMode === "debt" && selectedMember) {
-                    try {
-                        const newDebt = (selectedMember.hutang || 0) + (grandTotal - cashNum);
-                        await db.members.update(selectedMember.uid, { hutang: newDebt });
-                    } catch (debtErr) {
-                        console.warn("Gagal memperbarui hutang member lokal:", debtErr);
-                    }
-                }
-
-                toast.warning("Koneksi offline. Transaksi disimpan secara lokal.");
+                toast.warning(notice);
                 onPaySuccess(mockReceipt);
                 onOpenChange(false);
             } catch (err) {
                 const message = err instanceof Error ? err.message : String(err);
                 toast.error(`Gagal menyimpan transaksi offline: ${message}`);
             }
+        };
+
+        if (isOnline) {
+            bulkCheckout.mutate(payload, {
+                onSuccess: (res) => {
+                    if (res.data) onPaySuccess(res.data);
+                    onOpenChange(false);
+                },
+                onError: (err) => {
+                    if (err instanceof NetworkError) {
+                        void saveOffline("Koneksi terputus saat memproses. Transaksi disimpan secara lokal.");
+                        return;
+                    }
+                    toast.error(err.message || "Transaksi gagal diproses.");
+                },
+            });
+        } else {
+            await saveOffline("Koneksi offline. Transaksi disimpan secara lokal.");
         }
     };
 
