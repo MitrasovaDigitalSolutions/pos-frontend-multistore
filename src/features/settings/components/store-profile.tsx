@@ -13,7 +13,7 @@ export function StoreProfile() {
 
     const { settings, fetchSettings, isLoading: isSettingsLoading } = useSettingsStore();
     const { data: cashAccountsData, isLoading: isCashAccountsLoading } = useCashAccounts();
-    const cashAccounts = cashAccountsData?.data || [];
+    const cashAccounts = cashAccountsData || [];
 
     const [formData, setFormData] = useState<Record<string, string | File>>({
         app_name: "",
