@@ -7,6 +7,17 @@ import { useSettingsStore } from "@/stores/settings-store";
 import { settingsApi } from "@/features/settings/api/settings-api";
 import { useCashAccounts } from "@/features/cash/api/cash-api";
 
+interface StoreSettingsForm {
+    app_name: string;
+    app_address: string;
+    app_phone: string;
+    app_logo_url: string | File;
+    tax_rate_ppn: string;
+    cash_account_register_uid: string;
+    cash_account_main_uid: string;
+    cash_account_bank_uid: string;
+}
+
 export function StoreProfile() {
     const { data: session } = useSession();
     const user = session?.user;
@@ -15,7 +26,7 @@ export function StoreProfile() {
     const { data: cashAccountsData, isLoading: isCashAccountsLoading } = useCashAccounts();
     const cashAccounts = cashAccountsData || [];
 
-    const [formData, setFormData] = useState<Record<string, string | File>>({
+    const [formData, setFormData] = useState<StoreSettingsForm>({
         app_name: "",
         app_address: "",
         app_phone: "",
@@ -44,7 +55,7 @@ export function StoreProfile() {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData((prev) => ({
             ...prev,
-            [e.target.name]: e.target.value,
+            [e.target.name as keyof StoreSettingsForm]: e.target.value,
         }));
     };
 
@@ -52,7 +63,7 @@ export function StoreProfile() {
         if (e.target.files && e.target.files[0]) {
             setFormData((prev) => ({
                 ...prev,
-                [e.target.name]: e.target.files![0],
+                [e.target.name as keyof StoreSettingsForm]: e.target.files![0],
             }));
         }
     };
@@ -61,7 +72,7 @@ export function StoreProfile() {
         e.preventDefault();
         setIsSaving(true);
         try {
-            for (const key of Object.keys(formData)) {
+            for (const key of Object.keys(formData) as Array<keyof StoreSettingsForm>) {
                 if (settings[key] !== formData[key]) {
                     await settingsApi.update(key, formData[key]);
                 }
