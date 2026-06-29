@@ -203,11 +203,7 @@ export function SessionDetailsView({
                         <Button
                             variant="outline"
                             onClick={() => onAction("cash_in")}
-                            disabled={!isOnline}
-                            className={cn(
-                                "h-11 border-dashed border-emerald-500 hover:bg-emerald-50 text-emerald-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer bg-white",
-                                !isOnline && "opacity-50 cursor-not-allowed border-slate-200 text-slate-400 hover:bg-white hover:text-slate-400"
-                            )}
+                            className="h-11 border-dashed border-emerald-500 hover:bg-emerald-50 text-emerald-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer bg-white"
                         >
                             <IconArrowDownLeft size={16} />
                             <span>Cash In (Uang Masuk)</span>
@@ -215,11 +211,7 @@ export function SessionDetailsView({
                         <Button
                             variant="outline"
                             onClick={() => onAction("cash_out")}
-                            disabled={!isOnline}
-                            className={cn(
-                                "h-11 border-dashed border-rose-500 hover:bg-rose-50 text-rose-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer bg-white",
-                                !isOnline && "opacity-50 cursor-not-allowed border-slate-200 text-slate-400 hover:bg-white hover:text-slate-400"
-                            )}
+                            className="h-11 border-dashed border-rose-500 hover:bg-rose-50 text-rose-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer bg-white"
                         >
                             <IconArrowUpRight size={16} />
                             <span>Cash Out (Uang Keluar)</span>

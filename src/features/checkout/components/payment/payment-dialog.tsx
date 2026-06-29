@@ -19,6 +19,8 @@ import { db } from "@/lib/db";
 import { useNetworkStatus } from "@/hooks/use-network-status";
 import { NetworkError } from "@/shared/errors/api-error";
 
+import { useSession } from "next-auth/react";
+
 // Sub-components
 import { CashPaymentForm } from "./cash-payment-form";
 import { CardPaymentForm } from "./card-payment-form";
@@ -51,6 +53,7 @@ export function PaymentDialog({
 }: PaymentDialogProps) {
     const bulkCheckout = useBulkCheckout();
     const isOnline = useNetworkStatus();
+    const { data: session } = useSession();
 
     const [payMode, setPayMode] = useState<"cash" | "card" | "debt">("cash");
     const [cashReceived, setCashReceived] = useState("");
@@ -78,6 +81,22 @@ export function PaymentDialog({
     const isDebtValid = !!selectedMember && cashNum < grandTotal && grandTotal > 0;
     const isProcessing = bulkCheckout.isPending;
 
+    const decrementLocalStock = async () => {
+        for (const item of cartList) {
+            if (item.is_jasa) continue;
+            try {
+                const product = await db.products.get(item.product_uid);
+                if (product) {
+                    const newStock = Math.max(0, product.stok - item.qty);
+                    await db.products.update(item.product_uid, { stok: newStock });
+                }
+            } catch (stockErr) {
+                console.warn(`Gagal mengurangi stok produk ${item.product_uid}:`, stockErr);
+            }
+        }
+        onLocalProductsReload?.();
+    };
+
     const handlePaySubmit = async () => {
         if (cartItems.length === 0) {
             toast.error("Keranjang belanja kosong.");
@@ -99,11 +118,21 @@ export function PaymentDialog({
 
         const payload: Record<string, unknown> = {
             uid: clientUid,
+            payment_method: payMode,
             metode_pembayaran: payMode,
-            items: cartItems,
+            discount: discount,
             diskon: discount,
+            tax: tax,
             pajak: tax,
+            paid: payMode === "cash" ? cashNum : (payMode === "debt" ? cashNum : grandTotal),
+            nominal_bayar: payMode === "cash" ? cashNum : (payMode === "debt" ? cashNum : grandTotal),
+            cashier_name: session?.user?.name || "",
             member_uid: selectedMember?.uid || null,
+            items: cartItems.map((item) => ({
+                product_id: item.product_uid,
+                product_uid: item.product_uid,
+                quantity: item.quantity,
+            })),
         };
 
         if (payMode === "cash") {
@@ -139,10 +168,12 @@ export function PaymentDialog({
         const saveOffline = async (notice: string) => {
             try {
                 const offlineReceiptUid = `OFFLINE-${clientUid}`;
+                const subtotalVal = cartList.reduce((acc, item) => acc + item.price * item.qty, 0);
 
                 const mockReceipt: Receipt = {
                     uid: offlineReceiptUid,
-                    subtotal: grandTotal - tax,
+                    subtotal: subtotalVal,
+                    diskon: discount,
                     pajak: tax,
                     total: grandTotal,
                     metode_pembayaran: payMode,
@@ -186,20 +217,48 @@ export function PaymentDialog({
                         timestamp: now,
                     });
 
-                    for (const item of cartList) {
-                        if (item.is_jasa) continue;
+                    // Decrement local stock
+                    await decrementLocalStock();
+
+                    // Update local cash drawer active session & movements if offline
+                    const activeSessionId = session?.cashDrawerSessionId;
+                    if (activeSessionId) {
                         try {
-                            const product = await db.products.get(item.product_uid);
-                            if (product) {
-                                const newStock = Math.max(0, product.stok - item.qty);
-                                await db.products.update(item.product_uid, { stok: newStock });
+                            const dbSession = await db.cashDrawerSessions.get(activeSessionId);
+                            if (dbSession) {
+                                const cashAdded = payMode === "cash" ? grandTotal : (payMode === "debt" ? cashNum : 0);
+                                if (cashAdded > 0) {
+                                    const newExpectedCash = (dbSession.expected_cash || 0) + cashAdded;
+                                    const newCashSalesTotal = (dbSession.cash_sales_total || 0) + cashAdded;
+
+                                    await db.cashDrawerSessions.update(activeSessionId, {
+                                        expected_cash: newExpectedCash,
+                                        cash_sales_total: newCashSalesTotal,
+                                        updated_at: now,
+                                    });
+
+                                    const movementUid = `OFFLINE-MOV-${crypto.randomUUID()}`;
+                                    const newMovement = {
+                                        uid: movementUid,
+                                        cash_drawer_session_uid: activeSessionId,
+                                        user_uid: dbSession.user_uid,
+                                        type: "cash_sale",
+                                        amount: cashAdded,
+                                        balance_before: dbSession.expected_cash,
+                                        balance_after: newExpectedCash,
+                                        reference_uid: offlineReceiptUid,
+                                        reference_type: "transaction",
+                                        note: `Penjualan Offline (${payMode === "cash" ? "Tunai" : "Hutang"})`,
+                                        created_at: now,
+                                        updated_at: now,
+                                    };
+                                    await db.cashDrawerMovements.add(newMovement);
+                                }
                             }
-                        } catch (stockErr) {
-                            console.warn(`Gagal mengurangi stok produk ${item.product_uid}:`, stockErr);
+                        } catch (drawerErr) {
+                            console.warn("Gagal memperbarui laci kasir lokal:", drawerErr);
                         }
                     }
-
-                    onLocalProductsReload?.();
 
                     if (payMode === "debt" && selectedMember) {
                         try {
@@ -222,7 +281,8 @@ export function PaymentDialog({
 
         if (isOnline) {
             bulkCheckout.mutate(payload, {
-                onSuccess: (res) => {
+                onSuccess: async (res) => {
+                    await decrementLocalStock();
                     if (res.data) onPaySuccess(res.data);
                     onOpenChange(false);
                 },

@@ -11,6 +11,8 @@ interface CheckoutStoreState {
     cart: CartItem[];
     holdList: HoldTransaction[];
     selectedMember: Member | null;
+    discountType: "nominal" | "percent";
+    discountValue: number;
 
     // Cart Actions
     setCart: (items: CartItem[]) => void;
@@ -22,6 +24,10 @@ interface CheckoutStoreState {
 
     // Member Actions
     setSelectedMember: (member: Member | null) => void;
+
+    // Discount Actions
+    setDiscountType: (type: "nominal" | "percent") => void;
+    setDiscountValue: (val: number) => void;
 
     // Hold/Recall Actions
     addHoldTransaction: (hold: HoldTransaction) => void;
@@ -35,6 +41,8 @@ export const useCheckoutStore = create<CheckoutStoreState>()(
             cart: [],
             holdList: [],
             selectedMember: null,
+            discountType: "nominal",
+            discountValue: 0,
 
             setCart: (items) => set({ cart: items }),
 
@@ -74,9 +82,13 @@ export const useCheckoutStore = create<CheckoutStoreState>()(
                     cart: state.cart.filter((i) => i.product_uid !== productId),
                 })),
 
-            clearCart: () => set({ cart: [], selectedMember: null }),
+            clearCart: () => set({ cart: [], selectedMember: null, discountType: "nominal", discountValue: 0 }),
 
             setSelectedMember: (member) => set({ selectedMember: member }),
+
+            setDiscountType: (type) => set({ discountType: type }),
+
+            setDiscountValue: (val) => set({ discountValue: val }),
 
             addHoldTransaction: (hold) =>
                 set((state) => ({

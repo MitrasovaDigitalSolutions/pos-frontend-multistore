@@ -12,6 +12,21 @@ export interface OfflineTransaction {
     errorMessage?: string;
 }
 
+import type { CashDrawerSession, CashDrawerMovement } from "@/features/checkout/types";
+
+export interface OfflineDrawerAction {
+    id?: number;
+    session_uid: string;
+    type: "cash_in" | "cash_out";
+    payload: {
+        amount: number;
+        note?: string;
+    };
+    timestamp: string;
+    status: "pending" | "syncing" | "failed";
+    errorMessage?: string;
+}
+
 // Permanent offline transaction history (for monitoring)
 export interface OfflineTransactionRecord {
     uid: string;              // Client-generated UUID (matches offlineQueue.uid)
@@ -28,6 +43,9 @@ class POSDatabase extends Dexie {
     members!: Table<Member, string>;
     offlineQueue!: Table<OfflineTransaction, number>;
     offlineTransactions!: Table<OfflineTransactionRecord, string>;
+    cashDrawerSessions!: Table<CashDrawerSession, string>;
+    cashDrawerMovements!: Table<CashDrawerMovement, string>;
+    offlineDrawerActions!: Table<OfflineDrawerAction, number>;
 
     constructor() {
         super("POSDatabase");
@@ -41,6 +59,15 @@ class POSDatabase extends Dexie {
             members: "uid, nama, kode, status, updated_at",
             offlineQueue: "++id, uid, timestamp, status",
             offlineTransactions: "uid, timestamp, status",
+        });
+        this.version(4).stores({
+            products: "uid, nama, barcode, status, updated_at",
+            members: "uid, nama, kode, status, updated_at",
+            offlineQueue: "++id, uid, timestamp, status",
+            offlineTransactions: "uid, timestamp, status",
+            cashDrawerSessions: "uid, status, opened_at",
+            cashDrawerMovements: "uid, cash_drawer_session_uid, type, created_at",
+            offlineDrawerActions: "++id, session_uid, type, timestamp, status",
         });
     }
 }

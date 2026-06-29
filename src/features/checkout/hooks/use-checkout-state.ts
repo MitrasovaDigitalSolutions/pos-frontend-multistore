@@ -20,7 +20,7 @@ export function useCheckoutState() {
     const isOnline = useNetworkStatus();
     // Products list from API for Catalog & Search
     const { data: productsData, refetch: refetchProducts } = useProducts({
-        per_page: 1000,
+        per_page: 9,
     });
 
     const [localProducts, setLocalProducts] = useState<Product[]>([]);
@@ -69,6 +69,10 @@ export function useCheckoutState() {
     const removeHoldTransaction = useCheckoutStore((state) => state.removeHoldTransaction);
     const clearHoldList = useCheckoutStore((state) => state.clearHoldList);
     const setSelectedMember = useCheckoutStore((state) => state.setSelectedMember);
+    const discountType = useCheckoutStore((state) => state.discountType);
+    const discountValue = useCheckoutStore((state) => state.discountValue);
+    const setDiscountType = useCheckoutStore((state) => state.setDiscountType);
+    const setDiscountValue = useCheckoutStore((state) => state.setDiscountValue);
 
     // Hydration check to prevent Next.js hydration mismatches
     const [mounted, setMounted] = useState(false);
@@ -112,7 +116,13 @@ export function useCheckoutState() {
     // ─── Calculations ─────────────────────────────────────────────────────────
     const subtotal = cart.reduce((acc, i) => acc + i.price * i.qty, 0);
     const ppn = 0;
-    const grandTotal = subtotal;
+    const discountAmount = useMemo(() => {
+        if (discountType === "percent") {
+            return Math.min(subtotal, Math.floor((discountValue / 100) * subtotal));
+        }
+        return Math.min(subtotal, discountValue);
+    }, [discountType, discountValue, subtotal]);
+    const grandTotal = Math.max(0, subtotal - discountAmount);
 
     // ─── Handlers ─────────────────────────────────────────────────────────────
 
@@ -126,6 +136,8 @@ export function useCheckoutState() {
                 uid: holdId as string,
                 items_count: cart.reduce((acc, item) => acc + item.qty, 0),
                 subtotal,
+                discountType,
+                discountValue,
                 created_at: new Date().toISOString(),
                 items: cart,
                 member: selectedMember,
@@ -140,7 +152,7 @@ export function useCheckoutState() {
         } finally {
             setIsProcessing(false);
         }
-    }, [cart, subtotal, addHoldTransaction, clearCart, activeRecallId, selectedMember]);
+    }, [cart, subtotal, discountType, discountValue, addHoldTransaction, clearCart, activeRecallId, selectedMember]);
 
     const openHoldList = useCallback(() => {
         setIsHoldListOpen(true);
@@ -300,6 +312,8 @@ export function useCheckoutState() {
             // Load items into cart
             useCheckoutStore.getState().setCart(held.items);
             useCheckoutStore.getState().setSelectedMember(held.member || null);
+            useCheckoutStore.getState().setDiscountType(held.discountType || "nominal");
+            useCheckoutStore.getState().setDiscountValue(held.discountValue || 0);
             setActiveRecallId(held.uid);
             // Remove from holdList
             removeHoldTransaction(holdTrxId);
@@ -443,6 +457,11 @@ export function useCheckoutState() {
         barcodeInputRef,
         subtotal,
         ppn,
+        discountType,
+        discountValue,
+        discountAmount,
+        setDiscountType,
+        setDiscountValue,
         grandTotal,
         hasAccessAdmin,
         isVoidConfirmOpen,

@@ -38,7 +38,7 @@ export function AdjustmentDialog({
     const methods = useForm<AdjustmentInput>({
         resolver: zodResolver(adjustmentSchema) as Resolver<AdjustmentInput>,
         defaultValues: {
-            product_uid: 0,
+            product_uid: "",
             kuantitas: 0,
             alasan: "",
         },
@@ -54,7 +54,7 @@ export function AdjustmentDialog({
     useEffect(() => {
         if (open) {
             reset({
-                product_uid: 0,
+                product_uid: "",
                 kuantitas: 0,
                 alasan: "",
             });
