@@ -15,7 +15,7 @@ export function StoreProfile() {
     const { data: cashAccountsData, isLoading: isCashAccountsLoading } = useCashAccounts();
     const cashAccounts = cashAccountsData?.data || [];
 
-    const [formData, setFormData] = useState<Record<string, string>>({
+    const [formData, setFormData] = useState<Record<string, string | File>>({
         app_name: "",
         app_address: "",
         app_phone: "",
@@ -46,6 +46,15 @@ export function StoreProfile() {
             ...prev,
             [e.target.name]: e.target.value,
         }));
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setFormData((prev) => ({
+                ...prev,
+                [e.target.name]: e.target.files![0],
+            }));
+        }
     };
 
     const handleSave = async (e: React.FormEvent) => {
@@ -115,15 +124,20 @@ export function StoreProfile() {
                     />
                 </div>
                 <div className="space-y-1 md:col-span-2">
-                    <label className="font-semibold block">URL Logo Toko</label>
-                    <input 
-                        type="url" 
-                        name="app_logo_url" 
-                        value={formData.app_logo_url} 
-                        onChange={handleChange} 
-                        placeholder="https://..."
-                        className="w-full border border-slate-200 rounded p-2 focus:ring-1 focus:ring-blue-500" 
-                    />
+                    <label className="font-semibold block">Logo Toko (Opsional)</label>
+                    <div className="flex items-center gap-4">
+                        {settings.app_logo_url && typeof formData.app_logo_url === 'string' && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={settings.app_logo_url} alt="Logo" className="w-12 h-12 object-contain bg-slate-100 rounded border border-slate-200" />
+                        )}
+                        <input 
+                            type="file" 
+                            name="app_logo_url" 
+                            accept="image/*"
+                            onChange={handleFileChange} 
+                            className="w-full border border-slate-200 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500" 
+                        />
+                    </div>
                 </div>
                 <div className="space-y-1">
                     <label className="font-semibold block">Tarif Pajak PPN (%)</label>
