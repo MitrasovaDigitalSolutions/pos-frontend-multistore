@@ -202,6 +202,11 @@ export function Checkout() {
                         trxTime={state.trxTime}
                         subtotal={state.subtotal}
                         ppn={state.ppn}
+                        discountType={state.discountType}
+                        discountValue={state.discountValue}
+                        discountAmount={state.discountAmount}
+                        setDiscountType={state.setDiscountType}
+                        setDiscountValue={state.setDiscountValue}
                         grandTotal={state.grandTotal}
                         cartLength={state.cart.length}
                         isProcessing={state.isProcessing}
@@ -282,7 +287,7 @@ export function Checkout() {
                     product_uid: item.product_uid,
                     quantity: item.qty,
                 }))}
-                discount={0}
+                discount={state.discountAmount}
                 tax={state.ppn}
                 selectedMember={state.selectedMember}
                 onPaySuccess={state.handlePaymentSuccess}

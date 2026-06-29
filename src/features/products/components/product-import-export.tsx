@@ -219,6 +219,7 @@ export function ProductImportExport({
       showExport={showExport}
       importProgress={importProgress}
       isProgressActive={isProgressActive}
+      templateDownloadUrl="/api/v1/template-product/download"
     />
   );
 }

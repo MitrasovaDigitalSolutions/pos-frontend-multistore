@@ -19,6 +19,7 @@ import { useState, useEffect } from "react";
 import { CreateMemberDialog } from "./create-member-dialog";
 import { db } from "@/lib/db";
 import { useNetworkStatus } from "@/hooks/use-network-status";
+import { cn } from "@/lib/utils";
 
 interface CheckoutTotalsSectionProps {
     transactionId: string | null;
@@ -26,6 +27,11 @@ interface CheckoutTotalsSectionProps {
     trxTime: string;
     subtotal: number;
     ppn: number;
+    discountType: "nominal" | "percent";
+    discountValue: number;
+    discountAmount: number;
+    setDiscountType: (type: "nominal" | "percent") => void;
+    setDiscountValue: (val: number) => void;
     grandTotal: number;
     cartLength: number;
     isProcessing: boolean;
@@ -44,6 +50,11 @@ export function CheckoutTotalsSection({
     trxTime,
     subtotal,
     ppn: _ppn,
+    discountType,
+    discountValue,
+    discountAmount,
+    setDiscountType,
+    setDiscountValue,
     grandTotal,
     cartLength,
     isProcessing,
@@ -191,6 +202,102 @@ export function CheckoutTotalsSection({
                     </div>
                 </div>
 
+                {/* Diskon Transaksi */}
+                <div className="bg-white border border-slate-100 rounded-xl p-3.5 shadow-sm space-y-2">
+                    <div className="flex justify-between items-center text-[9px] font-extrabold text-slate-400 uppercase tracking-wider select-none">
+                        <span>Diskon Transaksi</span>
+                        {discountAmount > 0 && (
+                            <span className="text-emerald-600 font-bold normal-case">
+                                Terpasang: -{formatRupiah(discountAmount)}
+                            </span>
+                        )}
+                    </div>
+                    
+                    <div className="flex gap-2">
+                        {/* Toggle Button Group */}
+                        <div className="flex bg-slate-100 p-0.5 rounded-lg shrink-0 select-none">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setDiscountType("nominal");
+                                    setDiscountValue(0);
+                                }}
+                                className={cn(
+                                    "px-2.5 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer border-none outline-none",
+                                    discountType === "nominal"
+                                        ? "bg-white text-slate-800 shadow-sm"
+                                        : "text-slate-500 hover:text-slate-700 bg-transparent"
+                                )}
+                            >
+                                Rp
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setDiscountType("percent");
+                                    setDiscountValue(0);
+                                }}
+                                className={cn(
+                                    "px-2.5 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer border-none outline-none",
+                                    discountType === "percent"
+                                        ? "bg-white text-slate-800 shadow-sm"
+                                        : "text-slate-500 hover:text-slate-700 bg-transparent"
+                                )}
+                            >
+                                %
+                            </button>
+                        </div>
+
+                        {/* Input Field */}
+                        <div className="relative flex-1">
+                            {discountType === "nominal" ? (
+                                <input
+                                    type="text"
+                                    value={discountValue > 0 ? new Intl.NumberFormat("id-ID").format(discountValue) : ""}
+                                    onChange={(e) => {
+                                        const cleanValue = e.target.value.replace(/\D/g, "");
+                                        const val = cleanValue === "" ? 0 : Number(cleanValue);
+                                        if (val > subtotal) {
+                                            setDiscountValue(subtotal);
+                                        } else {
+                                            setDiscountValue(val);
+                                        }
+                                    }}
+                                    placeholder="Contoh: 50.000"
+                                    className="w-full h-8 pl-3 pr-8 rounded-lg border border-slate-200 bg-transparent text-xs font-bold transition-all outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50"
+                                />
+                            ) : (
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    value={discountValue || ""}
+                                    onChange={(e) => {
+                                        const val = parseFloat(e.target.value) || 0;
+                                        if (val < 0) return;
+                                        if (val > 100) {
+                                            setDiscountValue(100);
+                                        } else {
+                                            setDiscountValue(val);
+                                        }
+                                    }}
+                                    placeholder="Contoh: 10"
+                                    className="w-full h-8 pl-3 pr-8 rounded-lg border border-slate-200 bg-transparent text-xs font-bold transition-all outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                />
+                            )}
+                            {discountValue > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={() => setDiscountValue(0)}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 p-0.5 rounded transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center"
+                                >
+                                    <IconX size={12} />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
                 {/* Action Buttons Grid - Combined 1-row layout */}
                 <div className="grid grid-cols-4 gap-2">
                     <Button
@@ -245,8 +352,8 @@ export function CheckoutTotalsSection({
                     </div>
                     <div className="flex justify-between">
                         <span>Diskon Belanja</span>
-                        <span className="text-rose-500 font-bold">
-                            - Rp 0
+                        <span className={cn("font-bold", discountAmount > 0 ? "text-rose-550" : "text-slate-800")}>
+                            - {formatRupiah(discountAmount)}
                         </span>
                     </div>
                 </div>

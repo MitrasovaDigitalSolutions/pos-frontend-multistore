@@ -15,6 +15,8 @@ export interface HoldTransaction {
     uid: string;
     items_count: number;
     subtotal: number;
+    discountType?: "nominal" | "percent";
+    discountValue?: number;
     created_at: string;
     items: CartItem[];
     member?: Member | null;
@@ -31,6 +33,7 @@ export interface Receipt {
     uid: string;
     items: ReceiptItem[];
     subtotal: number;
+    diskon?: number;
     pajak: number;
     total: number;
     metode_pembayaran: "cash" | "card" | "debt";

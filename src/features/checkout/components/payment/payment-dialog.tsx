@@ -118,11 +118,21 @@ export function PaymentDialog({
 
         const payload: Record<string, unknown> = {
             uid: clientUid,
+            payment_method: payMode,
             metode_pembayaran: payMode,
-            items: cartItems,
+            discount: discount,
             diskon: discount,
+            tax: tax,
             pajak: tax,
+            paid: payMode === "cash" ? cashNum : (payMode === "debt" ? cashNum : grandTotal),
+            nominal_bayar: payMode === "cash" ? cashNum : (payMode === "debt" ? cashNum : grandTotal),
+            cashier_name: session?.user?.name || "",
             member_uid: selectedMember?.uid || null,
+            items: cartItems.map((item) => ({
+                product_id: item.product_uid,
+                product_uid: item.product_uid,
+                quantity: item.quantity,
+            })),
         };
 
         if (payMode === "cash") {
@@ -158,10 +168,12 @@ export function PaymentDialog({
         const saveOffline = async (notice: string) => {
             try {
                 const offlineReceiptUid = `OFFLINE-${clientUid}`;
+                const subtotalVal = cartList.reduce((acc, item) => acc + item.price * item.qty, 0);
 
                 const mockReceipt: Receipt = {
                     uid: offlineReceiptUid,
-                    subtotal: grandTotal - tax,
+                    subtotal: subtotalVal,
+                    diskon: discount,
                     pajak: tax,
                     total: grandTotal,
                     metode_pembayaran: payMode,
