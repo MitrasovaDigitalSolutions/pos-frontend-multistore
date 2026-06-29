@@ -30,7 +30,7 @@ interface PaymentDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     grandTotal: number;
-    cartItems: { product_uid: string; quantity: number }[];
+    cartItems: { product_uid: string; quantity: number; harga_satuan?: number }[];
     discount: number;
     tax: number;
     selectedMember: Member | null;
