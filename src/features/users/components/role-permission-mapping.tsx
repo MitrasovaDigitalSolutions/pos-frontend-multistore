@@ -432,7 +432,7 @@ export function RolePermissionMapping() {
 
                         return (
                             <button
-                                key={role.uid}
+                                key={role.id}
                                 onClick={() => setSelectedRoleName(role.name)}
                                 className={`w-full text-left p-4 rounded-2xl border transition-all duration-200 cursor-pointer ${isSelected
                                     ? "bg-white border-emerald-500 shadow-md ring-1 ring-emerald-500/20"
