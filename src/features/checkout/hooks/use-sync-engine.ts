@@ -83,6 +83,40 @@ export function useSyncEngine() {
         }
     }, [isOnline, updatePendingCount]);
 
+    // ─── Sync Cash In/Out Offline Actions ──────────────────────────────────────────
+    const syncOfflineDrawerActions = useCallback(async () => {
+        if (!isOnline) return;
+
+        try {
+            const pendingActions = await db.offlineDrawerActions
+                .where("status")
+                .equals("pending")
+                .sortBy("timestamp");
+
+            if (pendingActions.length === 0) return;
+
+            for (const action of pendingActions) {
+                try {
+                    await db.offlineDrawerActions.update(action.id!, { status: "syncing" });
+                    const url = `/v1/cash-drawer/sessions/${action.session_uid}/${action.type === "cash_in" ? "cash-in" : "cash-out"}`;
+                    await apiPost(url, action.payload);
+
+                    // Successfully synced, delete it from local table
+                    await db.offlineDrawerActions.delete(action.id!);
+                } catch (err) {
+                    const error = err as Error;
+                    console.error(`Gagal sinkronisasi aksi laci kasir offline ID ${action.id}:`, error);
+                    await db.offlineDrawerActions.update(action.id!, {
+                        status: "failed",
+                        errorMessage: error.message || "Gagal menghubungi server",
+                    });
+                }
+            }
+        } catch (err) {
+            console.error("Gagal menjalankan sinkronisasi aksi laci kasir offline:", err);
+        }
+    }, [isOnline]);
+
     // ─── Sync ALL Pending Transactions (manual trigger) ──────────────────────────
     const syncOfflineTransactions = useCallback(async () => {
         if (!isOnline || isSyncingRef.current) return;
@@ -91,6 +125,9 @@ export function useSyncEngine() {
             isSyncingRef.current = true;
             setIsSyncing(true);
             setSyncError(null);
+
+            // Sync drawer actions first
+            await syncOfflineDrawerActions();
 
             const pendingRecords = await db.offlineTransactions
                 .where("status")
@@ -129,6 +166,7 @@ export function useSyncEngine() {
             setIsSyncing(false);
             await updatePendingCount();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOnline, syncSingleTransaction, updatePendingCount]);
 
     // ─── Sync SELECTED Pending Transactions (manual checkbox trigger) ─────────────
@@ -237,11 +275,12 @@ export function useSyncEngine() {
         if (isOnline) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             syncCatalog();
+            syncOfflineDrawerActions();
         }
         // NOTE: syncOfflineTransactions is intentionally NOT called here.
         // Offline transactions must be synced manually from the monitoring page.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOnline]);
+    }, [isOnline, syncOfflineDrawerActions]);
 
     // Periodic catalog sync every 30 minutes while online
     useEffect(() => {

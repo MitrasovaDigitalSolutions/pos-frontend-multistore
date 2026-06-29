@@ -20,7 +20,7 @@ export function useCheckoutState() {
     const isOnline = useNetworkStatus();
     // Products list from API for Catalog & Search
     const { data: productsData, refetch: refetchProducts } = useProducts({
-        per_page: 1000,
+        per_page: 9,
     });
 
     const [localProducts, setLocalProducts] = useState<Product[]>([]);

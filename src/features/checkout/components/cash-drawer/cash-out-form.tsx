@@ -12,6 +12,10 @@ import { useCashOut } from "../../api/cash-drawer-api";
 import { cashOutSchema, type CashOutInput } from "../../schemas/cash-drawer-schema";
 
 
+import { db } from "@/lib/db";
+import { useNetworkStatus } from "@/hooks/use-network-status";
+import type { CashDrawerMovement } from "../../types/cash-drawer";
+
 interface CashOutFormProps {
     sessionId: string;
     token?: string;
@@ -21,6 +25,7 @@ interface CashOutFormProps {
 
 export function CashOutForm({ sessionId, token, onSuccess, onCancel }: CashOutFormProps) {
     const cashOutMutation = useCashOut();
+    const isOnline = useNetworkStatus();
 
     const methods = useForm<CashOutInput>({
         resolver: zodResolver(cashOutSchema) as Resolver<CashOutInput>,
@@ -34,14 +39,57 @@ export function CashOutForm({ sessionId, token, onSuccess, onCancel }: CashOutFo
 
     const onSubmit = async (data: CashOutInput) => {
         try {
-            await cashOutMutation.mutateAsync({
-                session: sessionId,
-                payload: {
+            if (isOnline) {
+                await cashOutMutation.mutateAsync({
+                    session: sessionId,
+                    payload: {
+                        amount: data.amount,
+                        note: data.note.trim(),
+                    },
+                    token,
+                });
+            } else {
+                const now = new Date().toISOString();
+                const session = await db.cashDrawerSessions.get(sessionId);
+                if (!session) throw new Error("Sesi laci kasir aktif tidak ditemukan di database lokal.");
+
+                const newExpectedCash = (session.expected_cash || 0) - data.amount;
+                const newCashOutTotal = (session.cash_out_total || 0) + data.amount;
+
+                await db.cashDrawerSessions.update(sessionId, {
+                    expected_cash: newExpectedCash,
+                    cash_out_total: newCashOutTotal,
+                    updated_at: now,
+                });
+
+                const movementUid = `OFFLINE-MOV-${crypto.randomUUID()}`;
+                const newMovement: CashDrawerMovement = {
+                    uid: movementUid,
+                    cash_drawer_session_uid: sessionId,
+                    user_uid: session.user_uid,
+                    type: "cash_out",
                     amount: data.amount,
-                    note: data.note.trim(),
-                },
-                token,
-            });
+                    balance_before: session.expected_cash,
+                    balance_after: newExpectedCash,
+                    reference_uid: null,
+                    reference_type: null,
+                    note: data.note.trim() || "Uang Keluar (Offline)",
+                    created_at: now,
+                    updated_at: now,
+                };
+                await db.cashDrawerMovements.add(newMovement);
+
+                await db.offlineDrawerActions.add({
+                    session_uid: sessionId,
+                    type: "cash_out",
+                    payload: {
+                        amount: data.amount,
+                        note: data.note.trim(),
+                    },
+                    timestamp: now,
+                    status: "pending",
+                });
+            }
             toast.success("Pencatatan Cash Out berhasil!");
             onSuccess();
         } catch (err) {
