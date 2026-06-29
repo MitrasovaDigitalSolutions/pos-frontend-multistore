@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { useSyncEngine } from "@/features/checkout/hooks/use-sync-engine";
 import { PrintReceiptLayout } from "@/features/checkout/components/print-receipt-layout";
 import type { CashDrawerSession } from "@/features/checkout/types";
+import { db } from "@/lib/db";
 
 export function Checkout() {
     const state = useCheckoutState();
@@ -44,11 +45,54 @@ export function Checkout() {
         refetch: refetchCurrentDrawer,
     } = useCurrentCashDrawer(cashDrawerToken);
 
-    const activeDrawerSession = currentDrawerData?.data || (
-        !isOnline && state.session?.cashDrawerSessionId
-            ? { uid: state.session.cashDrawerSessionId } as CashDrawerSession
-            : null
-    );
+    const [localDrawerSession, setLocalDrawerSession] = useState<CashDrawerSession | null>(null);
+
+    // Update localDrawerSession and save to local DB when online
+    useEffect(() => {
+        if (isOnline && currentDrawerData?.data) {
+            const session = currentDrawerData.data;
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setLocalDrawerSession(session);
+            db.cashDrawerSessions.put(session).catch((err) => {
+                console.error("Gagal menyimpan sesi laci kasir ke DB lokal:", err);
+            });
+            if (session.movements) {
+                db.cashDrawerMovements.bulkPut(session.movements).catch((err) => {
+                    console.error("Gagal menyimpan riwayat laci kasir ke DB lokal:", err);
+                });
+            }
+        }
+    }, [isOnline, currentDrawerData]);
+
+    // Load from local DB when offline
+    useEffect(() => {
+        if (!isOnline && state.session?.cashDrawerSessionId) {
+            db.cashDrawerSessions.get(state.session.cashDrawerSessionId).then(async (session) => {
+                if (session) {
+                    const movements = await db.cashDrawerMovements
+                        .where("cash_drawer_session_uid")
+                        .equals(session.uid)
+                        .toArray();
+                    movements.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+                    setLocalDrawerSession({
+                        ...session,
+                        movements,
+                    });
+                } else {
+                    setLocalDrawerSession({ uid: state.session!.cashDrawerSessionId } as CashDrawerSession);
+                }
+            }).catch((err) => {
+                console.error("Gagal memuat sesi laci lokal:", err);
+                setLocalDrawerSession({ uid: state.session!.cashDrawerSessionId } as CashDrawerSession);
+            });
+        } else if (!isOnline && !state.session?.cashDrawerSessionId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setLocalDrawerSession(null);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOnline, state.session?.cashDrawerSessionId]);
+
+    const activeDrawerSession = isOnline ? currentDrawerData?.data : localDrawerSession;
 
     const isSessionLoaded = state.session !== undefined;
     const hasCashDrawerSession = !!state.session?.cashDrawerSessionId;
@@ -158,6 +202,11 @@ export function Checkout() {
                         trxTime={state.trxTime}
                         subtotal={state.subtotal}
                         ppn={state.ppn}
+                        discountType={state.discountType}
+                        discountValue={state.discountValue}
+                        discountAmount={state.discountAmount}
+                        setDiscountType={state.setDiscountType}
+                        setDiscountValue={state.setDiscountValue}
                         grandTotal={state.grandTotal}
                         cartLength={state.cart.length}
                         isProcessing={state.isProcessing}
@@ -238,7 +287,7 @@ export function Checkout() {
                     product_uid: item.product_uid,
                     quantity: item.qty,
                 }))}
-                discount={0}
+                discount={state.discountAmount}
                 tax={state.ppn}
                 selectedMember={state.selectedMember}
                 onPaySuccess={state.handlePaymentSuccess}

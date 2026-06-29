@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const adjustmentSchema = z.object({
-    product_uid: z.coerce.number().min(1, "Produk wajib dipilih"),
+    product_uid: z.string().min(1, "Produk wajib dipilih"),
     kuantitas: z.coerce.number().refine((val) => val !== 0, {
         message: "Kuantitas perubahan tidak boleh 0",
     }),
@@ -9,3 +9,4 @@ export const adjustmentSchema = z.object({
 });
 
 export type AdjustmentInput = z.infer<typeof adjustmentSchema>;
+

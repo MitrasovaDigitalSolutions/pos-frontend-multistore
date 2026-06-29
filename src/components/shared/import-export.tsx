@@ -2,13 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { BaseDialog } from "@/components/ui/base-dialog";
 import {
   Popover,
   PopoverTrigger,
@@ -22,6 +16,7 @@ import {
   IconFileSpreadsheet,
   IconX,
   IconCheck,
+  IconTableImport,
 } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -50,6 +45,10 @@ export interface ImportExportProps {
   showExport?: boolean;
   showImport?: boolean;
 
+  // Template download
+  templateDownloadUrl?: string;
+  templateDownloadLabel?: string;
+
   // Progress states
   importProgress?: number | null;
   isProgressActive?: boolean;
@@ -71,6 +70,8 @@ export function ImportExport({
   importLabel = "Import",
   showExport = true,
   showImport = true,
+  templateDownloadUrl,
+  templateDownloadLabel = "Unduh Template",
   importProgress = null,
   isProgressActive = false,
 }: ImportExportProps) {
@@ -328,100 +329,122 @@ export function ImportExport({
       </div>
 
       {/* Dialog Modal */}
-      <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-        <DialogContent
-          className="max-w-md bg-white dark:bg-slate-900 rounded-2xl p-6 gap-0 border-slate-100 dark:border-slate-800 shadow-xl overflow-hidden"
-          showCloseButton={!isImporting}
-        >
-          <DialogHeader className="pb-4 border-b border-slate-100 dark:border-slate-800">
-            <DialogTitle className="text-sm font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
-              <IconFileSpreadsheet size={18} className="text-violet-600" />
-              <span>{title}</span>
-            </DialogTitle>
-            <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              {description}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 pt-4">
-            {/* Warning Alert Box */}
-            <div className="flex items-start gap-2.5 bg-amber-55/10 dark:bg-amber-950/20 p-3.5 rounded-xl border border-amber-200 dark:border-amber-900/50">
-              <IconAlertTriangle size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-              <div className="text-[11px] text-amber-800 dark:text-amber-400 font-semibold leading-relaxed">
-                {warningMessage}
-              </div>
+      <BaseDialog
+        open={isOpen}
+        onOpenChange={handleOpenChange}
+        showCloseButton={!isImporting}
+        className="max-w-sm p-4 gap-0 overflow-hidden"
+        title={
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-violet-100 flex items-center justify-center shrink-0">
+              <IconFileSpreadsheet size={13} className="text-violet-600" />
             </div>
+            <span className="text-[13px] font-bold text-slate-800">{title}</span>
+          </div>
+        }
+      >
+        <div className="space-y-3 pt-4">
+          {/* Description */}
+          <p className="text-[10px] text-slate-400 font-medium leading-relaxed -mt-2">
+            {description}
+          </p>
 
-            {/* Drag and Drop Zone or selected file preview */}
-            {!selectedFile ? (
-              <div
-                onDragEnter={handleDrag}
-                onDragOver={handleDrag}
-                onDragLeave={handleDrag}
-                onDrop={handleDrop}
-                onClick={triggerFileInput}
-                className={cn(
-                  "border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all",
-                  isDragActive
-                    ? "border-violet-500 bg-violet-50/10 dark:bg-violet-950/10"
-                    : "border-slate-200 dark:border-slate-800 hover:border-violet-500 hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
-                )}
-              >
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  accept={accept}
-                  className="hidden"
-                  disabled={isImporting}
-                />
-                <div className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-850 flex items-center justify-center text-slate-400 hover:text-violet-500 transition-colors">
-                  <IconUpload size={20} />
-                </div>
-                <div className="text-center">
-                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    Tarik & lepas file di sini, atau klik untuk memilih file
-                  </p>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5">
-                    Format yang didukung: {accept}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="border border-slate-100 dark:border-slate-800 rounded-xl p-4 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/20">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-lg bg-violet-55/10 dark:bg-violet-950/30 text-violet-600 flex items-center justify-center shrink-0">
-                    <IconFileSpreadsheet size={20} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate pr-2">
-                      {selectedFile.name}
-                    </p>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
-                      Ukuran: {formatFileSize(selectedFile.size)}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  disabled={isImporting}
-                  onClick={() => setSelectedFile(null)}
-                  className="text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg"
-                >
-                  <IconX size={16} />
-                </Button>
-              </div>
-            )}
+          {/* Warning inline */}
+          <div className="flex items-start gap-2 bg-amber-50 px-3 py-2.5 rounded-xl border border-amber-200/70">
+            <IconAlertTriangle size={13} className="text-amber-500 shrink-0 mt-[1px]" />
+            <p className="text-[10px] text-amber-700 font-medium leading-relaxed">
+              {warningMessage}
+            </p>
           </div>
 
+          {/* Template download — compact row */}
+          {templateDownloadUrl && (
+            <div className="flex items-center justify-between gap-2 bg-violet-50 border border-violet-100 rounded-xl px-3 py-2">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <IconTableImport size={13} className="text-violet-500 shrink-0" />
+                <span className="text-[10px] font-semibold text-violet-700 truncate">
+                  Belum punya template?
+                </span>
+              </div>
+              <a
+                href={templateDownloadUrl}
+                download
+                className="shrink-0 flex items-center gap-1 text-[10px] font-bold text-violet-600 hover:text-violet-800 bg-white border border-violet-200 rounded-lg px-2 py-1 transition-all hover:border-violet-400 hover:shadow-sm"
+              >
+                <IconDownload size={11} className="shrink-0" />
+                {templateDownloadLabel}
+              </a>
+            </div>
+          )}
+
+          {/* Drag-and-drop zone or file preview */}
+          {!selectedFile ? (
+            <div
+              onDragEnter={handleDrag}
+              onDragOver={handleDrag}
+              onDragLeave={handleDrag}
+              onDrop={handleDrop}
+              onClick={triggerFileInput}
+              className={cn(
+                "border-2 border-dashed rounded-xl px-4 py-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all select-none",
+                isDragActive
+                  ? "border-violet-500 bg-violet-50/60 scale-[1.01]"
+                  : "border-slate-200 hover:border-violet-400 hover:bg-slate-50/70"
+              )}
+            >
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept={accept}
+                className="hidden"
+                disabled={isImporting}
+              />
+              <div className={cn(
+                "w-9 h-9 rounded-full flex items-center justify-center transition-colors",
+                isDragActive ? "bg-violet-100 text-violet-600" : "bg-slate-100 text-slate-400"
+              )}>
+                <IconUpload size={17} />
+              </div>
+              <div className="text-center">
+                <p className="text-[11px] font-semibold text-slate-600">
+                  <span className="text-violet-600">Klik pilih file</span> atau seret ke sini
+                </p>
+                <p className="text-[9px] text-slate-400 mt-1 font-medium uppercase tracking-wide">
+                  {accept}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 border border-violet-100 rounded-xl px-3 py-2.5 bg-violet-50/40">
+              <div className="w-8 h-8 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center shrink-0">
+                <IconFileSpreadsheet size={17} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-bold text-slate-800 truncate">
+                  {selectedFile.name}
+                </p>
+                <p className="text-[9px] text-slate-400 font-medium mt-0.5">
+                  {formatFileSize(selectedFile.size)}
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={isImporting}
+                onClick={() => setSelectedFile(null)}
+                className="w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors disabled:opacity-50 shrink-0"
+              >
+                <IconX size={14} />
+              </button>
+            </div>
+          )}
+
           {/* Action Buttons */}
-          <div className="w-full flex gap-3 mt-6">
+          <div className="flex gap-2 pt-1">
             <Button
               type="button"
               variant="outline"
-              className="flex-1 h-10 text-xs font-bold border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
+              className="flex-1 h-9 text-xs font-bold border-slate-200 hover:bg-slate-50 rounded-xl cursor-pointer text-slate-600"
               onClick={handleCloseDialog}
               disabled={isImporting}
             >
@@ -429,25 +452,25 @@ export function ImportExport({
             </Button>
             <Button
               type="button"
-              className="flex-1 h-10 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer bg-violet-600 hover:bg-violet-700 text-white disabled:bg-violet-600/50 disabled:opacity-90"
+              className="flex-1 h-9 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer bg-violet-600 hover:bg-violet-700 text-white disabled:bg-violet-400 disabled:opacity-70 transition-colors"
               onClick={onImportConfirm}
               disabled={!selectedFile || isImporting}
             >
               {isImporting ? (
                 <>
-                  <IconLoader2 size={14} className="animate-spin" />
+                  <IconLoader2 size={13} className="animate-spin" />
                   <span>Mengimpor...</span>
                 </>
               ) : (
                 <>
-                  <IconCheck size={14} />
+                  <IconCheck size={13} />
                   <span>Import Sekarang</span>
                 </>
               )}
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </BaseDialog>
     </div>
   );
 }
