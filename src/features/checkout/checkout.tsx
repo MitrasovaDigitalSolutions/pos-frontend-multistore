@@ -144,6 +144,7 @@ export function Checkout() {
                         barcodeInputRef={state.barcodeInputRef}
                         onCatalogOpen={() => state.setIsCatalogOpen(true)}
                         onUpdateQty={state.handleUpdateQty}
+                        onUpdatePrice={state.handleUpdatePrice}
                         onRemoveItem={state.handleRemoveItem}
                         onAddProduct={state.handleAddProduct}
                         products={state.products}
@@ -234,10 +235,16 @@ export function Checkout() {
                 open={state.isPayModalOpen}
                 onOpenChange={state.setIsPayModalOpen}
                 grandTotal={state.grandTotal}
-                cartItems={state.cart.map((item) => ({
-                    product_uid: item.product_uid,
-                    quantity: item.qty,
-                }))}
+                cartItems={state.cart.map((item) => {
+                    const payloadItem: any = {
+                        product_uid: item.product_uid,
+                        quantity: item.qty,
+                    };
+                    if (item.is_jasa) {
+                        payloadItem.harga_satuan = item.price;
+                    }
+                    return payloadItem;
+                })}
                 discount={0}
                 tax={state.ppn}
                 selectedMember={state.selectedMember}

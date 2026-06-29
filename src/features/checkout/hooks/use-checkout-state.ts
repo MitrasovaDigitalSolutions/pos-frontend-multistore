@@ -62,6 +62,7 @@ export function useCheckoutState() {
     const storeSelectedMember = useCheckoutStore((state) => state.selectedMember);
     const addItem = useCheckoutStore((state) => state.addItem);
     const updateItemQty = useCheckoutStore((state) => state.updateItemQty);
+    const updateItemPrice = useCheckoutStore((state) => state.updateItemPrice);
     const removeItem = useCheckoutStore((state) => state.removeItem);
     const clearCart = useCheckoutStore((state) => state.clearCart);
     const addHoldTransaction = useCheckoutStore((state) => state.addHoldTransaction);
@@ -205,6 +206,11 @@ export function useCheckoutState() {
             return;
         }
         updateItemQty(item.product_uid, newQty);
+    };
+
+    const handleUpdatePrice = async (item: CartItem, newPrice: number) => {
+        if (newPrice < 0) return;
+        updateItemPrice(item.product_uid, newPrice);
     };
 
     const handleRemoveItem = async (item: CartItem) => {
@@ -447,6 +453,7 @@ export function useCheckoutState() {
         handleVoidDraft,
         handleAddProduct,
         handleUpdateQty,
+        handleUpdatePrice,
         handleRemoveItem,
         handleBarcodeSubmit,
         handleRecall,

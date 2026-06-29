@@ -24,6 +24,7 @@ interface CheckoutCartSectionProps {
     barcodeInputRef: React.RefObject<HTMLInputElement | null>;
     onCatalogOpen: () => void;
     onUpdateQty: (item: CartItem, qty: number) => void;
+    onUpdatePrice: (item: CartItem, price: number) => void;
     onRemoveItem: (item: CartItem) => void;
     onAddProduct: (product: Product) => void;
     products?: Product[];
@@ -35,6 +36,7 @@ export function CheckoutCartSection({
     barcodeInputRef,
     onCatalogOpen,
     onUpdateQty,
+    onUpdatePrice,
     onRemoveItem,
     onAddProduct,
     products = [],
@@ -111,8 +113,13 @@ export function CheckoutCartSection({
                                                 {idx + 1}
                                             </TableCell>
                                             <TableCell>
-                                                <div className="font-bold text-slate-800 text-[12px]">
+                                                <div className="font-bold text-slate-800 text-[12px] flex items-center gap-2">
                                                     {item.name}
+                                                    {item.is_jasa && (
+                                                        <span className="bg-emerald-100 text-emerald-700 text-[9px] px-1.5 py-0.5 rounded-sm font-bold uppercase tracking-wider">
+                                                            Jasa
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 {item.barcode && (
                                                     <div className="text-[10px] text-slate-400 font-medium">
@@ -169,7 +176,31 @@ export function CheckoutCartSection({
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right text-slate-700 font-medium tabular-nums">
-                                                {formatRupiah(item.price)}
+                                                {item.is_jasa ? (
+                                                    <Input
+                                                        type="number"
+                                                        value={item.price}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            if (val === "") return;
+                                                            const num = parseInt(val, 10);
+                                                            if (!isNaN(num) && num >= 0) {
+                                                                onUpdatePrice(item, num);
+                                                            }
+                                                        }}
+                                                        onBlur={(e) => {
+                                                            const val = e.target.value;
+                                                            const num = parseInt(val, 10);
+                                                            if (val === "" || isNaN(num) || num < 0) {
+                                                                onUpdatePrice(item, 0);
+                                                            }
+                                                        }}
+                                                        className="w-24 h-7 text-right text-xs font-bold text-slate-800 border border-slate-200 rounded-lg outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 px-2 ml-auto [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                        disabled={isProcessing}
+                                                    />
+                                                ) : (
+                                                    formatRupiah(item.price)
+                                                )}
                                             </TableCell>
                                             <TableCell className="text-right font-bold text-slate-900 tabular-nums">
                                                 {formatRupiah(item.price * item.qty)}
@@ -199,8 +230,13 @@ export function CheckoutCartSection({
                                 >
                                     <div className="flex justify-between items-start">
                                         <div className="min-w-0 flex-1 pr-2">
-                                            <div className="font-bold text-slate-800 text-xs break-words">
+                                            <div className="font-bold text-slate-800 text-xs break-words flex items-center gap-2">
                                                 {item.name}
+                                                {item.is_jasa && (
+                                                    <span className="bg-emerald-100 text-emerald-700 text-[9px] px-1.5 py-0.5 rounded-sm font-bold uppercase tracking-wider whitespace-nowrap">
+                                                        Jasa
+                                                    </span>
+                                                )}
                                             </div>
                                             {item.barcode && (
                                                 <div className="text-[10px] text-slate-400 font-medium mt-0.5">
@@ -219,8 +255,33 @@ export function CheckoutCartSection({
                                     </div>
 
                                     <div className="flex justify-between items-center bg-slate-50/50 p-2 rounded-lg border border-slate-100">
-                                        <div className="text-[10px] font-bold text-slate-400">
-                                            Harga: <span className="text-slate-700 font-semibold ml-1">{formatRupiah(item.price)}</span>
+                                        <div className="text-[10px] font-bold text-slate-400 flex items-center">
+                                            Harga: 
+                                            {item.is_jasa ? (
+                                                <Input
+                                                    type="number"
+                                                    value={item.price}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        if (val === "") return;
+                                                        const num = parseInt(val, 10);
+                                                        if (!isNaN(num) && num >= 0) {
+                                                            onUpdatePrice(item, num);
+                                                        }
+                                                    }}
+                                                    onBlur={(e) => {
+                                                        const val = e.target.value;
+                                                        const num = parseInt(val, 10);
+                                                        if (val === "" || isNaN(num) || num < 0) {
+                                                            onUpdatePrice(item, 0);
+                                                        }
+                                                    }}
+                                                    className="w-24 ml-2 h-6 text-right text-xs font-bold text-slate-800 border border-slate-200 rounded-md outline-none focus:border-emerald-500 px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                    disabled={isProcessing}
+                                                />
+                                            ) : (
+                                                <span className="text-slate-700 font-semibold ml-1">{formatRupiah(item.price)}</span>
+                                            )}
                                         </div>
                                         <div className="text-[10px] font-bold text-slate-400">
                                             Total: <span className="text-emerald-600 font-extrabold ml-1">{formatRupiah(item.price * item.qty)}</span>

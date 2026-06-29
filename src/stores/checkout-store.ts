@@ -16,6 +16,7 @@ interface CheckoutStoreState {
     setCart: (items: CartItem[]) => void;
     addItem: (item: CartItem) => void;
     updateItemQty: (productId: string, qty: number) => void;
+    updateItemPrice: (productId: string, price: number) => void;
     removeItem: (productId: string) => void;
     clearCart: () => void;
 
@@ -58,6 +59,13 @@ export const useCheckoutStore = create<CheckoutStoreState>()(
                 set((state) => ({
                     cart: state.cart.map((i) =>
                         i.product_uid === productId ? { ...i, qty } : i
+                    ),
+                })),
+
+            updateItemPrice: (productId, price) =>
+                set((state) => ({
+                    cart: state.cart.map((i) =>
+                        i.product_uid === productId ? { ...i, price } : i
                     ),
                 })),
 
