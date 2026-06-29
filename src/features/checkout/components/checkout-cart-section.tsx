@@ -17,6 +17,7 @@ import { BarcodeInput } from "@/components/shared/barcode-input";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import type { Product } from "@/features/products/types";
+import { useRouter } from "next/navigation";
 
 interface CheckoutCartSectionProps {
     isProcessing: boolean;
@@ -39,6 +40,15 @@ export function CheckoutCartSection({
     onAddProduct,
     products = [],
 }: CheckoutCartSectionProps) {
+    const router = useRouter();
+
+    const handleSearchSubmit = (query: string) => {
+        const url = query
+            ? `/products?search=${encodeURIComponent(query)}`
+            : "/products";
+        router.push(url);
+    };
+
     return (
         <div className="bg-white border-r border-slate-200 flex flex-col h-full overflow-hidden min-h-0">
             {/* Scanner / Search */}
@@ -52,6 +62,8 @@ export function CheckoutCartSection({
                         placeholder="Scan Barcode atau ketik nama produk... (Enter)"
                         mode="sell"
                         products={products}
+                        searchLabel="Cari Selengkapnya"
+                        onSearchSubmit={handleSearchSubmit}
                     />
                 </div>
                 <Button

@@ -35,6 +35,7 @@ export const ROUTES = {
 
     // Protected - POS
     CHECKOUT: "/checkout",
+    PRODUCTS: "/products",
 
     // Error
     UNAUTHORIZED: "/unauthorized",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,6 +15,7 @@ import { useBrands } from "@/features/brands/api/brands-api";
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
+import { useSearchParams } from "next/navigation";
 
 interface ProductFilterValues {
   search: string;
@@ -24,6 +25,9 @@ interface ProductFilterValues {
 }
 
 export function Products() {
+  const searchParams = useSearchParams();
+  const searchParam = searchParams.get("search") || "";
+
   const { data: session } = useSession();
   const userRoles = session?.user?.roles || [];
   const userPermissions = session?.user?.permissions || [];
@@ -41,7 +45,9 @@ export function Products() {
     status?: string;
     category_uid?: string;
     brand_uid?: string;
-  }>({});
+  }>(() => ({
+    search: searchParam || undefined,
+  }));
 
   // Load categories and brands for the dropdown filter options
   const { data: categoriesRes } = useCategories({ per_page: 1000 });
@@ -49,12 +55,21 @@ export function Products() {
 
   const filterMethods = useForm<ProductFilterValues>({
     defaultValues: {
-      search: "",
+      search: searchParam,
       category_uid: "all",
       brand_uid: "all",
       status: "all",
     },
   });
+
+  // Sync URL search param to state and form values
+  useEffect(() => {
+    filterMethods.setValue("search", searchParam);
+    setAppliedFilters((prev) => ({
+      ...prev,
+      search: searchParam || undefined,
+    }));
+  }, [searchParam, filterMethods]);
 
   const handleFilterSubmit = (data: ProductFilterValues) => {
     setAppliedFilters({

@@ -13,6 +13,8 @@ interface BarcodeInputProps {
     placeholder?: string;
     products?: Product[];
     mode?: "purchase" | "sell";
+    searchLabel?: string;
+    onSearchSubmit?: (query: string) => void;
 }
 
 export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
@@ -23,6 +25,8 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
         placeholder = "Scan barcode atau ketik nama produk...",
         products = [],
         mode = "purchase",
+        searchLabel = "Cari",
+        onSearchSubmit,
     }: BarcodeInputProps, ref) {
         const localRef = useRef<HTMLInputElement>(null);
         const inputRef = (ref || localRef) as React.MutableRefObject<HTMLInputElement | null>;
@@ -36,6 +40,17 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
         const [showDropdown, setShowDropdown] = useState(false);
         const [focusedIndex, setFocusedIndex] = useState(-1);
         const [debouncedValue, setDebouncedValue] = useState("");
+        const dropdownRef = useRef<HTMLDivElement>(null);
+
+        // Scroll focused suggestion into view
+        useEffect(() => {
+            if (focusedIndex >= 0 && dropdownRef.current) {
+                const selectedElement = dropdownRef.current.querySelector(`[data-index="${focusedIndex}"]`);
+                if (selectedElement) {
+                    selectedElement.scrollIntoView({ block: "nearest", behavior: "auto" });
+                }
+            }
+        }, [focusedIndex]);
 
         // Debounce input value for search queries
         useEffect(() => {
@@ -134,6 +149,14 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
         const handleSubmit = async (e: React.FormEvent) => {
             e.preventDefault();
             const query = value.trim();
+
+            if (onSearchSubmit) {
+                onSearchSubmit(query);
+                setShowDropdown(false);
+                setFocusedIndex(-1);
+                return;
+            }
+
             setValue("");
             setShowDropdown(false);
             setFocusedIndex(-1);
@@ -277,7 +300,7 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
 
                         <button
                             type="submit"
-                            disabled={disabled || isSearching || !value.trim()}
+                            disabled={disabled || isSearching || (!onSearchSubmit && !value.trim())}
                             className="
                                 flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold
                                 bg-emerald-50 text-emerald-600 hover:bg-emerald-100
@@ -286,14 +309,17 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                             "
                         >
                             <IconSearch size={14} />
-                            <span>Cari</span>
+                            <span>{searchLabel}</span>
                         </button>
                     </div>
                 </form>
 
                 {/* Suggestions Dropdown list */}
                 {showDropdown && (
-                    <div className="absolute z-50 left-0 right-0 top-full mt-1 max-h-60 overflow-y-auto overflow-x-hidden min-w-[280px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl outline-none">
+                    <div
+                        ref={dropdownRef}
+                        className="absolute z-50 left-0 right-0 top-full mt-1 max-h-60 overflow-y-auto overflow-x-hidden min-w-[280px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl outline-none"
+                    >
                         {isApiLoading ? (
                             <div className="p-4 text-center text-xs text-slate-400 font-medium flex items-center justify-center gap-2">
                                 <IconLoader2 size={16} className="text-emerald-500 animate-spin" />
@@ -310,15 +336,19 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                                     return (
                                         <div
                                             key={p.uid}
+                                            data-index={index}
                                             onClick={() => handleSelectProduct(p)}
                                             onMouseEnter={() => setFocusedIndex(index)}
                                             className={`
-                                                flex items-center justify-between px-4 py-3 cursor-pointer transition-colors duration-150
-                                                ${isFocused ? "bg-emerald-50/70 dark:bg-emerald-950/20" : "hover:bg-slate-50/50 dark:hover:bg-slate-800/30"}
+                                                flex items-center justify-between pr-4 py-3 cursor-pointer transition-all duration-150 border-l-4
+                                                ${isFocused
+                                                    ? "bg-emerald-100 dark:bg-emerald-900/60 border-l-emerald-500 pl-3"
+                                                    : "hover:bg-slate-50/50 dark:hover:bg-slate-800/30 border-l-transparent pl-3"
+                                                }
                                             `}
                                         >
                                             <div className="flex flex-col gap-0.5 text-left">
-                                                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                                                <span className={`text-xs font-semibold ${isFocused ? "text-emerald-950 dark:text-emerald-50" : "text-slate-800 dark:text-slate-200"}`}>
                                                     {p.nama}
                                                 </span>
                                                 <div className="flex items-center gap-2 text-[10px] text-slate-400 font-medium">
