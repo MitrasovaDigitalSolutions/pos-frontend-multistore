@@ -1,4 +1,5 @@
-import { api } from "@/lib/api";
+import { apiGet, apiPut } from "@/shared/api/api-client";
+import { ENDPOINTS } from "@/shared/api/endpoints";
 
 export interface AppSetting {
     uid: string;
@@ -12,17 +13,17 @@ export interface AppSetting {
 
 export const settingsApi = {
     getAll: async () => {
-        const response = await api.get<{ data: AppSetting[] }>("/v1/settings");
+        const response = await apiGet<{ data: AppSetting[] }>("/v1/settings");
         return response.data;
     },
 
     getByKey: async (key: string) => {
-        const response = await api.get<{ data: AppSetting }>(`/v1/settings/${key}`);
+        const response = await apiGet<{ data: AppSetting }>(`/v1/settings/${key}`);
         return response.data;
     },
 
     update: async (key: string, value: string | null) => {
-        const response = await api.put<{ data: AppSetting }>(`/v1/settings/${key}`, { value });
+        const response = await apiPut<{ data: AppSetting }>(`/v1/settings/${key}`, { value });
         return response.data;
     }
 };
