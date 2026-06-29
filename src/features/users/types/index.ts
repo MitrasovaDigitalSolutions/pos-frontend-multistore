@@ -3,13 +3,13 @@ import type { User as CoreUser } from "@/types/auth";
 export type User = CoreUser;
 
 export interface Permission {
-    uid: string;
+    id: string;
     name: string;
     guard_name: string;
 }
 
 export interface RoleWithPermissions {
-    uid: string;
+    id: string;
     name: string;
     guard_name: string;
     permissions: Permission[];
