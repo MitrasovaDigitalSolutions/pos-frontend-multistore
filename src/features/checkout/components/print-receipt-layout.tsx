@@ -55,7 +55,6 @@ export function PrintReceiptLayout({ receipt, cashierName }: PrintReceiptLayoutP
                         TELP: {appPhone}
                     </p>
                 )}
-                </p>
             </div>
 
             <div className="border-t border-dashed border-black my-1.5" />
