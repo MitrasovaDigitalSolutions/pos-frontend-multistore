@@ -3,6 +3,7 @@
 import React from "react";
 import type { Transaction } from "../../types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { useSettingsStore } from "@/stores/settings-store";
 
 interface TransactionPrintReceiptProps {
     transaction: Transaction;
@@ -10,12 +11,17 @@ interface TransactionPrintReceiptProps {
 }
 
 export function TransactionPrintReceipt({ transaction, formattedDate }: TransactionPrintReceiptProps) {
+    const getSetting = useSettingsStore((state) => state.getSetting);
+    const appName = getSetting("app_name", "Mitra Buana Motor");
+    const appAddress = getSetting("app_address", "Jl. Raya Sukabumi No. 123");
+    const appPhone = getSetting("app_phone", "(0266) 123456");
+
     return (
         <div className="hidden print:block w-[76mm] mx-auto text-black p-1 text-[11px] font-mono leading-tight bg-white">
             <div className="text-center space-y-1 mb-4">
-                <h2 className="text-sm font-bold uppercase tracking-wider">MITRA BUANA MOTOR</h2>
-                <p className="text-[9px] text-gray-600">Jl. Raya Sukabumi No. 123</p>
-                <p className="text-[9px] text-gray-600">Telp: (0266) 123456</p>
+                <h2 className="text-sm font-bold uppercase tracking-wider">{appName}</h2>
+                <p className="text-[9px] text-gray-600">{appAddress}</p>
+                {appPhone && <p className="text-[9px] text-gray-600">Telp: {appPhone}</p>}
                 <div className="border-t border-dashed border-gray-400 my-2" />
             </div>
 

@@ -24,11 +24,17 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { loginSchema, type LoginInput } from "../schemas/login-schema";
 
+import { useSettingsStore } from "@/stores/settings-store";
+
 export function LoginForm() {
     const router = useAppRouter();
     const { data: session, status } = useSession();
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+
+    const getSetting = useSettingsStore((state) => state.getSetting);
+    const appName = getSetting("app_name", "Mitra Buana Motor");
+    const appLogo = getSetting("app_logo_url", "");
 
     const {
         register,
@@ -92,13 +98,13 @@ export function LoginForm() {
                     <div className="mx-auto w-16 h-16 bg-white border border-slate-100 shadow-sm rounded-2xl flex items-center justify-center mb-4 overflow-hidden p-2">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                            src="/logo/logo.png"
-                            alt="Mitra Buana Motor Logo"
+                            src={appLogo || "/logo/logo.png"}
+                            alt={`${appName} Logo`}
                             className="w-full h-full object-contain"
                         />
                     </div>
                     <CardTitle className="text-lg font-bold text-slate-900">
-                        Mitra Buana Motor
+                        {appName}
                     </CardTitle>
                     <CardDescription className="text-xs text-slate-400">
                         Sistem Point of Sale

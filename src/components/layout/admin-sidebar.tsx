@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useSidebarStore } from "@/stores/sidebar-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import {
     IconLogout
 } from "@tabler/icons-react";
@@ -53,6 +54,10 @@ export function AdminSidebar() {
 
     const userRoles = user?.roles || [];
     const userPermissions = user?.permissions || [];
+
+    const getSetting = useSettingsStore((state) => state.getSetting);
+    const appName = getSetting("app_name", "Mitra Buana Motor");
+    const appLogo = getSetting("app_logo_url", "");
 
     const handleLogout = () => {
         setIsLogoutConfirmOpen(true);
@@ -112,13 +117,13 @@ export function AdminSidebar() {
                 >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                        src="/logo/logo.png"
+                        src={appLogo || "/logo/logo.png"}
                         alt="Logo"
                         className="w-7 h-7 object-contain rounded-md p-0.5 shrink-0"
                     />
                     {!collapsed && (
                         <span className="font-extrabold text-xs text-white tracking-wider truncate">
-                            Mitra Buana Motor
+                            {appName}
                         </span>
                     )}
                 </div>
