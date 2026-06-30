@@ -14,6 +14,10 @@ import {
   YAxis,
 } from "recharts";
 import type { JasaVsProductData } from "../types";
+import { cn } from "@/lib/utils";
+
+type ChartTab = "profit" | "gross";
+
 
 interface JasaVsProductChartProps {
   data: JasaVsProductData | undefined;
@@ -58,6 +62,8 @@ const CustomTooltip = ({
 
 export function JasaVsProductChart({ data, isLoading }: JasaVsProductChartProps) {
   const [mounted, setMounted] = useState(false);
+  const [activeTab, setActiveTab] = useState<ChartTab>("profit");
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setMounted(true);
@@ -67,17 +73,27 @@ export function JasaVsProductChart({ data, isLoading }: JasaVsProductChartProps)
 
   const total_jasa_sales = data?.total_jasa_sales ?? 0;
   const total_product_sales = data?.total_product_sales ?? 0;
+  const total_jasa_profit = data?.total_jasa_profit ?? 0;
+  const total_product_profit = data?.total_product_profit ?? 0;
   const total_jasa_quantity = data?.total_jasa_quantity ?? 0;
   const total_product_quantity = data?.total_product_quantity ?? 0;
 
-  const totalSales = total_jasa_sales + total_product_sales;
-  const productPct = totalSales > 0 ? (total_product_sales / totalSales) * 100 : 0;
-  const jasaPct = totalSales > 0 ? (total_jasa_sales / totalSales) * 100 : 0;
+  const isProfit = activeTab === "profit";
+
+  const totalValue = isProfit
+    ? total_jasa_profit + total_product_profit
+    : total_jasa_sales + total_product_sales;
+
+  const productValue = isProfit ? total_product_profit : total_product_sales;
+  const jasaValue = isProfit ? total_jasa_profit : total_jasa_sales;
+
+  const productPct = totalValue > 0 ? (productValue / totalValue) * 100 : 0;
+  const jasaPct = totalValue > 0 ? (jasaValue / totalValue) * 100 : 0;
 
   const chartData = [
     {
       name: "Produk",
-      Omset: total_product_sales,
+      value: productValue,
       percentage: productPct,
       quantity: total_product_quantity,
       unit: "Item",
@@ -85,7 +101,7 @@ export function JasaVsProductChart({ data, isLoading }: JasaVsProductChartProps)
     },
     {
       name: "Jasa",
-      Omset: total_jasa_sales,
+      value: jasaValue,
       percentage: jasaPct,
       quantity: total_jasa_quantity,
       unit: "Jasa",
@@ -130,15 +146,43 @@ export function JasaVsProductChart({ data, isLoading }: JasaVsProductChartProps)
 
   return (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-4 flex flex-col justify-between h-full min-h-[280px] select-none">
-      {/* Header */}
+      {/* Header with inline Switcher */}
       <div className="flex items-center justify-between pb-2 border-b border-slate-50">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 select-none">
           <div className="w-5 h-5 rounded bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
             <IconChartBar size={12} className="stroke-[2.5]" />
           </div>
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-            Komposisi Penjualan
+            {isProfit ? "Komposisi Profit" : "Komposisi Penjualan"}
           </span>
+        </div>
+
+        {/* Small Switcher buttons group */}
+        <div className="flex bg-slate-50 p-0.5 rounded-md border border-slate-100 text-[9px] font-bold shadow-sm">
+          <button
+            type="button"
+            onClick={() => setActiveTab("profit")}
+            className={cn(
+              "px-2 py-0.5 rounded-sm transition-all select-none",
+              activeTab === "profit"
+                ? "bg-white text-slate-800 shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-slate-200/50"
+                : "text-slate-400 hover:text-slate-600 border border-transparent"
+            )}
+          >
+            Profit
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("gross")}
+            className={cn(
+              "px-2 py-0.5 rounded-sm transition-all select-none",
+              activeTab === "gross"
+                ? "bg-white text-slate-800 shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-slate-200/50"
+                : "text-slate-400 hover:text-slate-600 border border-transparent"
+            )}
+          >
+            Gross
+          </button>
         </div>
       </div>
 
@@ -172,7 +216,7 @@ export function JasaVsProductChart({ data, isLoading }: JasaVsProductChartProps)
                 cursor={{ fill: "#f8fafc", radius: 6 }}
                 wrapperStyle={{ zIndex: 50 }}
               />
-              <Bar dataKey="Omset" radius={[6, 6, 0, 0]}>
+              <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                 {chartData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
@@ -197,7 +241,7 @@ export function JasaVsProductChart({ data, isLoading }: JasaVsProductChartProps)
             </span>
           </div>
           <div className="text-[11px] font-black text-slate-800 tabular-nums mt-0.5">
-            {formatRupiah(total_product_sales)}
+            {formatRupiah(productValue)}
           </div>
           <div className="text-[8px] font-semibold text-slate-400">
             {productPct.toFixed(0)}% | {total_product_quantity} Item
@@ -213,7 +257,7 @@ export function JasaVsProductChart({ data, isLoading }: JasaVsProductChartProps)
             </span>
           </div>
           <div className="text-[11px] font-black text-slate-800 tabular-nums mt-0.5">
-            {formatRupiah(total_jasa_sales)}
+            {formatRupiah(jasaValue)}
           </div>
           <div className="text-[8px] font-semibold text-slate-400">
             {jasaPct.toFixed(0)}% | {total_jasa_quantity} Jasa

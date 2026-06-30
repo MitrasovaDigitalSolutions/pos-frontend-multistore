@@ -175,3 +175,20 @@ export function useMemberDebtHistory(memberUid: string) {
         enabled: !!memberUid,
     });
 }
+
+export interface UpdateMemberPointsPayload {
+    type: "add" | "subtract";
+    points: number;
+    note: string;
+}
+
+export function useUpdateMemberPoints() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<Member>, Error, { uid: string; data: UpdateMemberPointsPayload }>({
+        mutationFn: ({ uid, data }) =>
+            apiPatch<ApiResponse<Member>, UpdateMemberPointsPayload>(`/v1/members/${uid}/points`, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
+        },
+    });
+}

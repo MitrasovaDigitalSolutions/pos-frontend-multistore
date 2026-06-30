@@ -20,6 +20,8 @@ import { CreateMemberDialog } from "./create-member-dialog";
 import { db } from "@/lib/db";
 import { useNetworkStatus } from "@/hooks/use-network-status";
 import { cn } from "@/lib/utils";
+import { useSettingsStore } from "@/stores/settings-store";
+
 
 interface CheckoutTotalsSectionProps {
     transactionId: string | null;
@@ -49,7 +51,7 @@ export function CheckoutTotalsSection({
     cashierName,
     trxTime,
     subtotal,
-    ppn: _ppn,
+    ppn,
     discountType,
     discountValue,
     discountAmount,
@@ -70,6 +72,12 @@ export function CheckoutTotalsSection({
     const { data: membersData = [], isLoading: isMembersLoading } = useAllMembers();
     const [localMembers, setLocalMembers] = useState<Member[]>([]);
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+    const getTaxRate = useSettingsStore((state) => state.getTaxRate);
+    const ppnRate = getTaxRate();
+    const getSetting = useSettingsStore((state) => state.getSetting);
+    const pointRate = parseFloat(getSetting("point_rate", "1000")) || 1000;
+
+
 
     useEffect(() => {
         let isMounted = true;
@@ -192,7 +200,7 @@ export function CheckoutTotalsSection({
                                 {selectedMember ? (
                                     <>
                                         <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                                        <span>+{Math.floor(grandTotal / 10000)} Poin</span>
+                                        <span>+{Math.floor(grandTotal / pointRate)} Poin</span>
                                     </>
                                 ) : (
                                     <span className="text-slate-400 font-bold">Non-Member</span>
@@ -356,6 +364,14 @@ export function CheckoutTotalsSection({
                             - {formatRupiah(discountAmount)}
                         </span>
                     </div>
+                    {ppn > 0 && (
+                        <div className="flex justify-between">
+                            <span>Pajak (PPN {ppnRate}%)</span>
+                            <span className="text-slate-800 tabular-nums font-bold">
+                                {formatRupiah(ppn)}
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 <div className="border-t border-dashed border-slate-200 pt-3 flex justify-between items-center gap-3">

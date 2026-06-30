@@ -102,16 +102,13 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
         const suggestions = useMemo(() => {
             if (value.trim().length < 2) return [];
             if (isLocalMode) {
-                const words = value.toLowerCase().trim().split(/\s+/);
-                const rawSearch = value.toLowerCase().trim();
+                const searchLower = value.toLowerCase().trim();
+                const queryWords = searchLower.split(/\s+/);
                 return products
                     .filter((p) => {
-                        // Optional exact barcode match
-                        if (p.barcode && p.barcode.toLowerCase().includes(rawSearch)) return true;
-                        
-                        const productName = p.nama ? p.nama.toLowerCase() : "";
-                        // Every word must be found in the product name
-                        return words.every(word => productName.includes(word));
+                        const barcodeMatch = p.barcode?.toLowerCase().includes(searchLower) ?? false;
+                        const nameWordsMatch = queryWords.every((word) => p.nama.toLowerCase().includes(word));
+                        return barcodeMatch || nameWordsMatch;
                     })
                     .slice(0, 8);
             }
@@ -172,10 +169,18 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                     (p) => p.barcode?.toLowerCase() === query.toLowerCase(),
                 );
 
-                // 2. Try local match by name
+                // 2. Try local match by name (precise)
                 if (!found) {
                     found = products.find((p) =>
                         p.nama.toLowerCase().includes(query.toLowerCase()),
+                    );
+                }
+
+                // 2b. Try local match by split words (fuzzy)
+                if (!found) {
+                    const queryWords = query.toLowerCase().trim().split(/\s+/);
+                    found = products.find((p) =>
+                        queryWords.every((word) => p.nama.toLowerCase().includes(word))
                     );
                 }
 

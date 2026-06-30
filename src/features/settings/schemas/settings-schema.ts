@@ -24,6 +24,9 @@ export const storeSettingsSchema = z.object({
         .number({ error: "Tarif PPN wajib diisi" })
         .min(0, "Tarif PPN minimal 0%")
         .max(100, "Tarif PPN maksimal 100%"),
+    point_rate: z
+        .number({ error: "Tarif konversi poin wajib diisi" })
+        .min(1, "Tarif konversi poin minimal Rp 1 per poin"),
     cash_account_register_uid: z
         .string()
         .optional()

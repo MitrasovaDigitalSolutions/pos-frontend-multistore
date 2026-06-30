@@ -8,6 +8,7 @@ import { hasRole, hasPermission } from "@/constants/roles";
 import { useMembers } from "./api/members-api";
 import { MemberList } from "./components/member-list";
 import { MemberDialog } from "./components/member-dialog";
+import { AdjustPointsDialog } from "./components/adjust-points-dialog";
 import { memberSchema, type MemberInput } from "./schemas/member-schema";
 import type { Member } from "./types";
 import { FilterForm } from "@/components/forms/filter-form";
@@ -71,6 +72,13 @@ export function Members() {
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingMember, setEditingMember] = useState<Member | null>(null);
+    const [isAdjustPointsOpen, setIsAdjustPointsOpen] = useState(false);
+    const [selectedMemberForPoints, setSelectedMemberForPoints] = useState<Member | null>(null);
+
+    const handleAdjustPoints = (member: Member) => {
+        setSelectedMemberForPoints(member);
+        setIsAdjustPointsOpen(true);
+    };
 
     const dialogMethods = useForm<MemberInput>({
         resolver: zodResolver(memberSchema) as Resolver<MemberInput>,
@@ -147,6 +155,7 @@ export function Members() {
                     onPageChange={setPage}
                     onPerPageChange={setPerPage}
                     onEdit={handleEdit}
+                    onAdjustPoints={handleAdjustPoints}
                     onAddClick={handleAddClick}
                     isLoading={isLoading}
                     isFetching={isFetching}
@@ -182,6 +191,12 @@ export function Members() {
                     open={isDialogOpen}
                     onOpenChange={setIsDialogOpen}
                     editingMember={editingMember}
+                />
+
+                <AdjustPointsDialog
+                    open={isAdjustPointsOpen}
+                    onOpenChange={setIsAdjustPointsOpen}
+                    member={selectedMemberForPoints}
                 />
             </FormProvider>
         </div>

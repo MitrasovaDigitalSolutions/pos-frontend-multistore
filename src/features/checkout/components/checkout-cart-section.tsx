@@ -15,10 +15,10 @@ import type { CartItem } from "@/features/checkout/types";
 import type { Product } from "@/features/products/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconScan, IconTrash } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { ProductSearchDialog } from "./product-search-dialog";
 
 interface ServicePriceInputProps {
     item: CartItem;
@@ -79,13 +79,12 @@ export function CheckoutCartSection({
     onAddProduct,
     products = [],
 }: CheckoutCartSectionProps) {
-    const router = useRouter();
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
 
     const handleSearchSubmit = (query: string) => {
-        const url = query
-            ? `/products?search=${encodeURIComponent(query)}`
-            : "/products";
-        router.push(url);
+        setSearchQuery(query);
+        setIsSearchOpen(true);
     };
 
     return (
@@ -349,6 +348,21 @@ export function CheckoutCartSection({
                     </>
                 )}
             </div>
+
+            {isSearchOpen && (
+                <ProductSearchDialog
+                    open={isSearchOpen}
+                    onOpenChange={(open) => {
+                        setIsSearchOpen(open);
+                        if (!open) {
+                            setTimeout(() => barcodeInputRef.current?.focus(), 100);
+                        }
+                    }}
+                    products={products}
+                    onAddProduct={onAddProduct}
+                    initialSearchQuery={searchQuery}
+                />
+            )}
         </div>
     );
 }

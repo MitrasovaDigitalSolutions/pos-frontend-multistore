@@ -28,6 +28,13 @@ apiClient.interceptors.request.use(
             "X-Correlation-ID",
             `pos-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
         );
+
+        // If the payload is FormData, delete the Content-Type header to allow Axios and the browser
+        // to dynamically set the Content-Type with the correct boundary parameter.
+        if (config.data instanceof FormData) {
+            config.headers.delete("Content-Type");
+        }
+
         return config;
     },
     (error) => Promise.reject(error),

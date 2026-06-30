@@ -118,14 +118,14 @@ export function useCheckoutState() {
     const subtotal = cart.reduce((acc, i) => acc + i.price * i.qty, 0);
     const getTaxRate = useSettingsStore((state) => state.getTaxRate);
     const taxRate = getTaxRate() / 100;
-    const ppn = Math.floor(subtotal * taxRate);
     const discountAmount = useMemo(() => {
         if (discountType === "percent") {
             return Math.min(subtotal, Math.floor((discountValue / 100) * subtotal));
         }
         return Math.min(subtotal, discountValue);
     }, [discountType, discountValue, subtotal]);
-    const grandTotal = Math.max(0, subtotal - discountAmount);
+    const ppn = Math.floor((subtotal - discountAmount) * taxRate);
+    const grandTotal = Math.max(0, subtotal - discountAmount + ppn);
 
     // ─── Handlers ─────────────────────────────────────────────────────────────
 
@@ -245,6 +245,12 @@ export function useCheckoutState() {
         if (!found) {
             found = products?.find((p) =>
                 p.nama.toLowerCase().includes(query.toLowerCase()),
+            );
+        }
+        if (!found) {
+            const queryWords = query.toLowerCase().split(/\s+/);
+            found = products?.find((p) =>
+                queryWords.every((word) => p.nama.toLowerCase().includes(word))
             );
         }
 
