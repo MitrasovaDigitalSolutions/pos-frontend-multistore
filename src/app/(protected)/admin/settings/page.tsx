@@ -1,7 +1,7 @@
 import { StoreProfile } from "@/features/settings/components/store-profile";
 
 export const metadata = {
-    title: "Pengaturan Toko - Mitra Buana Motor",
+    title: "Pengaturan Toko",
 };
 
 export default function AdminSettingsPage() {

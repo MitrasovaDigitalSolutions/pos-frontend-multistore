@@ -56,7 +56,7 @@ export function AdminSidebar() {
     const userPermissions = user?.permissions || [];
 
     const getSetting = useSettingsStore((state) => state.getSetting);
-    const appName = getSetting("app_name", "Mitra Buana Motor");
+    const appName = getSetting("app_name", "Mitrasova POS");
     const appLogo = getSetting("app_logo_url", "");
 
     const handleLogout = () => {

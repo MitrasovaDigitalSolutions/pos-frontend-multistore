@@ -37,13 +37,14 @@ export function CheckoutTopBar({
     onCatalogSyncRequest,
 }: CheckoutTopBarProps) {
     const getSetting = useSettingsStore((state) => state.getSetting);
-    const appName = getSetting("app_name", "Mitra Buana Motor");
+    const appName = getSetting("app_name", "Mitrasova POS");
     const appLogo = getSetting("app_logo_url", "");
 
     return (
         <div className="bg-slate-900 text-white h-12 px-4 sm:px-6 flex items-center justify-between border-b border-slate-800">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 {appLogo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img src={appLogo} alt={appName} className="h-6 w-auto shrink-0 rounded" />
                 ) : (
                     <IconScan size={20} className="text-emerald-400 shrink-0" />

@@ -2,7 +2,7 @@ import { LabaRugiReportView } from "@/features/reports/components/laba-rugi/laba
 
 
 export const metadata = {
-    title: "Laporan Laba Rugi - Mitra Buana Motor",
+    title: "Laporan Laba Rugi",
 };
 
 export default function LaporanLabaRugiPage() {

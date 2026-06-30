@@ -1,7 +1,7 @@
 import { Expenses } from "@/features/expenses/expenses";
 
 export const metadata = {
-    title: "Kelola Pengeluaran Kas Toko - Mitra Buana Motor",
+    title: "Kelola Pengeluaran Kas Toko",
 };
 
 export default function AdminExpensesPage() {

@@ -12,8 +12,8 @@ interface PrintReceiptLayoutProps {
 
 export function PrintReceiptLayout({ receipt, cashierName }: PrintReceiptLayoutProps) {
     const getSetting = useSettingsStore((state) => state.getSetting);
-    const appName = getSetting("app_name", "Mitra Buana Motor");
-    const appAddress = getSetting("app_address", "Jl. Raya Contoh No. 1, Jakarta");
+    const appName = getSetting("app_name", "Mitrasova POS");
+    const appAddress = getSetting("app_address", "Indonesia");
     const appPhone = getSetting("app_phone", "0812-3456-7890");
 
     if (!receipt) return null;

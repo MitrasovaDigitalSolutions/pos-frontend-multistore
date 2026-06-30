@@ -1,7 +1,7 @@
 import { PenjualanReportView } from "@/features/reports/components/penjualan/penjualan-report";
 
 export const metadata = {
-    title: "Laporan Penjualan - Mitra Buana Motor",
+    title: "Laporan Penjualan",
 };
 
 export default function LaporanPenjualanPage() {

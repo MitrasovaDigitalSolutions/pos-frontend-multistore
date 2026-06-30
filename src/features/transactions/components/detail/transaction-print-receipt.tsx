@@ -12,8 +12,8 @@ interface TransactionPrintReceiptProps {
 
 export function TransactionPrintReceipt({ transaction, formattedDate }: TransactionPrintReceiptProps) {
     const getSetting = useSettingsStore((state) => state.getSetting);
-    const appName = getSetting("app_name", "Mitra Buana Motor");
-    const appAddress = getSetting("app_address", "Jl. Raya Sukabumi No. 123");
+    const appName = getSetting("app_name", "Mitrasova POS");
+    const appAddress = getSetting("app_address", "Indonesia");
     const appPhone = getSetting("app_phone", "(0266) 123456");
 
     return (

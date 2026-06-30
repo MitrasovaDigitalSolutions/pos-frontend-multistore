@@ -5,7 +5,7 @@ import { IconArrowLeft } from "@tabler/icons-react";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Daftar Barang - Mitra Buana Motor",
+  title: "Daftar Barang",
 };
 
 export default function ProductsPage() {
