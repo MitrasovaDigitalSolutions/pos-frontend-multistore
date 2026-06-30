@@ -18,6 +18,7 @@ import type { Member } from "@/features/members/types";
 import { db } from "@/lib/db";
 import { useNetworkStatus } from "@/hooks/use-network-status";
 import { NetworkError } from "@/shared/errors/api-error";
+import { toUTC7String } from "@/lib/date-utils";
 
 import { useSession } from "next-auth/react";
 
@@ -114,7 +115,7 @@ export function PaymentDialog({
         }
 
         const clientUid = crypto.randomUUID();
-        const now = new Date().toISOString();
+        const now = toUTC7String();
 
         const payload: Record<string, unknown> = {
             uid: clientUid,
