@@ -18,7 +18,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     fetchSettings: async () => {
         set({ isLoading: true, error: null });
         try {
-            const { data } = await settingsApi.getAll();
+            const data = await settingsApi.getAll();
             const settingsMap: Record<string, string | null> = {};
             data.forEach((setting) => {
                 settingsMap[setting.key] = setting.value;
