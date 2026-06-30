@@ -6,13 +6,13 @@ import { auth } from "@/lib/auth";
 // Attaches the Bearer token from the server-side NextAuth session.
 // Browser never knows the real backend URL or token.
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL
+const BACKEND_URL = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
 
 async function handler(req: NextRequest) {
   // Get the path after /api/proxy
   const url = new URL(req.url);
   const proxyPath = url.pathname.replace(/^\/api\/proxy/, "");
-  const targetUrl = `${BACKEND_URL}${proxyPath}${url.search}`;
+  const targetUrl = `${BACKEND_URL}/api${proxyPath}${url.search}`;
 
   // Get session for Bearer token
   const session = await auth();

@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { useCreateProduct, useUpdateProduct } from "../api/products-api";
 import { type ProductInput } from "../schemas/product-schema";
 import type { Product } from "../types";
+import { getImageUrl } from "@/lib/utils";
 
 interface ProductFormDialogProps {
     open: boolean;
@@ -170,9 +171,7 @@ export function ProductFormDialog({
         }
     };
 
-    const initialImageUrl = editingProduct?.image_path
-        ? `${process.env.NEXT_PUBLIC_API_URL}/storage/${editingProduct.image_path}`
-        : null;
+    const initialImageUrl = getImageUrl(editingProduct?.image_path);
 
     return (
         <BaseDialog

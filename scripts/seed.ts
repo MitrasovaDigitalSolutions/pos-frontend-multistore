@@ -10,7 +10,8 @@ import { existsSync } from "fs";
 
 // Load environment variables from .env if running directly
 // Bun loads .env automatically, but we can verify it
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const rawUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = `${rawUrl.replace(/\/+$/, "")}/api`;
 
 console.log("=========================================");
 console.log("   POS DATABASE SEEDING UTILITY         ");

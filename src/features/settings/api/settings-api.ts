@@ -1,4 +1,4 @@
-import { apiGet, apiPut, apiPost } from "@/shared/api/api-client";
+import { apiGet, apiPost } from "@/shared/api/api-client";
 
 export interface AppSetting {
     uid: string;
@@ -25,12 +25,11 @@ export const settingsApi = {
         if (value instanceof File) {
             const formData = new FormData();
             formData.append("value", value);
-            formData.append("_method", "PUT");
             const response = await apiPost<{ data: AppSetting }>(`/v1/settings/${key}`, formData);
             return response.data;
         }
 
-        const response = await apiPut<{ data: AppSetting }>(`/v1/settings/${key}`, { value });
+        const response = await apiPost<{ data: AppSetting }>(`/v1/settings/${key}`, { value });
         return response.data;
     }
 };

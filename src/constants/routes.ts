@@ -45,7 +45,12 @@ export type AppRoute = (typeof ROUTES)[keyof typeof ROUTES];
 
 // ─── Public Routes (no auth required) ───────────────────────────────────────
 
-export const PUBLIC_ROUTES: string[] = [ROUTES.LOGIN, "/api/auth"];
+export const PUBLIC_ROUTES: string[] = [
+    ROUTES.LOGIN,
+    "/api/auth",
+    "/api/proxy/v1/settings/app_name",
+    "/api/proxy/v1/settings/app_logo_url"
+];
 
 // ─── Auth Routes (redirect to dashboard if already logged in) ───────────────
 

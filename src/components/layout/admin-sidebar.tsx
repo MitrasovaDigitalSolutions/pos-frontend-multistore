@@ -7,7 +7,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { cn, getImageUrl } from "@/lib/utils";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import {
@@ -56,8 +56,13 @@ export function AdminSidebar() {
     const userPermissions = user?.permissions || [];
 
     const getSetting = useSettingsStore((state) => state.getSetting);
-    const appName = getSetting("app_name", "Mitrasova POS");
-    const appLogo = getSetting("app_logo_url", "");
+    const isLoadingSettings = useSettingsStore((state) => state.isLoading);
+    const isSettingsLoading = isLoadingSettings || !mounted;
+
+    const appNameRaw = getSetting("app_name", "");
+    const appName = appNameRaw && appNameRaw.trim() !== "" ? appNameRaw : "Mitrasova POS";
+    const appLogoRaw = getSetting("app_logo_url", "");
+    const appLogo = getImageUrl(appLogoRaw);
 
     const handleLogout = () => {
         setIsLogoutConfirmOpen(true);
@@ -115,16 +120,27 @@ export function AdminSidebar() {
                         collapsed ? "justify-center px-0" : "px-5"
                     )}
                 >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                        src={appLogo || "/logo/logo.png"}
-                        alt="Logo"
-                        className="w-7 h-7 object-contain rounded-md p-0.5 shrink-0"
-                    />
-                    {!collapsed && (
-                        <span className="font-extrabold text-xs text-white tracking-wider truncate">
-                            {appName}
-                        </span>
+                    {isSettingsLoading ? (
+                        <>
+                            <div className="w-7 h-7 bg-gray-800 rounded-md animate-pulse shrink-0" />
+                            {!collapsed && (
+                                <div className="h-3 bg-gray-800 rounded animate-pulse w-24 shrink-0" />
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src={appLogo || "/logo/logo.png"}
+                                alt="Logo"
+                                className="w-7 h-7 object-contain rounded-md p-0.5 shrink-0"
+                            />
+                            {!collapsed && (
+                                <span className="font-extrabold text-xs text-white tracking-wider truncate">
+                                    {appName}
+                                </span>
+                            )}
+                        </>
                     )}
                 </div>
 

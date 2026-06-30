@@ -6,6 +6,7 @@ import { IconScan, IconHome, IconLogout, IconWifi, IconCash } from "@tabler/icon
 import { OfflineReadinessBadge } from "@/features/checkout/components/offline-readiness-badge";
 import type { OfflineReadinessState } from "@/hooks/use-offline-readiness";
 import { useSettingsStore } from "@/stores/settings-store";
+import { getImageUrl } from "@/lib/utils";
 
 interface CheckoutTopBarProps {
     transactionId: string | null;
@@ -38,7 +39,8 @@ export function CheckoutTopBar({
 }: CheckoutTopBarProps) {
     const getSetting = useSettingsStore((state) => state.getSetting);
     const appName = getSetting("app_name", "Mitrasova POS");
-    const appLogo = getSetting("app_logo_url", "");
+    const appLogoRaw = getSetting("app_logo_url", "");
+    const appLogo = getImageUrl(appLogoRaw);
 
     return (
         <div className="bg-slate-900 text-white h-12 px-4 sm:px-6 flex items-center justify-between border-b border-slate-800">

@@ -2,8 +2,8 @@ import type { AppSetting } from "./settings-api";
 
 export async function getSettingsOnServer(): Promise<AppSetting[]> {
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://kspmitrasejatipersada.biz.id/api";
-        const res = await fetch(`${apiUrl}/v1/settings`, {
+        const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
+        const res = await fetch(`${apiUrl}/api/v1/settings`, {
             next: { revalidate: 300 } // Cache settings for 5 minutes (300 seconds)
         });
         if (!res.ok) {
