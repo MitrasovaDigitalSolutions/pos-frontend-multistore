@@ -179,9 +179,6 @@ export function LoginForm() {
                 {/* Content/Showcase Section */}
                 <div className="my-auto space-y-6 relative z-10 max-w-lg py-4">
                     <div className="space-y-4">
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-semibold uppercase tracking-wider backdrop-blur-md">
-                            ✨ Aplikasi Kasir & Kelola Toko
-                        </div>
                         <h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.2] text-slate-100">
                             Kemudahan Kelola Transaksi <br />
                             <span className="bg-gradient-to-r from-emerald-400 via-emerald-300 to-teal-300 bg-clip-text text-transparent">
@@ -281,8 +278,9 @@ export function LoginForm() {
             </div>
 
             {/* Right Side: Form Container */}
-            <div className="flex-1 flex items-center justify-center p-6 md:p-8 lg:p-12 min-h-screen md:min-h-0 md:h-full z-10 overflow-y-auto">
-                <div className="w-full max-w-[400px] space-y-4 md:space-y-5 animate-fade-in py-6">
+            <div className="flex-1 flex flex-col justify-between p-6 md:p-8 lg:p-12 min-h-screen md:min-h-0 md:h-full z-10 overflow-y-auto">
+                <div className="hidden md:block" />
+                <div className="w-full max-w-[400px] mx-auto space-y-4 md:space-y-5 animate-fade-in py-6 my-auto">
                     {/* Brand header on mobile only */}
                     <div className="flex flex-col items-center text-center md:hidden mb-2">
                         <div className="relative group mb-2">
@@ -396,6 +394,12 @@ export function LoginForm() {
                             Butuh bantuan masuk atau lupa password? Hubungi supervisor atau administrator toko Anda.
                         </p>
                     </div>
+                </div>
+
+                {/* Mobile Footer Section */}
+                <div className="relative z-10 text-xs text-slate-400 flex justify-between items-center border-t border-slate-200/60 md:hidden">
+                    <span>© {new Date().getFullYear()} Mitrasova POS</span>
+                    <span>v1.0.0</span>
                 </div>
             </div>
         </div>
