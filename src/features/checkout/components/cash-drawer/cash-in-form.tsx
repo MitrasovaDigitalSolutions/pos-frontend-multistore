@@ -15,6 +15,7 @@ import { cashInSchema, type CashInInput } from "../../schemas/cash-drawer-schema
 import { db } from "@/lib/db";
 import { useNetworkStatus } from "@/hooks/use-network-status";
 import type { CashDrawerMovement } from "../../types/cash-drawer";
+import { toUTC7String } from "@/lib/date-utils";
 
 interface CashInFormProps {
     sessionId: string;
@@ -49,7 +50,7 @@ export function CashInForm({ sessionId, token, onSuccess, onCancel }: CashInForm
                     token,
                 });
             } else {
-                const now = new Date().toISOString();
+                const now = toUTC7String();
                 const session = await db.cashDrawerSessions.get(sessionId);
                 if (!session) throw new Error("Sesi laci kasir aktif tidak ditemukan di database lokal.");
 

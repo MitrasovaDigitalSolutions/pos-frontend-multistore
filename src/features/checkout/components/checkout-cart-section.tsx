@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
-import { Button } from "@/components/ui/button";
+import { FormNominalInput } from "@/components/forms/form-nominal-input";
+import { BarcodeInput } from "@/components/shared/barcode-input";
+import { Input } from "@/components/ui/input";
 import {
     Table,
     TableBody,
@@ -10,13 +11,51 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { IconScan, IconCategory, IconTrash } from "@tabler/icons-react";
 import type { CartItem } from "@/features/checkout/types";
-import { BarcodeInput } from "@/components/shared/barcode-input";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
 import type { Product } from "@/features/products/types";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { IconScan, IconTrash } from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
+import React from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { toast } from "sonner";
+
+interface ServicePriceInputProps {
+    item: CartItem;
+    onUpdatePrice: (item: CartItem, price: number) => void;
+    isProcessing: boolean;
+    className?: string;
+}
+
+function ServicePriceInput({
+    item,
+    onUpdatePrice,
+    isProcessing,
+    className,
+}: ServicePriceInputProps) {
+    const methods = useForm<{ price: number | null }>({
+        defaultValues: {
+            price: item.price,
+        },
+    });
+
+    React.useEffect(() => {
+        methods.reset({ price: item.price });
+    }, [item.price, methods]);
+
+    return (
+        <FormProvider {...methods}>
+            <FormNominalInput<{ price: number | null }>
+                name="price"
+                onValueChange={(val) => {
+                    onUpdatePrice(item, val ?? 0);
+                }}
+                disabled={isProcessing}
+                className={className}
+            />
+        </FormProvider>
+    );
+}
 
 interface CheckoutCartSectionProps {
     isProcessing: boolean;
@@ -34,13 +73,21 @@ export function CheckoutCartSection({
     isProcessing,
     cart,
     barcodeInputRef,
-    onCatalogOpen,
     onUpdateQty,
     onUpdatePrice,
     onRemoveItem,
     onAddProduct,
     products = [],
 }: CheckoutCartSectionProps) {
+    const router = useRouter();
+
+    const handleSearchSubmit = (query: string) => {
+        const url = query
+            ? `/products?search=${encodeURIComponent(query)}`
+            : "/products";
+        router.push(url);
+    };
+
     return (
         <div className="bg-white border-r border-slate-200 flex flex-col h-full overflow-hidden min-h-0">
             {/* Scanner / Search */}
@@ -54,16 +101,10 @@ export function CheckoutCartSection({
                         placeholder="Scan Barcode atau ketik nama produk... (Enter)"
                         mode="sell"
                         products={products}
+                        searchLabel="Cari Selengkapnya"
+                        onSearchSubmit={handleSearchSubmit}
                     />
                 </div>
-                <Button
-                    variant="outline"
-                    onClick={onCatalogOpen}
-                    className="h-13 border-dashed border-emerald-500 hover:bg-emerald-50 text-emerald-600 font-bold px-4 rounded-xl flex gap-2 cursor-pointer bg-white shrink-0 w-full sm:w-auto justify-center"
-                >
-                    <IconCategory size={18} />
-                    <span>Katalog (F2)</span>
-                </Button>
             </div>
 
             {/* Cart Items (Table on Desktop, Cards on Mobile) */}
@@ -75,7 +116,7 @@ export function CheckoutCartSection({
                             Belum Ada Item Belanja
                         </h4>
                         <p className="text-xs text-slate-400 mt-1 max-w-70">
-                            Pindai barcode atau gunakan Katalog untuk menambahkan item.
+                            Pindai barcode atau cari produk untuk menambahkan item.
                         </p>
                     </div>
                 ) : (
@@ -94,7 +135,7 @@ export function CheckoutCartSection({
                                         <TableHead className="text-center w-28 text-[10px] font-bold text-slate-500">
                                             Qty
                                         </TableHead>
-                                        <TableHead className="text-right w-24 text-[10px] font-bold text-slate-500">
+                                        <TableHead className="text-right w-32 text-[10px] font-bold text-slate-500">
                                             Harga
                                         </TableHead>
                                         <TableHead className="text-right w-28 text-[10px] font-bold text-slate-500">
@@ -177,26 +218,11 @@ export function CheckoutCartSection({
                                             </TableCell>
                                             <TableCell className="text-right text-slate-700 font-medium tabular-nums">
                                                 {item.is_jasa ? (
-                                                    <Input
-                                                        type="number"
-                                                        value={item.price}
-                                                        onChange={(e) => {
-                                                            const val = e.target.value;
-                                                            if (val === "") return;
-                                                            const num = parseInt(val, 10);
-                                                            if (!isNaN(num) && num >= 0) {
-                                                                onUpdatePrice(item, num);
-                                                            }
-                                                        }}
-                                                        onBlur={(e) => {
-                                                            const val = e.target.value;
-                                                            const num = parseInt(val, 10);
-                                                            if (val === "" || isNaN(num) || num < 0) {
-                                                                onUpdatePrice(item, 0);
-                                                            }
-                                                        }}
-                                                        className="w-24 h-7 text-right text-xs font-bold text-slate-800 border border-slate-200 rounded-lg outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 px-2 ml-auto [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                        disabled={isProcessing}
+                                                    <ServicePriceInput
+                                                        item={item}
+                                                        onUpdatePrice={onUpdatePrice}
+                                                        isProcessing={isProcessing}
+                                                        className="w-28 h-7 text-right text-xs font-bold text-slate-800 border border-slate-200 rounded-lg outline-none focus-visible:ring-emerald-500 focus-visible:border-emerald-500 px-2 ml-auto"
                                                     />
                                                 ) : (
                                                     formatRupiah(item.price)
@@ -256,28 +282,13 @@ export function CheckoutCartSection({
 
                                     <div className="flex justify-between items-center bg-slate-50/50 p-2 rounded-lg border border-slate-100">
                                         <div className="text-[10px] font-bold text-slate-400 flex items-center">
-                                            Harga: 
+                                            Harga:
                                             {item.is_jasa ? (
-                                                <Input
-                                                    type="number"
-                                                    value={item.price}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value;
-                                                        if (val === "") return;
-                                                        const num = parseInt(val, 10);
-                                                        if (!isNaN(num) && num >= 0) {
-                                                            onUpdatePrice(item, num);
-                                                        }
-                                                    }}
-                                                    onBlur={(e) => {
-                                                        const val = e.target.value;
-                                                        const num = parseInt(val, 10);
-                                                        if (val === "" || isNaN(num) || num < 0) {
-                                                            onUpdatePrice(item, 0);
-                                                        }
-                                                    }}
-                                                    className="w-24 ml-2 h-6 text-right text-xs font-bold text-slate-800 border border-slate-200 rounded-md outline-none focus:border-emerald-500 px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                    disabled={isProcessing}
+                                                <ServicePriceInput
+                                                    item={item}
+                                                    onUpdatePrice={onUpdatePrice}
+                                                    isProcessing={isProcessing}
+                                                    className="w-28 ml-2 h-7 text-right text-xs font-bold text-slate-800 border border-slate-200 rounded-md outline-none focus-visible:ring-emerald-500 focus-visible:border-emerald-500 px-2"
                                                 />
                                             ) : (
                                                 <span className="text-slate-700 font-semibold ml-1">{formatRupiah(item.price)}</span>

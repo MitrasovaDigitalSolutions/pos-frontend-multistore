@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { apiGetData, apiGetList, apiPost } from "@/shared/api/api-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { toUTC7String } from "@/lib/date-utils";
 
 // Catalog auto-sync interval: every 30 minutes when online
 const CATALOG_SYNC_INTERVAL_MS = 30 * 60 * 1000;
@@ -46,7 +47,7 @@ export function useSyncEngine() {
             const record = await db.offlineTransactions.get(uid);
             if (!record) return "failed";
 
-            const now = new Date().toISOString();
+            const now = toUTC7String();
             const syncPayload = {
                 ...record.payload,
                 uid: record.uid,
