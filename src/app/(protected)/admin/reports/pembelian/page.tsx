@@ -2,7 +2,7 @@ import { PembelianReportView } from "@/features/reports/components/pembelian/pem
 
 
 export const metadata = {
-    title: "Laporan Pembelian - Mitra Buana Motor",
+    title: "Laporan Pembelian",
 };
 
 export default function LaporanPembelianPage() {

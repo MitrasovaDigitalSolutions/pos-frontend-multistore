@@ -1,7 +1,7 @@
 import { Checkout } from "@/features/checkout/checkout";
 
 export const metadata = {
-  title: "Checkout / Kasir - Mitra Buana Motor",
+  title: "Checkout / Kasir",
 };
 
 export default function CheckoutPage() {

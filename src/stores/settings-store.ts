@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { settingsApi, AppSetting } from "@/features/settings/api/settings-api";
+import { settingsApi } from "@/features/settings/api/settings-api";
 
 interface SettingsState {
     settings: Record<string, string | null>;

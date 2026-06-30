@@ -1,7 +1,7 @@
 import { AuditLogs } from "@/features/audit/audit";
 
 export const metadata = {
-  title: "Audit Logs - Mitra Buana Motor",
+  title: "Audit Logs",
 };
 
 export default function AdminAuditPage() {

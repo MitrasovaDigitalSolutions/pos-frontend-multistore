@@ -1,5 +1,4 @@
 import { apiGet, apiPut, apiPost } from "@/shared/api/api-client";
-import { ENDPOINTS } from "@/shared/api/endpoints";
 
 export interface AppSetting {
     uid: string;

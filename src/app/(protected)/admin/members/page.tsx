@@ -1,7 +1,7 @@
 import { Members } from "@/features/members/members";
 
 export const metadata = {
-    title: "Kelola Member / Pelanggan - Mitra Buana Motor",
+    title: "Kelola Member / Pelanggan",
 };
 
 export default function AdminMembersPage() {
