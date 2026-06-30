@@ -247,6 +247,12 @@ export function useCheckoutState() {
                 p.nama.toLowerCase().includes(query.toLowerCase()),
             );
         }
+        if (!found) {
+            const queryWords = query.toLowerCase().split(/\s+/);
+            found = products?.find((p) =>
+                queryWords.every((word) => p.nama.toLowerCase().includes(word))
+            );
+        }
 
         // Search full IndexedDB table if not found in memory state
         if (!found) {

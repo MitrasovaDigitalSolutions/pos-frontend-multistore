@@ -156,11 +156,69 @@ export function DataTable<TData, TValue>({
     const currentPageVal = onPageChange ? page : localPage;
     const perPageVal = onPerPageChange ? (perPage ?? 10) : localPerPage;
 
+    const [localSorting, setLocalSorting] = React.useState<SortingState>(defaultSorting ?? []);
+
+    const sorting = React.useMemo<SortingState>(() => {
+        if (onSortChange) {
+            if (!sortBy) return [];
+            return [{ id: sortBy, desc: sortOrder === "desc" }];
+        }
+        return localSorting;
+    }, [onSortChange, sortBy, sortOrder, localSorting]);
+
+    const handleSortingChange = (updater: React.SetStateAction<SortingState>) => {
+        if (onSortChange) {
+            const nextSorting = typeof updater === "function" ? updater(sorting) : updater;
+            if (nextSorting.length > 0) {
+                const firstSort = nextSorting[0];
+                onSortChange(firstSort.id, firstSort.desc ? "desc" : "asc");
+            } else {
+                onSortChange(undefined, undefined);
+            }
+        } else {
+            setLocalSorting(updater);
+        }
+    };
+
+    const sortedData = React.useMemo(() => {
+        if (onSortChange || sorting.length === 0) return data;
+
+        const sorted = [...data];
+        const sortInfo = sorting[0];
+        const isDesc = sortInfo.desc;
+
+        sorted.sort((a, b) => {
+            const getVal = (item: unknown, path: string): unknown => {
+                return path.split('.').reduce((obj: unknown, p) => {
+                    if (obj && typeof obj === 'object') {
+                        return (obj as Record<string, unknown>)[p];
+                    }
+                    return undefined;
+                }, item);
+            };
+
+            let aVal = getVal(a, sortInfo.id);
+            let bVal = getVal(b, sortInfo.id);
+
+            if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+            if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+
+            if (aVal === undefined || aVal === null) return isDesc ? -1 : 1;
+            if (bVal === undefined || bVal === null) return isDesc ? 1 : -1;
+
+            if (aVal < bVal) return isDesc ? 1 : -1;
+            if (aVal > bVal) return isDesc ? -1 : 1;
+            return 0;
+        });
+
+        return sorted;
+    }, [data, sorting, onSortChange]);
+
     const paginatedData = React.useMemo(() => {
-        if (!isClientPagination) return data;
+        if (!isClientPagination) return sortedData;
         const start = (currentPageVal - 1) * perPageVal;
-        return data.slice(start, start + perPageVal);
-    }, [data, isClientPagination, currentPageVal, perPageVal]);
+        return sortedData.slice(start, start + perPageVal);
+    }, [sortedData, isClientPagination, currentPageVal, perPageVal]);
 
     const computedMeta = React.useMemo(() => {
         if (meta) return meta;
@@ -189,30 +247,6 @@ export function DataTable<TData, TValue>({
         } else {
             setLocalPerPage(pp);
             setLocalPage(1);
-        }
-    };
-
-    const [localSorting, setLocalSorting] = React.useState<SortingState>(defaultSorting ?? []);
-
-    const sorting = React.useMemo<SortingState>(() => {
-        if (onSortChange) {
-            if (!sortBy) return [];
-            return [{ id: sortBy, desc: sortOrder === "desc" }];
-        }
-        return localSorting;
-    }, [onSortChange, sortBy, sortOrder, localSorting]);
-
-    const handleSortingChange = (updater: React.SetStateAction<SortingState>) => {
-        if (onSortChange) {
-            const nextSorting = typeof updater === "function" ? updater(sorting) : updater;
-            if (nextSorting.length > 0) {
-                const firstSort = nextSorting[0];
-                onSortChange(firstSort.id, firstSort.desc ? "desc" : "asc");
-            } else {
-                onSortChange(undefined, undefined);
-            }
-        } else {
-            setLocalSorting(updater);
         }
     };
 

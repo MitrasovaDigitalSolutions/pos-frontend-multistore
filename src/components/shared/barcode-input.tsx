@@ -102,12 +102,14 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
         const suggestions = useMemo(() => {
             if (value.trim().length < 2) return [];
             if (isLocalMode) {
+                const searchLower = value.toLowerCase().trim();
+                const queryWords = searchLower.split(/\s+/);
                 return products
-                    .filter(
-                        (p) =>
-                            p.nama.toLowerCase().includes(value.toLowerCase()) ||
-                            (p.barcode && p.barcode.toLowerCase().includes(value.toLowerCase())),
-                    )
+                    .filter((p) => {
+                        const barcodeMatch = p.barcode?.toLowerCase().includes(searchLower) ?? false;
+                        const nameWordsMatch = queryWords.every((word) => p.nama.toLowerCase().includes(word));
+                        return barcodeMatch || nameWordsMatch;
+                    })
                     .slice(0, 8);
             }
             return apiProducts || [];
@@ -167,10 +169,18 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                     (p) => p.barcode?.toLowerCase() === query.toLowerCase(),
                 );
 
-                // 2. Try local match by name
+                // 2. Try local match by name (precise)
                 if (!found) {
                     found = products.find((p) =>
                         p.nama.toLowerCase().includes(query.toLowerCase()),
+                    );
+                }
+
+                // 2b. Try local match by split words (fuzzy)
+                if (!found) {
+                    const queryWords = query.toLowerCase().trim().split(/\s+/);
+                    found = products.find((p) =>
+                        queryWords.every((word) => p.nama.toLowerCase().includes(word))
                     );
                 }
 
