@@ -84,7 +84,10 @@ export interface JasaVsProductData {
     to: string;
     total_jasa_sales: number;
     total_product_sales: number;
+    total_jasa_profit: number;
+    total_product_profit: number;
     total_jasa_quantity: number;
     total_product_quantity: number;
 }
+
 

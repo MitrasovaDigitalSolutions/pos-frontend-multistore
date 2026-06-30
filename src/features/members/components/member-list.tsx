@@ -6,7 +6,8 @@ import { hasRole, hasPermission } from "@/constants/roles";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { IconPlus } from "@tabler/icons-react";
+import { IconPlus, IconAward } from "@tabler/icons-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Member } from "../types";
 import { DataTable } from "@/components/ui/data-table";
 import { useDeleteMember } from "../api/members-api";
@@ -25,6 +26,7 @@ interface MemberListProps {
     onPageChange: (page: number) => void;
     onPerPageChange: (perPage: number) => void;
     onEdit: (member: Member) => void;
+    onAdjustPoints: (member: Member) => void;
     onAddClick: () => void;
     isLoading?: boolean;
     isFetching?: boolean;
@@ -42,6 +44,7 @@ export function MemberList({
     onPageChange,
     onPerPageChange,
     onEdit,
+    onAdjustPoints,
     onAddClick,
     isLoading = false,
     isFetching = false,
@@ -205,6 +208,19 @@ export function MemberList({
                 estimateRowHeight={44}
                 onEdit={hasManageMembers ? onEdit : undefined}
                 onDelete={hasManageMembers ? handleDelete : undefined}
+                extraActions={hasManageMembers ? (member) => (
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button
+                                onClick={() => onAdjustPoints(member)}
+                                className="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors border-none bg-transparent cursor-pointer"
+                            >
+                                <IconAward size={16} />
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent>Sesuaikan Poin</TooltipContent>
+                    </Tooltip>
+                ) : undefined}
             />
 
             <ConfirmDialog

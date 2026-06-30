@@ -105,6 +105,12 @@ export function ReceiptDialog({
                                     <span className="tabular-nums">-{formatRupiah(receipt.diskon)}</span>
                                 </div>
                             )}
+                            {receipt?.pajak !== undefined && receipt.pajak > 0 && (
+                                <div className="flex justify-between text-slate-650">
+                                    <span>Pajak:</span>
+                                    <span className="tabular-nums">{formatRupiah(receipt.pajak)}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between font-extrabold text-[11px] text-slate-900 pt-0.5">
                                 <span>TOTAL:</span>
                                 <span className="tabular-nums">{formatRupiah(receipt?.total ?? 0)}</span>

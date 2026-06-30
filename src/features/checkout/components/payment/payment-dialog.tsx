@@ -281,20 +281,27 @@ export function PaymentDialog({
         };
 
         if (isOnline) {
-            bulkCheckout.mutate(payload, {
-                onSuccess: async (res) => {
-                    await decrementLocalStock();
-                    if (res.data) onPaySuccess(res.data);
-                    onOpenChange(false);
+            bulkCheckout.mutate(
+                {
+                    payload,
+                    grandTotal,
+                    memberUid: selectedMember?.uid || null,
                 },
-                onError: (err) => {
-                    if (err instanceof NetworkError) {
-                        void saveOffline("Koneksi terputus saat memproses. Transaksi disimpan secara lokal.");
-                        return;
-                    }
-                    toast.error(err.message || "Transaksi gagal diproses.");
-                },
-            });
+                {
+                    onSuccess: async (res) => {
+                        await decrementLocalStock();
+                        if (res.data) onPaySuccess(res.data);
+                        onOpenChange(false);
+                    },
+                    onError: (err) => {
+                        if (err instanceof NetworkError) {
+                            void saveOffline("Koneksi terputus saat memproses. Transaksi disimpan secara lokal.");
+                            return;
+                        }
+                        toast.error(err.message || "Transaksi gagal diproses.");
+                    },
+                }
+            );
         } else {
             await saveOffline("Koneksi offline. Transaksi disimpan secara lokal.");
         }
@@ -403,6 +410,24 @@ export function PaymentDialog({
                                     {formatRupiah(grandTotal)}
                                 </h2>
                             </div>
+
+                            {/* Mini Breakdown for clarity */}
+                            {(discount > 0 || tax > 0) && (
+                                <div className="space-y-1 text-[10px] text-slate-500 font-semibold px-1 pb-2 border-b border-slate-200">
+                                    {discount > 0 && (
+                                        <div className="flex justify-between">
+                                            <span>Diskon</span>
+                                            <span className="text-rose-600 font-bold">-{formatRupiah(discount)}</span>
+                                        </div>
+                                    )}
+                                    {tax > 0 && (
+                                        <div className="flex justify-between">
+                                            <span>Pajak (PPN)</span>
+                                            <span className="text-slate-800 font-bold">{formatRupiah(tax)}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {payMode === "cash" && (
                                 <div className="text-center pt-1">
