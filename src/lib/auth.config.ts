@@ -20,10 +20,10 @@ export default {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL
+        const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
 
         try {
-          const res = await fetch(`${apiUrl}/v1/auth/login`, {
+          const res = await fetch(`${apiUrl}/api/v1/auth/login`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -90,8 +90,8 @@ export default {
       }
 
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        const res = await fetch(`${apiUrl}/v1/auth/me`, {
+        const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
+        const res = await fetch(`${apiUrl}/api/v1/auth/me`, {
           headers: {
             Authorization: `Bearer ${token.accessToken}`,
             Accept: "application/json",

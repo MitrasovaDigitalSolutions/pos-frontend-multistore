@@ -12,7 +12,7 @@ interface SettingsState {
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
     settings: {},
-    isLoading: false,
+    isLoading: true,
     error: null,
     
     fetchSettings: async () => {

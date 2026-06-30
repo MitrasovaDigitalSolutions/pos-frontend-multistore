@@ -4,6 +4,7 @@ import { useCashAccounts } from "@/features/cash/api/cash-api";
 import { settingsApi } from "@/features/settings/api/settings-api";
 import { useSettingsStore } from "@/stores/settings-store";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { getImageUrl } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
@@ -307,7 +308,7 @@ export function StoreProfile() {
                                         </p>
                                         <FormImageUpload<StoreSettingsInput>
                                             name="app_logo_url"
-                                            initialUrl={settings.app_logo_url}
+                                            initialUrl={getImageUrl(settings.app_logo_url)}
                                             disabled={isSaving}
                                             className="flex-1 min-h-[220px]"
                                         />
