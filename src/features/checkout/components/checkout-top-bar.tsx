@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { IconScan, IconHome, IconLogout, IconWifi, IconCash } from "@tabler/icons-react";
 import { OfflineReadinessBadge } from "@/features/checkout/components/offline-readiness-badge";
 import type { OfflineReadinessState } from "@/hooks/use-offline-readiness";
+import { useSettingsStore } from "@/stores/settings-store";
 
 interface CheckoutTopBarProps {
     transactionId: string | null;
@@ -35,13 +36,21 @@ export function CheckoutTopBar({
     offlineReadiness,
     onCatalogSyncRequest,
 }: CheckoutTopBarProps) {
+    const getSetting = useSettingsStore((state) => state.getSetting);
+    const appName = getSetting("app_name", "Mitra Buana Motor");
+    const appLogo = getSetting("app_logo_url", "");
+
     return (
         <div className="bg-slate-900 text-white h-12 px-4 sm:px-6 flex items-center justify-between border-b border-slate-800">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                <IconScan size={20} className="text-emerald-400 shrink-0" />
+                {appLogo ? (
+                    <img src={appLogo} alt={appName} className="h-6 w-auto shrink-0 rounded" />
+                ) : (
+                    <IconScan size={20} className="text-emerald-400 shrink-0" />
+                )}
                 <span className="font-bold text-[13px] tracking-wide truncate max-w-28 sm:max-w-none shrink-0">
-                    <span className="hidden sm:inline">Mitra Buana Motor — Cashier Terminal</span>
-                    <span className="inline sm:hidden">MBM POS</span>
+                    <span className="hidden sm:inline">{appName} — Cashier Terminal</span>
+                    <span className="inline sm:hidden">{appName.substring(0, 8)} POS</span>
                 </span>
                 {transactionId && (
                     <span className="bg-emerald-700 text-emerald-100 text-[9px] font-bold px-2 py-0.5 rounded-full tracking-wider shrink-0">

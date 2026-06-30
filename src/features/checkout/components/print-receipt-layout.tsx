@@ -3,6 +3,7 @@
 import React from "react";
 import type { Receipt } from "../types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { useSettingsStore } from "@/stores/settings-store";
 
 interface PrintReceiptLayoutProps {
     receipt: Receipt | null;
@@ -10,6 +11,11 @@ interface PrintReceiptLayoutProps {
 }
 
 export function PrintReceiptLayout({ receipt, cashierName }: PrintReceiptLayoutProps) {
+    const getSetting = useSettingsStore((state) => state.getSetting);
+    const appName = getSetting("app_name", "Mitra Buana Motor");
+    const appAddress = getSetting("app_address", "Jl. Raya Contoh No. 1, Jakarta");
+    const appPhone = getSetting("app_phone", "0812-3456-7890");
+
     if (!receipt) return null;
 
     const items = receipt.items || [];
@@ -39,14 +45,16 @@ export function PrintReceiptLayout({ receipt, cashierName }: PrintReceiptLayoutP
             {/* Header */}
             <div className="text-center space-y-0.5 mb-2">
                 <h4 className="font-extrabold text-[10px] tracking-wider uppercase">
-                    MITRA BUANA MOTOR
+                    {appName}
                 </h4>
                 <p className="text-[8px]">
-                    Jl. Raya Contoh No. 1, Jakarta
+                    {appAddress}
                 </p>
-                <p className="text-[8px] font-bold">
-                    TELP: 021-12345678
-                </p>
+                {appPhone && (
+                    <p className="text-[8px] font-bold">
+                        TELP: {appPhone}
+                    </p>
+                )}
             </div>
 
             <div className="border-t border-dashed border-black my-1.5" />

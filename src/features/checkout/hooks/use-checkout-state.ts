@@ -7,6 +7,7 @@ import type { Product } from "@/features/products/types";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useCheckoutStore } from "@/stores/checkout-store";
 import { useSession } from "next-auth/react";
+import { useSettingsStore } from "@/stores/settings-store";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { db } from "@/lib/db";
@@ -115,7 +116,9 @@ export function useCheckoutState() {
 
     // ─── Calculations ─────────────────────────────────────────────────────────
     const subtotal = cart.reduce((acc, i) => acc + i.price * i.qty, 0);
-    const ppn = 0;
+    const getTaxRate = useSettingsStore((state) => state.getTaxRate);
+    const taxRate = getTaxRate() / 100;
+    const ppn = Math.floor(subtotal * taxRate);
     const discountAmount = useMemo(() => {
         if (discountType === "percent") {
             return Math.min(subtotal, Math.floor((discountValue / 100) * subtotal));

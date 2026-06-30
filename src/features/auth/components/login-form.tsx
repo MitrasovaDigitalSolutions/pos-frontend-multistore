@@ -58,6 +58,8 @@ function MitrasovaLogo({ className = "w-10 h-10" }: { className?: string }) {
     );
 }
 
+import { useSettingsStore } from "@/stores/settings-store";
+
 export function LoginForm() {
     const router = useAppRouter();
     const { data: session, status } = useSession();
@@ -92,6 +94,10 @@ export function LoginForm() {
 
         return () => clearInterval(interval);
     }, [api]);
+
+    const getSetting = useSettingsStore((state) => state.getSetting);
+    const appName = getSetting("app_name", "Mitra Buana Motor");
+    const appLogo = getSetting("app_logo_url", "");
 
     const {
         register,
