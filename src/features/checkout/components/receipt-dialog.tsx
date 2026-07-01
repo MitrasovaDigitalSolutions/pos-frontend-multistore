@@ -6,6 +6,7 @@ import { IconCircleCheck, IconPrinter } from "@tabler/icons-react";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { Receipt } from "../types";
 import { Scrollable } from "@/components/ui/scrollable";
+import { useSettingsStore } from "@/stores/settings-store";
 
 interface ReceiptDialogProps {
     open: boolean;
@@ -24,6 +25,11 @@ export function ReceiptDialog({
     onNewTransaction,
     onReprint,
 }: ReceiptDialogProps) {
+    const getSetting = useSettingsStore((state) => state.getSetting);
+    const appName = getSetting("app_name", "Mitrasova POS");
+    const appAddress = getSetting("app_address", "Indonesia");
+    const appPhone = getSetting("app_phone", "");
+
     return (
         <BaseDialog
             open={open}
@@ -46,12 +52,17 @@ export function ReceiptDialog({
                     {/* Thermal Receipt */}
                     <div className="w-full max-w-[320px] bg-slate-50/50 border border-slate-200/60 p-5 rounded-xl shadow-inner font-mono text-[10px] text-slate-700 relative">
                         <div className="text-center space-y-0.5 mb-3">
-                            <h4 className="font-extrabold text-[11px] text-slate-800 tracking-wider">
-                                RECEIPT
+                            <h4 className="font-extrabold text-[11px] text-slate-800 tracking-wider uppercase">
+                                {appName}
                             </h4>
                             <p className="text-[9px] text-slate-400">
-                                --------
+                                {appAddress}
                             </p>
+                            {appPhone && (
+                                <p className="text-[8px] text-slate-400 font-bold">
+                                    TELP: {appPhone}
+                                </p>
+                            )}
                         </div>
                         <div className="border-t border-dashed border-slate-300 my-2"></div>
 
