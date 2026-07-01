@@ -9,6 +9,9 @@ import { useTransactionDetail } from "../api/transactions-api";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { toast } from "sonner";
+import QZService from "@/services/qz.service";
+import axios from "axios";
+import { buildReceipt } from "@/utils/ReceiptFormatter";
 
 // Import refactored subcomponents
 import { TransactionDetailHeader } from "./detail/transaction-detail-header";
@@ -52,10 +55,15 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
     const date = new Date(transaction.created_at);
     const formattedDate = format(date, "dd MMMM yyyy, HH:mm", { locale: id });
 
-    const handlePrint = () => {
+    const handlePrint = async () => {
         if (transaction?.uid) {
             const toastId = toast.success("Mencetak struk...");
-            window.open(`/api/proxy/v1/transactions-print/${transaction.uid}`, "_blank");
+            const { data } = await axios.get(`/api/proxy/v1/transactions-print/${transaction.uid}`);
+
+            const receipt = buildReceipt(data);
+            await QZService.print("EPSON-LX310", receipt);
+
+            // window.open(`/api/proxy/v1/transactions-print/${transaction.uid}`, "_blank");
             setTimeout(() => {
                 toast.dismiss(toastId);
             }, 3000);
