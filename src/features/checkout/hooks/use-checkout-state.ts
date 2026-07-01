@@ -384,14 +384,6 @@ export function useCheckoutState() {
         if (receiptData?.uid) {
             localStorage.setItem("lastTransactionId", String(receiptData.uid));
             setLastTransactionId(String(receiptData.uid));
-            const isOfflineTx = String(receiptData.uid).startsWith("OFFLINE-");
-            if (isOfflineTx) {
-                setTimeout(() => {
-                    window.print();
-                }, 250);
-            } else {
-                printOnlineReceipt(String(receiptData.uid));
-            }
         }
     };
 
