@@ -12,6 +12,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { db } from "@/lib/db";
 import { useNetworkStatus } from "@/hooks/use-network-status";
+import axios from "axios";
+import { buildReceipt } from "@/utils/ReceiptFormatter";
+import QZService from "@/services/qz.service";
 
 export function useCheckoutState() {
     const router = useAppRouter();
@@ -345,6 +348,22 @@ export function useCheckoutState() {
         }
     }, [storeHoldList, removeHoldTransaction, activeRecallId, addHoldTransaction, namaTransaksi]);
 
+    const printOnlineReceipt = useCallback(async (uid: string) => {
+        const toastId = toast.success("Mencetak struk...");
+        try {
+            const { data } = await axios.get(`/api/proxy/v1/transactions-print/${uid}`);
+            const receiptText = buildReceipt(data);
+            await QZService.print("EPSON LX-310 ESC/P", receiptText);
+        } catch (err) {
+            console.error("Gagal mencetak struk:", err);
+            toast.error("Gagal mencetak struk. Pastikan QZ Tray aktif.");
+        } finally {
+            setTimeout(() => {
+                toast.dismiss(toastId);
+            }, 3000);
+        }
+    }, []);
+
     const handleNewTransaction = () => {
         clearCart();
         setActiveRecallId(null);
@@ -369,7 +388,7 @@ export function useCheckoutState() {
                     window.print();
                 }, 250);
             } else {
-                window.open(`/api/proxy/v1/transactions-print/${receiptData.uid}`, "_blank");
+                printOnlineReceipt(String(receiptData.uid));
             }
         }
     };
@@ -381,19 +400,20 @@ export function useCheckoutState() {
 
 
 
-    const handleReprint = useCallback(() => {
-        if (lastTransactionId) {
-            const isOfflineTx = String(lastTransactionId).startsWith("OFFLINE-");
+    const handleReprint = useCallback((uid?: string) => {
+        const targetId = uid || lastTransactionId;
+        if (targetId) {
+            const isOfflineTx = String(targetId).startsWith("OFFLINE-");
             if (isOfflineTx) {
                 window.print();
+                toast.success("Mencetak ulang struk...");
             } else {
-                window.open(`/api/proxy/v1/transactions-print/${lastTransactionId}`, "_blank");
+                printOnlineReceipt(String(targetId));
             }
-            toast.success("Mencetak ulang struk terakhir...");
         } else {
-            toast.error("Tidak ada transaksi terakhir yang dapat dicetak ulang.");
+            toast.error("Tidak ada transaksi yang dapat dicetak ulang.");
         }
-    }, [lastTransactionId]);
+    }, [lastTransactionId, printOnlineReceipt]);
 
     // ─── Clock & Keyboard Shortcuts ───────────────────────────────────────────
     useEffect(() => {
