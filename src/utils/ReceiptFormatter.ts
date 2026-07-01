@@ -4,6 +4,8 @@ export interface ReceiptData {
 }
 
 const WIDTH = 80;
+const LEFT_WIDTH = 38;
+const RIGHT_WIDTH = WIDTH - LEFT_WIDTH;
 
 const line = () => "-".repeat(WIDTH);
 
@@ -65,6 +67,19 @@ const formatDate = (value?: string | Date | null) => {
         minute: "2-digit",
         hour12: false,
     }).format(new Date(value));
+};
+
+const footerLine = (
+    left: string,
+    label: string,
+    value: number | string
+) => {
+    const leftText = pad(left, LEFT_WIDTH);
+
+    const rightText =
+        `${label.padEnd(10)}Rp. ${money(value).padStart(15)}`;
+
+    return leftText + rightText.padStart(RIGHT_WIDTH);
 };
 
 export function buildReceipt(data: ReceiptData) {
@@ -144,19 +159,10 @@ export function buildReceipt(data: ReceiptData) {
 
     // ================= FOOTER =================
 
-    txt += "Terima kasih !!! Telah Percaya pada kami\n";
-    txt += "Silahkan Datang Kembali\n\n";
-
-    txt += rightTotal("Jumlah :", sale.subtotal) + "\n";
-    txt += rightTotal("Diskon :", sale.diskon ?? 0) + "\n";
-    txt += rightTotal(
-        isDebt ? "Bayar :" : "Tunai :",
-        bayar
-    ) + "\n";
-    txt += rightTotal(
-        isDebt ? "Kurang :" : "Kembali :",
-        kembali
-    ) + "\n";
+    txt += footerLine("Terima kasih atas kepercayaan Anda.","Jumlah :",sale.subtotal) + "\n";
+    txt += footerLine("Silahkan Datang Kembali.","Diskon :",sale.diskon ?? 0 ) + "\n";
+    txt += footerLine("",isDebt ? "Bayar :" : "Tunai :",bayar) + "\n";
+    txt += footerLine("",isDebt ? "Kurang :" : "Kembali :",kembali) + "\n";
 
     txt += line() + "\n";
 
