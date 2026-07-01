@@ -45,6 +45,12 @@ export const storeSettingsSchema = z.object({
         .or(z.literal(""))
         .nullable()
         .transform((val) => val || ""),
+    printer_id: z
+        .string()
+        .optional()
+        .or(z.literal(""))
+        .nullable()
+        .transform((val) => val || ""),
 });
 
 export type StoreSettingsInput = z.infer<typeof storeSettingsSchema>;

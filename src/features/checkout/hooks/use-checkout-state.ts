@@ -20,6 +20,7 @@ export function useCheckoutState() {
     const router = useAppRouter();
     const { data: session, update } = useSession();
     const user = session?.user;
+    const getSetting = useSettingsStore((state) => state.getSetting);
 
     const isOnline = useNetworkStatus();
     // Products list from API for Catalog & Search
@@ -353,7 +354,8 @@ export function useCheckoutState() {
         try {
             const { data } = await axios.get(`/api/proxy/v1/transactions-print/${uid}`);
             const receiptText = buildReceipt(data);
-            await QZService.print("EPSON LX-310 ESC/P", receiptText);
+            const printerName = getSetting("printer_id") || "EPSON LX-310 ESC/P";
+            await QZService.print(printerName, receiptText);
         } catch (err) {
             console.error("Gagal mencetak struk:", err);
             toast.error("Gagal mencetak struk. Pastikan QZ Tray aktif.");
@@ -362,7 +364,7 @@ export function useCheckoutState() {
                 toast.dismiss(toastId);
             }, 3000);
         }
-    }, []);
+    }, [getSetting]);
 
     const handleNewTransaction = () => {
         clearCart();

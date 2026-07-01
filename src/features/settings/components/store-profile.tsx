@@ -69,6 +69,7 @@ export function StoreProfile() {
             cash_account_register_uid: "",
             cash_account_main_uid: "",
             cash_account_bank_uid: "",
+            printer_id: "",
         },
     });
 
@@ -85,6 +86,7 @@ export function StoreProfile() {
                 cash_account_register_uid: settings.cash_account_register_uid || "",
                 cash_account_main_uid: settings.cash_account_main_uid || "",
                 cash_account_bank_uid: settings.cash_account_bank_uid || "",
+                printer_id: settings.printer_id || "",
             });
         }
     }, [settings, methods]);
@@ -306,6 +308,19 @@ export function StoreProfile() {
                                             <FormInput<StoreSettingsInput>
                                                 name="app_phone"
                                                 placeholder="Masukkan nomor telepon..."
+                                                disabled={isSaving}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="flex flex-col">
+                                            <LabelWithTooltip
+                                                label="ID Printer Struk"
+                                                tooltip="ID / Nama printer default yang digunakan untuk mencetak struk (misal: EPSON LX-310 ESC/P)."
+                                            />
+                                            <FormInput<StoreSettingsInput>
+                                                name="printer_id"
+                                                placeholder="Contoh: EPSON LX-310 ESC/P..."
                                                 disabled={isSaving}
                                             />
                                         </div>

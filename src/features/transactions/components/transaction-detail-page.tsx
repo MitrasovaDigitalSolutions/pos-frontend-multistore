@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import QZService from "@/services/qz.service";
 import axios from "axios";
 import { buildReceipt } from "@/utils/ReceiptFormatter";
+import { useSettingsStore } from "@/stores/settings-store";
 
 // Import refactored subcomponents
 import { TransactionDetailHeader } from "./detail/transaction-detail-header";
@@ -26,6 +27,7 @@ interface TransactionDetailPageProps {
 export function TransactionDetailPage({ transactionId }: TransactionDetailPageProps) {
     const router = useAppRouter();
     const { data: transaction, isLoading, error } = useTransactionDetail(transactionId);
+    const getSetting = useSettingsStore((state) => state.getSetting);
 
     if (isLoading) {
         return <PageLoader message="Memuat detail transaksi..." />;
@@ -61,7 +63,8 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
             const { data } = await axios.get(`/api/proxy/v1/transactions-print/${transaction.uid}`);
 
             const receipt = buildReceipt(data);
-            await QZService.print("EPSON LX-310 ESC/P", receipt);
+            const printerName = getSetting("printer_id") || "EPSON LX-310 ESC/P";
+            await QZService.print(printerName, receipt);
 
             // window.open(`/api/proxy/v1/transactions-print/${transaction.uid}`, "_blank");
             setTimeout(() => {
