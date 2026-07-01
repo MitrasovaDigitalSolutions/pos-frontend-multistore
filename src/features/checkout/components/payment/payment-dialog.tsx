@@ -78,7 +78,7 @@ export function PaymentDialog({
     const cashNum = parseFloat(cashReceived) || 0;
     const changeValue = cashNum - grandTotal;
     const isCashValid = cashNum >= grandTotal && grandTotal > 0;
-    const isCardValid = cardLast4.length === 4 && grandTotal > 0;
+    const isCardValid = grandTotal > 0;
     const isDebtValid = !!selectedMember && cashNum < grandTotal && grandTotal > 0;
     const isProcessing = bulkCheckout.isPending;
 

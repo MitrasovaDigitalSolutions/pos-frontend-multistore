@@ -31,6 +31,7 @@ interface CheckoutStoreState {
 
     // Hold/Recall Actions
     addHoldTransaction: (hold: HoldTransaction) => void;
+    updateHoldName: (uid: string, name: string) => void;
     removeHoldTransaction: (uid: string) => void;
     clearHoldList: () => void;
 }
@@ -93,6 +94,13 @@ export const useCheckoutStore = create<CheckoutStoreState>()(
             addHoldTransaction: (hold) =>
                 set((state) => ({
                     holdList: [...state.holdList, hold],
+                })),
+
+            updateHoldName: (uid, name) =>
+                set((state) => ({
+                    holdList: state.holdList.map((h) =>
+                        h.uid === uid ? { ...h, name } : h
+                    ),
                 })),
 
             removeHoldTransaction: (id) =>

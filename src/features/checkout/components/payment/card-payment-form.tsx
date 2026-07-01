@@ -41,7 +41,7 @@ export function CardPaymentForm({
             </div>
             <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    4 Digit Terakhir Kartu
+                    4 Digit Terakhir Kartu (Opsional)
                 </label>
                 <Input
                     type="text"

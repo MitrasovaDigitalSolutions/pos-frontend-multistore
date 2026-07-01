@@ -313,6 +313,7 @@ export function Checkout() {
                 onRecall={state.handleRecall}
                 onClearAll={state.handleClearHoldList}
                 isProcessing={state.isProcessing}
+                onRenameHold={state.handleRenameHold}
             />
 
             <ReceiptDialog
