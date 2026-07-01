@@ -43,7 +43,7 @@ export function CheckoutTopBar({
     const appLogo = getImageUrl(appLogoRaw);
 
     return (
-        <div className="bg-slate-900 text-white h-12 px-4 sm:px-6 flex items-center justify-between border-b border-slate-800">
+        <div className="bg-slate-900 text-white h-10 px-3 sm:px-5 flex items-center justify-between border-b border-slate-800">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 {appLogo ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -51,7 +51,7 @@ export function CheckoutTopBar({
                 ) : (
                     <IconScan size={20} className="text-emerald-400 shrink-0" />
                 )}
-                <span className="font-bold text-[13px] tracking-wide truncate max-w-28 sm:max-w-none shrink-0">
+                <span className="font-bold text-[12px] tracking-wide truncate max-w-28 sm:max-w-none shrink-0">
                     <span className="hidden sm:inline">{appName} — Cashier Terminal</span>
                     <span className="inline sm:hidden">{appName.substring(0, 8)} POS</span>
                 </span>
@@ -62,12 +62,12 @@ export function CheckoutTopBar({
                 )}
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
                 <Button
                     variant="ghost"
                     onClick={onInfoSesiClick}
                     disabled={!activeDrawerSession}
-                    className="text-xs font-bold text-emerald-400 hover:text-emerald-350 hover:bg-emerald-950/20 h-8 px-2 sm:px-3 rounded-lg flex items-center gap-1.5 cursor-pointer bg-transparent border-none disabled:opacity-40"
+                    className="text-[11px] font-bold text-emerald-400 hover:text-emerald-350 hover:bg-emerald-950/20 h-7 px-2 sm:px-2.5 rounded-md flex items-center gap-1.5 cursor-pointer bg-transparent border-none disabled:opacity-40 transition-colors"
                 >
                     <IconCash size={15} />
                     <span className="hidden sm:inline">Info Laci Kasir</span>
@@ -79,7 +79,7 @@ export function CheckoutTopBar({
                         <Button
                             variant="ghost"
                             onClick={onDashboardClick}
-                            className="text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 h-8 px-2 sm:px-3 rounded-lg flex items-center gap-1.5 cursor-pointer bg-transparent border-none"
+                            className="text-[11px] font-bold text-slate-300 hover:text-white hover:bg-slate-800 h-7 px-2 sm:px-2.5 rounded-md flex items-center gap-1.5 cursor-pointer bg-transparent border-none transition-colors"
                         >
                             <IconHome size={15} />
                             <span className="hidden sm:inline">Admin</span>
@@ -91,7 +91,7 @@ export function CheckoutTopBar({
                 <Button
                     variant="ghost"
                     onClick={onLogout}
-                    className="text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-950/20 h-8 px-2 sm:px-3 rounded-lg flex items-center gap-1.5 cursor-pointer bg-transparent border-none"
+                    className="text-[11px] font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-950/20 h-7 px-2 sm:px-2.5 rounded-md flex items-center gap-1.5 cursor-pointer bg-transparent border-none transition-colors"
                 >
                     <IconLogout size={15} />
                     <span className="hidden sm:inline">Logout</span>

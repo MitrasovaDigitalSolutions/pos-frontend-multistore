@@ -5,7 +5,6 @@ import { useCheckoutState } from "@/features/checkout/hooks/use-checkout-state";
 import { CheckoutTopBar } from "@/features/checkout/components/checkout-top-bar";
 import { CheckoutCartSection } from "@/features/checkout/components/checkout-cart-section";
 import { CheckoutTotalsSection } from "@/features/checkout/components/checkout-totals-section";
-import { CatalogDialog } from "@/features/checkout/components/catalog-dialog";
 import { PaymentDialog } from "@/features/checkout/components/payment/payment-dialog";
 import { HoldListDialog } from "@/features/checkout/components/hold-list-dialog";
 import { ReceiptDialog } from "@/features/checkout/components/receipt-dialog";
@@ -179,14 +178,13 @@ export function Checkout() {
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-[60%_40%] lg:grid-cols-[65%_35%] h-[calc(100vh-92px)] md:h-[calc(100vh-80px)] overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-[60%_40%] lg:grid-cols-[65%_35%] h-[calc(100vh-80px)] md:h-[calc(100vh-72px)] overflow-hidden">
                 {/* Left: Cart */}
                 <div className={cn("h-full flex flex-col min-h-0", activeMobileTab !== "cart" && "hidden md:flex")}>
                     <CheckoutCartSection
                         isProcessing={state.isProcessing}
                         cart={state.cart}
                         barcodeInputRef={state.barcodeInputRef}
-                        onCatalogOpen={() => state.setIsCatalogOpen(true)}
                         onUpdateQty={state.handleUpdateQty}
                         onUpdatePrice={state.handleUpdatePrice}
                         onRemoveItem={state.handleRemoveItem}
@@ -225,24 +223,21 @@ export function Checkout() {
             </div>
 
             {/* Shortcuts Bar */}
-            <div className="hidden md:flex absolute left-0 right-0 bottom-0 h-8 bg-slate-900 text-slate-400 items-center px-6 text-[10px] gap-6 font-semibold select-none z-10">
-                <div className="flex gap-1">
-                    <span className="bg-slate-800 text-white px-1.5 py-0.5 rounded font-bold">F1</span> Bayar
+            <div className="hidden md:flex absolute left-0 right-0 bottom-0 h-8 bg-slate-900 border-t border-slate-800 text-slate-400 items-center px-6 text-[10px] gap-6 font-semibold select-none z-10">
+                <div className="flex gap-1.5 items-center">
+                    <kbd className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold shadow border border-slate-700">F1</kbd> Bayar
                 </div>
-                <div className="flex gap-1">
-                    <span className="bg-slate-800 text-white px-1.5 py-0.5 rounded font-bold">F2</span> Katalog
+                <div className="flex gap-1.5 items-center">
+                    <kbd className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold shadow border border-slate-700">F5</kbd> Hold
                 </div>
-                <div className="flex gap-1">
-                    <span className="bg-slate-800 text-white px-1.5 py-0.5 rounded font-bold">F5</span> Hold
+                <div className="flex gap-1.5 items-center">
+                    <kbd className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold shadow border border-slate-700">F6</kbd> Recall
                 </div>
-                <div className="flex gap-1">
-                    <span className="bg-slate-800 text-white px-1.5 py-0.5 rounded font-bold">F6</span> Recall
+                <div className="flex gap-1.5 items-center">
+                    <kbd className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold shadow border border-slate-700">F10</kbd> Void
                 </div>
-                <div className="flex gap-1">
-                    <span className="bg-slate-800 text-white px-1.5 py-0.5 rounded font-bold">F10</span> Void
-                </div>
-                <div className="flex gap-1">
-                    <span className="bg-slate-800 text-white px-1.5 py-0.5 rounded font-bold">Esc</span> Tutup
+                <div className="flex gap-1.5 items-center">
+                    <kbd className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold shadow border border-slate-700">Esc</kbd> Tutup
                 </div>
             </div>
 
@@ -273,13 +268,6 @@ export function Checkout() {
                 onConfirm={async () => {
                     await signOut({ callbackUrl: "/login" });
                 }}
-            />
-
-            <CatalogDialog
-                open={state.isCatalogOpen}
-                onOpenChange={state.setIsCatalogOpen}
-                products={state.products || []}
-                onAddProduct={state.handleAddProduct}
             />
 
             <PaymentDialog
