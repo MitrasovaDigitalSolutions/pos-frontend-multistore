@@ -285,7 +285,11 @@ export function Checkout() {
                 onOpenChange={state.setIsPayModalOpen}
                 grandTotal={state.grandTotal}
                 cartItems={state.cart.map((item) => {
-                    const payloadItem: any = {
+                    const payloadItem: {
+                        product_uid: string;
+                        quantity: number;
+                        harga_satuan?: number;
+                    } = {
                         product_uid: item.product_uid,
                         quantity: item.qty,
                     };

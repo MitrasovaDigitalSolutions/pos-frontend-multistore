@@ -14,7 +14,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     settings: {},
     isLoading: true,
     error: null,
-    
+
     fetchSettings: async () => {
         set({ isLoading: true, error: null });
         try {
@@ -38,8 +38,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         const value = get().settings["tax_rate_ppn"];
         if (value) {
             const parsed = parseFloat(value);
-            return isNaN(parsed) ? 11 : parsed;
+            return isNaN(parsed) ? 0 : parsed;
         }
-        return 11;
+        return 0;
     }
 }));
