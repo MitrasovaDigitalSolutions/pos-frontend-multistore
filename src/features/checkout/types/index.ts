@@ -13,7 +13,7 @@ export interface CartItem {
 
 export interface HoldTransaction {
     uid: string;
-    name?: string;
+    nama_transaksi?: string;
     items_count: number;
     subtotal: number;
     discountType?: "nominal" | "percent";
@@ -32,6 +32,7 @@ export interface ReceiptItem {
 
 export interface Receipt {
     uid: string;
+    nama_transaksi?: string;
     items: ReceiptItem[];
     subtotal: number;
     diskon?: number;

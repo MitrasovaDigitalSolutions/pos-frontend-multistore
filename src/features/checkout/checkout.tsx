@@ -218,6 +218,8 @@ export function Checkout() {
                         onVoid={state.handleVoidDraft}
                         onPayOpen={() => state.setIsPayModalOpen(true)}
                         onReprint={state.handleReprint}
+                        namaTransaksi={state.namaTransaksi}
+                        setNamaTransaksi={state.setNamaTransaksi}
                     />
                 </div>
             </div>
@@ -304,6 +306,7 @@ export function Checkout() {
                 onPaySuccess={state.handlePaymentSuccess}
                 cartList={state.cart}
                 onLocalProductsReload={state.reloadLocalProducts}
+                namaTransaksi={state.namaTransaksi}
             />
 
             <HoldListDialog
@@ -313,7 +316,6 @@ export function Checkout() {
                 onRecall={state.handleRecall}
                 onClearAll={state.handleClearHoldList}
                 isProcessing={state.isProcessing}
-                onRenameHold={state.handleRenameHold}
             />
 
             <ReceiptDialog
