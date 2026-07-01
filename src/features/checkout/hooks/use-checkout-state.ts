@@ -100,7 +100,6 @@ export function useCheckoutState() {
 
     // UI state
     const [barcodeInput, setBarcodeInput] = useState("");
-    const [isCatalogOpen, setIsCatalogOpen] = useState(false);
     const [isPayModalOpen, setIsPayModalOpen] = useState(false);
     const [isReceiptOpen, setIsReceiptOpen] = useState(false);
     const [isHoldListOpen, setIsHoldListOpen] = useState(false);
@@ -428,9 +427,6 @@ export function useCheckoutState() {
             if (e.key === "F1") {
                 e.preventDefault();
                 if (cart.length > 0) setIsPayModalOpen(true);
-            } else if (e.key === "F2") {
-                e.preventDefault();
-                setIsCatalogOpen((p) => !p);
             } else if (e.key === "F4") {
                 e.preventDefault();
                 handleReprint();
@@ -478,8 +474,6 @@ export function useCheckoutState() {
         setSelectedMember,
         barcodeInput,
         setBarcodeInput,
-        isCatalogOpen,
-        setIsCatalogOpen,
         isPayModalOpen,
         setIsPayModalOpen,
         isReceiptOpen,

@@ -9,6 +9,10 @@ import {
     IconLoader2,
     IconPrinter,
     IconNotebook,
+    IconCheck,
+    IconAlertTriangle,
+    IconArrowDown,
+    IconReceipt,
 } from "@tabler/icons-react";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { useBulkCheckout } from "@/features/checkout/api/checkout-api";
@@ -98,6 +102,13 @@ export function PaymentDialog({
     const isCardValid = grandTotal > 0;
     const isDebtValid = !!selectedMember && cashNum < grandTotal && grandTotal > 0;
     const isProcessing = bulkCheckout.isPending;
+
+    // Determine if the submit button should be enabled
+    const isSubmitEnabled = payMode === "cash"
+        ? isCashValid
+        : payMode === "card"
+            ? isCardValid
+            : isDebtValid;
 
     const decrementLocalStock = async () => {
         for (const item of cartList) {
@@ -326,82 +337,148 @@ export function PaymentDialog({
         }
     };
 
+    // Payment mode tab config
+    const payModes = [
+        {
+            key: "cash" as const,
+            label: "Tunai",
+            icon: IconCash,
+            activeColor: "emerald",
+        },
+        {
+            key: "card" as const,
+            label: "Kartu / EDC",
+            icon: IconCreditCard,
+            activeColor: "indigo",
+        },
+        {
+            key: "debt" as const,
+            label: "Hutang",
+            icon: IconNotebook,
+            activeColor: "rose",
+        },
+    ];
+
+    const getTabClass = (mode: typeof payMode, activeColor: string) => {
+        if (payMode === mode) {
+            return `bg-${activeColor}-50 border-${activeColor}-500 text-${activeColor}-700 shadow-sm shadow-${activeColor}-500/10`;
+        }
+        return "bg-white border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50/80 hover:border-slate-300";
+    };
+
+    // Summary card change status
+    const renderCashSummary = () => {
+        const isExact = cashNum === grandTotal && cashNum > 0;
+        const isSufficient = cashNum >= grandTotal && cashNum > 0;
+        const isInsufficient = cashNum > 0 && cashNum < grandTotal;
+
+        return (
+            <div className="space-y-3">
+                {/* Dibayar */}
+                {cashNum > 0 && (
+                    <div className="flex justify-between items-center text-[11px] font-bold animate-in fade-in-0 duration-200">
+                        <span className="text-slate-500">Dibayar</span>
+                        <span className="text-slate-800 font-mono font-extrabold">{formatRupiah(cashNum)}</span>
+                    </div>
+                )}
+
+                {/* Kembalian / Status */}
+                {cashNum > 0 && (
+                    <div
+                        className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 animate-in fade-in-0 slide-in-from-bottom-1 ${
+                            isExact
+                                ? "bg-emerald-50 border border-emerald-200/80"
+                                : isSufficient
+                                    ? "bg-emerald-50 border border-emerald-200/80"
+                                    : "bg-red-50 border border-red-200/80"
+                        }`}
+                    >
+                        {isExact ? (
+                            <>
+                                <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                                    <IconCheck size={13} strokeWidth={3} className="text-white" />
+                                </div>
+                                <div>
+                                    <p className="text-emerald-700 font-extrabold text-[11px]">Uang Pas</p>
+                                    <p className="text-emerald-600/70 text-[9px] font-semibold">Tidak ada kembalian</p>
+                                </div>
+                            </>
+                        ) : isSufficient ? (
+                            <>
+                                <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                                    <IconArrowDown size={13} strokeWidth={2.5} className="text-white" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-emerald-600/70 text-[9px] font-semibold">Kembalian</p>
+                                    <p className="text-emerald-700 font-mono font-extrabold text-sm leading-none">{formatRupiah(changeValue)}</p>
+                                </div>
+                            </>
+                        ) : isInsufficient ? (
+                            <>
+                                <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
+                                    <IconAlertTriangle size={13} strokeWidth={2.5} className="text-white" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-red-500/70 text-[9px] font-semibold">Kurang</p>
+                                    <p className="text-red-600 font-mono font-extrabold text-sm leading-none">{formatRupiah(Math.abs(changeValue))}</p>
+                                </div>
+                            </>
+                        ) : null}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     return (
         <BaseDialog
             open={open}
             onOpenChange={onOpenChange}
             title={
-                <div className="flex items-center gap-2 select-none">
-                    <IconCash size={20} className="text-emerald-500" />
-                    <span>Metode Pembayaran</span>
+                <div className="flex items-center gap-2.5 select-none">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center">
+                        <IconReceipt size={16} className="text-emerald-600" />
+                    </div>
+                    <div>
+                        <span className="text-sm font-extrabold tracking-tight text-slate-800 block leading-tight">Pembayaran</span>
+                        <span className="text-[9px] font-bold text-slate-400 leading-none">{cartList.length} item · {formatRupiah(grandTotal)}</span>
+                    </div>
                 </div>
             }
             className="sm:max-w-3xl"
         >
-            <div className="flex gap-6 mt-4">
+            <div className="mt-3 animate-in fade-in-50 duration-200">
                 <FormProvider {...methods}>
-                    {/* Left side: Payment method buttons */}
-                    <div className="flex flex-col gap-3 w-52 shrink-0 select-none bg-slate-50/60 p-2.5 border border-slate-100 rounded-2xl">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setPayMode("cash");
-                                setValue("cashReceived", 0);
-                            }}
-                            className={`h-16 px-3 rounded-xl flex flex-col justify-center items-start cursor-pointer border-2 transition-all duration-200 ${payMode === "cash"
-                                ? "bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-600/10"
-                                : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300"
-                                }`}
-                            disabled={isProcessing}
-                        >
-                            <div className="flex items-center gap-1.5 font-black text-[10px] tracking-wider">
-                                <IconCash size={15} />
-                                <span>TUNAI (CASH)</span>
-                            </div>
-                            <span className={`text-[8px] mt-1 font-bold leading-none ${payMode === "cash" ? "text-emerald-100" : "text-slate-400"}`}>Bayar cash & kembalian</span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setPayMode("card");
-                                setValue("cashReceived", 0);
-                            }}
-                            className={`h-16 px-3 rounded-xl flex flex-col justify-center items-start cursor-pointer border-2 transition-all duration-200 ${payMode === "card"
-                                ? "bg-indigo-650 border-indigo-650 text-white shadow-md shadow-indigo-650/10"
-                                : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300"
-                                }`}
-                            disabled={isProcessing}
-                        >
-                            <div className="flex items-center gap-1.5 font-black text-[10px] tracking-wider">
-                                <IconCreditCard size={15} />
-                                <span>KARTU / EDC</span>
-                            </div>
-                            <span className={`text-[8px] mt-1 font-bold leading-none ${payMode === "card" ? "text-indigo-100" : "text-slate-400"}`}>Debit / Kredit via EDC</span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setPayMode("debt");
-                                setValue("cashReceived", 0);
-                            }}
-                            className={`h-16 px-3 rounded-xl flex flex-col justify-center items-start cursor-pointer border-2 transition-all duration-200 ${payMode === "debt"
-                                ? "bg-rose-650 border-rose-650 text-white shadow-md shadow-rose-650/10"
-                                : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300"
-                                }`}
-                            disabled={isProcessing}
-                        >
-                            <div className="flex items-center gap-1.5 font-black text-[10px] tracking-wider">
-                                <IconNotebook size={15} />
-                                <span>HUTANG</span>
-                            </div>
-                            <span className={`text-[8px] mt-1 font-bold leading-none ${payMode === "debt" ? "text-rose-100" : "text-slate-400"}`}>Catat hutang member</span>
-                        </button>
+                    {/* Payment Mode Tabs */}
+                    <div className="grid grid-cols-3 gap-2.5 mb-5 select-none">
+                        {payModes.map((mode) => (
+                            <button
+                                key={mode.key}
+                                type="button"
+                                onClick={() => {
+                                    setPayMode(mode.key);
+                                    setValue("cashReceived", 0);
+                                }}
+                                className={`h-12 rounded-xl flex items-center justify-center gap-2.5 font-extrabold text-xs cursor-pointer border-2 transition-all duration-200 active:scale-[0.97] ${getTabClass(mode.key, mode.activeColor)}`}
+                                disabled={isProcessing}
+                            >
+                                <mode.icon
+                                    size={17}
+                                    className={
+                                        payMode === mode.key
+                                            ? `text-${mode.activeColor}-600`
+                                            : "text-slate-400"
+                                    }
+                                />
+                                <span>{mode.label}</span>
+                            </button>
+                        ))}
                     </div>
 
-                    {/* Two Column Layout */}
-                    <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
-                        {/* Left Column: Form Fields */}
-                        <div className="md:col-span-7">
+                    {/* Main Content Split Layout */}
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
+                        {/* Left: Input Form Area */}
+                        <div className="md:col-span-7 space-y-4">
                             {payMode === "cash" && (
                                 <CashPaymentForm
                                     grandTotal={grandTotal}
@@ -424,93 +501,93 @@ export function PaymentDialog({
                             )}
                         </div>
 
-                        {/* Right Column: Checkout Summary Card */}
-                        <div className="md:col-span-5 bg-slate-900 border border-slate-800 text-slate-100 p-5 rounded-2xl flex flex-col justify-between space-y-5 shadow-xl shadow-slate-900/10 select-none">
+                        {/* Right: Summary Card */}
+                        <div className="md:col-span-5 bg-gradient-to-b from-slate-50 to-slate-100/30 border border-slate-200/60 p-5 rounded-2xl flex flex-col justify-between space-y-4 select-none relative overflow-hidden">
+                            {/* Subtle decorative accent */}
+                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400 rounded-t-2xl" />
+
                             <div className="space-y-4 flex-1">
-                                <div className="text-center pb-4 border-b border-slate-800/80">
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                                {/* Grand Total */}
+                                <div className="text-center pb-4 border-b border-dashed border-slate-200/80">
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
                                         Total Tagihan
                                     </span>
-                                    <h2 className="text-3xl font-black text-emerald-400 mt-1.5 leading-none tabular-nums tracking-tight">
+                                    <h2 className="text-3xl font-black text-slate-900 mt-1.5 leading-none tabular-nums tracking-tight font-mono">
                                         {formatRupiah(grandTotal)}
                                     </h2>
                                 </div>
 
-                                {/* Mini Breakdown for clarity */}
+                                {/* Mini Breakdown */}
                                 {(discount > 0 || tax > 0) && (
-                                    <div className="space-y-2 text-[9px] text-slate-400 font-bold px-1 pb-3 border-b border-slate-800/80">
+                                    <div className="space-y-2 text-[11px] text-slate-500 font-bold px-1 pb-3 border-b border-slate-200/60">
                                         {discount > 0 && (
-                                            <div className="flex justify-between">
+                                            <div className="flex justify-between items-center">
                                                 <span>Diskon</span>
-                                                <span className="text-rose-450 font-extrabold">-{formatRupiah(discount)}</span>
+                                                <span className="text-rose-600 font-extrabold font-mono">-{formatRupiah(discount)}</span>
                                             </div>
                                         )}
                                         {tax > 0 && (
-                                            <div className="flex justify-between">
+                                            <div className="flex justify-between items-center">
                                                 <span>Pajak (PPN)</span>
-                                                <span className="text-slate-200 font-extrabold">{formatRupiah(tax)}</span>
+                                                <span className="text-slate-800 font-extrabold font-mono">{formatRupiah(tax)}</span>
                                             </div>
                                         )}
                                     </div>
                                 )}
 
-                                {payMode === "cash" && (
-                                    <div className="text-center pt-2">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                            Kembalian
-                                        </span>
-                                        <h3
-                                            className={`text-2xl font-black mt-1.5 tracking-tight tabular-nums ${changeValue < 0 ? "text-rose-450" : "text-emerald-400"
-                                                }`}
-                                        >
-                                            {changeValue === 0
-                                                ? "Rp 0"
-                                                : changeValue < 0
-                                                    ? `Kurang ${formatRupiah(Math.abs(changeValue))}`
-                                                    : formatRupiah(changeValue)}
-                                        </h3>
-                                    </div>
-                                )}
+                                {/* Cash Mode Summary */}
+                                {payMode === "cash" && renderCashSummary()}
 
+                                {/* Card Mode Summary */}
                                 {payMode === "card" && (
-                                    <div className="text-center pt-2">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                                    <div className="text-center pt-1 space-y-2">
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
                                             Metode Pembayaran
                                         </span>
-                                        <h3 className="text-xs font-black text-indigo-400 uppercase tracking-wider mt-2 bg-indigo-950/40 border border-indigo-900/30 py-1.5 px-3 rounded-xl inline-block mx-auto">
+                                        <h3 className="text-xs font-black text-indigo-750 uppercase tracking-wider">
                                             EDC / {cardType.toUpperCase()}
                                         </h3>
                                         {cardLast4 && (
-                                            <p className="text-[10px] text-slate-450 mt-2 font-mono">
+                                            <p className="inline-block bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-md text-[9px] font-mono font-bold border border-indigo-100/60">
                                                 Kartu: **** {cardLast4}
                                             </p>
                                         )}
                                     </div>
                                 )}
 
+                                {/* Debt Mode Summary */}
                                 {payMode === "debt" && selectedMember && (
-                                    <div className="text-center pt-2">
-                                        <span className="text-[9px] font-black text-slate-450 uppercase tracking-widest">
-                                            Sisa Hutang Baru
-                                        </span>
-                                        <h3 className="text-2xl font-black text-rose-400 mt-1.5 tabular-nums">
-                                            {formatRupiah(grandTotal - cashNum)}
-                                        </h3>
+                                    <div className="space-y-3">
+                                        <div className="text-center">
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
+                                                Member
+                                            </span>
+                                            <p className="text-xs font-extrabold text-slate-800 mt-1">{selectedMember.nama}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-rose-50 border border-rose-200/80 animate-in fade-in-0 duration-200">
+                                            <div className="w-6 h-6 rounded-full bg-rose-500 flex items-center justify-center flex-shrink-0">
+                                                <IconNotebook size={13} strokeWidth={2.5} className="text-white" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-rose-500/70 text-[9px] font-semibold">Sisa Hutang Baru</p>
+                                                <p className="text-rose-700 font-mono font-extrabold text-sm leading-none">{formatRupiah(grandTotal - cashNum)}</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
                             </div>
 
+                            {/* Submit Button */}
                             <Button
                                 onClick={handlePaySubmit}
-                                disabled={
-                                    isProcessing ||
-                                    (payMode === "cash"
-                                        ? !isCashValid
-                                        : payMode === "card"
-                                            ? !isCardValid
-                                            : !isDebtValid)
-                                }
-                                className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-800 disabled:text-slate-500 disabled:border-transparent disabled:cursor-not-allowed font-extrabold text-xs text-white rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-lg shadow-emerald-600/10 active:scale-[0.98] transition-all border-none"
+                                disabled={isProcessing || !isSubmitEnabled}
+                                className={`w-full h-12 font-extrabold text-xs text-white rounded-xl flex items-center justify-center gap-2.5 cursor-pointer transition-all duration-200 active:scale-[0.98] border-none ${
+                                    isProcessing || !isSubmitEnabled
+                                        ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+                                        : payMode === "debt"
+                                            ? "bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 shadow-lg shadow-rose-500/20 hover:shadow-xl hover:shadow-rose-500/30"
+                                            : "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30"
+                                }`}
                             >
                                 {isProcessing ? (
                                     <IconLoader2 size={16} className="animate-spin" />

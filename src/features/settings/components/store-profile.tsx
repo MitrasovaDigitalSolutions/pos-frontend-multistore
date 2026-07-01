@@ -20,7 +20,7 @@ import { FormTextarea } from "@/components/forms/form-textarea";
 // UI Components
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { IconAdjustments, IconInfoCircle } from "@tabler/icons-react";
+import { IconAdjustments, IconInfoCircle, IconPrinter } from "@tabler/icons-react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import {
     Loader2,
@@ -312,19 +312,6 @@ export function StoreProfile() {
                                             />
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div className="flex flex-col">
-                                            <LabelWithTooltip
-                                                label="ID Printer Struk"
-                                                tooltip="ID / Nama printer default yang digunakan untuk mencetak struk (misal: EPSON LX-310 ESC/P)."
-                                            />
-                                            <FormInput<StoreSettingsInput>
-                                                name="printer_id"
-                                                placeholder="Contoh: EPSON LX-310 ESC/P..."
-                                                disabled={isSaving}
-                                            />
-                                        </div>
-                                    </div>
                                     <div className="flex flex-col">
                                         <LabelWithTooltip
                                             label="Alamat Toko"
@@ -430,6 +417,34 @@ export function StoreProfile() {
                                         name="cash_account_bank_uid"
                                         options={cashAccountOptions}
                                         placeholder="Pilih Akun Kas"
+                                        disabled={isSaving}
+                                    />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Section 4: Perangkat Printer */}
+                    <Card className="border border-slate-100 rounded-2xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] hover:shadow-[0_4px_20px_rgba(15,23,42,0.03)] transition-all duration-300 bg-white overflow-hidden">
+                        <CardContent className="p-5 space-y-4">
+                            <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3 mb-1">
+                                <div className="w-8 h-8 rounded-lg bg-slate-50 text-slate-600 flex items-center justify-center border border-slate-100/60 shadow-sm">
+                                    <IconPrinter size={15} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-wide">Perangkat Printer</h3>
+                                    <p className="text-[9px] text-slate-400 font-bold mt-0.5">ID printer thermal default untuk mencetak struk belanja</p>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="flex flex-col">
+                                    <LabelWithTooltip
+                                        label="Nama / ID Printer"
+                                        tooltip="ID / Nama printer default yang digunakan untuk mencetak struk (misal: EPSON LX-310 ESC/P)."
+                                    />
+                                    <FormInput<StoreSettingsInput>
+                                        name="printer_id"
+                                        placeholder="Contoh: EPSON LX-310 ESC/P..."
                                         disabled={isSaving}
                                     />
                                 </div>
