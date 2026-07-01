@@ -77,8 +77,6 @@ export function CheckoutTotalsSection({
     const getSetting = useSettingsStore((state) => state.getSetting);
     const pointRate = parseFloat(getSetting("point_rate", "1000")) || 1000;
 
-
-
     useEffect(() => {
         let isMounted = true;
         if (!isOnline || membersData.length === 0) {
@@ -220,7 +218,7 @@ export function CheckoutTotalsSection({
                             </span>
                         )}
                     </div>
-                    
+
                     <div className="flex gap-2">
                         {/* Toggle Button Group */}
                         <div className="flex bg-slate-100 p-0.5 rounded-lg shrink-0 select-none">
