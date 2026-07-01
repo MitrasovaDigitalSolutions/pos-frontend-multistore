@@ -219,7 +219,7 @@ export function Checkout() {
                         onPayOpen={() => state.setIsPayModalOpen(true)}
                         onReprint={state.handleReprint}
                         namaTransaksi={state.namaTransaksi}
-                        setNamaTransaksi={state.setNamaTransaksi}
+                        onNamaTransaksiChange={state.setNamaTransaksi}
                     />
                 </div>
             </div>
@@ -330,6 +330,7 @@ export function Checkout() {
                 receipt={state.receipt}
                 cashierName={state.user?.name || ""}
                 onNewTransaction={state.handleNewTransaction}
+                onReprint={state.handleReprint}
             />
 
             {/* Cash Drawer Dialogs */}

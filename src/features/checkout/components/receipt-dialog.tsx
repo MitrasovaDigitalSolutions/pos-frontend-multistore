@@ -13,6 +13,7 @@ interface ReceiptDialogProps {
     receipt: Receipt | null;
     cashierName: string;
     onNewTransaction: () => void;
+    onReprint?: (uid?: string) => void;
 }
 
 export function ReceiptDialog({
@@ -21,6 +22,7 @@ export function ReceiptDialog({
     receipt,
     cashierName,
     onNewTransaction,
+    onReprint,
 }: ReceiptDialogProps) {
     return (
         <BaseDialog
@@ -174,7 +176,11 @@ export function ReceiptDialog({
                             if (isOfflineTx) {
                                 window.print();
                             } else {
-                                window.open(`/api/proxy/v1/transactions-print/${receipt.uid}`, "_blank");
+                                if (onReprint) {
+                                    onReprint(String(receipt.uid));
+                                } else {
+                                    window.open(`/api/proxy/v1/transactions-print/${receipt.uid}`, "_blank");
+                                }
                             }
                         }
                     }}

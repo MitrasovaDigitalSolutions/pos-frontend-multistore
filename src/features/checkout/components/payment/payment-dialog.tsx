@@ -336,7 +336,7 @@ export function PaymentDialog({
                     <span>Metode Pembayaran</span>
                 </div>
             }
-            className="sm:max-w-2xl"
+            className="sm:max-w-3xl"
         >
             <div className="flex gap-6 mt-4">
                 <FormProvider {...methods}>
