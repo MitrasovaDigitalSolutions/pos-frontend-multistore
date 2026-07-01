@@ -32,6 +32,27 @@ const rightTotal = (label: string, value: number | string) => {
     return text.padStart(WIDTH);
 };
 
+const wrapText = (text: string, width: number) => {
+    const words = text.split(" ");
+    const lines: string[] = [];
+    let current = "";
+
+    for (const word of words) {
+        const next = current ? `${current} ${word}` : word;
+
+        if (next.length <= width) {
+            current = next;
+        } else {
+            if (current) lines.push(current);
+            current = word;
+        }
+    }
+
+    if (current) lines.push(current);
+
+    return lines.join("\n");
+};
+
 const formatDate = (value?: string | Date | null) => {
     if (!value) return "-";
 
@@ -68,7 +89,7 @@ export function buildReceipt(data: ReceiptData) {
     // ================= HEADER =================
 
     txt += leftRight(app.app_name ?? "", faktur) + "\n";
-    txt += (app.app_address ?? "") + "\n";
+    txt += wrapText(app.app_address ?? "", 60) + "\n";
 
     if (app.app_phone) {
         txt += `Telp : ${app.app_phone}\n`;
