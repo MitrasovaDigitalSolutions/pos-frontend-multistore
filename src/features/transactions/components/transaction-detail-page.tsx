@@ -61,7 +61,7 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
             const { data } = await axios.get(`/api/proxy/v1/transactions-print/${transaction.uid}`);
 
             const receipt = buildReceipt(data);
-            await QZService.print("EPSON-LX310 ESC/P", receipt);
+            await QZService.print("EPSON LX310 ESC/P", receipt);
 
             // window.open(`/api/proxy/v1/transactions-print/${transaction.uid}`, "_blank");
             setTimeout(() => {
