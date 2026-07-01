@@ -21,6 +21,7 @@ import { NetworkError } from "@/shared/errors/api-error";
 import { toUTC7String } from "@/lib/date-utils";
 
 import { useSession } from "next-auth/react";
+import { useForm, FormProvider, useWatch } from "react-hook-form";
 
 // Sub-components
 import { CashPaymentForm } from "./cash-payment-form";
@@ -38,6 +39,7 @@ interface PaymentDialogProps {
     onPaySuccess: (receipt: Receipt) => void;
     cartList: CartItem[];
     onLocalProductsReload?: () => void;
+    namaTransaksi: string;
 }
 
 export function PaymentDialog({
@@ -51,31 +53,46 @@ export function PaymentDialog({
     onPaySuccess,
     cartList,
     onLocalProductsReload,
+    namaTransaksi,
 }: PaymentDialogProps) {
     const bulkCheckout = useBulkCheckout();
     const isOnline = useNetworkStatus();
     const { data: session } = useSession();
 
     const [payMode, setPayMode] = useState<"cash" | "card" | "debt">("cash");
-    const [cashReceived, setCashReceived] = useState("");
-    const [cardType, setCardType] = useState("debit");
-    const [cardLast4, setCardLast4] = useState("");
-    const [cardRef, setCardRef] = useState("");
+
+    const methods = useForm({
+        defaultValues: {
+            cashReceived: null as number | null,
+            cardType: "debit",
+            cardLast4: "",
+            cardRef: "",
+        }
+    });
+
+    const { setValue } = methods;
+
+    const cardType = useWatch({ control: methods.control, name: "cardType" });
+    const cardLast4 = useWatch({ control: methods.control, name: "cardLast4" });
+    const cardRef = useWatch({ control: methods.control, name: "cardRef" });
+    const cashReceivedVal = useWatch({ control: methods.control, name: "cashReceived" });
 
     useEffect(() => {
         if (open) {
             const timer = setTimeout(() => {
                 setPayMode("cash");
-                setCashReceived("");
-                setCardLast4("");
-                setCardRef("");
-                setCardType("debit");
+                methods.reset({
+                    cashReceived: null,
+                    cardType: "debit",
+                    cardLast4: "",
+                    cardRef: "",
+                });
             }, 0);
             return () => clearTimeout(timer);
         }
-    }, [open]);
+    }, [open, methods]);
 
-    const cashNum = parseFloat(cashReceived) || 0;
+    const cashNum = cashReceivedVal || 0;
     const changeValue = cashNum - grandTotal;
     const isCashValid = cashNum >= grandTotal && grandTotal > 0;
     const isCardValid = grandTotal > 0;
@@ -119,6 +136,7 @@ export function PaymentDialog({
 
         const payload: Record<string, unknown> = {
             uid: clientUid,
+            nama_transaksi: namaTransaksi || null,
             payment_method: payMode,
             metode_pembayaran: payMode,
             discount: discount,
@@ -173,6 +191,7 @@ export function PaymentDialog({
 
                 const mockReceipt: Receipt = {
                     uid: offlineReceiptUid,
+                    nama_transaksi: namaTransaksi || undefined,
                     subtotal: subtotalVal,
                     diskon: discount,
                     pajak: tax,
@@ -319,185 +338,177 @@ export function PaymentDialog({
             }
             className="sm:max-w-2xl"
         >
-            <div className="space-y-4 pt-3">
-                {/* Mode toggle */}
-                <div className="grid grid-cols-3 gap-2">
-                    <Button
-                        onClick={() => {
-                            setPayMode("cash");
-                            setCashReceived("");
-                        }}
-                        className={`h-10 font-bold text-[10px] rounded-xl flex gap-1 cursor-pointer border-none transition-all ${payMode === "cash"
+            <div className="flex gap-6 mt-4">
+                <FormProvider {...methods}>
+                    {/* Left side: Payment method buttons */}
+                    <div className="flex flex-col gap-2 w-48 shrink-0 select-none">
+                        <Button
+                            onClick={() => {
+                                setPayMode("cash");
+                                setValue("cashReceived", 0);
+                            }}
+                            className={`h-10 font-bold text-[10px] rounded-xl flex gap-1 cursor-pointer border-none transition-all ${payMode === "cash"
                                 ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/10"
                                 : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100/70"
-                            }`}
-                        disabled={isProcessing}
-                    >
-                        <IconCash size={14} /> TUNAI (CASH)
-                    </Button>
-                    <Button
-                        onClick={() => {
-                            setPayMode("card");
-                            setCashReceived("");
-                        }}
-                        className={`h-10 font-bold text-[10px] rounded-xl flex gap-1 cursor-pointer border transition-all ${payMode === "card"
+                                }`}
+                            disabled={isProcessing}
+                        >
+                            <IconCash size={14} /> TUNAI (CASH)
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                setPayMode("card");
+                                setValue("cashReceived", 0);
+                            }}
+                            className={`h-10 font-bold text-[10px] rounded-xl flex gap-1 cursor-pointer border transition-all ${payMode === "card"
                                 ? "bg-slate-700 text-white border-slate-700 shadow-sm shadow-slate-700/10"
                                 : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
-                            }`}
-                        disabled={isProcessing}
-                    >
-                        <IconCreditCard size={14} /> KARTU / EDC
-                    </Button>
-                    <Button
-                        onClick={() => {
-                            setPayMode("debt");
-                            setCashReceived("");
-                        }}
-                        className={`h-10 font-bold text-[10px] rounded-xl flex gap-1 cursor-pointer border-none transition-all ${payMode === "debt"
+                                }`}
+                            disabled={isProcessing}
+                        >
+                            <IconCreditCard size={14} /> KARTU / EDC
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                setPayMode("debt");
+                                setValue("cashReceived", 0);
+                            }}
+                            className={`h-10 font-bold text-[10px] rounded-xl flex gap-1 cursor-pointer border-none transition-all ${payMode === "debt"
                                 ? "bg-rose-600 text-white shadow-sm shadow-rose-600/10"
                                 : "bg-rose-50 text-rose-600 hover:bg-rose-100/70"
-                            }`}
-                        disabled={isProcessing}
-                    >
-                        <IconNotebook size={14} /> HUTANG
-                    </Button>
-                </div>
-
-                {/* Two Column Layout */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
-                    {/* Left Column: Form Fields */}
-                    <div className="md:col-span-7">
-                        {payMode === "cash" && (
-                            <CashPaymentForm
-                                cashReceived={cashReceived}
-                                setCashReceived={setCashReceived}
-                                grandTotal={grandTotal}
-                                isProcessing={isProcessing}
-                            />
-                        )}
-
-                        {payMode === "card" && (
-                            <CardPaymentForm
-                                cardType={cardType}
-                                setCardType={setCardType}
-                                cardLast4={cardLast4}
-                                setCardLast4={setCardLast4}
-                                cardRef={cardRef}
-                                setCardRef={setCardRef}
-                                isProcessing={isProcessing}
-                            />
-                        )}
-
-                        {payMode === "debt" && (
-                            <DebtPaymentForm
-                                selectedMember={selectedMember}
-                                cashReceived={cashReceived}
-                                setCashReceived={setCashReceived}
-                                grandTotal={grandTotal}
-                                isProcessing={isProcessing}
-                            />
-                        )}
+                                }`}
+                            disabled={isProcessing}
+                        >
+                            <IconNotebook size={14} /> HUTANG
+                        </Button>
                     </div>
 
-                    {/* Right Column: Checkout Summary Card */}
-                    <div className="md:col-span-5 bg-slate-50 border border-slate-100 p-4 rounded-xl flex flex-col justify-between space-y-4">
-                        <div className="space-y-4">
-                            <div className="text-center pb-3 border-b border-slate-200">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                    Total Tagihan
-                                </span>
-                                <h2 className="text-2xl font-extrabold text-slate-950 mt-1 leading-none tabular-nums">
-                                    {formatRupiah(grandTotal)}
-                                </h2>
-                            </div>
-
-                            {/* Mini Breakdown for clarity */}
-                            {(discount > 0 || tax > 0) && (
-                                <div className="space-y-1 text-[10px] text-slate-500 font-semibold px-1 pb-2 border-b border-slate-200">
-                                    {discount > 0 && (
-                                        <div className="flex justify-between">
-                                            <span>Diskon</span>
-                                            <span className="text-rose-600 font-bold">-{formatRupiah(discount)}</span>
-                                        </div>
-                                    )}
-                                    {tax > 0 && (
-                                        <div className="flex justify-between">
-                                            <span>Pajak (PPN)</span>
-                                            <span className="text-slate-800 font-bold">{formatRupiah(tax)}</span>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
+                    {/* Two Column Layout */}
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
+                        {/* Left Column: Form Fields */}
+                        <div className="md:col-span-7">
                             {payMode === "cash" && (
-                                <div className="text-center pt-1">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                        Kembalian
-                                    </span>
-                                    <h3
-                                        className={`text-2xl font-extrabold mt-1 tracking-tight tabular-nums ${changeValue < 0 ? "text-rose-500" : "text-emerald-500"
-                                            }`}
-                                    >
-                                        {changeValue === 0
-                                            ? "Rp 0"
-                                            : changeValue < 0
-                                                ? `Kurang ${formatRupiah(Math.abs(changeValue))}`
-                                                : formatRupiah(changeValue)}
-                                    </h3>
-                                </div>
+                                <CashPaymentForm
+                                    grandTotal={grandTotal}
+                                    isProcessing={isProcessing}
+                                />
                             )}
 
                             {payMode === "card" && (
-                                <div className="text-center pt-1">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                        Metode Pembayaran
-                                    </span>
-                                    <h3 className="text-base font-bold text-slate-700 mt-1">
-                                        EDC / {cardType.toUpperCase()}
-                                    </h3>
-                                    {cardLast4 && (
-                                        <p className="text-xs text-slate-500 mt-0.5">
-                                            Kartu: **** **** **** {cardLast4}
-                                        </p>
-                                    )}
-                                </div>
+                                <CardPaymentForm
+                                    isProcessing={isProcessing}
+                                />
                             )}
 
-                            {payMode === "debt" && selectedMember && (
-                                <div className="text-center pt-1">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                        Sisa Hutang Baru
-                                    </span>
-                                    <h3 className="text-2xl font-extrabold text-rose-500 mt-1 tabular-nums">
-                                        {formatRupiah(grandTotal - cashNum)}
-                                    </h3>
-                                </div>
+                            {payMode === "debt" && (
+                                <DebtPaymentForm
+                                    selectedMember={selectedMember}
+                                    grandTotal={grandTotal}
+                                    isProcessing={isProcessing}
+                                />
                             )}
                         </div>
 
-                        <Button
-                            onClick={handlePaySubmit}
-                            disabled={
-                                isProcessing ||
-                                (payMode === "cash"
-                                    ? !isCashValid
-                                    : payMode === "card"
-                                        ? !isCardValid
-                                        : !isDebtValid)
-                            }
-                            className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-200 disabled:cursor-not-allowed font-bold text-xs text-white rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-600/10 border-none"
-                        >
-                            {isProcessing ? (
-                                <IconLoader2 size={16} className="animate-spin" />
-                            ) : (
-                                <IconPrinter size={16} />
-                            )}
-                            <span>
-                                {payMode === "debt" ? "SIMPAN & CETAK" : "SELESAI & CETAK"}
-                            </span>
-                        </Button>
+                        {/* Right Column: Checkout Summary Card */}
+                        <div className="md:col-span-5 bg-slate-50 border border-slate-100 p-4 rounded-xl flex flex-col justify-between space-y-4">
+                            <div className="space-y-4">
+                                <div className="text-center pb-3 border-b border-slate-200">
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                        Total Tagihan
+                                    </span>
+                                    <h2 className="text-2xl font-extrabold text-slate-950 mt-1 leading-none tabular-nums">
+                                        {formatRupiah(grandTotal)}
+                                    </h2>
+                                </div>
+
+                                {/* Mini Breakdown for clarity */}
+                                {(discount > 0 || tax > 0) && (
+                                    <div className="space-y-1 text-[10px] text-slate-500 font-semibold px-1 pb-2 border-b border-slate-200">
+                                        {discount > 0 && (
+                                            <div className="flex justify-between">
+                                                <span>Diskon</span>
+                                                <span className="text-rose-600 font-bold">-{formatRupiah(discount)}</span>
+                                            </div>
+                                        )}
+                                        {tax > 0 && (
+                                            <div className="flex justify-between">
+                                                <span>Pajak (PPN)</span>
+                                                <span className="text-slate-800 font-bold">{formatRupiah(tax)}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {payMode === "cash" && (
+                                    <div className="text-center pt-1">
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                            Kembalian
+                                        </span>
+                                        <h3
+                                            className={`text-2xl font-extrabold mt-1 tracking-tight tabular-nums ${changeValue < 0 ? "text-rose-500" : "text-emerald-500"
+                                                }`}
+                                        >
+                                            {changeValue === 0
+                                                ? "Rp 0"
+                                                : changeValue < 0
+                                                    ? `Kurang ${formatRupiah(Math.abs(changeValue))}`
+                                                    : formatRupiah(changeValue)}
+                                        </h3>
+                                    </div>
+                                )}
+
+                                {payMode === "card" && (
+                                    <div className="text-center pt-1">
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                            Metode Pembayaran
+                                        </span>
+                                        <h3 className="text-base font-bold text-slate-700 mt-1">
+                                            EDC / {cardType.toUpperCase()}
+                                        </h3>
+                                        {cardLast4 && (
+                                            <p className="text-xs text-slate-500 mt-0.5">
+                                                Kartu: **** **** **** {cardLast4}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
+                                {payMode === "debt" && selectedMember && (
+                                    <div className="text-center pt-1">
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                            Sisa Hutang Baru
+                                        </span>
+                                        <h3 className="text-2xl font-extrabold text-rose-500 mt-1 tabular-nums">
+                                            {formatRupiah(grandTotal - cashNum)}
+                                        </h3>
+                                    </div>
+                                )}
+                            </div>
+
+                            <Button
+                                onClick={handlePaySubmit}
+                                disabled={
+                                    isProcessing ||
+                                    (payMode === "cash"
+                                        ? !isCashValid
+                                        : payMode === "card"
+                                            ? !isCardValid
+                                            : !isDebtValid)
+                                }
+                                className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-200 disabled:cursor-not-allowed font-bold text-xs text-white rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-600/10 border-none"
+                            >
+                                {isProcessing ? (
+                                    <IconLoader2 size={16} className="animate-spin" />
+                                ) : (
+                                    <IconPrinter size={16} />
+                                )}
+                                <span>
+                                    {payMode === "debt" ? "SIMPAN & CETAK" : "SELESAI & CETAK"}
+                                </span>
+                            </Button>
+                        </div>
                     </div>
-                </div>
+                </FormProvider>
             </div>
         </BaseDialog>
     );

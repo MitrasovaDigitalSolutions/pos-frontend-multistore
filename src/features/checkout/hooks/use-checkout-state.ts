@@ -67,7 +67,6 @@ export function useCheckoutState() {
     const removeItem = useCheckoutStore((state) => state.removeItem);
     const clearCart = useCheckoutStore((state) => state.clearCart);
     const addHoldTransaction = useCheckoutStore((state) => state.addHoldTransaction);
-    const updateHoldName = useCheckoutStore((state) => state.updateHoldName);
     const removeHoldTransaction = useCheckoutStore((state) => state.removeHoldTransaction);
     const clearHoldList = useCheckoutStore((state) => state.clearHoldList);
     const setSelectedMember = useCheckoutStore((state) => state.setSelectedMember);
@@ -75,6 +74,8 @@ export function useCheckoutState() {
     const discountValue = useCheckoutStore((state) => state.discountValue);
     const setDiscountType = useCheckoutStore((state) => state.setDiscountType);
     const setDiscountValue = useCheckoutStore((state) => state.setDiscountValue);
+    const namaTransaksiStore = useCheckoutStore((state) => state.namaTransaksi);
+    const setNamaTransaksi = useCheckoutStore((state) => state.setNamaTransaksi);
 
     // Hydration check to prevent Next.js hydration mismatches
     const [mounted, setMounted] = useState(false);
@@ -88,6 +89,7 @@ export function useCheckoutState() {
     const cart = useMemo(() => (mounted ? storeCart : []), [mounted, storeCart]);
     const holdList = useMemo(() => (mounted ? storeHoldList : []), [mounted, storeHoldList]);
     const selectedMember = useMemo(() => (mounted ? storeSelectedMember : null), [mounted, storeSelectedMember]);
+    const namaTransaksi = useMemo(() => (mounted ? namaTransaksiStore : ""), [mounted, namaTransaksiStore]);
 
     // Recalled transaction reference ID (purely for local UI representation)
     const [activeRecallId, setActiveRecallId] = useState<string | null>(null);
@@ -134,10 +136,12 @@ export function useCheckoutState() {
         if (cart.length === 0) return;
         try {
             setIsProcessing(true);
-            const holdId = activeRecallId || Date.now() as unknown as string;
+            const holdId = activeRecallId || Date.now().toString();
+            const defaultName = `TRX #${String(holdId).slice(-8)}`;
 
             const newHold: HoldTransaction = {
-                uid: holdId as string,
+                uid: holdId,
+                nama_transaksi: namaTransaksi || defaultName,
                 items_count: cart.reduce((acc, item) => acc + item.qty, 0),
                 subtotal,
                 discountType,
@@ -151,12 +155,13 @@ export function useCheckoutState() {
             toast.info("Transaksi di-hold.");
             clearCart();
             setActiveRecallId(null);
+            setNamaTransaksi("");
         } catch {
             toast.error("Gagal hold transaksi.");
         } finally {
             setIsProcessing(false);
         }
-    }, [cart, subtotal, discountType, discountValue, addHoldTransaction, clearCart, activeRecallId, selectedMember]);
+    }, [cart, subtotal, discountType, discountValue, addHoldTransaction, clearCart, activeRecallId, selectedMember, namaTransaksi, setNamaTransaksi]);
 
     const openHoldList = useCallback(() => {
         setIsHoldListOpen(true);
@@ -172,9 +177,10 @@ export function useCheckoutState() {
     const handleConfirmVoid = useCallback(() => {
         clearCart();
         setActiveRecallId(null);
+        setNamaTransaksi("");
         setIsVoidConfirmOpen(false);
         toast.error("Transaksi dibatalkan.");
-    }, [clearCart]);
+    }, [clearCart, setNamaTransaksi]);
 
     const handleAddProduct = async (product: Product) => {
         if (product.status !== "active") {
@@ -307,8 +313,10 @@ export function useCheckoutState() {
             const activeCart = useCheckoutStore.getState().cart;
             if (activeCart.length > 0) {
                 const currentHoldId = activeRecallId || Date.now().toString();
+                const defaultName = `TRX #${String(currentHoldId).slice(-8)}`;
                 const autoHoldItem: HoldTransaction = {
                     uid: currentHoldId,
+                    nama_transaksi: namaTransaksi || defaultName,
                     items_count: activeCart.reduce((acc, item) => acc + item.qty, 0),
                     subtotal: activeCart.reduce((acc, i) => acc + i.price * i.qty, 0),
                     created_at: new Date().toISOString(),
@@ -324,6 +332,7 @@ export function useCheckoutState() {
             useCheckoutStore.getState().setSelectedMember(held.member || null);
             useCheckoutStore.getState().setDiscountType(held.discountType || "nominal");
             useCheckoutStore.getState().setDiscountValue(held.discountValue || 0);
+            useCheckoutStore.getState().setNamaTransaksi(held.nama_transaksi || "");
             setActiveRecallId(held.uid);
             // Remove from holdList
             removeHoldTransaction(holdTrxId);
@@ -334,11 +343,12 @@ export function useCheckoutState() {
         } finally {
             setIsProcessing(false);
         }
-    }, [storeHoldList, removeHoldTransaction, activeRecallId, addHoldTransaction]);
+    }, [storeHoldList, removeHoldTransaction, activeRecallId, addHoldTransaction, namaTransaksi]);
 
     const handleNewTransaction = () => {
         clearCart();
         setActiveRecallId(null);
+        setNamaTransaksi("");
         setReceipt(null);
         setIsReceiptOpen(false);
         setTimeout(() => barcodeInputRef.current?.focus(), 100);
@@ -369,14 +379,7 @@ export function useCheckoutState() {
         toast.error("Semua transaksi hold telah dihapus.");
     }, [clearHoldList]);
 
-    const handleRenameHold = useCallback((uid: string, name: string) => {
-        try {
-            updateHoldName(uid, name);
-            toast.success("Nama transaksi hold berhasil diubah.");
-        } catch {
-            toast.error("Gagal mengubah nama transaksi hold.");
-        }
-    }, [updateHoldName]);
+
 
     const handleReprint = useCallback(() => {
         if (lastTransactionId) {
@@ -469,6 +472,8 @@ export function useCheckoutState() {
         setIsReceiptOpen,
         isHoldListOpen,
         setIsHoldListOpen,
+        namaTransaksi,
+        setNamaTransaksi,
         isProcessing,
         receipt,
         setReceipt,
@@ -498,7 +503,6 @@ export function useCheckoutState() {
         handleNewTransaction,
         handlePaymentSuccess,
         handleClearHoldList,
-        handleRenameHold,
         handleReprint,
         lastTransactionId,
     };

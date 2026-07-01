@@ -1,25 +1,25 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
+import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { toast } from "sonner";
 import type { Member } from "@/features/members/types";
+import { useFormContext, useWatch } from "react-hook-form";
 
 interface DebtPaymentFormProps {
     selectedMember: Member | null;
-    cashReceived: string;
-    setCashReceived: (val: string) => void;
     grandTotal: number;
     isProcessing: boolean;
 }
 
 export function DebtPaymentForm({
     selectedMember,
-    cashReceived,
-    setCashReceived,
     grandTotal,
     isProcessing,
 }: DebtPaymentFormProps) {
+    const { setValue, control } = useFormContext();
+    const cashReceived = useWatch({ control, name: "cashReceived" });
+
     if (!selectedMember) {
         return (
             <div className="bg-rose-50 border border-rose-100 p-4 rounded-xl text-center">
@@ -31,7 +31,7 @@ export function DebtPaymentForm({
         );
     }
 
-    const cashNum = parseFloat(cashReceived) || 0;
+    const cashNum = Number(cashReceived) || 0;
 
     return (
         <div className="space-y-4">
@@ -53,34 +53,27 @@ export function DebtPaymentForm({
                     Uang Muka / DP (Tunai) - Opsional
                 </label>
                 <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-lg select-none">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-lg select-none z-10">
                         Rp
                     </span>
-                    <Input
-                        type="text"
+                    <FormNominalInput
+                        name="cashReceived"
                         placeholder="0"
-                        className="h-14 pl-12 pr-24 text-2xl font-extrabold text-slate-950 bg-white border-2 border-emerald-500 focus-visible:ring-emerald-600 rounded-xl"
-                        value={
-                            cashReceived
-                                ? new Intl.NumberFormat("id-ID").format(Number(cashReceived))
-                                : ""
-                        }
-                        onChange={(e) => {
-                            const clean = e.target.value.replace(/\D/g, "");
-                            if (Number(clean) >= grandTotal) {
-                                toast.warning("Uang muka harus kurang dari total tagihan.");
-                                return;
-                            }
-                            setCashReceived(clean);
-                        }}
+                        className="h-14 pl-12 pr-24 text-2xl font-extrabold text-slate-950 bg-white border-2 border-emerald-500 focus-visible:ring-emerald-600 rounded-xl relative"
                         disabled={isProcessing}
+                        onValueChange={(val) => {
+                            if (val !== null && val >= grandTotal) {
+                                toast.warning("Uang muka harus kurang dari total tagihan.");
+                                setValue("cashReceived", null);
+                            }
+                        }}
                         autoFocus
                     />
                     {cashReceived && (
                         <button
                             type="button"
-                            onClick={() => setCashReceived("")}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all cursor-pointer select-none"
+                            onClick={() => setValue("cashReceived", null)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all cursor-pointer select-none z-10"
                             disabled={isProcessing}
                         >
                             Reset

@@ -13,6 +13,7 @@ interface CheckoutStoreState {
     selectedMember: Member | null;
     discountType: "nominal" | "percent";
     discountValue: number;
+    namaTransaksi: string;
 
     // Cart Actions
     setCart: (items: CartItem[]) => void;
@@ -25,13 +26,15 @@ interface CheckoutStoreState {
     // Member Actions
     setSelectedMember: (member: Member | null) => void;
 
+    // Nama Transaksi Actions
+    setNamaTransaksi: (name: string) => void;
+
     // Discount Actions
     setDiscountType: (type: "nominal" | "percent") => void;
     setDiscountValue: (val: number) => void;
 
     // Hold/Recall Actions
     addHoldTransaction: (hold: HoldTransaction) => void;
-    updateHoldName: (uid: string, name: string) => void;
     removeHoldTransaction: (uid: string) => void;
     clearHoldList: () => void;
 }
@@ -44,6 +47,7 @@ export const useCheckoutStore = create<CheckoutStoreState>()(
             selectedMember: null,
             discountType: "nominal",
             discountValue: 0,
+            namaTransaksi: "",
 
             setCart: (items) => set({ cart: items }),
 
@@ -83,9 +87,11 @@ export const useCheckoutStore = create<CheckoutStoreState>()(
                     cart: state.cart.filter((i) => i.product_uid !== productId),
                 })),
 
-            clearCart: () => set({ cart: [], selectedMember: null, discountType: "nominal", discountValue: 0 }),
+            clearCart: () => set({ cart: [], selectedMember: null, discountType: "nominal", discountValue: 0, namaTransaksi: "" }),
 
             setSelectedMember: (member) => set({ selectedMember: member }),
+
+            setNamaTransaksi: (name) => set({ namaTransaksi: name }),
 
             setDiscountType: (type) => set({ discountType: type }),
 
@@ -94,13 +100,6 @@ export const useCheckoutStore = create<CheckoutStoreState>()(
             addHoldTransaction: (hold) =>
                 set((state) => ({
                     holdList: [...state.holdList, hold],
-                })),
-
-            updateHoldName: (uid, name) =>
-                set((state) => ({
-                    holdList: state.holdList.map((h) =>
-                        h.uid === uid ? { ...h, name } : h
-                    ),
                 })),
 
             removeHoldTransaction: (id) =>
