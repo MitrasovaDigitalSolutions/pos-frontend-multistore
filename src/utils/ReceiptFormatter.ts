@@ -86,7 +86,11 @@ export function buildReceipt(data: ReceiptData) {
         sale.member?.nama ?? "-"
     ) + "\n";
 
-    txt += `No. Trx : ${sale.nomor_transaksi} - ${sale.nama_transaksi}\n`;
+    txt += leftRight(
+        `No. TRX   : ${sale.nomor_transaksi}`,
+        sale.nama_transaksi ?? "-"
+    ) + "\n";
+
 
     txt += line() + "\n";
     txt += line() + "\n";
