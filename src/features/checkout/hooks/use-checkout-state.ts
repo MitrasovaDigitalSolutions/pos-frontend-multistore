@@ -67,6 +67,7 @@ export function useCheckoutState() {
     const removeItem = useCheckoutStore((state) => state.removeItem);
     const clearCart = useCheckoutStore((state) => state.clearCart);
     const addHoldTransaction = useCheckoutStore((state) => state.addHoldTransaction);
+    const updateHoldName = useCheckoutStore((state) => state.updateHoldName);
     const removeHoldTransaction = useCheckoutStore((state) => state.removeHoldTransaction);
     const clearHoldList = useCheckoutStore((state) => state.clearHoldList);
     const setSelectedMember = useCheckoutStore((state) => state.setSelectedMember);
@@ -368,6 +369,15 @@ export function useCheckoutState() {
         toast.error("Semua transaksi hold telah dihapus.");
     }, [clearHoldList]);
 
+    const handleRenameHold = useCallback((uid: string, name: string) => {
+        try {
+            updateHoldName(uid, name);
+            toast.success("Nama transaksi hold berhasil diubah.");
+        } catch {
+            toast.error("Gagal mengubah nama transaksi hold.");
+        }
+    }, [updateHoldName]);
+
     const handleReprint = useCallback(() => {
         if (lastTransactionId) {
             const isOfflineTx = String(lastTransactionId).startsWith("OFFLINE-");
@@ -488,6 +498,7 @@ export function useCheckoutState() {
         handleNewTransaction,
         handlePaymentSuccess,
         handleClearHoldList,
+        handleRenameHold,
         handleReprint,
         lastTransactionId,
     };

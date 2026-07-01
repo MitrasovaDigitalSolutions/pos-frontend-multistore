@@ -13,6 +13,7 @@ export interface CartItem {
 
 export interface HoldTransaction {
     uid: string;
+    name?: string;
     items_count: number;
     subtotal: number;
     discountType?: "nominal" | "percent";
