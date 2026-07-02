@@ -8,6 +8,7 @@ class QZService {
 
         qz.security.setCertificatePromise(async () => {
             const { data } = await axios.get("/api/proxy/v1/qz/certificate");
+            console.log("CERTIFICATE:", data);
             if (!data) {
                 throw new Error("Certificate tidak ditemukan");
             }
@@ -15,7 +16,9 @@ class QZService {
         });
 
         qz.security.setSignaturePromise(async (toSign: string) => {
+            console.log("TO SIGN:", toSign);
             const { data } = await axios.post("/api/proxy/v1/qz/sign", { toSign });
+            console.log("SIGNATURE:", data);
             if (!data) {
                 throw new Error("Signature gagal dibuat");
             }
