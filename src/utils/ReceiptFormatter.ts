@@ -164,7 +164,5 @@ export function buildReceipt(data: ReceiptData) {
     txt += footerLine("",isDebt ? "Bayar :" : "Tunai :",bayar) + "\n";
     txt += footerLine("",isDebt ? "Kurang :" : "Kembali :",kembali) + "\n";
 
-    txt += line() + "\n";
-
     return txt;
 }
