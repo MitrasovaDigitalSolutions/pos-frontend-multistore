@@ -6,6 +6,16 @@ declare module 'qz-tray' {
             isActive(): boolean;
         };
 
+        security: {
+            setCertificatePromise(
+                fn: () => Promise<string>
+            ): void;
+
+            setSignaturePromise(
+                fn: (toSign: string) => Promise<string>
+            ): void;
+        };
+
         printers: {
             find(name?: string): Promise<string | string[]>;
         };
