@@ -35,22 +35,28 @@ class QZService {
                 // localStorage might be full — non-critical
             }
 
-            qz.security.setCertificatePromise(() => Promise.resolve(certificate));
+            qz.security.setCertificatePromise((resolve) => {
+                resolve(certificate);
+            });
 
-            qz.security.setSignaturePromise(async (toSign: string) => {
-                if (typeof navigator !== "undefined" && !navigator.onLine) {
-                    throw new Error("Backend signer unavailable while offline");
-                }
+            qz.security.setSignaturePromise((toSign: string) => async (resolve, reject) => {
+                try {
+                    if (typeof navigator !== "undefined" && !navigator.onLine) {
+                        throw new Error("Backend signer unavailable while offline");
+                    }
 
-                const { data: sig } = await axios.post<string>(
-                    "/api/proxy/v1/qz/sign",
-                    { toSign },
-                    { timeout: 2000 }
-                );
-                if (!sig) {
-                    throw new Error("Signature gagal dibuat");
+                    const { data: sig } = await axios.post<string>(
+                        "/api/proxy/v1/qz/sign",
+                        { toSign },
+                        { timeout: 2000 }
+                    );
+                    if (!sig) {
+                        throw new Error("Signature gagal dibuat");
+                    }
+                    resolve(sig);
+                } catch (error) {
+                    reject(error);
                 }
-                return sig;
             });
 
             this.securityMode = "signed";
@@ -65,10 +71,14 @@ class QZService {
     private useUnsignedMode() {
         this.securityMode = "unsigned";
         try {
-            // QZ Tray still expects promise handlers. Empty values only work when
-            // the installed QZ Tray allows unsigned requests.
-            qz.security.setCertificatePromise(() => Promise.resolve(""));
-            qz.security.setSignaturePromise(() => Promise.resolve(""));
+            // QZ Tray still expects resolver-style handlers. Resolving with no
+            // value enables anonymous/unsigned mode when QZ Tray allows it.
+            qz.security.setCertificatePromise((resolve) => {
+                resolve();
+            });
+            qz.security.setSignaturePromise(() => (resolve) => {
+                resolve();
+            });
         } catch (clearErr) {
             console.warn("Gagal mereset keamanan QZ Tray:", clearErr);
         }

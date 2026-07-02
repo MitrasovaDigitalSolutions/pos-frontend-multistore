@@ -41,10 +41,19 @@ const serwist = new Serwist({
         },
         {
             matcher: ({ request, sameOrigin }) => request.mode === "navigate" && sameOrigin,
-            handler: new NetworkFirst({
-                cacheName: "pages",
-                networkTimeoutSeconds: 3,
-            }),
+            handler: async ({ event, request }) => {
+                const strategy = new NetworkFirst({
+                    cacheName: "pages",
+                    networkTimeoutSeconds: 3,
+                });
+
+                try {
+                    return await strategy.handle({ event, request });
+                } catch {
+                    const cachedShell = await caches.match("/");
+                    return cachedShell ?? Response.error();
+                }
+            },
         },
         ...defaultCache,
     ],
