@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { Button } from "@/components/ui/button";
 import { CommandSelect } from "@/components/ui/command-select";
@@ -17,6 +17,7 @@ import {
 } from "@tabler/icons-react";
 import { useState, useEffect, useCallback } from "react";
 import { CreateMemberDialog } from "./create-member-dialog";
+import { PayDebtDialog } from "@/features/debts/components/pay-debt-dialog";
 import { db } from "@/lib/db";
 import { useNetworkStatus } from "@/hooks/use-network-status";
 import { cn } from "@/lib/utils";
@@ -76,10 +77,12 @@ export function CheckoutTotalsSection({
     const { data: membersData = [], isLoading: isMembersLoading } = useAllMembers();
     const [localMembers, setLocalMembers] = useState<Member[]>([]);
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+    const [isPayDebtOpen, setIsPayDebtOpen] = useState(false);
     const getTaxRate = useSettingsStore((state) => state.getTaxRate);
     const ppnRate = getTaxRate();
     const getSetting = useSettingsStore((state) => state.getSetting);
     const pointRate = parseFloat(getSetting("point_rate", "1000")) || 1000;
+    const pointSystemEnable = getSetting("point_system_enable", "true") === "true";
 
     const [prevNama, setPrevNama] = useState(namaTransaksi);
     const [localNama, setLocalNama] = useState(namaTransaksi);
@@ -126,11 +129,17 @@ export function CheckoutTotalsSection({
 
     const members = isOnline && membersData.length > 0 ? membersData : localMembers;
 
+    const activeMember = selectedMember
+        ? (members.find((m) => m.uid === selectedMember.uid) || selectedMember)
+        : null;
+
     const memberOptions = members
         .filter((m) => m.status === "active")
         .map((m) => ({
             value: m.uid,
-            label: `${m.nama} (${m.kode}) - ${m.poin} Poin`,
+            label: pointSystemEnable
+                ? `${m.nama} (${m.kode}) - ${m.poin} Poin`
+                : `${m.nama} (${m.kode})`,
         }));
 
     return (
@@ -203,18 +212,43 @@ export function CheckoutTotalsSection({
                         </div>
                     </div>
                     {selectedMember ? (
-                        <div className="flex items-center gap-2 bg-emerald-50/50 border border-emerald-100 p-1.5 rounded-lg">
-                            <div className="w-6 h-6 rounded-md bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                                <IconUser size={12} />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                                <div className="text-[11px] font-bold text-slate-900 truncate leading-tight">
-                                    {selectedMember.nama}
+                        <div className="space-y-2 animate-in fade-in duration-300">
+                            {/* Member basic info card */}
+                            <div className="flex items-center gap-3 bg-white border border-slate-200/80 p-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                                <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100/50">
+                                    <IconUser size={16} className="stroke-[2.2]" />
                                 </div>
-                                <div className="text-[9px] font-bold text-slate-500 truncate leading-none mt-0.5">
-                                    {selectedMember.kode} • <span className="text-emerald-600">{selectedMember.poin} Poin</span>
+                                <div className="min-w-0 flex-1">
+                                    <div className="text-[12px] font-black text-slate-800 truncate leading-tight">
+                                        {selectedMember.nama}
+                                    </div>
+                                    <div className="text-[10px] font-bold text-slate-400 truncate leading-none mt-1">
+                                        {selectedMember.kode}{pointSystemEnable && ` • `}{pointSystemEnable && <span className="text-emerald-600 font-extrabold">{selectedMember.poin} Poin</span>}
+                                    </div>
                                 </div>
                             </div>
+
+                            {/* Highly interactive debt notification banner */}
+                            {activeMember && (activeMember.hutang || 0) > 0 && (
+                                <div className="bg-gradient-to-r from-rose-50 to-rose-100/50 border border-rose-200/80 p-3 rounded-xl flex items-center justify-between gap-3 shadow-sm shadow-rose-100 animate-in slide-in-from-top-2 duration-300">
+                                    <div className="space-y-0.5">
+                                        <span className="text-[9px] font-black text-rose-500 uppercase tracking-wider block">
+                                            Ada Tunggakan Hutang
+                                        </span>
+                                        <span className="text-[14px] font-black text-rose-700 font-mono tracking-tight block leading-none">
+                                            {formatRupiah(activeMember.hutang || 0)}
+                                        </span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsPayDebtOpen(true)}
+                                        className="h-8 px-3 bg-rose-600 hover:bg-rose-700 active:scale-[0.96] text-white border-none rounded-lg text-[10px] font-black flex items-center gap-1.5 cursor-pointer transition-all duration-200 shadow-md shadow-rose-600/20 hover:shadow-lg hover:shadow-rose-650/30"
+                                    >
+                                        <IconCash size={14} className="stroke-[2.2]" />
+                                        <span>BAYAR HUTANG</span>
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <CommandSelect
@@ -232,29 +266,30 @@ export function CheckoutTotalsSection({
                     )}
                 </div>
 
-                {/* Detail Keranjang & Benefit */}
                 <div className="bg-white border border-slate-100 rounded-xl p-2.5 shadow-sm space-y-1.5 select-none">
                     <div className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">
                         Status Keranjang & Loyalti
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div className={cn("grid gap-2 text-[11px]", pointSystemEnable ? "grid-cols-2" : "grid-cols-1")}>
                         <div className="space-y-0.5">
                             <span className="text-[9px] font-medium text-slate-455">Total Item</span>
                             <div className="font-extrabold text-slate-800">{cartLength} Jenis Produk</div>
                         </div>
-                        <div className="space-y-0.5">
-                            <span className="text-[9px] font-medium text-slate-455">Loyalty Poin</span>
-                            <div className="font-extrabold text-emerald-600 flex items-center gap-1">
-                                {selectedMember ? (
-                                    <>
-                                        <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
-                                        <span>+{Math.floor(grandTotal / pointRate)} Poin</span>
-                                    </>
-                                ) : (
-                                    <span className="text-slate-400 font-bold">Non-Member</span>
-                                )}
+                        {pointSystemEnable && (
+                            <div className="space-y-0.5 animate-in fade-in duration-200">
+                                <span className="text-[9px] font-medium text-slate-455">Loyalty Poin</span>
+                                <div className="font-extrabold text-emerald-600 flex items-center gap-1">
+                                    {selectedMember ? (
+                                        <>
+                                            <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
+                                            <span>+{Math.floor(grandTotal / pointRate)} Poin</span>
+                                        </>
+                                    ) : (
+                                        <span className="text-slate-400 font-bold">Non-Member</span>
+                                    )}
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
 
@@ -450,6 +485,14 @@ export function CheckoutTotalsSection({
                 onOpenChange={setIsAddMemberOpen}
                 onSuccess={(newMember) => {
                     onMemberChange(newMember);
+                }}
+            />
+            <PayDebtDialog
+                open={isPayDebtOpen}
+                onOpenChange={setIsPayDebtOpen}
+                member={activeMember}
+                onSuccess={(updatedMember) => {
+                    onMemberChange(updatedMember);
                 }}
             />
         </div>

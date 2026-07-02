@@ -21,8 +21,9 @@ export function useBulkCheckout() {
             // 1. Submit checkout transaction
             const response = await apiPost<ApiResponse<Receipt>>("/v1/transactions", payload);
 
-            // 2. Award member points if transaction succeeds and a member is selected
-            if (memberUid && grandTotal > 0 && response.data) {
+            // 2. Award member points if transaction succeeds, member is selected, and point system is enabled
+            const pointSystemEnable = getSetting("point_system_enable", "true") === "true";
+            if (pointSystemEnable && memberUid && grandTotal > 0 && response.data) {
                 const pointRate = parseFloat(getSetting("point_rate", "1000")) || 1000;
                 const points = Math.floor(grandTotal / pointRate);
 

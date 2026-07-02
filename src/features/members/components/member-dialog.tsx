@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useCreateMember, useUpdateMember } from "../api/members-api";
 import type { MemberInput } from "../schemas/member-schema";
 import type { Member } from "../types";
+import { useSettingsStore } from "@/stores/settings-store";
 
 interface MemberDialogProps {
     open: boolean;
@@ -27,6 +28,9 @@ export function MemberDialog({
     const createMember = useCreateMember();
     const updateMember = useUpdateMember();
     const isEdit = !!editingMember;
+
+    const getSetting = useSettingsStore((state) => state.getSetting);
+    const pointSystemEnable = getSetting("point_system_enable", "true") === "true";
 
     const { handleSubmit } = useFormContext<MemberInput>();
     const isPending = createMember.isPending || updateMember.isPending;
@@ -144,20 +148,22 @@ export function MemberDialog({
                     />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className={pointSystemEnable ? "grid grid-cols-2 gap-4" : "grid grid-cols-1 gap-4"}>
                     {/* Poin */}
-                    <FormInput<MemberInput>
-                        name="poin"
-                        label="Poin Awal"
-                        type="number"
-                        placeholder="0"
-                        disabled={isPending || isEdit} // only allowed on create, or standard edit
-                        onChange={(e) => {
-                            // Convert to number
-                            const val = e.target.value;
-                            return val === "" ? 0 : Number(val);
-                        }}
-                    />
+                    {pointSystemEnable && (
+                        <FormInput<MemberInput>
+                            name="poin"
+                            label="Poin Awal"
+                            type="number"
+                            placeholder="0"
+                            disabled={isPending || isEdit} // only allowed on create, or standard edit
+                            onChange={(e) => {
+                                // Convert to number
+                                const val = e.target.value;
+                                return val === "" ? 0 : Number(val);
+                            }}
+                        />
+                    )}
 
                     {/* Status */}
                     <FormSelect<MemberInput>
