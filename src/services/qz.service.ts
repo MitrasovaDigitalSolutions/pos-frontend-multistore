@@ -15,14 +15,18 @@ class QZService {
             return data;
         });
 
-        qz.security.setSignaturePromise(async (toSign: string) => {
-            console.log("TO SIGN:", toSign);
-            const { data } = await axios.post("/api/proxy/v1/qz/sign", { toSign });
-            console.log("SIGNATURE:", data);
-            if (!data) {
-                throw new Error("Signature gagal dibuat");
-            }
-            return data;
+        qz.security.setSignaturePromise(async (toSign) => {
+            const res = await fetch("/api/proxy/v1/qz/sign", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ toSign }),
+            });
+
+            const signature = await res.text();
+
+            return signature;
         });
 
         this.initialized = true;
