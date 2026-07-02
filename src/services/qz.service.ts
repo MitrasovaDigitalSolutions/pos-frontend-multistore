@@ -65,11 +65,10 @@ class QZService {
     private useUnsignedMode() {
         this.securityMode = "unsigned";
         try {
-            // QZ Tray must allow unsigned requests for offline printing in this mode.
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            qz.security.setCertificatePromise(null as any);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            qz.security.setSignaturePromise(null as any);
+            // QZ Tray still expects promise handlers. Empty values only work when
+            // the installed QZ Tray allows unsigned requests.
+            qz.security.setCertificatePromise(() => Promise.resolve(""));
+            qz.security.setSignaturePromise(() => Promise.resolve(""));
         } catch (clearErr) {
             console.warn("Gagal mereset keamanan QZ Tray:", clearErr);
         }
