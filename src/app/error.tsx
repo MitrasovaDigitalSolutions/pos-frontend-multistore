@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 
@@ -10,6 +11,17 @@ export default function Error({
     error: Error & { digest?: string };
     reset: () => void;
 }) {
+    useEffect(() => {
+        const isChunkError =
+            error.message &&
+            (error.message.toLowerCase().includes("chunk") ||
+                error.message.toLowerCase().includes("loading"));
+
+        if (isChunkError) {
+            window.location.reload();
+        }
+    }, [error]);
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
             <div className="text-center space-y-4 max-w-md">

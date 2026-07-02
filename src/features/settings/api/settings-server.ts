@@ -4,7 +4,7 @@ export async function getSettingsOnServer(): Promise<AppSetting[]> {
     try {
         const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
         const res = await fetch(`${apiUrl}/api/v1/settings`, {
-            next: { revalidate: 300 } // Cache settings for 5 minutes (300 seconds)
+            cache: "no-store"
         });
         if (!res.ok) {
             console.error("Failed to fetch settings from server, status:", res.status);
