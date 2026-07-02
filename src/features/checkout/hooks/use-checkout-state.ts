@@ -103,6 +103,7 @@ export function useCheckoutState() {
     const [isPayModalOpen, setIsPayModalOpen] = useState(false);
     const [isReceiptOpen, setIsReceiptOpen] = useState(false);
     const [isHoldListOpen, setIsHoldListOpen] = useState(false);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
 
     // Receipt data (after successful payment)
@@ -349,11 +350,17 @@ export function useCheckoutState() {
     }, [storeHoldList, removeHoldTransaction, activeRecallId, addHoldTransaction, namaTransaksi]);
 
     const printOnlineReceipt = useCallback(async (uid: string) => {
+        const printerName = getSetting("printer_id");
+        if (!printerName) {
+            toast.warning("Printer belum dikonfigurasi! Membuka menu Pengaturan...");
+            setIsSettingsOpen(true);
+            return;
+        }
+
         const toastId = toast.success("Mencetak struk...");
         try {
             const { data } = await axios.get(`/api/proxy/v1/transactions-print/${uid}`);
             const receiptText = buildReceipt(data);
-            const printerName = getSetting("printer_id") || "EPSON LX-310 ESC/P";
             await QZService.print(printerName, receiptText);
         } catch (err) {
             console.error("Gagal mencetak struk:", err);
@@ -480,6 +487,8 @@ export function useCheckoutState() {
         setIsReceiptOpen,
         isHoldListOpen,
         setIsHoldListOpen,
+        isSettingsOpen,
+        setIsSettingsOpen,
         namaTransaksi,
         setNamaTransaksi,
         isProcessing,
