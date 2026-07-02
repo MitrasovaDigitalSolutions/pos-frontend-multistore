@@ -162,6 +162,7 @@ export function PaymentDialog({
                 product_id: item.product_uid,
                 product_uid: item.product_uid,
                 quantity: item.quantity,
+                harga_satuan: item.harga_satuan,
             })),
         };
 
