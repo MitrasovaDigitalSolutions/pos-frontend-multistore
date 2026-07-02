@@ -3,33 +3,48 @@ import axios from "axios";
 
 class QZService {
     private initialized = false;
-    private initSecurity() {
+    private async initSecurity() {
         if (this.initialized) return;
 
-        qz.security.setCertificatePromise(async () => {
-            const { data } = await axios.get("/api/proxy/v1/qz/certificate");
+        try {
+            if (typeof window !== "undefined" && !window.navigator.onLine) {
+                throw new Error("Browser is offline");
+            }
+
+            const { data } = await axios.get("/api/proxy/v1/qz/certificate", { timeout: 1000 });
             console.log("CERTIFICATE:", data);
             if (!data) {
                 throw new Error("Certificate tidak ditemukan");
             }
-            return data;
-        });
 
-        qz.security.setSignaturePromise(async (toSign: string) => {
-            console.log("TO SIGN:", toSign);
-            const { data } = await axios.post("/api/proxy/v1/qz/sign", { toSign });
-            console.log("SIGNATURE:", data);
-            if (!data) {
-                throw new Error("Signature gagal dibuat");
+            qz.security.setCertificatePromise(() => Promise.resolve(data));
+
+            qz.security.setSignaturePromise(async (toSign: string) => {
+                console.log("TO SIGN:", toSign);
+                const { data: sig } = await axios.post("/api/proxy/v1/qz/sign", { toSign }, { timeout: 2000 });
+                console.log("SIGNATURE:", sig);
+                if (!sig) {
+                    throw new Error("Signature gagal dibuat");
+                }
+                return sig;
+            });
+
+            this.initialized = true;
+        } catch (err) {
+            console.warn("Gagal memuat sertifikat QZ Tray (offline/error), beralih ke mode unsigned:", err);
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                qz.security.setCertificatePromise(null as any);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                qz.security.setSignaturePromise(null as any);
+            } catch (clearErr) {
+                console.warn("Gagal mereset keamanan QZ Tray:", clearErr);
             }
-            return data;
-        });
-
-        this.initialized = true;
+        }
     }
 
     async connect() { 
-        this.initSecurity(); 
+        await this.initSecurity(); 
         if (qz.websocket.isActive()) { 
             return; 
         } 
