@@ -19,6 +19,19 @@ class QZService {
 
             qz.security.setCertificatePromise(() => Promise.resolve(data));
 
+            qz.security.setSignaturePromise(async (toSign) => {
+                const res = await fetch("/api/proxy/v1/qz/sign", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ toSign }),
+                });
+
+                const signature = await res.text();
+
+                return signature;
+            });
             qz.security.setSignaturePromise(async (toSign: string) => {
                 console.log("TO SIGN:", toSign);
                 const { data: sig } = await axios.post("/api/proxy/v1/qz/sign", { toSign }, { timeout: 2000 });
@@ -43,17 +56,17 @@ class QZService {
         }
     }
 
-    async connect() { 
-        await this.initSecurity(); 
-        if (qz.websocket.isActive()) { 
-            return; 
-        } 
-        try { 
-            await qz.websocket.connect(); 
-        } catch (error) { 
-            console.error("Gagal terhubung ke QZ Tray:", error); 
-            throw new Error("Gagal terhubung ke QZ Tray. Pastikan aplikasi QZ Tray sedang berjalan."); 
-        } 
+    async connect() {
+        await this.initSecurity();
+        if (qz.websocket.isActive()) {
+            return;
+        }
+        try {
+            await qz.websocket.connect();
+        } catch (error) {
+            console.error("Gagal terhubung ke QZ Tray:", error);
+            throw new Error("Gagal terhubung ke QZ Tray. Pastikan aplikasi QZ Tray sedang berjalan.");
+        }
     }
 
     async disconnect() {
