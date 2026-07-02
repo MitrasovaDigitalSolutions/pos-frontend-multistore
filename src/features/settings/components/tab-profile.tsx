@@ -1,0 +1,122 @@
+"use client";
+
+import { type StoreSettingsInput } from "../schemas/settings-schema";
+import { Card, CardContent } from "@/components/ui/card";
+import { Store, Info } from "lucide-react";
+import { FormImageUpload } from "@/components/forms/form-image-upload";
+import { FormInput } from "@/components/forms/form-input";
+import { FormTextarea } from "@/components/forms/form-textarea";
+import { Scrollable } from "@/components/ui/scrollable";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+
+interface TabProfileProps {
+    isSaving: boolean;
+    initialLogoUrl: string;
+}
+
+function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }) {
+    return (
+        <div className="flex items-center gap-1.5 mb-1.5 select-none">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                {label}
+            </span>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <button type="button" className="p-0 border-none bg-transparent cursor-help text-slate-400 hover:text-slate-500 transition-colors flex items-center">
+                        <Info size={12} />
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs max-w-xs bg-slate-950 text-white rounded-lg p-2 shadow-lg border border-slate-800">
+                    {tooltip}
+                </TooltipContent>
+            </Tooltip>
+        </div>
+    );
+}
+
+export function TabProfile({ isSaving, initialLogoUrl }: TabProfileProps) {
+    return (
+        <TooltipProvider delayDuration={150}>
+            <Card className="border border-slate-100 rounded-2xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] bg-white overflow-hidden h-[500px] flex flex-col w-full">
+                {/* Header (pinned) */}
+                <div className="p-5 pb-3 border-b border-slate-100 shrink-0">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100/60 shadow-sm">
+                            <Store size={15} />
+                        </div>
+                        <div>
+                            <h3 className="text-xs font-black text-slate-800 uppercase tracking-wide">Identitas Toko</h3>
+                            <p className="text-xs text-slate-400 mt-0.5">Informasi profil dasar bisnis dan logo resmi Anda</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Scrollable Content */}
+                <Scrollable className="flex-1 min-h-0 w-full">
+                    <CardContent className="p-5 space-y-5">
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                            {/* Logo Uploader Panel */}
+                            <div className="md:col-span-4 lg:col-span-3 space-y-2">
+                                <LabelWithTooltip
+                                    label="Logo Toko"
+                                    tooltip="Logo resmi toko format JPG/PNG/WEBP maks 2MB."
+                                />
+                                <div className="border border-slate-150 rounded-2xl p-2.5 bg-slate-50/50">
+                                    <FormImageUpload<StoreSettingsInput>
+                                        name="app_logo_url"
+                                        initialUrl={initialLogoUrl}
+                                        disabled={isSaving}
+                                        className="h-[180px] min-h-0 [&>div]:h-[180px] [&>div]:min-h-0 [&>div]:md:min-h-0"
+                                    />
+                                </div>
+                                <p className="text-xs text-slate-400 leading-relaxed text-center">
+                                    Rasio 1:1, JPG/PNG/WEBP maks 2MB.
+                                </p>
+                            </div>
+
+                            {/* Text Fields Panel */}
+                            <div className="md:col-span-8 lg:col-span-9 space-y-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="flex flex-col">
+                                        <LabelWithTooltip
+                                            label="Nama Toko"
+                                            tooltip="Nama resmi toko yang dicetak pada bagian paling atas kop struk belanja."
+                                        />
+                                        <FormInput<StoreSettingsInput>
+                                            name="app_name"
+                                            placeholder="Masukkan nama toko..."
+                                            disabled={isSaving}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <LabelWithTooltip
+                                            label="Nomor Telepon"
+                                            tooltip="Nomor kontak resmi toko Anda untuk keperluan transaksi atau informasi."
+                                        />
+                                        <FormInput<StoreSettingsInput>
+                                            name="app_phone"
+                                            placeholder="Masukkan nomor telepon..."
+                                            disabled={isSaving}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex flex-col">
+                                    <LabelWithTooltip
+                                        label="Alamat Toko"
+                                        tooltip="Alamat fisik lengkap toko yang dicetak di baris alamat kop struk belanja."
+                                    />
+                                    <FormTextarea<StoreSettingsInput>
+                                        name="app_address"
+                                        placeholder="Masukkan alamat lengkap toko..."
+                                        disabled={isSaving}
+                                        className="min-h-[110px] text-xs"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Scrollable>
+            </Card>
+        </TooltipProvider>
+    );
+}

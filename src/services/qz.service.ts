@@ -44,6 +44,12 @@ class QZService {
         }
     }
 
+    async findAllPrinters(): Promise<string[]> {
+        await this.connect();
+        const printers = await qz.printers.find();
+        return Array.isArray(printers) ? printers : [printers];
+    }
+
     async print(printer: string, text: string) {
 
         await this.connect();

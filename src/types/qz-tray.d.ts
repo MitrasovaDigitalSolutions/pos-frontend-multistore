@@ -17,7 +17,7 @@ declare module 'qz-tray' {
         };
 
         printers: {
-            find(name?: string): Promise<string>;
+            find(name?: string): Promise<string | string[]>;
         };
 
         configs: {
