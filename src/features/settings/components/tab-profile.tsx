@@ -46,7 +46,7 @@ export function TabProfile({ isSaving, initialLogoUrl }: TabProfileProps) {
                         </div>
                         <div>
                             <h3 className="text-xs font-black text-slate-800 uppercase tracking-wide">Identitas Toko</h3>
-                            <p className="text-xs text-slate-400 font-bold mt-0.5">Informasi profil dasar bisnis dan logo resmi Anda</p>
+                            <p className="text-xs text-slate-400 mt-0.5">Informasi profil dasar bisnis dan logo resmi Anda</p>
                         </div>
                     </div>
                 </div>

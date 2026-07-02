@@ -43,19 +43,47 @@ export function TabPrinter({
     loadPrinters,
     qzError,
 }: TabPrinterProps) {
+    const renderStatusBadge = () => {
+        if (isLoadingPrinters) {
+            return (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100/60 text-[10px] font-bold animate-pulse">
+                    <Loader2 className="animate-spin" size={10} />
+                    Memindai...
+                </div>
+            );
+        }
+        if (qzError) {
+            return (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-100/60 text-[10px] font-bold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                    Terputus
+                </div>
+            );
+        }
+        return (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100/60 text-[10px] font-bold font-sans">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                QZ Tray: Aktif
+            </div>
+        );
+    };
+
     return (
         <TooltipProvider delayDuration={150}>
             <Card className="border border-slate-100 rounded-2xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] bg-white overflow-hidden h-[500px] flex flex-col w-full">
                 {/* Header (pinned) */}
-                <div className="p-5 pb-3 border-b border-slate-100 shrink-0">
+                <div className="p-5 pb-3 border-b border-slate-100 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-lg bg-slate-50 text-slate-600 flex items-center justify-center border border-slate-100/60 shadow-sm">
                             <IconPrinter size={15} />
                         </div>
                         <div>
                             <h3 className="text-xs font-black text-slate-800 uppercase tracking-wide">Perangkat Printer</h3>
-                            <p className="text-xs text-slate-400 font-bold mt-0.5">ID printer thermal default untuk mencetak struk belanja</p>
+                            <p className="text-xs text-slate-400 mt-0.5">ID printer default untuk mencetak struk belanja</p>
                         </div>
+                    </div>
+                    <div className="shrink-0 self-start sm:self-auto">
+                        {renderStatusBadge()}
                     </div>
                 </div>
 
@@ -85,7 +113,7 @@ export function TabPrinter({
                                     <div className="flex items-center justify-between">
                                         <LabelWithTooltip
                                             label="Nama / ID Printer"
-                                            tooltip="Pilih printer thermal default yang terhubung ke komputer Anda. Terkoneksi menggunakan aplikasi QZ Tray."
+                                            tooltip="Pilih printer  default yang terhubung ke komputer Anda. Terkoneksi menggunakan aplikasi QZ Tray."
                                         />
                                         <button
                                             type="button"
@@ -120,7 +148,7 @@ export function TabPrinter({
                                     </div>
                                     <ol className="text-xs text-slate-500 space-y-2 list-decimal list-inside pl-1 leading-relaxed">
                                         <li>
-                                            Pastikan printer thermal struk Anda sudah dinyalakan dan terhubung ke komputer via USB/Network.
+                                            Pastikan printer  struk Anda sudah dinyalakan dan terhubung ke komputer via USB/Network.
                                         </li>
                                         <li>
                                             Instal dan jalankan aplikasi pendukung <strong>QZ Tray</strong> di komputer kasir.

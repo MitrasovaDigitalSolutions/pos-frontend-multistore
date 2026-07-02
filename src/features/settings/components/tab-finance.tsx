@@ -44,7 +44,7 @@ export function TabFinance({ isSaving }: TabFinanceProps) {
                         </div>
                         <div>
                             <h3 className="text-xs font-black text-slate-800 uppercase tracking-wide">Keuangan & Pajak</h3>
-                            <p className="text-xs text-slate-400 font-bold mt-0.5">Pengaturan tarif PPN dan poin loyalitas</p>
+                            <p className="text-xs text-slate-400 mt-0.5">Pengaturan tarif PPN dan poin loyalitas</p>
                         </div>
                     </div>
                 </div>

@@ -24,7 +24,7 @@ export function TabCash({ isSaving, cashAccountOptions = [] }: TabCashProps) {
                         </div>
                         <div>
                             <h3 className="text-xs font-black text-slate-800 uppercase tracking-wide">Pemetaan Kas Default</h3>
-                            <p className="text-xs text-slate-400 font-bold mt-0.5">Akun kas default untuk transaksi dan operasional</p>
+                            <p className="text-xs text-slate-400 mt-0.5">Akun kas default untuk transaksi dan operasional</p>
                         </div>
                     </div>
                 </div>
@@ -53,7 +53,7 @@ export function TabCash({ isSaving, cashAccountOptions = [] }: TabCashProps) {
                                                 </TooltipContent>
                                             </Tooltip>
                                         </div>
-                                        <p className="text-xs text-slate-400 font-medium leading-relaxed max-w-md">
+                                        <p className="text-xs text-slate-400  max-w-md">
                                             Digunakan untuk menampung pendapatan uang tunai langsung dari meja kasir selama shift berjalan.
                                         </p>
                                     </div>
@@ -88,7 +88,7 @@ export function TabCash({ isSaving, cashAccountOptions = [] }: TabCashProps) {
                                                 </TooltipContent>
                                             </Tooltip>
                                         </div>
-                                        <p className="text-xs text-slate-400 font-medium leading-relaxed max-w-md">
+                                        <p className="text-xs text-slate-400  max-w-md">
                                             Brankas utama toko untuk menyimpan uang cash cadangan dan menerima setoran akhir dari kasir.
                                         </p>
                                     </div>
@@ -123,7 +123,7 @@ export function TabCash({ isSaving, cashAccountOptions = [] }: TabCashProps) {
                                                 </TooltipContent>
                                             </Tooltip>
                                         </div>
-                                        <p className="text-xs text-slate-400 font-medium leading-relaxed max-w-md">
+                                        <p className="text-xs text-slate-400  max-w-md">
                                             Digunakan untuk pencatatan transaksi non-tunai seperti kartu debit/kredit, transfer bank, dan QRIS.
                                         </p>
                                     </div>

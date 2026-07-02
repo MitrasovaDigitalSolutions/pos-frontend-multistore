@@ -14,7 +14,7 @@ import QZService from "@/services/qz.service";
 // UI Components
 import { Card } from "@/components/ui/card";
 import { IconAdjustments, IconPrinter } from "@tabler/icons-react";
-import { Loader2, Store, Wallet } from "lucide-react";
+import { Store, Wallet } from "lucide-react";
 import { Scrollable } from "@/components/ui/scrollable";
 
 // Subcomponents
@@ -237,44 +237,11 @@ export function StoreProfile() {
         }
     };
 
-    const getPrinterConnectionBadge = () => {
-        if (isLoadingPrinters) {
-            return (
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100/60 text-xs font-bold animate-pulse">
-                    <Loader2 className="animate-spin" size={10} />
-                    Memindai Printer...
-                </div>
-            );
-        }
-        if (qzError) {
-            return (
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-100/60 text-xs font-bold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                    QZ Tray: Terputus
-                </div>
-            );
-        }
-        return (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100/60 text-xs font-bold">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                QZ Tray: Aktif
-            </div>
-        );
-    };
 
     // Premium Skeleton Loading UI matching the new layout
     if (isSettingsLoading || isCashAccountsLoading) {
         return (
             <div className="w-full space-y-6 animate-pulse">
-                {/* Header Skeleton */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-                    <div className="space-y-1.5 flex-1">
-                        <div className="h-4 bg-slate-200 rounded w-1/4" />
-                        <div className="h-2.5 bg-slate-100 rounded w-1/3" />
-                    </div>
-                    <div className="h-6 bg-slate-200 rounded-full w-28" />
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
                     {/* Left Column - Navigation Skeleton */}
                     <div className="md:col-span-4 lg:col-span-3">
@@ -328,19 +295,6 @@ export function StoreProfile() {
     return (
         <FormProvider {...methods}>
             <form onSubmit={methods.handleSubmit(onSubmit, onError)} className="w-full space-y-6 relative">
-                {/* Header Section */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-                    <div className="space-y-1">
-                        <h2 className="text-base font-bold text-slate-800">Pengaturan Toko</h2>
-                        <p className="text-xs text-slate-400 font-bold">
-                            Kelola profil toko, keuangan, kas, dan printer thermal.
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-2 self-start sm:self-auto">
-                        {getPrinterConnectionBadge()}
-                    </div>
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
                     {/* Tab Nav - Left Column */}
                     <div className="md:col-span-4 lg:col-span-3">
