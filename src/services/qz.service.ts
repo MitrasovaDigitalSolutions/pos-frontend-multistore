@@ -5,6 +5,7 @@ const QZ_CERT_CACHE_KEY = "qz_certificate_cache";
 
 class QZService {
     private initialized = false;
+    private activeConnectionSigned = false;
 
     private setUnsignedMode() {
         try {
@@ -72,6 +73,12 @@ class QZService {
                     console.warn("Gagal membuat signature, mereset QZ Tray ke mode unsigned:", signErr);
                     this.setUnsignedMode();
                     this.initialized = false;
+                    this.activeConnectionSigned = false;
+                    try {
+                        await qz.websocket.disconnect();
+                    } catch (discErr) {
+                        console.warn("Gagal memutuskan koneksi saat reset:", discErr);
+                    }
                     throw signErr;
                 }
             });
@@ -85,12 +92,35 @@ class QZService {
 
     async connect() {
         const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+
+        // If the network status (online/offline) doesn't match the active connection mode,
+        // we must disconnect the websocket so it can reconnect in the correct mode.
+        if (qz.websocket.isActive()) {
+            if (isOffline && this.activeConnectionSigned) {
+                console.log("Aplikasi offline tapi koneksi QZ aktif dalam mode signed. Memutus koneksi...");
+                try {
+                    await this.disconnect();
+                } catch (err) {
+                    console.warn("Gagal memutus koneksi signed:", err);
+                }
+            } else if (!isOffline && !this.activeConnectionSigned && this.initialized) {
+                console.log("Aplikasi online tapi koneksi QZ aktif dalam mode unsigned. Memutus koneksi...");
+                try {
+                    await this.disconnect();
+                } catch (err) {
+                    console.warn("Gagal memutus koneksi unsigned:", err);
+                }
+            }
+        }
+
         if (isOffline) {
             console.warn("Aplikasi offline. Menggunakan mode unsigned untuk QZ Tray.");
             this.setUnsignedMode();
             this.initialized = false;
+            this.activeConnectionSigned = false;
         } else {
             await this.initSecurity();
+            this.activeConnectionSigned = true;
         }
 
         if (qz.websocket.isActive()) {
