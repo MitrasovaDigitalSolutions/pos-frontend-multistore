@@ -20,6 +20,7 @@ interface CheckoutTopBarProps {
     onSyncClick?: () => void;
     offlineReadiness?: OfflineReadinessState;
     onCatalogSyncRequest?: () => void;
+    isCatalogSyncing?: boolean;
 }
 
 export function CheckoutTopBar({
@@ -35,6 +36,7 @@ export function CheckoutTopBar({
     onSyncClick,
     offlineReadiness,
     onCatalogSyncRequest,
+    isCatalogSyncing = false,
 }: CheckoutTopBarProps) {
     const getSetting = useSettingsStore((state) => state.getSetting);
     const appName = getSetting("app_name", "Mitrasova POS");
@@ -103,6 +105,7 @@ export function CheckoutTopBar({
                     <OfflineReadinessBadge
                         state={offlineReadiness}
                         onRefreshRequest={onCatalogSyncRequest}
+                        isSyncing={isCatalogSyncing}
                     />
                 )}
 

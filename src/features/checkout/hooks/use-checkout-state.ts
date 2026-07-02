@@ -1,7 +1,7 @@
 "use client";
 
 import { lookupBarcode } from "@/features/checkout/api/checkout-api";
-import type { CartItem, HoldTransaction, Receipt } from "@/features/checkout/types";
+import type { CartItem, HoldTransaction, Receipt, ReceiptItem } from "@/features/checkout/types";
 import { useProducts } from "@/features/products/api/products-api";
 import type { Product } from "@/features/products/types";
 import { useAppRouter } from "@/hooks/use-app-router";
@@ -372,6 +372,70 @@ export function useCheckoutState() {
         }
     }, [getSetting]);
 
+    const printOfflineReceipt = useCallback(async (uid: string) => {
+        const printerName = getSetting("printer_id");
+        if (!printerName) {
+            toast.warning("Printer belum dikonfigurasi! Membuka menu Pengaturan...");
+            setIsSettingsOpen(true);
+            return;
+        }
+
+        const toastId = toast.success("Mencetak struk offline...");
+        try {
+            const clientUid = uid.startsWith("OFFLINE-") ? uid.replace("OFFLINE-", "") : uid;
+            const record = await db.offlineTransactions.get(clientUid);
+            if (!record || !record.receiptData) {
+                toast.error("Data transaksi offline tidak ditemukan.");
+                return;
+            }
+
+            const receiptData = record.receiptData;
+
+            // Prepare items with subtotal computed (since buildReceipt expects item.subtotal)
+            const formattedItems = (receiptData.items || []).map((item: ReceiptItem) => ({
+                ...item,
+                subtotal: item.harga_satuan * item.kuantitas,
+            }));
+
+            // Prepare the sale object matching ReceiptData.sale
+            const sale = {
+                uid: receiptData.uid,
+                nomor_transaksi: receiptData.uid,
+                nama_transaksi: receiptData.nama_transaksi,
+                created_at: record.timestamp || new Date().toISOString(),
+                user: {
+                    name: user?.name || "Kasir Offline",
+                },
+                member: receiptData.member,
+                metode_pembayaran: receiptData.metode_pembayaran,
+                subtotal: receiptData.subtotal,
+                diskon: receiptData.diskon || 0,
+                total: receiptData.total,
+                nominal_bayar: receiptData.nominal_bayar || 0,
+                kembalian: receiptData.kembalian || 0,
+                cash_received: receiptData.cash_received || 0,
+                debt_amount: receiptData.debt_amount || 0,
+                items: formattedItems,
+            };
+
+            const setting = {
+                app_name: getSetting("app_name", "Mitrasova POS"),
+                app_address: getSetting("app_address", "Indonesia"),
+                app_phone: getSetting("app_phone", ""),
+            };
+
+            const receiptText = buildReceipt({ sale, setting });
+            await QZService.print(printerName, receiptText);
+        } catch (err) {
+            console.error("Gagal mencetak struk offline:", err);
+            toast.error("Gagal mencetak struk offline. Pastikan QZ Tray aktif.");
+        } finally {
+            setTimeout(() => {
+                toast.dismiss(toastId);
+            }, 3000);
+        }
+    }, [getSetting, user]);
+
     const handleNewTransaction = () => {
         clearCart();
         setActiveRecallId(null);
@@ -405,15 +469,14 @@ export function useCheckoutState() {
         if (targetId) {
             const isOfflineTx = String(targetId).startsWith("OFFLINE-");
             if (isOfflineTx) {
-                window.print();
-                toast.success("Mencetak ulang struk...");
+                printOfflineReceipt(String(targetId));
             } else {
                 printOnlineReceipt(String(targetId));
             }
         } else {
             toast.error("Tidak ada transaksi yang dapat dicetak ulang.");
         }
-    }, [lastTransactionId, printOnlineReceipt]);
+    }, [lastTransactionId, printOfflineReceipt, printOnlineReceipt]);
 
     // ─── Clock & Keyboard Shortcuts ───────────────────────────────────────────
     useEffect(() => {

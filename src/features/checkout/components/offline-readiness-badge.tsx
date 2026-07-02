@@ -20,10 +20,12 @@ import {
 import { cn } from "@/lib/utils";
 import type { OfflineReadinessState, OfflineReadinessStatus } from "@/hooks/use-offline-readiness";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface OfflineReadinessBadgeProps {
     state: OfflineReadinessState;
     onRefreshRequest?: () => void;
+    isSyncing?: boolean;
 }
 
 interface StatusConfig {
@@ -97,6 +99,7 @@ function formatLastSynced(iso: string | null): string {
 export function OfflineReadinessBadge({
     state,
     onRefreshRequest,
+    isSyncing = false,
 }: OfflineReadinessBadgeProps) {
     const [isOpen, setIsOpen] = useState(false);
     const config = getStatusConfig(state.status);
@@ -207,37 +210,51 @@ export function OfflineReadinessBadge({
                         <div className="border-t border-slate-800/80 my-3" />
 
                         {/* Last Synced */}
-                        <div className="flex items-center justify-between text-slate-500 text-[11px]">
+                        <div className="flex items-center justify-between text-slate-500 text-[11px] mb-3">
                             <span>Terakhir sinkronisasi:</span>
                             <span className="text-slate-350 font-semibold">
                                 {formatLastSynced(state.lastSyncedAt)}
                             </span>
                         </div>
 
+                        {/* Manual Sync Button */}
+                        {onRefreshRequest && (
+                            <button
+                                onClick={async () => {
+                                    toast.promise(
+                                        (async () => {
+                                            await onRefreshRequest();
+                                        })(),
+                                        {
+                                            loading: "Menyinkronkan katalog produk & member...",
+                                            success: "Katalog berhasil disinkronisasi!",
+                                            error: "Gagal menyinkronkan katalog.",
+                                        }
+                                    );
+                                }}
+                                disabled={isSyncing}
+                                className={cn(
+                                    "w-full flex items-center justify-center gap-1.5 font-bold transition-all cursor-pointer outline-none py-2 rounded-lg text-slate-200 border border-slate-700 bg-slate-850 hover:bg-slate-800 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none text-xs mb-3",
+                                    isSyncing && "bg-slate-800 text-slate-400 border-slate-800"
+                                )}
+                            >
+                                <RefreshCw size={13} className={cn(isSyncing && "animate-spin")} />
+                                <span>{isSyncing ? "Menyinkronkan..." : "Jalankan Sinkronisasi"}</span>
+                            </button>
+                        )}
+
                         {/* Advice */}
                         {(state.status === "partial" || state.status === "not-ready") && !state.isDevMode && (
-                            <div className="mt-3 bg-amber-950/20 border border-amber-900/30 rounded-lg px-3 py-2 text-amber-300/90 text-[11px] leading-snug flex flex-col gap-2">
+                            <div className="mt-1 bg-amber-950/20 border border-amber-900/30 rounded-lg px-3 py-2 text-amber-300/90 text-[11px] leading-snug flex flex-col gap-2">
                                 <div className="flex items-start gap-1.5">
                                     <Lightbulb size={14} className="text-amber-400 shrink-0 mt-0.5" />
                                     <span>Pastikan terhubung ke internet dan buka halaman checkout agar sistem dapat mengunduh data untuk offline.</span>
                                 </div>
-                                {onRefreshRequest && (
-                                    <button
-                                        onClick={() => {
-                                            onRefreshRequest();
-                                            setIsOpen(false);
-                                        }}
-                                        className="flex items-center gap-1 text-amber-400 hover:text-amber-350 font-semibold transition-colors cursor-pointer outline-none self-start bg-amber-500/10 hover:bg-amber-500/20 px-2.5 py-1 rounded-md border border-amber-500/20"
-                                    >
-                                        <RefreshCw size={12} />
-                                        Sinkronisasi Sekarang
-                                    </button>
-                                )}
                             </div>
                         )}
 
                         {state.status === "ready" && (
-                            <div className="mt-3 bg-emerald-950/20 border border-emerald-900/30 rounded-lg px-3 py-2 text-emerald-300/90 text-[11px] leading-snug flex items-start gap-1.5">
+                            <div className="mt-1 bg-emerald-950/20 border border-emerald-900/30 rounded-lg px-3 py-2 text-emerald-300/90 text-[11px] leading-snug flex items-start gap-1.5">
                                 <CheckCircle2 size={14} className="text-emerald-400 shrink-0 mt-0.5" />
                                 <span>Sistem siap digunakan secara offline. Transaksi akan disimpan lokal dan disinkronisasi otomatis saat kembali online.</span>
                             </div>

@@ -183,12 +183,12 @@ export function ReceiptDialog({
                     variant="outline"
                     onClick={() => {
                         if (receipt?.uid) {
-                            const isOfflineTx = String(receipt.uid).startsWith("OFFLINE-");
-                            if (isOfflineTx) {
-                                window.print();
+                            if (onReprint) {
+                                onReprint(String(receipt.uid));
                             } else {
-                                if (onReprint) {
-                                    onReprint(String(receipt.uid));
+                                const isOfflineTx = String(receipt.uid).startsWith("OFFLINE-");
+                                if (isOfflineTx) {
+                                    window.print();
                                 } else {
                                     window.open(`/api/proxy/v1/transactions-print/${receipt.uid}`, "_blank");
                                 }

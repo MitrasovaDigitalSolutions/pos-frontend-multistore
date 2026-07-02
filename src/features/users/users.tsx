@@ -14,9 +14,11 @@ import { userSchema, type UserInput } from "./schemas/user-schema";
 import type { User } from "./types";
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
+import { FormSelect } from "@/components/forms/form-select";
 
 interface UserFilterValues {
   search: string;
+  status: string;
 }
 
 export function Users() {
@@ -50,22 +52,36 @@ export function Users() {
   const [perPage, setPerPage] = useState(10);
   const [sortBy, setSortBy] = useState<string | undefined>("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("asc");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [appliedFilters, setAppliedFilters] = useState<{
+    search?: string;
+    status?: string;
+  }>(() => ({
+    status: "active",
+  }));
 
   const filterMethods = useForm<UserFilterValues>({
     defaultValues: {
       search: "",
+      status: "active",
     },
   });
 
   const handleFilterSubmit = (data: UserFilterValues) => {
-    setDebouncedSearch(data.search);
+    setAppliedFilters({
+      search: data.search || undefined,
+      status: data.status !== "all" ? data.status : undefined,
+    });
     setPage(1);
   };
 
   const handleFilterReset = () => {
-    filterMethods.reset({ search: "" });
-    setDebouncedSearch("");
+    filterMethods.reset({
+      search: "",
+      status: "active",
+    });
+    setAppliedFilters({
+      status: "active",
+    });
     setPage(1);
   };
 
@@ -74,7 +90,7 @@ export function Users() {
     per_page: perPage,
     sort_by: sortBy,
     sort_order: sortOrder,
-    search: debouncedSearch || undefined,
+    ...appliedFilters,
   });
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -195,6 +211,16 @@ export function Users() {
                     name="search"
                     label="Cari Pengguna"
                     placeholder="Cari berdasarkan nama atau username..."
+                  />
+                  <FormSelect<UserFilterValues>
+                    name="status"
+                    label="Status"
+                    options={[
+                      { value: "all", label: "Semua Status" },
+                      { value: "active", label: "Aktif" },
+                      { value: "inactive", label: "Nonaktif" },
+                    ]}
+                    placeholder="Semua Status"
                   />
                 </FilterForm>
               }

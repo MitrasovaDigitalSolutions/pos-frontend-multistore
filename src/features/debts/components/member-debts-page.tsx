@@ -37,12 +37,14 @@ export function MemberDebtsPage() {
     const [appliedFilters, setAppliedFilters] = useState<{
         search?: string;
         status?: string;
-    }>({});
+    }>(() => ({
+        status: "active",
+    }));
 
     const filterMethods = useForm<MemberDebtsFilterValues>({
         defaultValues: {
             search: "",
-            status: "all",
+            status: "active",
         },
     });
 
@@ -57,9 +59,11 @@ export function MemberDebtsPage() {
     const handleFilterReset = () => {
         filterMethods.reset({
             search: "",
-            status: "all",
+            status: "active",
         });
-        setAppliedFilters({});
+        setAppliedFilters({
+            status: "active",
+        });
         setPage(1);
     };
 
