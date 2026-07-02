@@ -79,6 +79,7 @@ export function SalesByCategoryView() {
           category_uid: cat.uid,
           category: cat.nama,
           total_sales: 0,
+          total_profit: 0,
           total_quantity: 0,
           percentage_sales: 0,
         });

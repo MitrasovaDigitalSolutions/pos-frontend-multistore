@@ -441,7 +441,7 @@ export function useCheckoutState() {
                 handleVoidDraft();
             } else if (e.key === "Escape") {
                 setIsPayModalOpen(false);
-                setIsCatalogOpen(false);
+                // setIsCatalogOpen(false);
                 setIsReceiptOpen(false);
                 setIsHoldListOpen(false);
             }

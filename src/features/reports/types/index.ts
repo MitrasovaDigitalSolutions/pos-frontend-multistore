@@ -213,6 +213,7 @@ export interface SalesByCategoryItem {
     category_uid: string | null;
     category: string;
     total_sales: number;
+    total_profit: number;
     total_quantity: number;
     percentage_sales: number;
 }
