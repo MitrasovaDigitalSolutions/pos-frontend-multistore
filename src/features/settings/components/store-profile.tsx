@@ -4,50 +4,25 @@ import { useCashAccounts } from "@/features/cash/api/cash-api";
 import { settingsApi } from "@/features/settings/api/settings-api";
 import { useSettingsStore } from "@/stores/settings-store";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { getImageUrl } from "@/lib/utils";
+import { getImageUrl, cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { storeSettingsSchema, type StoreSettingsInput } from "../schemas/settings-schema";
-
-// Reusable Form Components
-import { FormImageUpload } from "@/components/forms/form-image-upload";
-import { FormInput } from "@/components/forms/form-input";
-import { FormNumberInput } from "@/components/forms/form-number-input";
-import { FormSelect } from "@/components/forms/form-select";
-import { FormTextarea } from "@/components/forms/form-textarea";
+import QZService from "@/services/qz.service";
 
 // UI Components
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { IconAdjustments, IconInfoCircle, IconPrinter } from "@tabler/icons-react";
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
-import {
-    Loader2,
-    Save,
-    Store,
-    Wallet
-} from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { IconAdjustments, IconPrinter } from "@tabler/icons-react";
+import { Loader2, Store, Wallet } from "lucide-react";
+import { Scrollable } from "@/components/ui/scrollable";
 
-function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }) {
-    return (
-        <div className="flex items-center gap-1.5 mb-1.5 select-none">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                {label}
-            </span>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <button type="button" className="p-0 border-none bg-transparent cursor-help text-slate-400 hover:text-slate-500 transition-colors flex items-center">
-                        <IconInfoCircle size={13} />
-                    </button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-[10px] max-w-xs bg-slate-950 text-white rounded-lg p-2 shadow-lg border border-slate-800">
-                    {tooltip}
-                </TooltipContent>
-            </Tooltip>
-        </div>
-    );
-}
+// Subcomponents
+import { TabProfile } from "./tab-profile";
+import { TabFinance } from "./tab-finance";
+import { TabCash } from "./tab-cash";
+import { TabPrinter } from "./tab-printer";
+import { FloatingSaveBar } from "./floating-save-bar";
 
 export function StoreProfile() {
     const { settings, fetchSettings, isLoading: isSettingsLoading } = useSettingsStore();
@@ -55,6 +30,10 @@ export function StoreProfile() {
     const cashAccounts = cashAccountsData || [];
 
     const [isSaving, setIsSaving] = useState(false);
+    const [printerOptions, setPrinterOptions] = useState<{ value: string; label: string }[]>([]);
+    const [isLoadingPrinters, setIsLoadingPrinters] = useState(false);
+    const [qzError, setQzError] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState("profile");
 
     // Initialize React Hook Form with Zod schema resolver
     const methods = useForm<StoreSettingsInput>({
@@ -73,6 +52,50 @@ export function StoreProfile() {
         },
     });
 
+    const { formState: { dirtyFields, errors } } = methods;
+
+    // Tabs definition mapping to form fields
+    const tabs = [
+        {
+            id: "profile",
+            label: "Identitas Toko",
+            description: "Profil dasar & logo",
+            icon: Store,
+            fields: ["app_name", "app_phone", "app_address", "app_logo_url"] as const,
+        },
+        {
+            id: "finance",
+            label: "Keuangan & Pajak",
+            description: "PPN & loyalitas member",
+            icon: IconAdjustments,
+            fields: ["tax_rate_ppn", "point_rate"] as const,
+        },
+        {
+            id: "cash",
+            label: "Pemetaan Kas",
+            description: "Akun kas operasional",
+            icon: Wallet,
+            fields: ["cash_account_register_uid", "cash_account_main_uid", "cash_account_bank_uid"] as const,
+        },
+        {
+            id: "printer",
+            label: "Perangkat Printer",
+            description: "Printer struk belanja",
+            icon: IconPrinter,
+            fields: ["printer_id"] as const,
+        },
+    ];
+
+    // Check if a tab is dirty
+    const isTabDirty = (tabFields: readonly string[]) => {
+        return tabFields.some((field) => dirtyFields[field as keyof StoreSettingsInput]);
+    };
+
+    // Check if a tab has errors
+    const hasTabError = (tabFields: readonly string[]) => {
+        return tabFields.some((field) => errors[field as keyof StoreSettingsInput]);
+    };
+
     // Populate form data once settings are loaded from store
     useEffect(() => {
         if (Object.keys(settings).length > 0) {
@@ -90,6 +113,45 @@ export function StoreProfile() {
             });
         }
     }, [settings, methods]);
+
+    // Load printers from QZ Tray
+    const loadPrinters = async () => {
+        setIsLoadingPrinters(true);
+        setQzError(null);
+        try {
+            const list = await QZService.findAllPrinters();
+            const options = list.map((p) => ({ value: p, label: p }));
+
+            // Ensure currently saved printer_id is in the options list
+            const currentPrinter = methods.getValues("printer_id") || settings.printer_id;
+            if (currentPrinter && !list.includes(currentPrinter)) {
+                options.push({ value: currentPrinter, label: currentPrinter });
+            }
+
+            setPrinterOptions(options);
+        } catch (err) {
+            console.error("Gagal mendeteksi printer dari QZ Tray:", err);
+            setQzError("Gagal menghubungkan ke QZ Tray. Pastikan aplikasi QZ Tray telah berjalan.");
+
+            // Fallback: show the currently selected printer as the only option so it's not blank
+            const currentPrinter = methods.getValues("printer_id") || settings.printer_id;
+            if (currentPrinter) {
+                setPrinterOptions([{ value: currentPrinter, label: currentPrinter }]);
+            } else {
+                setPrinterOptions([]);
+            }
+        } finally {
+            setIsLoadingPrinters(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === "printer" && Object.keys(settings).length > 0) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            loadPrinters();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab, settings.printer_id]);
 
     // Format options for cash account selects
     const cashAccountOptions = cashAccounts.map((account) => ({
@@ -158,322 +220,218 @@ export function StoreProfile() {
         }
     };
 
-    // Premium Skeleton Loading UI
+    // Auto-tab switcher on validation errors
+    const onError = (formErrors: typeof errors) => {
+        const errorKeys = Object.keys(formErrors) as Array<keyof StoreSettingsInput>;
+        if (errorKeys.length > 0) {
+            const firstErrorKey = errorKeys[0];
+            const tabWithWarning = tabs.find((t) =>
+                (t.fields as readonly string[]).includes(firstErrorKey)
+            );
+            if (tabWithWarning) {
+                setActiveTab(tabWithWarning.id);
+                toast.error(`Input tidak valid pada bagian "${tabWithWarning.label}". Silakan periksa kembali.`);
+            } else {
+                toast.error("Ada kesalahan pada input form. Silakan periksa kembali.");
+            }
+        }
+    };
+
+    const getPrinterConnectionBadge = () => {
+        if (isLoadingPrinters) {
+            return (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100/60 text-xs font-bold animate-pulse">
+                    <Loader2 className="animate-spin" size={10} />
+                    Memindai Printer...
+                </div>
+            );
+        }
+        if (qzError) {
+            return (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-100/60 text-xs font-bold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                    QZ Tray: Terputus
+                </div>
+            );
+        }
+        return (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100/60 text-xs font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                QZ Tray: Aktif
+            </div>
+        );
+    };
+
+    // Premium Skeleton Loading UI matching the new layout
     if (isSettingsLoading || isCashAccountsLoading) {
         return (
-            <div className="w-full max-w-4xl mx-auto space-y-6 animate-pulse">
-                {/* Section 1: Identitas Toko Skeleton */}
-                <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-[0_2px_12px_rgba(15,23,42,0.015)] space-y-4">
-                    <div className="flex items-center gap-2 border-b border-slate-100 pb-3 mb-1">
-                        <div className="w-8 h-8 bg-slate-200 rounded-lg" />
-                        <div className="space-y-1.5 flex-1">
-                            <div className="h-3 bg-slate-200 rounded w-1/4" />
-                            <div className="h-2 bg-slate-100 rounded w-1/3" />
+            <div className="w-full space-y-6 animate-pulse">
+                {/* Header Skeleton */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                    <div className="space-y-1.5 flex-1">
+                        <div className="h-4 bg-slate-200 rounded w-1/4" />
+                        <div className="h-2.5 bg-slate-100 rounded w-1/3" />
+                    </div>
+                    <div className="h-6 bg-slate-200 rounded-full w-28" />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                    {/* Left Column - Navigation Skeleton */}
+                    <div className="md:col-span-4 lg:col-span-3">
+                        <div className="bg-white border border-slate-100 rounded-2xl p-2 shadow-sm space-y-2">
+                            {[1, 2, 3, 4].map((i) => (
+                                <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl border border-transparent">
+                                    <div className="w-8 h-8 bg-slate-200 rounded-lg" />
+                                    <div className="flex-1 space-y-1.5">
+                                        <div className="h-2.5 bg-slate-200 rounded w-2/3" />
+                                        <div className="h-2 bg-slate-100 rounded w-1/2" />
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
-                        <div className="md:col-span-4 space-y-2 w-full">
-                            <div className="h-3 bg-slate-100 rounded w-1/2" />
-                            <div className="h-[180px] bg-slate-50 border-2 border-dashed border-slate-100 rounded-2xl w-full" />
-                        </div>
-                        <div className="md:col-span-8 space-y-4 w-full">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <div className="h-3 bg-slate-100 rounded w-1/3" />
-                                    <div className="h-10 bg-slate-50 rounded-xl w-full" />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <div className="h-3 bg-slate-100 rounded w-1/3" />
-                                    <div className="h-10 bg-slate-50 rounded-xl w-full" />
+
+                    {/* Right Column - Card Skeleton */}
+                    <div className="md:col-span-8 lg:col-span-9">
+                        <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4 h-[500px]">
+                            <div className="flex items-center gap-2 border-b border-slate-100 pb-3 mb-1">
+                                <div className="w-8 h-8 bg-slate-200 rounded-lg" />
+                                <div className="space-y-1.5 flex-1">
+                                    <div className="h-3 bg-slate-200 rounded w-1/4" />
+                                    <div className="h-2 bg-slate-100 rounded w-1/3" />
                                 </div>
                             </div>
-                            <div className="space-y-1.5">
-                                <div className="h-3 bg-slate-100 rounded w-1/4" />
-                                <div className="h-[85px] bg-slate-50 rounded-xl w-full" />
+
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <div className="h-2.5 bg-slate-100 rounded w-1/3" />
+                                        <div className="h-10 bg-slate-50 rounded-xl w-full" />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <div className="h-2.5 bg-slate-100 rounded w-1/3" />
+                                        <div className="h-10 bg-slate-50 rounded-xl w-full" />
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <div className="h-2.5 bg-slate-100 rounded w-1/4" />
+                                    <div className="h-24 bg-slate-50 rounded-xl w-full" />
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                {/* Section 2: Keuangan & Pajak Skeleton */}
-                <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-[0_2px_12px_rgba(15,23,42,0.015)] space-y-4">
-                    <div className="flex items-center gap-2 border-b border-slate-100 pb-3 mb-1">
-                        <div className="w-8 h-8 bg-slate-200 rounded-lg" />
-                        <div className="space-y-1.5 flex-1">
-                            <div className="h-3 bg-slate-200 rounded w-1/4" />
-                            <div className="h-2 bg-slate-100 rounded w-1/3" />
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                            <div className="h-3 bg-slate-100 rounded w-1/3" />
-                            <div className="h-10 bg-slate-50 rounded-xl w-full" />
-                        </div>
-                        <div className="space-y-1.5">
-                            <div className="h-3 bg-slate-100 rounded w-1/3" />
-                            <div className="h-10 bg-slate-50 rounded-xl w-full" />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Section 3: Pemetaan Kas Default Skeleton */}
-                <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-[0_2px_12px_rgba(15,23,42,0.015)] space-y-4">
-                    <div className="flex items-center gap-2 border-b border-slate-100 pb-3 mb-1">
-                        <div className="w-8 h-8 bg-slate-200 rounded-lg" />
-                        <div className="space-y-1.5 flex-1">
-                            <div className="h-3 bg-slate-200 rounded w-2/3" />
-                            <div className="h-2 bg-slate-100 rounded w-1/2" />
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="space-y-1.5">
-                            <div className="h-3 bg-slate-100 rounded w-2/3" />
-                            <div className="h-10 bg-slate-50 rounded-xl w-full" />
-                        </div>
-                        <div className="space-y-1.5">
-                            <div className="h-3 bg-slate-100 rounded w-2/3" />
-                            <div className="h-10 bg-slate-50 rounded-xl w-full" />
-                        </div>
-                        <div className="space-y-1.5">
-                            <div className="h-3 bg-slate-100 rounded w-2/3" />
-                            <div className="h-10 bg-slate-50 rounded-xl w-full" />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Action Button Skeleton */}
-                <div className="flex w-full justify-end pt-2">
-                    <div className="h-10 bg-slate-200 rounded-xl w-32" />
                 </div>
             </div>
         );
     }
 
     return (
-        <TooltipProvider delayDuration={150}>
-            <FormProvider {...methods}>
-                <form onSubmit={methods.handleSubmit(onSubmit)} className="w-full max-w-4xl mx-auto space-y-6">
-                    {/* Section 1: Profil & Identitas Toko */}
-                    <Card className="border border-slate-100 rounded-2xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] hover:shadow-[0_4px_20px_rgba(15,23,42,0.03)] transition-all duration-300 bg-white overflow-hidden">
-                        <CardContent className="p-5 space-y-4">
-                            <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3 mb-1">
-                                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100/60 shadow-sm">
-                                    <Store size={15} />
-                                </div>
-                                <div>
-                                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-wide">Identitas Toko</h3>
-                                    <p className="text-[9px] text-slate-400 font-bold mt-0.5">Informasi profil dasar bisnis dan logo resmi Anda</p>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-                                {/* Logo Uploader Panel */}
-                                <div className="md:col-span-4 space-y-2">
-                                    <LabelWithTooltip
-                                        label="Logo Toko"
-                                        tooltip="Logo resmi toko format JPG/PNG/WEBP maks 2MB."
-                                    />
-                                    <div className="border border-slate-100 rounded-2xl p-2 bg-slate-50/50">
-                                        <FormImageUpload<StoreSettingsInput>
-                                            name="app_logo_url"
-                                            initialUrl={getImageUrl(settings.app_logo_url)}
-                                            disabled={isSaving}
-                                            className="h-[180px] min-h-0 [&>div]:h-[180px] [&>div]:min-h-0 [&>div]:md:min-h-0"
-                                        />
-                                    </div>
-                                    <p className="text-[9px] text-slate-400 leading-relaxed text-center">
-                                        Rasio 1:1, JPG/PNG maks 2MB.
-                                    </p>
-                                </div>
-
-                                {/* Text Fields Panel */}
-                                <div className="md:col-span-8 space-y-4">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div className="flex flex-col">
-                                            <LabelWithTooltip
-                                                label="Nama Toko"
-                                                tooltip="Nama resmi toko yang dicetak pada bagian paling atas kop struk belanja."
-                                            />
-                                            <FormInput<StoreSettingsInput>
-                                                name="app_name"
-                                                placeholder="Masukkan nama toko..."
-                                                disabled={isSaving}
-                                            />
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <LabelWithTooltip
-                                                label="Nomor Telepon"
-                                                tooltip="Nomor kontak resmi toko Anda untuk keperluan transaksi atau informasi."
-                                            />
-                                            <FormInput<StoreSettingsInput>
-                                                name="app_phone"
-                                                placeholder="Masukkan nomor telepon..."
-                                                disabled={isSaving}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <LabelWithTooltip
-                                            label="Alamat Toko"
-                                            tooltip="Alamat fisik lengkap toko yang dicetak di baris alamat kop struk belanja."
-                                        />
-                                        <FormTextarea<StoreSettingsInput>
-                                            name="app_address"
-                                            placeholder="Masukkan alamat lengkap toko..."
-                                            disabled={isSaving}
-                                            className="min-h-[90px] text-xs"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Section 2: Keuangan & Pajak */}
-                    <Card className="border border-slate-100 rounded-2xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] hover:shadow-[0_4px_20px_rgba(15,23,42,0.03)] transition-all duration-300 bg-white overflow-hidden">
-                        <CardContent className="p-5 space-y-4">
-                            <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3 mb-1">
-                                <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100/60 shadow-sm">
-                                    <IconAdjustments size={15} />
-                                </div>
-                                <div>
-                                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-wide">Keuangan & Pajak</h3>
-                                    <p className="text-[9px] text-slate-400 font-bold mt-0.5">Pengaturan tarif PPN dan poin loyalitas</p>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="flex flex-col">
-                                    <LabelWithTooltip
-                                        label="Tarif PPN (%)"
-                                        tooltip="Persentase PPN default yang otomatis ditambahkan di kasir saat checkout pajak aktif."
-                                    />
-                                    <FormNumberInput<StoreSettingsInput>
-                                        name="tax_rate_ppn"
-                                        placeholder="Contoh: 11"
-                                        disabled={isSaving}
-                                        min={0}
-                                        max={100}
-                                    />
-                                </div>
-                                <div className="flex flex-col">
-                                    <LabelWithTooltip
-                                        label="Konversi Poin (Rupiah per Poin)"
-                                        tooltip="Kelipatan nominal belanja Rupiah untuk mendapat 1 poin member (dibulatkan kebawah)."
-                                    />
-                                    <FormNumberInput<StoreSettingsInput>
-                                        name="point_rate"
-                                        placeholder="Contoh: 1000"
-                                        disabled={isSaving}
-                                        min={1}
-                                    />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Section 3: Pemetaan Kas Default */}
-                    <Card className="border border-slate-100 rounded-2xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] hover:shadow-[0_4px_20px_rgba(15,23,42,0.03)] transition-all duration-300 bg-white overflow-hidden">
-                        <CardContent className="p-5 space-y-4">
-                            <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3 mb-1">
-                                <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-650 flex items-center justify-center border border-indigo-100/60 shadow-sm">
-                                    <Wallet size={15} />
-                                </div>
-                                <div>
-                                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-wide">Pemetaan Kas Default</h3>
-                                    <p className="text-[9px] text-slate-400 font-bold mt-0.5">Akun kas default untuk transaksi dan operasional</p>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <div className="flex flex-col">
-                                    <LabelWithTooltip
-                                        label="Kas Kasir"
-                                        tooltip="Akun kas penampung utama uang tunai hasil transaksi kasir harian."
-                                    />
-                                    <FormSelect<StoreSettingsInput>
-                                        name="cash_account_register_uid"
-                                        options={cashAccountOptions}
-                                        placeholder="Pilih Akun Kas"
-                                        disabled={isSaving}
-                                    />
-                                </div>
-                                <div className="flex flex-col">
-                                    <LabelWithTooltip
-                                        label="Kas Utama"
-                                        tooltip="Akun kas pusat untuk menampung pemindahan saldo kasir harian."
-                                    />
-                                    <FormSelect<StoreSettingsInput>
-                                        name="cash_account_main_uid"
-                                        options={cashAccountOptions}
-                                        placeholder="Pilih Akun Kas"
-                                        disabled={isSaving}
-                                    />
-                                </div>
-                                <div className="flex flex-col">
-                                    <LabelWithTooltip
-                                        label="Kas Bank"
-                                        tooltip="Akun bank penampung utama pembayaran non-tunai (Qris, debit, transfer)."
-                                    />
-                                    <FormSelect<StoreSettingsInput>
-                                        name="cash_account_bank_uid"
-                                        options={cashAccountOptions}
-                                        placeholder="Pilih Akun Kas"
-                                        disabled={isSaving}
-                                    />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Section 4: Perangkat Printer */}
-                    <Card className="border border-slate-100 rounded-2xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] hover:shadow-[0_4px_20px_rgba(15,23,42,0.03)] transition-all duration-300 bg-white overflow-hidden">
-                        <CardContent className="p-5 space-y-4">
-                            <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3 mb-1">
-                                <div className="w-8 h-8 rounded-lg bg-slate-50 text-slate-600 flex items-center justify-center border border-slate-100/60 shadow-sm">
-                                    <IconPrinter size={15} />
-                                </div>
-                                <div>
-                                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-wide">Perangkat Printer</h3>
-                                    <p className="text-[9px] text-slate-400 font-bold mt-0.5">ID printer thermal default untuk mencetak struk belanja</p>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="flex flex-col">
-                                    <LabelWithTooltip
-                                        label="Nama / ID Printer"
-                                        tooltip="ID / Nama printer default yang digunakan untuk mencetak struk (misal: EPSON LX-310 ESC/P)."
-                                    />
-                                    <FormInput<StoreSettingsInput>
-                                        name="printer_id"
-                                        placeholder="Contoh: EPSON LX-310 ESC/P..."
-                                        disabled={isSaving}
-                                    />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Footer Save Button */}
-                    <div className="flex w-full justify-end pt-2">
-                        <Button
-                            type="submit"
-                            disabled={isSaving}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md hover:shadow-lg shadow-emerald-600/10 active:scale-[0.98] transition-all duration-200 px-6 py-3 h-auto cursor-pointer border-none"
-                        >
-                            {isSaving ? (
-                                <>
-                                    <Loader2 className="animate-spin mr-2" size={16} />
-                                    Menyimpan...
-                                </>
-                            ) : (
-                                <>
-                                    <Save className="mr-2" size={16} />
-                                    Simpan Pengaturan
-                                </>
-                            )}
-                        </Button>
+        <FormProvider {...methods}>
+            <form onSubmit={methods.handleSubmit(onSubmit, onError)} className="w-full space-y-6 relative">
+                {/* Header Section */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                    <div className="space-y-1">
+                        <h2 className="text-base font-bold text-slate-800">Pengaturan Toko</h2>
+                        <p className="text-xs text-slate-400 font-bold">
+                            Kelola profil toko, keuangan, kas, dan printer thermal.
+                        </p>
                     </div>
-                </form>
-            </FormProvider>
-        </TooltipProvider>
+                    <div className="flex items-center gap-2 self-start sm:self-auto">
+                        {getPrinterConnectionBadge()}
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                    {/* Tab Nav - Left Column */}
+                    <div className="md:col-span-4 lg:col-span-3">
+                        <Card className="border border-slate-100 rounded-2xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] bg-white p-2 h-auto md:h-[500px] flex flex-col">
+                            <Scrollable orientation="both" className="h-full w-full pr-1">
+                                <div className="flex flex-row md:flex-col gap-1 pb-2 md:pb-0">
+                                    {tabs.map((tab) => {
+                                        const Icon = tab.icon;
+                                        const dirty = isTabDirty(tab.fields);
+                                        const error = hasTabError(tab.fields);
+                                        const isActive = activeTab === tab.id;
+
+                                        return (
+                                            <button
+                                                key={tab.id}
+                                                type="button"
+                                                onClick={() => setActiveTab(tab.id)}
+                                                className={cn(
+                                                    "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-left cursor-pointer shrink-0 md:shrink-1 select-none",
+                                                    isActive
+                                                        ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/10"
+                                                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                                                )}
+                                            >
+                                                <div className={cn(
+                                                    "p-1.5 rounded-lg transition-colors flex items-center justify-center shrink-0",
+                                                    isActive ? "bg-emerald-700/60 text-white" : "bg-slate-100 text-slate-500"
+                                                )}>
+                                                    <Icon size={16} />
+                                                </div>
+                                                <div className="flex-1 min-w-0 pr-2">
+                                                    <p className="text-sm font-bold tracking-wide whitespace-normal md:whitespace-nowrap">
+                                                        {tab.label}
+                                                    </p>
+                                                    <p className={cn(
+                                                        "text-xs md:block hidden font-medium mt-0.5 whitespace-normal",
+                                                        isActive ? "text-emerald-100" : "text-slate-400"
+                                                    )}>
+                                                        {tab.description}
+                                                    </p>
+                                                </div>
+
+                                                {/* Badges/Indicators */}
+                                                <div className="flex items-center gap-1.5 ml-auto shrink-0">
+                                                    {error ? (
+                                                        <span className="w-2 h-2 rounded-full bg-rose-500 ring-4 ring-rose-500/20 animate-pulse" />
+                                                    ) : dirty ? (
+                                                        <span className="w-2 h-2 rounded-full bg-amber-500 ring-4 ring-amber-500/20 animate-pulse" />
+                                                    ) : null}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </Scrollable>
+                        </Card>
+                    </div>
+
+                    {/* Content - Right Column */}
+                    <div className="md:col-span-8 lg:col-span-9 space-y-6">
+                        {/* Tab 1: Profil Toko */}
+                        <div className={activeTab === "profile" ? "block animate-fade-in" : "hidden"}>
+                            <TabProfile isSaving={isSaving} initialLogoUrl={getImageUrl(settings.app_logo_url)} />
+                        </div>
+
+                        {/* Tab 2: Keuangan & Pajak */}
+                        <div className={activeTab === "finance" ? "block animate-fade-in" : "hidden"}>
+                            <TabFinance isSaving={isSaving} />
+                        </div>
+
+                        {/* Tab 3: Pemetaan Kas Default */}
+                        <div className={activeTab === "cash" ? "block animate-fade-in" : "hidden"}>
+                            <TabCash isSaving={isSaving} cashAccountOptions={cashAccountOptions} />
+                        </div>
+
+                        {/* Tab 4: Perangkat Printer */}
+                        <div className={activeTab === "printer" ? "block animate-fade-in" : "hidden"}>
+                            <TabPrinter
+                                isSaving={isSaving}
+                                printerOptions={printerOptions}
+                                isLoadingPrinters={isLoadingPrinters}
+                                loadPrinters={loadPrinters}
+                                qzError={qzError}
+                            />
+                        </div>
+
+                        {/* Sticky Floating Action Bar */}
+                        <FloatingSaveBar isSaving={isSaving} />
+                    </div>
+                </div>
+            </form>
+        </FormProvider>
     );
 }
