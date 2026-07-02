@@ -64,6 +64,13 @@ class QZService {
                     }
                     resolve(signature);
                 } catch (error) {
+                    if (axios.isAxiosError(error) && !error.response) {
+                        console.warn("Signer QZ tidak tersedia, melanjutkan dengan mode unsigned:", error);
+                        this.useUnsignedMode();
+                        resolve();
+                        return;
+                    }
+
                     reject(error);
                 }
             });
