@@ -49,15 +49,29 @@ class QZService {
             qz.security.setCertificatePromise(() => Promise.resolve(certificate));
 
             qz.security.setSignaturePromise(async (toSign: string) => {
-                const { data: sig } = await axios.post(
-                    "/api/proxy/v1/qz/sign",
-                    { toSign },
-                    { timeout: 2000 }
-                );
-                if (!sig) {
-                    throw new Error("Signature gagal dibuat");
+                try {
+                    const { data: sig } = await axios.post(
+                        "/api/proxy/v1/qz/sign",
+                        { toSign },
+                        { timeout: 2000 }
+                    );
+                    if (!sig) {
+                        throw new Error("Signature gagal dibuat");
+                    }
+                    return sig;
+                } catch (signErr) {
+                    console.warn("Gagal membuat signature, mereset QZ Tray ke mode unsigned:", signErr);
+                    try {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        qz.security.setCertificatePromise(null as any);
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        qz.security.setSignaturePromise(null as any);
+                    } catch (clearErr) {
+                        console.warn("Gagal mereset keamanan QZ Tray:", clearErr);
+                    }
+                    this.initialized = false;
+                    throw signErr;
                 }
-                return sig;
             });
 
             this.initialized = true;
@@ -75,7 +89,22 @@ class QZService {
     }
 
     async connect() {
-        await this.initSecurity();
+        const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+        if (isOffline) {
+            console.warn("Aplikasi offline. Menggunakan mode unsigned untuk QZ Tray.");
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                qz.security.setCertificatePromise(null as any);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                qz.security.setSignaturePromise(null as any);
+            } catch (err) {
+                console.warn("Gagal mereset keamanan QZ Tray:", err);
+            }
+            this.initialized = false;
+        } else {
+            await this.initSecurity();
+        }
+
         if (qz.websocket.isActive()) {
             return;
         }

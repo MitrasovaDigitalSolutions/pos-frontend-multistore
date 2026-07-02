@@ -26,6 +26,13 @@ const serwist = new Serwist({
             handler: new NetworkOnly(),
         },
         {
+            // QZ Tray certificate and signing requests must never be cached.
+            // The client-side QZService handles failures gracefully (falls back
+            // to unsigned mode or uses a localStorage-cached certificate).
+            matcher: ({ url, sameOrigin }) => sameOrigin && url.pathname.startsWith("/api/proxy/v1/qz/"),
+            handler: new NetworkOnly(),
+        },
+        {
             matcher: ({ url, sameOrigin }) => url.pathname === "/api/auth/session" && sameOrigin,
             handler: new NetworkFirst({
                 cacheName: "auth-session",
