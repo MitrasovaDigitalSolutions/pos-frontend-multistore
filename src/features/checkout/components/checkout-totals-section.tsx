@@ -82,7 +82,7 @@ export function CheckoutTotalsSection({
     const ppnRate = getTaxRate();
     const getSetting = useSettingsStore((state) => state.getSetting);
     const pointRate = parseFloat(getSetting("point_rate", "1000")) || 1000;
-    const pointSystemEnable = getSetting("point_system_enable", "true") === "true";
+    const pointSystemEnabled = getSetting("point_system_enabled", "true") === "true";
 
     const [prevNama, setPrevNama] = useState(namaTransaksi);
     const [localNama, setLocalNama] = useState(namaTransaksi);
@@ -137,7 +137,7 @@ export function CheckoutTotalsSection({
         .filter((m) => m.status === "active")
         .map((m) => ({
             value: m.uid,
-            label: pointSystemEnable
+            label: pointSystemEnabled
                 ? `${m.nama} (${m.kode}) - ${m.poin} Poin`
                 : `${m.nama} (${m.kode})`,
         }));
@@ -223,7 +223,7 @@ export function CheckoutTotalsSection({
                                         {selectedMember.nama}
                                     </div>
                                     <div className="text-[10px] font-bold text-slate-400 truncate leading-none mt-1">
-                                        {selectedMember.kode}{pointSystemEnable && ` • `}{pointSystemEnable && <span className="text-emerald-600 font-extrabold">{selectedMember.poin} Poin</span>}
+                                        {selectedMember.kode}{pointSystemEnabled && ` • `}{pointSystemEnabled && <span className="text-emerald-600 font-extrabold">{selectedMember.poin} Poin</span>}
                                     </div>
                                 </div>
                             </div>
@@ -270,12 +270,12 @@ export function CheckoutTotalsSection({
                     <div className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">
                         Status Keranjang & Loyalti
                     </div>
-                    <div className={cn("grid gap-2 text-[11px]", pointSystemEnable ? "grid-cols-2" : "grid-cols-1")}>
+                    <div className={cn("grid gap-2 text-[11px]", pointSystemEnabled ? "grid-cols-2" : "grid-cols-1")}>
                         <div className="space-y-0.5">
                             <span className="text-[9px] font-medium text-slate-455">Total Item</span>
                             <div className="font-extrabold text-slate-800">{cartLength} Jenis Produk</div>
                         </div>
-                        {pointSystemEnable && (
+                        {pointSystemEnabled && (
                             <div className="space-y-0.5 animate-in fade-in duration-200">
                                 <span className="text-[9px] font-medium text-slate-455">Loyalty Poin</span>
                                 <div className="font-extrabold text-emerald-600 flex items-center gap-1">
