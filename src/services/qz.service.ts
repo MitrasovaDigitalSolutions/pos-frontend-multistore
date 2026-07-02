@@ -6,6 +6,15 @@ const QZ_CERT_CACHE_KEY = "qz_certificate_cache";
 class QZService {
     private initialized = false;
 
+    private setUnsignedMode() {
+        try {
+            qz.security.setCertificatePromise(() => Promise.resolve(""));
+            qz.security.setSignaturePromise(() => Promise.resolve(""));
+        } catch (err) {
+            console.warn("Gagal mengatur QZ Tray ke mode unsigned:", err);
+        }
+    }
+
     /**
      * Initialise QZ Tray security (certificate + signature).
      *
@@ -61,14 +70,7 @@ class QZService {
                     return sig;
                 } catch (signErr) {
                     console.warn("Gagal membuat signature, mereset QZ Tray ke mode unsigned:", signErr);
-                    try {
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        qz.security.setCertificatePromise(null as any);
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        qz.security.setSignaturePromise(null as any);
-                    } catch (clearErr) {
-                        console.warn("Gagal mereset keamanan QZ Tray:", clearErr);
-                    }
+                    this.setUnsignedMode();
                     this.initialized = false;
                     throw signErr;
                 }
@@ -77,14 +79,7 @@ class QZService {
             this.initialized = true;
         } catch (err) {
             console.warn("Gagal memuat sertifikat QZ Tray, beralih ke mode unsigned:", err);
-            try {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                qz.security.setCertificatePromise(null as any);
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                qz.security.setSignaturePromise(null as any);
-            } catch (clearErr) {
-                console.warn("Gagal mereset keamanan QZ Tray:", clearErr);
-            }
+            this.setUnsignedMode();
         }
     }
 
@@ -92,14 +87,7 @@ class QZService {
         const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
         if (isOffline) {
             console.warn("Aplikasi offline. Menggunakan mode unsigned untuk QZ Tray.");
-            try {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                qz.security.setCertificatePromise(null as any);
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                qz.security.setSignaturePromise(null as any);
-            } catch (err) {
-                console.warn("Gagal mereset keamanan QZ Tray:", err);
-            }
+            this.setUnsignedMode();
             this.initialized = false;
         } else {
             await this.initSecurity();
