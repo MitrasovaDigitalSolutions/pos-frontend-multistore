@@ -17,12 +17,19 @@ class QZService {
      */
     private async initSecurity() {
         const isOnline = typeof navigator === "undefined" || navigator.onLine;
-        if (this.initialized && (this.securityMode === "signed" || !isOnline)) return;
+
+        if (!isOnline) {
+            if (this.securityMode !== "unsigned") {
+                console.info("QZ Tray offline, menggunakan mode unsigned.");
+                this.useUnsignedMode();
+            }
+            this.initialized = true;
+            return;
+        }
+
+        if (this.initialized && this.securityMode === "signed") return;
 
         try {
-            if (!isOnline) {
-                throw new Error("Browser offline, backend signer unavailable");
-            }
 
             const { data: certificate } = await axios.get<string>("/api/proxy/v1/qz/certificate", { timeout: 5000 });
 
