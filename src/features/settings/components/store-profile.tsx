@@ -45,7 +45,7 @@ export function StoreProfile() {
             app_logo_url: null,
             tax_rate_ppn: 0,
             point_rate: 1000,
-            point_system_enabled: true,
+            point_system_enabled: "true",
             cash_account_register_uid: "",
             cash_account_main_uid: "",
             cash_account_bank_uid: "",
@@ -108,8 +108,8 @@ export function StoreProfile() {
                 tax_rate_ppn: settings.tax_rate_ppn ? Number(settings.tax_rate_ppn) : 0,
                 point_rate: settings.point_rate ? Number(settings.point_rate) : 1000,
                 point_system_enabled: settings.point_system_enabled === undefined || settings.point_system_enabled === null
-                    ? true
-                    : settings.point_system_enabled === "true",
+                    ? "true"
+                    : settings.point_system_enabled,
                 cash_account_register_uid: settings.cash_account_register_uid || "",
                 cash_account_main_uid: settings.cash_account_main_uid || "",
                 cash_account_bank_uid: settings.cash_account_bank_uid || "",
@@ -197,13 +197,6 @@ export function StoreProfile() {
                     const origPointStr = originalValue !== null && originalValue !== undefined ? String(originalValue) : "";
                     if (formPointStr !== origPointStr) {
                         await settingsApi.update(key, formPointStr);
-                        hasChanged = true;
-                    }
-                } else if (key === "point_system_enabled") {
-                    const formBoolStr = formValue ? "true" : "false";
-                    const origBoolStr = originalValue !== null && originalValue !== undefined ? originalValue : "true";
-                    if (formBoolStr !== origBoolStr) {
-                        await settingsApi.update(key, formBoolStr);
                         hasChanged = true;
                     }
                 } else {

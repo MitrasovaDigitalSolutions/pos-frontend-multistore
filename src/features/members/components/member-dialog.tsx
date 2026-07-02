@@ -30,7 +30,7 @@ export function MemberDialog({
     const isEdit = !!editingMember;
 
     const getSetting = useSettingsStore((state) => state.getSetting);
-    const pointSystemEnable = getSetting("point_system_enable", "true") === "true";
+    const pointSystemEnabled = getSetting("point_system_enabled", "true") === "true";
 
     const { handleSubmit } = useFormContext<MemberInput>();
     const isPending = createMember.isPending || updateMember.isPending;
@@ -148,9 +148,9 @@ export function MemberDialog({
                     />
                 </div>
 
-                <div className={pointSystemEnable ? "grid grid-cols-2 gap-4" : "grid grid-cols-1 gap-4"}>
+                <div className={pointSystemEnabled ? "grid grid-cols-2 gap-4" : "grid grid-cols-1 gap-4"}>
                     {/* Poin */}
-                    {pointSystemEnable && (
+                    {pointSystemEnabled && (
                         <FormInput<MemberInput>
                             name="poin"
                             label="Poin Awal"

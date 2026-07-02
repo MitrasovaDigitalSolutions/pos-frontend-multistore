@@ -36,7 +36,7 @@ function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }
 
 export function TabFinance({ isSaving }: TabFinanceProps) {
     const { control, watch } = useFormContext<StoreSettingsInput>();
-    const pointSystemEnable = watch("point_system_enabled");
+    const pointSystemEnable = watch("point_system_enabled") === "true";
 
     return (
         <TooltipProvider delayDuration={150}>
@@ -93,8 +93,8 @@ export function TabFinance({ isSaving }: TabFinanceProps) {
                                         name="point_system_enabled"
                                         render={({ field }) => (
                                             <Switch
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
+                                                checked={field.value === "true"}
+                                                onCheckedChange={(checked) => field.onChange(checked ? "true" : "false")}
                                                 disabled={isSaving}
                                             />
                                         )}

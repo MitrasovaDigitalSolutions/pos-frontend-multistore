@@ -62,7 +62,7 @@ export function MemberList({
         hasPermission(userRoles, userPermissions, "manage_members");
 
     const getSetting = useSettingsStore((state) => state.getSetting);
-    const pointSystemEnable = getSetting("point_system_enable", "true") === "true";
+    const pointSystemEnabled = getSetting("point_system_enabled", "true") === "true";
 
     const deleteMember = useDeleteMember();
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -132,7 +132,7 @@ export function MemberList({
                 },
             ];
 
-            if (pointSystemEnable) {
+            if (pointSystemEnabled) {
                 baseColumns.push({
                     accessorKey: "poin",
                     header: "Poin",
@@ -171,7 +171,7 @@ export function MemberList({
 
             return baseColumns;
         },
-        [pointSystemEnable],
+        [pointSystemEnabled],
     );
 
     return (
@@ -216,7 +216,7 @@ export function MemberList({
                 estimateRowHeight={44}
                 onEdit={hasManageMembers ? onEdit : undefined}
                 onDelete={hasManageMembers ? handleDelete : undefined}
-                extraActions={hasManageMembers && pointSystemEnable ? (member) => (
+                extraActions={hasManageMembers && pointSystemEnabled ? (member) => (
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <button
