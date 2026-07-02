@@ -16,14 +16,15 @@ class QZService {
      * signatures for POST payloads while the backend is unreachable.
      */
     private async initSecurity() {
-        if (this.initialized) return;
+        const isOnline = typeof navigator === "undefined" || navigator.onLine;
+        if (this.initialized && (this.securityMode === "signed" || !isOnline)) return;
 
         try {
-            if (typeof navigator !== "undefined" && !navigator.onLine) {
+            if (!isOnline) {
                 throw new Error("Browser offline, backend signer unavailable");
             }
 
-            const { data: certificate } = await axios.get<string>("/api/proxy/v1/qz/certificate", { timeout: 2000 });
+            const { data: certificate } = await axios.get<string>("/api/proxy/v1/qz/certificate", { timeout: 5000 });
 
             if (!certificate) {
                 throw new Error("Certificate tidak ditemukan");
@@ -45,21 +46,23 @@ class QZService {
                         throw new Error("Backend signer unavailable while offline");
                     }
 
-                    const { data: sig } = await axios.post<string>(
+                    const { data } = await axios.post<string | { signature?: string; data?: string }>(
                         "/api/proxy/v1/qz/sign",
                         { toSign },
-                        { timeout: 2000 }
+                        { timeout: 5000 }
                     );
-                    if (!sig) {
+                    const signature = typeof data === "string" ? data : data.signature ?? data.data;
+                    if (!signature) {
                         throw new Error("Signature gagal dibuat");
                     }
-                    resolve(sig);
+                    resolve(signature);
                 } catch (error) {
                     reject(error);
                 }
             });
 
             this.securityMode = "signed";
+            console.info("QZ Tray menggunakan mode signed backend.");
         } catch (err) {
             console.warn("Gagal memuat signer QZ Tray, beralih ke mode unsigned:", err);
             this.useUnsignedMode();
