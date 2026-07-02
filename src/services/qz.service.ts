@@ -2,54 +2,47 @@ import qz from "qz-tray";
 import axios from "axios";
 
 const QZ_CERT_CACHE_KEY = "qz_certificate_cache";
+const QZ_CONNECT_RETRIES = 2;
 
 class QZService {
     private initialized = false;
+    private securityMode: "signed" | "unsigned" | null = null;
 
     /**
      * Initialise QZ Tray security (certificate + signature).
      *
-     * Strategy:
-     *  1. Try to fetch the certificate from the backend API.
-     *  2. On success → cache it in localStorage for offline use.
-     *  3. On failure → fall back to a previously cached certificate.
-     *  4. If neither is available → run in unsigned mode.
+     * Signed mode needs the backend for both certificate and per-request signing.
+     * Serwist can keep the app available offline, but it cannot create QZ
+     * signatures for POST payloads while the backend is unreachable.
      */
     private async initSecurity() {
         if (this.initialized) return;
 
         try {
-            let certificate: string | null = null;
-
-            // 1. Try fetching from backend
-            try {
-                const { data } = await axios.get("/api/proxy/v1/qz/certificate", { timeout: 2000 });
-                if (data) {
-                    certificate = data;
-                    // Cache for offline use
-                    try {
-                        localStorage.setItem(QZ_CERT_CACHE_KEY, data);
-                    } catch {
-                        // localStorage might be full — non-critical
-                    }
-                }
-            } catch {
-                // API unreachable — try cached certificate
-                try {
-                    certificate = localStorage.getItem(QZ_CERT_CACHE_KEY);
-                } catch {
-                    // localStorage unavailable
-                }
+            if (typeof navigator !== "undefined" && !navigator.onLine) {
+                throw new Error("Browser offline, backend signer unavailable");
             }
 
+            const { data: certificate } = await axios.get<string>("/api/proxy/v1/qz/certificate", { timeout: 2000 });
+
             if (!certificate) {
-                throw new Error("Certificate tidak ditemukan (API dan cache kosong)");
+                throw new Error("Certificate tidak ditemukan");
+            }
+
+            try {
+                localStorage.setItem(QZ_CERT_CACHE_KEY, certificate);
+            } catch {
+                // localStorage might be full — non-critical
             }
 
             qz.security.setCertificatePromise(() => Promise.resolve(certificate));
 
             qz.security.setSignaturePromise(async (toSign: string) => {
-                const { data: sig } = await axios.post(
+                if (typeof navigator !== "undefined" && !navigator.onLine) {
+                    throw new Error("Backend signer unavailable while offline");
+                }
+
+                const { data: sig } = await axios.post<string>(
                     "/api/proxy/v1/qz/sign",
                     { toSign },
                     { timeout: 2000 }
@@ -60,17 +53,25 @@ class QZService {
                 return sig;
             });
 
-            this.initialized = true;
+            this.securityMode = "signed";
         } catch (err) {
-            console.warn("Gagal memuat sertifikat QZ Tray, beralih ke mode unsigned:", err);
-            try {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                qz.security.setCertificatePromise(null as any);
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                qz.security.setSignaturePromise(null as any);
-            } catch (clearErr) {
-                console.warn("Gagal mereset keamanan QZ Tray:", clearErr);
-            }
+            console.warn("Gagal memuat signer QZ Tray, beralih ke mode unsigned:", err);
+            this.useUnsignedMode();
+        } finally {
+            this.initialized = true;
+        }
+    }
+
+    private useUnsignedMode() {
+        this.securityMode = "unsigned";
+        try {
+            // QZ Tray must allow unsigned requests for offline printing in this mode.
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            qz.security.setCertificatePromise(null as any);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            qz.security.setSignaturePromise(null as any);
+        } catch (clearErr) {
+            console.warn("Gagal mereset keamanan QZ Tray:", clearErr);
         }
     }
 
@@ -79,12 +80,31 @@ class QZService {
         if (qz.websocket.isActive()) {
             return;
         }
-        try {
-            await qz.websocket.connect();
-        } catch (error) {
-            console.error("Gagal terhubung ke QZ Tray:", error);
-            throw new Error("Gagal terhubung ke QZ Tray. Pastikan aplikasi QZ Tray sedang berjalan.");
+
+        let lastError: unknown;
+        for (let attempt = 1; attempt <= QZ_CONNECT_RETRIES; attempt += 1) {
+            try {
+                await qz.websocket.connect();
+                return;
+            } catch (error) {
+                lastError = error;
+                console.warn(`Percobaan koneksi QZ Tray ${attempt} gagal:`, error);
+
+                if (qz.websocket.isActive()) {
+                    try {
+                        await qz.websocket.disconnect();
+                    } catch {
+                        // Ignore cleanup failure before retrying.
+                    }
+                }
+            }
         }
+
+        console.error("Gagal terhubung ke QZ Tray:", lastError);
+        const unsignedHint = this.securityMode === "unsigned"
+            ? " Jika sedang offline, pastikan QZ Tray mengizinkan unsigned requests."
+            : "";
+        throw new Error(`Gagal terhubung ke QZ Tray. Pastikan aplikasi QZ Tray sedang berjalan.${unsignedHint}`);
     }
 
     async disconnect() {
