@@ -158,12 +158,17 @@ export function PaymentDialog({
             nominal_bayar: payMode === "cash" ? cashNum : (payMode === "debt" ? cashNum : grandTotal),
             cashier_name: session?.user?.name || "",
             member_uid: selectedMember?.uid || null,
-            items: cartItems.map((item) => ({
-                product_id: item.product_uid,
-                product_uid: item.product_uid,
-                quantity: item.quantity,
-                harga_satuan: item.harga_satuan,
-            })),
+            items: cartItems.map((item) => {
+                const itemPayload: Record<string, unknown> = {
+                    product_id: item.product_uid,
+                    product_uid: item.product_uid,
+                    quantity: item.quantity,
+                };
+                if (item.harga_satuan !== undefined) {
+                    itemPayload.harga_satuan = item.harga_satuan;
+                }
+                return itemPayload;
+            }),
         };
 
         if (payMode === "cash") {

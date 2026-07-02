@@ -8,11 +8,11 @@ declare module 'qz-tray' {
 
         security: {
             setCertificatePromise(
-                fn: () => Promise<string>
+                fn: (resolve: (certificate?: string) => void, reject: (error: unknown) => void) => void
             ): void;
 
             setSignaturePromise(
-                fn: (toSign: string) => Promise<string>
+                fn: (toSign: string) => (resolve: (signature?: string) => void, reject: (error: unknown) => void) => void
             ): void;
         };
 

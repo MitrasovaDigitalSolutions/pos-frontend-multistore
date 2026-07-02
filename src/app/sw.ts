@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 import { defaultCache } from "@serwist/next/worker";
-import { Serwist, NetworkFirst, NetworkOnly, type PrecacheEntry, type SerwistGlobalConfig } from "serwist";
+import { Serwist, NetworkFirst, type PrecacheEntry, type SerwistGlobalConfig } from "serwist";
 
 declare global {
     interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -21,9 +21,16 @@ const serwist = new Serwist({
     runtimeCaching: [
         {
             // Connectivity heartbeat must always hit the network, never the cache,
-            // otherwise a stale cached 200 would mask a real outage.
+            // otherwise a stale cached 200 would mask a real outage. Return a
+            // synthetic 503 while offline so Serwist does not throw no-response.
             matcher: ({ url, sameOrigin }) => sameOrigin && url.pathname === "/api/proxy/v1/health",
-            handler: new NetworkOnly(),
+            handler: async ({ request }) => {
+                try {
+                    return await fetch(request);
+                } catch {
+                    return Response.json({ status: "offline" }, { status: 503 });
+                }
+            },
         },
         {
             matcher: ({ url, sameOrigin }) => url.pathname === "/api/auth/session" && sameOrigin,
@@ -41,10 +48,19 @@ const serwist = new Serwist({
         },
         {
             matcher: ({ request, sameOrigin }) => request.mode === "navigate" && sameOrigin,
-            handler: new NetworkFirst({
-                cacheName: "pages",
-                networkTimeoutSeconds: 3,
-            }),
+            handler: async ({ event, request }) => {
+                const strategy = new NetworkFirst({
+                    cacheName: "pages",
+                    networkTimeoutSeconds: 3,
+                });
+
+                try {
+                    return await strategy.handle({ event, request });
+                } catch {
+                    const cachedShell = await caches.match("/");
+                    return cachedShell ?? Response.error();
+                }
+            },
         },
         ...defaultCache,
     ],
