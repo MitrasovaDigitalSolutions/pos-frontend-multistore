@@ -123,7 +123,7 @@ export function buildReceipt(data: ReceiptData) {
     ) + "\n";
 
     txt += leftRight(
-        `No. TRX   : ${sale.nomor_transaksi}`,
+        `No. TRX : ${sale.nomor_transaksi}`,
         sale.nama_transaksi ?? "-"
     ) + "\n";
 
@@ -159,9 +159,9 @@ export function buildReceipt(data: ReceiptData) {
 
     // ================= FOOTER =================
 
-    txt += footerLine("Terima kasih atas kepercayaan Anda.","Jumlah :",sale.subtotal) + "\n";
-    txt += footerLine("Silahkan Datang Kembali.","Diskon :",sale.diskon ?? 0 ) + "\n";
-    txt += footerLine("",isDebt ? "Bayar :" : "Tunai :",bayar) + "\n";
+    txt += footerLine("Terima kasih atas kepercayaan Anda.","Jumlah  :",sale.subtotal) + "\n";
+    txt += footerLine("Silahkan Datang Kembali.","Diskon  :",sale.diskon ?? 0 ) + "\n";
+    txt += footerLine("",isDebt ? "Bayar :" : "Tunai   :",bayar) + "\n";
     txt += footerLine("",isDebt ? "Kurang :" : "Kembali :",kembali) + "\n";
 
     return txt;
