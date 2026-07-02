@@ -297,11 +297,20 @@ export function Checkout() {
                 open={state.isPayModalOpen}
                 onOpenChange={state.setIsPayModalOpen}
                 grandTotal={state.grandTotal}
-                cartItems={state.cart.map((item) => ({
-                    product_uid: item.product_uid,
-                    quantity: item.qty,
-                    harga_satuan: item.price,
-                }))}
+                cartItems={state.cart.map((item) => {
+                    const payloadItem: {
+                        product_uid: string;
+                        quantity: number;
+                        harga_satuan?: number;
+                    } = {
+                        product_uid: item.product_uid,
+                        quantity: item.qty,
+                    };
+                    if (item.is_jasa) {
+                        payloadItem.harga_satuan = item.price;
+                    }
+                    return payloadItem;
+                })}
                 discount={state.discountAmount}
                 tax={state.ppn}
                 selectedMember={state.selectedMember}
