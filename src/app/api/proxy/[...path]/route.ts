@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 // ─── Catch-All API Proxy ────────────────────────────────────────────────────
 // Proxies all requests from /api/proxy/* to the Laravel backend.
 // Attaches the Bearer token from the server-side NextAuth session.
@@ -54,6 +56,7 @@ async function handler(req: NextRequest) {
       method: req.method,
       headers,
       body,
+      cache: "no-store",
     });
 
     const responseData = await response.arrayBuffer();

@@ -7,6 +7,8 @@ import { Coins, Percent, Info } from "lucide-react";
 import { FormNumberInput } from "@/components/forms/form-number-input";
 import { Scrollable } from "@/components/ui/scrollable";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { useFormContext, Controller } from "react-hook-form";
+import { Switch } from "@/components/ui/switch";
 
 interface TabFinanceProps {
     isSaving: boolean;
@@ -33,6 +35,9 @@ function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }
 }
 
 export function TabFinance({ isSaving }: TabFinanceProps) {
+    const { control, watch } = useFormContext<StoreSettingsInput>();
+    const pointSystemEnable = watch("point_system_enable");
+
     return (
         <TooltipProvider delayDuration={150}>
             <Card className="border border-slate-100 rounded-2xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] bg-white overflow-hidden h-[500px] flex flex-col w-full">
@@ -73,18 +78,43 @@ export function TabFinance({ isSaving }: TabFinanceProps) {
                                     </div>
                                 </div>
 
-                                <div className="flex flex-col">
-                                    <LabelWithTooltip
-                                        label="Konversi Poin (Rupiah per Poin)"
-                                        tooltip="Kelipatan nominal belanja Rupiah untuk mendapat 1 poin member (dibulatkan kebawah)."
-                                    />
-                                    <FormNumberInput<StoreSettingsInput>
-                                        name="point_rate"
-                                        placeholder="Contoh: 1000"
-                                        disabled={isSaving}
-                                        min={1}
+                                <div className="flex items-center justify-between border border-slate-100/80 rounded-xl p-4 bg-slate-50/30">
+                                    <div className="space-y-0.5">
+                                        <LabelWithTooltip
+                                            label="Sistem Poin Member"
+                                            tooltip="Aktifkan atau nonaktifkan sistem akumulasi poin untuk member."
+                                        />
+                                        <p className="text-[11px] text-slate-400">
+                                            Aktifkan loyalitas member dan akumulasi poin transaksi
+                                        </p>
+                                    </div>
+                                    <Controller
+                                        control={control}
+                                        name="point_system_enable"
+                                        render={({ field }) => (
+                                            <Switch
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                                disabled={isSaving}
+                                            />
+                                        )}
                                     />
                                 </div>
+
+                                {pointSystemEnable && (
+                                    <div className="flex flex-col animate-in fade-in duration-200">
+                                        <LabelWithTooltip
+                                            label="Konversi Poin (Rupiah per Poin)"
+                                            tooltip="Kelipatan nominal belanja Rupiah untuk mendapat 1 poin member (dibulatkan kebawah)."
+                                        />
+                                        <FormNumberInput<StoreSettingsInput>
+                                            name="point_rate"
+                                            placeholder="Contoh: 1000"
+                                            disabled={isSaving}
+                                            min={1}
+                                        />
+                                    </div>
+                                )}
                             </div>
 
                             {/* Help Panel Column */}

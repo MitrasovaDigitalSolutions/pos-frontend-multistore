@@ -9,10 +9,12 @@ import { PaymentDialog } from "@/features/checkout/components/payment/payment-di
 import { HoldListDialog } from "@/features/checkout/components/hold-list-dialog";
 import { ReceiptDialog } from "@/features/checkout/components/receipt-dialog";
 import { OfflineTransactionsDialog } from "@/features/checkout/components/offline-transactions-dialog";
+import { CashierSettingsDialog } from "@/features/checkout/components/cashier-settings-dialog";
 import { BukaShiftModal, InfoSesiAktifModal } from "@/features/checkout/components/cash-drawer";
 import { useCurrentCashDrawer } from "@/features/checkout/api/cash-drawer-api";
 import { signOut } from "@/lib/auth-helpers";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { IconSettings } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { useNetworkStatus } from "@/hooks/use-network-status";
 import { useOfflineReadiness } from "@/hooks/use-offline-readiness";
@@ -223,23 +225,43 @@ export function Checkout() {
             </div>
 
             {/* Shortcuts Bar */}
-            <div className="hidden md:flex absolute left-0 right-0 bottom-0 h-8 bg-slate-900 border-t border-slate-800 text-slate-400 items-center px-6 text-[10px] gap-6 font-semibold select-none z-10">
-                <div className="flex gap-1.5 items-center">
-                    <kbd className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold shadow border border-slate-700">F1</kbd> Bayar
+            <div className="hidden md:flex absolute left-0 right-0 bottom-0 h-8 bg-slate-900 border-t border-slate-800 text-slate-400 items-center px-6 text-[10px] justify-between font-semibold select-none z-10">
+                <div className="flex gap-6 items-center">
+                    <div className="flex gap-1.5 items-center">
+                        <kbd className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold shadow border border-slate-700">F1</kbd> Bayar
+                    </div>
+                    <div className="flex gap-1.5 items-center">
+                        <kbd className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold shadow border border-slate-700">F5</kbd> Hold
+                    </div>
+                    <div className="flex gap-1.5 items-center">
+                        <kbd className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold shadow border border-slate-700">F6</kbd> Recall
+                    </div>
+                    <div className="flex gap-1.5 items-center">
+                        <kbd className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold shadow border border-slate-700">F10</kbd> Void
+                    </div>
+                    <div className="flex gap-1.5 items-center">
+                        <kbd className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold shadow border border-slate-700">Esc</kbd> Tutup
+                    </div>
                 </div>
-                <div className="flex gap-1.5 items-center">
-                    <kbd className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold shadow border border-slate-700">F5</kbd> Hold
-                </div>
-                <div className="flex gap-1.5 items-center">
-                    <kbd className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold shadow border border-slate-700">F6</kbd> Recall
-                </div>
-                <div className="flex gap-1.5 items-center">
-                    <kbd className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold shadow border border-slate-700">F10</kbd> Void
-                </div>
-                <div className="flex gap-1.5 items-center">
-                    <kbd className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold shadow border border-slate-700">Esc</kbd> Tutup
-                </div>
+
+                <button
+                    type="button"
+                    onClick={() => state.setIsSettingsOpen(true)}
+                    className="flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors cursor-pointer bg-transparent border-none outline-none font-bold py-1 px-2.5 rounded hover:bg-slate-800 text-[10px] uppercase tracking-wider"
+                >
+                    <IconSettings size={12} className="shrink-0" />
+                    <span>Pengaturan</span>
+                </button>
             </div>
+
+            {/* Mobile Settings Button - Floating bottom-right */}
+            <button
+                type="button"
+                onClick={() => state.setIsSettingsOpen(true)}
+                className="flex md:hidden fixed bottom-4 right-4 z-30 items-center justify-center w-9 h-9 rounded-full bg-slate-900 text-white shadow-lg border border-slate-800 cursor-pointer active:scale-95 transition-all"
+            >
+                <IconSettings size={16} />
+            </button>
 
             {/* Dialogs */}
             <ConfirmDialog
@@ -342,6 +364,11 @@ export function Checkout() {
             <OfflineTransactionsDialog
                 open={isOfflineTransactionsOpen}
                 onOpenChange={setIsOfflineTransactionsOpen}
+            />
+
+            <CashierSettingsDialog
+                open={state.isSettingsOpen}
+                onOpenChange={state.setIsSettingsOpen}
             />
 
             {/* Hidden Print Receipt container */}

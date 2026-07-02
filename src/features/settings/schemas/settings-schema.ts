@@ -27,6 +27,9 @@ export const storeSettingsSchema = z.object({
     point_rate: z
         .number({ error: "Tarif konversi poin wajib diisi" })
         .min(1, "Tarif konversi poin minimal Rp 1 per poin"),
+    point_system_enable: z
+        .boolean()
+        .optional(),
     cash_account_register_uid: z
         .string()
         .optional()

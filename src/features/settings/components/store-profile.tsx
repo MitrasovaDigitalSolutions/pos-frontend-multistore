@@ -45,6 +45,7 @@ export function StoreProfile() {
             app_logo_url: null,
             tax_rate_ppn: 0,
             point_rate: 1000,
+            point_system_enable: true,
             cash_account_register_uid: "",
             cash_account_main_uid: "",
             cash_account_bank_uid: "",
@@ -68,7 +69,7 @@ export function StoreProfile() {
             label: "Keuangan & Pajak",
             description: "PPN & loyalitas member",
             icon: IconAdjustments,
-            fields: ["tax_rate_ppn", "point_rate"] as const,
+            fields: ["tax_rate_ppn", "point_rate", "point_system_enable"] as const,
         },
         {
             id: "cash",
@@ -106,6 +107,9 @@ export function StoreProfile() {
                 app_logo_url: settings.app_logo_url || null,
                 tax_rate_ppn: settings.tax_rate_ppn ? Number(settings.tax_rate_ppn) : 0,
                 point_rate: settings.point_rate ? Number(settings.point_rate) : 1000,
+                point_system_enable: settings.point_system_enable === undefined || settings.point_system_enable === null
+                    ? true
+                    : settings.point_system_enable === "true",
                 cash_account_register_uid: settings.cash_account_register_uid || "",
                 cash_account_main_uid: settings.cash_account_main_uid || "",
                 cash_account_bank_uid: settings.cash_account_bank_uid || "",
@@ -193,6 +197,13 @@ export function StoreProfile() {
                     const origPointStr = originalValue !== null && originalValue !== undefined ? String(originalValue) : "";
                     if (formPointStr !== origPointStr) {
                         await settingsApi.update(key, formPointStr);
+                        hasChanged = true;
+                    }
+                } else if (key === "point_system_enable") {
+                    const formBoolStr = formValue ? "true" : "false";
+                    const origBoolStr = originalValue !== null && originalValue !== undefined ? originalValue : "true";
+                    if (formBoolStr !== origBoolStr) {
+                        await settingsApi.update(key, formBoolStr);
                         hasChanged = true;
                     }
                 } else {

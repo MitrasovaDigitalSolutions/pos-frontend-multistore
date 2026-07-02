@@ -12,6 +12,7 @@ import type { Member } from "../types";
 import { DataTable } from "@/components/ui/data-table";
 import { useDeleteMember } from "../api/members-api";
 import { toast } from "sonner";
+import { useSettingsStore } from "@/stores/settings-store";
 
 interface MemberListProps {
     members: Member[];
@@ -59,6 +60,9 @@ export function MemberList({
     const hasManageMembers =
         hasRole(userRoles, "admin") ||
         hasPermission(userRoles, userPermissions, "manage_members");
+
+    const getSetting = useSettingsStore((state) => state.getSetting);
+    const pointSystemEnable = getSetting("point_system_enable", "true") === "true";
 
     const deleteMember = useDeleteMember();
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -126,7 +130,10 @@ export function MemberList({
                     ),
                     size: 200,
                 },
-                {
+            ];
+
+            if (pointSystemEnable) {
+                baseColumns.push({
                     accessorKey: "poin",
                     header: "Poin",
                     cell: ({ row }) => (
@@ -135,35 +142,36 @@ export function MemberList({
                         </span>
                     ),
                     size: 100,
+                });
+            }
+
+            baseColumns.push({
+                accessorKey: "status",
+                header: "Status",
+                enableSorting: false,
+                meta: {
+                    headerClassName: "text-center",
+                    cellClassName: "text-center",
                 },
-                {
-                    accessorKey: "status",
-                    header: "Status",
-                    enableSorting: false,
-                    meta: {
-                        headerClassName: "text-center",
-                        cellClassName: "text-center",
-                    },
-                    cell: ({ row }) => {
-                        const m = row.original;
-                        return (
-                            <span
-                                className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${m.status === "active"
-                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                    : "bg-rose-50 text-rose-700 border-rose-200"
-                                    }`}
-                            >
-                                {m.status === "active" ? "Aktif" : "Nonaktif"}
-                            </span>
-                        );
-                    },
-                    size: 100,
+                cell: ({ row }) => {
+                    const m = row.original;
+                    return (
+                        <span
+                            className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${m.status === "active"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                : "bg-rose-50 text-rose-700 border-rose-200"
+                                }`}
+                        >
+                            {m.status === "active" ? "Aktif" : "Nonaktif"}
+                        </span>
+                    );
                 },
-            ];
+                size: 100,
+            });
 
             return baseColumns;
         },
-        [],
+        [pointSystemEnable],
     );
 
     return (
@@ -208,7 +216,7 @@ export function MemberList({
                 estimateRowHeight={44}
                 onEdit={hasManageMembers ? onEdit : undefined}
                 onDelete={hasManageMembers ? handleDelete : undefined}
-                extraActions={hasManageMembers ? (member) => (
+                extraActions={hasManageMembers && pointSystemEnable ? (member) => (
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <button

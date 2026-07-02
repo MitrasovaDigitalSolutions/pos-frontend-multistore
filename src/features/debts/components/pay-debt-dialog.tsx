@@ -11,13 +11,16 @@ import { usePayMemberDebt, type PayDebtPayload } from "@/features/members/api/me
 import { toast } from "sonner";
 import type { Member } from "@/features/members/types";
 
+import { db } from "@/lib/db";
+
 interface PayDebtDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     member: Member | null;
+    onSuccess?: (updatedMember: Member) => void;
 }
 
-export function PayDebtDialog({ open, onOpenChange, member }: PayDebtDialogProps) {
+export function PayDebtDialog({ open, onOpenChange, member, onSuccess }: PayDebtDialogProps) {
     const payDebtMutation = usePayMemberDebt();
 
     const [amount, setAmount] = useState("");
@@ -77,9 +80,21 @@ export function PayDebtDialog({ open, onOpenChange, member }: PayDebtDialogProps
         payDebtMutation.mutate(
             { uid: member.uid, data: payload },
             {
-                onSuccess: () => {
+                onSuccess: (res) => {
                     toast.success(`Pembayaran hutang member ${member.nama} berhasil dicatat.`);
                     onOpenChange(false);
+                    if (res.data?.member) {
+                        const updatedMember = res.data.member;
+                        db.members.update(updatedMember.uid, {
+                            hutang: updatedMember.hutang || 0,
+                            poin: updatedMember.poin || 0,
+                        }).catch((err) => {
+                            console.warn("Gagal memperbarui member di IndexedDB:", err);
+                        });
+                        if (onSuccess) {
+                            onSuccess(updatedMember);
+                        }
+                    }
                 },
                 onError: (err) => {
                     toast.error(err.message || "Gagal mencatat pembayaran hutang.");

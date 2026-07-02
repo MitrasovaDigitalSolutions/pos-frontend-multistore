@@ -1,12 +1,11 @@
 "use client";
 
-import React from "react";
 import { Button } from "@/components/ui/button";
-import { IconScan, IconHome, IconLogout, IconWifi, IconCash } from "@tabler/icons-react";
 import { OfflineReadinessBadge } from "@/features/checkout/components/offline-readiness-badge";
 import type { OfflineReadinessState } from "@/hooks/use-offline-readiness";
-import { useSettingsStore } from "@/stores/settings-store";
 import { getImageUrl } from "@/lib/utils";
+import { useSettingsStore } from "@/stores/settings-store";
+import { IconCash, IconHome, IconLogout, IconScan, IconWifi } from "@tabler/icons-react";
 
 interface CheckoutTopBarProps {
     transactionId: string | null;
