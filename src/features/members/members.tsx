@@ -36,12 +36,14 @@ export function Members() {
     const [appliedFilters, setAppliedFilters] = useState<{
         search?: string;
         status?: string;
-    }>({});
+    }>(() => ({
+        status: "active",
+    }));
 
     const filterMethods = useForm<MemberFilterValues>({
         defaultValues: {
             search: "",
-            status: "all",
+            status: "active",
         },
     });
 
@@ -56,9 +58,11 @@ export function Members() {
     const handleFilterReset = () => {
         filterMethods.reset({
             search: "",
-            status: "all",
+            status: "active",
         });
-        setAppliedFilters({});
+        setAppliedFilters({
+            status: "active",
+        });
         setPage(1);
     };
 

@@ -47,6 +47,7 @@ export function Products() {
     brand_uid?: string;
   }>(() => ({
     search: searchParam || undefined,
+    status: "active",
   }));
 
   // Load categories and brands for the dropdown filter options
@@ -58,7 +59,7 @@ export function Products() {
       search: searchParam,
       category_uid: "all",
       brand_uid: "all",
-      status: "all",
+      status: "active",
     },
   });
 
@@ -86,9 +87,11 @@ export function Products() {
       search: "",
       category_uid: "all",
       brand_uid: "all",
-      status: "all",
+      status: "active",
     });
-    setAppliedFilters({});
+    setAppliedFilters({
+      status: "active",
+    });
     setPage(1);
   };
 

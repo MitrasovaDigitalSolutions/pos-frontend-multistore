@@ -152,6 +152,7 @@ export function Checkout() {
                 onSyncClick={() => setIsOfflineTransactionsOpen(true)}
                 offlineReadiness={offlineReadiness}
                 onCatalogSyncRequest={syncEngine.triggerCatalogSync}
+                isCatalogSyncing={syncEngine.isCatalogSyncing}
             />
 
             {/* Mobile Tab Switcher */}
