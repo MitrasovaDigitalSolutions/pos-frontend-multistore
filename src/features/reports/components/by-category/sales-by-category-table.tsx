@@ -58,6 +58,7 @@ export function SalesByCategoryTable({ data, isLoading }: SalesByCategoryTablePr
                 <th className="text-left font-extrabold text-slate-500 uppercase tracking-wider px-4 py-3 text-[9px] w-8">#</th>
                 <th className="text-left font-extrabold text-slate-500 uppercase tracking-wider px-4 py-3 text-[9px]">Kategori</th>
                 <th className="text-right font-extrabold text-slate-500 uppercase tracking-wider px-4 py-3 text-[9px]">Total Penjualan</th>
+                <th className="text-right font-extrabold text-slate-500 uppercase tracking-wider px-4 py-3 text-[9px]">Total Keuntungan</th>
                 <th className="text-right font-extrabold text-slate-500 uppercase tracking-wider px-4 py-3 text-[9px]">Total Qty</th>
                 <th className="text-left font-extrabold text-slate-500 uppercase tracking-wider px-4 py-3 text-[9px] min-w-[140px]">Kontribusi</th>
               </tr>
@@ -89,6 +90,13 @@ export function SalesByCategoryTable({ data, isLoading }: SalesByCategoryTablePr
                     {/* Total Penjualan */}
                     <td className="px-4 py-3 text-right font-extrabold text-slate-800 tabular-nums">
                       {formatRupiah(item.total_sales)}
+                    </td>
+
+                    {/* Total Keuntungan */}
+                    <td className="px-4 py-3 text-right font-bold tabular-nums">
+                      <span className={item.total_profit >= 0 ? "text-emerald-600" : "text-rose-600"}>
+                        {item.total_profit < 0 ? `-${formatRupiah(Math.abs(item.total_profit))}` : formatRupiah(item.total_profit)}
+                      </span>
                     </td>
 
                     {/* Total Qty */}
@@ -126,6 +134,16 @@ export function SalesByCategoryTable({ data, isLoading }: SalesByCategoryTablePr
                 </td>
                 <td className="px-4 py-3 text-right font-black text-slate-900 tabular-nums">
                   {formatRupiah(data.reduce((s, d) => s + d.total_sales, 0))}
+                </td>
+                <td className="px-4 py-3 text-right font-black tabular-nums">
+                  {(() => {
+                    const totalProfit = data.reduce((s, d) => s + (d.total_profit ?? 0), 0);
+                    return (
+                      <span className={totalProfit >= 0 ? "text-emerald-700" : "text-rose-700"}>
+                        {totalProfit < 0 ? `-${formatRupiah(Math.abs(totalProfit))}` : formatRupiah(totalProfit)}
+                      </span>
+                    );
+                  })()}
                 </td>
                 <td className="px-4 py-3 text-right font-black text-slate-900 tabular-nums">
                   {data.reduce((s, d) => s + d.total_quantity, 0).toLocaleString("id-ID")} pcs
