@@ -109,7 +109,7 @@ export function PurchaseReturn() {
         apiParams.status = deferredFilters.status;
     }
     if (deferredFilters.supplier_uid && deferredFilters.supplier_uid !== "all") {
-        apiParams.supplier_uid = Number(deferredFilters.supplier_uid);
+        apiParams.supplier_uid = deferredFilters.supplier_uid;
     }
     if (deferredFilters.start_date) {
         apiParams.start_date = deferredFilters.start_date;

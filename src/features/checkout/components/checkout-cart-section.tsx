@@ -57,6 +57,65 @@ function ServicePriceInput({
     );
 }
 
+interface CheckoutQtyInputProps {
+    value: number;
+    onChange: (val: number) => void;
+    onBlur?: React.FocusEventHandler<HTMLInputElement>;
+    onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
+    className?: string;
+    disabled?: boolean;
+}
+
+function CheckoutQtyInput({
+    value,
+    onChange,
+    onBlur,
+    onKeyDown,
+    className,
+    disabled,
+}: CheckoutQtyInputProps) {
+    const [localVal, setLocalVal] = React.useState<string>(String(value));
+
+    React.useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setLocalVal(String(value));
+    }, [value]);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        setLocalVal(val);
+
+        if (val === "") return;
+
+        const num = parseInt(val, 10);
+        if (!isNaN(num) && num > 0) {
+            onChange(num);
+        }
+    };
+
+    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        const num = parseInt(localVal, 10);
+        if (localVal === "" || isNaN(num) || num <= 0) {
+            setLocalVal(String(value));
+        } else {
+            onChange(num);
+        }
+        onBlur?.(e);
+    };
+
+    return (
+        <Input
+            type="number"
+            value={localVal}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            onKeyDown={onKeyDown}
+            className={className}
+            disabled={disabled}
+        />
+    );
+}
+
 interface CheckoutCartSectionProps {
     isProcessing: boolean;
     cart: CartItem[];
@@ -176,24 +235,9 @@ export function CheckoutCartSection({
                                                     >
                                                         -
                                                     </button>
-                                                    <Input
-                                                        type="number"
+                                                    <CheckoutQtyInput
                                                         value={item.qty}
-                                                        onChange={(e) => {
-                                                            const val = e.target.value;
-                                                            if (val === "") return;
-                                                            const num = parseInt(val, 10);
-                                                            if (!isNaN(num) && num > 0) {
-                                                                onUpdateQty(item, num);
-                                                            }
-                                                        }}
-                                                        onBlur={(e) => {
-                                                            const val = e.target.value;
-                                                            const num = parseInt(val, 10);
-                                                            if (val === "" || isNaN(num) || num <= 0) {
-                                                                onUpdateQty(item, item.qty);
-                                                            }
-                                                        }}
+                                                        onChange={(num) => onUpdateQty(item, num)}
                                                         onKeyDown={(e) => {
                                                             if (e.key === "Enter") {
                                                                 e.preventDefault();
@@ -310,24 +354,9 @@ export function CheckoutCartSection({
                                             >
                                                 -
                                             </button>
-                                            <Input
-                                                type="number"
+                                            <CheckoutQtyInput
                                                 value={item.qty}
-                                                onChange={(e) => {
-                                                    const val = e.target.value;
-                                                    if (val === "") return;
-                                                    const num = parseInt(val, 10);
-                                                    if (!isNaN(num) && num > 0) {
-                                                        onUpdateQty(item, num);
-                                                    }
-                                                }}
-                                                onBlur={(e) => {
-                                                    const val = e.target.value;
-                                                    const num = parseInt(val, 10);
-                                                    if (val === "" || isNaN(num) || num <= 0) {
-                                                        onUpdateQty(item, item.qty);
-                                                    }
-                                                }}
+                                                onChange={(num) => onUpdateQty(item, num)}
                                                 className="w-14 h-7 text-center text-xs font-bold text-slate-800 border border-slate-200 rounded-lg outline-none focus:border-emerald-500 px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                 disabled={isProcessing}
                                             />

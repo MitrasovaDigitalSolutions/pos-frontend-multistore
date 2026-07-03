@@ -122,7 +122,7 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
         }));
 
         const payload = {
-            purchase_order_uid: data.purchase_order_uid ? Number(data.purchase_order_uid) : null,
+            purchase_order_uid: data.purchase_order_uid || null,
             supplier_uid: data.supplier_uid,
             nomor_faktur: data.nomor_faktur,
             nilai_faktur: Number(data.nilai_faktur),

@@ -356,7 +356,7 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
             }));
 
             const payload = {
-                purchase_order_uid: receiving.purchase_order_uid ? Number(receiving.purchase_order_uid) : null,
+                purchase_order_uid: receiving.purchase_order_uid || null,
                 supplier_uid: receiving.supplier_uid,
                 nomor_faktur: formData.nomor_faktur,
                 nilai_faktur: Number(formData.nilai_faktur),
