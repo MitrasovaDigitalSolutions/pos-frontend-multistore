@@ -59,6 +59,17 @@ export function useCheckoutState() {
         };
     }, [productsData, reloadLocalProducts]);
 
+    useEffect(() => {
+        const handleCatalogSynced = () => {
+            reloadLocalProducts();
+        };
+
+        window.addEventListener("pos_catalog_synced", handleCatalogSynced);
+        return () => {
+            window.removeEventListener("pos_catalog_synced", handleCatalogSynced);
+        };
+    }, [reloadLocalProducts]);
+
     const products = localProducts;
 
     // Connect to local checkout Zustand store
