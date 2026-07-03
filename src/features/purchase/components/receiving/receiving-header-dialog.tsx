@@ -1,26 +1,25 @@
 "use client";
 
-import { useEffect } from "react";
-import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-import { BaseDialog } from "@/components/ui/base-dialog";
-import { FormSelect } from "@/components/forms/form-select";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { FormNominalInput } from "@/components/forms/form-nominal-input";
-import { Input } from "@/components/ui/input";
+import { FormSelect } from "@/components/forms/form-select";
+import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
-import { IconClipboardPlus } from "@tabler/icons-react";
-import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
-import { useUpdateReceiving, useOutstandingPurchaseOrders } from "../../api/purchase-api";
-import { receivingHeaderSchema, type ReceivingHeaderInput } from "../../schemas/receiving-schema";
-import type { Receiving } from "../../types";
-import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { Input } from "@/components/ui/input";
 import { Scrollable } from "@/components/ui/scrollable";
 import {
-    PAYMENT_STATUS,
-    PAYMENT_STATUS_LABELS,
+    PAYMENT_STATUS
 } from "@/constants/purchase";
+import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { IconClipboardPlus } from "@tabler/icons-react";
+import { useEffect } from "react";
+import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
+import { toast } from "sonner";
+import { useOutstandingPurchaseOrders, useUpdateReceiving } from "../../api/purchase-api";
+import { receivingHeaderSchema, type ReceivingHeaderInput } from "../../schemas/receiving-schema";
+import type { Receiving } from "../../types";
 
 interface ReceivingHeaderDialogProps {
     open: boolean;
@@ -158,7 +157,7 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
                     <span>Edit Informasi Penerimaan Barang</span>
                 </>
             }
-            className="max-w-xl flex flex-col max-h-[90vh]"
+            className="sm:max-w-2xl flex flex-col max-h-[90vh]"
         >
             <FormProvider {...methods}>
                 <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden min-h-0 pt-4">
@@ -241,7 +240,7 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
                             </div>
 
                             {/* Status Pembayaran */}
-                            <div className="space-y-1.5 sm:col-span-2">
+                            {/* <div className="space-y-1.5 sm:col-span-2">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                     Status Pembayaran
                                 </label>
@@ -261,7 +260,7 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
                                         {errors.status_pembayaran.message}
                                     </p>
                                 )}
-                            </div>
+                            </div> */}
                         </div>
 
                         {/* Catatan */}
