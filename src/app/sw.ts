@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 import { defaultCache } from "@serwist/next/worker";
-import { Serwist, NetworkFirst, type PrecacheEntry, type SerwistGlobalConfig } from "serwist";
+import { Serwist, NetworkFirst, NetworkOnly, type PrecacheEntry, type SerwistGlobalConfig } from "serwist";
 
 declare global {
     interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -31,6 +31,13 @@ const serwist = new Serwist({
                     return Response.json({ status: "offline" }, { status: 503 });
                 }
             },
+        },
+        {
+            // QZ Tray certificate and signing requests must never be cached.
+            // The client-side QZService handles failures gracefully (falls back
+            // to unsigned mode or uses a localStorage-cached certificate).
+            matcher: ({ url, sameOrigin }) => sameOrigin && url.pathname.startsWith("/api/proxy/v1/qz/"),
+            handler: new NetworkOnly(),
         },
         {
             matcher: ({ url, sameOrigin }) => url.pathname === "/api/auth/session" && sameOrigin,

@@ -15,6 +15,8 @@ interface BarcodeInputProps {
     mode?: "purchase" | "sell";
     searchLabel?: string;
     onSearchSubmit?: (query: string) => void;
+    onProductNotFound?: (query: string) => void;
+    onInputChange?: (value: string) => void;
 }
 
 export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
@@ -27,6 +29,8 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
         mode = "purchase",
         searchLabel = "Cari",
         onSearchSubmit,
+        onProductNotFound,
+        onInputChange,
     }: BarcodeInputProps, ref) {
         const localRef = useRef<HTMLInputElement>(null);
         const inputRef = (ref || localRef) as React.MutableRefObject<HTMLInputElement | null>;
@@ -202,6 +206,7 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                 } else {
                     triggerFlash("error");
                     onError?.(`Produk "${query}" tidak ditemukan!`);
+                    onProductNotFound?.(query);
                 }
             } catch {
                 triggerFlash("error");
@@ -284,7 +289,10 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                             ref={inputRef}
                             type="text"
                             value={value}
-                            onChange={(e) => setValue(e.target.value)}
+                            onChange={(e) => {
+                                setValue(e.target.value);
+                                onInputChange?.(e.target.value);
+                            }}
                             onKeyDown={handleKeyDown}
                             placeholder={placeholder}
                             disabled={disabled || isSearching}
@@ -334,8 +342,24 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                                 <span>Mencari produk...</span>
                             </div>
                         ) : suggestions.length === 0 ? (
-                            <div className="p-4 text-center text-xs text-slate-400 font-medium">
-                                Tidak ada produk yang cocok.
+                            <div className="p-4 text-center space-y-2">
+                                <p className="text-xs text-slate-400 font-medium">
+                                    Tidak ada produk yang cocok.
+                                </p>
+                                {onProductNotFound && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const query = value.trim();
+                                            setShowDropdown(false);
+                                            setFocusedIndex(-1);
+                                            onProductNotFound?.(query);
+                                        }}
+                                        className="mt-1 w-full flex items-center justify-center gap-1 py-1.5 px-3 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer border-none"
+                                    >
+                                        + Tambah Produk Baru
+                                    </button>
+                                )}
                             </div>
                         ) : (
                             <div className="divide-y divide-slate-50 dark:divide-slate-800/50">
