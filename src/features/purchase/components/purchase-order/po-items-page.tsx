@@ -336,7 +336,7 @@ function POItemsContainer({ poId, order }: { poId: string; order: PurchaseOrder 
                         setNotFoundQuery("");
                         handleProductFound(product);
                     }}
-                    infoMessage={notFoundQuery ? `Produk "${notFoundQuery}" belum ada di server. Silakan buat baru.` : undefined}
+                    infoMessage={notFoundQuery ? `Produk "${notFoundQuery}" tidak ditemukan. Silakan buat baru.` : undefined}
                 />
             </div>
         </FormProvider>

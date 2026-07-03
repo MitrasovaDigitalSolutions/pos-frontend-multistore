@@ -638,7 +638,7 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
                         setNotFoundQuery("");
                         handleProductFound(product);
                     }}
-                    infoMessage={notFoundQuery ? `Produk "${notFoundQuery}" belum ada di server. Silakan buat baru.` : undefined}
+                    infoMessage={notFoundQuery ? `Produk "${notFoundQuery}" tidak ditemukan. Silakan buat baru.` : undefined}
                 />
             </div>
         </FormProvider>
