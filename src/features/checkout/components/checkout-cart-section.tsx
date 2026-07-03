@@ -77,6 +77,7 @@ function CheckoutQtyInput({
     const [localVal, setLocalVal] = React.useState<string>(String(value));
 
     React.useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLocalVal(String(value));
     }, [value]);
 
