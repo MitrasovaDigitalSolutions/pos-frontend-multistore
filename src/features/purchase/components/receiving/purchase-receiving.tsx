@@ -102,7 +102,7 @@ export function PurchaseReceiving() {
         apiParams.status = deferredFilters.status;
     }
     if (deferredFilters.supplier_id && deferredFilters.supplier_id !== "all") {
-        apiParams.supplier_id = Number(deferredFilters.supplier_id);
+        apiParams.supplier_uid = deferredFilters.supplier_id;
     }
     if (deferredFilters.start_date) {
         apiParams.start_date = deferredFilters.start_date;
