@@ -9,7 +9,7 @@ import { BaseDialog } from "@/components/ui/base-dialog";
 import { Input } from "@/components/ui/input";
 import { useBrands } from "@/features/brands/api/brands-api";
 import { useCategories } from "@/features/categories/api/categories-api";
-import { IconPackage } from "@tabler/icons-react";
+import { IconPackage, IconInfoCircle } from "@tabler/icons-react";
 import { useEffect, useMemo } from "react";
 import { useFormContext, Controller } from "react-hook-form";
 import { Switch } from "@/components/ui/switch";
@@ -23,12 +23,16 @@ interface ProductFormDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     editingProduct: Product | null;
+    onSuccess?: (product: Product) => void;
+    infoMessage?: string;
 }
 
 export function ProductFormDialog({
     open,
     onOpenChange,
     editingProduct,
+    onSuccess,
+    infoMessage,
 }: ProductFormDialogProps) {
     const createProduct = useCreateProduct();
     const updateProduct = useUpdateProduct();
@@ -163,6 +167,9 @@ export function ProductFormDialog({
                         res.message || "Produk berhasil ditambahkan!",
                     );
                     onOpenChange(false);
+                    if (res.data) {
+                        onSuccess?.(res.data);
+                    }
                 },
                 onError: (err) => {
                     toast.error(err.message || "Gagal menambahkan produk.");
@@ -191,8 +198,14 @@ export function ProductFormDialog({
         >
             <form
                 onSubmit={handleSubmit(onSubmit)}
-                className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4"
+                className="grid grid-cols-1 md:grid-cols-3 gap-6 "
             >
+                {infoMessage && (
+                    <div className="md:col-span-3 p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-medium flex items-center gap-2.5">
+                        <IconInfoCircle size={18} className="text-amber-600 shrink-0" />
+                        <p className="font-bold">Info:</p> {infoMessage}
+                    </div>
+                )}
                 {/* Kolom Kiri: Upload Gambar */}
                 <div className="md:col-span-1">
                     <FormImageUpload<ProductInput>
