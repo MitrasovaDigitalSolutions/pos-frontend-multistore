@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useCheckoutState } from "@/features/checkout/hooks/use-checkout-state";
 import { CheckoutTopBar } from "@/features/checkout/components/checkout-top-bar";
 import { CheckoutCartSection } from "@/features/checkout/components/checkout-cart-section";
@@ -128,6 +128,29 @@ export function Checkout() {
         setHasAutoOpened(false);
     };
 
+    /**
+     * Reprint handler that fetches the last sales transaction UID from
+     * the active cash drawer session's movements (type: "cash_sale").
+     * Falls back to the default handleReprint (localStorage-based) when
+     * no drawer session or sales movement is found.
+     */
+    const handleReprintFromDrawer = useCallback(() => {
+        const movements = activeDrawerSession?.movements;
+        if (movements && movements.length > 0) {
+            // Find the latest cash_sale movement (movements are sorted newest-first)
+            const lastSale = [...movements]
+                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                .find((m) => m.type === "cash_sale");
+
+            if (lastSale?.reference_uid) {
+                state.handleReprint(lastSale.reference_uid);
+                return;
+            }
+        }
+        // Fallback: use the default handler (localStorage lastTransactionId)
+        state.handleReprint();
+    }, [activeDrawerSession, state]);
+
     const handleLogout = () => {
         if (!isOnline) {
             toast.error("Koneksi terputus. Harap sambungkan ke internet sebelum keluar dari akun.");
@@ -218,7 +241,7 @@ export function Checkout() {
                         onRecallOpen={state.openHoldList}
                         onVoid={state.handleVoidDraft}
                         onPayOpen={() => state.setIsPayModalOpen(true)}
-                        onReprint={state.handleReprint}
+                        onReprint={handleReprintFromDrawer}
                         namaTransaksi={state.namaTransaksi}
                         onNamaTransaksiChange={state.setNamaTransaksi}
                     />

@@ -142,29 +142,29 @@ export function Dashboard() {
         </div>
 
         <section className="grid grid-cols-12 gap-4 mb-4">
-          <div className="col-span-3 h-full">
+          <div className="col-span-12 lg:col-span-3 h-full">
             <StatMiniCards summary={summary} isLoading={isLoading} />
           </div>
-          <div className="col-span-6 h-full">
+          <div className="col-span-12 md:col-span-8 lg:col-span-6 h-full">
             <RevenueChart summary={summary} from={watchFrom || undefined} to={watchTo || undefined} />
           </div>
-          <div className="col-span-3 h-full">
+          <div className="col-span-12 md:col-span-4 lg:col-span-3 h-full">
             <SalesStatistics summary={summary} isLoading={isLoading} />
           </div>
         </section>
 
         <section className="grid grid-cols-12 gap-4">
-          <div className="col-span-6 h-full">
+          <div className="col-span-12 lg:col-span-6 h-full">
             <RecentOrdersTable
               from={watchFrom}
               to={watchTo}
               paymentMethod={paymentMethod}
             />
           </div>
-          <div className="col-span-3 h-full">
+          <div className="col-span-12 md:col-span-6 lg:col-span-3 h-full">
             <TopSellingWeekly summary={summary} isLoading={isLoading} />
           </div>
-          <div className="col-span-3 h-full">
+          <div className="col-span-12 md:col-span-6 lg:col-span-3 h-full">
             <JasaVsProductChart data={jasaVsProduct} isLoading={jasaVsProductLoading} />
           </div>
         </section>
