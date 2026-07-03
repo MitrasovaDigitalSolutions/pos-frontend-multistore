@@ -18,6 +18,7 @@ import {
     usePurchaseOrderDetail,
     useScanReceivingProduct,
     useComparePrices,
+    useUpdateReceiving,
     type ComparePricesResult
 } from "../../../api/purchase-api";
 import type { PurchaseItemLocal, Receiving } from "../../../types";
@@ -26,7 +27,7 @@ import { BarcodeInput } from "@/components/shared/barcode-input";
 import { BulkSubmitBar } from "../../shared/bulk-submit-bar";
 import { ItemsTable } from "../../shared/items-table";
 import { ReceivingHeaderDialog } from "../receiving-header-dialog";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ReceivingFinalizeDialog } from "../receiving-finalize-dialog";
 import { RECEIVING_STATUS } from "@/constants/purchase";
 import { PriceAlertDialog, type PriceAlertFormInput } from "./price-alert-dialog";
 import { ReceivingInstructionPanel } from "./receiving-instruction-panel";
@@ -132,6 +133,7 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
     const totalValue = store(selectTotal);
 
     const bulkReplace = useBulkReplaceReceivingItems();
+    const updateReceiving = useUpdateReceiving();
     const completeReceiving = useCompleteReceiving();
     const comparePrices = useComparePrices();
     const scanMutation = useScanReceivingProduct();
@@ -337,25 +339,36 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
     // ─── Price Comparison & Finalization Logic ───
     const [priceAlerts, setPriceAlerts] = useState<ComparePricesResult[]>([]);
     const [isAlertOpen, setIsAlertOpen] = useState(false);
-    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [isFinalizeOpen, setIsFinalizeOpen] = useState(false);
     const [isFinalizing, setIsFinalizing] = useState(false);
 
-    const executeFinalizeComplete = async (payload?: {
-        items: Array<{
-            product_uid: string;
-            kuantitas: number;
-            harga_beli: number;
-            update_harga_jual: boolean;
-            harga_jual_baru: number | null;
-            margin_baru: number | null;
-        }>;
+    const handleFinalizeConfirm = async (formData: {
+        nomor_faktur: string;
+        nilai_faktur: number;
+        catatan: string | null;
     }) => {
         setIsFinalizing(true);
         try {
-            if (payload) {
-                // If we have custom pricing parameters to apply, update them first
-                await bulkReplace.mutateAsync({ uid: receivingId, data: payload });
-            }
+            const itemsPayload = items.map((item) => ({
+                product_uid: item.product_uid,
+                kuantitas: item.kuantitas,
+                harga_beli: item.harga_estimasi,
+            }));
+
+            const payload = {
+                purchase_order_uid: receiving.purchase_order_uid ? Number(receiving.purchase_order_uid) : null,
+                supplier_uid: receiving.supplier_uid,
+                nomor_faktur: formData.nomor_faktur,
+                nilai_faktur: Number(formData.nilai_faktur),
+                tanggal_terima: receiving.tanggal_terima || (receiving.created_at ? receiving.created_at.split("T")[0] : ""),
+                status_pembayaran: receiving.status_pembayaran,
+                catatan: formData.catatan,
+                status: receiving.status,
+                items: itemsPayload,
+            };
+
+            // Save updated header + items to backend
+            await updateReceiving.mutateAsync({ uid: receivingId, data: payload });
 
             // Finalize completion
             await completeReceiving.mutateAsync(receivingId);
@@ -369,8 +382,7 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
             toast.error(errorObj.message || "Gagal menyelesaikan penerimaan barang.");
         } finally {
             setIsFinalizing(false);
-            setIsAlertOpen(false);
-            setIsConfirmOpen(false);
+            setIsFinalizeOpen(false);
         }
     };
 
@@ -412,7 +424,7 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
                 setIsAlertOpen(true);
             } else {
                 // No alerts, proceed to final confirmation directly
-                setIsConfirmOpen(true);
+                setIsFinalizeOpen(true);
             }
         } catch (err: unknown) {
             const errorObj = err as { message?: string };
@@ -421,10 +433,11 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
     };
 
     const handleCompleteWithoutPrices = () => {
-        executeFinalizeComplete();
+        setIsAlertOpen(false);
+        setIsFinalizeOpen(true);
     };
 
-    const handleCompleteWithPrices = (formValues: PriceAlertFormInput) => {
+    const handleCompleteWithPrices = async (formValues: PriceAlertFormInput) => {
         const payload = {
             items: items.map((item) => {
                 const pricing = formValues.items.find((fit) => fit.product_uid === item.product_uid);
@@ -438,7 +451,14 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
                 };
             }),
         };
-        executeFinalizeComplete(payload);
+        try {
+            await bulkReplace.mutateAsync({ uid: receivingId, data: payload });
+            setIsAlertOpen(false);
+            setIsFinalizeOpen(true);
+        } catch (err: unknown) {
+            const errorObj = err as { message?: string };
+            toast.error(errorObj.message || "Gagal menyimpan update harga.");
+        }
     };
 
     const uniqueProductCount = items.length;
@@ -606,17 +626,14 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
                     receiving={receiving}
                 />
 
-                {/* Confirm Dialog */}
-                <ConfirmDialog
-                    open={isConfirmOpen}
-                    onOpenChange={setIsConfirmOpen}
-                    title="Selesaikan Penerimaan"
-                    description="Apakah Anda yakin ingin menyelesaikan penerimaan ini? Stok produk akan langsung ditambahkan ke inventori dan tidak dapat diubah lagi."
-                    confirmText="Ya, Selesaikan"
-                    cancelText="Batal"
-                    variant="warning"
-                    onConfirm={() => executeFinalizeComplete()}
-                    isLoading={isFinalizing}
+                {/* Finalize Dialog */}
+                <ReceivingFinalizeDialog
+                    open={isFinalizeOpen}
+                    onOpenChange={setIsFinalizeOpen}
+                    receiving={receiving}
+                    items={items}
+                    isPending={isFinalizing || updateReceiving.isPending || completeReceiving.isPending}
+                    onConfirm={handleFinalizeConfirm}
                 />
 
                 {/* Price comparison alert dialog */}
