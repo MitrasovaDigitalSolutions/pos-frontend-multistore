@@ -7,6 +7,7 @@ const QZ_CONNECT_RETRIES = 2;
 class QZService {
     private initialized = false;
     private securityMode: "signed" | "unsigned" | null = null;
+    private activeConnectionSigned = false;
 
     /**
      * Initialise QZ Tray security (certificate + signature).
@@ -126,7 +127,7 @@ class QZService {
 
         if (isOffline) {
             console.warn("Aplikasi offline. Menggunakan mode unsigned untuk QZ Tray.");
-            this.setUnsignedMode();
+            this.useUnsignedMode();
             this.initialized = false;
             this.activeConnectionSigned = false;
         } else {
