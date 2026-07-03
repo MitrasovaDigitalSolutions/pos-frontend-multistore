@@ -218,9 +218,12 @@ export function useSyncEngine() {
 
             // 1. Sync Products (Incremental Delta Sync)
             let lastProductUpdate = "";
-            const lastProduct = await db.products.orderBy("updated_at").last();
-            if (lastProduct && lastProduct.updated_at) {
-                lastProductUpdate = lastProduct.updated_at;
+            const hasSyncedBefore = typeof window !== "undefined" ? localStorage.getItem("catalog_last_synced_at") : null;
+            if (hasSyncedBefore) {
+                const lastProduct = await db.products.orderBy("updated_at").last();
+                if (lastProduct && lastProduct.updated_at) {
+                    lastProductUpdate = lastProduct.updated_at;
+                }
             }
 
             let currentPage = 1;
@@ -257,6 +260,9 @@ export function useSyncEngine() {
             }
 
             localStorage.setItem("catalog_last_synced_at", new Date().toISOString());
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(new Event("pos_catalog_synced"));
+            }
         } catch (err) {
             console.error("Gagal sinkronisasi katalog:", err);
         } finally {
