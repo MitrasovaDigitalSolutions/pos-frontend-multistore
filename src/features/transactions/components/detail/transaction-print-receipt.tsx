@@ -119,10 +119,31 @@ export function TransactionPrintReceipt({ transaction, formattedDate }: Transact
                 )}
                 {transaction.metode_pembayaran === "debt" && (
                     <>
-                        <div className="flex justify-between">
-                            <span>DP Tunai:</span>
-                            <span>{formatRupiah(transaction.cash_received || 0)}</span>
-                        </div>
+                        {transaction.card_amount && transaction.card_amount > 0 ? (
+                            <>
+                                <div className="flex justify-between">
+                                    <span>DP Tunai:</span>
+                                    <span>{formatRupiah(transaction.cash_amount || 0)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>DP Transfer:</span>
+                                    <span>{formatRupiah(transaction.card_amount)}</span>
+                                </div>
+                                <div className="flex justify-between text-[8px] pl-2 text-gray-700">
+                                    <span>Kartu:</span>
+                                    <span className="uppercase">{transaction.jenis_kartu || "Debit"}</span>
+                                </div>
+                                <div className="flex justify-between text-[8px] pl-2 text-gray-700">
+                                    <span>No Kartu:</span>
+                                    <span>**** {transaction.nomor_kartu_akhir || "0000"}</span>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex justify-between">
+                                <span>DP Tunai:</span>
+                                <span>{formatRupiah(transaction.cash_received || 0)}</span>
+                            </div>
+                        )}
                         <div className="flex justify-between font-bold">
                             <span>Hutang:</span>
                             <span>{formatRupiah(transaction.debt_amount || 0)}</span>

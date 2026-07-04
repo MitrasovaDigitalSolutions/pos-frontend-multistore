@@ -46,6 +46,8 @@ export interface Receipt {
     member?: Member | null;
     member_uid?: string | null;
     cash_received?: number;
+    cash_amount?: number;
+    card_amount?: number;
     debt_amount?: number;
 }
 
