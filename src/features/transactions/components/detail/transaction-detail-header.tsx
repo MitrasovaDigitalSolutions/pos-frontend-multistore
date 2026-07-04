@@ -9,12 +9,14 @@ interface TransactionDetailHeaderProps {
     transactionNumber: string;
     status: string;
     onPrint: () => void;
+    namaTransaksi?: string | null;
 }
 
 export function TransactionDetailHeader({
     transactionNumber,
     status,
     onPrint,
+    namaTransaksi,
 }: TransactionDetailHeaderProps) {
     const router = useAppRouter();
 
@@ -87,6 +89,11 @@ export function TransactionDetailHeader({
                     <div className="flex flex-wrap items-center gap-2.5 mt-1">
                         <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-slate-100">
                             Transaksi: <span className="text-indigo-650 dark:text-indigo-400">{transactionNumber}</span>
+                            {namaTransaksi && (
+                                <span className="text-slate-400 dark:text-slate-500 font-medium text-xs ml-2 italic">
+                                    ({namaTransaksi})
+                                </span>
+                            )}
                         </h2>
 
                         <div

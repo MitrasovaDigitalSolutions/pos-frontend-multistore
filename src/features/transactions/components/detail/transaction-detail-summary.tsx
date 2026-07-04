@@ -263,6 +263,19 @@ export function TransactionDetailSummary({ transaction, formattedDate }: Transac
                         </div>
                     </div>
 
+                    {/* Transaction Name Info */}
+                    {transaction.nama_transaksi && (
+                        <div className="col-span-2 flex items-center gap-2.5 bg-slate-900/50 p-2 rounded-xl">
+                            <IconNotebook size={14} className="text-indigo-400 shrink-0" />
+                            <div className="truncate">
+                                <div className="text-[8px] text-slate-400 font-extrabold uppercase tracking-wider leading-none">Nama/Keterangan</div>
+                                <div className="font-bold text-slate-100 mt-1 truncate text-[11px] leading-none">
+                                    {transaction.nama_transaksi}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Member/Pelanggan Info */}
                     {transaction.member && (
                         <div className="col-span-2 flex items-center justify-between bg-slate-900/50 p-2 rounded-xl border border-slate-850">
