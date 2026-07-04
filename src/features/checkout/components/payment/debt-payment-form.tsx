@@ -1,6 +1,7 @@
 "use client";
 
 import { FormNominalInput } from "@/components/forms/form-nominal-input";
+import { FormInput } from "@/components/forms/form-input";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { toast } from "sonner";
 import type { Member } from "@/features/members/types";
@@ -20,6 +21,8 @@ export function DebtPaymentForm({
 }: DebtPaymentFormProps) {
     const { setValue, control } = useFormContext();
     const cashReceived = useWatch({ control, name: "cashReceived" });
+    const cardAmount = useWatch({ control, name: "cardAmount" });
+    const cardType = useWatch({ control, name: "cardType" }) || "debit";
 
     if (!selectedMember) {
         return (
@@ -36,7 +39,8 @@ export function DebtPaymentForm({
     }
 
     const cashNum = Number(cashReceived) || 0;
-    const remainingDebt = grandTotal - cashNum;
+    const cardAmountNum = Number(cardAmount) || 0;
+    const remainingDebt = grandTotal - cashNum - cardAmountNum;
 
     return (
         <div className="space-y-4 animate-in fade-in-50 duration-200">
@@ -73,8 +77,9 @@ export function DebtPaymentForm({
                         className="h-14 pl-11 pr-20 text-2xl font-black text-slate-900 bg-white border border-slate-200/80 focus-visible:border-rose-500 focus-visible:ring-2 focus-visible:ring-rose-500/20 rounded-xl relative transition-all shadow-sm font-mono tracking-tight"
                         disabled={isProcessing}
                         onValueChange={(val) => {
-                            if (val !== null && val >= grandTotal) {
-                                toast.warning("Uang muka harus kurang dari total tagihan.");
+                            const currentCardAmount = Number(cardAmount) || 0;
+                            if (val !== null && (val + currentCardAmount) >= grandTotal) {
+                                toast.warning("Total uang muka harus kurang dari total tagihan.");
                                 setValue("cashReceived", null);
                             }
                         }}
@@ -92,6 +97,112 @@ export function DebtPaymentForm({
                     )}
                 </div>
             </div>
+
+            {/* DP / Down Payment Transfer/Card Input */}
+            <div className="bg-slate-50/50 border border-slate-100 p-5 rounded-2xl space-y-2">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
+                    Uang Muka / DP (Transfer/Card) - Opsional
+                </label>
+                <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-extrabold text-lg select-none z-10 font-mono">
+                        Rp
+                    </span>
+                    <FormNominalInput
+                        name="cardAmount"
+                        placeholder="0"
+                        className="h-14 pl-11 pr-20 text-2xl font-black text-slate-900 bg-white border border-slate-200/80 focus-visible:border-rose-500 focus-visible:ring-2 focus-visible:ring-rose-500/20 rounded-xl relative transition-all shadow-sm font-mono tracking-tight"
+                        disabled={isProcessing}
+                        onValueChange={(val) => {
+                            const currentCashReceived = Number(cashReceived) || 0;
+                            if (val !== null && (val + currentCashReceived) >= grandTotal) {
+                                toast.warning("Total uang muka harus kurang dari total tagihan.");
+                                setValue("cardAmount", null);
+                            }
+                        }}
+                    />
+                    {cardAmount !== null && cardAmount !== undefined && (
+                        <button
+                            type="button"
+                            onClick={() => setValue("cardAmount", null)}
+                            className="absolute right-3.5 top-1/2 -translate-y-1/2 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-650 px-3 py-1 text-[10px] font-bold rounded-lg transition-all cursor-pointer select-none z-10 border-none"
+                            disabled={isProcessing}
+                        >
+                            Reset
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            {/* Card details if cardAmount > 0 */}
+            {cardAmountNum > 0 && (
+                <div className="space-y-4 animate-in fade-in-50 duration-200">
+                    {/* Card Type Selection */}
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-450 uppercase tracking-widest block select-none">
+                            Jenis Kartu DP
+                        </label>
+                        <div className="bg-slate-100/80 p-1 rounded-xl grid grid-cols-2 select-none border border-slate-200/40">
+                            <button
+                                type="button"
+                                onClick={() => setValue("cardType", "debit")}
+                                className={`py-2 rounded-lg text-xs font-bold transition-all cursor-pointer border-none ${
+                                    cardType === "debit"
+                                        ? "bg-white text-slate-900 shadow-sm font-extrabold"
+                                        : "bg-transparent text-slate-500 hover:text-slate-700"
+                                }`}
+                                disabled={isProcessing}
+                            >
+                                Debit Card
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setValue("cardType", "credit")}
+                                className={`py-2 rounded-lg text-xs font-bold transition-all cursor-pointer border-none ${
+                                    cardType === "credit"
+                                        ? "bg-white text-slate-900 shadow-sm font-extrabold"
+                                        : "bg-transparent text-slate-500 hover:text-slate-700"
+                                }`}
+                                disabled={isProcessing}
+                            >
+                                Credit Card
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Inputs Panel */}
+                    <div className="bg-slate-50/50 border border-slate-100 p-5 rounded-2xl space-y-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-slate-450 uppercase tracking-widest block">
+                                4 Digit Terakhir Kartu (Opsional)
+                            </label>
+                            <FormInput
+                                name="cardLast4"
+                                type="text"
+                                maxLength={4}
+                                placeholder="XXXX"
+                                className="h-11 border-slate-200/80 focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 rounded-xl text-center font-mono font-bold text-sm tracking-widest"
+                                disabled={isProcessing}
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(/\D/g, "").slice(0, 4);
+                                    setValue("cardLast4", val);
+                                }}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-slate-450 uppercase tracking-widest block">
+                                No. Referensi EDC (Opsional)
+                            </label>
+                            <FormInput
+                                name="cardRef"
+                                type="text"
+                                placeholder="Masukkan nomor referensi transaksi..."
+                                className="h-11 text-xs border-slate-200/80 focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 rounded-xl px-3.5"
+                                disabled={isProcessing}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Sisa Hutang Baru Breakdown */}
             <div className="bg-rose-50/50 border border-rose-100/50 p-4 rounded-xl text-center select-none">

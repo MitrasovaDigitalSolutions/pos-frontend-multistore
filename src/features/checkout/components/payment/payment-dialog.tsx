@@ -68,6 +68,7 @@ export function PaymentDialog({
     const methods = useForm({
         defaultValues: {
             cashReceived: null as number | null,
+            cardAmount: null as number | null,
             cardType: "debit",
             cardLast4: "",
             cardRef: "",
@@ -80,6 +81,7 @@ export function PaymentDialog({
     const cardLast4 = useWatch({ control: methods.control, name: "cardLast4" });
     const cardRef = useWatch({ control: methods.control, name: "cardRef" });
     const cashReceivedVal = useWatch({ control: methods.control, name: "cashReceived" });
+    const cardAmountVal = useWatch({ control: methods.control, name: "cardAmount" });
 
     useEffect(() => {
         if (open) {
@@ -87,6 +89,7 @@ export function PaymentDialog({
                 setPayMode("cash");
                 methods.reset({
                     cashReceived: null,
+                    cardAmount: null,
                     cardType: "debit",
                     cardLast4: "",
                     cardRef: "",
@@ -97,10 +100,12 @@ export function PaymentDialog({
     }, [open, methods]);
 
     const cashNum = cashReceivedVal || 0;
+    const cardAmountNum = cardAmountVal || 0;
+    const totalDp = cashNum + cardAmountNum;
     const changeValue = cashNum - grandTotal;
     const isCashValid = cashNum >= grandTotal && grandTotal > 0;
     const isCardValid = grandTotal > 0;
-    const isDebtValid = !!selectedMember && cashNum < grandTotal && grandTotal > 0;
+    const isDebtValid = !!selectedMember && grandTotal > 0 && totalDp < grandTotal;
     const isProcessing = bulkCheckout.isPending;
 
     // Determine if the submit button should be enabled
@@ -137,8 +142,11 @@ export function PaymentDialog({
             return;
         }
 
-        if (payMode === "debt" && cashNum >= grandTotal) {
-            toast.error("Uang muka (DP) tidak boleh melebihi atau sama dengan total belanja. Gunakan pembayaran Tunai.");
+        const cardAmountNum = methods.getValues("cardAmount") || 0;
+        const totalDp = cashNum + cardAmountNum;
+
+        if (payMode === "debt" && totalDp >= grandTotal) {
+            toast.error("Total uang muka (DP) tidak boleh melebihi atau sama dengan total tagihan.");
             return;
         }
 
@@ -195,9 +203,27 @@ export function PaymentDialog({
             };
         } else if (payMode === "debt") {
             payload.cash_received = cashNum;
+            payload.cash_amount = cashNum;
+            payload.card_amount = cardAmountNum;
+            if (cardAmountNum > 0) {
+                const finalCardRef = cardRef || `EDC-${Date.now()}`;
+                payload.card_type = cardType;
+                payload.jenis_kartu = cardType;
+                payload.last_four = cardLast4;
+                payload.nomor_kartu_akhir = cardLast4;
+                payload.reference_number = finalCardRef;
+                payload.referensi_edc = finalCardRef;
+            }
             payload.debt_details = {
                 cash_received: cashNum,
-                debt_amount: grandTotal - cashNum,
+                cash_amount: cashNum,
+                card_amount: cardAmountNum,
+                debt_amount: grandTotal - totalDp,
+                ...(cardAmountNum > 0 && {
+                    jenis_kartu: cardType,
+                    nomor_kartu_akhir: cardLast4,
+                    referensi_edc: cardRef || `EDC-${Date.now()}`,
+                }),
             };
         }
 
@@ -214,12 +240,12 @@ export function PaymentDialog({
                     pajak: tax,
                     total: grandTotal,
                     metode_pembayaran: payMode,
-                    nominal_bayar: payMode === "cash" ? cashNum : 0,
+                    nominal_bayar: payMode === "cash" ? cashNum : (payMode === "debt" ? totalDp : 0),
                     kembalian: payMode === "cash" ? Math.max(0, changeValue) : 0,
                     cash_received: payMode === "debt" ? cashNum : (payMode === "cash" ? cashNum : 0),
-                    debt_amount: payMode === "debt" ? (grandTotal - cashNum) : 0,
-                    jenis_kartu: payMode === "card" ? cardType : undefined,
-                    nomor_kartu_akhir: payMode === "card" ? cardLast4 : undefined,
+                    debt_amount: payMode === "debt" ? (grandTotal - totalDp) : 0,
+                    jenis_kartu: payMode === "card" ? cardType : (payMode === "debt" && cardAmountNum > 0 ? cardType : undefined),
+                    nomor_kartu_akhir: payMode === "card" ? cardLast4 : (payMode === "debt" && cardAmountNum > 0 ? cardLast4 : undefined),
                     member: selectedMember,
                     items: cartList.map((item) => ({
                         uid: item.product_uid,
@@ -299,7 +325,7 @@ export function PaymentDialog({
 
                     if (payMode === "debt" && selectedMember) {
                         try {
-                            const newDebt = (selectedMember.hutang || 0) + (grandTotal - cashNum);
+                            const newDebt = (selectedMember.hutang || 0) + (grandTotal - totalDp);
                             await db.members.update(selectedMember.uid, { hutang: newDebt });
                         } catch (debtErr) {
                             console.warn("Gagal memperbarui hutang member lokal:", debtErr);
@@ -576,7 +602,7 @@ export function PaymentDialog({
                                             </div>
                                             <div className="flex-1">
                                                 <p className="text-rose-500/70 text-[9px] font-semibold">Sisa Hutang Baru</p>
-                                                <p className="text-rose-700 font-mono font-extrabold text-sm leading-none">{formatRupiah(grandTotal - cashNum)}</p>
+                                                <p className="text-rose-700 font-mono font-extrabold text-sm leading-none">{formatRupiah(grandTotal - totalDp)}</p>
                                             </div>
                                         </div>
                                     </div>
