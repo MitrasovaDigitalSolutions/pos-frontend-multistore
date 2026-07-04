@@ -161,8 +161,25 @@ export function buildReceipt(data: ReceiptData) {
 
     txt += footerLine("Terima kasih atas kepercayaan Anda.","Jumlah  :",sale.subtotal) + "\n";
     txt += footerLine("Silahkan Datang Kembali.","Diskon  :",sale.diskon ?? 0 ) + "\n";
-    txt += footerLine("",isDebt ? "Bayar :" : "Tunai   :",bayar) + "\n";
-    txt += footerLine("",isDebt ? "Kurang :" : "Kembali :",kembali) + "\n";
+    
+    if (isDebt) {
+        const cashAmount = sale.cash_amount ?? sale.cash_received ?? 0;
+        const cardAmount = sale.card_amount ?? 0;
+        
+        if (cardAmount > 0) {
+            txt += footerLine("", "DP Tunai:", cashAmount) + "\n";
+            txt += footerLine("", "DP Transfer:", cardAmount) + "\n";
+            if (sale.nomor_kartu_akhir) {
+                txt += padLeft(`Kartu: ${sale.jenis_kartu || "Debit"} (**** ${sale.nomor_kartu_akhir})`, WIDTH) + "\n";
+            }
+        } else {
+            txt += footerLine("", "DP Tunai:", cashAmount) + "\n";
+        }
+        txt += footerLine("", "Kurang  :", sale.debt_amount ?? 0) + "\n";
+    } else {
+        txt += footerLine("", "Tunai   :", bayar) + "\n";
+        txt += footerLine("", "Kembali :", kembali) + "\n";
+    }
 
     return txt;
 }

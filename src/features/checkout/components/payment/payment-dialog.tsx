@@ -243,6 +243,8 @@ export function PaymentDialog({
                     nominal_bayar: payMode === "cash" ? cashNum : (payMode === "debt" ? totalDp : 0),
                     kembalian: payMode === "cash" ? Math.max(0, changeValue) : 0,
                     cash_received: payMode === "debt" ? cashNum : (payMode === "cash" ? cashNum : 0),
+                    cash_amount: payMode === "cash" ? cashNum : (payMode === "debt" ? cashNum : 0),
+                    card_amount: payMode === "card" ? grandTotal : (payMode === "debt" ? cardAmountNum : 0),
                     debt_amount: payMode === "debt" ? (grandTotal - totalDp) : 0,
                     jenis_kartu: payMode === "card" ? cardType : (payMode === "debt" && cardAmountNum > 0 ? cardType : undefined),
                     nomor_kartu_akhir: payMode === "card" ? cardLast4 : (payMode === "debt" && cardAmountNum > 0 ? cardLast4 : undefined),

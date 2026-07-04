@@ -155,12 +155,33 @@ export function TransactionDetailSummary({ transaction, formattedDate }: Transac
 
                     {paymentMethod === "debt" && (
                         <>
-                            <div className="flex justify-between items-center text-slate-655">
-                                <span className="font-medium">Uang Muka (DP)</span>
-                                <span className="font-semibold text-slate-800 tabular-nums">
-                                    {formatRupiah(transaction.cash_received || 0)}
-                                </span>
-                            </div>
+                            {transaction.card_amount && transaction.card_amount > 0 ? (
+                                <>
+                                    <div className="flex justify-between items-center text-slate-655">
+                                        <span className="font-medium">DP Tunai</span>
+                                        <span className="font-semibold text-slate-800 tabular-nums">
+                                            {formatRupiah(transaction.cash_amount || 0)}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-slate-655">
+                                        <span className="font-medium">DP Transfer/Card</span>
+                                        <span className="font-semibold text-slate-800 tabular-nums">
+                                            {formatRupiah(transaction.card_amount)}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-[10px] text-slate-500 pl-3">
+                                        <span>Kartu ({transaction.jenis_kartu || "Debit"})</span>
+                                        <span className="font-mono">{transaction.nomor_kartu_akhir ? `**** ${transaction.nomor_kartu_akhir}` : "-"}</span>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="flex justify-between items-center text-slate-655">
+                                    <span className="font-medium">Uang Muka (DP)</span>
+                                    <span className="font-semibold text-slate-800 tabular-nums">
+                                        {formatRupiah(transaction.cash_received || 0)}
+                                    </span>
+                                </div>
+                            )}
                             <div className="flex justify-between items-center text-slate-655">
                                 <span className="font-medium">Sisa Hutang</span>
                                 <span className="font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-100/40 tabular-nums text-[11px]">

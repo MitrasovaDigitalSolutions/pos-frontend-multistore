@@ -150,10 +150,31 @@ export function PrintReceiptLayout({ receipt, cashierName }: PrintReceiptLayoutP
                     </>
                 ) : receipt.metode_pembayaran === "debt" ? (
                     <>
-                        <div className="flex justify-between font-semibold">
-                            <span>DP Tunai:</span>
-                            <span className="tabular-nums">{formatRupiah(receipt.cash_received ?? 0)}</span>
-                        </div>
+                        {receipt.card_amount && receipt.card_amount > 0 ? (
+                            <>
+                                <div className="flex justify-between font-semibold">
+                                    <span>DP Tunai:</span>
+                                    <span className="tabular-nums">{formatRupiah(receipt.cash_amount ?? 0)}</span>
+                                </div>
+                                <div className="flex justify-between font-semibold">
+                                    <span>DP Transfer:</span>
+                                    <span className="tabular-nums">{formatRupiah(receipt.card_amount)}</span>
+                                </div>
+                                <div className="flex justify-between text-[7px] pl-2 text-gray-700">
+                                    <span>Kartu:</span>
+                                    <span className="uppercase">{receipt.jenis_kartu || "Debit"}</span>
+                                </div>
+                                <div className="flex justify-between text-[7px] pl-2 text-gray-700">
+                                    <span>No Kartu:</span>
+                                    <span>**** {receipt.nomor_kartu_akhir || "0000"}</span>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex justify-between font-semibold">
+                                <span>DP Tunai:</span>
+                                <span className="tabular-nums">{formatRupiah(receipt.cash_received ?? 0)}</span>
+                            </div>
+                        )}
                         <div className="flex justify-between font-bold">
                             <span>Hutang Baru:</span>
                             <span className="tabular-nums">{formatRupiah(receipt.debt_amount ?? 0)}</span>
