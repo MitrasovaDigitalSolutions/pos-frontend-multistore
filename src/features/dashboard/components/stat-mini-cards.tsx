@@ -31,7 +31,7 @@ export function StatMiniCards({ summary, isLoading }: StatMiniCardsProps) {
   };
 
   return (
-    <div className="flex flex-col gap-2 h-full">
+    <div className="grid grid-cols-1 sm:grid-cols-3 lg:flex lg:flex-col gap-2 lg:h-full">
       {/* Card 1: Penjualan Bersih */}
       <div className="flex-1 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all p-3 flex flex-col justify-between min-h-0">
         <div>

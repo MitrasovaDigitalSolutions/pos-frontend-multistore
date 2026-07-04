@@ -16,6 +16,8 @@ export interface Transaction extends BaseSale {
     member?: Member | null;
     member_uid?: string | null;
     cash_received?: number | null;
+    cash_amount?: number | null;
+    card_amount?: number | null;
     debt_amount?: number | null;
 }
 

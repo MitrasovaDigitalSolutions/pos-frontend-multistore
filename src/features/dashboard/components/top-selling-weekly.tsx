@@ -87,7 +87,7 @@ export function TopSellingWeekly({ summary, isLoading }: TopSellingWeeklyProps) 
   );
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col gap-3 h-full justify-between">
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col gap-3 h-full min-h-[280px] justify-between">
       {/* Header with inline Switcher */}
       <div className="flex items-center justify-between border-b border-slate-50 pb-2">
         <div className="flex items-center gap-1.5 select-none">

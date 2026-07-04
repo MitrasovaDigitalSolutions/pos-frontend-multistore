@@ -68,7 +68,9 @@ export function SessionDetailsView({
     }
 
 
-    const movements = activeSession.movements || [];
+    const movements = [...(activeSession.movements || [])].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
 
     return (
         <div className="space-y-4">
@@ -95,10 +97,7 @@ export function SessionDetailsView({
                         size="sm"
                         onClick={() => setShowHistory(!showHistory)}
                         className={cn(
-                            "h-7 px-2.5 text-[10px] rounded-lg flex items-center gap-1.5 font-bold cursor-pointer transition-all border",
-                            showHistory
-                                ? "bg-emerald-50 text-emerald-600 border-emerald-200"
-                                : "text-emerald-600 hover:text-emerald-600 hover:bg-emerald-50 border-emerald-200 bg-white"
+                            "h-7 px-2.5 text-[10px] rounded-lg flex items-center gap-1.5 font-bold cursor-pointer transition-all border text-emerald-600 hover:text-emerald-600 hover:bg-emerald-50 border-emerald-200",
                         )}
                     >
                         <IconHistory size={13} />
@@ -121,9 +120,9 @@ export function SessionDetailsView({
                 </div>
             )}
 
-            <div className={cn("grid gap-6 transition-all duration-300", showHistory ? "grid-cols-[1.3fr_1fr]" : "grid-cols-1")}>
+            <div className="flex gap-0 transition-all duration-300 overflow-hidden w-full">
                 {/* Left Column (Main details) */}
-                <div className="space-y-4">
+                <div className="flex-1 min-w-0 space-y-4">
                     {/* Summary Grid */}
                     <div className="grid grid-cols-2 gap-3">
                         <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5 space-y-1">
@@ -232,75 +231,82 @@ export function SessionDetailsView({
                 </div>
 
                 {/* Right Column (History) */}
-                {showHistory && (
-                    <div className="border-l border-slate-100 pl-6 flex flex-col max-h-[420px]">
-                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1 shrink-0 mb-3">
+                <div
+                    className={cn(
+                        "transition-all duration-300 ease-in-out flex flex-col max-h-[420px] shrink-0",
+                        showHistory
+                            ? "w-[300px] opacity-100 pl-6 border-l border-slate-100 ml-6"
+                            : "w-0 opacity-0 pl-0 border-l-0 ml-0 overflow-hidden"
+                    )}
+                >
+                    <div className="w-[268px] flex flex-col h-full">
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1 shrink-0 mb-3 whitespace-nowrap">
                             <IconHistory size={12} /> Riwayat Arus Kas Shift
                         </span>
                         <Scrollable className="flex-1 min-h-0">
                             {movements.length > 0 ? (
-                                    <div className="flex flex-col border border-slate-100 rounded-xl divide-y divide-slate-100 bg-white pr-1">
-                                        {movements.map((movement) => {
-                                            const isOutflow = movement.type === "cash_out" || movement.type === "cash_refund";
-                                            return (
-                                                <div key={movement.uid} className="p-2.5 flex justify-between items-center text-xs">
-                                                    <div className="space-y-0.5">
-                                                        <div className="font-bold text-slate-700 flex items-center gap-1">
-                                                            {(movement.type === "opening" || movement.type === "initial") && (
-                                                                <span className="bg-slate-100 text-slate-600 text-[8px] font-extrabold px-1 py-0.5 rounded">
-                                                                    Mulai
-                                                                </span>
-                                                            )}
-                                                            {movement.type === "cash_sale" && (
-                                                                <span className="bg-indigo-50 text-indigo-700 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-indigo-100">
-                                                                    <IconCash size={8} /> Penjualan
-                                                                </span>
-                                                            )}
-                                                            {movement.type === "cash_in" && (
-                                                                <span className="bg-emerald-50 text-emerald-700 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-emerald-100">
-                                                                    <IconArrowDownLeft size={8} /> Masuk
-                                                                </span>
-                                                            )}
-                                                            {movement.type === "cash_out" && (
-                                                                <span className="bg-rose-50 text-rose-700 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-rose-100">
-                                                                    <IconArrowUpRight size={8} /> Keluar
-                                                                </span>
-                                                            )}
-                                                            {movement.type === "cash_refund" && (
-                                                                <span className="bg-amber-50 text-amber-700 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-amber-100">
-                                                                    <IconArrowUpRight size={8} /> Refund
-                                                                </span>
-                                                            )}
-                                                            <span className="truncate max-w-[130px]" title={movement.note || ""}>
-                                                                {movement.note || "Arus kas laci"}
+                                <div className="flex flex-col border border-slate-100 rounded-xl divide-y divide-slate-100 bg-white pr-1">
+                                    {movements.map((movement) => {
+                                        const isOutflow = movement.type === "cash_out" || movement.type === "cash_refund";
+                                        return (
+                                            <div key={movement.uid} className="p-2.5 flex justify-between items-center text-xs">
+                                                <div className="space-y-0.5">
+                                                    <div className="font-bold text-slate-700 flex items-center gap-1">
+                                                        {(movement.type === "opening" || movement.type === "initial") && (
+                                                            <span className="bg-slate-100 text-slate-600 text-[8px] font-extrabold px-1 py-0.5 rounded">
+                                                                Mulai
                                                             </span>
-                                                        </div>
-                                                        <div className="text-[9px] text-slate-400 font-medium">
-                                                            {new Date(movement.created_at).toLocaleTimeString("id-ID", {
-                                                                hour: "2-digit",
-                                                                minute: "2-digit",
-                                                                hour12: false,
-                                                            })}
-                                                        </div>
+                                                        )}
+                                                        {movement.type === "cash_sale" && (
+                                                            <span className="bg-indigo-50 text-indigo-700 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-indigo-100">
+                                                                <IconCash size={8} /> Penjualan
+                                                            </span>
+                                                        )}
+                                                        {movement.type === "cash_in" && (
+                                                            <span className="bg-emerald-50 text-emerald-700 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-emerald-100">
+                                                                <IconArrowDownLeft size={8} /> Masuk
+                                                            </span>
+                                                        )}
+                                                        {movement.type === "cash_out" && (
+                                                            <span className="bg-rose-50 text-rose-700 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-rose-100">
+                                                                <IconArrowUpRight size={8} /> Keluar
+                                                            </span>
+                                                        )}
+                                                        {movement.type === "cash_refund" && (
+                                                            <span className="bg-amber-50 text-amber-750 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-amber-100">
+                                                                <IconArrowUpRight size={8} /> Refund
+                                                            </span>
+                                                        )}
+                                                        <span className="truncate max-w-[130px]" title={movement.note || ""}>
+                                                            {movement.note || "Arus kas laci"}
+                                                        </span>
                                                     </div>
-                                                    <span className={cn(
-                                                        "font-bold tabular-nums",
-                                                        isOutflow ? "text-rose-500" : "text-emerald-600"
-                                                    )}>
-                                                        {isOutflow ? "-" : "+"} {formatRupiah(movement.amount)}
-                                                    </span>
+                                                    <div className="text-[9px] text-slate-400 font-medium">
+                                                        {new Date(movement.created_at).toLocaleTimeString("id-ID", {
+                                                            hour: "2-digit",
+                                                            minute: "2-digit",
+                                                            hour12: false,
+                                                        })}
+                                                    </div>
                                                 </div>
-                                            );
-                                        })}
-                                    </div>
-                                ) : (
-                                    <div className="border border-dashed border-slate-200 rounded-xl p-8 text-center text-slate-400 text-xs">
-                                        Belum ada riwayat arus kas shift ini.
-                                    </div>
-                                )}
+                                                <span className={cn(
+                                                    "font-bold tabular-nums",
+                                                    isOutflow ? "text-rose-500" : "text-emerald-600"
+                                                )}>
+                                                    {isOutflow ? "-" : "+"} {formatRupiah(movement.amount)}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="border border-dashed border-slate-200 rounded-xl p-8 text-center text-slate-400 text-xs">
+                                    Belum ada riwayat arus kas shift ini.
+                                </div>
+                            )}
                         </Scrollable>
                     </div>
-                )}
+                </div>
             </div>
         </div>
     );

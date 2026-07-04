@@ -29,7 +29,7 @@ export function AdminSidebar() {
     const { data: session } = useSession();
     const user = session?.user;
 
-    const { isCollapsed, toggle } = useSidebarStore();
+    const { isCollapsed, toggle, isMobileOpen, setMobileOpen } = useSidebarStore();
     const [mounted, setMounted] = useState(false);
     const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
 
@@ -48,6 +48,11 @@ export function AdminSidebar() {
             document.documentElement.classList.remove("overflow-hidden");
         };
     }, []);
+
+    useEffect(() => {
+        // Auto-close mobile sidebar when navigating
+        setMobileOpen(false);
+    }, [pathname, setMobileOpen]);
 
     const collapsed = mounted ? isCollapsed : false;
     const currentTab = searchParams.get("tab") || "inventory";
@@ -95,15 +100,26 @@ export function AdminSidebar() {
 
     return (
         <TooltipProvider delayDuration={0}>
+            {/* Mobile Sidebar Overlay Backdrop */}
+            {mounted && isMobileOpen && (
+                <div
+                    className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
+                    onClick={() => setMobileOpen(false)}
+                />
+            )}
+
             <aside
                 className={cn(
-                    "relative z-20 bg-gray-950 text-gray-400 flex flex-col justify-between border-r border-gray-900 shrink-0 transition-all duration-300 h-screen select-none",
+                    "bg-gray-950 text-gray-400 flex flex-col justify-between border-r border-gray-900 shrink-0 transition-all duration-300 h-screen select-none",
+                    // Mobile overlay vs Desktop inline layouts
+                    "fixed inset-y-0 left-0 z-50 lg:relative lg:translate-x-0 lg:z-20",
+                    mounted && isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
                     collapsed ? "w-16" : "w-52.5"
                 )}
             >
                 <button
                     onClick={toggle}
-                    className="absolute top-2 -right-4 z-10 w-4 h-16 flex items-center justify-center rounded-tr-md rounded-br-md bg-gray-950 text-gray-400 hover:text-white hover:bg-gray-900 shadow-md cursor-pointer transition-all outline-none"
+                    className="absolute top-2 -right-4 z-10 w-4 h-16 hidden lg:flex items-center justify-center rounded-tr-md rounded-br-md bg-gray-950 text-gray-400 hover:text-white hover:bg-gray-900 shadow-md cursor-pointer transition-all outline-none"
                     title={collapsed ? "Perluas Menu" : "Sembunyikan Menu"}
                 >
                     {collapsed ? (
