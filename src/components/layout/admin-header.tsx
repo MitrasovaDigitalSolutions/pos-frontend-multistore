@@ -2,10 +2,12 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { IconCalendar } from "@tabler/icons-react";
+import { IconCalendar, IconMenu } from "@tabler/icons-react";
 import { NAVIGATION_CONFIG } from "./sidebar-config";
+import { useSidebarStore } from "@/stores/sidebar-store";
 
 export function AdminHeader() {
+  const { toggleMobile } = useSidebarStore();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
@@ -69,20 +71,30 @@ export function AdminHeader() {
   const userRole = user?.roles?.[0] || "kasir";
 
   return (
-    <header className="relative z-10 flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200/60 bg-slate-100">
-      <h2 className="text-lg font-extrabold text-slate-900">{getTitle()}</h2>
-      <div className="flex items-center gap-4">
+    <header className="relative z-10 flex justify-between items-center px-4 md:px-8 pt-6 pb-4 border-b border-slate-200/60 bg-slate-100">
+      <div className="flex items-center gap-3">
+        {/* Hamburger Menu Toggle */}
+        <button
+          type="button"
+          onClick={toggleMobile}
+          className="lg:hidden p-1.5 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800 hover:border-slate-300 transition-all cursor-pointer shadow-sm"
+        >
+          <IconMenu size={16} className="stroke-[2.5]" />
+        </button>
+        <h2 className="text-lg font-extrabold text-slate-900 leading-none">{getTitle()}</h2>
+      </div>
+      <div className="flex items-center gap-3 md:gap-4">
         {/* Date Badge */}
-        <div className="bg-yellow-50 text-yellow-500 border border-yellow-100 px-3 py-1.5 rounded-full flex items-center gap-2 font-bold text-xs select-none">
+        <div className="hidden sm:flex bg-yellow-50 text-yellow-500 border border-yellow-100 px-3 py-1.5 rounded-full items-center gap-2 font-bold text-xs select-none">
           <IconCalendar size={15} />
           <span>Hari Ini: {formattedDate}</span>
         </div>
 
-        <div className="h-5 w-px bg-slate-200" />
+        <div className="hidden sm:block h-5 w-px bg-slate-200" />
 
         {/* User Badge */}
         <div className="flex items-center gap-2.5">
-          <div className="text-right">
+          <div className="text-right hidden md:block">
             <div className="text-xs font-bold text-slate-800 leading-tight">{userName}</div>
             <div className="text-[9px] font-extrabold uppercase text-emerald-600 tracking-wider leading-none mt-0.5">
               {userRole.replace("_", " ")}
