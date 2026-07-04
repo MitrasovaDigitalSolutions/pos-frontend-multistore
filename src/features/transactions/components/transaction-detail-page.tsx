@@ -87,6 +87,7 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
                     transactionNumber={transaction.nomor_transaksi}
                     status={transaction.status}
                     onPrint={handlePrint}
+                    namaTransaksi={transaction.nama_transaksi}
                 />
 
                 {/* Main content grid */}

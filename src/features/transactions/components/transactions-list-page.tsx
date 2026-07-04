@@ -161,6 +161,15 @@ export function TransactionsListPage() {
             ),
         },
         {
+            accessorKey: "nama_transaksi",
+            header: "Nama/Keterangan",
+            cell: ({ row }) => (
+                <span className="text-slate-655 font-semibold truncate max-w-[150px] inline-block" title={row.original.nama_transaksi || undefined}>
+                    {row.original.nama_transaksi || "-"}
+                </span>
+            ),
+        },
+        {
             accessorKey: "user.name",
             header: "Kasir",
             cell: ({ row }) => (

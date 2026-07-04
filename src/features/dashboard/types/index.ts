@@ -64,6 +64,7 @@ export interface Sale {
     store_uid: string | null;
     user_uid: string;
     nomor_transaksi: string;
+    nama_transaksi?: string | null;
     subtotal: number;
     pajak: number;
     diskon: number;
