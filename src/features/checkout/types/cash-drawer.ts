@@ -1,4 +1,4 @@
-import type { Transaction } from "@/types/common";
+import type { Transaction } from "@/features/transactions/types";
 
 export interface CashDrawerMovement {
     uid: string;

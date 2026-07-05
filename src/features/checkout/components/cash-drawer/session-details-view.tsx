@@ -16,6 +16,9 @@ import {
     IconDoorExit,
     IconLoader2,
     IconX,
+    IconCreditCard,
+    IconNotebook,
+    IconLayersIntersect,
 } from "@tabler/icons-react";
 import { Scrollable } from "@/components/ui/scrollable";
 
@@ -38,6 +41,18 @@ export function SessionDetailsView({
     onClose,
     isOnline = true,
 }: SessionDetailsViewProps) {
+    const [activeTab, setActiveTab] = React.useState<'cash' | 'noncash'>('cash');
+
+    const nonCashTransactions = React.useMemo(() => {
+        const txs = activeSession?.transactions || [];
+        return txs
+            .filter((t: any) => {
+                const method = t.metode_pembayaran?.toLowerCase();
+                return method === "card" || method === "debt" || method === "split";
+            })
+            .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }, [activeSession?.transactions]);
+
     const formattedTime = (dateStr?: string) => {
         if (!dateStr) return "-";
         return new Date(dateStr).toLocaleString("id-ID", {
@@ -240,69 +255,181 @@ export function SessionDetailsView({
                     )}
                 >
                     <div className="w-[268px] flex flex-col h-full">
-                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1 shrink-0 mb-3 whitespace-nowrap">
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1 shrink-0 mb-2 whitespace-nowrap">
                             <IconHistory size={12} /> Riwayat Arus Kas Shift
                         </span>
+                        
+                        {/* Tab Switcher */}
+                        <div className="bg-slate-100/80 p-0.5 rounded-lg grid grid-cols-2 select-none border border-slate-200/40 mb-3 shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab("cash")}
+                                className={cn(
+                                    "py-1 rounded text-[10px] font-bold transition-all cursor-pointer border-none",
+                                    activeTab === "cash"
+                                        ? "bg-white text-slate-900 shadow-sm font-extrabold"
+                                        : "bg-transparent text-slate-500 hover:text-slate-700"
+                                )}
+                            >
+                                Tunai
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab("noncash")}
+                                className={cn(
+                                    "py-1 rounded text-[10px] font-bold transition-all cursor-pointer border-none",
+                                    activeTab === "noncash"
+                                        ? "bg-white text-slate-900 shadow-sm font-extrabold"
+                                        : "bg-transparent text-slate-500 hover:text-slate-700"
+                                )}
+                            >
+                                Non-Tunai / Hutang
+                            </button>
+                        </div>
+
                         <Scrollable className="flex-1 min-h-0">
-                            {movements.length > 0 ? (
-                                <div className="flex flex-col border border-slate-100 rounded-xl divide-y divide-slate-100 bg-white pr-1">
-                                    {movements.map((movement) => {
-                                        const isOutflow = movement.type === "cash_out" || movement.type === "cash_refund";
-                                        return (
-                                            <div key={movement.uid} className="p-2.5 flex justify-between items-center text-xs">
-                                                <div className="space-y-0.5">
-                                                    <div className="font-bold text-slate-700 flex items-center gap-1">
-                                                        {(movement.type === "opening" || movement.type === "initial") && (
-                                                            <span className="bg-slate-100 text-slate-600 text-[8px] font-extrabold px-1 py-0.5 rounded">
-                                                                Mulai
+                            {activeTab === "cash" ? (
+                                movements.length > 0 ? (
+                                    <div className="flex flex-col border border-slate-100 rounded-xl divide-y divide-slate-100 bg-white pr-1">
+                                        {movements.map((movement) => {
+                                            const isOutflow = movement.type === "cash_out" || movement.type === "cash_refund";
+                                            return (
+                                                <div key={movement.uid} className="p-2.5 flex justify-between items-center text-xs">
+                                                    <div className="space-y-0.5">
+                                                        <div className="font-bold text-slate-700 flex items-center gap-1">
+                                                            {(movement.type === "opening" || movement.type === "initial") && (
+                                                                <span className="bg-slate-100 text-slate-650 text-[8px] font-extrabold px-1 py-0.5 rounded">
+                                                                    Mulai
+                                                                </span>
+                                                            )}
+                                                            {movement.type === "cash_sale" && (
+                                                                <span className="bg-indigo-50 text-indigo-700 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-indigo-100">
+                                                                    <IconCash size={8} /> Penjualan
+                                                                </span>
+                                                            )}
+                                                            {movement.type === "cash_in" && (
+                                                                <span className="bg-emerald-50 text-emerald-700 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-emerald-100">
+                                                                    <IconArrowDownLeft size={8} /> Masuk
+                                                                </span>
+                                                            )}
+                                                            {movement.type === "cash_out" && (
+                                                                <span className="bg-rose-50 text-rose-700 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-rose-100">
+                                                                    <IconArrowUpRight size={8} /> Keluar
+                                                                </span>
+                                                            )}
+                                                            {movement.type === "cash_refund" && (
+                                                                <span className="bg-amber-50 text-amber-750 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-amber-100">
+                                                                    <IconArrowUpRight size={8} /> Refund
+                                                                </span>
+                                                            )}
+                                                            <span className="truncate max-w-[130px]" title={movement.note || ""}>
+                                                                {movement.note || "Arus kas laci"}
                                                             </span>
-                                                        )}
-                                                        {movement.type === "cash_sale" && (
-                                                            <span className="bg-indigo-50 text-indigo-700 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-indigo-100">
-                                                                <IconCash size={8} /> Penjualan
-                                                            </span>
-                                                        )}
-                                                        {movement.type === "cash_in" && (
-                                                            <span className="bg-emerald-50 text-emerald-700 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-emerald-100">
-                                                                <IconArrowDownLeft size={8} /> Masuk
-                                                            </span>
-                                                        )}
-                                                        {movement.type === "cash_out" && (
-                                                            <span className="bg-rose-50 text-rose-700 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-rose-100">
-                                                                <IconArrowUpRight size={8} /> Keluar
-                                                            </span>
-                                                        )}
-                                                        {movement.type === "cash_refund" && (
-                                                            <span className="bg-amber-50 text-amber-750 text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border border-amber-100">
-                                                                <IconArrowUpRight size={8} /> Refund
-                                                            </span>
-                                                        )}
-                                                        <span className="truncate max-w-[130px]" title={movement.note || ""}>
-                                                            {movement.note || "Arus kas laci"}
-                                                        </span>
+                                                        </div>
+                                                        <div className="text-[9px] text-slate-400 font-medium">
+                                                            {new Date(movement.created_at).toLocaleTimeString("id-ID", {
+                                                                hour: "2-digit",
+                                                                minute: "2-digit",
+                                                                hour12: false,
+                                                            })}
+                                                        </div>
                                                     </div>
-                                                    <div className="text-[9px] text-slate-400 font-medium">
-                                                        {new Date(movement.created_at).toLocaleTimeString("id-ID", {
-                                                            hour: "2-digit",
-                                                            minute: "2-digit",
-                                                            hour12: false,
-                                                        })}
+                                                    <span className={cn(
+                                                        "font-bold tabular-nums",
+                                                        isOutflow ? "text-rose-500" : "text-emerald-600"
+                                                    )}>
+                                                        {isOutflow ? "-" : "+"} {formatRupiah(movement.amount)}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="border border-dashed border-slate-200 rounded-xl p-8 text-center text-slate-400 text-xs">
+                                        Belum ada riwayat arus kas shift ini.
+                                    </div>
+                                )
+                            ) : (
+                                nonCashTransactions.length > 0 ? (
+                                    <div className="flex flex-col border border-slate-100 rounded-xl divide-y divide-slate-100 bg-white pr-1">
+                                        {nonCashTransactions.map((tx: any) => {
+                                            const method = tx.metode_pembayaran?.toLowerCase();
+                                            const isCard = method === "card";
+                                            const isDebt = method === "debt";
+                                            const isSplit = method === "split";
+
+                                            // Render badge logic
+                                            let badgeIcon = <IconCreditCard size={8} />;
+                                            let badgeClass = "bg-blue-50 text-blue-700 border-blue-100";
+                                            let badgeLabel = "EDC";
+                                            if (isDebt) {
+                                                badgeIcon = <IconNotebook size={8} />;
+                                                badgeClass = "bg-amber-50 text-amber-700 border-amber-100";
+                                                badgeLabel = "Hutang";
+                                            } else if (isSplit) {
+                                                badgeIcon = <IconLayersIntersect size={8} />;
+                                                badgeClass = "bg-purple-50 text-purple-700 border-purple-100";
+                                                badgeLabel = "Split";
+                                            }
+
+                                            // Extra detail logic
+                                            let detailText = "";
+                                            if (isSplit) {
+                                                const cashPaid = tx.nominal_bayar || 0;
+                                                const change = tx.kembalian || 0;
+                                                const cashPortion = Math.max(0, cashPaid - change);
+                                                const cardPortion = Math.max(0, tx.total - cashPortion);
+                                                detailText = `EDC: ${formatRupiah(cardPortion)}`;
+                                            } else if (isDebt) {
+                                                const totalDp = (tx.cash_amount || 0) + (tx.card_amount || 0);
+                                                if (totalDp > 0) {
+                                                    detailText = `DP: ${formatRupiah(totalDp)}`;
+                                                }
+                                            }
+
+                                            return (
+                                                <div key={tx.uid} className="p-2.5 flex justify-between items-center text-xs">
+                                                    <div className="space-y-0.5 min-w-0 flex-1 pr-2">
+                                                        <div className="font-bold text-slate-700 flex items-center gap-1">
+                                                            <span className={cn("text-[8px] font-extrabold px-1 py-0.5 rounded flex items-center gap-0.5 border uppercase", badgeClass)}>
+                                                                {badgeIcon} {badgeLabel}
+                                                            </span>
+                                                            <span className="truncate max-w-[120px]" title={tx.nomor_transaksi}>
+                                                                {tx.nomor_transaksi}
+                                                            </span>
+                                                        </div>
+                                                        {tx.nama_transaksi && (
+                                                            <div className="text-[10px] text-slate-500 font-semibold truncate" title={tx.nama_transaksi}>
+                                                                {tx.nama_transaksi}
+                                                            </div>
+                                                        )}
+                                                        <div className="text-[9px] text-slate-400 font-medium">
+                                                            {new Date(tx.created_at).toLocaleTimeString("id-ID", {
+                                                                hour: "2-digit",
+                                                                minute: "2-digit",
+                                                                hour12: false,
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right shrink-0 flex flex-col justify-center">
+                                                        <span className="font-bold tabular-nums text-slate-800">
+                                                            {formatRupiah(tx.total)}
+                                                        </span>
+                                                        {detailText && (
+                                                            <span className="text-[8px] text-slate-400 font-bold tracking-tight">
+                                                                {detailText}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
-                                                <span className={cn(
-                                                    "font-bold tabular-nums",
-                                                    isOutflow ? "text-rose-500" : "text-emerald-600"
-                                                )}>
-                                                    {isOutflow ? "-" : "+"} {formatRupiah(movement.amount)}
-                                                </span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            ) : (
-                                <div className="border border-dashed border-slate-200 rounded-xl p-8 text-center text-slate-400 text-xs">
-                                    Belum ada riwayat arus kas shift ini.
-                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="border border-dashed border-slate-200 rounded-xl p-8 text-center text-slate-400 text-xs">
+                                        Belum ada transaksi non-tunai shift ini.
+                                    </div>
+                                )
                             )}
                         </Scrollable>
                     </div>
