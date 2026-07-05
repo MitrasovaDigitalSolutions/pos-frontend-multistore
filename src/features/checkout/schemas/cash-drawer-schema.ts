@@ -17,6 +17,7 @@ export type CashInInput = z.infer<typeof cashInSchema>;
 export const cashOutSchema = z.object({
     amount: z.coerce.number().min(1, "Jumlah uang keluar minimal Rp 1"),
     note: z.string().min(1, "Catatan pengeluaran wajib diisi"),
+    expense_category_uid: z.string().optional().nullable(),
 });
 
 export type CashOutInput = z.infer<typeof cashOutSchema>;
