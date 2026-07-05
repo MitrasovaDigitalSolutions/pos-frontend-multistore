@@ -130,12 +130,12 @@ export interface HoldTransaction {
 
 export interface TransactionItem {
     uid: string;
-    product_uid: string;
+    product_uid: string | null;
     nama_produk: string;
     harga_satuan: number;
     kuantitas: number;
     barcode?: string | null;
-    product?: Pick<Product, "stok" | "barcode">;
+    product?: Pick<Product, "stok" | "barcode"> | null;
 }
 
 export interface Transaction {
@@ -144,11 +144,11 @@ export interface Transaction {
     subtotal: number;
     pajak: number;
     total: number;
-    metode_pembayaran?: "cash" | "card";
-    nominal_bayar?: number;
-    kembalian?: number;
-    jenis_kartu?: string;
-    nomor_kartu_akhir?: string;
+    metode_pembayaran?: string | null;
+    nominal_bayar?: number | null;
+    kembalian?: number | null;
+    jenis_kartu?: string | null;
+    nomor_kartu_akhir?: string | null;
     items: TransactionItem[];
     created_at: string;
     nomor_transaksi: string
