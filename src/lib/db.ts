@@ -21,6 +21,7 @@ export interface OfflineDrawerAction {
     payload: {
         amount: number;
         note?: string;
+        expense_category_uid?: string | null;
     };
     timestamp: string;
     status: "pending" | "syncing" | "failed";

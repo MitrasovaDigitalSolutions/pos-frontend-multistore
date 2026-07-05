@@ -1,4 +1,4 @@
-import type { Transaction } from "@/types/common";
+import type { Transaction } from "@/features/transactions/types";
 
 export interface CashDrawerMovement {
     uid: string;
@@ -84,6 +84,7 @@ export interface CashInPayload {
 export interface CashOutPayload {
     amount: number;
     note: string;
+    expense_category_uid?: string | null;
 }
 
 export interface CloseCashDrawerPayload {

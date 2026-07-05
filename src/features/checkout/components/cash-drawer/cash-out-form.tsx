@@ -7,9 +7,11 @@ import { IconChevronLeft, IconLoader2, IconArrowUpRight } from "@tabler/icons-re
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/forms/form-input";
 import { FormNominalInput } from "@/components/forms/form-nominal-input";
+import { FormSelect } from "@/components/forms/form-select";
 import { toast } from "sonner";
 import { useCashOut } from "../../api/cash-drawer-api";
 import { cashOutSchema, type CashOutInput } from "../../schemas/cash-drawer-schema";
+import { useExpenseCategories } from "@/features/expenses/api/expenses-api";
 
 
 import { db } from "@/lib/db";
@@ -27,12 +29,25 @@ interface CashOutFormProps {
 export function CashOutForm({ sessionId, token, onSuccess, onCancel }: CashOutFormProps) {
     const cashOutMutation = useCashOut();
     const isOnline = useNetworkStatus();
+    const { data: categories, isLoading: isLoadingCategories } = useExpenseCategories();
+
+    const categoryOptions = React.useMemo(() => {
+        return [
+            { value: "", label: "Pengeluaran Kasir (Default)" },
+            ...(categories?.map((cat) => ({
+                value: cat.uid,
+                label: cat.nama,
+                description: cat.keterangan || undefined,
+            })) || []),
+        ];
+    }, [categories]);
 
     const methods = useForm<CashOutInput>({
         resolver: zodResolver(cashOutSchema) as Resolver<CashOutInput>,
         defaultValues: {
             amount: 0,
             note: "",
+            expense_category_uid: "",
         },
     });
 
@@ -46,6 +61,7 @@ export function CashOutForm({ sessionId, token, onSuccess, onCancel }: CashOutFo
                     payload: {
                         amount: data.amount,
                         note: data.note.trim(),
+                        expense_category_uid: data.expense_category_uid || null,
                     },
                     token,
                 });
@@ -86,6 +102,7 @@ export function CashOutForm({ sessionId, token, onSuccess, onCancel }: CashOutFo
                     payload: {
                         amount: data.amount,
                         note: data.note.trim(),
+                        expense_category_uid: data.expense_category_uid || null,
                     },
                     timestamp: now,
                     status: "pending",
@@ -120,6 +137,15 @@ export function CashOutForm({ sessionId, token, onSuccess, onCancel }: CashOutFo
                         name="amount"
                         label="Jumlah Uang Keluar (Rp)"
                         placeholder="0"
+                        disabled={cashOutMutation.isPending || isSubmitting}
+                    />
+
+                    <FormSelect<CashOutInput>
+                        name="expense_category_uid"
+                        label="Kategori Pengeluaran"
+                        options={categoryOptions}
+                        placeholder="Pilih kategori pengeluaran..."
+                        isLoading={isLoadingCategories}
                         disabled={cashOutMutation.isPending || isSubmitting}
                     />
 
