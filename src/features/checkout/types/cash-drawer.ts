@@ -84,6 +84,7 @@ export interface CashInPayload {
 export interface CashOutPayload {
     amount: number;
     note: string;
+    expense_category_uid?: string | null;
 }
 
 export interface CloseCashDrawerPayload {
