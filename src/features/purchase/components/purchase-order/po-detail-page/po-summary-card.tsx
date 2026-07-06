@@ -1,5 +1,6 @@
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { PurchaseOrder } from "../../../types";
+import { formatDate } from "@/lib/date-utils";
 
 interface POSummaryCardProps {
     order: PurchaseOrder;
@@ -22,9 +23,7 @@ export function POSummaryCard({ order, getStatusClass, getStatusLabel }: POSumma
                 <div className="space-y-1">
                     <span className="text-[10px] font-bold text-slate-400 uppercase">Tanggal PO</span>
                     <p className="font-semibold text-slate-700">
-                        {new Date(order.tanggal_po).toLocaleString("id-ID", {
-                            dateStyle: "medium",
-                        })}
+                        {formatDate(order.tanggal_po, "dd MMM yyyy")}
                     </p>
                 </div>
                 <div className="space-y-1">

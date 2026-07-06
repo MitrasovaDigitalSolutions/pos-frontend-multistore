@@ -15,6 +15,7 @@ import { useCreatePurchaseReturnHeader, useReceivings } from "../../api/purchase
 import { purchaseReturnHeaderSchema, type PurchaseReturnHeaderInput } from "../../schemas/return-schema";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { RECEIVING_STATUS } from "@/constants/purchase";
+import { todayStr } from "@/lib/date-utils";
 
 export function ReturnCreatePage() {
     const router = useAppRouter();
@@ -43,7 +44,7 @@ export function ReturnCreatePage() {
         defaultValues: {
             receiving_uid: undefined,
             supplier_uid: undefined,
-            tanggal_retur: new Date().toISOString().split("T")[0],
+            tanggal_retur: todayStr(),
             catatan: "",
         },
     });

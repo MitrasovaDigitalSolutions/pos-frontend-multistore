@@ -8,6 +8,7 @@ import { usePembelianReport } from "../../api/reports-api";
 import { PembelianHeaderFilters } from "./pembelian-header-filters";
 import { PembelianSummaryCard } from "./pembelian-summary-card";
 import { PembelianDetailsTable } from "./pembelian-details-table";
+import { formatToISO, todayStr } from "@/lib/date-utils";
 
 interface PembelianFilterValues {
     fromDate: string;
@@ -30,8 +31,8 @@ export function PembelianReportView() {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const [appliedFilters, setAppliedFilters] = useState<PembelianFilterValues>({
-        fromDate: thirtyDaysAgo.toISOString().split("T")[0],
-        toDate: new Date().toISOString().split("T")[0],
+        fromDate: formatToISO(thirtyDaysAgo),
+        toDate: todayStr(),
         includeItems: true,
         includePayments: true,
     });
@@ -62,8 +63,8 @@ export function PembelianReportView() {
 
     const handleFilterReset = () => {
         const defaults = {
-            fromDate: thirtyDaysAgo.toISOString().split("T")[0],
-            toDate: new Date().toISOString().split("T")[0],
+            fromDate: formatToISO(thirtyDaysAgo),
+            toDate: todayStr(),
             includeItems: true,
             includePayments: true,
         };

@@ -23,6 +23,7 @@ import {
 import { paymentSchema, type PaymentInput } from "../../../schemas/payment-schema";
 import { PaymentForm } from "./payment-form";
 import { DebtSummary } from "./debt-summary";
+import { todayStr, formatToISO } from "@/lib/date-utils";
 
 export function PaymentCreatePage() {
     const router = useAppRouter();
@@ -57,7 +58,7 @@ export function PaymentCreatePage() {
         defaultValues: {
             receiving_uid: "",
             jumlah_bayar: 0,
-            tanggal_bayar: new Date().toISOString().split("T")[0],
+            tanggal_bayar: todayStr(),
             cash_account_uid: "",
             metode_pembayaran: "Cash",
             nomor_referensi: "",
@@ -84,7 +85,7 @@ export function PaymentCreatePage() {
             reset({
                 receiving_uid: editingPayment.referensi_uid,
                 jumlah_bayar: editingPayment.total,
-                tanggal_bayar: editingPayment.created_at.split("T")[0] || editingPayment.created_at.split(" ")[0],
+                tanggal_bayar: formatToISO(editingPayment.created_at),
                 cash_account_uid: editingPayment.cash_account_uid,
                 metode_pembayaran: editingPayment.metode_pembayaran,
                 nomor_referensi: editingPayment.nomor_referensi || "",

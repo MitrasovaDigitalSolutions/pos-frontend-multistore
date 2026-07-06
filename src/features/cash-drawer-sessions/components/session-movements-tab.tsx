@@ -4,6 +4,7 @@ import React from "react";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { cn } from "@/lib/utils";
 import type { CashDrawerMovement } from "@/features/checkout/types/cash-drawer";
+import { formatDate } from "@/lib/date-utils";
 import {
     IconCash,
     IconArrowDownLeft,
@@ -39,13 +40,7 @@ export function SessionMovementsTab({ movements }: SessionMovementsTabProps) {
     };
 
     const formattedTime = (dateStr: string) => {
-        return new Date(dateStr).toLocaleString("id-ID", {
-            day: "numeric",
-            month: "short",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-        });
+        return formatDate(dateStr, "d MMM yyyy, HH:mm");
     };
 
     // Sort movements by newest first (as requested)

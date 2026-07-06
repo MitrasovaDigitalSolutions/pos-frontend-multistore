@@ -9,6 +9,7 @@ import {
     type PaymentStatus,
 } from "@/constants/purchase";
 import type { Receiving } from "../../../types";
+import { formatDate } from "@/lib/date-utils";
 
 interface POReceivingsTabProps {
     receivings: Receiving[];
@@ -36,9 +37,7 @@ export function POReceivingsTab({ receivings, receivingsLoading, onViewDetail }:
                             {rec.nomor_penerimaan}
                         </td>
                         <td className="p-3 text-slate-700">
-                            {new Date(rec.created_at).toLocaleString("id-ID", {
-                                dateStyle: "medium",
-                            })}
+                             {formatDate(rec.created_at, "dd MMM yyyy")}
                         </td>
                         <td className="p-3 text-right text-slate-700 font-mono">
                             {rec.nilai_faktur ? formatRupiah(rec.nilai_faktur) : "-"}

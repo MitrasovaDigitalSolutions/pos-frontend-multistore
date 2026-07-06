@@ -14,6 +14,7 @@ import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
 import { useUpdatePurchaseOrder } from "../../api/purchase-api";
 import { purchaseOrderHeaderSchema, type PurchaseOrderHeaderInput } from "../../schemas/order-schema";
 import type { PurchaseOrder } from "../../types";
+import { formatToISO } from "@/lib/date-utils";
 
 interface POHeaderDialogProps {
     open: boolean;
@@ -51,7 +52,7 @@ export function POHeaderDialog({ open, onOpenChange, order }: POHeaderDialogProp
         if (open && order) {
             reset({
                 supplier_uid: order.supplier_uid || undefined,
-                tanggal_po: order.tanggal_po ? order.tanggal_po.split("T")[0] : "",
+                tanggal_po: order.tanggal_po ? formatToISO(order.tanggal_po) : "",
                 catatan: order.catatan || "",
             });
         }

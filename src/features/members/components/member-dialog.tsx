@@ -13,6 +13,7 @@ import { useCreateMember, useUpdateMember } from "../api/members-api";
 import type { MemberInput } from "../schemas/member-schema";
 import type { Member } from "../types";
 import { useSettingsStore } from "@/stores/settings-store";
+import { formatToISO } from "@/lib/date-utils";
 
 interface MemberDialogProps {
     open: boolean;
@@ -40,7 +41,7 @@ export function MemberDialog({
         const formattedData = {
             ...data,
             tanggal_lahir: data.tanggal_lahir
-                ? new Date(data.tanggal_lahir).toISOString().split("T")[0]
+                ? formatToISO(data.tanggal_lahir)
                 : null,
         };
 

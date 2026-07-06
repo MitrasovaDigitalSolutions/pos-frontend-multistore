@@ -13,6 +13,7 @@ import {
     RETURN_STATUS_CLASSES,
     type ReturnStatus,
 } from "@/constants/purchase";
+import { formatDate, formatToReadableDateTime } from "@/lib/date-utils";
 
 interface ReturnDetailDialogProps {
     open: boolean;
@@ -112,9 +113,7 @@ export function ReturnDetailDialog({
                         <div className="space-y-1">
                             <span className="text-[10px] font-bold text-slate-400 uppercase">Tanggal Retur</span>
                             <p className="font-semibold text-slate-700">
-                                {new Date(returnData.tanggal_retur).toLocaleString("id-ID", {
-                                    dateStyle: "medium",
-                                })}
+                                {formatDate(returnData.tanggal_retur, "dd MMM yyyy")}
                             </p>
                         </div>
                         <div className="space-y-1">
@@ -251,7 +250,7 @@ export function ReturnDetailDialog({
                                             </p>
                                             <div className="flex gap-2 text-[10px] text-slate-400 font-mono">
                                                 <span>
-                                                    {new Date(log.created_at).toLocaleString("id-ID")}
+                                                    {formatToReadableDateTime(log.created_at)}
                                                 </span>
                                                 <span>•</span>
                                                 <span>Oleh: {log.user?.name || "System"}</span>

@@ -16,6 +16,7 @@ import { purchaseReturnHeaderSchema, type PurchaseReturnHeaderInput } from "../.
 import type { PurchaseReturn } from "../../types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { RECEIVING_STATUS } from "@/constants/purchase";
+import { formatToISO } from "@/lib/date-utils";
 
 interface ReturnHeaderDialogProps {
     open: boolean;
@@ -80,7 +81,7 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
             reset({
                 receiving_uid: returnObj.stock_receiving_uid || undefined,
                 supplier_uid: returnObj.supplier_uid ? String(returnObj.supplier_uid) : undefined,
-                tanggal_retur: returnObj.tanggal_retur ? returnObj.tanggal_retur.split("T")[0] : "",
+                tanggal_retur: returnObj.tanggal_retur ? formatToISO(returnObj.tanggal_retur) : "",
                 catatan: returnObj.catatan || "",
             });
         }

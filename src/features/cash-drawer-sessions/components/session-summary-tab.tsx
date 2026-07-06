@@ -4,6 +4,7 @@ import React from "react";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { cn } from "@/lib/utils";
 import type { CashDrawerSession } from "@/features/checkout/types/cash-drawer";
+import { formatDate } from "@/lib/date-utils";
 import {
     IconClock,
     IconUser,
@@ -29,14 +30,7 @@ export function SessionSummaryTab({ session }: SessionSummaryTabProps) {
 
     const formattedTime = (dateStr?: string) => {
         if (!dateStr) return "-";
-        return new Date(dateStr).toLocaleString("id-ID", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-        });
+        return formatDate(dateStr, "d MMM yyyy, HH:mm");
     };
 
     const getClosedByName = (s: CashDrawerSession) => {

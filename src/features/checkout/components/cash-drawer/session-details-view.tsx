@@ -27,6 +27,7 @@ import {
     IconInfoCircle,
 } from "@tabler/icons-react";
 import { Scrollable } from "@/components/ui/scrollable";
+import { formatDate, formatToTime } from "@/lib/date-utils";
 
 interface SessionDetailsViewProps {
     activeSession: CashDrawerSession | undefined;
@@ -65,14 +66,7 @@ export function SessionDetailsView({
 
     const formattedTime = (dateStr?: string) => {
         if (!dateStr) return "-";
-        return new Date(dateStr).toLocaleString("id-ID", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-        });
+        return formatDate(dateStr, "d MMM yyyy, HH:mm");
     };
 
     if (isLoading) {
@@ -393,11 +387,7 @@ export function SessionDetailsView({
                                                                     </span>
                                                                 </span>
                                                                 <span className="text-slate-400 font-bold font-mono">
-                                                                    {new Date(movement.created_at).toLocaleTimeString("id-ID", {
-                                                                        hour: "2-digit",
-                                                                        minute: "2-digit",
-                                                                        hour12: false,
-                                                                    })}
+                                                                    {formatToTime(movement.created_at)}
                                                                 </span>
                                                             </div>
 
@@ -486,11 +476,7 @@ export function SessionDetailsView({
                                                                     )}
                                                                 </div>
                                                                 <span className="text-slate-400 font-bold font-mono shrink-0">
-                                                                    {new Date(tx.created_at).toLocaleTimeString("id-ID", {
-                                                                        hour: "2-digit",
-                                                                        minute: "2-digit",
-                                                                        hour12: false,
-                                                                    })}
+                                                                    {formatToTime(tx.created_at)}
                                                                 </span>
                                                             </div>
 
