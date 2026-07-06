@@ -525,6 +525,11 @@ export function CashAccountsDashboard() {
                                                 </td>
                                                 <td className="py-3.5 px-4 text-xs font-medium">
                                                     {renderReference(movement)}
+                                                    {movement.note && (
+                                                        <span className="block text-[10px] text-slate-500 mt-1 italic">
+                                                            {movement.note}
+                                                        </span>
+                                                    )}
                                                 </td>
                                                 <td className="py-3.5 px-4 text-center">
                                                     <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${isInflow
