@@ -16,7 +16,6 @@ export interface CashLedger {
     expense_uid?: string | null;
     cash_drawer_movement_uid?: string | null;
     cash_drawer_session_uid?: string | null;
-    note?: string | null;
     created_at: string;
     updated_at?: string;
 

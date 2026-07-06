@@ -525,9 +525,9 @@ export function CashAccountsDashboard() {
                                                 </td>
                                                 <td className="py-3.5 px-4 text-xs font-medium">
                                                     {renderReference(movement)}
-                                                    {movement.note && (
+                                                    {movement.sale?.nomor_transaksi && (
                                                         <span className="block text-[10px] text-slate-500 mt-1 italic">
-                                                            {movement.note}
+                                                            {movement.kategori === 'sales' && movement.tipe === 'outflow' ? 'Void Reversal' : ''}
                                                         </span>
                                                     )}
                                                 </td>
