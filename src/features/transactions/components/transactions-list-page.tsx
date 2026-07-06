@@ -141,15 +141,13 @@ export function TransactionsListPage() {
 
     const statusBadges: Record<string, string> = {
         completed: "bg-emerald-50 text-emerald-700 border-emerald-100/50",
-        canceled: "bg-rose-50 text-rose-700 border-rose-100/50",
         void: "bg-rose-50 text-rose-700 border-rose-100/50",
         draft: "bg-amber-50 text-amber-700 border-amber-100/50",
     };
 
     const statusLabels: Record<string, string> = {
         completed: "Selesai",
-        canceled: "VOID/BATAL",
-        void: "VOID/BATAL",
+        void: "Void / Batal",
         draft: "Draft",
     };
 
@@ -287,7 +285,7 @@ export function TransactionsListPage() {
     const statusOptions = [
         { value: "all", label: "Semua Status" },
         { value: "completed", label: "Selesai" },
-        { value: "canceled", label: "Void / Batal" },
+        { value: "void", label: "Void / Batal" },
         { value: "draft", label: "Draft" },
     ];
 
