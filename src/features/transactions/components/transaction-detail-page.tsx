@@ -33,7 +33,7 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
     const { data: transaction, isLoading, error } = useTransactionDetail(transactionId);
     const getSetting = useSettingsStore((state) => state.getSetting);
     const [isVoidDialogOpen, setIsVoidDialogOpen] = useState(false);
-    
+
     const voidMutation = useVoidTransaction();
 
     if (isLoading) {
@@ -80,7 +80,7 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
             toast.error("Gagal mencetak struk: ID transaksi tidak ditemukan.");
         }
     };
-    
+
     const handleVoid = (reason: string) => {
         voidMutation.mutate(
             { id: transaction.uid, void_reason: reason },
@@ -109,7 +109,7 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
             <TransactionPrintReceipt transaction={transaction} formattedDate={formattedDate} />
 
             {/* ─── WEB-VIEW DISPLAY SECTION (Hidden when printing) ─── */}
-            <div className="space-y-6 print:hidden">
+            <div className="space-y-4 print:hidden">
                 {/* Refactored Header Component */}
                 <TransactionDetailHeader
                     transactionNumber={transaction.nomor_transaksi}
@@ -118,54 +118,77 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
                     onVoid={() => setIsVoidDialogOpen(true)}
                     namaTransaksi={transaction.nama_transaksi}
                 />
-                
+
                 {transaction.status === "void" && (
-                    <div className="bg-rose-50/60 dark:bg-rose-950/10 border border-rose-100 dark:border-rose-900/40 rounded-2xl p-5 flex flex-col md:flex-row md:items-start justify-between gap-4 shadow-sm">
-                        <div className="flex items-start gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-200 dark:border-rose-800/30">
-                                <IconAlertTriangle size={20} stroke={2.2} />
+                    <div className="group relative overflow-hidden bg-gradient-to-br from-rose-50 via-rose-50/70 to-white dark:from-rose-950/20 dark:via-rose-950/10 dark:to-slate-950 border-l-4 border-l-rose-500 border border-rose-100 dark:border-rose-900/30 rounded-2xl p-4.5 shadow-sm hover:shadow-md transition-all duration-300 space-y-3.5">
+                        {/* Header Section */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-rose-100/50 dark:border-rose-900/20 pb-3">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-xl bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-rose-200 dark:shadow-none animate-pulse">
+                                    <IconAlertTriangle size={18} stroke={2.5} />
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-black text-rose-850 dark:text-rose-455 tracking-tight uppercase">
+                                        Transaksi Telah Dibatalkan
+                                    </h4>
+                                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
+                                        ID REFERENSI: <span className="text-slate-600 dark:text-slate-350">{transaction.uid}</span>
+                                    </p>
+                                </div>
                             </div>
-                            <div className="space-y-1">
-                                <h4 className="text-sm font-extrabold text-rose-850 dark:text-rose-400">
-                                    Transaksi Telah Dibatalkan (Void)
-                                </h4>
-                                <p className="text-xs text-rose-600 dark:text-rose-400/80 leading-relaxed max-w-xl">
-                                    Seluruh item penjualan di bawah ini telah dibatalkan dan pencatatan keuangan dibalikkan.
+                        </div>
+
+                        {/* Content Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+
+                            {/* Left Side: General description & inline metadata */}
+                            <div className="md:col-span-7 space-y-3">
+                                <p className="text-xs text-rose-600 dark:text-rose-400/80 leading-relaxed font-medium">
+                                    Seluruh item penjualan di bawah ini telah dibatalkan dan pencatatan keuangan dikembalikan. Transaksi ini tidak valid lagi untuk pelaporan kasir.
                                 </p>
-                                
-                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+
+                                {/* Metadata Info Row (Horizontal list) */}
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-rose-100/30 dark:border-rose-900/10 pt-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                                     {transaction.voided_at && (
-                                        <div className="flex items-center gap-1">
-                                            <span className="text-slate-400 dark:text-slate-500">Waktu:</span>
-                                            <span className="text-slate-700 dark:text-slate-350 font-bold">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-slate-400 dark:text-slate-500">Dibatalkan pada:</span>
+                                            <span className="text-slate-800 dark:text-slate-200 font-extrabold">
                                                 {format(new Date(transaction.voided_at), "dd MMMM yyyy, HH:mm", { locale: localeId })}
                                             </span>
                                         </div>
                                     )}
                                     {(transaction.void_by || transaction.voidBy) && (
-                                        <div className="flex items-center gap-1">
-                                            <span className="text-slate-400 dark:text-slate-500">Oleh:</span>
-                                            <span className="text-slate-700 dark:text-slate-350 font-bold">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-slate-400 dark:text-slate-500">Otorisator:</span>
+                                            <span className="text-slate-800 dark:text-slate-200 font-extrabold">
                                                 {(transaction.void_by || transaction.voidBy)?.name}
                                             </span>
                                         </div>
                                     )}
                                 </div>
                             </div>
-                        </div>
 
-                        {transaction.catatan_void && (
-                            <div className="w-full md:w-auto md:max-w-xs shrink-0 self-stretch md:self-auto">
-                                <div className="bg-white/85 dark:bg-slate-950/40 border border-rose-100 dark:border-slate-800/60 rounded-xl p-3 h-full flex flex-col justify-center">
-                                    <span className="text-[10px] font-extrabold text-rose-600 dark:text-rose-400 uppercase tracking-wider block mb-1">
-                                        Alasan Void:
-                                    </span>
-                                    <p className="text-xs italic text-slate-750 dark:text-slate-300 font-medium leading-normal break-words">
-                                        &ldquo;{transaction.catatan_void}&rdquo;
-                                    </p>
+                            {/* Right Side: Reason box */}
+                            {transaction.catatan_void && (
+                                <div className="md:col-span-5 flex h-full">
+                                    <div className="w-full bg-rose-100/25 dark:bg-rose-950/15 border border-rose-250/40 dark:border-rose-900/30 rounded-xl p-3.5 flex flex-col justify-between hover:border-rose-300 dark:hover:border-rose-800 hover:shadow-xs transition-all duration-300">
+                                        <div className="space-y-1.5">
+                                            <span className="text-[10px] font-extrabold text-rose-650 dark:text-rose-400 uppercase tracking-wider block">
+                                                Alasan Pembatalan:
+                                            </span>
+                                            <p className="text-xs italic text-slate-800 dark:text-slate-250 font-semibold leading-relaxed break-words font-sans">
+                                                &ldquo;{transaction.catatan_void}&rdquo;
+                                            </p>
+                                        </div>
+
+                                        <span className="text-[9px] font-bold text-rose-600/60 dark:text-rose-400/60 text-right block mt-2">
+                                            * tercatat otomatis pada sistem audit log
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
+
+                        </div>
                     </div>
                 )}
 
