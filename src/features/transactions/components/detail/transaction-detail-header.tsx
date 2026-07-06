@@ -68,7 +68,7 @@ export function TransactionDetailHeader({
     };
 
     return (
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             {/* Left side: Back Button & Title Info */}
             <div className="flex items-center gap-3.5">
                 <Button

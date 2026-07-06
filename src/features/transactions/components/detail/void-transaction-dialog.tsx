@@ -61,14 +61,14 @@ export function VoidTransactionDialog({
             className="sm:max-w-md bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-2xl p-6"
             showCloseButton={!isLoading}
         >
-            <div className="flex flex-col items-start w-full mt-4">
+            <div className="flex flex-col items-start w-full">
                 <form onSubmit={handleSubmit} className="w-full space-y-4">
                     {/* Warning Box */}
                     <div className="bg-rose-50/60 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-xl p-3 flex items-start gap-2.5">
                         <IconAlertTriangle size={16} stroke={2.2} className="text-rose-500 shrink-0 mt-0.5" />
                         <div className="space-y-0.5">
                             <span className="text-xs font-bold text-rose-700 dark:text-rose-400 block">
-                                Peringatan Keamanan
+                                Peringatan
                             </span>
                             <span className="text-[11px] text-rose-600/90 dark:text-rose-400/90 leading-relaxed block font-medium">
                                 Tindakan ini tidak dapat dibatalkan! Seluruh stok barang dan jurnal keuangan akan dikembalikan.
@@ -138,7 +138,7 @@ export function VoidTransactionDialog({
                             ) : (
                                 <IconX size={16} />
                             )}
-                            <span>Proses Void</span>
+                            <span>Lakukan Pembatalan</span>
                         </Button>
                     </div>
                 </form>
