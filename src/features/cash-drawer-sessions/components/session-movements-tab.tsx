@@ -57,7 +57,7 @@ export function SessionMovementsTab({ movements }: SessionMovementsTabProps) {
             {sortedMovements.length > 0 ? (
                 <div className="relative pl-1">
                     {/* Vertical timeline track line */}
-                    <div className="absolute left-4 top-3 bottom-3 w-0.5 bg-slate-100 dark:bg-slate-800/80" />
+                    <div className="absolute left-5 top-3 bottom-3 w-0.5 bg-slate-100 dark:bg-slate-800/80" />
 
                     <div className="space-y-3 relative">
                         {sortedMovements.map((movement) => {

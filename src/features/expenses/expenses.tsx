@@ -15,7 +15,7 @@ import { FormSelect } from "@/components/forms/form-select";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { useExpenseCategories } from "./api/expenses-api";
 import { useCashAccounts } from "@/features/cash/api/cash-api";
-import { getDefaultDateRange, todayStr } from "@/lib/date-utils";
+import { getDefaultDateRange, todayStr, formatToISO } from "@/lib/date-utils";
 
 interface ExpenseFilterValues {
     search: string;
@@ -109,7 +109,7 @@ export function Expenses() {
             amount: expense.amount,
             nama: expense.nama || "",
             catatan: expense.catatan || "",
-            tanggal: expense.tanggal || todayStr(),
+            tanggal: formatToISO(expense.tanggal) || todayStr(),
         });
         setIsDialogOpen(true);
     };
