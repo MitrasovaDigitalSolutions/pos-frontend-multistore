@@ -56,7 +56,11 @@ export function SessionDetailsView({
                 const method = t.metode_pembayaran?.toLowerCase();
                 return method === "card" || method === "debt" || method === "split";
             })
-            .sort((a: Transaction, b: Transaction) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            .sort((a: Transaction, b: Transaction) => {
+                const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+                const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+                return timeB - timeA;
+            });
     }, [activeSession?.transactions]);
 
     const formattedTime = (dateStr?: string) => {
@@ -89,9 +93,11 @@ export function SessionDetailsView({
     }
 
     // Newest first for quick access in the sidebar
-    const movements = [...(activeSession.movements || [])].sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
+    const movements = [...(activeSession.movements || [])].sort((a, b) => {
+        const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return timeB - timeA;
+    });
 
     const totalInflow = activeSession.opening_balance + activeSession.cash_sales_total + activeSession.cash_in_total;
     const totalOutflow = activeSession.cash_out_total + activeSession.cash_refunds_total;
