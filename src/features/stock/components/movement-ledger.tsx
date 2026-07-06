@@ -8,6 +8,7 @@ import { DataTable } from "@/components/ui/data-table";
 const TIPE_CLASSES: Record<string, string> = {
     receive: "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/30",
     void: "bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-900/30",
+    sale_void: "bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-900/30",
     sale: "bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900/30",
     retur: "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/30",
     penyesuaian: "bg-slate-50 text-slate-700 border-slate-100 dark:bg-slate-900/50 dark:text-slate-400 dark:border-slate-800",
@@ -21,6 +22,7 @@ const TIPE_CLASSES: Record<string, string> = {
 const TIPE_LABELS: Record<string, string> = {
     receive: "Penerimaan",
     void: "Pembatalan",
+    sale_void: "Pembatalan Penjualan",
     sale: "Penjualan",
     retur: "Retur",
     penyesuaian: "Penyesuaian",

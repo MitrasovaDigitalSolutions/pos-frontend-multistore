@@ -80,6 +80,7 @@ export function StockLedger() {
         { value: "all", label: "Semua Tipe" },
         { value: "receive", label: "Penerimaan" },
         { value: "sale", label: "Penjualan" },
+        { value: "sale_void", label: "Pembatalan Penjualan" },
         { value: "retur", label: "Retur" },
         { value: "void", label: "Pembatalan" },
         { value: "adjustment", label: "Penyesuaian" },
@@ -88,15 +89,6 @@ export function StockLedger() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h3 className="text-sm font-bold text-slate-900">
-                    Kartu Stok / Mutasi Barang
-                </h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                    Laporan mutasi pergerakan masuk dan keluar stok produk secara real-time.
-                </p>
-            </div>
-
             <FilterForm
                 methods={filterMethods}
                 onSubmit={handleFilterSubmit}
