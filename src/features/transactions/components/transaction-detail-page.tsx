@@ -1,18 +1,20 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { PageLoader } from "@/components/feedback/page-loader";
 import { Button } from "@/components/ui/button";
 import { IconAlertTriangle } from "@tabler/icons-react";
-import { useTransactionDetail } from "../api/transactions-api";
+import { useTransactionDetail, useVoidTransaction } from "../api/transactions-api";
 import { format } from "date-fns";
-import { id } from "date-fns/locale";
+import { id as localeId } from "date-fns/locale";
 import { toast } from "sonner";
 import QZService from "@/services/qz.service";
 import axios from "axios";
 import { buildReceipt } from "@/utils/ReceiptFormatter";
 import { useSettingsStore } from "@/stores/settings-store";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 
 // Import refactored subcomponents
 import { TransactionDetailHeader } from "./detail/transaction-detail-header";
@@ -26,8 +28,11 @@ interface TransactionDetailPageProps {
 
 export function TransactionDetailPage({ transactionId }: TransactionDetailPageProps) {
     const router = useAppRouter();
+    const queryClient = useQueryClient();
     const { data: transaction, isLoading, error } = useTransactionDetail(transactionId);
     const getSetting = useSettingsStore((state) => state.getSetting);
+    
+    const voidMutation = useVoidTransaction();
 
     if (isLoading) {
         return <PageLoader message="Memuat detail transaksi..." />;
@@ -55,7 +60,7 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
 
     // Format transaction date
     const date = new Date(transaction.created_at);
-    const formattedDate = format(date, "dd MMMM yyyy, HH:mm", { locale: id });
+    const formattedDate = format(date, "dd MMMM yyyy, HH:mm", { locale: localeId });
 
     const handlePrint = async () => {
         if (transaction?.uid) {
@@ -66,13 +71,34 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
             const printerName = getSetting("printer_id") || "EPSON LX-310 ESC/P";
             await QZService.print(printerName, receipt);
 
-            // window.open(`/api/proxy/v1/transactions-print/${transaction.uid}`, "_blank");
             setTimeout(() => {
                 toast.dismiss(toastId);
             }, 3000);
         } else {
             toast.error("Gagal mencetak struk: ID transaksi tidak ditemukan.");
         }
+    };
+    
+    const handleVoid = () => {
+        const reason = window.prompt("Masukkan alasan void transaksi ini:");
+        if (reason === null) return; // User cancelled
+        if (!reason.trim()) {
+            toast.error("Alasan void harus diisi");
+            return;
+        }
+        
+        voidMutation.mutate(
+            { id: transaction.uid, void_reason: reason },
+            {
+                onSuccess: () => {
+                    toast.success("Transaksi berhasil di-void");
+                    queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all });
+                },
+                onError: (err: any) => {
+                    toast.error(err?.response?.data?.message || "Gagal melakukan void transaksi");
+                }
+            }
+        );
     };
 
     return (
@@ -87,8 +113,26 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
                     transactionNumber={transaction.nomor_transaksi}
                     status={transaction.status}
                     onPrint={handlePrint}
+                    onVoid={handleVoid}
                     namaTransaksi={transaction.nama_transaksi}
                 />
+                
+                {transaction.status === "void" && (
+                    <div className="bg-rose-50 border border-rose-200 text-rose-800 rounded-xl p-4 flex flex-col gap-1 shadow-sm">
+                        <div className="font-bold flex items-center gap-2">
+                            <IconAlertTriangle size={18} />
+                            <span>Transaksi ini telah divoid</span>
+                        </div>
+                        {transaction.catatan_void && (
+                            <div className="text-sm">Alasan: {transaction.catatan_void}</div>
+                        )}
+                        {transaction.voided_at && (
+                            <div className="text-sm text-rose-600">
+                                Waktu: {format(new Date(transaction.voided_at), "dd MMMM yyyy, HH:mm", { locale: localeId })}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Main content grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -111,3 +155,4 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
 }
 
 export default TransactionDetailPage;
+
