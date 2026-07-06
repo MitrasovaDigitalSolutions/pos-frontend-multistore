@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { useOutstandingPurchaseOrders, useUpdateReceiving } from "../../api/purchase-api";
 import { receivingHeaderSchema, type ReceivingHeaderInput } from "../../schemas/receiving-schema";
 import type { Receiving } from "../../types";
+import { formatToISO } from "@/lib/date-utils";
 
 interface ReceivingHeaderDialogProps {
     open: boolean;
@@ -92,7 +93,7 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
                 supplier_uid: receiving.supplier_uid ? String(receiving.supplier_uid) : null,
                 nomor_faktur: receiving.nomor_faktur || "",
                 nilai_faktur: receiving.nilai_faktur || 0,
-                tanggal_terima: receiving.created_at ? receiving.created_at.split("T")[0] : "",
+                tanggal_terima: receiving.created_at ? formatToISO(receiving.created_at) : "",
                 status_pembayaran: receiving.status_pembayaran || PAYMENT_STATUS.PENDING,
                 catatan: receiving.catatan || "",
             });

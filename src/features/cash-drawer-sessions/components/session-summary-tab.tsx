@@ -4,6 +4,7 @@ import React from "react";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { cn } from "@/lib/utils";
 import type { CashDrawerSession } from "@/features/checkout/types/cash-drawer";
+import { formatDate } from "@/lib/date-utils";
 import {
     IconClock,
     IconUser,
@@ -29,14 +30,7 @@ export function SessionSummaryTab({ session }: SessionSummaryTabProps) {
 
     const formattedTime = (dateStr?: string) => {
         if (!dateStr) return "-";
-        return new Date(dateStr).toLocaleString("id-ID", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-        });
+        return formatDate(dateStr, "d MMM yyyy, HH:mm");
     };
 
     const getClosedByName = (s: CashDrawerSession) => {
@@ -281,12 +275,12 @@ export function SessionSummaryTab({ session }: SessionSummaryTabProps) {
                         <div>
                             {difference < 0 ? (
                                 <p>
-                                    <strong className="font-extrabold text-rose-900 block mb-0.5">⚠️ Selisih Kurang (Shortage)</strong>
+                                    <strong className="font-extrabold text-rose-900 block mb-0.5">Selisih Kurang (Shortage)</strong>
                                     Terdapat kekurangan kas sebesar <strong className="text-rose-900 font-bold">{formatRupiah(Math.abs(difference))}</strong>. Kasir harus memeriksa apakah ada pengeluaran tunai/pembelian operasional yang lupa diinput ke kas, atau kesalahan saat memberikan uang kembalian ke pelanggan.
                                 </p>
                             ) : (
                                 <p>
-                                    <strong className="font-extrabold text-teal-900 block mb-0.5">📈 Selisih Lebih (Surplus)</strong>
+                                    <strong className="font-extrabold text-teal-900 block mb-0.5">Selisih Lebih (Surplus)</strong>
                                     Terdapat kelebihan kas sebesar <strong className="text-teal-900 font-bold">{formatRupiah(difference)}</strong>. Pemilik toko atau admin harus memastikan seluruh penjualan tunai telah terinput dengan benar, atau apakah ada uang modal kasir yang tidak dihitung saat pembukaan.
                                 </p>
                             )}

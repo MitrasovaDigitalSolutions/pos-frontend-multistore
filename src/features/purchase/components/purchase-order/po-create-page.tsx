@@ -12,6 +12,7 @@ import { useAppRouter } from "@/hooks/use-app-router";
 import { useCreatePurchaseOrderHeader } from "../../api/purchase-api";
 import { purchaseOrderHeaderSchema, type PurchaseOrderHeaderInput } from "../../schemas/order-schema";
 import { IconArrowLeft, IconClipboardPlus } from "@tabler/icons-react";
+import { todayStr } from "@/lib/date-utils";
 
 export function POCreatePage() {
     const router = useAppRouter();
@@ -27,7 +28,7 @@ export function POCreatePage() {
         resolver: zodResolver(purchaseOrderHeaderSchema) as Resolver<PurchaseOrderHeaderInput>,
         defaultValues: {
             supplier_uid: undefined,
-            tanggal_po: new Date().toISOString().split("T")[0],
+            tanggal_po: todayStr(),
             catatan: "",
         },
     });

@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import type { OfflineTransactionRecord, OfflineTransaction } from "@/lib/db";
 import { toast } from "sonner";
+import { todayStr } from "@/lib/date-utils";
 
 /**
  * Exports all offline transactions and queue items from IndexedDB into a JSON file download.
@@ -27,7 +28,7 @@ export async function exportOfflineBackup(): Promise<boolean> {
         const url = URL.createObjectURL(blob);
 
         const link = document.createElement("a");
-        const dateStr = new Date().toISOString().split("T")[0];
+        const dateStr = todayStr();
         link.href = url;
         link.download = `pos_offline_backup_${dateStr}.json`;
         document.body.appendChild(link);

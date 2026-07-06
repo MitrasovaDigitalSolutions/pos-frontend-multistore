@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { IconCalendar, IconMenu } from "@tabler/icons-react";
 import { NAVIGATION_CONFIG } from "./sidebar-config";
 import { useSidebarStore } from "@/stores/sidebar-store";
+import { formatToReadableDate } from "@/lib/date-utils";
 
 export function AdminHeader() {
   const { toggleMobile } = useSidebarStore();
@@ -61,11 +62,7 @@ export function AdminHeader() {
     return null;
   }
 
-  const formattedDate = new Date().toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const formattedDate = formatToReadableDate(new Date());
 
   const userName = user?.name || "Kasir";
   const userRole = user?.roles?.[0] || "kasir";

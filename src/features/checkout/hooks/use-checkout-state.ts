@@ -15,6 +15,7 @@ import { useNetworkStatus } from "@/hooks/use-network-status";
 import axios from "axios";
 import { buildReceipt } from "@/utils/ReceiptFormatter";
 import QZService from "@/services/qz.service";
+import { formatDate } from "@/lib/date-utils";
 
 export function useCheckoutState() {
     const router = useAppRouter();
@@ -493,13 +494,7 @@ export function useCheckoutState() {
     useEffect(() => {
         const updateTime = () => {
             const now = new Date();
-            setTrxTime(
-                `${now.toLocaleDateString("id-ID", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                })} ${now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", hour12: false })}`,
-            );
+            setTrxTime(formatDate(now, "dd MMM yyyy, HH:mm"));
         };
         updateTime();
         const timer = setInterval(updateTime, 60000);

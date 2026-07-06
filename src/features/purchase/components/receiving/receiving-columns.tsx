@@ -1,6 +1,7 @@
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Receiving } from "../../types";
+import { formatToReadableDateTime } from "@/lib/date-utils";
 import {
     PAYMENT_STATUS_LABELS,
     PAYMENT_STATUS_CLASSES,
@@ -16,10 +17,7 @@ export const receivingColumns: ColumnDef<Receiving>[] = [
         header: "Tanggal",
         cell: ({ row }) => (
             <span className="text-slate-600 font-medium text-xs">
-                {new Date(row.original.created_at).toLocaleString("id-ID", {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                })}
+                {formatToReadableDateTime(row.original.created_at)}
             </span>
         ),
         size: 160,

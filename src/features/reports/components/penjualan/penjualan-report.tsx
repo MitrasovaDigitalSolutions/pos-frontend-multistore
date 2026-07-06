@@ -8,6 +8,7 @@ import { usePenjualanReport } from "../../api/reports-api";
 import { PenjualanHeaderFilters } from "./penjualan-header-filters";
 import { PenjualanSummaryCard } from "./penjualan-summary-card";
 import { PenjualanDetailsTable } from "./penjualan-details-table";
+import { todayStr } from "@/lib/date-utils";
 
 interface PenjualanFilterValues {
     fromDate: string;
@@ -25,7 +26,7 @@ export function PenjualanReportView() {
         hasPermission(userRoles, userPermissions, "view_reports");
 
     // Default: today only
-    const today = new Date().toISOString().split("T")[0];
+    const today = todayStr();
 
     const [page, setPage] = useState<number>(1);
     const [perPage, setPerPage] = useState<number>(10);

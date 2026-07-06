@@ -4,6 +4,7 @@ import React from "react";
 import type { Receipt } from "../types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { useSettingsStore } from "@/stores/settings-store";
+import { formatDate, formatToTime } from "@/lib/date-utils";
 
 interface PrintReceiptLayoutProps {
     receipt: Receipt | null;
@@ -77,7 +78,7 @@ export function PrintReceiptLayout({ receipt, cashierName }: PrintReceiptLayoutP
                 <div className="flex justify-between">
                     <span>TRX #{receipt.uid}</span>
                     <span>
-                        {new Date().toLocaleDateString("id-ID")} {new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                        {formatDate(new Date(), "dd/MM/yyyy")} {formatToTime(new Date())}
                     </span>
                 </div>
                 {receipt.member && (

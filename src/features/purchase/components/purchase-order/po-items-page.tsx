@@ -23,6 +23,7 @@ import {
     PO_STATUS_CLASSES,
     type POStatus,
 } from "@/constants/purchase";
+import { formatDate } from "@/lib/date-utils";
 
 interface POItemsPageProps {
     poId: string;
@@ -222,7 +223,7 @@ function POItemsContainer({ poId, order }: { poId: string; order: PurchaseOrder 
                                 </span>
                             </h2>
                             <p className="text-xs text-slate-400">
-                                Supplier: <span className="font-semibold text-slate-600">{order.supplier?.nama || order.supplier_name || "-"}</span> | Tanggal: {new Date(order.tanggal_po).toLocaleDateString("id-ID", { dateStyle: "medium" })}
+                                Supplier: <span className="font-semibold text-slate-600">{order.supplier?.nama || order.supplier_name || "-"}</span> | Tanggal: {formatDate(order.tanggal_po, "dd MMM yyyy")}
                             </p>
                         </div>
                     </div>

@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import type { StockMovement } from "../types";
 import { DataTable } from "@/components/ui/data-table";
+import { formatToReadableDateTime } from "@/lib/date-utils";
 
 const TIPE_CLASSES: Record<string, string> = {
     receive: "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/30",
@@ -68,9 +69,7 @@ export function MovementLedger({
                 header: "Waktu",
                 cell: ({ row }) => (
                     <span className="text-[11px] text-slate-500">
-                        {new Date(row.original.created_at).toLocaleString(
-                            "id-ID",
-                        )}
+                        {formatToReadableDateTime(row.original.created_at)}
                     </span>
                 ),
                 size: 160,

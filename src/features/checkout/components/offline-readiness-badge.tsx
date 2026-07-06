@@ -18,6 +18,7 @@ import {
     Lightbulb,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/date-utils";
 import type { OfflineReadinessState, OfflineReadinessStatus } from "@/hooks/use-offline-readiness";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -83,17 +84,8 @@ function getStatusConfig(status: OfflineReadinessStatus): StatusConfig {
 
 function formatLastSynced(iso: string | null): string {
     if (!iso) return "Belum pernah";
-    try {
-        const date = new Date(iso);
-        return date.toLocaleString("id-ID", {
-            day: "2-digit",
-            month: "short",
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    } catch {
-        return "Tidak diketahui";
-    }
+    const formatted = formatDate(iso, "dd MMM, HH:mm");
+    return formatted || "Tidak diketahui";
 }
 
 export function OfflineReadinessBadge({

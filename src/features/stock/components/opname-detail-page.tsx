@@ -23,6 +23,7 @@ import { ROUTES } from "@/constants/routes";
 import { queryKeys } from "@/lib/query-keys";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
+import { formatToReadableDateTime } from "@/lib/date-utils";
 import type { OpnameItem } from "../types";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { toast } from "sonner";
@@ -214,10 +215,7 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                         <div className="flex justify-between">
                             <span className="text-slate-400">Tanggal Dibuat</span>
                             <span className="font-semibold text-slate-700">
-                                {new Date(opname.created_at).toLocaleString("id-ID", {
-                                    dateStyle: "medium",
-                                    timeStyle: "short",
-                                })}
+                                {formatToReadableDateTime(opname.created_at)}
                             </span>
                         </div>
                         <div className="flex justify-between">
@@ -302,7 +300,7 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                                         </p>
                                         <div className="flex flex-wrap gap-2 text-[10px] text-slate-400 font-mono">
                                             <span>
-                                                {new Date(log.created_at).toLocaleString("id-ID")}
+                                                {formatToReadableDateTime(log.created_at)}
                                             </span>
                                             <span>•</span>
                                             <span>Oleh: {log.user?.name || "System"}</span>

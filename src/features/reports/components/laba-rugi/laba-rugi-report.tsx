@@ -8,6 +8,7 @@ import { useLabaRugiReport } from "../../api/reports-api";
 import { LabaRugiHeaderFilters } from "./laba-rugi-header-filters";
 import { LabaRugiSummaryCard } from "./laba-rugi-summary-card";
 import { LabaRugiDetailsTable } from "./laba-rugi-details-table";
+import { formatToISO, todayStr } from "@/lib/date-utils";
 
 interface LabaRugiFilterValues {
     fromDate: string;
@@ -29,8 +30,8 @@ export function LabaRugiReportView() {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const [appliedFilters, setAppliedFilters] = useState<LabaRugiFilterValues>({
-        fromDate: thirtyDaysAgo.toISOString().split("T")[0],
-        toDate: new Date().toISOString().split("T")[0],
+        fromDate: formatToISO(thirtyDaysAgo),
+        toDate: todayStr(),
         interval: "daily",
     });
 
@@ -59,8 +60,8 @@ export function LabaRugiReportView() {
 
     const handleFilterReset = () => {
         const defaults = {
-            fromDate: thirtyDaysAgo.toISOString().split("T")[0],
-            toDate: new Date().toISOString().split("T")[0],
+            fromDate: formatToISO(thirtyDaysAgo),
+            toDate: todayStr(),
             interval: "daily",
         };
         methods.reset(defaults);

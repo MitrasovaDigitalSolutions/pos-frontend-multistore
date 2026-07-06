@@ -23,6 +23,7 @@ import {
 } from "../../../api/purchase-api";
 import type { PurchaseItemLocal, Receiving } from "../../../types";
 import type { Product } from "@/features/products/types";
+import { formatToISO } from "@/lib/date-utils";
 import { BarcodeInput } from "@/components/shared/barcode-input";
 import { BulkSubmitBar } from "../../shared/bulk-submit-bar";
 import { ItemsTable } from "../../shared/items-table";
@@ -360,7 +361,7 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
                 supplier_uid: receiving.supplier_uid,
                 nomor_faktur: formData.nomor_faktur,
                 nilai_faktur: Number(formData.nilai_faktur),
-                tanggal_terima: receiving.tanggal_terima || (receiving.created_at ? receiving.created_at.split("T")[0] : ""),
+                tanggal_terima: receiving.tanggal_terima || (receiving.created_at ? formatToISO(receiving.created_at) : ""),
                 status_pembayaran: receiving.status_pembayaran,
                 catatan: formData.catatan,
                 status: receiving.status,

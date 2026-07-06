@@ -12,6 +12,7 @@ import {
     IconNotebook,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import { formatDate, formatToTime } from "@/lib/date-utils";
 
 const STATUS_CONFIG = {
     pending: {
@@ -41,15 +42,12 @@ const PAYMENT_LABELS: Record<string, { label: string; icon: typeof IconCash }> =
 };
 
 function formatDateTime(iso: string) {
-    try {
-        const d = new Date(iso);
-        return {
-            date: d.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" }),
-            time: d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
-        };
-    } catch {
-        return { date: "-", time: "-" };
-    }
+    const formattedDate = formatDate(iso, "dd MMM yyyy");
+    const formattedTime = formatToTime(iso, true);
+    return {
+        date: formattedDate || "-",
+        time: formattedTime || "-",
+    };
 }
 
 interface OfflineTransactionsTableProps {

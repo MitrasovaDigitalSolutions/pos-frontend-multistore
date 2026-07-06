@@ -14,6 +14,7 @@ import type { Member } from "./types";
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
+import { formatToISO } from "@/lib/date-utils";
 
 interface MemberFilterValues {
     search: string;
@@ -118,7 +119,7 @@ export function Members() {
             email: member.email || "",
             nomor_telepon: member.nomor_telepon || "",
             alamat: member.alamat || "",
-            tanggal_lahir: member.tanggal_lahir || "",
+            tanggal_lahir: formatToISO(member.tanggal_lahir) || "",
             jenis_kelamin: member.jenis_kelamin || null,
             poin: member.poin,
             status: member.status,

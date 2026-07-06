@@ -11,6 +11,7 @@ import { useSession } from "next-auth/react";
 import { useMemo, useState } from "react";
 import { SessionDetailDialog } from "./components/session-detail-dialog";
 import { SessionFilter } from "./components/session-filter";
+import { formatToReadableDateTime } from "@/lib/date-utils";
 
 export function CashDrawerSessions() {
     const { data: session } = useSession();
@@ -77,10 +78,7 @@ export function CashDrawerSessions() {
                 header: "Waktu Buka",
                 cell: ({ row }) => (
                     <span className="text-slate-500 font-medium text-xs">
-                        {new Date(row.original.opened_at).toLocaleString("id-ID", {
-                            dateStyle: "medium",
-                            timeStyle: "short",
-                        })}
+                        {formatToReadableDateTime(row.original.opened_at)}
                     </span>
                 ),
                 size: 160,
@@ -91,10 +89,7 @@ export function CashDrawerSessions() {
                 cell: ({ row }) => (
                     <span className="text-slate-500 font-medium text-xs">
                         {row.original.closed_at ? (
-                            new Date(row.original.closed_at).toLocaleString("id-ID", {
-                                dateStyle: "medium",
-                                timeStyle: "short",
-                            })
+                            formatToReadableDateTime(row.original.closed_at)
                         ) : (
                             <span className="text-emerald-600 font-bold italic text-[11px]">Aktif / Terbuka</span>
                         )}

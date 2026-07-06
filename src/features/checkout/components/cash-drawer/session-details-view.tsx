@@ -27,6 +27,7 @@ import {
     IconInfoCircle,
 } from "@tabler/icons-react";
 import { Scrollable } from "@/components/ui/scrollable";
+import { formatDate, formatToTime } from "@/lib/date-utils";
 
 interface SessionDetailsViewProps {
     activeSession: CashDrawerSession | undefined;
@@ -56,19 +57,16 @@ export function SessionDetailsView({
                 const method = t.metode_pembayaran?.toLowerCase();
                 return method === "card" || method === "debt" || method === "split";
             })
-            .sort((a: Transaction, b: Transaction) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            .sort((a: Transaction, b: Transaction) => {
+                const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+                const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+                return timeB - timeA;
+            });
     }, [activeSession?.transactions]);
 
     const formattedTime = (dateStr?: string) => {
         if (!dateStr) return "-";
-        return new Date(dateStr).toLocaleString("id-ID", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-        });
+        return formatDate(dateStr, "d MMM yyyy, HH:mm");
     };
 
     if (isLoading) {
@@ -89,9 +87,11 @@ export function SessionDetailsView({
     }
 
     // Newest first for quick access in the sidebar
-    const movements = [...(activeSession.movements || [])].sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
+    const movements = [...(activeSession.movements || [])].sort((a, b) => {
+        const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return timeB - timeA;
+    });
 
     const totalInflow = activeSession.opening_balance + activeSession.cash_sales_total + activeSession.cash_in_total;
     const totalOutflow = activeSession.cash_out_total + activeSession.cash_refunds_total;
@@ -321,7 +321,7 @@ export function SessionDetailsView({
                                 movements.length > 0 ? (
                                     <div className="relative pl-1">
                                         {/* Vertical line indicator */}
-                                        <div className="absolute left-3.5 top-2 bottom-2 w-0.5 bg-slate-100" />
+                                        <div className="absolute left-[14.5px] -translate-x-1/2 top-2 bottom-2 w-0.5 bg-slate-100" />
                                         
                                         <div className="space-y-4 relative">
                                             {movements.map((movement) => {
@@ -387,11 +387,7 @@ export function SessionDetailsView({
                                                                     </span>
                                                                 </span>
                                                                 <span className="text-slate-400 font-bold font-mono">
-                                                                    {new Date(movement.created_at).toLocaleTimeString("id-ID", {
-                                                                        hour: "2-digit",
-                                                                        minute: "2-digit",
-                                                                        hour12: false,
-                                                                    })}
+                                                                    {formatToTime(movement.created_at)}
                                                                 </span>
                                                             </div>
 
@@ -421,7 +417,7 @@ export function SessionDetailsView({
                                 nonCashTransactions.length > 0 ? (
                                     <div className="relative pl-1">
                                         {/* Vertical line indicator */}
-                                        <div className="absolute left-3.5 top-2 bottom-2 w-0.5 bg-slate-100" />
+                                        <div className="absolute left-[14.5px] -translate-x-1/2 top-2 bottom-2 w-0.5 bg-slate-100" />
                                         
                                         <div className="space-y-4 relative">
                                             {nonCashTransactions.map((tx: Transaction) => {
@@ -480,11 +476,7 @@ export function SessionDetailsView({
                                                                     )}
                                                                 </div>
                                                                 <span className="text-slate-400 font-bold font-mono shrink-0">
-                                                                    {new Date(tx.created_at).toLocaleTimeString("id-ID", {
-                                                                        hour: "2-digit",
-                                                                        minute: "2-digit",
-                                                                        hour12: false,
-                                                                    })}
+                                                                    {formatToTime(tx.created_at)}
                                                                 </span>
                                                             </div>
 
