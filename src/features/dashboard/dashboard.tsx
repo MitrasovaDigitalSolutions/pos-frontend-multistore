@@ -9,10 +9,8 @@ import { SalesStatistics } from "@/features/dashboard/components/sales-statistic
 import { StatMiniCards } from "@/features/dashboard/components/stat-mini-cards";
 import { TopSellingWeekly } from "@/features/dashboard/components/top-selling-weekly";
 import { JasaVsProductChart } from "@/features/dashboard/components/jasa-vs-product-chart";
-import { getDefaultDateRange } from "@/lib/date-utils";
+import { getDefaultDateRange, formatDate } from "@/lib/date-utils";
 import { IconFilter } from "@tabler/icons-react";
-import { format } from "date-fns";
-import { id } from "date-fns/locale";
 import { useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 
@@ -52,21 +50,15 @@ export function Dashboard() {
 
   const formatDateRange = () => {
     if (!watchFrom && !watchTo) return "Semua Waktu";
-    const parseDate = (dStr: string) => {
-      const parts = dStr.split("-");
-      return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-    };
-    const fromDate = watchFrom ? parseDate(watchFrom) : null;
-    const toDate = watchTo ? parseDate(watchTo) : null;
-
-    if (fromDate && toDate) {
-      return `${format(fromDate, "dd MMM yyyy", { locale: id })} - ${format(toDate, "dd MMM yyyy", { locale: id })}`;
+    
+    if (watchFrom && watchTo) {
+      return `${formatDate(watchFrom, "dd MMM yyyy")} - ${formatDate(watchTo, "dd MMM yyyy")}`;
     }
-    if (fromDate) {
-      return `Mulai ${format(fromDate, "dd MMM yyyy", { locale: id })}`;
+    if (watchFrom) {
+      return `Mulai ${formatDate(watchFrom, "dd MMM yyyy")}`;
     }
-    if (toDate) {
-      return `Sampai ${format(toDate, "dd MMM yyyy", { locale: id })}`;
+    if (watchTo) {
+      return `Sampai ${formatDate(watchTo, "dd MMM yyyy")}`;
     }
     return "Semua Waktu";
   };
