@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { IconArrowLeft, IconChevronRight, IconPrinter, IconX } from "@tabler/icons-react";
@@ -123,23 +123,20 @@ export function TransactionDetailHeader({
                 {currentStatus !== "void" && currentStatus !== "canceled" && onVoid && (
                     <Button
                         onClick={onVoid}
-                        variant="outline"
-                        className="group text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200 font-extrabold text-xs h-10 px-5 rounded-2xl flex items-center gap-2 cursor-pointer shadow-sm transition-all duration-300"
+                        className="group text-white bg-rose-500 hover:bg-rose-600 font-extrabold text-xs h-10 px-5 rounded-2xl flex items-center gap-2 cursor-pointer"
                     >
                         <IconX
                             size={16}
-                            className="transition-transform duration-300 group-hover:rotate-90"
                         />
-                        <span>Void Transaksi</span>
+                        <span>Batalkan Transaksi</span>
                     </Button>
                 )}
                 <Button
                     onClick={onPrint}
-                    className="group bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-extrabold text-xs h-10 px-5 rounded-2xl flex items-center gap-2 cursor-pointer shadow-md shadow-indigo-200/50 dark:shadow-none hover:shadow-lg hover:shadow-indigo-300/40 transition-all duration-300"
+                    className="group bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-extrabold text-xs h-10 px-5 rounded-2xl flex items-center gap-2 cursor-pointer"
                 >
                     <IconPrinter
                         size={16}
-                        className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:scale-110"
                     />
                     <span>Cetak Struk</span>
                 </Button>
