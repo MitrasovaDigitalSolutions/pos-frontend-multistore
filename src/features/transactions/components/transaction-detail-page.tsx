@@ -21,6 +21,7 @@ import { TransactionDetailHeader } from "./detail/transaction-detail-header";
 import { TransactionDetailItems } from "./detail/transaction-detail-items";
 import { TransactionDetailSummary } from "./detail/transaction-detail-summary";
 import { TransactionPrintReceipt } from "./detail/transaction-print-receipt";
+import { VoidTransactionDialog } from "./detail/void-transaction-dialog";
 
 interface TransactionDetailPageProps {
     transactionId: string;
@@ -31,6 +32,7 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
     const queryClient = useQueryClient();
     const { data: transaction, isLoading, error } = useTransactionDetail(transactionId);
     const getSetting = useSettingsStore((state) => state.getSetting);
+    const [isVoidDialogOpen, setIsVoidDialogOpen] = useState(false);
     
     const voidMutation = useVoidTransaction();
 
@@ -79,23 +81,23 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
         }
     };
     
-    const handleVoid = () => {
-        const reason = window.prompt("Masukkan alasan void transaksi ini:");
-        if (reason === null) return; // User cancelled
-        if (!reason.trim()) {
-            toast.error("Alasan void harus diisi");
-            return;
-        }
-        
+    const handleVoid = (reason: string) => {
         voidMutation.mutate(
             { id: transaction.uid, void_reason: reason },
             {
                 onSuccess: () => {
                     toast.success("Transaksi berhasil di-void");
                     queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all });
+                    setIsVoidDialogOpen(false);
                 },
-                onError: (err: any) => {
-                    toast.error(err?.response?.data?.message || "Gagal melakukan void transaksi");
+                onError: (err: unknown) => {
+                    let errMsg = "Gagal melakukan void transaksi";
+                    if (axios.isAxiosError(err)) {
+                        errMsg = err.response?.data?.message || errMsg;
+                    } else if (err instanceof Error) {
+                        errMsg = err.message;
+                    }
+                    toast.error(errMsg);
                 }
             }
         );
@@ -113,26 +115,69 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
                     transactionNumber={transaction.nomor_transaksi}
                     status={transaction.status}
                     onPrint={handlePrint}
-                    onVoid={handleVoid}
+                    onVoid={() => setIsVoidDialogOpen(true)}
                     namaTransaksi={transaction.nama_transaksi}
                 />
                 
                 {transaction.status === "void" && (
-                    <div className="bg-rose-50 border border-rose-200 text-rose-800 rounded-xl p-4 flex flex-col gap-1 shadow-sm">
-                        <div className="font-bold flex items-center gap-2">
-                            <IconAlertTriangle size={18} />
-                            <span>Transaksi ini telah divoid</span>
+                    <div className="bg-rose-50/60 dark:bg-rose-950/10 border border-rose-100 dark:border-rose-900/40 rounded-2xl p-5 flex flex-col md:flex-row md:items-start justify-between gap-4 shadow-sm">
+                        <div className="flex items-start gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-200 dark:border-rose-800/30">
+                                <IconAlertTriangle size={20} stroke={2.2} />
+                            </div>
+                            <div className="space-y-1">
+                                <h4 className="text-sm font-extrabold text-rose-850 dark:text-rose-400">
+                                    Transaksi Telah Dibatalkan (Void)
+                                </h4>
+                                <p className="text-xs text-rose-600 dark:text-rose-400/80 leading-relaxed max-w-xl">
+                                    Seluruh item penjualan di bawah ini telah dibatalkan dan pencatatan keuangan dibalikkan.
+                                </p>
+                                
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                                    {transaction.voided_at && (
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-slate-400 dark:text-slate-500">Waktu:</span>
+                                            <span className="text-slate-700 dark:text-slate-350 font-bold">
+                                                {format(new Date(transaction.voided_at), "dd MMMM yyyy, HH:mm", { locale: localeId })}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {(transaction.void_by || transaction.voidBy) && (
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-slate-400 dark:text-slate-500">Oleh:</span>
+                                            <span className="text-slate-700 dark:text-slate-350 font-bold">
+                                                {(transaction.void_by || transaction.voidBy)?.name}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
+
                         {transaction.catatan_void && (
-                            <div className="text-sm">Alasan: {transaction.catatan_void}</div>
-                        )}
-                        {transaction.voided_at && (
-                            <div className="text-sm text-rose-600">
-                                Waktu: {format(new Date(transaction.voided_at), "dd MMMM yyyy, HH:mm", { locale: localeId })}
+                            <div className="w-full md:w-auto md:max-w-xs shrink-0 self-stretch md:self-auto">
+                                <div className="bg-white/85 dark:bg-slate-950/40 border border-rose-100 dark:border-slate-800/60 rounded-xl p-3 h-full flex flex-col justify-center">
+                                    <span className="text-[10px] font-extrabold text-rose-600 dark:text-rose-400 uppercase tracking-wider block mb-1">
+                                        Alasan Void:
+                                    </span>
+                                    <p className="text-xs italic text-slate-750 dark:text-slate-300 font-medium leading-normal break-words">
+                                        &ldquo;{transaction.catatan_void}&rdquo;
+                                    </p>
+                                </div>
                             </div>
                         )}
                     </div>
                 )}
+
+                <VoidTransactionDialog
+                    key={`${transaction.uid}-${isVoidDialogOpen}`}
+                    open={isVoidDialogOpen}
+                    onOpenChange={setIsVoidDialogOpen}
+                    transactionNumber={transaction.nomor_transaksi}
+                    transactionName={transaction.nama_transaksi}
+                    onConfirm={handleVoid}
+                    isLoading={voidMutation.isPending}
+                />
 
                 {/* Main content grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
