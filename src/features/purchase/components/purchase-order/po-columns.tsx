@@ -3,6 +3,7 @@
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { PurchaseOrder } from "../../types";
+import { formatDate } from "@/lib/date-utils";
 import {
     PO_STATUS_LABELS,
     PO_STATUS_CLASSES,
@@ -15,9 +16,7 @@ export const poColumns: ColumnDef<PurchaseOrder>[] = [
         header: "Tanggal PO",
         cell: ({ row }) => (
             <span className="text-slate-600 font-medium text-xs">
-                {new Date(row.original.tanggal_po).toLocaleString("id-ID", {
-                    dateStyle: "medium",
-                })}
+                {formatDate(row.original.tanggal_po, "dd MMM yyyy")}
             </span>
         ),
         size: 120,

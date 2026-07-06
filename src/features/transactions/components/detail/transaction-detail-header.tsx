@@ -3,12 +3,13 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { IconArrowLeft, IconChevronRight, IconPrinter } from "@tabler/icons-react";
+import { IconArrowLeft, IconChevronRight, IconPrinter, IconX } from "@tabler/icons-react";
 
 interface TransactionDetailHeaderProps {
     transactionNumber: string;
     status: string;
     onPrint: () => void;
+    onVoid?: () => void;
     namaTransaksi?: string | null;
 }
 
@@ -16,6 +17,7 @@ export function TransactionDetailHeader({
     transactionNumber,
     status,
     onPrint,
+    onVoid,
     namaTransaksi,
 }: TransactionDetailHeaderProps) {
     const router = useAppRouter();
@@ -41,6 +43,13 @@ export function TransactionDetailHeader({
             border: "border-rose-200 dark:border-rose-800/60",
             dot: "bg-rose-500 shadow-rose-400",
         },
+        void: {
+            label: "Void / Dibatalkan",
+            bg: "bg-rose-50/80 dark:bg-rose-950/20",
+            text: "text-rose-700 dark:text-rose-400",
+            border: "border-rose-200 dark:border-rose-800/60",
+            dot: "bg-rose-500 shadow-rose-400",
+        },
         draft: {
             label: "Draft",
             bg: "bg-amber-50/80 dark:bg-amber-950/20",
@@ -59,7 +68,7 @@ export function TransactionDetailHeader({
     };
 
     return (
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             {/* Left side: Back Button & Title Info */}
             <div className="flex items-center gap-3.5">
                 <Button
@@ -111,13 +120,23 @@ export function TransactionDetailHeader({
 
             {/* Right side: Actions */}
             <div className="flex gap-2.5 shrink-0">
+                {currentStatus !== "void" && currentStatus !== "canceled" && onVoid && (
+                    <Button
+                        onClick={onVoid}
+                        className="group text-white bg-rose-500 hover:bg-rose-600 font-extrabold text-xs h-10 px-5 rounded-2xl flex items-center gap-2 cursor-pointer"
+                    >
+                        <IconX
+                            size={16}
+                        />
+                        <span>Batalkan Transaksi</span>
+                    </Button>
+                )}
                 <Button
                     onClick={onPrint}
-                    className="group bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-extrabold text-xs h-10 px-5 rounded-2xl flex items-center gap-2 cursor-pointer shadow-md shadow-indigo-200/50 dark:shadow-none hover:shadow-lg hover:shadow-indigo-300/40 transition-all duration-300"
+                    className="group bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-extrabold text-xs h-10 px-5 rounded-2xl flex items-center gap-2 cursor-pointer"
                 >
                     <IconPrinter
                         size={16}
-                        className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:scale-110"
                     />
                     <span>Cetak Struk</span>
                 </Button>

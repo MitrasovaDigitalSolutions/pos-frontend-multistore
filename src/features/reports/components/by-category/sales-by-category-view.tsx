@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useSalesByCategory } from "@/features/reports/api/reports-api";
 import { useCategories } from "@/features/categories/api/categories-api";
-import { getDefaultDateRange } from "@/lib/date-utils";
+import { getDefaultDateRange, formatDate } from "@/lib/date-utils";
 import { IconChartBar, IconRefresh, IconX } from "@tabler/icons-react";
 import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
@@ -194,9 +194,9 @@ export function SalesByCategoryView() {
                 Periode:
               </span>
               <span className="bg-indigo-50 text-indigo-600 text-[10px] font-bold px-2.5 py-1 rounded-lg">
-                {new Date(data.from).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}
+                {formatDate(data.from, "dd MMM yyyy")}
                 {" — "}
-                {new Date(data.to).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}
+                {formatDate(data.to, "dd MMM yyyy")}
               </span>
               <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2.5 py-1 rounded-lg">
                 {categoryData.length} Kategori

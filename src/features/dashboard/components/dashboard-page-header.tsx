@@ -1,13 +1,10 @@
 "use client";
 
 import { IconCalendarEvent } from "@tabler/icons-react";
+import { formatToReadableDate } from "@/lib/date-utils";
 
 export function DashboardPageHeader() {
-  const formattedDate = new Date().toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).toUpperCase();
+  const formattedDate = formatToReadableDate(new Date()).toUpperCase();
 
   return (
     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">

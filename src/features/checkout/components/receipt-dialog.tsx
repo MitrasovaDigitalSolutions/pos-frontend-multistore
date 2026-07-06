@@ -7,6 +7,7 @@ import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { Receipt } from "../types";
 import { Scrollable } from "@/components/ui/scrollable";
 import { useSettingsStore } from "@/stores/settings-store";
+import { formatDate } from "@/lib/date-utils";
 
 interface ReceiptDialogProps {
     open: boolean;
@@ -74,7 +75,7 @@ export function ReceiptDialog({
                             <div className="flex justify-between">
                                 <span>TRX #{receipt?.uid}</span>
                                 <span>
-                                    {new Date().toLocaleDateString("id-ID")}
+                                    {formatDate(new Date(), "dd/MM/yyyy")}
                                 </span>
                             </div>
                             {receipt?.member && (

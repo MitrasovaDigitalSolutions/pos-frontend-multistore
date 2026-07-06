@@ -16,6 +16,7 @@ import { useCashAccounts } from "@/features/cash/api/cash-api";
 import type { ExpenseInput } from "../schemas/expense-schema";
 import type { Expense } from "../types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { formatToISO, todayStr } from "@/lib/date-utils";
 
 interface ExpenseDialogProps {
     open: boolean;
@@ -42,8 +43,8 @@ export function ExpenseDialog({
         const formattedData = {
             ...data,
             tanggal: data.tanggal
-                ? new Date(data.tanggal).toISOString().split("T")[0]
-                : new Date().toISOString().split("T")[0],
+                ? formatToISO(data.tanggal)
+                : todayStr(),
         };
 
         if (isEdit && editingExpense) {

@@ -17,6 +17,7 @@ import {
   YAxis,
 } from "recharts";
 import type { DashboardSummary } from "../types";
+import { formatDate as utilsFormatDate } from "@/lib/date-utils";
 
 interface RevenueChartProps {
   summary: DashboardSummary | undefined;
@@ -73,13 +74,8 @@ const CustomTooltip = ({
 };
 
 const formatDate = (dateStr: string) => {
-  try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
-  } catch {
-    return dateStr;
-  }
+  const formatted = utilsFormatDate(dateStr, "d MMM");
+  return formatted || dateStr;
 };
 
 export function RevenueChart({ summary, from, to }: RevenueChartProps) {

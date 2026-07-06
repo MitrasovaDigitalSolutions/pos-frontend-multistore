@@ -9,6 +9,7 @@ import { hasPermission, hasRole } from "@/constants/roles";
 import { useActivityLogs, type ActivityLog } from "@/features/stock/api/stock-api";
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
+import { formatToReadableDateTime } from "@/lib/date-utils";
 
 interface AuditFilterValues {
     search: string;
@@ -80,10 +81,7 @@ export function AuditLogs() {
                 header: "Tanggal",
                 cell: ({ row }) => (
                     <span className="text-slate-500 font-medium text-xs">
-                        {new Date(row.original.created_at).toLocaleString("id-ID", {
-                            dateStyle: "medium",
-                            timeStyle: "short",
-                        })}
+                        {formatToReadableDateTime(row.original.created_at)}
                     </span>
                 ),
                 size: 160,

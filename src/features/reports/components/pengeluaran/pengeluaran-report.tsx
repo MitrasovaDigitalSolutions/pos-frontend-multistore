@@ -8,6 +8,7 @@ import { usePengeluaranReport } from "../../api/reports-api";
 import { PengeluaranHeaderFilters } from "./pengeluaran-header-filters";
 import { PengeluaranSummaryCard } from "./pengeluaran-summary-card";
 import { PengeluaranDetailsTable } from "./pengeluaran-details-table";
+import { formatToISO, todayStr } from "@/lib/date-utils";
 
 interface PengeluaranFilterValues {
     fromDate: string;
@@ -28,8 +29,8 @@ export function PengeluaranReportView() {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const [appliedFilters, setAppliedFilters] = useState<PengeluaranFilterValues>({
-        fromDate: thirtyDaysAgo.toISOString().split("T")[0],
-        toDate: new Date().toISOString().split("T")[0],
+        fromDate: formatToISO(thirtyDaysAgo),
+        toDate: todayStr(),
     });
 
     const methods = useForm<PengeluaranFilterValues>({
@@ -56,8 +57,8 @@ export function PengeluaranReportView() {
 
     const handleFilterReset = () => {
         const defaults = {
-            fromDate: thirtyDaysAgo.toISOString().split("T")[0],
-            toDate: new Date().toISOString().split("T")[0],
+            fromDate: formatToISO(thirtyDaysAgo),
+            toDate: todayStr(),
         };
         methods.reset(defaults);
         setAppliedFilters(defaults);

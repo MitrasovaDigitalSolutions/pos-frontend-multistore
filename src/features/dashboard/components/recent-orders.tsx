@@ -4,6 +4,7 @@ import { useCheckoutStore } from "@/stores/checkout-store";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconReceipt2, IconArrowUpRight, IconClock } from "@tabler/icons-react";
 import Link from "next/link";
+import { formatDate, formatToTime } from "@/lib/date-utils";
 import { useEffect, useState } from "react";
 import type { HoldTransaction } from "@/features/checkout/types";
 
@@ -80,15 +81,8 @@ export function RecentOrders() {
               </tr>
             ) : (
               transactions.map((trx: HoldTransaction) => {
-                const date = new Date(trx.created_at);
-                const timeStr = date.toLocaleTimeString("id-ID", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                });
-                const dateStr = date.toLocaleDateString("id-ID", {
-                  day: "2-digit",
-                  month: "short",
-                });
+                const timeStr = formatToTime(trx.created_at);
+                const dateStr = formatDate(trx.created_at, "dd MMM");
                 return (
                   <tr
                     key={trx.uid}

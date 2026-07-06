@@ -13,6 +13,7 @@ import {
     PAYMENT_STATUS_CLASSES,
     type PaymentStatus,
 } from "@/constants/purchase";
+import { formatToReadableDateTime } from "@/lib/date-utils";
 
 interface ReceivingDetailDialogProps {
     open: boolean;
@@ -110,10 +111,7 @@ export function ReceivingDetailDialog({
                         <div className="space-y-1">
                             <span className="text-[10px] font-bold text-slate-400 uppercase">Tanggal Masuk</span>
                             <p className="font-semibold text-slate-700">
-                                {new Date(receiving.created_at).toLocaleString("id-ID", {
-                                    dateStyle: "medium",
-                                    timeStyle: "short",
-                                })}
+                                {formatToReadableDateTime(receiving.created_at)}
                             </p>
                         </div>
                         <div className="space-y-1">
@@ -242,7 +240,7 @@ export function ReceivingDetailDialog({
                                             </p>
                                             <div className="flex gap-2 text-[10px] text-slate-400 font-mono">
                                                 <span>
-                                                    {new Date(log.created_at).toLocaleString("id-ID")}
+                                                    {formatToReadableDateTime(log.created_at)}
                                                 </span>
                                                 <span>•</span>
                                                 <span>Oleh: {log.user?.name || "System"}</span>

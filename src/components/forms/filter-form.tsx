@@ -2,6 +2,7 @@
 
 import React, { ReactNode, useState } from "react";
 import { FormProvider, UseFormReturn, FieldValues } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { IconFilter, IconRotate, IconChevronUp, IconChevronDown, IconSearch } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,7 @@ export function FilterForm<T extends FieldValues>({
     cols,
     defaultExpanded = true,
 }: FilterFormProps<T>) {
+    const queryClient = useQueryClient();
     const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
     // Count the direct children to determine the grid columns dynamically
@@ -63,7 +65,10 @@ export function FilterForm<T extends FieldValues>({
         return (
         <FormProvider {...methods}>
             <form
-                onSubmit={methods.handleSubmit(onSubmit)}
+                onSubmit={methods.handleSubmit((data) => {
+                    onSubmit(data);
+                    queryClient.invalidateQueries({ type: "active" });
+                })}
                 className={cn(
                     "bg-slate-50 border border-slate-100 rounded-xl p-3 my-3 flex flex-col sm:flex-row items-end gap-3 select-none",
                     className
@@ -101,7 +106,10 @@ export function FilterForm<T extends FieldValues>({
 return (
     <FormProvider {...methods}>
         <form
-            onSubmit={methods.handleSubmit(onSubmit)}
+            onSubmit={methods.handleSubmit((data) => {
+                onSubmit(data);
+                queryClient.invalidateQueries({ type: "active" });
+            })}
             className={cn(
                 "bg-slate-50 border border-slate-100 rounded-xl my-3 transition-all duration-200 select-none",
                 isExpanded ? "p-4 space-y-4" : "p-3",

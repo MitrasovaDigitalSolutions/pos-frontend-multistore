@@ -12,6 +12,7 @@ import {
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { formatDate, formatToTime } from "@/lib/date-utils";
 
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
@@ -508,16 +509,9 @@ export function CashAccountsDashboard() {
                                         return (
                                             <tr key={movement.uid} className="hover:bg-slate-50/50 transition-colors group">
                                                 <td className="py-3.5 px-4 text-xs font-medium text-slate-500">
-                                                    {new Date(movement.created_at).toLocaleDateString("id-ID", {
-                                                        day: "2-digit",
-                                                        month: "short",
-                                                        year: "numeric"
-                                                    })}
+                                                    {formatDate(movement.created_at, "dd MMM yyyy")}
                                                     <span className="text-[10px] text-slate-400 ml-1.5 block sm:inline font-mono">
-                                                        {new Date(movement.created_at).toLocaleTimeString("id-ID", {
-                                                            hour: "2-digit",
-                                                            minute: "2-digit"
-                                                        })}
+                                                        {formatToTime(movement.created_at)}
                                                     </span>
                                                 </td>
                                                 <td className="py-3.5 px-4 text-xs font-bold text-slate-800">
@@ -525,6 +519,11 @@ export function CashAccountsDashboard() {
                                                 </td>
                                                 <td className="py-3.5 px-4 text-xs font-medium">
                                                     {renderReference(movement)}
+                                                    {movement.sale?.nomor_transaksi && (
+                                                        <span className="block text-[10px] text-slate-500 mt-1 italic">
+                                                            {movement.kategori === 'sales' && movement.tipe === 'outflow' ? 'Void Reversal' : ''}
+                                                        </span>
+                                                    )}
                                                 </td>
                                                 <td className="py-3.5 px-4 text-center">
                                                     <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${isInflow

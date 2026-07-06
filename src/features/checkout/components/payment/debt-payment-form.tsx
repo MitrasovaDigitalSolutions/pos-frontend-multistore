@@ -43,9 +43,9 @@ export function DebtPaymentForm({
     const remainingDebt = grandTotal - cashNum - cardAmountNum;
 
     return (
-        <div className="space-y-4 animate-in fade-in-50 duration-200">
+        <div className="space-y-2 animate-in fade-in-50 duration-200">
             {/* Selected Member Info Card (Minimalist flat style) */}
-            <div className="bg-slate-50 border border-slate-200/50 p-4 rounded-xl flex items-center gap-3 select-none">
+            <div className="bg-slate-50 border border-slate-200/50 p-2 rounded-xl flex items-center gap-3 select-none">
                 <div className="w-9 h-9 rounded-full bg-white border border-slate-200/60 flex items-center justify-center text-slate-500 shrink-0 shadow-sm">
                     <IconUser size={16} />
                 </div>
@@ -63,7 +63,7 @@ export function DebtPaymentForm({
             </div>
 
             {/* DP / Down Payment Input */}
-            <div className="bg-slate-50/50 border border-slate-100 p-5 rounded-2xl space-y-2">
+            <div className="bg-slate-50/50 border border-slate-100 p-4 rounded-2xl space-y-2">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
                     Uang Muka / DP (Tunai) - Opsional
                 </label>
@@ -99,7 +99,7 @@ export function DebtPaymentForm({
             </div>
 
             {/* DP / Down Payment Transfer/Card Input */}
-            <div className="bg-slate-50/50 border border-slate-100 p-5 rounded-2xl space-y-2">
+            <div className="bg-slate-50/50 border border-slate-100 p-4 rounded-2xl space-y-2">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
                     Uang Muka / DP (Transfer/Card) - Opsional
                 </label>
@@ -145,11 +145,10 @@ export function DebtPaymentForm({
                             <button
                                 type="button"
                                 onClick={() => setValue("cardType", "debit")}
-                                className={`py-2 rounded-lg text-xs font-bold transition-all cursor-pointer border-none ${
-                                    cardType === "debit"
-                                        ? "bg-white text-slate-900 shadow-sm font-extrabold"
-                                        : "bg-transparent text-slate-500 hover:text-slate-700"
-                                }`}
+                                className={`py-2 rounded-lg text-xs font-bold transition-all cursor-pointer border-none ${cardType === "debit"
+                                    ? "bg-white text-slate-900 shadow-sm font-extrabold"
+                                    : "bg-transparent text-slate-500 hover:text-slate-700"
+                                    }`}
                                 disabled={isProcessing}
                             >
                                 Debit Card
@@ -157,11 +156,10 @@ export function DebtPaymentForm({
                             <button
                                 type="button"
                                 onClick={() => setValue("cardType", "credit")}
-                                className={`py-2 rounded-lg text-xs font-bold transition-all cursor-pointer border-none ${
-                                    cardType === "credit"
-                                        ? "bg-white text-slate-900 shadow-sm font-extrabold"
-                                        : "bg-transparent text-slate-500 hover:text-slate-700"
-                                }`}
+                                className={`py-2 rounded-lg text-xs font-bold transition-all cursor-pointer border-none ${cardType === "credit"
+                                    ? "bg-white text-slate-900 shadow-sm font-extrabold"
+                                    : "bg-transparent text-slate-500 hover:text-slate-700"
+                                    }`}
                                 disabled={isProcessing}
                             >
                                 Credit Card
@@ -170,7 +168,7 @@ export function DebtPaymentForm({
                     </div>
 
                     {/* Inputs Panel */}
-                    <div className="bg-slate-50/50 border border-slate-100 p-5 rounded-2xl space-y-4">
+                    <div className="bg-slate-50/50 border border-slate-100 p-4 rounded-2xl space-y-4">
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-bold text-slate-450 uppercase tracking-widest block">
                                 4 Digit Terakhir Kartu (Opsional)
@@ -205,7 +203,7 @@ export function DebtPaymentForm({
             )}
 
             {/* Sisa Hutang Baru Breakdown */}
-            <div className="bg-rose-50/50 border border-rose-100/50 p-4 rounded-xl text-center select-none">
+            <div className="bg-rose-50/50 border border-rose-100/50 p-2 rounded-xl text-center select-none">
                 <span className="text-[9px] font-bold text-rose-500 uppercase tracking-widest block">
                     Sisa Hutang Baru
                 </span>

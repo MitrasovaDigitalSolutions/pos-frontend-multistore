@@ -15,6 +15,7 @@ import { FormSelect } from "@/components/forms/form-select";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { useExpenseCategories } from "./api/expenses-api";
 import { useCashAccounts } from "@/features/cash/api/cash-api";
+import { getDefaultDateRange, todayStr, formatToISO } from "@/lib/date-utils";
 
 interface ExpenseFilterValues {
     search: string;
@@ -25,6 +26,8 @@ interface ExpenseFilterValues {
 }
 
 export function Expenses() {
+    const { from: defaultStart, to: defaultEnd } = getDefaultDateRange();
+
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
     const [appliedFilters, setAppliedFilters] = useState<{
@@ -33,7 +36,10 @@ export function Expenses() {
         cash_account_uid?: string;
         date_start?: string;
         date_end?: string;
-    }>({});
+    }>({
+        date_start: defaultStart,
+        date_end: defaultEnd,
+    });
 
     const { data: categories = [] } = useExpenseCategories();
     const { data: cashAccounts = [] } = useCashAccounts();
@@ -43,8 +49,8 @@ export function Expenses() {
             search: "",
             expense_category_uid: "all",
             cash_account_uid: "all",
-            date_start: "",
-            date_end: "",
+            date_start: defaultStart,
+            date_end: defaultEnd,
         },
     });
 
@@ -64,10 +70,13 @@ export function Expenses() {
             search: "",
             expense_category_uid: "all",
             cash_account_uid: "all",
-            date_start: "",
-            date_end: "",
+            date_start: defaultStart,
+            date_end: defaultEnd,
         });
-        setAppliedFilters({});
+        setAppliedFilters({
+            date_start: defaultStart,
+            date_end: defaultEnd,
+        });
         setPage(1);
     };
 
@@ -88,7 +97,7 @@ export function Expenses() {
             amount: 0,
             nama: "",
             catatan: "",
-            tanggal: new Date().toISOString().split("T")[0],
+            tanggal: todayStr(),
         },
     });
 
@@ -100,7 +109,7 @@ export function Expenses() {
             amount: expense.amount,
             nama: expense.nama || "",
             catatan: expense.catatan || "",
-            tanggal: expense.tanggal || new Date().toISOString().split("T")[0],
+            tanggal: formatToISO(expense.tanggal) || todayStr(),
         });
         setIsDialogOpen(true);
     };
@@ -113,7 +122,7 @@ export function Expenses() {
             amount: 0,
             nama: "",
             catatan: "",
-            tanggal: new Date().toISOString().split("T")[0],
+            tanggal: todayStr(),
         });
         setIsDialogOpen(true);
     };
@@ -127,7 +136,7 @@ export function Expenses() {
             amount: 0,
             nama: `Pembayaran ${catName}`,
             catatan: "",
-            tanggal: new Date().toISOString().split("T")[0],
+            tanggal: todayStr(),
         });
         setIsDialogOpen(true);
     };

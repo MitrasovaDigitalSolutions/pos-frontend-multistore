@@ -16,6 +16,7 @@ import { useCreateReceivingHeader, useOutstandingPurchaseOrders } from "../../ap
 import { receivingHeaderSchema, type ReceivingHeaderInput } from "../../schemas/receiving-schema";
 import { PAYMENT_STATUS } from "@/constants/purchase";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { todayStr } from "@/lib/date-utils";
 
 export function ReceivingCreatePage() {
     const router = useAppRouter();
@@ -46,7 +47,7 @@ export function ReceivingCreatePage() {
             supplier_uid: null,
             nomor_faktur: "",
             nilai_faktur: 0,
-            tanggal_terima: new Date().toISOString().split("T")[0],
+            tanggal_terima: todayStr(),
             status_pembayaran: PAYMENT_STATUS.PENDING,
             catatan: "",
         },
