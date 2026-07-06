@@ -321,7 +321,7 @@ export function SessionDetailsView({
                                 movements.length > 0 ? (
                                     <div className="relative pl-1">
                                         {/* Vertical line indicator */}
-                                        <div className="absolute left-3.5 top-2 bottom-2 w-0.5 bg-slate-100" />
+                                        <div className="absolute left-[14.5px] -translate-x-1/2 top-2 bottom-2 w-0.5 bg-slate-100" />
                                         
                                         <div className="space-y-4 relative">
                                             {movements.map((movement) => {
@@ -417,7 +417,7 @@ export function SessionDetailsView({
                                 nonCashTransactions.length > 0 ? (
                                     <div className="relative pl-1">
                                         {/* Vertical line indicator */}
-                                        <div className="absolute left-3.5 top-2 bottom-2 w-0.5 bg-slate-100" />
+                                        <div className="absolute left-[14.5px] -translate-x-1/2 top-2 bottom-2 w-0.5 bg-slate-100" />
                                         
                                         <div className="space-y-4 relative">
                                             {nonCashTransactions.map((tx: Transaction) => {
