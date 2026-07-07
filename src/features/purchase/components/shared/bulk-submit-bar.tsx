@@ -8,9 +8,14 @@ interface BulkSubmitBarProps {
     productCount: number;
     total: number;
     onSubmit: () => void;
+    onSecondarySubmit?: () => void;
     onReset: () => void;
     isSubmitting?: boolean;
     disabled?: boolean;
+    submitLabel?: string;
+    submitIcon?: React.ReactNode;
+    secondarySubmitLabel?: string;
+    secondarySubmitIcon?: React.ReactNode;
 }
 
 export function BulkSubmitBar({
@@ -18,9 +23,14 @@ export function BulkSubmitBar({
     productCount,
     total,
     onSubmit,
+    onSecondarySubmit,
     onReset,
     isSubmitting = false,
     disabled = false,
+    submitLabel,
+    submitIcon,
+    secondarySubmitLabel,
+    secondarySubmitIcon,
 }: BulkSubmitBarProps) {
     const hasItems = itemCount > 0;
 
@@ -80,6 +90,25 @@ export function BulkSubmitBar({
                             <span>Reset Items</span>
                         </button>
 
+                        {/* Secondary Submit (Simpan Penerimaan) */}
+                        {onSecondarySubmit && (
+                            <button
+                                type="button"
+                                onClick={onSecondarySubmit}
+                                disabled={!hasItems || isSubmitting || disabled}
+                                className="
+                                    flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold
+                                    border border-emerald-600 text-emerald-700 bg-white
+                                    hover:bg-emerald-50 hover:shadow-md
+                                    disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none
+                                    transition-all cursor-pointer
+                                "
+                            >
+                                {secondarySubmitIcon || <IconUpload size={16} />}
+                                <span>{secondarySubmitLabel || "Simpan Penerimaan"}</span>
+                            </button>
+                        )}
+
                         {/* Submit */}
                         <button
                             type="button"
@@ -100,8 +129,8 @@ export function BulkSubmitBar({
                                 </>
                             ) : (
                                 <>
-                                    <IconUpload size={16} />
-                                    <span>Simpan Semua Items ke Server</span>
+                                    {submitIcon || <IconUpload size={16} />}
+                                    <span>{submitLabel || "Simpan Semua Items ke Server"}</span>
                                 </>
                             )}
                         </button>

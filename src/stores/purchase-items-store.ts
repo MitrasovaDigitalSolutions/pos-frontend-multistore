@@ -8,14 +8,26 @@ import type { PurchaseItemLocal } from "@/features/purchase/types";
 
 export type ParentType = "po" | "receiving" | "return";
 
+export interface SavedHeaderData {
+    purchase_order_uid?: string | null;
+    supplier_uid?: string | null;
+    nomor_faktur?: string | null;
+    nilai_faktur?: number | null;
+    tanggal_terima?: string | null;
+    status_pembayaran?: "pending" | "unpaid" | "partial" | "paid";
+    catatan?: string | null;
+}
+
 interface PurchaseItemsState {
     parentId: string | null;
     parentType: ParentType | null;
     items: PurchaseItemLocal[];
+    headerData: SavedHeaderData | null;
     lastUpdated: number;
 
     // Actions
     setParent: (uid: string, type: ParentType) => void;
+    setHeaderData: (data: SavedHeaderData | null) => void;
     addItem: (product: {
         product_uid: string;
         barcode: string | null;
@@ -51,6 +63,7 @@ export function createPurchaseItemsStore(parentId: string, parentType: ParentTyp
                 parentId,
                 parentType,
                 items: [],
+                headerData: null,
                 lastUpdated: Date.now(),
 
                 setParent: (uid, type) =>
@@ -59,6 +72,12 @@ export function createPurchaseItemsStore(parentId: string, parentType: ParentTyp
                         parentType: type,
                         lastUpdated: Date.now(),
                     }),
+
+                setHeaderData: (data) =>
+                    set((state) => ({
+                        headerData: data ? { ...state.headerData, ...data } : null,
+                        lastUpdated: Date.now(),
+                    })),
 
                 addItem: (product) =>
                     set((state) => {
@@ -109,6 +128,7 @@ export function createPurchaseItemsStore(parentId: string, parentType: ParentTyp
                 clearAll: () =>
                     set({
                         items: [],
+                        headerData: null,
                         lastUpdated: Date.now(),
                     }),
 

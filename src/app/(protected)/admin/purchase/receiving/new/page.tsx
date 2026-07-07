@@ -1,5 +1,5 @@
-import { ReceivingCreatePage } from "@/features/purchase/components/receiving/receiving-create-page";
+import { ReceivingItemsPage } from "@/features/purchase/components/receiving/receiving-items-page";
 
 export default function AdminReceivingNewPage() {
-    return <ReceivingCreatePage />;
+    return <ReceivingItemsPage receivingId="new" />;
 }
