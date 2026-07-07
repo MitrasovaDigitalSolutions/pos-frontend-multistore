@@ -1,5 +1,5 @@
-import { POCreatePage } from "@/features/purchase/components/purchase-order/po-create-page";
+import { POItemsPage } from "@/features/purchase/components/purchase-order/po-items-page";
 
 export default function AdminPurchaseOrderCreatePage() {
-    return <POCreatePage />;
+    return <POItemsPage poId="new" />;
 }

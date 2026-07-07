@@ -33,6 +33,7 @@ interface PurchaseItemsState {
         barcode: string | null;
         nama: string;
         harga_estimasi: number;
+        kuantitas?: number;
         alasan?: string | null;
     }) => void;
     updateItem: (temp_uid: string, data: Partial<Pick<PurchaseItemLocal, "kuantitas" | "harga_estimasi" | "alasan">>) => void;
@@ -81,6 +82,7 @@ export function createPurchaseItemsStore(parentId: string, parentType: ParentTyp
 
                 addItem: (product) =>
                     set((state) => {
+                        const targetQty = product.kuantitas ?? 1;
                         const existing = state.items.find(
                             (i) => i.product_uid === product.product_uid,
                         );
@@ -88,7 +90,7 @@ export function createPurchaseItemsStore(parentId: string, parentType: ParentTyp
                             return {
                                 items: state.items.map((i) =>
                                     i.product_uid === product.product_uid
-                                        ? { ...i, kuantitas: i.kuantitas + 1 }
+                                        ? { ...i, kuantitas: i.kuantitas + targetQty }
                                         : i,
                                 ),
                                 lastUpdated: Date.now(),
@@ -102,7 +104,7 @@ export function createPurchaseItemsStore(parentId: string, parentType: ParentTyp
                                     product_uid: product.product_uid,
                                     barcode: product.barcode,
                                     nama: product.nama,
-                                    kuantitas: 1,
+                                    kuantitas: targetQty,
                                     harga_estimasi: product.harga_estimasi,
                                     alasan: product.alasan || null,
                                 },

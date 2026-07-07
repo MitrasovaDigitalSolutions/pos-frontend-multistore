@@ -1,41 +1,28 @@
 "use client";
- 
-import { PageLoader } from "@/components/feedback/page-loader";
+
 import { Button } from "@/components/ui/button";
-import { getPurchaseItemsStore, selectItemCount, selectTotal, clearPurchaseItemsStore } from "@/stores/purchase-items-store";
+import { Skeleton } from "@/components/ui/skeleton";
 import { IconArrowLeft, IconBarcode, IconCheck, IconInfoCircle, IconUpload, IconX } from "@tabler/icons-react";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { useEffect, useRef, useState } from "react";
-import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { FormProvider } from "react-hook-form";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { productSchema, type ProductInput } from "@/features/products/schemas/product-schema";
 import { ProductFormDialog } from "@/features/products/components/product-form-dialog";
 import { toast } from "sonner";
 import {
-    useBulkReplaceReceivingItems,
     useReceivingDetail,
-    useCompleteReceiving,
-    usePurchaseOrderDetail,
-    useScanReceivingProduct,
-    useComparePrices,
-    useUpdateReceiving,
-    useBulkCreateReceiving,
-    type ComparePricesResult
 } from "../../../api/purchase-api";
-import type { PurchaseItemLocal, Receiving } from "../../../types";
-import type { Product } from "@/features/products/types";
-import { formatToISO, todayStr } from "@/lib/date-utils";
+import type { Receiving } from "../../../types";
 import { BarcodeInput } from "@/components/shared/barcode-input";
 import { BulkSubmitBar } from "../../shared/bulk-submit-bar";
 import { ItemsTable } from "../../shared/items-table";
 import { ReceivingFinalizeDialog } from "../receiving-finalize-dialog";
-import { PAYMENT_STATUS, RECEIVING_STATUS } from "@/constants/purchase";
-import { PriceAlertDialog, type PriceAlertFormInput } from "./price-alert-dialog";
+import { RECEIVING_STATUS } from "@/constants/purchase";
+import { PriceAlertDialog } from "./price-alert-dialog";
 import { ReceivingInstructionPanel } from "./receiving-instruction-panel";
 import { ReceivingHeaderCard } from "./receiving-header-card";
-import { ReceivingHeaderInput } from "@/features/purchase/schemas/receiving-schema";
 import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
+import { useReceivingFlow } from "@/features/purchase/hooks/use-receiving-flow";
 
 interface ReceivingItemsPageProps {
     receivingId: string;
@@ -51,7 +38,11 @@ export function ReceivingItemsPage({ receivingId }: ReceivingItemsPageProps) {
     );
 
     if (receivingLoading) {
-        return <PageLoader message="Memuat detail Penerimaan..." />;
+        return (
+            <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+                <ReceivingPageSkeleton />
+            </div>
+        );
     }
 
     if (!isNew && (error || !receiving)) {
@@ -88,7 +79,7 @@ export function ReceivingItemsPage({ receivingId }: ReceivingItemsPageProps) {
         );
     }
 
-    const handleSaveSuccess = (uid: string, _nextAction: "save" | "process") => {
+    const handleSaveSuccess = (uid: string, _responseData?: Receiving) => {
         window.history.replaceState(null, "", `/admin/purchase/receiving/${uid}/items`);
         setActiveId(uid);
     };
@@ -105,7 +96,7 @@ export function ReceivingItemsPage({ receivingId }: ReceivingItemsPageProps) {
 interface ReceivingItemsContainerProps {
     receivingId: string;
     receiving?: Receiving;
-    onSaveSuccess: (uid: string, nextAction: "save" | "process") => void;
+    onSaveSuccess: (uid: string, responseData?: Receiving) => void;
 }
 
 function ReceivingItemsContainer({
@@ -113,517 +104,56 @@ function ReceivingItemsContainer({
     receiving,
     onSaveSuccess,
 }: ReceivingItemsContainerProps) {
-    const isNew = !receivingId || receivingId === "new";
-
-    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-    const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
-    const [notFoundQuery, setNotFoundQuery] = useState("");
-    const [saveMode, setSaveMode] = useState<"save" | "process">("process");
-    const saveModeRef = useRef<"save" | "process">("process");
-
-    const setSaveModeSync = (mode: "save" | "process") => {
-        saveModeRef.current = mode;
-        setSaveMode(mode);
-    };
-
-    const [currentId, setCurrentId] = useState(receivingId);
-    const [currentReceiving, setCurrentReceiving] = useState<Receiving | undefined>(receiving);
-
-    const [prevPropId, setPrevPropId] = useState(receivingId);
-    const [prevPropReceiving, setPrevPropReceiving] = useState<Receiving | undefined>(receiving);
-
-    if (receivingId !== prevPropId) {
-        setPrevPropId(receivingId);
-        setCurrentId(receivingId);
-    }
-    if (receiving !== prevPropReceiving) {
-        setPrevPropReceiving(receiving);
-        setCurrentReceiving(receiving);
-    }
-
-    const isCurrentNew = !currentId || currentId === "new";
-
-    const bulkCreateReceiving = useBulkCreateReceiving();
-    const tempHeaderDataRef = useRef<ReceivingHeaderInput | null>(null);
-    const [tempHeaderState, setTempHeaderState] = useState<ReceivingHeaderInput | null>(null);
-    const [bulkItemsPayload, setBulkItemsPayload] = useState<{
-        product_uid: string;
-        kuantitas: number;
-        harga_beli: number;
-        update_harga_jual: boolean;
-        harga_jual_baru: number | null;
-        margin_baru: number | null;
-    }[] | null>(null);
-
+    const router = useAppRouter();
     const { data: suppliers = [] } = useAllSuppliers();
 
-    const handleHeaderValidated = (data: ReceivingHeaderInput) => {
-        tempHeaderDataRef.current = data;
-        setTempHeaderState(data); // keep state in sync for JSX
-        handleComplete(true, "bulk");
-    };
-
-    const dialogMethods = useForm<ProductInput>({
-        resolver: zodResolver(productSchema) as Resolver<ProductInput>,
-        defaultValues: {
-            nama: "",
-            merek: "Umum",
-            barcode: "",
-            harga: 0,
-            stok: 0,
-            harga_beli: 0,
-            margin: 0,
-            category_uid: null,
-            brand_uid: null,
-            image: null,
-            is_jasa: false,
-        },
+    const {
+        currentReceiving,
+        isCurrentNew,
+        items,
+        itemCount,
+        totalValue,
+        uniqueProductCount,
+        poId,
+        poData,
+        notFoundQuery,
+        setNotFoundQuery,
+        isCreateDialogOpen,
+        setIsCreateDialogOpen,
+        isResetDialogOpen,
+        setIsResetDialogOpen,
+        priceAlerts,
+        isAlertOpen,
+        isFinalizeOpen,
+        isFinalizing,
+        isSubmitting,
+        productForm,
+        headerForm,
+        handleProductFound,
+        handleOpenCreateDialog,
+        handleReset,
+        handleSaveClick,
+        onProcessClick,
+        handleCompleteWithoutPrices,
+        handleCompleteWithPrices,
+        handleFinalizeConfirm,
+        handleFinalizeClose,
+        handleAlertClose,
+        clearAll,
+        handleUpdateItem,
+        removeItem,
+        suppliersLoading,
+        supplierOptions,
+        posLoading,
+        poOptions,
+    } = useReceivingFlow({
+        receivingId,
+        receiving,
+        onSaveSuccess,
     });
 
-    const handleOpenCreateDialog = (query: string) => {
-        const cleanQuery = query.trim();
-        const isBarcode = /^\d+$/.test(cleanQuery);
-        dialogMethods.reset({
-            nama: isBarcode ? "" : cleanQuery,
-            merek: "Umum",
-            barcode: isBarcode ? cleanQuery : "",
-            harga: 0,
-            stok: 0,
-            harga_beli: 0,
-            margin: 0,
-            category_uid: null,
-            brand_uid: null,
-            image: null,
-            is_jasa: false,
-        });
-        setIsCreateDialogOpen(true);
-    };
-    const router = useAppRouter();
-    const store = getPurchaseItemsStore(receivingId, "receiving");
-    const items = store((state) => state.items);
-    const addItem = store((state) => state.addItem);
-    const clearAll = store((state) => state.clearAll);
-    const updateItem = store((state) => state.updateItem);
-    const removeItem = store((state) => state.removeItem);
-
-    const itemCount = store(selectItemCount);
-    const totalValue = store(selectTotal);
-
-    const bulkReplace = useBulkReplaceReceivingItems();
-    const updateReceiving = useUpdateReceiving();
-    const completeReceiving = useCompleteReceiving();
-    const comparePrices = useComparePrices();
-    const scanMutation = useScanReceivingProduct();
-
-    const poId = receiving?.purchase_order_uid || null;
-    const { data: poData } = usePurchaseOrderDetail(poId);
-
-    const isFirstLoad = useRef(true);
-
-    const handleSaveSuccess = (uid: string, responseData?: Receiving) => {
-        setCurrentId(uid);
-        if (responseData) {
-            setCurrentReceiving(responseData);
-        }
-
-        if (saveModeRef.current === "process") {
-            setTimeout(() => {
-                handleComplete(true, uid);
-            }, 50);
-        } else {
-            onSaveSuccess(uid, "save");
-        }
-    };
-
-    // Build PO sisa reference map for validation
-    const poRemainingMap = useRef<Record<string, { sisa: number; nama: string }>>({});
-    useEffect(() => {
-        if (poData?.items) {
-            const map: Record<string, { sisa: number; nama: string }> = {};
-            poData.items.forEach((item) => {
-                map[String(item.product_uid)] = {
-                    sisa: item.sisa_belum_diterima,
-                    nama: item.product?.nama || "Produk",
-                };
-            });
-            poRemainingMap.current = map;
-        }
-    }, [poData]);
-
-    const getProductInfo = (productId: string | number) => {
-        const targetId = productId;
-        const localItem = items.find((item) => item.product_uid === targetId);
-        if (localItem) {
-            return {
-                uid: localItem.product_uid,
-                nama: localItem.nama,
-                barcode: localItem.barcode,
-                harga_beli: localItem.harga_estimasi,
-            } as unknown as Product;
-        }
-
-        const recItem = currentReceiving?.items?.find((item) => item.product_uid === targetId);
-        if (recItem?.product) return recItem.product;
-
-        const poItem = poData?.items?.find((item) => item.product_uid === targetId);
-        if (poItem?.product) return poItem.product;
-
-        return null;
-    };
-
-    // Initialize items: load existing items from receiving draft or from PO sisa
-    useEffect(() => {
-        if (isNew) {
-            isFirstLoad.current = false;
-            return;
-        }
-        if (!isFirstLoad.current) return;
-
-        if (store.getState().items.length > 0) {
-            isFirstLoad.current = false;
-            return;
-        }
-
-        // 1. If we have existing receiving items in draft, load them
-        if (receiving?.items && receiving.items.length > 0) {
-            const dbItems: PurchaseItemLocal[] = receiving.items.map((item) => ({
-                temp_uid: `${Date.now()}-${item.uid}-${Math.random().toString(36).substring(2, 5)}`,
-                product_uid: String(item.product_uid),
-                barcode: item.product?.barcode || null,
-                nama: item.product?.nama || "Produk Tanpa Nama",
-                kuantitas: item.kuantitas,
-                harga_estimasi: item.product?.harga_beli ?? item.harga_beli,
-            }));
-            store.setState({ items: dbItems });
-            isFirstLoad.current = false;
-        }
-        // 2. Else if it's linked to PO and PO has items, wait until PO data is loaded, then populate
-        else if (poId) {
-            if (poData?.items && poData.items.length > 0) {
-                const poItems: PurchaseItemLocal[] = poData.items
-                    .filter((item) => item.sisa_belum_diterima > 0)
-                    .map((item) => ({
-                        temp_uid: `${Date.now()}-${item.uid}-${Math.random().toString(36).substring(2, 5)}`,
-                        product_uid: String(item.product_uid),
-                        barcode: item.product?.barcode || null,
-                        nama: item.product?.nama || "Produk Tanpa Nama",
-                        kuantitas: item.sisa_belum_diterima,
-                        harga_estimasi: item.product?.harga_beli ?? item.harga_estimasi, // default to product's current buy price, fallback to PO price
-                    }));
-                store.setState({ items: poItems });
-                isFirstLoad.current = false;
-            }
-        }
-        // 3. If no items in draft and no PO, we are done
-        else {
-            isFirstLoad.current = false;
-        }
-    }, [receiving?.items, poId, poData, store, isNew]);
-
-    const handleProductFound = async (product: Product) => {
-        // If there is no PO: we bypass scan endpoint and add directly
-        if (!poId) {
-            addItem({
-                product_uid: product.uid,
-                barcode: product.barcode,
-                nama: product.nama,
-                harga_estimasi: product.harga_beli || 0,
-            });
-            toast.success(`Ditambahkan: ${product.nama}`);
-            return;
-        }
-
-        // If from PO, use scan mutation for verification
-        try {
-            const res = await scanMutation.mutateAsync({
-                receiving_uid: receivingId,
-                barcode: product.barcode || "",
-            });
-
-            if (!res || !res.data || !res.data.product) {
-                // Fallback: Add directly if valid product but scan endpoint didn't return product info
-                addItem({
-                    product_uid: product.uid,
-                    barcode: product.barcode,
-                    nama: product.nama,
-                    harga_estimasi: product.harga_beli || 0,
-                });
-                toast.success(`Ditambahkan: ${product.nama} (Luar PO)`);
-                return;
-            }
-
-            const scanResult = res.data;
-            const poItem = scanResult.po_item;
-
-            // If it is in the PO, perform the limit warning check
-            if (poItem) {
-                // Calculate current quantity in Zustand for this product
-                const existingItem = items.find((i) => i.product_uid === product.uid);
-                const currentQty = existingItem ? existingItem.kuantitas : 0;
-
-                // Qty Limit check
-                if (currentQty + 1 > poItem.sisa) {
-                    toast.warning(`Peringatan: Kuantitas melebihi sisa PO (${poItem.sisa} pcs).`);
-                }
-            }
-
-            addItem({
-                product_uid: product.uid,
-                barcode: product.barcode,
-                nama: product.nama,
-                harga_estimasi: product.harga_beli || scanResult.product.harga_beli || scanResult.product.harga_beli_terakhir || poItem?.harga_estimasi || 0,
-            });
-            toast.success(`Ditambahkan: ${product.nama}`);
-        } catch {
-            addItem({
-                product_uid: product.uid,
-                barcode: product.barcode,
-                nama: product.nama,
-                harga_estimasi: product.harga_beli || 0,
-            });
-            toast.success(`Ditambahkan: ${product.nama} (Luar PO)`);
-        }
-    };
-
-    // Validation check before bulk submit
-    const validateQuantities = () => {
-        if (poId) {
-            for (const item of items) {
-                const poLimit = poRemainingMap.current[item.product_uid];
-                if (poLimit && item.kuantitas > poLimit.sisa) {
-                    return {
-                        valid: false,
-                        message: `Kuantitas untuk "${item.nama}" (${item.kuantitas} pcs) melebihi sisa PO yang belum diterima (${poLimit.sisa} pcs).`,
-                    };
-                }
-            }
-        }
-        return { valid: true };
-    };
-
-    const onProcessClick = () => {
-        setSaveModeSync("process");
-        handleComplete(false);
-    };
-
-    const onSaveClick = () => {
-        setSaveModeSync("save");
-        handleComplete(false);
-    };
-
-    const handleReset = () => {
-        setIsResetDialogOpen(true);
-    };
-
-    // ─── Price Comparison & Finalization Logic ───
-    const [priceAlerts, setPriceAlerts] = useState<ComparePricesResult[]>([]);
-    const [isAlertOpen, setIsAlertOpen] = useState(false);
-    const [isFinalizeOpen, setIsFinalizeOpen] = useState(false);
-    const [isFinalizing, setIsFinalizing] = useState(false);
-
-    const handleFinalizeConfirm = async (formData: {
-        nomor_faktur: string | null;
-        nilai_faktur: number;
-        catatan: string | null;
-    }) => {
-        setIsFinalizing(true);
-        try {
-            const targetId = currentId;
-
-            // If we are doing bulk create (because document hasn't been created yet):
-            if (targetId === "new") {
-                const itemsPayload = bulkItemsPayload || items.map((item) => ({
-                    product_uid: item.product_uid,
-                    kuantitas: item.kuantitas,
-                    harga_beli: item.harga_estimasi,
-                    update_harga_jual: false,
-                    harga_jual_baru: null,
-                    margin_baru: null,
-                }));
-
-                const payload = {
-                    purchase_order_uid: tempHeaderDataRef.current?.purchase_order_uid || null,
-                    supplier_uid: tempHeaderDataRef.current?.supplier_uid || "",
-                    nomor_faktur: formData.nomor_faktur || null,
-                    nilai_faktur: Number(formData.nilai_faktur),
-                    tanggal_terima: tempHeaderDataRef.current?.tanggal_terima || todayStr(),
-                    status_pembayaran: currentReceiving?.status_pembayaran || PAYMENT_STATUS.PENDING,
-                    catatan: formData.catatan || tempHeaderDataRef.current?.catatan || null,
-                    status: "completed",
-                    items: itemsPayload,
-                };
-
-                await bulkCreateReceiving.mutateAsync(payload);
-
-                toast.success("Penerimaan barang bulk telah diselesaikan & stok/harga telah diperbarui!");
-                clearAll();
-                clearPurchaseItemsStore("new", "receiving");
-                router.push("/admin/purchase/receiving");
-                return;
-            }
-
-            // Otherwise, run original draft finalization sequence:
-            const itemsPayload = items.map((item) => ({
-                product_uid: item.product_uid,
-                kuantitas: item.kuantitas,
-                harga_beli: item.harga_estimasi,
-            }));
-
-            const payload = {
-                purchase_order_uid: currentReceiving?.purchase_order_uid || null,
-                supplier_uid: currentReceiving?.supplier_uid || "",
-                nomor_faktur: formData.nomor_faktur,
-                nilai_faktur: Number(formData.nilai_faktur),
-                tanggal_terima: currentReceiving?.tanggal_terima || (currentReceiving?.created_at ? formatToISO(currentReceiving.created_at) : ""),
-                status_pembayaran: currentReceiving?.status_pembayaran || PAYMENT_STATUS.PENDING,
-                catatan: formData.catatan,
-                status: currentReceiving?.status || "draft",
-                items: itemsPayload,
-            };
-
-            // Save updated header + items to backend
-            await updateReceiving.mutateAsync({ uid: targetId, data: payload });
-
-            // Finalize completion
-            await completeReceiving.mutateAsync(targetId);
-
-            toast.success("Penerimaan barang telah diselesaikan & stok/harga telah diperbarui!");
-            clearAll();
-            clearPurchaseItemsStore(targetId, "receiving");
-            router.push("/admin/purchase/receiving");
-        } catch (err: unknown) {
-            const errorObj = err as { message?: string };
-            toast.error(errorObj.message || "Gagal menyelesaikan penerimaan barang.");
-        } finally {
-            setIsFinalizing(false);
-            setIsFinalizeOpen(false);
-        }
-    };
-
-    const handleComplete = async (skipHeaderSave = false, _overrideId?: string) => {
-        if (items.length === 0) {
-            toast.error("Harap tambahkan minimal 1 barang sebelum menyelesaikan.");
-            return;
-        }
-
-        const validation = validateQuantities();
-        if (!validation.valid) {
-            toast.error(validation.message);
-            return;
-        }
-
-        if (!skipHeaderSave) {
-            const headerForm = document.getElementById("receiving-header-form") as HTMLFormElement;
-            if (headerForm) {
-                headerForm.requestSubmit();
-                return;
-            }
-        }
-
-        // If bulk processing, we don't have a backend receiving draft yet.
-        // Or if we just successfully saved the draft via header card's form submit,
-        // we can jump straight to price comparison.
-        try {
-            // Call compare prices to check price alerts
-            const res = await comparePrices.mutateAsync({
-                items: items.map((i) => ({
-                    product_uid: i.product_uid,
-                    harga_beli: i.harga_estimasi,
-                })),
-            });
-
-            const alerts = (res.data || []).filter((r) => r.perlu_alert);
-            if (alerts.length > 0) {
-                setPriceAlerts(alerts);
-                setIsAlertOpen(true);
-            } else {
-                // No alerts, proceed to final confirmation directly
-                setIsFinalizeOpen(true);
-            }
-        } catch (err: unknown) {
-            const errorObj = err as { message?: string };
-            toast.error(errorObj.message || "Gagal membandingkan harga.");
-        }
-    };
-
-    const prevReceivingIdRef = useRef(receivingId);
-    const autoFinalizeRef = useRef(false);
-
-    useEffect(() => {
-        if (prevReceivingIdRef.current === "new" && receivingId !== "new") {
-            if (saveMode === "process") {
-                autoFinalizeRef.current = true;
-            }
-            prevReceivingIdRef.current = receivingId;
-        }
-    }, [receivingId, saveMode]);
-
-    useEffect(() => {
-        if (autoFinalizeRef.current && receiving && items.length > 0) {
-            autoFinalizeRef.current = false;
-            setTimeout(() => {
-                handleComplete(true);
-            }, 50);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [receiving, items.length]);
-
-    const handleCompleteWithoutPrices = () => {
-        setIsAlertOpen(false);
-        setIsFinalizeOpen(true);
-    };
-
-    const handleCompleteWithPrices = async (formValues: PriceAlertFormInput) => {
-        const payload = {
-            items: items.map((item) => {
-                const pricing = formValues.items.find((fit) => fit.product_uid === item.product_uid);
-                return {
-                    product_uid: item.product_uid,
-                    kuantitas: item.kuantitas,
-                    harga_beli: item.harga_estimasi,
-                    update_harga_jual: pricing ? pricing.update_harga_jual : false,
-                    harga_jual_baru: pricing && pricing.update_harga_jual ? pricing.harga_jual_baru : null,
-                    margin_baru: pricing && pricing.update_harga_jual ? pricing.margin_baru : null,
-                };
-            }),
-        };
-
-        // If bulk processing, save to local payload state instead of hitting replace API
-        if (currentId === "new" || currentId === "bulk") {
-            setBulkItemsPayload(payload.items);
-            setIsAlertOpen(false);
-            setIsFinalizeOpen(true);
-            return;
-        }
-
-        try {
-            await bulkReplace.mutateAsync({ uid: currentId, data: payload });
-            setIsAlertOpen(false);
-            setIsFinalizeOpen(true);
-        } catch (err: unknown) {
-            const errorObj = err as { message?: string };
-            toast.error(errorObj.message || "Gagal menyimpan update harga.");
-        }
-    };
-
-    const uniqueProductCount = items.length;
-
-    const handleFinalizeClose = (open: boolean) => {
-        setIsFinalizeOpen(open);
-        if (!open && isNew && currentId !== "new") {
-            onSaveSuccess(currentId, "save");
-        }
-    };
-
-    const handleAlertClose = (open: boolean) => {
-        setIsAlertOpen(open);
-        if (!open && isNew && currentId !== "new") {
-            onSaveSuccess(currentId, "save");
-        }
-    };
-
     return (
-        <FormProvider {...dialogMethods}>
+        <FormProvider {...productForm}>
             <div className="space-y-6">
                 {/* Header info / Breadcrumb */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
@@ -696,7 +226,7 @@ function ReceivingItemsContainer({
                                         setNotFoundQuery("");
                                     }
                                 }}
-                                disabled={bulkReplace.isPending}
+                                disabled={isSubmitting}
                                 placeholder="Scan barcode distributor atau masukkan kode produk..."
                             />
 
@@ -734,19 +264,9 @@ function ReceivingItemsContainer({
                             <ItemsTable
                                 items={items}
                                 priceLabel="Harga Beli"
-                                onUpdateItem={(temp_uid, data) => {
-                                    // Qty Limit warning check on adjustment
-                                    const item = items.find((i) => i.temp_uid === temp_uid);
-                                    if (item && data.kuantitas && poId) {
-                                        const poLimit = poRemainingMap.current[item.product_uid];
-                                        if (poLimit && data.kuantitas > poLimit.sisa) {
-                                            toast.warning(`Peringatan: Kuantitas melebihi sisa PO (${poLimit.sisa} pcs).`);
-                                        }
-                                    }
-                                    updateItem(temp_uid, data);
-                                }}
+                                onUpdateItem={handleUpdateItem}
                                 onRemoveItem={removeItem}
-                                disabled={bulkReplace.isPending}
+                                disabled={isSubmitting}
                             />
                         </div>
                     </div>
@@ -754,12 +274,12 @@ function ReceivingItemsContainer({
                     {/* Sidebar Info/Instruction */}
                     <div className="lg:col-span-4 space-y-6">
                         <ReceivingHeaderCard
-                            receiving={currentReceiving}
-                            receivingId={currentId}
-                            localItems={items}
-                            onSaveSuccess={handleSaveSuccess}
-                            onHeaderValidated={handleHeaderValidated}
-                            saveMode={saveMode}
+                            form={headerForm}
+                            suppliersLoading={suppliersLoading}
+                            supplierOptions={supplierOptions}
+                            posLoading={posLoading}
+                            poOptions={poOptions}
+                            isPending={isSubmitting}
                         />
                         <ReceivingInstructionPanel poId={poId} />
                     </div>
@@ -769,9 +289,9 @@ function ReceivingItemsContainer({
                 <div className="sticky bottom-0 z-10">
                     <BulkSubmitBar
                         onSubmit={onProcessClick}
-                        onSecondarySubmit={onSaveClick}
+                        onSecondarySubmit={handleSaveClick}
                         onReset={handleReset}
-                        isSubmitting={bulkReplace.isPending || completeReceiving.isPending || isFinalizing || bulkCreateReceiving.isPending}
+                        isSubmitting={isSubmitting}
                         itemCount={itemCount}
                         total={totalValue}
                         productCount={uniqueProductCount}
@@ -789,16 +309,16 @@ function ReceivingItemsContainer({
                         onOpenChange={handleFinalizeClose}
                         receiving={currentReceiving || ({
                             nomor_penerimaan: "Akan Dibuat Otomatis",
-                            supplier: suppliers.find(s => s.uid === (tempHeaderState?.supplier_uid || receiving?.supplier_uid))?.nama || "—",
-                            purchase_order_uid: tempHeaderState?.purchase_order_uid || receiving?.purchase_order_uid || null,
-                            nomor_faktur: tempHeaderState?.nomor_faktur || "",
-                            nilai_faktur: (tempHeaderState?.nilai_faktur != null && Number(tempHeaderState.nilai_faktur) !== 0)
-                                ? Number(tempHeaderState.nilai_faktur)
+                            supplier: suppliers.find(s => s.uid === (headerForm.watch("supplier_uid") || receiving?.supplier_uid))?.nama || "—",
+                            purchase_order_uid: headerForm.watch("purchase_order_uid") || receiving?.purchase_order_uid || null,
+                            nomor_faktur: headerForm.watch("nomor_faktur") || "",
+                            nilai_faktur: (headerForm.watch("nilai_faktur") != null && Number(headerForm.watch("nilai_faktur")) !== 0)
+                                ? Number(headerForm.watch("nilai_faktur"))
                                 : totalValue,
-                            catatan: tempHeaderState?.catatan || "",
+                            catatan: headerForm.watch("catatan") || "",
                         } as unknown as Receiving)}
                         items={items}
-                        isPending={isFinalizing || updateReceiving.isPending || completeReceiving.isPending || bulkCreateReceiving.isPending}
+                        isPending={isSubmitting}
                         onConfirm={handleFinalizeConfirm}
                     />
                 )}
@@ -809,7 +329,6 @@ function ReceivingItemsContainer({
                     onOpenChange={handleAlertClose}
                     priceAlerts={priceAlerts}
                     isFinalizing={isFinalizing}
-                    getProductInfo={getProductInfo}
                     onCompleteWithoutPrices={handleCompleteWithoutPrices}
                     onCompleteWithPrices={handleCompleteWithPrices}
                 />
@@ -841,5 +360,58 @@ function ReceivingItemsContainer({
                 />
             </div>
         </FormProvider>
+    );
+}
+
+function ReceivingPageSkeleton() {
+    return (
+        <div className="space-y-6">
+            {/* Header info / Breadcrumb */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                <div className="flex items-center gap-4">
+                    <Skeleton className="h-9 w-9 rounded-xl" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-5 w-48 rounded" />
+                        <Skeleton className="h-3 w-72 rounded" />
+                    </div>
+                </div>
+            </div>
+
+            {/* Scanning and Info Panel */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                <div className="lg:col-span-8 space-y-6">
+                    {/* Barcode scanner box */}
+                    <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
+                        <div className="flex items-center gap-2 pb-3 border-b border-slate-50">
+                            <Skeleton className="h-5 w-5 rounded" />
+                            <Skeleton className="h-4 w-36 rounded" />
+                        </div>
+                        <Skeleton className="h-10 w-full rounded-xl" />
+                    </div>
+
+                    {/* Table of items */}
+                    <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-4 space-y-3">
+                        <Skeleton className="h-8 w-full rounded" />
+                        <Skeleton className="h-12 w-full rounded" />
+                        <Skeleton className="h-12 w-full rounded" />
+                        <Skeleton className="h-12 w-full rounded" />
+                    </div>
+                </div>
+
+                {/* Sidebar Info/Instruction */}
+                <div className="lg:col-span-4 space-y-6">
+                    <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
+                        <Skeleton className="h-4 w-32 rounded" />
+                        <Skeleton className="h-8 w-full rounded" />
+                        <Skeleton className="h-8 w-full rounded" />
+                        <Skeleton className="h-8 w-full rounded" />
+                    </div>
+                    <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
+                        <Skeleton className="h-4 w-24 rounded" />
+                        <Skeleton className="h-16 w-full rounded" />
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 }

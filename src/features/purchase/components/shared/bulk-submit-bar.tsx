@@ -78,7 +78,7 @@ export function BulkSubmitBar({
                         <button
                             type="button"
                             onClick={onReset}
-                            disabled={!hasItems || isSubmitting || disabled}
+                            disabled={isSubmitting || disabled}
                             className="
                                 flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold
                                 border border-slate-200 text-slate-600 bg-white
