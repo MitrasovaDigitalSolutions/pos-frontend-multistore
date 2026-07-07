@@ -1,43 +1,41 @@
 "use client";
 
-import { PageLoader } from "@/components/feedback/page-loader";
 import { Button } from "@/components/ui/button";
-import { getPurchaseItemsStore, selectItemCount, selectTotal } from "@/stores/purchase-items-store";
-import { IconArrowLeft, IconBarcode, IconInfoCircle, IconX } from "@tabler/icons-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { IconArrowLeft, IconBarcode, IconCheck, IconInfoCircle, IconX } from "@tabler/icons-react";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useEffect, useRef, useState } from "react";
-import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { productSchema, type ProductInput } from "@/features/products/schemas/product-schema";
+import { FormProvider } from "react-hook-form";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ProductFormDialog } from "@/features/products/components/product-form-dialog";
 import { toast } from "sonner";
-import { useBulkReplacePurchaseOrderItems, usePurchaseOrderDetail } from "../../api/purchase-api";
-import type { PurchaseItemLocal, PurchaseOrder } from "../../types";
-import type { Product } from "@/features/products/types";
+import { usePurchaseOrderDetail } from "../../../api/purchase-api";
+import type { PurchaseItemLocal, PurchaseOrder } from "../../../types";
 import { BarcodeInput } from "@/components/shared/barcode-input";
-import { BulkSubmitBar } from "../shared/bulk-submit-bar";
-import { ItemsTable } from "../shared/items-table";
-import {
-    PO_STATUS,
-    PO_STATUS_LABELS,
-    PO_STATUS_CLASSES,
-    type POStatus,
-} from "@/constants/purchase";
-import { formatDate } from "@/lib/date-utils";
+import { BulkSubmitBar } from "../../shared/bulk-submit-bar";
+import { ItemsTable } from "../../shared/items-table";
+import { PO_STATUS } from "@/constants/purchase";
+import { usePoFlow } from "@/features/purchase/hooks/use-po-flow";
+import { POHeaderCard } from "./po-header-card";
+import { POInstructionPanel } from "./po-instruction-panel";
+import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
 
 interface POItemsPageProps {
     poId: string;
 }
 
 export function POItemsPage({ poId }: POItemsPageProps) {
-    const { data: order, isLoading: orderLoading, error } = usePurchaseOrderDetail(poId);
+    const isNew = !poId || poId === "new";
+    const { data: order, isLoading: orderLoading, error } = usePurchaseOrderDetail(
+        isNew ? null : poId
+    );
     const router = useAppRouter();
 
     if (orderLoading) {
-        return <PageLoader message="Memuat detail Purchase Order..." />;
+        return <POPageSkeleton />;
     }
 
-    if (error || !order) {
+    if (error || (!isNew && !order)) {
         return (
             <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm max-w-md mx-auto mt-12">
                 <p className="text-sm font-bold text-slate-800">Error</p>
@@ -54,8 +52,7 @@ export function POItemsPage({ poId }: POItemsPageProps) {
         );
     }
 
-    // Only allow editing items if status is draft
-    if (order.status !== PO_STATUS.DRAFT) {
+    if (order && order.status !== PO_STATUS.DRAFT) {
         return (
             <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm max-w-md mx-auto mt-12">
                 <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
@@ -75,71 +72,68 @@ export function POItemsPage({ poId }: POItemsPageProps) {
     return <POItemsContainer poId={poId} order={order} />;
 }
 
-function POItemsContainer({ poId, order }: { poId: string; order: PurchaseOrder }) {
+function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder }) {
     const router = useAppRouter();
-    const store = getPurchaseItemsStore(poId, "po");
-    const items = store((state) => state.items);
-    const addItem = store((state) => state.addItem);
-    const clearAll = store((state) => state.clearAll);
-    const updateItem = store((state) => state.updateItem);
-    const removeItem = store((state) => state.removeItem);
+    const [activeId, setActiveId] = useState(poId);
+    const [activeOrder, setActiveOrder] = useState<PurchaseOrder | undefined>(order);
 
-    const itemCount = store(selectItemCount);
-    const totalValue = store(selectTotal);
-
-    const bulkReplace = useBulkReplacePurchaseOrderItems();
-    const isFirstLoad = useRef(true);
-
-    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-    const [notFoundQuery, setNotFoundQuery] = useState("");
-
-    const dialogMethods = useForm<ProductInput>({
-        resolver: zodResolver(productSchema) as Resolver<ProductInput>,
-        defaultValues: {
-            nama: "",
-            merek: "Umum",
-            barcode: "",
-            harga: 0,
-            stok: 0,
-            harga_beli: 0,
-            margin: 0,
-            category_uid: null,
-            brand_uid: null,
-            image: null,
-            is_jasa: false,
-        },
-    });
-
-    const handleOpenCreateDialog = (query: string) => {
-        const cleanQuery = query.trim();
-        const isBarcode = /^\d+$/.test(cleanQuery);
-        dialogMethods.reset({
-            nama: isBarcode ? "" : cleanQuery,
-            merek: "Umum",
-            barcode: isBarcode ? cleanQuery : "",
-            harga: 0,
-            stok: 0,
-            harga_beli: 0,
-            margin: 0,
-            category_uid: null,
-            brand_uid: null,
-            image: null,
-            is_jasa: false,
-        });
-        setIsCreateDialogOpen(true);
+    const handleSaveSuccess = (uid: string, responseData?: PurchaseOrder) => {
+        window.history.replaceState(null, "", `/admin/purchase/order/${uid}/items`);
+        setActiveId(uid);
+        if (responseData) {
+            setActiveOrder(responseData);
+        }
     };
 
-    // Initialize from DB if Zustand store has items
+    const {
+        currentId,
+        isCurrentNew,
+        items,
+        itemCount,
+        totalValue,
+        uniqueProductCount,
+        isResetDialogOpen,
+        setIsResetDialogOpen,
+        notFoundQuery,
+        setNotFoundQuery,
+        isCreateDialogOpen,
+        setIsCreateDialogOpen,
+        suppliersLoading,
+        supplierOptions,
+        isSubmitting,
+        isConfirmOpen,
+        setIsConfirmOpen,
+        onProcessClick,
+        handleFinalizeConfirm,
+        productForm,
+        headerForm,
+        handleProductFound,
+        handleOpenCreateDialog,
+        handleReset,
+        handleSaveClick,
+        clearAll,
+        updateItem,
+        removeItem,
+    } = usePoFlow({
+        poId: activeId,
+        order: activeOrder,
+        onSaveSuccess: handleSaveSuccess,
+    });
+
+    const isFirstLoad = useRef(true);
+    const store = getPurchaseItemsStore(currentId, "po");
+
+    // Prepopulate Zustand items from DB order items if existing draft PO
     useEffect(() => {
-        if (!isFirstLoad.current) return;
+        if (!isFirstLoad.current || isCurrentNew) return;
 
         if (store.getState().items.length > 0) {
             isFirstLoad.current = false;
             return;
         }
 
-        if (order.items && order.items.length > 0) {
-            const dbItems: PurchaseItemLocal[] = order.items.map((item) => ({
+        if (activeOrder?.items && activeOrder.items.length > 0) {
+            const dbItems: PurchaseItemLocal[] = activeOrder.items.map((item) => ({
                 temp_uid: `${Date.now()}-${item.uid}-${Math.random().toString(36).substring(2, 5)}`,
                 product_uid: item.product_uid,
                 barcode: item.product?.barcode || null,
@@ -152,64 +146,17 @@ function POItemsContainer({ poId, order }: { poId: string; order: PurchaseOrder 
         } else {
             isFirstLoad.current = false;
         }
-    }, [order.items, store]);
-
-    const handleProductFound = (product: Product) => {
-        addItem({
-            product_uid: product.uid,
-            barcode: product.barcode,
-            nama: product.nama,
-            harga_estimasi: product.harga_beli || 0, // default to buy price as estimation
-        });
-        toast.success(`Ditambahkan: ${product.nama}`);
-    };
-
-    const handleProductError = (errMessage: string) => {
-        toast.error(errMessage);
-    };
-
-    const handleSubmit = () => {
-        if (items.length === 0) {
-            toast.error("Harap tambahkan minimal 1 barang sebelum menyimpan.");
-            return;
-        }
-
-        const payload = store.getState().getSubmitPayload();
-
-        bulkReplace.mutate(
-            { uid: poId, data: payload },
-            {
-                onSuccess: () => {
-                    toast.success("Daftar barang Purchase Order berhasil disimpan ke database!");
-                    clearAll();
-                    router.push(`/admin/purchase/order/${poId}`);
-                },
-                onError: (err) => {
-                    toast.error(err.message || "Gagal menyimpan daftar barang ke database.");
-                },
-            }
-        );
-    };
-
-    const handleReset = () => {
-        if (confirm("Apakah Anda yakin ingin mengosongkan semua daftar barang di halaman ini? Perubahan lokal akan hilang.")) {
-            clearAll();
-            toast.info("Daftar barang lokal berhasil dikosongkan.");
-        }
-    };
-
-    // Count unique products
-    const uniqueProductCount = items.length;
+    }, [activeOrder, isCurrentNew, store]);
 
     return (
-        <FormProvider {...dialogMethods}>
+        <FormProvider {...productForm}>
             <div className="space-y-6">
                 {/* Header info / Breadcrumb */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                         <Button
                             type="button"
-                            onClick={() => router.push(`/admin/purchase/order/${poId}`)}
+                            onClick={() => router.push(isCurrentNew ? "/admin/purchase/order" : `/admin/purchase/order/${currentId}`)}
                             variant="outline"
                             className="p-2 h-9 w-9 rounded-xl border-slate-200 text-slate-500 hover:text-slate-900 bg-white"
                         >
@@ -217,25 +164,25 @@ function POItemsContainer({ poId, order }: { poId: string; order: PurchaseOrder 
                         </Button>
                         <div>
                             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                <span>Input Barang PO — {order.nomor_po}</span>
-                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${PO_STATUS_CLASSES[order.status as POStatus] || "bg-amber-50 text-amber-700 border-amber-100"}`}>
-                                    {PO_STATUS_LABELS[order.status as POStatus] || "Draft"}
+                                <span>{isCurrentNew ? "Buat Purchase Order Baru" : `Edit Barang PO — ${activeOrder?.nomor_po}`}</span>
+                                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold border bg-amber-50 text-amber-700 border-amber-100">
+                                    Draft
                                 </span>
                             </h2>
                             <p className="text-xs text-slate-400">
-                                Supplier: <span className="font-semibold text-slate-600">{order.supplier?.nama || order.supplier_name || "-"}</span> | Tanggal: {formatDate(order.tanggal_po, "dd MMM yyyy")}
+                                Masukkan detail vendor supplier dan daftar barang pesanan.
                             </p>
                         </div>
                     </div>
                 </div>
 
-                {/* Scanning and Info Info Panel */}
+                {/* Main Content Layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     <div className="lg:col-span-8 space-y-6">
                         {/* Barcode scanner box */}
                         <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
                             <div className="flex items-center gap-2 pb-3 border-b border-slate-50">
-                                <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg">
+                                <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg border border-emerald-100/30">
                                     <IconBarcode size={18} />
                                 </div>
                                 <h3 className="text-xs font-bold text-slate-900">Scan Barcode / Cari Produk</h3>
@@ -246,7 +193,7 @@ function POItemsContainer({ poId, order }: { poId: string; order: PurchaseOrder 
                                     setNotFoundQuery("");
                                     handleProductFound(product);
                                 }}
-                                onError={handleProductError}
+                                onError={(err) => toast.error(err)}
                                 onProductNotFound={(query) => {
                                     setNotFoundQuery(query);
                                     handleOpenCreateDialog(query);
@@ -256,7 +203,7 @@ function POItemsContainer({ poId, order }: { poId: string; order: PurchaseOrder 
                                         setNotFoundQuery("");
                                     }
                                 }}
-                                disabled={bulkReplace.isPending}
+                                disabled={isSubmitting}
                                 placeholder="Arahkan scanner ke barcode atau ketik nama produk..."
                             />
 
@@ -295,40 +242,40 @@ function POItemsContainer({ poId, order }: { poId: string; order: PurchaseOrder 
                                 items={items}
                                 onUpdateItem={updateItem}
                                 onRemoveItem={removeItem}
-                                disabled={bulkReplace.isPending}
-                                isPriceReadOnly={true}
+                                disabled={isSubmitting}
+                                isPriceReadOnly={false}
                             />
                         </div>
                     </div>
 
                     {/* Sidebar Info/Instruction */}
                     <div className="lg:col-span-4 space-y-6">
-                        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 space-y-4">
-                            <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                                <IconInfoCircle size={16} className="text-blue-500" />
-                                <span>Petunjuk Penggunaan</span>
-                            </h4>
-                            <ul className="text-[11px] text-slate-500 space-y-2 list-disc pl-4 leading-relaxed">
-                                <li>Setiap produk yang Anda <strong>scan</strong> atau pilih akan masuk ke daftar di sebelah kiri.</li>
-                                <li>Jika produk sudah ada, kuantitas otomatis bertambah 1.</li>
-                                <li>Anda dapat mengubah <strong>kuantitas</strong> langsung di dalam tabel. <strong>Harga estimasi</strong> hanya berupa informasi referensi (read-only).</li>
-                                <li>Data disimpan secara otomatis di browser Anda (localStorage) dan aman meski halaman ditutup atau tidak sengaja ter-refresh.</li>
-                                <li>Tekan tombol <strong>Submit Semua Items ke Server</strong> di bawah untuk menyimpan perubahan permanen ke database</li>
-                            </ul>
-                        </div>
+                        <POHeaderCard
+                            form={headerForm}
+                            supplierOptions={supplierOptions}
+                            suppliersLoading={suppliersLoading}
+                            disabled={isSubmitting}
+                        />
+                        <POInstructionPanel />
                     </div>
                 </div>
 
                 {/* Sticky Bottom Submit Bar */}
                 <BulkSubmitBar
-                    onSubmit={handleSubmit}
+                    onSubmit={onProcessClick}
+                    onSecondarySubmit={handleSaveClick}
                     onReset={handleReset}
-                    isSubmitting={bulkReplace.isPending}
+                    isSubmitting={isSubmitting}
                     itemCount={itemCount}
                     total={totalValue}
                     productCount={uniqueProductCount}
+                    submitLabel="Proses PO"
+                    submitIcon={<IconCheck size={16} />}
+                    secondarySubmitLabel="Simpan PO"
+                    secondarySubmitIcon={<IconCheck size={16} />}
                 />
 
+                {/* Create Product Dialog */}
                 <ProductFormDialog
                     open={isCreateDialogOpen}
                     onOpenChange={setIsCreateDialogOpen}
@@ -339,7 +286,81 @@ function POItemsContainer({ poId, order }: { poId: string; order: PurchaseOrder 
                     }}
                     infoMessage={notFoundQuery ? `Produk "${notFoundQuery}" tidak ditemukan. Silakan buat baru.` : undefined}
                 />
+
+                {/* Process Confirmation Dialog */}
+                <ConfirmDialog
+                    open={isConfirmOpen}
+                    onOpenChange={setIsConfirmOpen}
+                    title="Proses Purchase Order?"
+                    description="Apakah Anda yakin ingin memproses Purchase Order ini? Status akan berubah menjadi ordered dan data tidak dapat diubah lagi."
+                    confirmText="Ya, Proses"
+                    cancelText="Batal"
+                    variant="success"
+                    onConfirm={handleFinalizeConfirm}
+                    isLoading={isSubmitting}
+                />
+
+                {/* Reset Confirmation Dialog */}
+                <ConfirmDialog
+                    open={isResetDialogOpen}
+                    onOpenChange={setIsResetDialogOpen}
+                    title="Kosongkan Form PO?"
+                    description="Apakah Anda yakin ingin mengosongkan seluruh daftar barang dan input form PO di halaman ini? Semua data belum tersimpan akan hilang."
+                    confirmText="Ya, Kosongkan"
+                    cancelText="Batal"
+                    variant="danger"
+                    onConfirm={() => {
+                        clearAll();
+                        setIsResetDialogOpen(false);
+                        toast.info("Daftar barang PO lokal berhasil dikosongkan.");
+                    }}
+                />
             </div>
         </FormProvider>
     );
 }
+
+function POPageSkeleton() {
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center gap-4">
+                <Skeleton className="h-9 w-9 rounded-xl" />
+                <div className="space-y-2">
+                    <Skeleton className="h-5 w-48" />
+                    <Skeleton className="h-3 w-72" />
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-8 space-y-6">
+                    {/* Header card skeleton */}
+                    <div className="bg-white border border-slate-100 rounded-2xl p-5 space-y-4">
+                        <Skeleton className="h-4 w-32" />
+                        <div className="grid grid-cols-2 gap-4">
+                            <Skeleton className="h-10 rounded-xl" />
+                            <Skeleton className="h-10 rounded-xl" />
+                        </div>
+                        <Skeleton className="h-10 rounded-xl" />
+                    </div>
+
+                    {/* Scanner skeleton */}
+                    <div className="bg-white border border-slate-100 rounded-2xl p-5">
+                        <Skeleton className="h-10 rounded-xl" />
+                    </div>
+
+                    {/* Table skeleton */}
+                    <div className="bg-white border border-slate-100 rounded-2xl p-5 space-y-2">
+                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-12 w-full" />
+                    </div>
+                </div>
+                <div className="lg:col-span-4">
+                    <Skeleton className="h-44 rounded-2xl" />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+

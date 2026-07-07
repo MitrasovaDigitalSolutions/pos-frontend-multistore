@@ -18,7 +18,7 @@ export const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
         value,
         onChange,
         allowNegative = false,
-        allowDecimal = false,
+        allowDecimal = true,
         min,
         max,
         className,

@@ -93,6 +93,7 @@ export const ENDPOINTS = {
             ITEMS_REPLACE: (uid: string) => `/v1/purchase/order/${uid}/items`,
             OUTSTANDING: "/v1/purchase/order/outstanding",
             RECEIVINGS: (uid: string) => `/v1/purchase/order/${uid}/receivings`,
+            BULK: "/v1/purchase/order/bulk",
         },
         PAYMENT: {
             LIST: "/v1/purchase/payment",
@@ -114,6 +115,7 @@ export const ENDPOINTS = {
             ITEMS_REPLACE: (uid: string) => `/v1/purchase/return/${uid}/items`,
             RETURNABLE_ITEMS: (receivingUid: string) => `/v1/purchase/receiving/${receivingUid}/returnable-items`,
             SCAN: "/v1/purchase/return/scan",
+            BULK: "/v1/purchase/return/bulk",
         },
     },
 

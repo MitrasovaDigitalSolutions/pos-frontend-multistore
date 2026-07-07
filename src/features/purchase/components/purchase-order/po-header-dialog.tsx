@@ -67,7 +67,7 @@ export function POHeaderDialog({ open, onOpenChange, order }: POHeaderDialogProp
                     onOpenChange(false);
                 },
                 onError: (err) => {
-                    toast.error(err.message || "Gagal memperbarui informasi header PO.");
+                    toast.error(err.message || "Gagal memperbarui informasi PO.");
                 },
             }
         );

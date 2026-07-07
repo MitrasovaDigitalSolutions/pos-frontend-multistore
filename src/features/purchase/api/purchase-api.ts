@@ -247,6 +247,23 @@ export function useCreatePurchaseOrderHeader() {
     });
 }
 
+export function useBulkCreatePurchaseOrder() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<PurchaseOrder>, Error, unknown>({
+        mutationFn: (data) =>
+            apiPost<ApiResponse<PurchaseOrder>, unknown>(
+                ENDPOINTS.PURCHASE.ORDER.BULK,
+                data,
+            ),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.orders(),
+            });
+            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+        },
+    });
+}
+
 // Step 3: Bulk submit items to PO
 export function useBulkSubmitPurchaseOrderItems() {
     const queryClient = useQueryClient();
@@ -601,6 +618,23 @@ export function useCreatePurchaseReturnHeader() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.purchase.returns(),
             });
+        },
+    });
+}
+
+export function useBulkCreatePurchaseReturn() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<PurchaseReturn>, Error, unknown>({
+        mutationFn: (data) =>
+            apiPost<ApiResponse<PurchaseReturn>, unknown>(
+                ENDPOINTS.PURCHASE.RETURN.BULK,
+                data,
+            ),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.returns(),
+            });
+            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
     });
 }
