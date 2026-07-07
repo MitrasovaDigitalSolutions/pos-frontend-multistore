@@ -2,7 +2,7 @@
 
 import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { BarcodeInput } from "@/components/shared/barcode-input";
-import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import {
     Table,
     TableBody,
@@ -74,45 +74,20 @@ function CheckoutQtyInput({
     className,
     disabled,
 }: CheckoutQtyInputProps) {
-    const [localVal, setLocalVal] = React.useState<string>(String(value));
-
-    React.useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setLocalVal(String(value));
-    }, [value]);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.value;
-        setLocalVal(val);
-
-        if (val === "") return;
-
-        const num = parseFloat(val);
-        if (!isNaN(num) && num > 0) {
-            onChange(num);
-        }
-    };
-
-    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-        const num = parseFloat(localVal);
-        if (localVal === "" || isNaN(num) || num <= 0) {
-            setLocalVal(String(value));
-        } else {
-            onChange(num);
-        }
-        onBlur?.(e);
-    };
-
     return (
-        <Input
-            type="number"
-            step="any"
-            value={localVal}
-            onChange={handleChange}
-            onBlur={handleBlur}
+        <NumberInput
+            value={value}
+            onChange={(val) => {
+                if (val !== null) {
+                    onChange(val);
+                }
+            }}
+            onBlur={onBlur}
             onKeyDown={onKeyDown}
             className={className}
             disabled={disabled}
+            allowDecimal={true}
+            min={0}
         />
     );
 }

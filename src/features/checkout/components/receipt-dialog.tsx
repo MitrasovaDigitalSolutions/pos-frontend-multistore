@@ -96,7 +96,7 @@ export function ReceiptDialog({
                                         className="flex justify-between text-[10px] text-slate-600"
                                     >
                                         <span className="truncate max-w-[170px]" title={item.nama_produk}>
-                                            {Number(item.kuantitas.toFixed(3))}x {item.nama_produk}
+                                            {Number(item.kuantitas)}x {item.nama_produk}
                                         </span>
                                         <span className="tabular-nums font-semibold shrink-0">
                                             {formatRupiah(item.harga_satuan * item.kuantitas)}

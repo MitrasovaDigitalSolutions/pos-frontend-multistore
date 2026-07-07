@@ -79,6 +79,7 @@ export const ENDPOINTS = {
             COMPLETE: (uid: string) => `/v1/purchase/receiving/${uid}/complete`,
             SCAN: "/v1/purchase/receiving/scan",
             DEBTS: "/v1/purchase/receiving/debts",
+            BULK: "/v1/purchase/receiving/bulk",
         },
         ORDER: {
             LIST: "/v1/purchase/order",

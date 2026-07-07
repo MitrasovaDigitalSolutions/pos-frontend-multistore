@@ -49,6 +49,23 @@ export function useCreateReceiving() {
             });
             queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
+     });
+}
+
+export function useBulkCreateReceiving() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<Receiving>, Error, unknown>({
+        mutationFn: (data) =>
+            apiPost<ApiResponse<Receiving>, unknown>(
+                ENDPOINTS.PURCHASE.RECEIVING.BULK,
+                data,
+            ),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.receivings(),
+            });
+            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+        },
     });
 }
 

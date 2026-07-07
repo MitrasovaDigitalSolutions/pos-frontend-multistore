@@ -3,7 +3,7 @@
 import { PageLoader } from "@/components/feedback/page-loader";
 import { Button } from "@/components/ui/button";
 import { getPurchaseItemsStore, selectItemCount, selectTotal, clearPurchaseItemsStore } from "@/stores/purchase-items-store";
-import { IconArrowLeft, IconBarcode, IconCheck, IconEdit, IconInfoCircle, IconX } from "@tabler/icons-react";
+import { IconArrowLeft, IconBarcode, IconCheck, IconInfoCircle, IconUpload, IconX } from "@tabler/icons-react";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
@@ -19,33 +19,41 @@ import {
     useScanReceivingProduct,
     useComparePrices,
     useUpdateReceiving,
+    useBulkCreateReceiving,
     type ComparePricesResult
 } from "../../../api/purchase-api";
 import type { PurchaseItemLocal, Receiving } from "../../../types";
 import type { Product } from "@/features/products/types";
-import { formatToISO } from "@/lib/date-utils";
+import { formatToISO, todayStr } from "@/lib/date-utils";
 import { BarcodeInput } from "@/components/shared/barcode-input";
 import { BulkSubmitBar } from "../../shared/bulk-submit-bar";
 import { ItemsTable } from "../../shared/items-table";
-import { ReceivingHeaderDialog } from "../receiving-header-dialog";
 import { ReceivingFinalizeDialog } from "../receiving-finalize-dialog";
-import { RECEIVING_STATUS } from "@/constants/purchase";
+import { PAYMENT_STATUS, RECEIVING_STATUS } from "@/constants/purchase";
 import { PriceAlertDialog, type PriceAlertFormInput } from "./price-alert-dialog";
 import { ReceivingInstructionPanel } from "./receiving-instruction-panel";
+import { ReceivingHeaderCard } from "./receiving-header-card";
+import { ReceivingHeaderInput } from "@/features/purchase/schemas/receiving-schema";
+import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
 
 interface ReceivingItemsPageProps {
     receivingId: string;
 }
 
 export function ReceivingItemsPage({ receivingId }: ReceivingItemsPageProps) {
-    const { data: receiving, isLoading: receivingLoading, error } = useReceivingDetail(receivingId);
     const router = useAppRouter();
+    const [activeId, setActiveId] = useState(receivingId);
+
+    const isNew = !activeId || activeId === "new";
+    const { data: receiving, isLoading: receivingLoading, error } = useReceivingDetail(
+        isNew ? null : activeId
+    );
 
     if (receivingLoading) {
         return <PageLoader message="Memuat detail Penerimaan..." />;
     }
 
-    if (error || !receiving) {
+    if (!isNew && (error || !receiving)) {
         return (
             <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm max-w-md mx-auto mt-12">
                 <p className="text-sm font-bold text-slate-800">Error</p>
@@ -62,7 +70,7 @@ export function ReceivingItemsPage({ receivingId }: ReceivingItemsPageProps) {
         );
     }
 
-    if (receiving.status !== RECEIVING_STATUS.DRAFT) {
+    if (!isNew && receiving && receiving.status !== RECEIVING_STATUS.DRAFT) {
         return (
             <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm max-w-md mx-auto mt-12">
                 <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
@@ -79,13 +87,79 @@ export function ReceivingItemsPage({ receivingId }: ReceivingItemsPageProps) {
         );
     }
 
-    return <ReceivingItemsContainer receivingId={receivingId} receiving={receiving} />;
+    const handleSaveSuccess = (uid: string, _nextAction: "save" | "process") => {
+        window.history.replaceState(null, "", `/admin/purchase/receiving/${uid}/items`);
+        setActiveId(uid);
+    };
+
+    return (
+        <ReceivingItemsContainer
+            receivingId={activeId}
+            receiving={receiving}
+            onSaveSuccess={handleSaveSuccess}
+        />
+    );
 }
 
-function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: string; receiving: Receiving }) {
-    const [isEditHeaderOpen, setIsEditHeaderOpen] = useState(false);
+interface ReceivingItemsContainerProps {
+    receivingId: string;
+    receiving?: Receiving;
+    onSaveSuccess: (uid: string, nextAction: "save" | "process") => void;
+}
+
+function ReceivingItemsContainer({
+    receivingId,
+    receiving,
+    onSaveSuccess,
+}: ReceivingItemsContainerProps) {
+    const isNew = !receivingId || receivingId === "new";
+
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [notFoundQuery, setNotFoundQuery] = useState("");
+    const [saveMode, setSaveMode] = useState<"save" | "process">("process");
+    const saveModeRef = useRef<"save" | "process">("process");
+
+    const setSaveModeSync = (mode: "save" | "process") => {
+        saveModeRef.current = mode;
+        setSaveMode(mode);
+    };
+
+    const [currentId, setCurrentId] = useState(receivingId);
+    const [currentReceiving, setCurrentReceiving] = useState<Receiving | undefined>(receiving);
+
+    const [prevPropId, setPrevPropId] = useState(receivingId);
+    const [prevPropReceiving, setPrevPropReceiving] = useState<Receiving | undefined>(receiving);
+
+    if (receivingId !== prevPropId) {
+        setPrevPropId(receivingId);
+        setCurrentId(receivingId);
+    }
+    if (receiving !== prevPropReceiving) {
+        setPrevPropReceiving(receiving);
+        setCurrentReceiving(receiving);
+    }
+
+    const isCurrentNew = !currentId || currentId === "new";
+
+    const bulkCreateReceiving = useBulkCreateReceiving();
+    const tempHeaderDataRef = useRef<ReceivingHeaderInput | null>(null);
+    const [tempHeaderState, setTempHeaderState] = useState<ReceivingHeaderInput | null>(null);
+    const [bulkItemsPayload, setBulkItemsPayload] = useState<{
+        product_uid: string;
+        kuantitas: number;
+        harga_beli: number;
+        update_harga_jual: boolean;
+        harga_jual_baru: number | null;
+        margin_baru: number | null;
+    }[] | null>(null);
+
+    const { data: suppliers = [] } = useAllSuppliers();
+
+    const handleHeaderValidated = (data: ReceivingHeaderInput) => {
+        tempHeaderDataRef.current = data;
+        setTempHeaderState(data); // keep state in sync for JSX
+        handleComplete(true, "bulk");
+    };
 
     const dialogMethods = useForm<ProductInput>({
         resolver: zodResolver(productSchema) as Resolver<ProductInput>,
@@ -139,10 +213,25 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
     const comparePrices = useComparePrices();
     const scanMutation = useScanReceivingProduct();
 
-    const poId = receiving.purchase_order_uid || null;
+    const poId = receiving?.purchase_order_uid || null;
     const { data: poData } = usePurchaseOrderDetail(poId);
 
     const isFirstLoad = useRef(true);
+
+    const handleSaveSuccess = (uid: string, responseData?: Receiving) => {
+        setCurrentId(uid);
+        if (responseData) {
+            setCurrentReceiving(responseData);
+        }
+
+        if (saveModeRef.current === "process") {
+            setTimeout(() => {
+                handleComplete(true, uid);
+            }, 50);
+        } else {
+            onSaveSuccess(uid, "save");
+        }
+    };
 
     // Build PO sisa reference map for validation
     const poRemainingMap = useRef<Record<string, { sisa: number; nama: string }>>({});
@@ -160,8 +249,18 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
     }, [poData]);
 
     const getProductInfo = (productId: string | number) => {
-        const targetId = (productId);
-        const recItem = receiving.items?.find((item) => item.product_uid === targetId);
+        const targetId = productId;
+        const localItem = items.find((item) => item.product_uid === targetId);
+        if (localItem) {
+            return {
+                uid: localItem.product_uid,
+                nama: localItem.nama,
+                barcode: localItem.barcode,
+                harga_beli: localItem.harga_estimasi,
+            } as unknown as Product;
+        }
+
+        const recItem = currentReceiving?.items?.find((item) => item.product_uid === targetId);
         if (recItem?.product) return recItem.product;
 
         const poItem = poData?.items?.find((item) => item.product_uid === targetId);
@@ -172,6 +271,10 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
 
     // Initialize items: load existing items from receiving draft or from PO sisa
     useEffect(() => {
+        if (isNew) {
+            isFirstLoad.current = false;
+            return;
+        }
         if (!isFirstLoad.current) return;
 
         if (store.getState().items.length > 0) {
@@ -180,7 +283,7 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
         }
 
         // 1. If we have existing receiving items in draft, load them
-        if (receiving.items && receiving.items.length > 0) {
+        if (receiving?.items && receiving.items.length > 0) {
             const dbItems: PurchaseItemLocal[] = receiving.items.map((item) => ({
                 temp_uid: `${Date.now()}-${item.uid}-${Math.random().toString(36).substring(2, 5)}`,
                 product_uid: String(item.product_uid),
@@ -213,7 +316,7 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
         else {
             isFirstLoad.current = false;
         }
-    }, [receiving.items, poId, poData, store]);
+    }, [receiving?.items, poId, poData, store, isNew]);
 
     const handleProductFound = async (product: Product) => {
         // If there is no PO: we bypass scan endpoint and add directly
@@ -296,38 +399,14 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
         return { valid: true };
     };
 
-    const handleBulkSubmit = () => {
-        if (items.length === 0) {
-            toast.error("Harap tambahkan minimal 1 barang sebelum menyimpan.");
-            return;
-        }
+    const onProcessClick = () => {
+        setSaveModeSync("process");
+        handleComplete(false);
+    };
 
-        const validation = validateQuantities();
-        if (!validation.valid) {
-            toast.error(validation.message);
-            return;
-        }
-
-        // Format payload to match ReceivingBulkItemsInput: { items: [{ product_uid, kuantitas, harga_beli }] }
-        const payload = {
-            items: items.map((item) => ({
-                product_uid: item.product_uid,
-                kuantitas: item.kuantitas,
-                harga_beli: item.harga_estimasi,
-            })),
-        };
-
-        bulkReplace.mutate(
-            { uid: receivingId, data: payload },
-            {
-                onSuccess: () => {
-                    toast.success("Daftar barang penerimaan berhasil disimpan.");
-                },
-                onError: (err) => {
-                    toast.error(err.message || "Gagal menyimpan daftar barang.");
-                },
-            }
-        );
+    const onSaveClick = () => {
+        setSaveModeSync("save");
+        handleComplete(false);
     };
 
     const handleReset = () => {
@@ -344,12 +423,47 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
     const [isFinalizing, setIsFinalizing] = useState(false);
 
     const handleFinalizeConfirm = async (formData: {
-        nomor_faktur: string;
+        nomor_faktur: string | null;
         nilai_faktur: number;
         catatan: string | null;
     }) => {
         setIsFinalizing(true);
         try {
+            const targetId = currentId;
+
+            // If we are doing bulk create (because document hasn't been created yet):
+            if (targetId === "new") {
+                const itemsPayload = bulkItemsPayload || items.map((item) => ({
+                    product_uid: item.product_uid,
+                    kuantitas: item.kuantitas,
+                    harga_beli: item.harga_estimasi,
+                    update_harga_jual: false,
+                    harga_jual_baru: null,
+                    margin_baru: null,
+                }));
+
+                const payload = {
+                    purchase_order_uid: tempHeaderDataRef.current?.purchase_order_uid || null,
+                    supplier_uid: tempHeaderDataRef.current?.supplier_uid || "",
+                    nomor_faktur: formData.nomor_faktur || null,
+                    nilai_faktur: Number(formData.nilai_faktur),
+                    tanggal_terima: tempHeaderDataRef.current?.tanggal_terima || todayStr(),
+                    status_pembayaran: currentReceiving?.status_pembayaran || PAYMENT_STATUS.PENDING,
+                    catatan: formData.catatan || tempHeaderDataRef.current?.catatan || null,
+                    status: "completed",
+                    items: itemsPayload,
+                };
+
+                await bulkCreateReceiving.mutateAsync(payload);
+
+                toast.success("Penerimaan barang bulk telah diselesaikan & stok/harga telah diperbarui!");
+                clearAll();
+                clearPurchaseItemsStore("new", "receiving");
+                router.push("/admin/purchase/receiving");
+                return;
+            }
+
+            // Otherwise, run original draft finalization sequence:
             const itemsPayload = items.map((item) => ({
                 product_uid: item.product_uid,
                 kuantitas: item.kuantitas,
@@ -357,26 +471,26 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
             }));
 
             const payload = {
-                purchase_order_uid: receiving.purchase_order_uid || null,
-                supplier_uid: receiving.supplier_uid,
+                purchase_order_uid: currentReceiving?.purchase_order_uid || null,
+                supplier_uid: currentReceiving?.supplier_uid || "",
                 nomor_faktur: formData.nomor_faktur,
                 nilai_faktur: Number(formData.nilai_faktur),
-                tanggal_terima: receiving.tanggal_terima || (receiving.created_at ? formatToISO(receiving.created_at) : ""),
-                status_pembayaran: receiving.status_pembayaran,
+                tanggal_terima: currentReceiving?.tanggal_terima || (currentReceiving?.created_at ? formatToISO(currentReceiving.created_at) : ""),
+                status_pembayaran: currentReceiving?.status_pembayaran || PAYMENT_STATUS.PENDING,
                 catatan: formData.catatan,
-                status: receiving.status,
+                status: currentReceiving?.status || "draft",
                 items: itemsPayload,
             };
 
             // Save updated header + items to backend
-            await updateReceiving.mutateAsync({ uid: receivingId, data: payload });
+            await updateReceiving.mutateAsync({ uid: targetId, data: payload });
 
             // Finalize completion
-            await completeReceiving.mutateAsync(receivingId);
+            await completeReceiving.mutateAsync(targetId);
 
             toast.success("Penerimaan barang telah diselesaikan & stok/harga telah diperbarui!");
             clearAll();
-            clearPurchaseItemsStore(receivingId, "receiving");
+            clearPurchaseItemsStore(targetId, "receiving");
             router.push("/admin/purchase/receiving");
         } catch (err: unknown) {
             const errorObj = err as { message?: string };
@@ -387,7 +501,7 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
         }
     };
 
-    const handleComplete = async () => {
+    const handleComplete = async (skipHeaderSave = false, _overrideId?: string) => {
         if (items.length === 0) {
             toast.error("Harap tambahkan minimal 1 barang sebelum menyelesaikan.");
             return;
@@ -399,18 +513,18 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
             return;
         }
 
-        // Save current items first before checking price changes
-        const payload = {
-            items: items.map((item) => ({
-                product_uid: item.product_uid,
-                kuantitas: item.kuantitas,
-                harga_beli: item.harga_estimasi,
-            })),
-        };
+        if (!skipHeaderSave) {
+            const headerForm = document.getElementById("receiving-header-form") as HTMLFormElement;
+            if (headerForm) {
+                headerForm.requestSubmit();
+                return;
+            }
+        }
 
+        // If bulk processing, we don't have a backend receiving draft yet.
+        // Or if we just successfully saved the draft via header card's form submit,
+        // we can jump straight to price comparison.
         try {
-            await bulkReplace.mutateAsync({ uid: receivingId, data: payload });
-
             // Call compare prices to check price alerts
             const res = await comparePrices.mutateAsync({
                 items: items.map((i) => ({
@@ -429,9 +543,31 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
             }
         } catch (err: unknown) {
             const errorObj = err as { message?: string };
-            toast.error(errorObj.message || "Gagal menyimpan items sebelum penyelesaian.");
+            toast.error(errorObj.message || "Gagal membandingkan harga.");
         }
     };
+
+    const prevReceivingIdRef = useRef(receivingId);
+    const autoFinalizeRef = useRef(false);
+
+    useEffect(() => {
+        if (prevReceivingIdRef.current === "new" && receivingId !== "new") {
+            if (saveMode === "process") {
+                autoFinalizeRef.current = true;
+            }
+            prevReceivingIdRef.current = receivingId;
+        }
+    }, [receivingId, saveMode]);
+
+    useEffect(() => {
+        if (autoFinalizeRef.current && receiving && items.length > 0) {
+            autoFinalizeRef.current = false;
+            setTimeout(() => {
+                handleComplete(true);
+            }, 50);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [receiving, items.length]);
 
     const handleCompleteWithoutPrices = () => {
         setIsAlertOpen(false);
@@ -452,8 +588,17 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
                 };
             }),
         };
+
+        // If bulk processing, save to local payload state instead of hitting replace API
+        if (currentId === "new" || currentId === "bulk") {
+            setBulkItemsPayload(payload.items);
+            setIsAlertOpen(false);
+            setIsFinalizeOpen(true);
+            return;
+        }
+
         try {
-            await bulkReplace.mutateAsync({ uid: receivingId, data: payload });
+            await bulkReplace.mutateAsync({ uid: currentId, data: payload });
             setIsAlertOpen(false);
             setIsFinalizeOpen(true);
         } catch (err: unknown) {
@@ -463,6 +608,20 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
     };
 
     const uniqueProductCount = items.length;
+
+    const handleFinalizeClose = (open: boolean) => {
+        setIsFinalizeOpen(open);
+        if (!open && isNew && currentId !== "new") {
+            onSaveSuccess(currentId, "save");
+        }
+    };
+
+    const handleAlertClose = (open: boolean) => {
+        setIsAlertOpen(open);
+        if (!open && isNew && currentId !== "new") {
+            onSaveSuccess(currentId, "save");
+        }
+    };
 
     return (
         <FormProvider {...dialogMethods}>
@@ -480,13 +639,23 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
                         </Button>
                         <div>
                             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                <span>Input Barang Penerimaan — {receiving.nomor_penerimaan}</span>
+                                <span>
+                                    {isCurrentNew
+                                        ? "Buat Penerimaan Baru"
+                                        : `Input Barang Penerimaan — ${currentReceiving?.nomor_penerimaan}`}
+                                </span>
                                 <span className="px-2 py-0.5 rounded-full text-[9px] font-bold border bg-amber-50 text-amber-700 border-amber-100">
                                     Draft
                                 </span>
                             </h2>
                             <p className="text-xs text-slate-400">
-                                Faktur: <span className="font-semibold text-slate-600">{receiving.nomor_faktur || "-"}</span> | Supplier: <span className="font-semibold text-slate-600">{receiving.supplier_relationship?.nama || receiving.supplier || "-"}</span>
+                                {isCurrentNew ? (
+                                    "Tambahkan barang penerimaan terlebih dahulu, lalu lengkapi & simpan header di panel kanan."
+                                ) : (
+                                    <>
+                                        Faktur: <span className="font-semibold text-slate-600">{currentReceiving?.nomor_faktur || "-"}</span> | Supplier: <span className="font-semibold text-slate-600">{currentReceiving?.supplier_relationship?.nama || currentReceiving?.supplier || "-"}</span>
+                                    </>
+                                )}
                             </p>
                         </div>
                     </div>
@@ -498,26 +667,6 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
                                 <p className="text-[9px] text-emerald-600 leading-none mt-0.5">Batas qty sesuai sisa PO</p>
                             </div>
                         )}
-
-                        <Button
-                            onClick={() => setIsEditHeaderOpen(true)}
-                            variant="outline"
-                            className="border-slate-200 text-slate-700 hover:text-slate-900 bg-white font-bold text-xs h-10 px-4 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0"
-                        >
-                            <IconEdit size={16} /> Edit Info
-                        </Button>
-
-                        <Button
-                            onClick={handleComplete}
-                            disabled={items.length === 0 || bulkReplace.isPending || completeReceiving.isPending || isFinalizing}
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs h-10 px-5 shadow-sm rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0 border-none"
-                        >
-                            {isFinalizing || completeReceiving.isPending ? "Memproses..." : (
-                                <>
-                                    <IconCheck size={16} /> Selesai & Tambah Stok
-                                </>
-                            )}
-                        </Button>
                     </div>
                 </div>
 
@@ -605,6 +754,14 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
 
                     {/* Sidebar Info/Instruction */}
                     <div className="lg:col-span-4 space-y-6">
+                        <ReceivingHeaderCard
+                            receiving={currentReceiving}
+                            receivingId={currentId}
+                            localItems={items}
+                            onSaveSuccess={handleSaveSuccess}
+                            onHeaderValidated={handleHeaderValidated}
+                            saveMode={saveMode}
+                        />
                         <ReceivingInstructionPanel poId={poId} />
                     </div>
                 </div>
@@ -612,35 +769,45 @@ function ReceivingItemsContainer({ receivingId, receiving }: { receivingId: stri
                 {/* Sticky Bottom Submit Bar */}
                 <div className="sticky bottom-0 z-10">
                     <BulkSubmitBar
-                        onSubmit={handleBulkSubmit}
+                        onSubmit={onProcessClick}
+                        onSecondarySubmit={onSaveClick}
                         onReset={handleReset}
-                        isSubmitting={bulkReplace.isPending}
+                        isSubmitting={bulkReplace.isPending || completeReceiving.isPending || isFinalizing || bulkCreateReceiving.isPending}
                         itemCount={itemCount}
                         total={totalValue}
                         productCount={uniqueProductCount}
+                        submitLabel="Proses Penerimaan"
+                        submitIcon={<IconCheck size={16} />}
+                        secondarySubmitLabel="Simpan Penerimaan"
+                        secondarySubmitIcon={<IconUpload size={16} />}
                     />
                 </div>
 
-                <ReceivingHeaderDialog
-                    open={isEditHeaderOpen}
-                    onOpenChange={setIsEditHeaderOpen}
-                    receiving={receiving}
-                />
-
                 {/* Finalize Dialog */}
-                <ReceivingFinalizeDialog
-                    open={isFinalizeOpen}
-                    onOpenChange={setIsFinalizeOpen}
-                    receiving={receiving}
-                    items={items}
-                    isPending={isFinalizing || updateReceiving.isPending || completeReceiving.isPending}
-                    onConfirm={handleFinalizeConfirm}
-                />
+                {(currentReceiving || (isCurrentNew && isFinalizeOpen)) && (
+                    <ReceivingFinalizeDialog
+                        open={isFinalizeOpen}
+                        onOpenChange={handleFinalizeClose}
+                        receiving={currentReceiving || ({
+                            nomor_penerimaan: "Akan Dibuat Otomatis",
+                            supplier: suppliers.find(s => s.uid === (tempHeaderState?.supplier_uid || receiving?.supplier_uid))?.nama || "—",
+                            purchase_order_uid: tempHeaderState?.purchase_order_uid || receiving?.purchase_order_uid || null,
+                            nomor_faktur: tempHeaderState?.nomor_faktur || "",
+                            nilai_faktur: (tempHeaderState?.nilai_faktur != null && Number(tempHeaderState.nilai_faktur) !== 0)
+                                ? Number(tempHeaderState.nilai_faktur)
+                                : totalValue,
+                            catatan: tempHeaderState?.catatan || "",
+                        } as unknown as Receiving)}
+                        items={items}
+                        isPending={isFinalizing || updateReceiving.isPending || completeReceiving.isPending || bulkCreateReceiving.isPending}
+                        onConfirm={handleFinalizeConfirm}
+                    />
+                )}
 
                 {/* Price comparison alert dialog */}
                 <PriceAlertDialog
                     open={isAlertOpen}
-                    onOpenChange={setIsAlertOpen}
+                    onOpenChange={handleAlertClose}
                     priceAlerts={priceAlerts}
                     isFinalizing={isFinalizing}
                     getProductInfo={getProductInfo}
