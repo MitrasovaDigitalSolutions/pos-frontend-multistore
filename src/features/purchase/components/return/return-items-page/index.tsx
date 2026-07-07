@@ -2,8 +2,9 @@
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
-import { IconArrowLeft, IconBarcode, IconCircleCheck, IconCheck } from "@tabler/icons-react";
+import { IconArrowLeft, IconBarcode, IconCheck, IconUpload } from "@tabler/icons-react";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useState } from "react";
 import { FormProvider } from "react-hook-form";
@@ -75,8 +76,10 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: string; retur
     const router = useAppRouter();
     const [activeId, setActiveId] = useState(returnId);
     const [activeReturn, setActiveReturn] = useState<PurchaseReturn | undefined>(returnObj);
+    const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
 
     const handleSaveSuccess = (uid: string, responseData?: PurchaseReturn) => {
+        window.history.replaceState(null, "", `/admin/purchase/return/${uid}/items`);
         setActiveId(uid);
         if (responseData) {
             setActiveReturn(responseData);
@@ -96,12 +99,12 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: string; retur
         receivingId,
         isFinalizeOpen,
         setIsFinalizeOpen,
-        isSavingForFinalize,
         isPending,
         headerForm,
         handleProductFound,
         handleSaveClick,
         handleFinalizeClick,
+        handleFinalizeConfirm,
         clearAll,
         updateItem,
     } = useReturnFlow({
@@ -110,14 +113,16 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: string; retur
         onSaveSuccess: handleSaveSuccess,
     });
 
-
-
     const reasons = [
         { value: "damaged", label: "Rusak / Cacat" },
         { value: "expired", label: "Kadaluarsa" },
         { value: "wrong_product", label: "Salah Kirim" },
         { value: "other", label: "Lainnya" },
     ];
+
+    const handleResetClick = () => {
+        setIsResetDialogOpen(true);
+    };
 
     return (
         <FormProvider {...headerForm}>
@@ -144,20 +149,6 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: string; retur
                                 Lengkapi referensi faktur penerimaan dan barang yang ingin dikembalikan.
                             </p>
                         </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        <Button
-                            onClick={handleFinalizeClick}
-                            disabled={activeItems.length === 0 || isPending}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-10 px-5 shadow-md shadow-emerald-600/10 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0 border-none transition-all hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                            {isSavingForFinalize ? "Memproses..." : (
-                                <>
-                                    <IconCircleCheck size={16} /> Finalisasi Retur
-                                </>
-                            )}
-                        </Button>
                     </div>
                 </div>
 
@@ -216,28 +207,47 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: string; retur
                     itemCount={activeItems.reduce((acc, i) => acc + i.kuantitas, 0)}
                     productCount={activeItems.length}
                     total={activeTotalValue}
-                    onSubmit={handleSaveClick}
-                    onReset={() => {
-                        clearAll();
-                        toast.info("Daftar retur lokal berhasil dikosongkan.");
-                    }}
+                    onSubmit={handleFinalizeClick}
+                    onSecondarySubmit={handleSaveClick}
+                    onReset={handleResetClick}
                     isSubmitting={isPending}
-                    submitLabel="Simpan Retur"
+                    submitLabel="Proses Retur"
                     submitIcon={<IconCheck size={16} />}
+                    secondarySubmitLabel="Simpan Retur"
+                    secondarySubmitIcon={<IconUpload size={16} />}
                 />
 
                 {/* Return Finalize Dialog */}
-                {activeReturn && (
+                {(activeReturn || (isCurrentNew && isFinalizeOpen)) && (
                     <ReturnFinalizeDialog
                         open={isFinalizeOpen}
                         onOpenChange={setIsFinalizeOpen}
-                        returnObj={activeReturn}
-                        onSuccess={() => {
-                            clearAll();
-                            router.push("/admin/purchase/return");
-                        }}
+                        returnObj={activeReturn || ({
+                            nomor_retur: "Akan Dibuat Otomatis",
+                            total_nominal: activeTotalValue,
+                            supplier_uid: headerForm.watch("supplier_uid"),
+                            receiving_uid: headerForm.watch("receiving_uid"),
+                        } as unknown as PurchaseReturn)}
+                        onConfirm={handleFinalizeConfirm}
+                        isPending={isPending}
                     />
                 )}
+
+                {/* Reset Confirmation Dialog */}
+                <ConfirmDialog
+                    open={isResetDialogOpen}
+                    onOpenChange={setIsResetDialogOpen}
+                    title="Kosongkan Retur?"
+                    description="Apakah Anda yakin ingin mengosongkan seluruh daftar barang dan input form retur di halaman ini? Semua data belum tersimpan akan hilang."
+                    confirmText="Ya, Kosongkan"
+                    cancelText="Batal"
+                    variant="danger"
+                    onConfirm={() => {
+                        clearAll();
+                        setIsResetDialogOpen(false);
+                        toast.info("Daftar retur lokal berhasil dikosongkan.");
+                    }}
+                />
             </div>
         </FormProvider>
     );
@@ -256,27 +266,12 @@ function ReturnPageSkeleton() {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-8 space-y-6">
-                    {/* Header card skeleton */}
                     <div className="bg-white border border-slate-100 rounded-2xl p-5 space-y-4">
                         <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-10 rounded-xl" />
                         <div className="grid grid-cols-2 gap-4">
                             <Skeleton className="h-10 rounded-xl" />
                             <Skeleton className="h-10 rounded-xl" />
                         </div>
-                        <Skeleton className="h-10 rounded-xl" />
-                    </div>
-
-                    {/* Scanner skeleton */}
-                    <div className="bg-white border border-slate-100 rounded-2xl p-5">
-                        <Skeleton className="h-10 rounded-xl" />
-                    </div>
-
-                    {/* Table skeleton */}
-                    <div className="bg-white border border-slate-100 rounded-2xl p-5 space-y-2">
-                        <Skeleton className="h-8 w-full" />
-                        <Skeleton className="h-12 w-full" />
-                        <Skeleton className="h-12 w-full" />
                     </div>
                 </div>
                 <div className="lg:col-span-4">

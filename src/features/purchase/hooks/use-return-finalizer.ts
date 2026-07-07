@@ -10,6 +10,8 @@ import {
     useCreatePurchaseReturnHeader,
     useUpdatePurchaseReturn,
     useBulkReplacePurchaseReturnItems,
+    useBulkCreatePurchaseReturn,
+    useFinalizePurchaseReturn,
 } from "@/features/purchase/api/purchase-api";
 import type { PurchaseReturnHeaderInput } from "@/features/purchase/schemas/return-schema";
 import type { PurchaseItemLocal, PurchaseReturn } from "@/features/purchase/types";
@@ -42,6 +44,8 @@ export function useReturnFinalizer({
     const createHeader = useCreatePurchaseReturnHeader();
     const updateReturn = useUpdatePurchaseReturn();
     const bulkReplace = useBulkReplacePurchaseReturnItems();
+    const bulkCreateReturn = useBulkCreatePurchaseReturn();
+    const finalizeReturn = useFinalizePurchaseReturn();
 
     const validateItems = (activeItems: PurchaseItemLocal[]) => {
         if (activeItems.length === 0) {
@@ -86,7 +90,7 @@ export function useReturnFinalizer({
 
         try {
             if (isCurrentNew) {
-                // 1. Create Return Header
+                // 1. Create Return Header draft
                 const res = await createHeader.mutateAsync(payloadHeader);
                 const newUid = res.data.uid;
 
@@ -96,11 +100,9 @@ export function useReturnFinalizer({
                     data: payloadItems,
                 });
 
-                toast.success("Daftar barang retur berhasil disimpan ke server!");
-                clearAll();
+                toast.success("Daftar barang retur draft berhasil disimpan!");
                 clearPurchaseItemsStore("new", "return");
                 onSaveSuccess(newUid, replaceRes.data);
-                router.push("/admin/purchase/return");
             } else {
                 // 1. Update Return Header
                 await updateReturn.mutateAsync({
@@ -114,15 +116,96 @@ export function useReturnFinalizer({
                     data: payloadItems,
                 });
 
-                toast.success("Perubahan barang retur berhasil disimpan!");
-                clearAll();
-                clearPurchaseItemsStore(currentId, "return");
+                toast.success("Perubahan barang retur draft berhasil disimpan!");
                 onSaveSuccess(currentId, replaceRes.data);
-                router.push("/admin/purchase/return");
             }
         } catch (err: unknown) {
             const errorObj = err as { message?: string };
             toast.error(errorObj.message || "Gagal menyimpan barang retur.");
+        }
+    };
+
+    const handleFinalizeConfirm = async (formData: {
+        resolution_type: "refund" | "credit" | "credit_note" | "exchange";
+        cash_account_uid?: string | null;
+        stock_receiving_uid?: string | null;
+        catatan_penyelesaian?: string | null;
+    }) => {
+        setIsSavingForFinalize(true);
+
+        const headerData = headerForm.getValues();
+        const activeItems = items.filter((i) => i.kuantitas > 0);
+
+        const payloadHeader = {
+            receiving_uid: headerData.receiving_uid,
+            supplier_uid: headerData.supplier_uid,
+            tanggal_retur: headerData.tanggal_retur,
+            catatan: headerData.catatan || null,
+        };
+
+        const payloadItems = activeItems.map((i) => ({
+            product_uid: i.product_uid,
+            kuantitas: i.kuantitas,
+            harga_beli: i.harga_estimasi,
+            alasan: i.alasan || "damaged",
+        }));
+
+        try {
+            if (isCurrentNew) {
+                const payload = {
+                    ...payloadHeader,
+                    status: "completed",
+                    resolution_type: formData.resolution_type,
+                    impact_type: formData.resolution_type,
+                    cash_account_uid: formData.resolution_type === "refund" ? formData.cash_account_uid : null,
+                    stock_receiving_uid: formData.resolution_type === "credit" ? formData.stock_receiving_uid : null,
+                    catatan_penyelesaian: formData.catatan_penyelesaian || null,
+                    items: payloadItems,
+                };
+
+                await bulkCreateReturn.mutateAsync(payload);
+
+                toast.success("Retur Pembelian berhasil diproses & diselesaikan!");
+                clearAll();
+                clearPurchaseItemsStore("new", "return");
+                router.push("/admin/purchase/return");
+            } else {
+                // 1. Save draft header & items
+                await updateReturn.mutateAsync({
+                    uid: currentId,
+                    data: payloadHeader,
+                });
+
+                await bulkReplace.mutateAsync({
+                    uid: currentId,
+                    data: { items: payloadItems },
+                });
+
+                // 2. Finalize
+                const finalizePayload = {
+                    resolution_type: formData.resolution_type,
+                    impact_type: formData.resolution_type,
+                    cash_account_uid: formData.resolution_type === "refund" ? formData.cash_account_uid : null,
+                    stock_receiving_uid: formData.resolution_type === "credit" ? formData.stock_receiving_uid : null,
+                    catatan_penyelesaian: formData.catatan_penyelesaian || null,
+                };
+
+                await finalizeReturn.mutateAsync({
+                    uid: currentId,
+                    data: finalizePayload,
+                });
+
+                toast.success("Retur Pembelian berhasil diproses & diselesaikan!");
+                clearAll();
+                clearPurchaseItemsStore(currentId, "return");
+                router.push("/admin/purchase/return");
+            }
+        } catch (err: unknown) {
+            const errorObj = err as { message?: string };
+            toast.error(errorObj.message || "Gagal memproses Retur Pembelian.");
+        } finally {
+            setIsSavingForFinalize(false);
+            setIsFinalizeOpen(false);
         }
     };
 
@@ -136,63 +219,7 @@ export function useReturnFinalizer({
             return;
         }
 
-        const data = headerForm.getValues();
-        const payloadHeader = {
-            receiving_uid: data.receiving_uid,
-            supplier_uid: data.supplier_uid,
-            tanggal_retur: data.tanggal_retur,
-            catatan: data.catatan || null,
-        };
-
-        const payloadItems = {
-            items: activeItems.map((i) => ({
-                product_uid: i.product_uid,
-                kuantitas: i.kuantitas,
-                harga_beli: i.harga_estimasi,
-                alasan: i.alasan || "damaged",
-            })),
-        };
-
-        setIsSavingForFinalize(true);
-
-        try {
-            if (isCurrentNew) {
-                // 1. Create Return Header
-                const res = await createHeader.mutateAsync(payloadHeader);
-                const newUid = res.data.uid;
-
-                // 2. Submit items
-                const replaceRes = await bulkReplace.mutateAsync({
-                    uid: newUid,
-                    data: payloadItems,
-                });
-
-                clearAll();
-                clearPurchaseItemsStore("new", "return");
-                onSaveSuccess(newUid, replaceRes.data);
-                setIsFinalizeOpen(true);
-            } else {
-                // 1. Update Return Header
-                await updateReturn.mutateAsync({
-                    uid: currentId,
-                    data: payloadHeader,
-                });
-
-                // 2. Submit items
-                const replaceRes = await bulkReplace.mutateAsync({
-                    uid: currentId,
-                    data: payloadItems,
-                });
-
-                onSaveSuccess(currentId, replaceRes.data);
-                setIsFinalizeOpen(true);
-            }
-        } catch (err: unknown) {
-            const errorObj = err as { message?: string };
-            toast.error(errorObj.message || "Gagal menyimpan barang retur sebelum finalisasi.");
-        } finally {
-            setIsSavingForFinalize(false);
-        }
+        setIsFinalizeOpen(true);
     };
 
     const handleSaveClick = () => {
@@ -206,6 +233,8 @@ export function useReturnFinalizer({
         createHeader.isPending ||
         updateReturn.isPending ||
         bulkReplace.isPending ||
+        bulkCreateReturn.isPending ||
+        finalizeReturn.isPending ||
         isSavingForFinalize;
 
     return {
@@ -215,5 +244,6 @@ export function useReturnFinalizer({
         isPending,
         handleSaveClick,
         handleFinalizeClick,
+        handleFinalizeConfirm,
     };
 }

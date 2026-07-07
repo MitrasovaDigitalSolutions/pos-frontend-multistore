@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { IconArrowLeft, IconBarcode, IconCheck, IconInfoCircle, IconX } from "@tabler/icons-react";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ProductFormDialog } from "@/features/products/components/product-form-dialog";
@@ -74,6 +74,16 @@ export function POItemsPage({ poId }: POItemsPageProps) {
 
 function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder }) {
     const router = useAppRouter();
+    const [activeId, setActiveId] = useState(poId);
+    const [activeOrder, setActiveOrder] = useState<PurchaseOrder | undefined>(order);
+
+    const handleSaveSuccess = (uid: string, responseData?: PurchaseOrder) => {
+        window.history.replaceState(null, "", `/admin/purchase/order/${uid}/items`);
+        setActiveId(uid);
+        if (responseData) {
+            setActiveOrder(responseData);
+        }
+    };
 
     const {
         currentId,
@@ -91,6 +101,10 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
         suppliersLoading,
         supplierOptions,
         isSubmitting,
+        isConfirmOpen,
+        setIsConfirmOpen,
+        onProcessClick,
+        handleFinalizeConfirm,
         productForm,
         headerForm,
         handleProductFound,
@@ -101,8 +115,9 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
         updateItem,
         removeItem,
     } = usePoFlow({
-        poId,
-        order,
+        poId: activeId,
+        order: activeOrder,
+        onSaveSuccess: handleSaveSuccess,
     });
 
     const isFirstLoad = useRef(true);
@@ -117,8 +132,8 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
             return;
         }
 
-        if (order?.items && order.items.length > 0) {
-            const dbItems: PurchaseItemLocal[] = order.items.map((item) => ({
+        if (activeOrder?.items && activeOrder.items.length > 0) {
+            const dbItems: PurchaseItemLocal[] = activeOrder.items.map((item) => ({
                 temp_uid: `${Date.now()}-${item.uid}-${Math.random().toString(36).substring(2, 5)}`,
                 product_uid: item.product_uid,
                 barcode: item.product?.barcode || null,
@@ -131,7 +146,7 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
         } else {
             isFirstLoad.current = false;
         }
-    }, [order, isCurrentNew, store]);
+    }, [activeOrder, isCurrentNew, store]);
 
     return (
         <FormProvider {...productForm}>
@@ -149,7 +164,7 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
                         </Button>
                         <div>
                             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                <span>{isCurrentNew ? "Buat Purchase Order Baru" : `Edit Barang PO — ${order?.nomor_po}`}</span>
+                                <span>{isCurrentNew ? "Buat Purchase Order Baru" : `Edit Barang PO — ${activeOrder?.nomor_po}`}</span>
                                 <span className="px-2 py-0.5 rounded-full text-[9px] font-bold border bg-amber-50 text-amber-700 border-amber-100">
                                     Draft
                                 </span>
@@ -247,14 +262,17 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
 
                 {/* Sticky Bottom Submit Bar */}
                 <BulkSubmitBar
-                    onSubmit={handleSaveClick}
+                    onSubmit={onProcessClick}
+                    onSecondarySubmit={handleSaveClick}
                     onReset={handleReset}
                     isSubmitting={isSubmitting}
                     itemCount={itemCount}
                     total={totalValue}
                     productCount={uniqueProductCount}
-                    submitLabel="Simpan PO"
+                    submitLabel="Proses PO"
                     submitIcon={<IconCheck size={16} />}
+                    secondarySubmitLabel="Simpan PO"
+                    secondarySubmitIcon={<IconCheck size={16} />}
                 />
 
                 {/* Create Product Dialog */}
@@ -267,6 +285,19 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
                         handleProductFound(product);
                     }}
                     infoMessage={notFoundQuery ? `Produk "${notFoundQuery}" tidak ditemukan. Silakan buat baru.` : undefined}
+                />
+
+                {/* Process Confirmation Dialog */}
+                <ConfirmDialog
+                    open={isConfirmOpen}
+                    onOpenChange={setIsConfirmOpen}
+                    title="Proses Purchase Order?"
+                    description="Apakah Anda yakin ingin memproses Purchase Order ini? Status akan berubah menjadi ordered dan data tidak dapat diubah lagi."
+                    confirmText="Ya, Proses"
+                    cancelText="Batal"
+                    variant="success"
+                    onConfirm={handleFinalizeConfirm}
+                    isLoading={isSubmitting}
                 />
 
                 {/* Reset Confirmation Dialog */}

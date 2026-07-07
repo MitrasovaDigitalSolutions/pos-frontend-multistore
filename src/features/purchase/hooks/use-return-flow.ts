@@ -214,6 +214,7 @@ export function useReturnFlow({
         handleProductFound: scannerState.handleProductFound,
         handleSaveClick: finalizerState.handleSaveClick,
         handleFinalizeClick: finalizerState.handleFinalizeClick,
+        handleFinalizeConfirm: finalizerState.handleFinalizeConfirm,
         clearAll,
         updateItem,
         removeItem,

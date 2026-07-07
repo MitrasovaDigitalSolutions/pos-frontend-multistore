@@ -11,9 +11,10 @@ import { usePoFinalizer } from "./use-po-finalizer";
 interface UsePoFlowProps {
     poId: string;
     order?: PurchaseOrder;
+    onSaveSuccess: (uid: string, responseData?: PurchaseOrder) => void;
 }
 
-export function usePoFlow({ poId, order }: UsePoFlowProps) {
+export function usePoFlow({ poId, order, onSaveSuccess }: UsePoFlowProps) {
     const [currentId, setCurrentId] = useState(poId);
     const [currentOrder, setCurrentOrder] = useState<PurchaseOrder | undefined>(order);
     const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
@@ -68,6 +69,7 @@ export function usePoFlow({ poId, order }: UsePoFlowProps) {
         items,
         clearAll,
         headerForm: headerState.headerForm,
+        onSaveSuccess,
     });
 
     const handleReset = () => {
@@ -96,6 +98,10 @@ export function usePoFlow({ poId, order }: UsePoFlowProps) {
 
         // Submission
         isSubmitting: finalizerState.isSubmitting,
+        isConfirmOpen: finalizerState.isConfirmOpen,
+        setIsConfirmOpen: finalizerState.setIsConfirmOpen,
+        onProcessClick: finalizerState.onProcessClick,
+        handleFinalizeConfirm: finalizerState.handleFinalizeConfirm,
 
         // Forms
         productForm: scannerState.productForm,
