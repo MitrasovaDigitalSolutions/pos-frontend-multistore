@@ -1,41 +1,40 @@
 "use client";
 
-import { PageLoader } from "@/components/feedback/page-loader";
 import { Button } from "@/components/ui/button";
-import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
-import { IconArrowLeft, IconBarcode, IconEdit, IconCircleCheck } from "@tabler/icons-react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+import { IconArrowLeft, IconBarcode, IconCircleCheck, IconCheck } from "@tabler/icons-react";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ReturnHeaderDialog } from "../return-header-dialog";
+import { useState } from "react";
+import { FormProvider } from "react-hook-form";
 import { ReturnFinalizeDialog } from "../return-finalize-dialog";
 import { toast } from "sonner";
-import {
-    useBulkReplacePurchaseReturnItems,
-    usePurchaseReturnDetail,
-    useReturnableItems,
-    useScanReturnProduct
-} from "../../../api/purchase-api";
-import type { PurchaseItemLocal, PurchaseReturn } from "../../../types";
-import type { Product } from "@/features/products/types";
+import { usePurchaseReturnDetail } from "../../../api/purchase-api";
+import type { PurchaseReturn } from "../../../types";
 import { BarcodeInput } from "@/components/shared/barcode-input";
 import { BulkSubmitBar } from "../../shared/bulk-submit-bar";
 import { RETURN_STATUS } from "@/constants/purchase";
 import { ReturnItemsTable } from "./return-items-table";
 import { ReturnInstructionPanel } from "./return-instruction-panel";
+import { useReturnFlow } from "@/features/purchase/hooks/use-return-flow";
+import { ReturnHeaderCard } from "./return-header-card";
 
 interface ReturnItemsPageProps {
     returnId: string;
 }
 
 export function ReturnItemsPage({ returnId }: ReturnItemsPageProps) {
-    const { data: returnObj, isLoading: returnLoading, error } = usePurchaseReturnDetail(returnId);
+    const isNew = !returnId || returnId === "new";
+    const { data: returnObj, isLoading: returnLoading, error } = usePurchaseReturnDetail(
+        isNew ? null : returnId
+    );
     const router = useAppRouter();
 
     if (returnLoading) {
-        return <PageLoader message="Memuat detail Dokumen Retur..." />;
+        return <ReturnPageSkeleton />;
     }
 
-    if (error || !returnObj) {
+    if (error || (!isNew && !returnObj)) {
         return (
             <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm max-w-md mx-auto mt-12">
                 <p className="text-sm font-bold text-slate-800">Error</p>
@@ -52,7 +51,7 @@ export function ReturnItemsPage({ returnId }: ReturnItemsPageProps) {
         );
     }
 
-    if (returnObj.status !== RETURN_STATUS.DRAFT) {
+    if (returnObj && returnObj.status !== RETURN_STATUS.DRAFT) {
         return (
             <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm max-w-md mx-auto mt-12">
                 <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
@@ -72,227 +71,46 @@ export function ReturnItemsPage({ returnId }: ReturnItemsPageProps) {
     return <ReturnItemsContainer returnId={returnId} returnObj={returnObj} />;
 }
 
-function ReturnItemsContainer({ returnId, returnObj }: { returnId: string; returnObj: PurchaseReturn }) {
-    const [isEditHeaderOpen, setIsEditHeaderOpen] = useState(false);
-    const [isFinalizeOpen, setIsFinalizeOpen] = useState(false);
-    const [isSavingForFinalize, setIsSavingForFinalize] = useState(false);
+function ReturnItemsContainer({ returnId, returnObj }: { returnId: string; returnObj?: PurchaseReturn }) {
     const router = useAppRouter();
-    const store = getPurchaseItemsStore(returnId, "return");
-    const items = store((state) => state.items);
-    const addItem = store((state) => state.addItem);
-    const clearAll = store((state) => state.clearAll);
-    const updateItem = store((state) => state.updateItem);
+    const [activeId, setActiveId] = useState(returnId);
+    const [activeReturn, setActiveReturn] = useState<PurchaseReturn | undefined>(returnObj);
 
-    const bulkReplace = useBulkReplacePurchaseReturnItems();
-    const scanMutation = useScanReturnProduct();
-
-    // Fetch returnable items for the linked receiving doc
-    const { data: returnableItems = [] } = useReturnableItems(
-        returnObj.stock_receiving_uid
-    );
-
-    const isFirstLoad = useRef(true);
-
-    // Build returnable limits map for validation
-    const returnLimitsMap = useMemo(() => {
-        const map: Record<string, { sisa: number; nama: string; harga: number }> = {};
-        if (returnableItems) {
-            returnableItems.forEach((item) => {
-                map[String(item.product_uid)] = {
-                    sisa: item.kuantitas_sisa,
-                    nama: item.product?.nama || "Produk",
-                    harga: item.harga_beli,
-                };
-            });
-        }
-        return map;
-    }, [returnableItems]);
-
-    // Initialize items: load existing from return draft DB OR pre-populate with returnable items from receiving (as 0 qty)
-    useEffect(() => {
-        if (!isFirstLoad.current) return;
-
-        if (store.getState().items.length > 0) {
-            isFirstLoad.current = false;
-            return;
-        }
-
-        // 1. If we have existing return items in draft, load them
-        if (returnObj.items && returnObj.items.length > 0) {
-            const dbItems: PurchaseItemLocal[] = returnObj.items.map((item) => ({
-                temp_uid: `${Date.now()}-${item.uid}-${Math.random().toString(36).substring(2, 5)}`,
-                product_uid: String(item.product_uid),
-                barcode: item.product?.barcode || null,
-                nama: item.product?.nama || "Produk Tanpa Nama",
-                kuantitas: item.kuantitas,
-                harga_estimasi: item.harga_beli,
-                alasan: item.alasan || "damaged",
-            }));
-            store.setState({ items: dbItems });
-            isFirstLoad.current = false;
-        }
-        // 2. Else pre-populate items with returnable items from receiving (start with 0 qty)
-        else if (returnObj.stock_receiving_uid) {
-            if (returnableItems && returnableItems.length > 0) {
-                const initItems: PurchaseItemLocal[] = returnableItems.map((item) => ({
-                    temp_uid: `${Date.now()}-${item.product_uid}-${Math.random().toString(36).substring(2, 5)}`,
-                    product_uid: String(item.product_uid),
-                    barcode: item.product?.barcode || null,
-                    nama: item.product?.nama || "Produk Tanpa Nama",
-                    kuantitas: 0,
-                    harga_estimasi: item.harga_beli,
-                    alasan: "damaged",
-                }));
-                store.setState({ items: initItems });
-                isFirstLoad.current = false;
-            }
-        }
-        // 3. Otherwise
-        else {
-            isFirstLoad.current = false;
-        }
-    }, [returnObj.items, returnObj.stock_receiving_uid, returnableItems, store]);
-
-    const handleProductFound = async (product: Product) => {
-        if (!returnObj.stock_receiving_uid) {
-            toast.error("Referensi Penerimaan belum ditentukan.");
-            return;
-        }
-
-        try {
-            const res = await scanMutation.mutateAsync({
-                receiving_uid: returnObj.stock_receiving_uid,
-                barcode: product.barcode || "",
-            });
-
-            if (!res || !res.data || !res.data.product) {
-                toast.error(`Produk "${product.nama}" tidak terdaftar atau tidak valid dalam Penerimaan terkait.`);
-                return;
-            }
-
-            const scanResult = res.data;
-            const maxLimit = scanResult.kuantitas_sisa;
-
-            // Find item in Zustand store
-            const existingItem = items.find((i) => i.product_uid === product.uid);
-            const currentQty = existingItem ? existingItem.kuantitas : 0;
-
-            if (currentQty >= maxLimit) {
-                toast.error(`Kuantitas retur untuk "${product.nama}" mencapai batas sisa faktur penerimaan (${maxLimit} pcs).`);
-                return;
-            }
-
-            if (existingItem) {
-                updateItem(existingItem.temp_uid, { kuantitas: currentQty + 1 });
-                toast.success(`Menambahkan 1 pcs "${product.nama}".`);
-            } else {
-                addItem({
-                    product_uid: product.uid,
-                    barcode: product.barcode,
-                    nama: product.nama,
-                    harga_estimasi: product.harga_beli || 0,
-                    alasan: "damaged"
-                });
-                toast.success(`"${product.nama}" berhasil ditambahkan ke keranjang retur.`);
-            }
-        } catch (err: unknown) {
-            const errorObj = err as { message?: string };
-            toast.error(errorObj.message || `Gagal memverifikasi produk "${product.nama}" pada Penerimaan.`);
+    const handleSaveSuccess = (uid: string, responseData?: PurchaseReturn) => {
+        setActiveId(uid);
+        if (responseData) {
+            setActiveReturn(responseData);
         }
     };
 
-    const handleSave = () => {
-        // Filter out items that have 0 or less quantity (user hasn't returned them)
-        const activeItems = items.filter((i) => i.kuantitas > 0);
+    const {
+        isCurrentNew,
+        items,
+        activeItems,
+        activeTotalValue,
+        returnLimitsMap,
+        suppliersLoading,
+        supplierOptions,
+        receivingsLoading,
+        receivingOptions,
+        receivingId,
+        isFinalizeOpen,
+        setIsFinalizeOpen,
+        isSavingForFinalize,
+        isPending,
+        headerForm,
+        handleProductFound,
+        handleSaveClick,
+        handleFinalizeClick,
+        clearAll,
+        updateItem,
+    } = useReturnFlow({
+        returnId: activeId,
+        returnObj: activeReturn,
+        onSaveSuccess: handleSaveSuccess,
+    });
 
-        if (activeItems.length === 0) {
-            toast.error("Harap isi kuantitas minimal 1 pcs pada salah satu barang yang ingin diretur.");
-            return;
-        }
 
-        // Validate max return limits
-        for (const item of activeItems) {
-            const limit = returnLimitsMap[item.product_uid];
-            if (limit && item.kuantitas > limit.sisa) {
-                toast.error(`Jumlah retur "${item.nama}" (${item.kuantitas} pcs) melebihi batas yang dapat diretur (${limit.sisa} pcs).`);
-                return;
-            }
-            if (!item.alasan) {
-                toast.error(`Harap pilih alasan retur untuk "${item.nama}".`);
-                return;
-            }
-        }
-
-        const payload = {
-            items: activeItems.map((i) => ({
-                product_uid: i.product_uid,
-                kuantitas: i.kuantitas,
-                harga_beli: i.harga_estimasi,
-                alasan: i.alasan || "damaged",
-            })),
-        };
-
-        bulkReplace.mutate(
-            { uid: returnId, data: payload },
-            {
-                onSuccess: () => {
-                    toast.success("Daftar barang retur berhasil disimpan ke server!");
-                    clearAll();
-                    router.push("/admin/purchase/return");
-                },
-                onError: (err) => {
-                    toast.error(err.message || "Gagal menyimpan barang retur ke server.");
-                },
-            }
-        );
-    };
-
-    const handleFinalizeClick = () => {
-        // Filter out items that have 0 or less quantity (user hasn't returned them)
-        const activeItems = items.filter((i) => i.kuantitas > 0);
-
-        if (activeItems.length === 0) {
-            toast.error("Harap isi kuantitas minimal 1 pcs pada salah satu barang yang ingin diretur.");
-            return;
-        }
-
-        // Validate max return limits
-        for (const item of activeItems) {
-            const limit = returnLimitsMap[item.product_uid];
-            if (limit && item.kuantitas > limit.sisa) {
-                toast.error(`Jumlah retur "${item.nama}" (${item.kuantitas} pcs) melebihi batas yang dapat diretur (${limit.sisa} pcs).`);
-                return;
-            }
-            if (!item.alasan) {
-                toast.error(`Harap pilih alasan retur untuk "${item.nama}".`);
-                return;
-            }
-        }
-
-        const payload = {
-            items: activeItems.map((i) => ({
-                product_uid: i.product_uid,
-                kuantitas: i.kuantitas,
-                harga_beli: i.harga_estimasi,
-                alasan: i.alasan || "damaged",
-            })),
-        };
-
-        setIsSavingForFinalize(true);
-        bulkReplace.mutate(
-            { uid: returnId, data: payload },
-            {
-                onSuccess: () => {
-                    setIsSavingForFinalize(false);
-                    setIsFinalizeOpen(true);
-                },
-                onError: (err) => {
-                    setIsSavingForFinalize(false);
-                    toast.error(err.message || "Gagal menyimpan barang retur ke server sebelum finalisasi.");
-                },
-            }
-        );
-    };
 
     const reasons = [
         { value: "damaged", label: "Rusak / Cacat" },
@@ -301,127 +119,170 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: string; retur
         { value: "other", label: "Lainnya" },
     ];
 
-    const isPending = bulkReplace.isPending;
-
-    // Calculate sum of active return items (where quantity > 0)
-    const activeItems = items.filter((i) => i.kuantitas > 0);
-    const activeTotalValue = activeItems.reduce((sum, i) => sum + i.kuantitas * i.harga_estimasi, 0);
-
     return (
-        <div className="space-y-6">
-            {/* Header info / Breadcrumb */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-                <div className="flex items-center gap-4">
-                    <Button
-                        type="button"
-                        onClick={() => router.push("/admin/purchase/return")}
-                        variant="outline"
-                        className="p-2 h-9 w-9 rounded-xl border-slate-200 text-slate-500 hover:text-slate-900 bg-white cursor-pointer animate-in slide-in-from-left duration-200"
-                    >
-                        <IconArrowLeft size={18} />
-                    </Button>
-                    <div>
-                        <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                            <span>Input Barang Retur — {returnObj.nomor_retur}</span>
-                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold border bg-amber-50 text-amber-700 border-amber-100">
-                                Draft
-                            </span>
-                        </h2>
-                        <p className="text-xs text-slate-400 font-sans">
-                            Faktur Penerimaan: <span className="font-semibold text-slate-600">{returnObj.stock_receiving?.nomor_penerimaan || "—"}</span> | Supplier: <span className="font-semibold text-slate-600">{returnObj.supplier?.nama || "—"}</span>
-                        </p>
+        <FormProvider {...headerForm}>
+            <div className="space-y-6">
+                {/* Header info / Breadcrumb */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                    <div className="flex items-center gap-4">
+                        <Button
+                            type="button"
+                            onClick={() => router.push("/admin/purchase/return")}
+                            variant="outline"
+                            className="p-2 h-9 w-9 rounded-xl border-slate-200 text-slate-500 hover:text-slate-900 bg-white cursor-pointer"
+                        >
+                            <IconArrowLeft size={18} />
+                        </Button>
+                        <div>
+                            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                <span>{isCurrentNew ? "Buat Retur Pembelian Baru" : `Input Barang Retur — ${activeReturn?.nomor_retur}`}</span>
+                                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold border bg-amber-50 text-amber-700 border-amber-100">
+                                    Draft
+                                </span>
+                            </h2>
+                            <p className="text-xs text-slate-400 font-sans">
+                                Lengkapi referensi faktur penerimaan dan barang yang ingin dikembalikan.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <Button
+                            onClick={handleFinalizeClick}
+                            disabled={activeItems.length === 0 || isPending}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-10 px-5 shadow-md shadow-emerald-600/10 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0 border-none transition-all hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            {isSavingForFinalize ? "Memproses..." : (
+                                <>
+                                    <IconCircleCheck size={16} /> Finalisasi Retur
+                                </>
+                            )}
+                        </Button>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <Button
-                        onClick={() => setIsEditHeaderOpen(true)}
-                        variant="outline"
-                        className="border-slate-200 text-slate-700 hover:text-slate-900 bg-white font-bold text-xs h-10 px-4 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0 transition-all hover:border-slate-300"
-                    >
-                        <IconEdit size={16} /> Edit Info
-                    </Button>
-
-                    <Button
-                        onClick={handleFinalizeClick}
-                        disabled={items.filter((i) => i.kuantitas > 0).length === 0 || bulkReplace.isPending || isSavingForFinalize}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-10 px-5 shadow-md shadow-emerald-600/10 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0 border-none transition-all hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                        {isSavingForFinalize ? "Memproses..." : (
-                            <>
-                                <IconCircleCheck size={16} /> Finalisasi Retur
-                            </>
-                        )}
-                    </Button>
-                </div>
-            </div>
-
-            {/* Scanning and Info Panel */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-in fade-in duration-300">
-                {/* Scanner and Items Table */}
-                <div className="lg:col-span-8 space-y-6">
-                    {/* Barcode scanner box */}
-                    <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4 hover:shadow-md transition-shadow duration-300">
-                        <div className="flex items-center gap-2 pb-3 border-b border-slate-50">
-                            <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg border border-emerald-100/30">
-                                <IconBarcode size={18} />
+                {/* Scanning and Info Panel */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    {/* Scanner and Items Table */}
+                    <div className="lg:col-span-8 space-y-6">
+                        {/* Barcode scanner box */}
+                        <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
+                            <div className="flex items-center gap-2 pb-3 border-b border-slate-50">
+                                <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg border border-emerald-100/30">
+                                    <IconBarcode size={18} />
+                                </div>
+                                <h3 className="text-xs font-bold text-slate-900 font-sans">Scan Barcode Retur</h3>
                             </div>
-                            <h3 className="text-xs font-bold text-slate-900 font-sans">Scan Barcode Retur</h3>
+
+                            <BarcodeInput
+                                onProductFound={handleProductFound}
+                                onError={(msg) => toast.error(msg)}
+                                disabled={isPending || !receivingId}
+                                placeholder={receivingId ? "Scan barcode distributor atau masukkan kode produk..." : "Harap pilih referensi faktur penerimaan terlebih dahulu..."}
+                            />
                         </div>
 
-                        <BarcodeInput
-                            onProductFound={handleProductFound}
-                            onError={(msg) => toast.error(msg)}
-                            disabled={isPending}
-                            placeholder="Scan barcode distributor atau masukkan kode produk..."
-                        />
+                        {/* Table of items */}
+                        <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden pb-24">
+                            <ReturnItemsTable
+                                items={items}
+                                isPending={isPending}
+                                updateItem={updateItem}
+                                returnLimitsMap={returnLimitsMap}
+                                reasons={reasons}
+                                activeItems={activeItems}
+                                activeTotalValue={activeTotalValue}
+                            />
+                        </div>
                     </div>
 
-                    {/* Table of items */}
-                    <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden pb-24 hover:shadow-md transition-shadow duration-300">
-                        <ReturnItemsTable
-                            items={items}
-                            isPending={isPending}
-                            updateItem={updateItem}
-                            returnLimitsMap={returnLimitsMap}
-                            reasons={reasons}
-                            activeItems={activeItems}
-                            activeTotalValue={activeTotalValue}
+                    {/* Sidebar Info/Instruction */}
+                    <div className="lg:col-span-4 space-y-6">
+                        <ReturnHeaderCard
+                            form={headerForm}
+                            supplierOptions={supplierOptions}
+                            suppliersLoading={suppliersLoading}
+                            receivingOptions={receivingOptions}
+                            receivingsLoading={receivingsLoading}
+                            receivingId={receivingId}
+                            disabled={isPending}
                         />
+                        <ReturnInstructionPanel />
                     </div>
                 </div>
 
-                {/* Sidebar Info/Instruction */}
-                <div className="lg:col-span-4 space-y-6 font-sans animate-in slide-in-from-right duration-300">
-                    <ReturnInstructionPanel />
+                {/* Sticky Bottom Bar */}
+                <BulkSubmitBar
+                    itemCount={activeItems.reduce((acc, i) => acc + i.kuantitas, 0)}
+                    productCount={activeItems.length}
+                    total={activeTotalValue}
+                    onSubmit={handleSaveClick}
+                    onReset={() => {
+                        clearAll();
+                        toast.info("Daftar retur lokal berhasil dikosongkan.");
+                    }}
+                    isSubmitting={isPending}
+                    submitLabel="Simpan Retur"
+                    submitIcon={<IconCheck size={16} />}
+                />
+
+                {/* Return Finalize Dialog */}
+                {activeReturn && (
+                    <ReturnFinalizeDialog
+                        open={isFinalizeOpen}
+                        onOpenChange={setIsFinalizeOpen}
+                        returnObj={activeReturn}
+                        onSuccess={() => {
+                            clearAll();
+                            router.push("/admin/purchase/return");
+                        }}
+                    />
+                )}
+            </div>
+        </FormProvider>
+    );
+}
+
+function ReturnPageSkeleton() {
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center gap-4">
+                <Skeleton className="h-9 w-9 rounded-xl" />
+                <div className="space-y-2">
+                    <Skeleton className="h-5 w-48" />
+                    <Skeleton className="h-3 w-72" />
                 </div>
             </div>
 
-            {/* Sticky Bottom Bar */}
-            <BulkSubmitBar
-                itemCount={activeItems.reduce((acc, i) => acc + i.kuantitas, 0)}
-                productCount={activeItems.length}
-                total={activeTotalValue}
-                onSubmit={handleSave}
-                onReset={clearAll}
-                isSubmitting={isPending}
-            />
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-8 space-y-6">
+                    {/* Header card skeleton */}
+                    <div className="bg-white border border-slate-100 rounded-2xl p-5 space-y-4">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-10 rounded-xl" />
+                        <div className="grid grid-cols-2 gap-4">
+                            <Skeleton className="h-10 rounded-xl" />
+                            <Skeleton className="h-10 rounded-xl" />
+                        </div>
+                        <Skeleton className="h-10 rounded-xl" />
+                    </div>
 
-            <ReturnHeaderDialog
-                open={isEditHeaderOpen}
-                onOpenChange={setIsEditHeaderOpen}
-                returnObj={returnObj}
-            />
+                    {/* Scanner skeleton */}
+                    <div className="bg-white border border-slate-100 rounded-2xl p-5">
+                        <Skeleton className="h-10 rounded-xl" />
+                    </div>
 
-            <ReturnFinalizeDialog
-                open={isFinalizeOpen}
-                onOpenChange={setIsFinalizeOpen}
-                returnObj={returnObj}
-                onSuccess={() => {
-                    clearAll();
-                    router.push("/admin/purchase/return");
-                }}
-            />
+                    {/* Table skeleton */}
+                    <div className="bg-white border border-slate-100 rounded-2xl p-5 space-y-2">
+                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-12 w-full" />
+                    </div>
+                </div>
+                <div className="lg:col-span-4">
+                    <Skeleton className="h-44 rounded-2xl" />
+                </div>
+            </div>
         </div>
     );
 }
