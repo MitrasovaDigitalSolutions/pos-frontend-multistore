@@ -6,7 +6,7 @@ import { Scrollable } from "@/components/ui/scrollable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCashDrawerDetail } from "@/features/checkout/api/cash-drawer-api";
 import { cn } from "@/lib/utils";
-import { IconCash, IconLoader2 } from "@tabler/icons-react";
+import { IconCash, IconLoader2, IconCopy, IconCheck } from "@tabler/icons-react";
 import { SessionSummaryTab } from "./session-summary-tab";
 import { SessionMovementsTab } from "./session-movements-tab";
 import { SessionTransactionsTab } from "./session-transactions-tab";
@@ -25,6 +25,7 @@ export function SessionDetailDialog({
     sessionId,
 }: SessionDetailDialogProps) {
     const [activeTab, setActiveTab] = useState<TabType>("summary");
+    const [copied, setCopied] = useState(false);
 
     const { data: detailData, isLoading, refetch } = useCashDrawerDetail(sessionId);
     const session = detailData?.data;
@@ -34,9 +35,19 @@ export function SessionDetailDialog({
         if (open) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setActiveTab("summary");
+            setCopied(false);
             refetch();
         }
     }, [open, refetch]);
+
+    const handleCopy = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (session?.uid) {
+            navigator.clipboard.writeText(session.uid);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -67,15 +78,26 @@ export function SessionDetailDialog({
             open={open}
             onOpenChange={onOpenChange}
             title={
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                     <div className={cn(
-                        "w-8 h-8 rounded-lg text-white flex items-center justify-center",
-                        session.status === "open" ? "bg-emerald-500" : "bg-slate-500"
+                        "w-9 h-9 rounded-xl text-white flex items-center justify-center shrink-0 shadow-sm transition-all duration-300",
+                        session.status === "open" ? "bg-emerald-500 shadow-emerald-100 animate-pulse" : "bg-slate-500 shadow-slate-100"
                     )}>
-                        <IconCash size={18} />
+                        <IconCash size={20} />
                     </div>
-                    <div className="text-left">
-                        <span className="block text-sm font-extrabold">Detail Sesi Kasir #{session.uid}</span>
+                    <div className="text-left min-w-0">
+                        <div className="flex items-center gap-1.5">
+                            <span className="block text-sm font-extrabold text-slate-900 leading-tight">
+                                Detail Sesi #{session.uid.slice(0, 8).toUpperCase()}
+                            </span>
+                            <button
+                                onClick={handleCopy}
+                                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors text-slate-400 hover:text-slate-650 focus:outline-none border-none bg-transparent cursor-pointer flex items-center justify-center shrink-0"
+                                title="Salin ID Sesi Lengkap"
+                            >
+                                {copied ? <IconCheck size={12} className="text-emerald-500" /> : <IconCopy size={12} />}
+                            </button>
+                        </div>
                         <span className="block text-[11px] font-medium text-slate-400 mt-0.5">
                             Kasir: <span className="text-slate-800 font-bold">{session.user?.name || "Kasir"}</span>
                         </span>
@@ -83,13 +105,13 @@ export function SessionDetailDialog({
                 </div>
             }
             headerRight={
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                     {session.status === "open" ? (
-                        <span className="bg-emerald-50 text-emerald-700 text-[9px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-100 uppercase tracking-wider">
+                        <span className="bg-emerald-50 text-emerald-700 text-[9px] font-black px-2.5 py-0.5 rounded-full border border-emerald-100 uppercase tracking-wider animate-pulse">
                             Terbuka
                         </span>
                     ) : (
-                        <span className="bg-slate-100 text-slate-700 text-[9px] font-bold px-2.5 py-0.5 rounded-full border border-slate-200 uppercase tracking-wider">
+                        <span className="bg-slate-100 text-slate-700 text-[9px] font-black px-2.5 py-0.5 rounded-full border border-slate-200 uppercase tracking-wider">
                             Ditutup
                         </span>
                     )}
