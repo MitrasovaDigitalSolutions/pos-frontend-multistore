@@ -172,6 +172,13 @@ export function clearPurchaseItemsStore(parentId: string, parentType: ParentType
     const key = `${parentType}-${parentId}`;
     const storageKey = `purchase-items-${parentType}-${parentId}`;
 
+    // Reset in-memory store state first (clears items + headerData)
+    // This prevents any lingering useWatch effects from re-persisting stale data
+    const existing = storeRegistry.get(key);
+    if (existing) {
+        existing.getState().clearAll();
+    }
+
     // Clear localStorage
     try {
         localStorage.removeItem(storageKey);

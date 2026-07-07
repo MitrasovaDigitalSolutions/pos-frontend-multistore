@@ -104,14 +104,24 @@ export function ReceivingHeaderCard({
 
     const watchedValues = useWatch({ control: methods.control });
 
-    // Save to Zustand store on any change to form values (only when document is new/unsaved)
+    const hasInitializedRef = useRef(false);
+    // Prevents re-writing stale form values back to the store after clearAll() is called
+    const isClearedRef = useRef(false);
+
+    // Detect when headerData is cleared externally (after we've initialized once)
+    // and block further auto-saves so the cleared state is not overwritten
     useEffect(() => {
-        if (isNew) {
+        if (isNew && headerData === null && hasInitializedRef.current) {
+            isClearedRef.current = true;
+        }
+    }, [isNew, headerData]);
+
+    // Save to Zustand store on any change to form values (only when document is new/unsaved and not yet cleared)
+    useEffect(() => {
+        if (isNew && !isClearedRef.current) {
             setHeaderData(watchedValues);
         }
     }, [watchedValues, isNew, setHeaderData]);
-
-    const hasInitializedRef = useRef(false);
 
     // Load initial defaults from Zustand store (if they exist) when creating a new receiving
     useEffect(() => {
