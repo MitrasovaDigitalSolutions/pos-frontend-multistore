@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
 
 import { getPurchaseItemsStore, selectItemCount, selectTotal } from "@/stores/purchase-items-store";
 import type { PurchaseItemLocal, Receiving } from "@/features/purchase/types";
@@ -21,6 +22,10 @@ export function useReceivingFlow({
     receiving,
     onSaveSuccess,
 }: UseReceivingFlowProps) {
+    const searchParams = useSearchParams();
+    const urlPoUid = searchParams?.get("po_uid") || null;
+    const isInitialPoLoadRef = useRef(true);
+
     // ─── Main States ──────────────────────────────────────────────────────────
     const [currentId, setCurrentId] = useState(receivingId);
     const [currentReceiving, setCurrentReceiving] = useState<Receiving | undefined>(receiving);
@@ -85,6 +90,61 @@ export function useReceivingFlow({
         poData: headerState.poData,
         poRemainingMap: headerState.poRemainingMap,
     });
+
+    // ─── PO Data Auto-population Effects ──────────────────────────────────────
+    const poItemsLoadedRef = useRef<Record<string, boolean>>({});
+    const prevPoIdRef = useRef<string | null>(headerState.poId);
+
+    // Effect A: Auto-populate items from PO when it loads
+    useEffect(() => {
+        if (isCurrentNew && headerState.poData?.items && items.length === 0) {
+            const poKey = headerState.poData.uid;
+            if (!poItemsLoadedRef.current[poKey]) {
+                poItemsLoadedRef.current[poKey] = true;
+                
+                let addedCount = 0;
+                headerState.poData.items.forEach((item) => {
+                    const sisa = item.sisa_belum_diterima;
+                    if (sisa > 0 && item.product) {
+                        addItem({
+                            product_uid: item.product_uid,
+                            barcode: item.product.barcode,
+                            nama: item.product.nama,
+                            harga_estimasi: item.harga_estimasi,
+                            kuantitas: sisa,
+                        });
+                        addedCount++;
+                    }
+                });
+
+                if (addedCount > 0) {
+                    toast.success(
+                        `Berhasil memuat ${addedCount} barang dari PO ${headerState.poData.nomor_po}.`
+                    );
+                }
+            }
+        }
+    }, [isCurrentNew, headerState.poData, items.length, addItem]);
+
+    // Effect B: Clear items if PO is changed manually, ignoring initial transition to urlPoUid
+    useEffect(() => {
+        if (isCurrentNew) {
+            const currentPoId = headerState.poId;
+            if (prevPoIdRef.current !== currentPoId) {
+                if (isInitialPoLoadRef.current) {
+                    if (currentPoId === urlPoUid) {
+                        isInitialPoLoadRef.current = false;
+                    } else {
+                        clearAll();
+                        isInitialPoLoadRef.current = false;
+                    }
+                } else {
+                    clearAll();
+                }
+                prevPoIdRef.current = currentPoId;
+            }
+        }
+    }, [isCurrentNew, headerState.poId, urlPoUid, clearAll]);
 
     // ─── Orchestrated Handlers ────────────────────────────────────────────────
     const handleUpdateItem = (

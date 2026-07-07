@@ -8,7 +8,14 @@ import { toast } from "sonner";
 interface UseReturnScannerProps {
     receivingId: string | null;
     items: PurchaseItemLocal[];
-    addItem: (product: { product_uid: string; barcode: string | null; nama: string; harga_estimasi: number; alasan?: string | null }) => void;
+    addItem: (product: {
+        product_uid: string;
+        barcode: string | null;
+        nama: string;
+        harga_estimasi: number;
+        kuantitas?: number;
+        alasan?: string | null;
+    }) => void;
     updateItem: (temp_uid: string, data: Partial<Pick<PurchaseItemLocal, "kuantitas" | "harga_estimasi" | "alasan">>) => void;
 }
 

@@ -13,7 +13,14 @@ interface UsePoScannerProps {
     currentId: string;
     currentOrder?: PurchaseOrder;
     items: PurchaseItemLocal[];
-    addItem: (product: { product_uid: string; barcode: string | null; nama: string; harga_estimasi: number }) => void;
+    addItem: (product: {
+        product_uid: string;
+        barcode: string | null;
+        nama: string;
+        harga_estimasi: number;
+        kuantitas?: number;
+        alasan?: string | null;
+    }) => void;
 }
 
 export function usePoScanner({

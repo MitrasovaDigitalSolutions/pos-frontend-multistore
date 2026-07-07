@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useForm, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useSearchParams } from "next/navigation";
 
 import { todayStr, formatToISO } from "@/lib/date-utils";
 import { PAYMENT_STATUS } from "@/constants/purchase";
@@ -28,10 +29,14 @@ export function useReceivingHeaderForm({
     currentReceiving,
     isCurrentNew,
 }: UseReceivingHeaderFormProps) {
+    const searchParams = useSearchParams();
+    const urlPoUid = searchParams?.get("po_uid") || null;
+    const initializedPoUidRef = useRef<string | null>(null);
+
     const headerForm = useForm<ReceivingHeaderInput>({
         resolver: zodResolver(receivingHeaderSchema) as unknown as Resolver<ReceivingHeaderInput>,
         defaultValues: {
-            purchase_order_uid: null,
+            purchase_order_uid: urlPoUid || null,
             supplier_uid: null,
             nomor_faktur: "",
             nilai_faktur: 0,
@@ -46,6 +51,7 @@ export function useReceivingHeaderForm({
     const store = getPurchaseItemsStore(currentId, "receiving");
     const headerData = store((state) => state.headerData);
     const setHeaderData = store((state) => state.setHeaderData);
+    const clearAll = store((state) => state.clearAll);
 
     const { data: suppliers = [], isLoading: suppliersLoading } = useAllSuppliers();
     const { data: outstandingPosData, isLoading: posLoading } = useOutstandingPurchaseOrders({
@@ -104,11 +110,32 @@ export function useReceivingHeaderForm({
 
     // ─── Header Form Sync Effects ─────────────────────────────────────────────
 
+    // 0. If urlPoUid is provided and it differs from the persisted PO, reset the store
+    useEffect(() => {
+        if (isCurrentNew && urlPoUid && initializedPoUidRef.current !== urlPoUid) {
+            initializedPoUidRef.current = urlPoUid;
+            const storedPoId = headerData?.purchase_order_uid;
+            if (storedPoId !== urlPoUid) {
+                clearAll();
+                setHeaderData({ purchase_order_uid: urlPoUid });
+                resetHeader({
+                    purchase_order_uid: urlPoUid,
+                    supplier_uid: null,
+                    nomor_faktur: "",
+                    nilai_faktur: 0,
+                    tanggal_terima: todayStr(),
+                    status_pembayaran: PAYMENT_STATUS.PENDING,
+                    catatan: "",
+                });
+            }
+        }
+    }, [isCurrentNew, urlPoUid, headerData?.purchase_order_uid, clearAll, setHeaderData, resetHeader]);
+
     // 1. Detect when headerData is cleared externally (e.g. via reset/clearAll)
     useEffect(() => {
         if (isCurrentNew && headerData === null) {
             resetHeader({
-                purchase_order_uid: null,
+                purchase_order_uid: urlPoUid || null,
                 supplier_uid: null,
                 nomor_faktur: "",
                 nilai_faktur: 0,
@@ -119,7 +146,7 @@ export function useReceivingHeaderForm({
             hasInitializedRef.current = false;
             isClearedRef.current = false;
         }
-    }, [isCurrentNew, headerData, resetHeader]);
+    }, [isCurrentNew, headerData, resetHeader, urlPoUid]);
 
     // 2. Save to Zustand store on any change to form values (only when new, not cleared, and form is dirty)
     const watchedHeaderValues = useWatch({ control: headerForm.control });
@@ -134,7 +161,7 @@ export function useReceivingHeaderForm({
         if (isCurrentNew && headerData && !hasInitializedRef.current) {
             hasInitializedRef.current = true;
             resetHeader({
-                purchase_order_uid: headerData.purchase_order_uid || null,
+                purchase_order_uid: urlPoUid || headerData.purchase_order_uid || null,
                 supplier_uid: headerData.supplier_uid || null,
                 nomor_faktur: headerData.nomor_faktur || "",
                 nilai_faktur: headerData.nilai_faktur || 0,
@@ -143,7 +170,7 @@ export function useReceivingHeaderForm({
                 catatan: headerData.catatan || "",
             });
         }
-    }, [isCurrentNew, headerData, resetHeader]);
+    }, [isCurrentNew, headerData, resetHeader, urlPoUid]);
 
     // 4. Synchronize default values when receiving loads/changes from backend draft
     useEffect(() => {
@@ -169,11 +196,13 @@ export function useReceivingHeaderForm({
             );
             if (selectedPo && selectedPo.supplier_uid) {
                 setHeaderValue("supplier_uid", String(selectedPo.supplier_uid));
+            } else if (poData && String(poData.uid) === purchaseOrderId && poData.supplier_uid) {
+                setHeaderValue("supplier_uid", String(poData.supplier_uid));
             } else if (currentReceiving && String(currentReceiving.purchase_order_uid) === purchaseOrderId) {
                 setHeaderValue("supplier_uid", currentReceiving.supplier_uid ? String(currentReceiving.supplier_uid) : null);
             }
         }
-    }, [purchaseOrderId, outstandingPosData, setHeaderValue, currentReceiving]);
+    }, [purchaseOrderId, outstandingPosData, poData, setHeaderValue, currentReceiving]);
 
     return {
         headerForm,
