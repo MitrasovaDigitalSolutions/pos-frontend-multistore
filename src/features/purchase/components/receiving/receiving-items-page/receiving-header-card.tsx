@@ -97,7 +97,7 @@ export function ReceivingHeaderCard({
         handleSubmit,
         reset,
         setValue,
-        formState: { errors },
+        formState: { errors, isDirty },
     } = methods;
 
     const purchaseOrderId = useWatch({ name: "purchase_order_uid", control: methods.control });
@@ -108,20 +108,30 @@ export function ReceivingHeaderCard({
     // Prevents re-writing stale form values back to the store after clearAll() is called
     const isClearedRef = useRef(false);
 
-    // Detect when headerData is cleared externally (after we've initialized once)
-    // and block further auto-saves so the cleared state is not overwritten
+    // Detect when headerData is cleared externally (e.g. via reset/clearAll)
+    // and reset the form to blank defaults.
     useEffect(() => {
-        if (isNew && headerData === null && hasInitializedRef.current) {
-            isClearedRef.current = true;
+        if (isNew && headerData === null) {
+            reset({
+                purchase_order_uid: null,
+                supplier_uid: null,
+                nomor_faktur: "",
+                nilai_faktur: 0,
+                tanggal_terima: todayStr(),
+                status_pembayaran: PAYMENT_STATUS.PENDING,
+                catatan: "",
+            });
+            hasInitializedRef.current = false;
+            isClearedRef.current = false;
         }
-    }, [isNew, headerData]);
+    }, [isNew, headerData, reset]);
 
-    // Save to Zustand store on any change to form values (only when document is new/unsaved and not yet cleared)
+    // Save to Zustand store on any change to form values (only when document is new/unsaved, not cleared, and form is dirty)
     useEffect(() => {
-        if (isNew && !isClearedRef.current) {
+        if (isNew && isDirty && !isClearedRef.current) {
             setHeaderData(watchedValues);
         }
-    }, [watchedValues, isNew, setHeaderData]);
+    }, [watchedValues, isNew, isDirty, setHeaderData]);
 
     // Load initial defaults from Zustand store (if they exist) when creating a new receiving
     useEffect(() => {
@@ -287,7 +297,7 @@ export function ReceivingHeaderCard({
                     </div>
                     <div>
                         <h4 className="text-xs font-bold text-slate-900">
-                            {isNew ? "Informasi Header" : "Edit Informasi Header"}
+                            {isNew ? "Informasi Penerimaan Barang" : "Edit Informasi Penerimaan Barang"}
                         </h4>
                         <p className="text-[10px] text-slate-400">
                             {isNew ? "Lengkapi info supplier & faktur" : "Data tersimpan & dapat diubah"}

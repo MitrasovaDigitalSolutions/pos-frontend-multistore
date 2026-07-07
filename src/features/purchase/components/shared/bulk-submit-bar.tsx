@@ -1,7 +1,8 @@
 "use client";
 
-import { IconUpload, IconTrashX, IconLoader2, IconAlertCircle } from "@tabler/icons-react";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { IconAlertCircle, IconLoader2, IconUpload } from "@tabler/icons-react";
+import { RefreshCcw } from "lucide-react";
 
 interface BulkSubmitBarProps {
     itemCount: number;
@@ -86,8 +87,8 @@ export function BulkSubmitBar({
                                 transition-all cursor-pointer
                             "
                         >
-                            <IconTrashX size={16} />
-                            <span>Reset Items</span>
+                            <RefreshCcw size={16} />
+                            <span>Reset</span>
                         </button>
 
                         {/* Secondary Submit (Simpan Penerimaan) */}
