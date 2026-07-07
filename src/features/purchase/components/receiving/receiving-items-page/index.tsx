@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import { PageLoader } from "@/components/feedback/page-loader";
 import { Button } from "@/components/ui/button";
 import { getPurchaseItemsStore, selectItemCount, selectTotal, clearPurchaseItemsStore } from "@/stores/purchase-items-store";
@@ -8,6 +8,7 @@ import { useAppRouter } from "@/hooks/use-app-router";
 import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { productSchema, type ProductInput } from "@/features/products/schemas/product-schema";
 import { ProductFormDialog } from "@/features/products/components/product-form-dialog";
 import { toast } from "sonner";
@@ -115,6 +116,7 @@ function ReceivingItemsContainer({
     const isNew = !receivingId || receivingId === "new";
 
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+    const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
     const [notFoundQuery, setNotFoundQuery] = useState("");
     const [saveMode, setSaveMode] = useState<"save" | "process">("process");
     const saveModeRef = useRef<"save" | "process">("process");
@@ -410,10 +412,7 @@ function ReceivingItemsContainer({
     };
 
     const handleReset = () => {
-        if (confirm("Apakah Anda yakin ingin mengosongkan daftar barang di halaman ini? Perubahan lokal akan hilang.")) {
-            clearAll();
-            toast.info("Daftar barang lokal berhasil dikosongkan.");
-        }
+        setIsResetDialogOpen(true);
     };
 
     // ─── Price Comparison & Finalization Logic ───
@@ -824,6 +823,21 @@ function ReceivingItemsContainer({
                         handleProductFound(product);
                     }}
                     infoMessage={notFoundQuery ? `Produk "${notFoundQuery}" tidak ditemukan. Silakan buat baru.` : undefined}
+                />
+
+                <ConfirmDialog
+                    open={isResetDialogOpen}
+                    onOpenChange={setIsResetDialogOpen}
+                    title="Kosongkan Penerimaan"
+                    description="Apakah Anda yakin ingin mengosongkan seluruh data penerimaan? Semua barang yang telah dipindai dan informasi header yang telah diisi akan hilang."
+                    confirmText="Ya, Kosongkan"
+                    cancelText="Batal"
+                    variant="warning"
+                    onConfirm={() => {
+                        clearAll();
+                        setIsResetDialogOpen(false);
+                        toast.info("Seluruh data penerimaan lokal berhasil dikosongkan.");
+                    }}
                 />
             </div>
         </FormProvider>
