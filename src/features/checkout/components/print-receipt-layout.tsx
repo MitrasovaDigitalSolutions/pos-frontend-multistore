@@ -98,7 +98,7 @@ export function PrintReceiptLayout({ receipt, cashierName }: PrintReceiptLayoutP
                             <span>{item.nama_produk}</span>
                         </div>
                         <div className="flex justify-between pl-2">
-                            <span>{item.kuantitas} x {formatRupiah(item.harga_satuan)}</span>
+                            <span>{Number(item.kuantitas.toFixed(3))} x {formatRupiah(item.harga_satuan)}</span>
                             <span className="tabular-nums font-semibold">
                                 {formatRupiah(item.harga_satuan * item.kuantitas)}
                             </span>

@@ -87,14 +87,14 @@ function CheckoutQtyInput({
 
         if (val === "") return;
 
-        const num = parseInt(val, 10);
+        const num = parseFloat(val);
         if (!isNaN(num) && num > 0) {
             onChange(num);
         }
     };
 
     const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-        const num = parseInt(localVal, 10);
+        const num = parseFloat(localVal);
         if (localVal === "" || isNaN(num) || num <= 0) {
             setLocalVal(String(value));
         } else {
@@ -106,6 +106,7 @@ function CheckoutQtyInput({
     return (
         <Input
             type="number"
+            step="any"
             value={localVal}
             onChange={handleChange}
             onBlur={handleBlur}
