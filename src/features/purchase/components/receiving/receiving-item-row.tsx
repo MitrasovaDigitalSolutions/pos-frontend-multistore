@@ -128,6 +128,7 @@ export function ReceivingItemRow({
                         placeholder="Qty"
                         disabled={isPending}
                         label="Qty"
+                        allowDecimal={true}
                     />
                 </div>
 

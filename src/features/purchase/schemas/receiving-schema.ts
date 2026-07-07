@@ -50,7 +50,11 @@ export type ReceivingInput = z.infer<typeof receivingSchema>;
 export const receivingHeaderSchema = z.object({
     purchase_order_uid: z.string().nullable().optional(),
     supplier_uid: z.string().nullable().optional(),
-    nomor_faktur: z.string().min(1, "Nomor faktur wajib diisi"),
+    nomor_faktur: z
+        .string()
+        .nullable()
+        .optional()
+        .transform((val) => val || null),
     nilai_faktur: z.coerce.number().min(0, "Nilai faktur minimal 0").default(0),
     tanggal_terima: z.string().min(1, "Tanggal terima wajib diisi"),
     status_pembayaran: z.enum(["pending", "unpaid", "partial", "paid"]).default("pending"),
