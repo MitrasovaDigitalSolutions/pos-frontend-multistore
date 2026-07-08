@@ -1,7 +1,8 @@
 export interface ManualJournalLine {
     id?: number;
     manual_journal_id?: number;
-    account_id: string;
+    chart_of_account_uid: string;
+    description: string;
     debit: number;
     credit: number;
     account?: {
@@ -28,7 +29,8 @@ export interface CreateManualJournalInput {
     description: string;
     status: "draft" | "posted";
     lines: {
-        account_id: string;
+        chart_of_account_uid: string;
+        description: string;
         debit: number;
         credit: number;
     }[];
