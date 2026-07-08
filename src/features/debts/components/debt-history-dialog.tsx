@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { BaseDialog } from "@/components/ui/base-dialog";
-import { PageLoader } from "@/components/feedback/page-loader";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { useMemberDebtHistory } from "@/features/members/api/members-api";
 import { format } from "date-fns";
@@ -90,8 +90,19 @@ export function DebtHistoryDialog({ open, onOpenChange, member }: DebtHistoryDia
                 {/* Tab Contents */}
                 <div className="flex-1 overflow-auto min-h-[250px]">
                     {isLoading ? (
-                        <div className="h-full flex items-center justify-center py-10">
-                            <PageLoader message="Memuat riwayat..." />
+                        <div className="space-y-3 p-1">
+                            {Array.from({ length: 4 }).map((_, idx) => (
+                                <div key={idx} className="flex justify-between items-center p-3 border border-slate-100 dark:border-slate-800 rounded-xl animate-pulse">
+                                    <div className="space-y-1.5 w-1/2">
+                                        <Skeleton className="h-4 w-3/4" />
+                                        <Skeleton className="h-3 w-1/2" />
+                                    </div>
+                                    <div className="space-y-1.5 w-20 flex flex-col items-end">
+                                        <Skeleton className="h-4 w-full" />
+                                        <Skeleton className="h-3 w-3/4" />
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     ) : error ? (
                         <div className="p-8 text-center text-rose-500 text-xs font-semibold">

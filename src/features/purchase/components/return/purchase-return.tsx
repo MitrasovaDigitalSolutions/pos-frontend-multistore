@@ -1,6 +1,6 @@
 "use client";
 
-import { PageLoader } from "@/components/feedback/page-loader";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useProducts } from "@/features/products/api/products-api";
 import { usePurchaseReturns } from "@/features/purchase/api/purchase-api";
 import { useSession } from "next-auth/react";
@@ -153,7 +153,46 @@ export function PurchaseReturn() {
     }
 
     if (productsLoading && !productsData) {
-        return <PageLoader message="Memuat daftar produk..." />;
+        return (
+            <div className="space-y-6 animate-pulse">
+                <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-6">
+                    <div className="flex justify-between items-center border-b border-slate-50 pb-6">
+                        <div className="space-y-2">
+                            <Skeleton className="h-5 w-64" />
+                            <Skeleton className="h-3.5 w-96" />
+                        </div>
+                        <Skeleton className="h-9 w-40 rounded-xl" />
+                    </div>
+                    
+                    {/* Filter Mock Skeleton */}
+                    <div className="flex flex-wrap gap-3">
+                        <Skeleton className="h-9 w-48 rounded-xl" />
+                        <Skeleton className="h-9 w-32 rounded-xl" />
+                        <Skeleton className="h-9 w-32 rounded-xl" />
+                    </div>
+
+                    {/* Table Skeleton */}
+                    <div className="space-y-4">
+                        <div className="flex justify-between border-b pb-3 border-slate-100">
+                            <Skeleton className="h-4 w-12" />
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-4 w-20" />
+                            <Skeleton className="h-4 w-16" />
+                        </div>
+                        {Array.from({ length: 5 }).map((_, idx) => (
+                            <div key={idx} className="flex justify-between py-2 border-b border-slate-50 last:border-0">
+                                <Skeleton className="h-4 w-6" />
+                                <Skeleton className="h-4 w-44" />
+                                <Skeleton className="h-4 w-20" />
+                                <Skeleton className="h-4 w-28" />
+                                <Skeleton className="h-4 w-12" />
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            </div>
+        );
     }
 
     return (
