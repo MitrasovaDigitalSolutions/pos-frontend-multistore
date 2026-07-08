@@ -164,28 +164,26 @@ export function DebtHistoryDialog({ open, onOpenChange, member }: DebtHistoryDia
                                     <thead>
                                         <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9px]">
                                             <th className="py-2.5 px-3">Tanggal</th>
+                                            <th className="py-2.5 px-3">No. Pembayaran</th>
                                             <th className="py-2.5 px-3">Metode Bayar</th>
                                             <th className="py-2.5 px-3 text-right text-emerald-600">Jumlah Bayar</th>
+                                            <th className="py-2.5 px-3 text-right text-slate-500">Sisa Hutang</th>
                                             <th className="py-2.5 px-3 pl-8">Catatan</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {payments.map((log) => {
-                                            interface LogPayload {
-                                                amount?: number;
-                                                payment_method?: string;
-                                                catatan?: string;
-                                            }
-                                            const payload = (log.payload || (log as unknown as { properties: LogPayload }).properties || {}) as LogPayload;
-                                            const amount = payload.amount || 0;
-                                            const method = payload.payment_method === "cash" ? "Tunai" : "Kartu/EDC";
+                                        {payments.map((payment) => {
+                                            const method = payment.metode_pembayaran === "cash" ? "Tunai" : "Kartu/EDC";
                                             return (
-                                                <tr key={log.uid} className="border-b border-slate-50 hover:bg-slate-50/50">
+                                                <tr key={payment.uid} className="border-b border-slate-50 hover:bg-slate-50/50">
                                                     <td className="py-3 px-3 text-slate-500 font-medium">
-                                                        {formatDateTime(log.created_at)}
+                                                        {formatDateTime(payment.tanggal_bayar)}
+                                                    </td>
+                                                    <td className="py-3 px-3 font-bold text-slate-800 font-mono text-[10px]">
+                                                        {payment.nomor_pembayaran}
                                                     </td>
                                                     <td className="py-3 px-3">
-                                                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded-lg border ${payload.payment_method === "cash"
+                                                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded-lg border ${payment.metode_pembayaran === "cash"
                                                             ? "bg-emerald-50 text-emerald-700 border-emerald-100"
                                                             : "bg-blue-50 text-blue-700 border-blue-100"
                                                             }`}>
@@ -193,10 +191,13 @@ export function DebtHistoryDialog({ open, onOpenChange, member }: DebtHistoryDia
                                                         </span>
                                                     </td>
                                                     <td className="py-3 px-3 text-right font-extrabold text-emerald-600 tabular-nums">
-                                                        {formatRupiah(amount)}
+                                                        {formatRupiah(payment.jumlah_bayar)}
                                                     </td>
-                                                    <td className="py-3 px-3 pl-8 text-slate-600 font-medium max-w-[200px] truncate" title={payload.catatan || log.description}>
-                                                        {payload.catatan || log.description}
+                                                    <td className="py-3 px-3 text-right font-medium text-slate-500 tabular-nums">
+                                                        {formatRupiah(payment.hutang_sesudah)}
+                                                    </td>
+                                                    <td className="py-3 px-3 pl-8 text-slate-600 font-medium max-w-[200px] truncate" title={payment.catatan || ""}>
+                                                        {payment.catatan || "-"}
                                                     </td>
                                                 </tr>
                                             );
