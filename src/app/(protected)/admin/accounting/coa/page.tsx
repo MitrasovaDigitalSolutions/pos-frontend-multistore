@@ -1,12 +1,9 @@
-import { UnderDevelopment } from "@/components/feedback/under-development";
-import { IconNotebook } from "@tabler/icons-react";
+import { CoaPage } from "@/features/accounting/components/coa/coa-page";
 
 export default function ChartOfAccountsPage() {
     return (
-        <UnderDevelopment
-            title="Chart of Accounts (COA)"
-            description="Fitur manajemen Chart of Accounts (COA) / Daftar Akun sedang dalam proses pengembangan. Halaman ini nantinya memungkinkan Anda membuat, memperbarui, dan mengelola daftar akun standar akuntansi bisnis."
-            icon={<IconNotebook className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />}
-        />
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 animate-in fade-in duration-300">
+            <CoaPage />
+        </div>
     );
 }

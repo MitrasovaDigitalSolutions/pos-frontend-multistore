@@ -9,29 +9,36 @@ interface BalanceSheetStatusCardProps {
     totalAssets: number;
     totalLiabilitiesAndEquity: number;
     difference: number;
+    leftLabel?: string;
+    rightLabel?: string;
+    leftLegend?: string;
+    rightLegend?: string;
 }
 
 export function BalanceSheetStatusCard({
     isBalanced,
     totalAssets,
     totalLiabilitiesAndEquity,
-    difference
+    difference,
+    leftLabel,
+    rightLabel,
+    leftLegend,
+    rightLegend
 }: BalanceSheetStatusCardProps) {
     return (
-        <div className="bg-white border border-slate-100 shadow-sm rounded-2xl p-6 overflow-hidden relative">
-            {/* Background visual decoration */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-slate-50 rounded-full -mr-20 -mt-20 -z-10 opacity-60" />
-            
+        <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm">
+
+
             <div className="flex flex-col lg:flex-row items-center justify-between gap-6 relative z-10">
                 {/* Status Message */}
                 <div className="flex items-start gap-4">
                     <div className={cn(
                         "p-3.5 rounded-2xl shrink-0 shadow-sm",
-                        isBalanced 
-                            ? "bg-emerald-50 text-emerald-600 ring-4 ring-emerald-50/50" 
+                        isBalanced
+                            ? "bg-emerald-50 text-emerald-600 ring-4 ring-emerald-50/50"
                             : "bg-rose-50 text-rose-600 ring-4 ring-rose-50/50"
                     )}>
-                        <IconScale className="w-7 h-7 animate-pulse" />
+                        <IconScale className="w-7 h-7" />
                     </div>
                     <div>
                         <div className="flex items-center gap-2 flex-wrap">
@@ -40,19 +47,19 @@ export function BalanceSheetStatusCard({
                             </h3>
                             <span className={cn(
                                 "text-[9px] px-2 py-0.5 rounded-full font-extrabold uppercase tracking-wider shadow-sm",
-                                isBalanced 
-                                    ? "bg-emerald-100 text-emerald-800 border border-emerald-200" 
+                                isBalanced
+                                    ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
                                     : "bg-rose-100 text-rose-800 border border-rose-200"
                             )}>
                                 {isBalanced ? "Seimbang (Balanced)" : "Tidak Seimbang"}
                             </span>
                         </div>
                         <p className="text-slate-500 text-xs mt-2 max-w-xl leading-relaxed">
-                            {isBalanced 
+                            {isBalanced
                                 ? "Sempurna! Nilai aset Anda tepat sama dengan gabungan kewajiban dan ekuitas. Ini menunjukkan pencatatan keuangan Anda tercatat dengan benar."
                                 : "Perhatian! Total Aset tidak sama dengan gabungan Kewajiban & Ekuitas. Mohon periksa kembali transaksi atau jurnal penyesuaian Anda."}
                             {!isBalanced && difference > 0 && (
-                                <span className="block font-bold text-rose-600 mt-1">
+                                <span className="block font-bold text-rose-600 mt-1.5">
                                     Selisih (Discrepancy): {formatRupiah(difference)}
                                 </span>
                             )}
@@ -65,7 +72,7 @@ export function BalanceSheetStatusCard({
                     <div className="flex justify-between items-end">
                         <div className="space-y-1">
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">
-                                Total Aset (A)
+                                {leftLabel || "Total Aset (A)"}
                             </span>
                             <span className="text-base font-extrabold text-emerald-600">
                                 {formatRupiah(totalAssets)}
@@ -73,7 +80,7 @@ export function BalanceSheetStatusCard({
                         </div>
                         <div className="text-right space-y-1">
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">
-                                Kewajiban + Ekuitas (K + E)
+                                {rightLabel || "Kewajiban + Ekuitas (K + E)"}
                             </span>
                             <span className={cn(
                                 "text-base font-extrabold",
@@ -83,33 +90,33 @@ export function BalanceSheetStatusCard({
                             </span>
                         </div>
                     </div>
-                    
+
                     {/* Comparison Progress Bar */}
                     <div className="w-full bg-slate-100 rounded-full h-2.5 relative overflow-hidden">
                         {isBalanced ? (
                             <div className="bg-gradient-to-r from-emerald-500 to-indigo-500 h-full rounded-full w-full animate-pulse" />
                         ) : (
                             <div className="flex h-full rounded-full overflow-hidden w-full">
-                                <div 
+                                <div
                                     className="bg-emerald-500 h-full transition-all duration-500"
                                     style={{ width: `${(totalAssets / (totalAssets + totalLiabilitiesAndEquity || 1)) * 100}%` }}
                                 />
-                                <div 
+                                <div
                                     className="bg-rose-500 h-full transition-all duration-500"
                                     style={{ width: `${(totalLiabilitiesAndEquity / (totalAssets + totalLiabilitiesAndEquity || 1)) * 100}%` }}
                                 />
                             </div>
                         )}
                     </div>
-                    
+
                     <div className="flex justify-between items-center text-[9px] font-bold text-slate-400">
                         <span className="flex items-center gap-1.5">
                             <span className="w-2 h-2 bg-emerald-500 rounded-full block" />
-                            Aset
+                            {leftLegend || "Aset"}
                         </span>
                         <span className="flex items-center gap-1.5">
                             <span className={cn("w-2 h-2 rounded-full block", isBalanced ? "bg-indigo-500" : "bg-rose-500")} />
-                            Kewajiban & Ekuitas
+                            {rightLegend || "Kewajiban & Ekuitas"}
                         </span>
                     </div>
                 </div>

@@ -126,6 +126,26 @@ export const ENDPOINTS = {
         JASA_VS_PRODUCT: "/v1/reports/sales/jasa-vs-product",
     },
 
+    // Chart of Accounts (COA)
+    CHART_OF_ACCOUNTS: {
+        LIST: "/v1/chart-of-accounts",
+        FLAT: "/v1/chart-of-accounts/flat",
+        BY_TYPE: (type: string) => `/v1/chart-of-accounts/type/${type}`,
+        DETAIL: (uid: string) => `/v1/chart-of-accounts/${uid}`,
+        CREATE: "/v1/chart-of-accounts",
+        UPDATE: (uid: string) => `/v1/chart-of-accounts/${uid}`,
+        DELETE: (uid: string) => `/v1/chart-of-accounts/${uid}`,
+    },
+
+    // Manual Journals
+    MANUAL_JOURNALS: {
+        LIST: "/v1/manual-journals",
+        DETAIL: (uid: string) => `/v1/manual-journals/${uid}`,
+        CREATE: "/v1/manual-journals",
+        UPDATE: (uid: string) => `/v1/manual-journals/${uid}`,
+        DELETE: (uid: string) => `/v1/manual-journals/${uid}`,
+    },
+
     // Transactions (Checkout)
     TRANSACTIONS: {
         CREATE: "/v1/transactions",
