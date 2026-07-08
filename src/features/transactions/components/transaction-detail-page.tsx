@@ -23,6 +23,10 @@ import { TransactionDetailSummary } from "./detail/transaction-detail-summary";
 import { TransactionPrintReceipt } from "./detail/transaction-print-receipt";
 import { VoidTransactionDialog } from "./detail/void-transaction-dialog";
 
+interface TransactionDetailPageProps {
+    transactionId: string;
+}
+
 function TransactionDetailSkeleton() {
     return (
         <div className="space-y-6 animate-pulse">
