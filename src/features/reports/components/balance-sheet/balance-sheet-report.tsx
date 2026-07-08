@@ -58,11 +58,11 @@ export function BalanceSheetReport() {
                 <>
                     <div className={cn(
                         "flex items-center justify-center p-4 rounded-lg border",
-                        data.is_balanced 
+                        data.data.is_balanced 
                             ? "bg-green-50/50 border-green-200 text-green-700"
                             : "bg-red-50/50 border-red-200 text-red-700"
                     )}>
-                        {data.is_balanced ? (
+                        {data.data.is_balanced ? (
                             <><CheckCircle2 className="w-5 h-5 mr-2" /> <span>Neraca Seimbang (Balanced)</span></>
                         ) : (
                             <><AlertCircle className="w-5 h-5 mr-2" /> <span>Neraca Tidak Seimbang (Unbalanced)</span></>
@@ -71,68 +71,74 @@ export function BalanceSheetReport() {
 
                     <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-4">
-                            {Object.entries(data.data)
-                                .filter(([key]) => key.includes("Aset") || key.includes("1000") || key.toLowerCase().includes("asset"))
-                                .map(([groupName, accounts]) => {
-                                    const total = accounts.reduce((sum, acc) => sum + acc.saldo, 0);
-                                    return (
-                                        <Card key={groupName}>
-                                            <CardHeader>
-                                                <CardTitle>{groupName.replace(/^\d+\s*-\s*/, '')}</CardTitle>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <div className="space-y-4">
-                                                    {accounts.map(acc => (
-                                                        <div key={acc.uid} className="flex justify-between items-center border-b pb-2">
-                                                            <span className="text-muted-foreground">{acc.nama}</span>
-                                                            <span className="font-medium">{formatRupiah(acc.saldo)}</span>
-                                                        </div>
-                                                    ))}
-                                                    <div className="flex justify-between items-center pt-2 font-bold text-lg">
-                                                        <span>Total {groupName.replace(/^\d+\s*-\s*/, '')}</span>
-                                                        <span>{formatRupiah(total)}</span>
-                                                    </div>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    );
-                                })}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Aset</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-4">
+                                        {data.data.assets.items.map((item, idx) => (
+                                            <div key={`${item.kode}-${idx}`} className="flex justify-between items-center border-b pb-2">
+                                                <span className="text-muted-foreground">{item.nama}</span>
+                                                <span className="font-medium">{formatRupiah(item.amount)}</span>
+                                            </div>
+                                        ))}
+                                        <div className="flex justify-between items-center pt-2 font-bold text-lg">
+                                            <span>Total Aset</span>
+                                            <span>{formatRupiah(data.data.assets.total_assets)}</span>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
                         </div>
 
                         <div className="space-y-4">
-                            {Object.entries(data.data)
-                                .filter(([key]) => !key.includes("Aset") && !key.includes("1000") && !key.toLowerCase().includes("asset"))
-                                .map(([groupName, accounts]) => {
-                                    const total = accounts.reduce((sum, acc) => sum + acc.saldo, 0);
-                                    return (
-                                        <Card key={groupName}>
-                                            <CardHeader>
-                                                <CardTitle>{groupName.replace(/^\d+\s*-\s*/, '')}</CardTitle>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <div className="space-y-4">
-                                                    {accounts.map(acc => (
-                                                        <div key={acc.uid} className="flex justify-between items-center border-b pb-2">
-                                                            <span className="text-muted-foreground">{acc.nama}</span>
-                                                            <span className="font-medium">{formatRupiah(acc.saldo)}</span>
-                                                        </div>
-                                                    ))}
-                                                    <div className="flex justify-between items-center pt-2 font-bold text-lg">
-                                                        <span>Total {groupName.replace(/^\d+\s*-\s*/, '')}</span>
-                                                        <span>{formatRupiah(total)}</span>
-                                                    </div>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    );
-                                })}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Kewajiban</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-4">
+                                        {data.data.liabilities.items.map((item, idx) => (
+                                            <div key={`${item.kode}-${idx}`} className="flex justify-between items-center border-b pb-2">
+                                                <span className="text-muted-foreground">{item.nama}</span>
+                                                <span className="font-medium">{formatRupiah(item.amount)}</span>
+                                            </div>
+                                        ))}
+                                        <div className="flex justify-between items-center pt-2 font-bold text-lg">
+                                            <span>Total Kewajiban</span>
+                                            <span>{formatRupiah(data.data.liabilities.total_liabilities)}</span>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
 
-                            <Card className={data.is_balanced ? "" : "border-red-200"}>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Ekuitas</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-4">
+                                        {data.data.equity.items.map((item, idx) => (
+                                            <div key={`${item.kode}-${idx}`} className="flex justify-between items-center border-b pb-2">
+                                                <span className="text-muted-foreground">{item.nama}</span>
+                                                <span className="font-medium">{formatRupiah(item.amount)}</span>
+                                            </div>
+                                        ))}
+                                        <div className="flex justify-between items-center pt-2 font-bold text-lg">
+                                            <span>Total Ekuitas</span>
+                                            <span>{formatRupiah(data.data.equity.total_equity)}</span>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card className={data.data.is_balanced ? "" : "border-red-200"}>
                                 <CardContent className="pt-6">
                                     <div className="flex justify-between items-center font-bold text-xl">
                                         <span>Total Kewajiban & Ekuitas</span>
-                                        <span className={data.is_balanced ? "" : "text-red-600"}>
-                                            {formatRupiah(data.total_liabilities_equity)}
+                                        <span className={data.data.is_balanced ? "" : "text-red-600"}>
+                                            {formatRupiah(data.data.liabilities.total_liabilities + data.data.equity.total_equity)}
                                         </span>
                                     </div>
                                 </CardContent>

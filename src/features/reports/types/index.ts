@@ -224,20 +224,37 @@ export interface SalesByCategoryResponse {
     data: SalesByCategoryItem[];
 }
 
-export interface CoABalance {
-    uid: string;
+export interface BalanceSheetItem {
     kode: string;
     nama: string;
-    tipe: string;
-    saldo: number;
-    is_auto: boolean;
+    amount: number;
+}
+
+export interface BalanceSheetSection {
+    items: BalanceSheetItem[];
+}
+
+export interface BalanceSheetAssets extends BalanceSheetSection {
+    total_assets: number;
+}
+
+export interface BalanceSheetLiabilities extends BalanceSheetSection {
+    total_liabilities: number;
+}
+
+export interface BalanceSheetEquity extends BalanceSheetSection {
+    total_equity: number;
+}
+
+export interface BalanceSheetData {
+    as_of_date: string;
+    assets: BalanceSheetAssets;
+    liabilities: BalanceSheetLiabilities;
+    equity: BalanceSheetEquity;
+    is_balanced: boolean;
 }
 
 export interface BalanceSheetReport {
-    tanggal: string;
-    data: Record<string, CoABalance[]>;
-    is_balanced: boolean;
-    total_assets: number;
-    total_liabilities_equity: number;
+    data: BalanceSheetData;
 }
 
