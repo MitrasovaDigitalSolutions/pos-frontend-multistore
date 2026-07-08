@@ -8,7 +8,7 @@ import { useFlatChartOfAccounts } from "@/features/accounting/api/coa-api";
 import { useCreateManualJournal } from "@/features/accounting/api/manual-journal-api";
 import { useBalanceSheet } from "@/features/reports/api/reports-api";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { getThisMonthRange } from "@/lib/date-utils";
+import { getThisMonthRange, formatUTC, todayStr } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import { useBalanceSheetStore } from "@/stores/balance-sheet-store";
 import {
@@ -60,7 +60,7 @@ export function BalanceSheetReport() {
     const methods = useForm<ManualJournalDraftMeta>({
         defaultValues: {
             description: "Penyesuaian Neraca Keuangan",
-            transaction_date: new Date().toISOString().split("T")[0],
+            transaction_date: todayStr(),
         },
     });
 
@@ -139,13 +139,15 @@ export function BalanceSheetReport() {
     const handlePostJournal = async () => {
         if (!editedData) return;
 
-        const lines: { account_id: string; debit: number; credit: number }[] = [];
+        const lines: { chart_of_account_uid: string; description: string; debit: number; credit: number }[] = [];
+        const journalDesc = description || "Penyesuaian Neraca Keuangan";
 
         // 1. Assets: Normal Debit
         editedData.assets.forEach((item) => {
             if (item.amount !== 0) {
                 lines.push({
-                    account_id: item.uid,
+                    chart_of_account_uid: item.uid,
+                    description: `${journalDesc} - ${item.nama}`,
                     debit: item.amount >= 0 ? item.amount : 0,
                     credit: item.amount < 0 ? Math.abs(item.amount) : 0,
                 });
@@ -156,7 +158,8 @@ export function BalanceSheetReport() {
         editedData.expense.forEach((item) => {
             if (item.amount !== 0) {
                 lines.push({
-                    account_id: item.uid,
+                    chart_of_account_uid: item.uid,
+                    description: `${journalDesc} - ${item.nama}`,
                     debit: item.amount >= 0 ? item.amount : 0,
                     credit: item.amount < 0 ? Math.abs(item.amount) : 0,
                 });
@@ -167,7 +170,8 @@ export function BalanceSheetReport() {
         editedData.liabilities.forEach((item) => {
             if (item.amount !== 0) {
                 lines.push({
-                    account_id: item.uid,
+                    chart_of_account_uid: item.uid,
+                    description: `${journalDesc} - ${item.nama}`,
                     debit: item.amount < 0 ? Math.abs(item.amount) : 0,
                     credit: item.amount >= 0 ? item.amount : 0,
                 });
@@ -178,7 +182,8 @@ export function BalanceSheetReport() {
         editedData.equity.forEach((item) => {
             if (item.amount !== 0) {
                 lines.push({
-                    account_id: item.uid,
+                    chart_of_account_uid: item.uid,
+                    description: `${journalDesc} - ${item.nama}`,
                     debit: item.amount < 0 ? Math.abs(item.amount) : 0,
                     credit: item.amount >= 0 ? item.amount : 0,
                 });
@@ -189,7 +194,8 @@ export function BalanceSheetReport() {
         editedData.revenue.forEach((item) => {
             if (item.amount !== 0) {
                 lines.push({
-                    account_id: item.uid,
+                    chart_of_account_uid: item.uid,
+                    description: `${journalDesc} - ${item.nama}`,
                     debit: item.amount < 0 ? Math.abs(item.amount) : 0,
                     credit: item.amount >= 0 ? item.amount : 0,
                 });
@@ -203,8 +209,8 @@ export function BalanceSheetReport() {
 
         try {
             await createJournalMutation.mutateAsync({
-                transaction_date: transactionDate,
-                description: description || "Penyesuaian Neraca Keuangan",
+                transaction_date: formatUTC(transactionDate),
+                description: journalDesc,
                 status: "posted",
                 lines,
             });
