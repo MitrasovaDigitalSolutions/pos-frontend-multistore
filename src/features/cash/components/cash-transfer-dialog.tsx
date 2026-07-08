@@ -195,7 +195,7 @@ export function CashTransferDialog({
                                 className="h-10 text-xs font-bold text-white rounded-xl bg-blue-600 hover:bg-blue-700"
                                 disabled={isSubmitting}
                             >
-                                {isSubmitting ? "Mentransfer..." : "Kirim Transfer"}
+                                {isSubmitting ? "Mentransfer..." : " Transfer"}
                             </Button>
                         </div>
                     </form>

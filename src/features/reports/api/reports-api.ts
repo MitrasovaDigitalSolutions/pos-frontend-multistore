@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiGetData } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
-import type { DailyReport, LabaRugiReport, PengeluaranReport, PurchaseReport, PenjualanReport, SalesByCategoryResponse } from "../types";
+import type { DailyReport, LabaRugiReport, PengeluaranReport, PurchaseReport, PenjualanReport, SalesByCategoryResponse, BalanceSheetReport } from "../types";
 
 export function useDailyReport(date: string) {
     return useQuery<DailyReport>({
@@ -80,3 +80,15 @@ export function useSalesByCategory(from: string, to: string, categoryIds?: strin
         enabled: !!from && !!to,
     });
 }
+
+export function useBalanceSheet(from: string, to: string) {
+    return useQuery<BalanceSheetReport>({
+        queryKey: [...queryKeys.reports.all, "balance-sheet", from, to],
+        queryFn: () =>
+            apiGetData<BalanceSheetReport>(
+                `/v1/reports/balance-sheet?start_date=${from}&end_date=${to}`
+            ),
+        enabled: !!from && !!to,
+    });
+}
+

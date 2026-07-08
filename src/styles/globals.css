@@ -190,5 +190,32 @@
     animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+@keyframes wave-move-forward {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+@keyframes wave-move-backward {
+    0% {
+        transform: translateX(-50%);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+
+.animate-wave-slow {
+    animation: wave-move-forward 6s linear infinite;
+}
+
+.animate-wave-fast {
+    animation: wave-move-backward 3.5s linear infinite;
+}
+
+
 
 
