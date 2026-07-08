@@ -224,24 +224,20 @@ export interface SalesByCategoryResponse {
     data: SalesByCategoryItem[];
 }
 
+export interface CoABalance {
+    uid: string;
+    kode: string;
+    nama: string;
+    tipe: string;
+    saldo: number;
+    is_auto: boolean;
+}
+
 export interface BalanceSheetReport {
-    assets: {
-        kas_dan_bank: number;
-        piutang_usaha: number;
-        persediaan_barang: number;
-        aset_tetap: number;
-        total: number;
-    };
-    liabilities: {
-        hutang_usaha: number;
-        kewajiban_lainnya: number;
-        total: number;
-    };
-    equity: {
-        modal_disetor: number;
-        laba_rugi_berjalan: number;
-        total: number;
-    };
+    tanggal: string;
+    data: Record<string, CoABalance[]>;
     is_balanced: boolean;
+    total_assets: number;
+    total_liabilities_equity: number;
 }
 
