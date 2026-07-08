@@ -159,4 +159,11 @@ export const queryKeys = {
         byType: (type: string) => [...queryKeys.chartOfAccounts.all, "type", type] as const,
         detail: (uid: string) => [...queryKeys.chartOfAccounts.all, "detail", uid] as const,
     },
+
+    // Manual Journals
+    manualJournals: {
+        all: ["manual-journals"] as const,
+        list: (params?: unknown) => [...queryKeys.manualJournals.all, "list", params] as const,
+        detail: (uid: string) => [...queryKeys.manualJournals.all, "detail", uid] as const,
+    },
 } as const;

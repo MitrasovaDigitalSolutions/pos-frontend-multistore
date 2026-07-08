@@ -111,7 +111,7 @@ export function CoaPage() {
     const expandAll = () => {
         if (!treeAccounts) return;
         const expanded: Record<string, boolean> = {};
-        
+
         const traverse = (nodes: ChartOfAccount[]) => {
             nodes.forEach((acc) => {
                 if (acc.children && acc.children.length > 0) {
@@ -120,7 +120,7 @@ export function CoaPage() {
                 }
             });
         };
-        
+
         traverse(treeAccounts);
         setExpandedNodes(expanded);
     };
@@ -327,7 +327,7 @@ export function CoaPage() {
                             </Badge>
                         </div>
 
-                        {/* Saldo Normal */}
+                        {/* Debit / Kredit */}
                         <div className="col-span-1 font-bold text-slate-600 dark:text-slate-400 capitalize">
                             {node.saldo_normal || "-"}
                         </div>
@@ -536,7 +536,7 @@ export function CoaPage() {
                     <div className="grid grid-cols-12 items-center py-3 px-4 text-[10px] font-extrabold uppercase text-slate-500 bg-slate-50/50 dark:bg-slate-950/20 border-b border-slate-100 dark:border-slate-800 tracking-wider">
                         <div className="col-span-5">Kode & Nama Akun</div>
                         <div className="col-span-2">Tipe</div>
-                        <div className="col-span-1">Saldo Normal</div>
+                        <div className="col-span-1">Debit / Kredit</div>
                         <div className="col-span-1">Status</div>
                         <div className="col-span-2">Keterangan</div>
                         <div className="col-span-1 text-right">Aksi</div>
@@ -595,7 +595,7 @@ export function CoaPage() {
                                                 </Badge>
                                             </div>
 
-                                            {/* Saldo Normal */}
+                                            {/* Debit / Kredit */}
                                             <div className="col-span-1 font-bold text-slate-600 dark:text-slate-400 capitalize">
                                                 {node.saldo_normal || "-"}
                                             </div>

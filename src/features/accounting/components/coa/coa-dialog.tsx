@@ -102,7 +102,7 @@ export function CoaDialog({
         }
     }, [watchedParentUid, flatAccounts, setValue]);
 
-    // Auto-set default Saldo Normal when Tipe changes
+    // Auto-set default Debit / Kredit when Tipe changes
     useEffect(() => {
         if (watchedTipe) {
             const currentSaldo = getValues("saldo_normal");
@@ -213,11 +213,11 @@ export function CoaDialog({
                             disabled={isSubmitting || !!watchedParentUid}
                         />
 
-                        {/* Saldo Normal */}
+                        {/* Debit / Kredit */}
                         <FormSelect<CoaSchemaInput>
                             name="saldo_normal"
-                            label="Saldo Normal (Default)"
-                            placeholder="Pilih Saldo Normal"
+                            label="Debit / Kredit (Default)"
+                            placeholder="Pilih Debit / Kredit"
                             options={normalBalanceOptions}
                             disabled={isSubmitting}
                         />

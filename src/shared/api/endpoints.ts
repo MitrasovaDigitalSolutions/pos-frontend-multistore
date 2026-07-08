@@ -137,6 +137,15 @@ export const ENDPOINTS = {
         DELETE: (uid: string) => `/v1/chart-of-accounts/${uid}`,
     },
 
+    // Manual Journals
+    MANUAL_JOURNALS: {
+        LIST: "/v1/manual-journals",
+        DETAIL: (uid: string) => `/v1/manual-journals/${uid}`,
+        CREATE: "/v1/manual-journals",
+        UPDATE: (uid: string) => `/v1/manual-journals/${uid}`,
+        DELETE: (uid: string) => `/v1/manual-journals/${uid}`,
+    },
+
     // Transactions (Checkout)
     TRANSACTIONS: {
         CREATE: "/v1/transactions",
