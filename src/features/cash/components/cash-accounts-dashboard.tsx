@@ -85,9 +85,31 @@ export function CashAccountsDashboard() {
                 </div>
 
                 {accountsLoading ? (
-                    <div className="bg-white border border-slate-100 rounded-2xl p-12 text-center shadow-sm">
-                        <IconLoader2 className="animate-spin text-emerald-600 mx-auto" size={32} />
-                        <p className="text-xs text-slate-400 mt-2">Memuat daftar akun kas...</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                            <div key={i} className="bg-white border border-slate-100 rounded-xl p-4 gap-3.5 flex flex-col animate-pulse min-h-[110px]">
+                                <div className="flex items-center justify-between pl-1.5">
+                                    <div className="flex items-center gap-2.5 w-full">
+                                        <div className="w-8.5 h-8.5 rounded-lg bg-slate-100 shrink-0" />
+                                        <div className="space-y-2 w-full">
+                                            <div className="h-3 bg-slate-100 rounded w-1/3" />
+                                            <div className="h-2.5 bg-slate-100 rounded w-1/4" />
+                                        </div>
+                                    </div>
+                                    <div className="h-4 bg-slate-100 rounded w-10 shrink-0" />
+                                </div>
+                                <div className="flex items-center justify-between border-t border-slate-100 pt-3 pl-1.5 w-full">
+                                    <div className="space-y-1.5 w-1/3">
+                                        <div className="h-2 bg-slate-100 rounded w-1/2" />
+                                        <div className="h-3 bg-slate-100 rounded w-full" />
+                                    </div>
+                                    <div className="flex gap-1.5">
+                                        <div className="w-10 h-7 bg-slate-100 rounded-lg" />
+                                        <div className="w-10 h-7 bg-slate-100 rounded-lg" />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 ) : accounts.length === 0 ? (
                     <div className="bg-white border border-slate-100 rounded-2xl p-12 text-center shadow-sm">
