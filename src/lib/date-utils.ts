@@ -214,6 +214,18 @@ export function getThisMonthRange() {
 }
 
 /**
+ * Mengembalikan range tanggal tahun ini (1 Januari s.d Hari ini) dalam format yyyy-MM-dd.
+ */
+export function getThisYearRange() {
+  const todayDate = new Date();
+  const start = new Date(todayDate.getFullYear(), 0, 1);
+  return {
+    from: format(start, "yyyy-MM-dd"),
+    to: format(todayDate, "yyyy-MM-dd"),
+  };
+}
+
+/**
  * Mengembalikan range tanggal bulan lalu secara penuh dalam format yyyy-MM-dd.
  */
 export function getLastMonthRange() {

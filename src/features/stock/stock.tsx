@@ -1,7 +1,8 @@
 "use client";
 
-import { PageLoader } from "@/components/feedback/page-loader";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { hasPermission, hasRole } from "@/constants/roles";
 import { useProducts } from "@/features/products/api/products-api";
 import {
     useOpnames,
@@ -9,12 +10,11 @@ import {
 import { AdjustmentDialog } from "@/features/stock/components/adjustment-dialog";
 import { OpnameDialog } from "@/features/stock/components/opname-dialog";
 import { OpnameList } from "@/features/stock/components/opname-list";
-import { IconActivity, IconClipboardCheck } from "@tabler/icons-react";
-import { useSearchParams } from "next/navigation";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { useState, useEffect } from "react";
+import { IconActivity, IconClipboardCheck } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
-import { hasRole, hasPermission } from "@/constants/roles";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export function StockManagement() {
     const searchParams = useSearchParams();
@@ -74,9 +74,48 @@ export function StockManagement() {
         );
     }
 
-    // Show page loader only on initial load of products (critical configurations)
+    // Show skeleton UI on initial load of products
     if (productsLoading && !productsData) {
-        return <PageLoader message="Memuat inventori & stok..." />;
+        return (
+            <div className="space-y-6">
+                <div className="space-y-6">
+                    <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-6">
+                        <div className="flex justify-between items-center border-b border-slate-50 pb-6">
+                            <div className="space-y-2">
+                                <Skeleton className="h-5 w-64" />
+                                <Skeleton className="h-3.5 w-96" />
+                            </div>
+                            <div className="flex gap-2">
+                                <Skeleton className="h-9 w-44 rounded-xl" />
+                                <Skeleton className="h-9 w-40 rounded-xl" />
+                            </div>
+                        </div>
+
+                        {/* Skeleton Table / List */}
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center border-b pb-3 border-slate-100">
+                                <Skeleton className="h-4 w-12" />
+                                <Skeleton className="h-4 w-28" />
+                                <Skeleton className="h-4 w-24" />
+                                <Skeleton className="h-4 w-32" />
+                                <Skeleton className="h-4 w-16" />
+                                <Skeleton className="h-4 w-16" />
+                            </div>
+                            {Array.from({ length: 5 }).map((_, idx) => (
+                                <div key={idx} className="flex justify-between items-center py-2 border-b border-slate-50 last:border-0">
+                                    <Skeleton className="h-4 w-6" />
+                                    <Skeleton className="h-4 w-48" />
+                                    <Skeleton className="h-4 w-20" />
+                                    <Skeleton className="h-4 w-24" />
+                                    <Skeleton className="h-4 w-12" />
+                                    <Skeleton className="h-4 w-12" />
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                </div>
+            </div>
+        );
     }
 
     const handleViewOpnameDetail = (uid: string) => {

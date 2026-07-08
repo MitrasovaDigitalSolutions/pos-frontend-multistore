@@ -1,147 +1,109 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DatePicker } from "@/components/ui/date-picker";
-import { useBalanceSheet } from "@/features/reports/api/reports-api";
-import { format } from "date-fns";
 import { useState } from "react";
+import { useBalanceSheet } from "@/features/reports/api/reports-api";
+import { IconCoin, IconTrendingUp, IconWallet } from "@tabler/icons-react";
+import { getThisMonthRange, getThisYearRange, getTodayRange } from "@/lib/date-utils";
 
-import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { cn } from "@/lib/utils";
-import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { BalanceSheetHeaderFilters } from "./balance-sheet-header-filters";
+import { BalanceSheetSectionCard } from "./balance-sheet-section-card";
+import { BalanceSheetSkeleton } from "./balance-sheet-skeleton";
+import { BalanceSheetStatusCard } from "./balance-sheet-status-card";
 
 export function BalanceSheetReport() {
-    const [startDate, setStartDate] = useState<string>(() => format(new Date(), "yyyy-MM-dd"));
-    const [endDate, setEndDate] = useState<string>(() => format(new Date(), "yyyy-MM-dd"));
-
-    // const dateRange = useMemo(() => {
-    //     const from = startDate ? parseISO(startDate) : undefined;
-    //     const to = endDate ? parseISO(endDate) : undefined;
-    //     return {
-    //         from: from && isValid(from) ? from : undefined,
-    //         to: to && isValid(to) ? to : undefined,
-    //     };
-    // }, [startDate, endDate]);
+    const [startDate, setStartDate] = useState<string>(() => getThisMonthRange().from);
+    const [endDate, setEndDate] = useState<string>(() => getThisMonthRange().to);
 
     const { data, isLoading, isError } = useBalanceSheet(startDate, endDate);
 
-    return (
-        <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0">
-                <h2 className="text-3xl font-bold tracking-tight">Neraca (Balance Sheet)</h2>
-                <div className="flex items-center space-x-2">
-                    <DatePicker
-                        value={startDate}
-                        onChange={(val) => {
-                            setStartDate(val)
-                            setEndDate(val)
-                        }}
-                        label="Tanggal"
-                    />
-                </div>
-            </div>
+    // Presets trigger
+    const handlePresetChange = (preset: "today" | "thisMonth" | "thisYear") => {
+        if (preset === "today") {
+            const range = getTodayRange();
+            setStartDate(range.from);
+            setEndDate(range.to);
+        } else if (preset === "thisMonth") {
+            const range = getThisMonthRange();
+            setStartDate(range.from);
+            setEndDate(range.to);
+        } else if (preset === "thisYear") {
+            const range = getThisYearRange();
+            setStartDate(range.from);
+            setEndDate(range.to);
+        }
+    };
 
-            {isLoading && (
-                <div className="flex justify-center p-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
-            )}
+    // Calculate metrics
+    const totalAssets = data?.assets?.total_assets ?? 0;
+    const totalLiabilities = data?.liabilities?.total_liabilities ?? 0;
+    const totalEquity = data?.equity?.total_equity ?? 0;
+    const totalLiabilitiesAndEquity = totalLiabilities + totalEquity;
+    const difference = Math.abs(totalAssets - totalLiabilitiesAndEquity);
+    const isBalanced = data?.is_balanced ?? false;
+
+    return (
+        <div className="space-y-6">
+            <BalanceSheetHeaderFilters
+                startDate={startDate}
+                endDate={endDate}
+                onStartDateChange={setStartDate}
+                onEndDateChange={setEndDate}
+                onPresetChange={handlePresetChange}
+            />
+
+            {isLoading && <BalanceSheetSkeleton />}
 
             {isError && (
-                <div className="text-center p-8 text-destructive">
-                    Gagal memuat data neraca. Silakan coba lagi.
+                <div className="text-center p-12 text-destructive bg-rose-50/50 border border-rose-100 rounded-2xl">
+                    <p className="font-bold">Gagal memuat data neraca.</p>
+                    <p className="text-xs mt-1 text-rose-600/80">Pastikan koneksi internet stabil dan coba segarkan halaman.</p>
                 </div>
             )}
 
-            {data && (
+            {data && !isLoading && (
                 <>
-                    <div className={cn(
-                        "flex items-center justify-center p-4 rounded-lg border",
-                        data.is_balanced
-                            ? "bg-green-50/50 border-green-200 text-green-700"
-                            : "bg-red-50/50 border-red-200 text-red-700"
-                    )}>
-                        {data.is_balanced ? (
-                            <><CheckCircle2 className="w-5 h-5 mr-2" /> <span>Neraca Seimbang (Balanced)</span></>
-                        ) : (
-                            <><AlertCircle className="w-5 h-5 mr-2" /> <span>Neraca Tidak Seimbang (Unbalanced)</span></>
-                        )}
-                    </div>
+                    <BalanceSheetStatusCard
+                        isBalanced={isBalanced}
+                        totalAssets={totalAssets}
+                        totalLiabilitiesAndEquity={totalLiabilitiesAndEquity}
+                        difference={difference}
+                    />
 
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <div className="space-y-4">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Aset</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-4">
-                                        {data.assets.items.map((item, idx) => (
-                                            <div key={`${item.kode}-${idx}`} className="flex justify-between items-center border-b pb-2">
-                                                <span className="text-muted-foreground">{item.nama}</span>
-                                                <span className="font-medium">{formatRupiah(item.amount)}</span>
-                                            </div>
-                                        ))}
-                                        <div className="flex justify-between items-center pt-2 font-bold text-lg">
-                                            <span>Total Aset</span>
-                                            <span>{formatRupiah(data.assets.total_assets)}</span>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                    <div className="grid gap-6 md:grid-cols-2">
+                        {/* Left Side: Assets */}
+                        <div className="space-y-6">
+                            <BalanceSheetSectionCard
+                                title="Aset"
+                                description="Seluruh harta kekayaan, hak paten, persediaan barang, serta piutang dagang yang dikuasai oleh bisnis Anda."
+                                items={data.assets?.items}
+                                total={totalAssets}
+                                accentColor="emerald"
+                                totalLabel="Total Aset"
+                                icon={<IconWallet className="w-4 text-emerald-500" />}
+                            />
                         </div>
 
-                        <div className="space-y-4">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Kewajiban</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-4">
-                                        {data.liabilities.items.map((item, idx) => (
-                                            <div key={`${item.kode}-${idx}`} className="flex justify-between items-center border-b pb-2">
-                                                <span className="text-muted-foreground">{item.nama}</span>
-                                                <span className="font-medium">{formatRupiah(item.amount)}</span>
-                                            </div>
-                                        ))}
-                                        <div className="flex justify-between items-center pt-2 font-bold text-lg">
-                                            <span>Total Kewajiban</span>
-                                            <span>{formatRupiah(data.liabilities.total_liabilities)}</span>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                        {/* Right Side: Liabilities & Equities */}
+                        <div className="space-y-6">
+                            <BalanceSheetSectionCard
+                                title="Kewajiban (Liabilitas)"
+                                description="Kewajiban finansial berupa utang usaha, pinjaman bank, atau kewajiban pembayaran lainnya kepada pihak luar."
+                                items={data.liabilities?.items}
+                                total={totalLiabilities}
+                                accentColor="amber"
+                                totalLabel="Total Kewajiban"
+                                icon={<IconCoin className="w-4 text-amber-500" />}
+                            />
 
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Ekuitas</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-4">
-                                        {data.equity.items.map((item, idx) => (
-                                            <div key={`${item.kode}-${idx}`} className="flex justify-between items-center border-b pb-2">
-                                                <span className="text-muted-foreground">{item.nama}</span>
-                                                <span className="font-medium">{formatRupiah(item.amount)}</span>
-                                            </div>
-                                        ))}
-                                        <div className="flex justify-between items-center pt-2 font-bold text-lg">
-                                            <span>Total Ekuitas</span>
-                                            <span>{formatRupiah(data.equity.total_equity)}</span>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            <Card className={data.is_balanced ? "" : "border-red-200"}>
-                                <CardContent className="pt-6">
-                                    <div className="flex justify-between items-center font-bold text-xl">
-                                        <span>Total Kewajiban & Ekuitas</span>
-                                        <span className={data.is_balanced ? "" : "text-red-600"}>
-                                            {formatRupiah(data.liabilities.total_liabilities + data.equity.total_equity)}
-                                        </span>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                            <BalanceSheetSectionCard
+                                title="Ekuitas"
+                                description="Modal bersih yang diinvestasikan oleh pemilik bisnis dan laba ditahan setelah dikurangi seluruh kewajiban."
+                                items={data.equity?.items}
+                                total={totalEquity}
+                                accentColor="indigo"
+                                totalLabel="Total Ekuitas"
+                                icon={<IconTrendingUp className="w-4 text-indigo-500" />}
+                            />
                         </div>
                     </div>
                 </>
