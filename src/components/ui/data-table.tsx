@@ -281,7 +281,7 @@ export function DataTable<TData, TValue>({
             size: 120,
             meta: {
                 headerClassName: "text-center w-28 sticky right-0 top-0 bg-slate-50 z-30 shadow-[-1px_0_0_0_rgba(241,245,249,1)] border-l border-slate-100",
-                cellClassName: "text-center sticky right-0 bg-white group-hover:bg-slate-50 z-10 shadow-[-1px_0_0_0_rgba(241,245,249,1)] border-l border-slate-100 transition-colors",
+                cellClassName: "text-center sticky right-0 bg-white group-hover:bg-slate-100 z-10 shadow-[-1px_0_0_0_rgba(241,245,249,1)] border-l border-slate-100 transition-colors",
             },
             cell: ({ row }) => {
                 const item = row.original;
@@ -641,7 +641,7 @@ export function DataTable<TData, TValue>({
                                             data-index={virtualRow.index}
                                             ref={rowVirtualizer.measureElement}
                                             className={cn(
-                                                "hover:bg-slate-50/50 border-b border-slate-100 transition-colors group",
+                                                "hover:bg-slate-100/70 border-b border-slate-100 transition-colors group",
                                                 isFetching && "opacity-75",
                                             )}
                                         >
@@ -688,7 +688,7 @@ export function DataTable<TData, TValue>({
                                 <TableRow
                                     key={row.id}
                                     className={cn(
-                                        "hover:bg-slate-50/50 border-b border-slate-100 transition-colors group",
+                                        "hover:bg-slate-100/70 border-b border-slate-100 transition-colors group",
                                         isFetching && "opacity-75",
                                     )}
                                 >
