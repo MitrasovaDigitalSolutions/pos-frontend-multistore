@@ -224,3 +224,24 @@ export interface SalesByCategoryResponse {
     data: SalesByCategoryItem[];
 }
 
+export interface BalanceSheetReport {
+    assets: {
+        kas_dan_bank: number;
+        piutang_usaha: number;
+        persediaan_barang: number;
+        aset_tetap: number;
+        total: number;
+    };
+    liabilities: {
+        hutang_usaha: number;
+        kewajiban_lainnya: number;
+        total: number;
+    };
+    equity: {
+        modal_disetor: number;
+        laba_rugi_berjalan: number;
+        total: number;
+    };
+    is_balanced: boolean;
+}
+
