@@ -254,7 +254,7 @@ export interface BalanceSheetData {
     is_balanced: boolean;
 }
 
-export interface BalanceSheetReport {
-    data: BalanceSheetData;
-}
+export type BalanceSheetReport = BalanceSheetData;
+
+
 
