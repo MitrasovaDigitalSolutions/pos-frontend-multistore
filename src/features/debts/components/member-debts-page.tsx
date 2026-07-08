@@ -1,20 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { useSession } from "next-auth/react";
-import { useForm } from "react-hook-form";
-import { hasRole, hasPermission } from "@/constants/roles";
-import { DataTable } from "@/components/ui/data-table";
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
+import { DataTable } from "@/components/ui/data-table";
+import { hasPermission, hasRole } from "@/constants/roles";
 import { useMemberDebts } from "@/features/members/api/members-api";
-import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { PayDebtDialog } from "./pay-debt-dialog";
-import { DebtHistoryDialog } from "./debt-history-dialog";
-import { IconNotebook, IconCash, IconClock, IconUsers } from "@tabler/icons-react";
-import type { ColumnDef } from "@tanstack/react-table";
 import type { Member } from "@/features/members/types";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { IconCash, IconClock, IconUsers } from "@tabler/icons-react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { useSession } from "next-auth/react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { DebtHistoryDialog } from "./debt-history-dialog";
+import { PayDebtDialog } from "./pay-debt-dialog";
 
 interface MemberDebtsFilterValues {
     search: string;
@@ -137,11 +137,10 @@ export function MemberDebtsPage() {
                 const isActive = row.original.status === "active";
                 return (
                     <span
-                        className={`text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${
-                            isActive
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                                : "bg-slate-50 text-slate-500 border-slate-200"
-                        }`}
+                        className={`text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${isActive
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                            : "bg-slate-50 text-slate-500 border-slate-200"
+                            }`}
                     >
                         {isActive ? "Aktif" : "Nonaktif"}
                     </span>
@@ -190,17 +189,6 @@ export function MemberDebtsPage() {
 
     return (
         <div className="space-y-6">
-            {/* Header section */}
-            <div>
-                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                    <IconNotebook size={20} className="text-rose-600" />
-                    <span>Daftar Hutang Member</span>
-                </h2>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                    Kelola data piutang member, catat mutasi pembayaran cicilan, dan pantau riwayat pelunasan hutang pelanggan.
-                </p>
-            </div>
-
             {/* Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Summary Card 1 */}
