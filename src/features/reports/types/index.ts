@@ -224,3 +224,20 @@ export interface SalesByCategoryResponse {
     data: SalesByCategoryItem[];
 }
 
+export interface CoABalance {
+    uid: string;
+    kode: string;
+    nama: string;
+    tipe: string;
+    saldo: number;
+    is_auto: boolean;
+}
+
+export interface BalanceSheetReport {
+    tanggal: string;
+    data: Record<string, CoABalance[]>;
+    is_balanced: boolean;
+    total_assets: number;
+    total_liabilities_equity: number;
+}
+
