@@ -81,14 +81,14 @@ export function useSalesByCategory(from: string, to: string, categoryIds?: strin
     });
 }
 
-export function useBalanceSheet(from: string, to: string) {
+export function useBalanceSheet(asOfDate: string) {
     return useQuery<BalanceSheetReport>({
-        queryKey: [...queryKeys.reports.all, "balance-sheet", from, to],
+        queryKey: [...queryKeys.reports.all, "balance-sheet", asOfDate],
         queryFn: () =>
             apiGetData<BalanceSheetReport>(
-                `/v1/reports/balance-sheet?start_date=${from}&end_date=${to}`
+                `/v1/reports/balance-sheet?as_of_date=${asOfDate}`
             ),
-        enabled: !!from && !!to,
+        enabled: !!asOfDate,
     });
 }
 
