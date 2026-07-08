@@ -111,20 +111,30 @@ export interface DebtTransaction {
     };
 }
 
-export interface DebtPayment {
+export interface MemberPayment {
     uid: string;
-    action: string;
-    description: string;
+    nomor_pembayaran: string;
+    jumlah_bayar: number;
+    metode_pembayaran: "cash" | "card";
+    cash_received: number | null;
+    kembalian: number | null;
+    jenis_kartu: string | null;
+    nomor_kartu_akhir: string | null;
+    referensi_edc: string | null;
+    hutang_sebelum: number;
+    hutang_sesudah: number;
+    tanggal_bayar: string;
+    catatan: string | null;
+    status: string;
     created_at: string;
-    payload?: {
-        amount: number;
-        payment_method: string;
-        catatan?: string;
-        cash_received?: number;
-        kembalian?: number;
-        jenis_kartu?: string;
-        nomor_kartu_akhir?: string;
-        referensi_edc?: string;
+    user?: {
+        uid: string;
+        name: string;
+    };
+    cash_account?: {
+        uid: string;
+        nama: string;
+        tipe: string;
     };
 }
 
@@ -139,7 +149,7 @@ export interface DebtHistoryResponse {
         };
     };
     payments: {
-        data: DebtPayment[];
+        data: MemberPayment[];
         meta: {
             current_page: number;
             last_page: number;
@@ -157,9 +167,9 @@ export function useMemberDebts(params?: PaginationParams & { search?: string; st
 
 export function usePayMemberDebt() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<{ member: Member; payment: unknown }>, Error, { uid: string; data: PayDebtPayload }>({
+    return useMutation<ApiResponse<{ member: Member; payment: MemberPayment }>, Error, { uid: string; data: PayDebtPayload }>({
         mutationFn: ({ uid, data }) =>
-            apiPatch<ApiResponse<{ member: Member; payment: unknown }>, PayDebtPayload>(`/v1/members/pay-debt/${uid}`, data),
+            apiPatch<ApiResponse<{ member: Member; payment: MemberPayment }>, PayDebtPayload>(`/v1/members/pay-debt/${uid}`, data),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
             queryClient.invalidateQueries({ queryKey: ["cash-drawer"] });
