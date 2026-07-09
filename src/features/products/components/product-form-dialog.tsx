@@ -119,8 +119,11 @@ export function ProductFormDialog({
             formData.append("barcode", data.barcode);
         }
 
-        formData.append("harga", String(data.harga));
-        formData.append("stok", String(data.stok));
+        formData.append("harga_jual", String(data.harga));
+
+        if (data.stok !== undefined && data.stok !== null) {
+            formData.append("stok", String(data.stok));
+        }
 
         if (data.harga_beli !== null && data.harga_beli !== undefined) {
             formData.append("harga_beli", String(data.harga_beli));
@@ -130,21 +133,17 @@ export function ProductFormDialog({
             formData.append("margin", String(data.margin));
         }
 
-        if (data.category_uid !== null && data.category_uid !== undefined) {
-            formData.append("category_uid", String(data.category_uid));
-        }
-
-        if (data.brand_uid !== null && data.brand_uid !== undefined) {
-            formData.append("brand_uid", String(data.brand_uid));
-        }
+        formData.append("category_uid", data.category_uid ? String(data.category_uid) : "");
+        formData.append("brand_uid", data.brand_uid ? String(data.brand_uid) : "");
 
         if (data.image instanceof File) {
             formData.append("image", data.image);
         }
 
-        formData.append("is_jasa", data.is_jasa ? "1" : "0");
+        formData.append("is_jasa", data.is_jasa ? "true" : "false");
 
         if (editingProduct) {
+            formData.append("status", editingProduct.status);
             updateProduct.mutate(
                 { uid: editingProduct.uid, data: formData },
                 {
@@ -199,6 +198,7 @@ export function ProductFormDialog({
                 </>
             }
             className="sm:max-w-4xl"
+            scrollable={true}
         >
             <form
                 onSubmit={handleSubmit(onSubmit, onError)}

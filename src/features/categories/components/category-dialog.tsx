@@ -80,7 +80,7 @@ export function CategoryDialog({
 
             <form
                 onSubmit={handleSubmit(onSubmit)}
-                className="space-y-4 pt-4"
+                className="space-y-4"
             >
                 {/* Nama */}
                 <FormInput<CategoryInput>

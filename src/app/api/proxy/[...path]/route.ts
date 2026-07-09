@@ -52,6 +52,10 @@ async function handler(req: NextRequest) {
         ? await req.arrayBuffer()
         : undefined;
 
+    if (body) {
+      headers.set("Content-Length", body.byteLength.toString());
+    }
+
     const response = await fetch(targetUrl, {
       method: req.method,
       headers,
