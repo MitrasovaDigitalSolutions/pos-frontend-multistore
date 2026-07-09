@@ -211,7 +211,7 @@ export function MemberPaymentsPage() {
         <div className="space-y-6">
             {/* List Table & Filter Section */}
             <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4">
-                <div className="flex justify-between items-center border-b border-slate-50 pb-3">
+                <div className="flex justify-between items-center border-b border-slate-50">
                     <div>
                         <h4 className="text-xs font-bold text-slate-800">Daftar Pembayaran Hutang Member</h4>
                         <p className="text-[10px] text-slate-400">Gunakan kolom cari member untuk memfilter data.</p>
