@@ -140,7 +140,7 @@ export function ProductFormDialog({
             formData.append("image", data.image);
         }
 
-        formData.append("is_jasa", data.is_jasa ? "true" : "false");
+        formData.append("is_jasa", data.is_jasa ? "1" : "0");
 
         if (editingProduct) {
             formData.append("status", editingProduct.status);

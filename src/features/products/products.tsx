@@ -22,6 +22,7 @@ interface ProductFilterValues {
   category_uid: string;
   brand_uid: string;
   status: string;
+  is_jasa: string;
 }
 
 export function Products() {
@@ -45,6 +46,7 @@ export function Products() {
     status?: string;
     category_uid?: string;
     brand_uid?: string;
+    is_jasa?: string;
   }>(() => ({
     search: searchParam || undefined,
     status: "active",
@@ -60,12 +62,14 @@ export function Products() {
       category_uid: "all",
       brand_uid: "all",
       status: "active",
+      is_jasa: "all",
     },
   });
 
   // Sync URL search param to state and form values
   useEffect(() => {
     filterMethods.setValue("search", searchParam);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAppliedFilters((prev) => ({
       ...prev,
       search: searchParam || undefined,
@@ -78,6 +82,7 @@ export function Products() {
       status: data.status !== "all" ? data.status : undefined,
       category_uid: data.category_uid !== "all" ? (data.category_uid) : undefined,
       brand_uid: data.brand_uid !== "all" ? (data.brand_uid) : undefined,
+      is_jasa: data.is_jasa !== "all" ? data.is_jasa : undefined,
     });
     setPage(1);
   };
@@ -88,6 +93,7 @@ export function Products() {
       category_uid: "all",
       brand_uid: "all",
       status: "active",
+      is_jasa: "all",
     });
     setAppliedFilters({
       status: "active",
@@ -184,6 +190,12 @@ export function Products() {
     { value: "inactive", label: "Nonaktif" },
   ];
 
+  const tipeOptions = [
+    { value: "all", label: "Semua Tipe" },
+    { value: "0", label: "Barang" },
+    { value: "1", label: "Jasa" },
+  ];
+
   return (
     <div className="space-y-6">
       <FormProvider {...dialogMethods}>
@@ -233,6 +245,12 @@ export function Products() {
                 label="Status"
                 options={statusOptions}
                 placeholder="Semua Status"
+              />
+              <FormSelect<ProductFilterValues>
+                name="is_jasa"
+                label="Tipe"
+                options={tipeOptions}
+                placeholder="Semua Tipe"
               />
             </FilterForm>
           }
