@@ -39,7 +39,7 @@ export function useUpdateProduct() {
         { uid: string; data: FormData }
     >({
         mutationFn: ({ uid, data }) =>
-            apiPut<ApiResponse<Product>, FormData>(
+            apiPost<ApiResponse<Product>, FormData>(
                 `/v1/products/${uid}`,
                 data,
             ),
