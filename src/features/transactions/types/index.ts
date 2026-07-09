@@ -6,6 +6,7 @@ import type { Member } from "@/features/members/types";
 
 export interface TransactionItem extends BaseSaleItem {
     product?: Product | null;
+    harga_beli?: number;
 }
 
 export interface Transaction extends BaseSale {
