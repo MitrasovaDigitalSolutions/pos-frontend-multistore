@@ -290,6 +290,12 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                     },
+                    {
+                        path: ROUTES.ADMIN_ACCOUNTING_JOURNALS,
+                        label: "Jurnal Manual",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                    },
                 ],
             },
         ],

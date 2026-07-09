@@ -35,6 +35,7 @@ export const ROUTES = {
     ADMIN_ACCOUNTING_BALANCESHEET: "/admin/accounting/balance-sheet",
     ADMIN_ACCOUNTING_COA: "/admin/accounting/coa",
     ADMIN_ACCOUNTING_COA_MAPPING: "/admin/accounting/coa-mapping",
+    ADMIN_ACCOUNTING_JOURNALS: "/admin/accounting/journals",
 
     // Protected - POS
     CHECKOUT: "/checkout",

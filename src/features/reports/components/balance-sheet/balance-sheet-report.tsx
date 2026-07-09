@@ -4,13 +4,17 @@ import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { FormInput } from "@/components/forms/form-input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useFlatChartOfAccounts } from "@/features/accounting/api/coa-api";
-import { useCreateManualJournal } from "@/features/accounting/api/manual-journal-api";
+import { useCreateManualJournal, useUpdateManualJournal, useManualJournalDetail } from "@/features/accounting/api/manual-journal-api";
 import { useBalanceSheet } from "@/features/reports/api/reports-api";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { getThisMonthRange, formatUTC, todayStr } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import { useBalanceSheetStore } from "@/stores/balance-sheet-store";
+import { useSearchParams, useRouter } from "next/navigation";
+import { format } from "date-fns";
+import { id as localeId } from "date-fns/locale";
 import {
     IconBook,
     IconCheck,
@@ -38,13 +42,19 @@ interface ManualJournalDraftMeta {
 
 export function BalanceSheetReport() {
     const [asOfDate, setAsOfDate] = useState<string>(() => getThisMonthRange().to);
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const action = searchParams.get("action");
+    const journalUid = searchParams.get("uid");
 
     const { data, isLoading, isError, refetch } = useBalanceSheet(asOfDate);
     const { data: flatAccounts } = useFlatChartOfAccounts();
 
+    const { data: journal, isLoading: isJournalLoading } = useManualJournalDetail(
+        (action === "edit" || action === "detail") && journalUid ? journalUid : null
+    );
+
     // Zustand store editor state
-
-
     const {
         isEditing,
         editedData,
@@ -52,10 +62,14 @@ export function BalanceSheetReport() {
         transactionDate,
         setEditing,
         initializeData,
+        initializeFromJournal,
         setDescription,
         setTransactionDate,
         reset: resetStore
     } = useBalanceSheetStore();
+
+    const [hasInitializedJournal, setHasInitializedJournal] = useState(false);
+    const [hasInitializedNew, setHasInitializedNew] = useState(false);
 
     const methods = useForm<ManualJournalDraftMeta>({
         defaultValues: {
@@ -78,9 +92,55 @@ export function BalanceSheetReport() {
         return () => subscription.unsubscribe();
     }, [methods, setDescription, setTransactionDate]);
 
-    const createJournalMutation = useCreateManualJournal();
+    // Reset initialization guard when journal or action changes
+    useEffect(() => {
+        setHasInitializedJournal(false);
+        setHasInitializedNew(false);
+    }, [journalUid, action]);
 
-    // Initialize edit mode
+    // Initialize edit mode for NEW adjustments
+    useEffect(() => {
+        if (action === "new" && data && flatAccounts && !hasInitializedNew) {
+            initializeData(data, flatAccounts);
+            methods.reset({
+                description: "Penyesuaian Neraca Keuangan",
+                transaction_date: asOfDate,
+            });
+            setEditing(true);
+            setHasInitializedNew(true);
+        }
+    }, [action, data, flatAccounts, hasInitializedNew, initializeData, methods, asOfDate, setEditing]);
+
+    // Initialize edit/detail/view modes for EXISTING manual journal
+    useEffect(() => {
+        if ((action === "edit" || action === "detail") && journal && flatAccounts && !hasInitializedJournal) {
+            initializeFromJournal(journal, flatAccounts);
+            methods.reset({
+                description: journal.description || "Penyesuaian Neraca Keuangan",
+                transaction_date: journal.transaction_date ? journal.transaction_date.substring(0, 10) : todayStr(),
+            });
+            setHasInitializedJournal(true);
+
+            if (action === "detail") {
+                setEditing(false);
+            }
+        }
+    }, [action, journal, flatAccounts, hasInitializedJournal, initializeFromJournal, methods, setEditing]);
+
+    // Reset editing state and store if action is not edit or new
+    useEffect(() => {
+        if (action !== "new" && action !== "edit") {
+            setEditing(false);
+            if (action !== "detail") {
+                resetStore();
+            }
+        }
+    }, [action, setEditing, resetStore]);
+
+    const createJournalMutation = useCreateManualJournal();
+    const updateJournalMutation = useUpdateManualJournal();
+
+    // Initialize edit mode manually
     const handleStartEditing = () => {
         if (!data || !flatAccounts) return;
 
@@ -136,7 +196,7 @@ export function BalanceSheetReport() {
     }
 
     // Submit journal penyesuaian manual
-    const handlePostJournal = async () => {
+    const handleSaveJournal = async (status: "draft" | "posted") => {
         if (!editedData) return;
 
         const lines: { chart_of_account_uid: string; description: string; debit: number; credit: number }[] = [];
@@ -208,25 +268,99 @@ export function BalanceSheetReport() {
         }
 
         try {
-            await createJournalMutation.mutateAsync({
-                transaction_date: formatUTC(transactionDate),
-                description: journalDesc,
-                status: "posted",
-                lines,
-            });
-            toast.success("Jurnal penyesuaian berhasil diposting!");
+            if (action === "edit" && journalUid) {
+                await updateJournalMutation.mutateAsync({
+                    uid: journalUid,
+                    data: {
+                        transaction_date: formatUTC(transactionDate),
+                        description: journalDesc,
+                        status,
+                        lines,
+                    },
+                });
+                toast.success(status === "posted" ? "Jurnal penyesuaian berhasil diposting!" : "Draf jurnal berhasil diperbarui!");
+            } else {
+                await createJournalMutation.mutateAsync({
+                    transaction_date: formatUTC(transactionDate),
+                    description: journalDesc,
+                    status,
+                    lines,
+                });
+                toast.success(status === "posted" ? "Jurnal penyesuaian berhasil diposting!" : "Draf jurnal berhasil disimpan!");
+            }
             resetStore();
             refetch();
+            if (action) {
+                router.push("/admin/accounting/journals");
+            }
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : "Gagal memposting jurnal.";
             toast.error(msg);
         }
     };
 
+    if ((action === "edit" || action === "detail") && isJournalLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center py-24 gap-3 text-slate-500">
+                <IconLoader2 className="animate-spin text-indigo-600" size={40} />
+                <span className="text-sm font-semibold">Memuat Data Jurnal...</span>
+            </div>
+        );
+    }
+
+    if (action === "detail" && !journal) {
+        return (
+            <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm space-y-4">
+                <p className="text-sm font-bold text-slate-800">Detail Jurnal Tidak Ditemukan</p>
+                <Button onClick={() => router.push("/admin/accounting/journals")} size="sm" className="cursor-pointer">
+                    Kembali ke Daftar
+                </Button>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
             {/* Header / Filter Section */}
-            {!isEditing ? (
+            {action === "detail" && journal ? (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                    <div className="flex items-center gap-3">
+                        <IconBook className="w-5 h-5 text-indigo-600" />
+                        <div>
+                            <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+                                Detail Jurnal Manual: {journal.reference_number}
+                            </h2>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                Menampilkan pratinjau neraca keuangan dari entri jurnal ini.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                resetStore();
+                                router.push("/admin/accounting/journals");
+                            }}
+                            className="h-9 px-4 text-xs font-bold rounded-xl border-slate-200 hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                        >
+                            Kembali ke Daftar
+                        </Button>
+                        {journal.status === "draft" && (
+                            <Button
+                                size="sm"
+                                onClick={() => router.push(`/admin/accounting/balance-sheet?action=edit&uid=${journal.uid}`)}
+                                className="h-9 px-4 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                            >
+                                <IconEdit className="w-3.5 h-3.5" />
+                                Edit Jurnal
+                            </Button>
+                        )}
+                    </div>
+                </div>
+            ) : !isEditing ? (
                 <BalanceSheetHeaderFilters
                     asOfDate={asOfDate}
                     onAsOfDateChange={setAsOfDate}
@@ -237,7 +371,7 @@ export function BalanceSheetReport() {
                                 variant="outline"
                                 size="sm"
                                 onClick={handleStartEditing}
-                                className="h-8 px-3 text-xs font-bold rounded-xl border-slate-200 hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 transition-all shadow-sm shrink-0"
+                                className="h-8 px-3 text-xs font-bold rounded-xl border-slate-200 hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 transition-all shadow-sm shrink-0 cursor-pointer"
                             >
                                 <IconEdit className="w-3.5 h-3.5" />
                                 Edit Neraca
@@ -251,7 +385,7 @@ export function BalanceSheetReport() {
                         <IconBook className="w-5 h-5 text-indigo-600" />
                         <div>
                             <h2 className="text-lg font-bold text-slate-800 tracking-tight">
-                                Mode Edit: Jurnal Penyesuaian
+                                {action === "edit" ? "Edit Jurnal Manual" : "Mode Edit: Jurnal Penyesuaian"}
                             </h2>
                             <p className="text-xs text-slate-500 mt-0.5">
                                 Sesuaikan nilai CoA di bawah. Perubahan Debit dan Kredit harus seimbang.
@@ -290,10 +424,59 @@ export function BalanceSheetReport() {
                 </div>
             )}
 
+            {action === "detail" && journal && (
+                <Card className="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-50 pb-3">
+                        <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                            <IconBook className="w-4 h-4 text-indigo-500" />
+                            Informasi Jurnal Penyesuaian
+                        </h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-xs">
+                        <div>
+                            <span className="text-slate-400 font-medium block mb-0.5">No. Referensi</span>
+                            <span className="font-mono font-bold text-slate-800">{journal.reference_number}</span>
+                        </div>
+                        <div>
+                            <span className="text-slate-400 font-medium block mb-0.5">Tanggal Transaksi</span>
+                            <span className="font-semibold text-slate-700">
+                                {format(new Date(journal.transaction_date), "dd MMMM yyyy", { locale: localeId })}
+                            </span>
+                        </div>
+                        <div>
+                            <span className="text-slate-400 font-medium block mb-0.5">Pembuat</span>
+                            <span className="font-semibold text-slate-700">
+                                {journal.creator?.name || journal.creator?.username || "-"}
+                            </span>
+                        </div>
+                        <div>
+                            <span className="text-slate-400 font-medium block mb-0.5">Status</span>
+                            <Badge className={cn("px-2 py-0.5 border text-[10px] font-semibold", 
+                                journal.status === "draft" && "bg-slate-100 text-slate-700 border-slate-200",
+                                journal.status === "posted" && "bg-emerald-50 text-emerald-700 border-emerald-200",
+                                journal.status === "voided" && "bg-rose-50 text-rose-700 border-rose-200"
+                            )} variant="outline">
+                                {journal.status === "draft" && "Draft"}
+                                {journal.status === "posted" && "Posted"}
+                                {journal.status === "voided" && "Voided (Batal)"}
+                            </Badge>
+                        </div>
+                    </div>
+                    {journal.description && (
+                        <div className="pt-3 border-t border-slate-50 text-xs">
+                            <span className="text-slate-400 font-medium block mb-1">Keterangan Utama</span>
+                            <p className="text-slate-600 leading-relaxed font-medium bg-slate-50 p-2.5 rounded-xl border border-slate-100/50">
+                                {journal.description}
+                            </p>
+                        </div>
+                    )}
+                </Card>
+            )}
+
             {((data && !isLoading) || (showDraft && editedData)) && (
                 <>
                     {/* Draft Warning Banner */}
-                    {!isEditing && hasDraft && (
+                    {!isEditing && hasDraft && action !== "detail" && (
                         <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-800 mb-6 animate-fade-in">
                             <div className="flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
@@ -305,15 +488,20 @@ export function BalanceSheetReport() {
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    onClick={resetStore}
-                                    className="h-8 px-3 text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl"
+                                    onClick={() => {
+                                        resetStore();
+                                        if (action) {
+                                            router.push("/admin/accounting/journals");
+                                        }
+                                    }}
+                                    className="h-8 px-3 text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl cursor-pointer"
                                 >
                                     Buang Draf
                                 </Button>
                                 <Button
                                     type="button"
                                     onClick={() => setEditing(true)}
-                                    className="h-8 px-3 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl"
+                                    className="h-8 px-3 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl cursor-pointer"
                                 >
                                     Edit Draf
                                 </Button>
@@ -459,8 +647,13 @@ export function BalanceSheetReport() {
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        onClick={resetStore}
-                                        className="h-10 px-4 text-xs font-bold rounded-xl border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors shadow-sm flex items-center gap-1.5"
+                                        onClick={() => {
+                                            resetStore();
+                                            if (action) {
+                                                router.push("/admin/accounting/journals");
+                                            }
+                                        }}
+                                        className="h-10 px-4 text-xs font-bold rounded-xl border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
                                         title="Batalkan semua perubahan dan buang draf"
                                     >
                                         <IconX className="w-3.5 h-3.5 text-slate-400" />
@@ -469,22 +662,31 @@ export function BalanceSheetReport() {
                                     <Button
                                         type="button"
                                         variant="outline"
+                                        disabled={createJournalMutation.isPending || updateJournalMutation.isPending}
                                         onClick={() => {
-                                            setEditing(false);
-                                            toast.success("Draf neraca berhasil disimpan di lokal.");
+                                            if (action === "edit" || action === "new") {
+                                                handleSaveJournal("draft");
+                                            } else {
+                                                setEditing(false);
+                                                toast.success("Draf neraca berhasil disimpan di lokal.");
+                                            }
                                         }}
-                                        className="h-10 px-4 text-xs font-bold rounded-xl border-indigo-200 hover:border-indigo-300 hover:bg-indigo-50/30 text-indigo-700 transition-colors shadow-sm flex items-center gap-1.5"
+                                        className="h-10 px-4 text-xs font-bold rounded-xl border-indigo-200 hover:border-indigo-300 hover:bg-indigo-50/30 text-indigo-700 transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
                                     >
-                                        <IconDeviceFloppy className="w-3.5 h-3.5 text-indigo-500" />
+                                        {(createJournalMutation.isPending || updateJournalMutation.isPending) ? (
+                                            <IconLoader2 className="w-3.5 h-3.5 animate-spin" />
+                                        ) : (
+                                            <IconDeviceFloppy className="w-3.5 h-3.5 text-indigo-500" />
+                                        )}
                                         Simpan Draft
                                     </Button>
                                     <Button
                                         type="button"
-                                        disabled={!isBalanced || !description || !transactionDate || createJournalMutation.isPending}
-                                        onClick={handlePostJournal}
-                                        className="h-10 px-5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-100 disabled:text-slate-400 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md shadow-indigo-600/10 active:scale-[0.98]"
+                                        disabled={!isBalanced || !description || !transactionDate || createJournalMutation.isPending || updateJournalMutation.isPending}
+                                        onClick={() => handleSaveJournal("posted")}
+                                        className="h-10 px-5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-100 disabled:text-slate-400 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md shadow-indigo-600/10 active:scale-[0.98] cursor-pointer"
                                     >
-                                        {createJournalMutation.isPending ? (
+                                        {(createJournalMutation.isPending || updateJournalMutation.isPending) ? (
                                             <>
                                                 <IconLoader2 className="w-3.5 h-3.5 animate-spin" />
                                                 Posting...
