@@ -42,7 +42,7 @@ export function TransactionDetailSummary({ transaction, formattedDate }: Transac
     return (
         <div className="space-y-4">
             {/* 1. Unified Hero Metrics Card (Compact side-by-side) */}
-            <div className="bg-slate-50/65 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 flex items-center justify-between divide-x divide-slate-200/60 dark:divide-slate-800/80 shadow-xs">
+            <div className="bg-white dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 flex items-center justify-between divide-x divide-slate-200/60 dark:divide-slate-800/80 shadow-xs">
                 {/* Total Jual Column */}
                 <div className="flex-1 pr-3 flex items-start gap-2.5">
                     <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-650 flex items-center justify-center shrink-0 border border-indigo-100/50 shadow-xs">
@@ -61,21 +61,18 @@ export function TransactionDetailSummary({ transaction, formattedDate }: Transac
 
                 {/* Keuntungan Column */}
                 <div className="flex-1 pl-4 flex items-start gap-2.5">
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border shadow-xs ${
-                        totalProfit >= 0 ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-rose-50 text-rose-600 border-rose-100"
-                    }`}>
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border shadow-xs ${totalProfit >= 0 ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-rose-50 text-rose-600 border-rose-100"
+                        }`}>
                         <IconTrendingUp size={15} className="stroke-[2.2]" />
                     </div>
                     <div className="space-y-0.5">
                         <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Keuntungan</span>
-                        <p className={`text-xs sm:text-sm font-black tracking-tight tabular-nums ${
-                            totalProfit >= 0 ? "text-emerald-600" : "text-rose-600"
-                        }`}>
+                        <p className={`text-xs sm:text-sm font-black tracking-tight tabular-nums ${totalProfit >= 0 ? "text-emerald-600" : "text-rose-600"
+                            }`}>
                             {formatRupiah(totalProfit)}
                         </p>
-                        <span className={`text-[8px] font-extrabold px-1.5 py-0.2 rounded w-fit block mt-0.5 ${
-                            totalProfit >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
-                        }`}>
+                        <span className={`text-[8px] font-extrabold px-1.5 py-0.2 rounded w-fit block mt-0.5 ${totalProfit >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
+                            }`}>
                             {profitMargin.toFixed(1)}% margin
                         </span>
                     </div>
@@ -127,15 +124,14 @@ export function TransactionDetailSummary({ transaction, formattedDate }: Transac
                     {/* Payment badge & subdetails */}
                     <div className="flex items-center justify-between mb-2">
                         <span className="font-medium text-slate-500">Metode Pembayaran</span>
-                        <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-lg border ${
-                            paymentMethod === "cash" ? "bg-emerald-50 text-emerald-700 border-emerald-100/50" :
+                        <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-lg border ${paymentMethod === "cash" ? "bg-emerald-50 text-emerald-700 border-emerald-100/50" :
                             paymentMethod === "card" ? "bg-blue-50 text-blue-700 border-blue-100/50" :
-                            paymentMethod === "debt" ? "bg-rose-50 text-rose-700 border-rose-100/50" :
-                            "bg-indigo-50 text-indigo-700 border-indigo-100/50"
-                        }`}>
+                                paymentMethod === "debt" ? "bg-rose-50 text-rose-700 border-rose-100/50" :
+                                    "bg-indigo-50 text-indigo-700 border-indigo-100/50"
+                            }`}>
                             {paymentMethod === "cash" ? "Tunai" :
-                             paymentMethod === "card" ? "Non-Tunai" :
-                             paymentMethod === "debt" ? "Tempo" : "Split"}
+                                paymentMethod === "card" ? "Non-Tunai" :
+                                    paymentMethod === "debt" ? "Tempo" : "Split"}
                         </span>
                     </div>
 
@@ -180,8 +176,8 @@ export function TransactionDetailSummary({ transaction, formattedDate }: Transac
                                     <div>
                                         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Uang Muka (DP)</span>
                                         <p className="font-bold text-slate-800 mt-0.5 tabular-nums text-xs">
-                                            {formatRupiah(transaction.card_amount && transaction.card_amount > 0 
-                                                ? (transaction.cash_amount || 0) + transaction.card_amount 
+                                            {formatRupiah(transaction.card_amount && transaction.card_amount > 0
+                                                ? (transaction.cash_amount || 0) + transaction.card_amount
                                                 : transaction.cash_received || 0)}
                                         </p>
                                     </div>
