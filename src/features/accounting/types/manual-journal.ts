@@ -3,8 +3,8 @@ export interface ManualJournalLine {
     manual_journal_id?: number;
     chart_of_account_uid: string;
     description: string;
-    debit: number;
-    credit: number;
+    debit: number | string;
+    credit: number | string;
     account?: {
         uid: string;
         kode: string;
@@ -13,12 +13,13 @@ export interface ManualJournalLine {
 }
 
 export interface ManualJournal {
-    id: number;
+    uid: string;
     reference_number: string;
     transaction_date: string;
     description: string;
     status: "draft" | "posted" | "voided";
     created_by: string | null;
+    creator?: { uid: string; name: string; username: string } | null;
     created_at: string;
     updated_at: string;
     lines?: ManualJournalLine[];

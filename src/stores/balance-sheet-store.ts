@@ -1,5 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { ChartOfAccount } from "@/features/accounting/types";
+import type { ManualJournal, ManualJournalLine } from "@/features/accounting/types/manual-journal";
+import type { BalanceSheetItem } from "@/features/reports/types";
 
 export interface BalanceSheetEditItem {
     uid: string;
@@ -23,7 +26,15 @@ interface BalanceSheetStoreState {
     transactionDate: string;
 
     setEditing: (editing: boolean) => void;
-    initializeData: (data: { assets?: any; liabilities?: any; equity?: any }, coaList: any[]) => void;
+    initializeData: (
+        data: {
+            assets?: { items: BalanceSheetItem[] };
+            liabilities?: { items: BalanceSheetItem[] };
+            equity?: { items: BalanceSheetItem[] };
+        },
+        coaList: ChartOfAccount[]
+    ) => void;
+    initializeFromJournal: (journal: ManualJournal, coaList: ChartOfAccount[]) => void;
     updateItemAmount: (
         section: "assets" | "liabilities" | "equity" | "revenue" | "expense",
         uid: string,
@@ -53,7 +64,7 @@ export const useBalanceSheetStore = create<BalanceSheetStoreState>()(
             setEditing: (editing) => set({ isEditing: editing }),
 
             initializeData: (data, coaList) => {
-                const mapSection = (items: any[]) => {
+                const mapSection = (items: BalanceSheetItem[] | undefined) => {
                     return (items || []).map((item) => {
                         const matched = coaList.find((coa) => coa.kode === item.kode);
                         return {
@@ -75,6 +86,59 @@ export const useBalanceSheetStore = create<BalanceSheetStoreState>()(
                     },
                     description: "Penyesuaian Neraca Keuangan",
                     transactionDate: new Date().toISOString().split("T")[0],
+                });
+            },
+
+            initializeFromJournal: (journal, coaList) => {
+                const assets: BalanceSheetEditItem[] = [];
+                const liabilities: BalanceSheetEditItem[] = [];
+                const equity: BalanceSheetEditItem[] = [];
+                const revenue: BalanceSheetEditItem[] = [];
+                const expense: BalanceSheetEditItem[] = [];
+
+                (journal.lines || []).forEach((line: ManualJournalLine) => {
+                    const matchedCoa = coaList.find(
+                        (coa) => coa.uid === line.chart_of_account_uid || coa.kode === line.account?.kode
+                    );
+                    if (!matchedCoa) return;
+
+                    const tipe = matchedCoa.tipe;
+
+                    const debitVal = Number(line.debit) || 0;
+                    const creditVal = Number(line.credit) || 0;
+
+                    let amount = 0;
+                    if (tipe === "asset" || tipe === "expense") {
+                        amount = debitVal - creditVal;
+                    } else {
+                        amount = creditVal - debitVal;
+                    }
+
+                    const item: BalanceSheetEditItem = {
+                        uid: matchedCoa.uid,
+                        kode: matchedCoa.kode,
+                        nama: matchedCoa.nama,
+                        amount,
+                    };
+
+                    if (tipe === "asset") assets.push(item);
+                    else if (tipe === "liability") liabilities.push(item);
+                    else if (tipe === "equity") equity.push(item);
+                    else if (tipe === "revenue") revenue.push(item);
+                    else if (tipe === "expense") expense.push(item);
+                });
+
+                set({
+                    editedData: {
+                        assets,
+                        liabilities,
+                        equity,
+                        revenue,
+                        expense,
+                    },
+                    description: journal.description || "",
+                    transactionDate: journal.transaction_date ? journal.transaction_date.split("T")[0] : new Date().toISOString().split("T")[0],
+                    isEditing: true,
                 });
             },
 

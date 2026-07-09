@@ -225,6 +225,12 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasRole(roles, "admin") || hasPermission(roles, permissions, "view_members"),
                     },
                     {
+                        path: ROUTES.ADMIN_DEBTS_MEMBER_PAYMENTS,
+                        label: "Pembayaran Hutang Member",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_members"),
+                    },
+                    {
                         path: ROUTES.ADMIN_DEBTS_SALES,
                         label: "Hutang Sales",
                         permission: (roles, permissions) =>
@@ -287,6 +293,12 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     {
                         path: ROUTES.ADMIN_ACCOUNTING_COA_MAPPING,
                         label: "Mapping COA",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_ACCOUNTING_JOURNALS,
+                        label: "Jurnal Manual",
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                     },

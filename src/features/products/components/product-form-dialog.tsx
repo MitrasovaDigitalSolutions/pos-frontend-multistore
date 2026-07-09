@@ -4,20 +4,20 @@ import { FormImageUpload } from "@/components/forms/form-image-upload";
 import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { FormNumberInput } from "@/components/forms/form-number-input";
 import { FormSelect } from "@/components/forms/form-select";
-import { Button } from "@/components/ui/button";
+import { FormSwitch } from "@/components/forms/form-switch";
 import { BaseDialog } from "@/components/ui/base-dialog";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useBrands } from "@/features/brands/api/brands-api";
 import { useCategories } from "@/features/categories/api/categories-api";
-import { IconPackage, IconInfoCircle } from "@tabler/icons-react";
+import { getImageUrl } from "@/lib/utils";
+import { IconInfoCircle, IconPackage } from "@tabler/icons-react";
 import { useEffect, useMemo } from "react";
-import { useFormContext, Controller, type FieldErrors } from "react-hook-form";
-import { Switch } from "@/components/ui/switch";
+import { useFormContext, type FieldErrors } from "react-hook-form";
 import { toast } from "sonner";
 import { useCreateProduct, useUpdateProduct } from "../api/products-api";
 import { type ProductInput } from "../schemas/product-schema";
 import type { Product } from "../types";
-import { getImageUrl } from "@/lib/utils";
 
 interface ProductFormDialogProps {
     open: boolean;
@@ -42,7 +42,6 @@ export function ProductFormDialog({
         handleSubmit,
         watch,
         setValue,
-        control,
         formState: { errors },
     } = useFormContext<ProductInput>();
 
@@ -300,28 +299,12 @@ export function ProductFormDialog({
                         />
                     </div>
 
-                    {/* Status Jasa / Layanan */}
-                    <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                        <div className="space-y-0.5">
-                            <label className="text-xs font-bold text-slate-800">
-                                Produk Jasa / Layanan
-                            </label>
-                            <p className="text-[10px] text-slate-400">
-                                Aktifkan jika produk ini berupa layanan atau jasa yang tidak memerlukan stok fisik.
-                            </p>
-                        </div>
-                        <Controller
-                            name="is_jasa"
-                            control={control}
-                            render={({ field }) => (
-                                <Switch
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                    disabled={isPending}
-                                />
-                            )}
-                        />
-                    </div>
+                    <FormSwitch<ProductInput>
+                        name="is_jasa"
+                        label="Produk Jasa / Layanan"
+                        description="Aktifkan jika produk ini berupa layanan atau jasa yang tidak memerlukan stok fisik."
+                        disabled={isPending}
+                    />
 
                     {/* Keuangan: Harga Beli, Harga Jual, Margin */}
                     <div className="grid grid-cols-3 gap-3">
