@@ -35,7 +35,7 @@ export const paymentColumns: ColumnDef<ReceivingPayment>[] = [
         enableSorting: false,
         cell: ({ row }) => (
             <span className="font-semibold text-slate-700 text-xs font-mono">
-                {row.original.receiving?.nomor_penerimaan || "-"}
+                {row.original.stock_receiving?.nomor_penerimaan || "-"}
             </span>
         ),
         size: 160,
@@ -46,7 +46,7 @@ export const paymentColumns: ColumnDef<ReceivingPayment>[] = [
         enableSorting: false,
         cell: ({ row }) => (
             <span className="text-slate-600 text-xs font-medium">
-                {row.original.receiving?.supplier_relationship?.nama || row.original.receiving?.supplier || "-"}
+                {row.original.stock_receiving?.supplier_relationship?.nama || row.original.stock_receiving?.supplier || "-"}
             </span>
         ),
         size: 240,
