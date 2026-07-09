@@ -31,6 +31,7 @@ export const ROUTES = {
     ADMIN_PURCHASE_PAYMENT: "/admin/purchase/payment",
     ADMIN_PURCHASE_RETURN: "/admin/purchase/return",
     ADMIN_DEBTS_MEMBER: "/admin/debts/member",
+    ADMIN_DEBTS_MEMBER_PAYMENTS: "/admin/debts/member-payments",
     ADMIN_DEBTS_SALES: "/admin/debts/sales",
     ADMIN_ACCOUNTING_BALANCESHEET: "/admin/accounting/balance-sheet",
     ADMIN_ACCOUNTING_COA: "/admin/accounting/coa",

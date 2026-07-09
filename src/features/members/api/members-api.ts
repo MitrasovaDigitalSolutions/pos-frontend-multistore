@@ -136,6 +136,7 @@ export interface MemberPayment {
         nama: string;
         tipe: string;
     };
+    member?: Member;
 }
 
 export interface DebtHistoryResponse {
@@ -183,6 +184,13 @@ export function useMemberDebtHistory(memberUid: string) {
         queryKey: [...queryKeys.members.all, "debt-history", memberUid],
         queryFn: () => apiGetData<DebtHistoryResponse>(`/v1/members/debt-history/${memberUid}`),
         enabled: !!memberUid,
+    });
+}
+
+export function useMemberPayments(params?: PaginationParams & { search?: string }) {
+    return useQuery<PaginatedResponse<MemberPayment>>({
+        queryKey: [...queryKeys.members.all, "payments", params],
+        queryFn: () => apiGetList<MemberPayment>("/v1/members/payments", params),
     });
 }
 
