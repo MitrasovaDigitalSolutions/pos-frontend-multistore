@@ -134,13 +134,13 @@ export function AdjustmentDialog({
                 className="sm:max-w-3xl"
                 scrollable={true}
             >
-                <div className="flex flex-col flex-1 overflow-hidden min-h-0 ">
+                <div className="flex flex-col flex-1 overflow-hidden">
                     {/* Reusable FilterForm */}
                     <FilterForm<ProductSearchValues>
                         methods={filterMethods}
                         onSubmit={handleFilterSubmit}
                         onReset={handleFilterReset}
-                        className="mb-3"
+                        className="mt-0"
                     >
                         <FormInput<ProductSearchValues>
                             name="search"
