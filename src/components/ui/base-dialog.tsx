@@ -6,6 +6,8 @@ import { DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { IconX } from "@tabler/icons-react";
 
+import { Scrollable } from "@/components/ui/scrollable";
+
 // ─── BaseDialog ──────────────────────────────────────────────────────────────
 // Reusable dialog with a symmetric header — title and close (X) button are
 // always on the same row, same height, perfectly aligned.
@@ -22,6 +24,8 @@ interface BaseDialogProps {
     children: React.ReactNode;
     /** Prevent closing via the X button (e.g. mid-flow forms) */
     showCloseButton?: boolean;
+    /** Enable scrollable content inside the dialog body */
+    scrollable?: boolean;
 }
 
 export function BaseDialog({
@@ -32,13 +36,14 @@ export function BaseDialog({
     className,
     children,
     showCloseButton = true,
+    scrollable = false,
 }: BaseDialogProps) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             {/* Always hide the default absolute-positioned close button */}
             <DialogContent
                 className={cn(
-                    "bg-white rounded-2xl border-slate-100 p-6 shadow-2xl",
+                    "bg-white rounded-2xl border-slate-100 p-6 shadow-2xl flex flex-col max-h-[90vh]",
                     className,
                 )}
                 showCloseButton={false}
@@ -63,7 +68,13 @@ export function BaseDialog({
                 )}
 
                 {/* ── Content ── */}
-                {children}
+                {scrollable ? (
+                    <Scrollable className="flex-1 max-h-[calc(90vh-100px)] min-h-0" scrollbarClassName="z-40">
+                        {children}
+                    </Scrollable>
+                ) : (
+                    children
+                )}
             </DialogContent>
         </Dialog>
     );

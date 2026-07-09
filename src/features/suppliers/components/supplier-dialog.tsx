@@ -82,7 +82,7 @@ export function SupplierDialog({
         >
             <form
                 onSubmit={handleSubmit(onSubmit)}
-                className="space-y-4 pt-4"
+                className="space-y-4"
             >
                 {/* Nama */}
                 <div className="space-y-1.5">

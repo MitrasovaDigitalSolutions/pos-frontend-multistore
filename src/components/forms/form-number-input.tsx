@@ -17,7 +17,7 @@ interface FormNumberInputProps<T extends FieldValues> extends Omit<
     "name" | "value" | "onChange"
 > {
     name: FieldPath<T>;
-    label?: string;
+    label?: React.ReactNode;
     helperText?: React.ReactNode;
     onValueChange?: (val: number | null) => void;
 }
