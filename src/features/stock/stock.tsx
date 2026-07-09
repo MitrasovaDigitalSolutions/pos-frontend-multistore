@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { hasPermission, hasRole } from "@/constants/roles";
-import { useProducts } from "@/features/products/api/products-api";
 import {
     useOpnames,
 } from "@/features/stock/api/stock-api";
@@ -43,10 +42,6 @@ export function StockManagement() {
     const [opnamesSortBy, setOpnamesSortBy] = useState<string | undefined>("created_at");
     const [opnamesSortOrder, setOpnamesSortOrder] = useState<"asc" | "desc" | undefined>("desc");
 
-    // Load all products (up to 1000) for local low stock warnings and selection dropdowns in modals
-    const { data: productsData, isLoading: productsLoading } = useProducts({
-        per_page: 1000,
-    });
     const {
         data: opnamesData,
         isLoading: opnamesLoading,
@@ -58,7 +53,6 @@ export function StockManagement() {
         sort_order: opnamesSortOrder,
     });
 
-    const products = productsData?.data || [];
     const opnames = opnamesData?.data || [];
 
     // Modals
@@ -74,8 +68,8 @@ export function StockManagement() {
         );
     }
 
-    // Show skeleton UI on initial load of products
-    if (productsLoading && !productsData) {
+    // Show skeleton UI on initial load of opnames
+    if (opnamesLoading && !opnamesData) {
         return (
             <div className="space-y-6">
                 <div className="space-y-6">
@@ -186,7 +180,6 @@ export function StockManagement() {
             <AdjustmentDialog
                 open={isAdjustmentOpen}
                 onOpenChange={setIsAdjustmentOpen}
-                products={products || []}
             />
 
             <OpnameDialog

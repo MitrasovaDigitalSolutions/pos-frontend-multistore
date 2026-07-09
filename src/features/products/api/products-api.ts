@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
     apiGetList,
     apiPost,
+    apiPut,
     apiPatch,
     apiDelete,
 } from "@/shared/api/api-client";
@@ -38,7 +39,7 @@ export function useUpdateProduct() {
         { uid: string; data: FormData }
     >({
         mutationFn: ({ uid, data }) =>
-            apiPost<ApiResponse<Product>, FormData>(
+            apiPut<ApiResponse<Product>, FormData>(
                 `/v1/products/${uid}`,
                 data,
             ),
