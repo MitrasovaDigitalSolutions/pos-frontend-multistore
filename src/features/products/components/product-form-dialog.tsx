@@ -11,7 +11,7 @@ import { useBrands } from "@/features/brands/api/brands-api";
 import { useCategories } from "@/features/categories/api/categories-api";
 import { IconPackage, IconInfoCircle } from "@tabler/icons-react";
 import { useEffect, useMemo } from "react";
-import { useFormContext, Controller } from "react-hook-form";
+import { useFormContext, Controller, type FieldErrors } from "react-hook-form";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useCreateProduct, useUpdateProduct } from "../api/products-api";
@@ -145,7 +145,6 @@ export function ProductFormDialog({
         formData.append("is_jasa", data.is_jasa ? "1" : "0");
 
         if (editingProduct) {
-            formData.append("_method", "PUT");
             updateProduct.mutate(
                 { uid: editingProduct.uid, data: formData },
                 {
@@ -178,6 +177,11 @@ export function ProductFormDialog({
         }
     };
 
+    const onError = (formErrors: FieldErrors<ProductInput>) => {
+        console.error("Product Form Validation Errors:", formErrors);
+        toast.error("Gagal menyimpan produk. Silakan periksa kembali input Anda.");
+    };
+
     const initialImageUrl = getImageUrl(editingProduct?.image_path);
 
     return (
@@ -197,7 +201,7 @@ export function ProductFormDialog({
             className="sm:max-w-4xl"
         >
             <form
-                onSubmit={handleSubmit(onSubmit)}
+                onSubmit={handleSubmit(onSubmit, onError)}
                 className="grid grid-cols-1 md:grid-cols-3 gap-6 "
             >
                 {infoMessage && (

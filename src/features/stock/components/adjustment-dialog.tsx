@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, FormProvider, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BaseDialog } from "@/components/ui/base-dialog";
@@ -15,24 +15,41 @@ import {
     type AdjustmentInput,
 } from "../schemas/adjustment-schema";
 import { useCreateAdjustment } from "../api/stock-api";
+import { useProducts } from "@/features/products/api/products-api";
+import { useDebounce } from "@/hooks/use-debounce";
 import type { Product } from "@/features/products/types";
 
 interface AdjustmentDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    products: Product[];
+    products?: Product[];
 }
 
 export function AdjustmentDialog({
     open,
     onOpenChange,
-    products,
 }: AdjustmentDialogProps) {
     const createAdjustment = useCreateAdjustment();
+    const [search, setSearch] = useState("");
+    const debouncedSearch = useDebounce(search, 300);
 
-    const productOptions = products.map((p) => ({
+    const [prevOpen, setPrevOpen] = useState(open);
+    if (open !== prevOpen) {
+        setPrevOpen(open);
+        if (open) {
+            setSearch("");
+        }
+    }
+
+    const { data: productsData, isLoading: isProductsLoading } = useProducts({
+        search: debouncedSearch || undefined,
+        per_page: 50,
+    });
+
+    const productOptions = (productsData?.data || []).map((p) => ({
         value: p.uid,
         label: `${p.nama} (Stok: ${p.stok})`,
+        description: p.barcode || undefined,
     }));
 
     const methods = useForm<AdjustmentInput>({
@@ -99,6 +116,8 @@ export function AdjustmentDialog({
                         options={productOptions}
                         placeholder="-- Pilih Produk --"
                         disabled={isPending}
+                        onSearchChange={setSearch}
+                        isLoading={isProductsLoading}
                     />
 
                     <FormNumberInput<AdjustmentInput>
