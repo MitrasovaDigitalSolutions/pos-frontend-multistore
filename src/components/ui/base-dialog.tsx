@@ -50,7 +50,7 @@ export function BaseDialog({
             >
                 {/* ── Symmetric Header ── */}
                 {title && (
-                    <div className="flex items-center justify-between pb-4 border-b border-slate-100 shrink-0">
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
                         <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
                             {title}
                         </DialogTitle>
