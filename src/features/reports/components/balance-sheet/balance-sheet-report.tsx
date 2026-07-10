@@ -199,68 +199,66 @@ export function BalanceSheetReport() {
     const handleSaveJournal = async (status: "draft" | "posted") => {
         if (!editedData) return;
 
-        const lines: { chart_of_account_uid: string; description: string; debit: number; credit: number }[] = [];
         const journalDesc = description || "Penyesuaian Neraca Keuangan";
+        const lines: { chart_of_account_uid: string; description: string; debit: number; credit: number }[] = [];
 
-        // 1. Assets: Normal Debit
-        editedData.assets.forEach((item) => {
-            if (item.amount !== 0) {
-                lines.push({
-                    chart_of_account_uid: item.uid,
-                    description: `${journalDesc} - ${item.nama}`,
-                    debit: item.amount >= 0 ? item.amount : 0,
-                    credit: item.amount < 0 ? Math.abs(item.amount) : 0,
-                });
-            }
-        });
+        const isEditingExisting = action === "edit" && !!journalUid;
 
-        // 2. Beban (Expense): Normal Debit
-        editedData.expense.forEach((item) => {
-            if (item.amount !== 0) {
-                lines.push({
-                    chart_of_account_uid: item.uid,
-                    description: `${journalDesc} - ${item.nama}`,
-                    debit: item.amount >= 0 ? item.amount : 0,
-                    credit: item.amount < 0 ? Math.abs(item.amount) : 0,
+        if (isEditingExisting) {
+            // Replacing an existing journal: post the full edited sheet.
+            const pushSection = (items: typeof editedData.assets, debitNormal: boolean) => {
+                items.forEach((item) => {
+                    if (item.amount !== 0) {
+                        lines.push({
+                            chart_of_account_uid: item.uid,
+                            description: `${journalDesc} - ${item.nama}`,
+                            debit: debitNormal ? Math.max(item.amount, 0) : Math.max(-item.amount, 0),
+                            credit: debitNormal ? Math.max(-item.amount, 0) : Math.max(item.amount, 0),
+                        });
+                    }
                 });
-            }
-        });
+            };
+            pushSection(editedData.assets, true);
+            pushSection(editedData.expense, true);
+            pushSection(editedData.liabilities, false);
+            pushSection(editedData.equity, false);
+            pushSection(editedData.revenue, false);
+        } else {
+            // New adjustment from the balance sheet: post ONLY the per-CoA delta vs the
+            // originally fetched sheet. BalanceSheetService UNIONs manual_journal_lines with
+            // general_ledger, so posting the full sheet would double-count every balance.
+            const originalByKode: Record<string, number> = {};
+            const record = (items?: { kode: string | null; amount?: number }[]) => {
+                (items || []).forEach((it) => {
+                    const key = it.kode ?? "__null__";
+                    originalByKode[key] = (originalByKode[key] ?? 0) + (it.amount ?? 0);
+                });
+            };
+            record(data?.assets?.items);
+            record(data?.liabilities?.items);
+            record(data?.equity?.items);
 
-        // 3. Liabilities: Normal Credit
-        editedData.liabilities.forEach((item) => {
-            if (item.amount !== 0) {
-                lines.push({
-                    chart_of_account_uid: item.uid,
-                    description: `${journalDesc} - ${item.nama}`,
-                    debit: item.amount < 0 ? Math.abs(item.amount) : 0,
-                    credit: item.amount >= 0 ? item.amount : 0,
-                });
+            const sections: Array<"assets" | "liabilities" | "equity" | "revenue" | "expense"> = [
+                "assets", "liabilities", "equity", "revenue", "expense",
+            ];
+            for (const section of sections) {
+                const items = editedData[section];
+                const debitNormal = section === "assets" || section === "expense";
+                for (const item of items) {
+                    // Synthetic lines (e.g. Laba Rugi Berjalan, kode null) are derived, not adjustable.
+                    if (item.kode === null) continue;
+                    const original = originalByKode[item.kode] ?? 0;
+                    const delta = (item.amount ?? 0) - original;
+                    if (delta === 0) continue;
+                    lines.push({
+                        chart_of_account_uid: item.uid,
+                        description: `${journalDesc} - ${item.nama}`,
+                        debit: debitNormal ? Math.max(delta, 0) : Math.max(-delta, 0),
+                        credit: debitNormal ? Math.max(-delta, 0) : Math.max(delta, 0),
+                    });
+                }
             }
-        });
-
-        // 4. Equity: Normal Credit
-        editedData.equity.forEach((item) => {
-            if (item.amount !== 0) {
-                lines.push({
-                    chart_of_account_uid: item.uid,
-                    description: `${journalDesc} - ${item.nama}`,
-                    debit: item.amount < 0 ? Math.abs(item.amount) : 0,
-                    credit: item.amount >= 0 ? item.amount : 0,
-                });
-            }
-        });
-
-        // 5. Pendapatan (Revenue): Normal Credit
-        editedData.revenue.forEach((item) => {
-            if (item.amount !== 0) {
-                lines.push({
-                    chart_of_account_uid: item.uid,
-                    description: `${journalDesc} - ${item.nama}`,
-                    debit: item.amount < 0 ? Math.abs(item.amount) : 0,
-                    credit: item.amount >= 0 ? item.amount : 0,
-                });
-            }
-        });
+        }
 
         if (lines.length === 0) {
             toast.error("Minimal harus ada satu akun dengan nominal bukan nol untuk diposting.");

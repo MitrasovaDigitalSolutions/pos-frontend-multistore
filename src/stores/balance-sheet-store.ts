@@ -6,7 +6,7 @@ import type { BalanceSheetItem } from "@/features/reports/types";
 
 export interface BalanceSheetEditItem {
     uid: string;
-    kode: string;
+    kode: string | null;
     nama: string;
     amount: number;
 }
