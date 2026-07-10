@@ -56,8 +56,8 @@ export function BalanceSheetStatusCard({
                         </div>
                         <p className="text-slate-500 text-xs mt-2 max-w-xl leading-relaxed">
                             {isBalanced
-                                ? "Sempurna! Nilai aset Anda tepat sama dengan gabungan kewajiban dan ekuitas. Ini menunjukkan pencatatan keuangan Anda tercatat dengan benar."
-                                : "Perhatian! Total Aset tidak sama dengan gabungan Kewajiban & Ekuitas. Mohon periksa kembali transaksi atau jurnal penyesuaian Anda."}
+                                ? "Sempurna! (Aset + Beban) tepat sama dengan (Kewajiban + Ekuitas + Pendapatan). Ini menunjukkan pencatatan keuangan Anda tercatat dengan benar."
+                                : "Perhatian! (Aset + Beban) tidak sama dengan (Kewajiban + Ekuitas + Pendapatan). Mohon periksa kembali transaksi atau jurnal penyesuaian Anda."}
                             {!isBalanced && difference > 0 && (
                                 <span className="block font-bold text-rose-600 mt-1.5">
                                     Selisih (Discrepancy): {formatRupiah(difference)}
@@ -119,6 +119,13 @@ export function BalanceSheetStatusCard({
                             {rightLegend || "Kewajiban & Ekuitas"}
                         </span>
                     </div>
+
+                    {/* Debit/Credit convention legend */}
+                    <p className="text-[11px] text-slate-400 leading-relaxed mt-1">
+                        Konvensi standar akuntansi: <span className="text-emerald-600 font-semibold">Beban bertambah di sisi Debit</span>,{" "}
+                        <span className="text-rose-600 font-semibold">Pendapatan bertambah di sisi Credit</span>. Persamaan neraca:{" "}
+                        <span className="text-slate-500 font-semibold">Aset + Beban = Kewajiban + Ekuitas + Pendapatan</span>.
+                    </p>
                 </div>
             </div>
         </div>
