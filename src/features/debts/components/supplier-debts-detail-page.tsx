@@ -201,8 +201,8 @@ export function SupplierDebtsDetailPage({ supplierUid, supplierName }: SupplierD
             id: "actions",
             header: "Aksi",
             meta: {
-                headerClassName: "text-center w-24",
-                cellClassName: "text-center",
+                headerClassName: "text-center w-24 sticky right-0 top-0 bg-slate-50 z-30 shadow-[-1px_0_0_0_rgba(241,245,249,1)] border-l border-slate-100",
+                cellClassName: "text-center sticky right-0 bg-white group-hover:bg-slate-100 z-10 shadow-[-1px_0_0_0_rgba(241,245,249,1)] border-l border-slate-100 transition-colors",
             },
             cell: ({ row }) => (
                 <button
