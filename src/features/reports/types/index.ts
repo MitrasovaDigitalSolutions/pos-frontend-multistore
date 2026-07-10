@@ -252,11 +252,21 @@ export interface BalanceSheetEquity extends BalanceSheetSection {
     total_equity: number;
 }
 
+export interface BalanceSheetRevenue extends BalanceSheetSection {
+    total_revenue: number;
+}
+
+export interface BalanceSheetExpense extends BalanceSheetSection {
+    total_expense: number;
+}
+
 export interface BalanceSheetData {
     as_of_date: string;
     assets: BalanceSheetAssets;
     liabilities: BalanceSheetLiabilities;
     equity: BalanceSheetEquity;
+    revenue: BalanceSheetRevenue;
+    expense: BalanceSheetExpense;
     is_balanced: boolean;
 }
 

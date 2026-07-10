@@ -186,14 +186,16 @@ export function BalanceSheetReport() {
 
         difference = Math.abs(totalDebits - totalCredits);
         isBalanced = difference === 0;
-    } else if (data) {
-        totalAssets = data.assets?.total_assets ?? 0;
-        totalLiabilities = data.liabilities?.total_liabilities ?? 0;
-        totalEquity = data.equity?.total_equity ?? 0;
-        totalLiabilitiesAndEquity = totalLiabilities + totalEquity;
-        difference = Math.abs(totalAssets - totalLiabilitiesAndEquity);
-        isBalanced = data.is_balanced ?? false;
-    }
+        } else if (data) {
+            totalAssets = data.assets?.total_assets ?? 0;
+            totalLiabilities = data.liabilities?.total_liabilities ?? 0;
+            totalEquity = data.equity?.total_equity ?? 0;
+            totalExpense = data.expense?.total_expense ?? 0;
+            totalRevenue = data.revenue?.total_revenue ?? 0;
+            totalLiabilitiesAndEquity = totalLiabilities + totalEquity + totalRevenue;
+            difference = Math.abs((totalAssets + totalExpense) - totalLiabilitiesAndEquity);
+            isBalanced = data.is_balanced ?? false;
+        }
 
     // Submit journal penyesuaian manual
     const handleSaveJournal = async (status: "draft" | "posted") => {
@@ -510,13 +512,13 @@ export function BalanceSheetReport() {
                     {/* Status Card (Balances debits vs credits) */}
                     <BalanceSheetStatusCard
                         isBalanced={isBalanced}
-                        totalAssets={showDraft ? (totalAssets + totalExpense) : totalAssets}
-                        totalLiabilitiesAndEquity={showDraft ? (totalLiabilities + totalEquity + totalRevenue) : totalLiabilitiesAndEquity}
+                        totalAssets={totalAssets + totalExpense}
+                        totalLiabilitiesAndEquity={totalLiabilities + totalEquity + totalRevenue}
                         difference={difference}
-                        leftLabel={showDraft ? "Total Debet (Aset + Beban)" : "Total Aset (A)"}
-                        rightLabel={showDraft ? "Total Kredit (Liabilitas + Ekuitas + Pendapatan)" : "Kewajiban + Ekuitas (K + E)"}
-                        leftLegend={showDraft ? "Debet" : "Aset"}
-                        rightLegend={showDraft ? "Kredit" : "Kewajiban & Ekuitas"}
+                        leftLabel="Total Aset + Beban (A + B)"
+                        rightLabel="Kewajiban + Ekuitas + Pendapatan (K + E + R)"
+                        leftLegend="Aset & Beban"
+                        rightLegend="Kewajiban, Ekuitas & Pendapatan"
                     />
 
                     <div className="grid gap-6 md:grid-cols-2">
@@ -535,21 +537,19 @@ export function BalanceSheetReport() {
                                 coaList={flatAccounts || []}
                             />
 
-                            {/* Expense section - visible in Edit Mode or when Draft is active */}
-                            {showDraft && editedData && (
-                                <BalanceSheetSectionCard
-                                    title="Beban (Beban Operasional & Lain-lain)"
-                                    description="Pengeluaran operasional, beban gaji, sewa, listrik, air, dan beban penyusutan lainnya dalam tahun berjalan."
-                                    items={editedData.expense}
-                                    total={totalExpense}
-                                    accentColor="amber"
-                                    totalLabel="Total Beban"
-                                    icon={<IconTrendingUp className="w-4 text-amber-500" />}
-                                    isEditing={isEditing}
-                                    sectionKey="expense"
-                                    coaList={flatAccounts || []}
-                                />
-                            )}
+                            {/* Expense section */}
+                            <BalanceSheetSectionCard
+                                title="Beban (Beban Operasional & Lain-lain)"
+                                description="Pengeluaran operasional, beban gaji, sewa, listrik, air, dan beban penyusutan lainnya dalam tahun berjalan."
+                                items={showDraft && editedData ? editedData.expense : (data?.expense?.items || [])}
+                                total={totalExpense}
+                                accentColor="amber"
+                                totalLabel="Total Beban"
+                                icon={<IconTrendingUp className="w-4 text-amber-500" />}
+                                isEditing={isEditing}
+                                sectionKey="expense"
+                                coaList={flatAccounts || []}
+                            />
                         </div>
 
                         {/* Right Side: Liabilities, Equity & Revenues (Credit Column) */}
@@ -580,21 +580,19 @@ export function BalanceSheetReport() {
                                 coaList={flatAccounts || []}
                             />
 
-                            {/* Revenue section - visible in Edit Mode or when Draft is active */}
-                            {showDraft && editedData && (
-                                <BalanceSheetSectionCard
-                                    title="Pendapatan (Omset & Operasional)"
-                                    description="Hasil penjualan produk, jasa, omset kotor, serta pendapatan non-operasional lainnya dalam tahun berjalan."
-                                    items={editedData.revenue}
-                                    total={totalRevenue}
-                                    accentColor="indigo"
-                                    totalLabel="Total Pendapatan"
-                                    icon={<IconCoin className="w-4 text-indigo-500" />}
-                                    isEditing={isEditing}
-                                    sectionKey="revenue"
-                                    coaList={flatAccounts || []}
-                                />
-                            )}
+                            {/* Revenue section */}
+                            <BalanceSheetSectionCard
+                                title="Pendapatan (Omset & Operasional)"
+                                description="Hasil penjualan produk, jasa, omset kotor, serta pendapatan non-operasional lainnya dalam tahun berjalan."
+                                items={showDraft && editedData ? editedData.revenue : (data?.revenue?.items || [])}
+                                total={totalRevenue}
+                                accentColor="indigo"
+                                totalLabel="Total Pendapatan"
+                                icon={<IconCoin className="w-4 text-indigo-500" />}
+                                isEditing={isEditing}
+                                sectionKey="revenue"
+                                coaList={flatAccounts || []}
+                            />
                         </div>
                     </div>
 
