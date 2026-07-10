@@ -147,6 +147,12 @@ export const ENDPOINTS = {
         DELETE: (uid: string) => `/v1/manual-journals/${uid}`,
     },
 
+    // COA Mappings (operational transaction → Chart of Account)
+    COA_MAPPINGS: {
+        LIST: "/v1/accounting/coa-mappings",
+        UPDATE: "/v1/accounting/coa-mappings",
+    },
+
     // Transactions (Checkout)
     TRANSACTIONS: {
         CREATE: "/v1/transactions",
