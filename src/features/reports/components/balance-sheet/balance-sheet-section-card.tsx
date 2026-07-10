@@ -130,7 +130,7 @@ export function BalanceSheetSectionCard({
         }
     };
 
-    const displayedItems = isEditing ? items : items.filter((item) => item.amount !== 0);
+    const displayedItems = isEditing ? items : items.filter((item) => (item.debit || 0) !== 0 || (item.credit || 0) !== 0 || (item.amount || 0) !== 0);
 
     const totalDebit = items.reduce((sum, item) => sum + (item.debit || 0), 0);
     const totalCredit = items.reduce((sum, item) => sum + (item.credit || 0), 0);
