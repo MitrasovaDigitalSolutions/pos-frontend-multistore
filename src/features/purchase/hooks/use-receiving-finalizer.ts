@@ -343,7 +343,8 @@ export function useReceivingFinalizer({
         isFinalizing ||
         bulkCreateReceiving.isPending ||
         updateReceiving.isPending ||
-        createHeaderMutation.isPending;
+        createHeaderMutation.isPending ||
+        comparePrices.isPending;
 
     return {
         priceAlerts,

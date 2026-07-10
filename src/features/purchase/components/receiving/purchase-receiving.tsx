@@ -12,7 +12,7 @@ import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
-import { RECEIVING_STATUS, RECEIVING_STATUS_LABELS } from "@/constants/purchase";
+import { RECEIVING_STATUS, RECEIVING_STATUS_LABELS, PAYMENT_STATUS, PAYMENT_STATUS_LABELS } from "@/constants/purchase";
 
 interface ReceivingFilterValues {
     search: string;
@@ -20,6 +20,7 @@ interface ReceivingFilterValues {
     supplier_id: string;
     start_date: string;
     end_date: string;
+    status_pembayaran: string;
 }
 
 export function PurchaseReceiving() {
@@ -45,6 +46,7 @@ export function PurchaseReceiving() {
         supplier_id: "all",
         start_date: "",
         end_date: "",
+        status_pembayaran: "all",
     });
 
     const deferredFilters = useDeferredValue(filters);
@@ -56,6 +58,7 @@ export function PurchaseReceiving() {
             supplier_id: "all",
             start_date: "",
             end_date: "",
+            status_pembayaran: "all",
         },
     });
 
@@ -66,6 +69,7 @@ export function PurchaseReceiving() {
             supplier_id: data.supplier_id,
             start_date: data.start_date,
             end_date: data.end_date,
+            status_pembayaran: data.status_pembayaran,
         });
         setReceivingPage(1);
     };
@@ -77,6 +81,7 @@ export function PurchaseReceiving() {
             supplier_id: "all",
             start_date: "",
             end_date: "",
+            status_pembayaran: "all",
         });
         setFilters({
             search: "",
@@ -84,6 +89,7 @@ export function PurchaseReceiving() {
             supplier_id: "all",
             start_date: "",
             end_date: "",
+            status_pembayaran: "all",
         });
         setReceivingPage(1);
     };
@@ -110,6 +116,9 @@ export function PurchaseReceiving() {
     if (deferredFilters.end_date) {
         apiParams.end_date = deferredFilters.end_date;
     }
+    if (deferredFilters.status_pembayaran && deferredFilters.status_pembayaran !== "all") {
+        apiParams.status_pembayaran = deferredFilters.status_pembayaran;
+    }
 
     const {
         data: receivingsData,
@@ -124,6 +133,14 @@ export function PurchaseReceiving() {
         ...Object.values(RECEIVING_STATUS).map((status) => ({
             value: status,
             label: RECEIVING_STATUS_LABELS[status],
+        })),
+    ];
+
+    const paymentStatusOptions = [
+        { value: "all", label: "Semua Status Pembayaran" },
+        ...Object.values(PAYMENT_STATUS).map((status) => ({
+            value: status,
+            label: PAYMENT_STATUS_LABELS[status],
         })),
     ];
 
@@ -195,6 +212,12 @@ export function PurchaseReceiving() {
                             label="Status"
                             options={statusOptions}
                             placeholder="Semua Status"
+                        />
+                        <FormSelect<ReceivingFilterValues>
+                            name="status_pembayaran"
+                            label="Status Pembayaran"
+                            options={paymentStatusOptions}
+                            placeholder="Semua Status Pembayaran"
                         />
                     </FilterForm>
                 }

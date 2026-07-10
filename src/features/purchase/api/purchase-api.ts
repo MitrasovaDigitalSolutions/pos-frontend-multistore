@@ -13,7 +13,7 @@ import type { Product } from "@/features/products/types";
 
 // ─── Stock Receiving Hooks ────────────────────────────────────────────────────
 
-export function useReceivings(params?: PaginationParams & { search?: string; status?: string; supplier_uid?: string; start_date?: string; end_date?: string }) {
+export function useReceivings(params?: PaginationParams & { search?: string; status?: string; supplier_uid?: string; start_date?: string; end_date?: string; status_pembayaran?: string }) {
     return useQuery<PaginatedResponse<Receiving>>({
         queryKey: [...queryKeys.purchase.receivings(), params],
         queryFn: () => apiGetList<Receiving>(ENDPOINTS.PURCHASE.RECEIVING.LIST, params),
