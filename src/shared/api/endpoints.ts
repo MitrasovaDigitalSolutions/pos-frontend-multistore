@@ -149,8 +149,8 @@ export const ENDPOINTS = {
 
     // COA Mappings (operational transaction → Chart of Account)
     COA_MAPPINGS: {
-        LIST: "/v1/accounting/coa-mappings",
-        UPDATE: "/v1/accounting/coa-mappings",
+        LIST: "/v1/coa-mappings",
+        UPDATE: "/v1/coa-mappings",
     },
 
     // Transactions (Checkout)
