@@ -108,7 +108,7 @@ export interface ReceivingPayment {
         name: string;
         username?: string;
     } | null;
-    receiving?: Receiving | null;
+    stock_receiving?: Receiving | null;
     cash_account?: CashAccount | null;
 }
 

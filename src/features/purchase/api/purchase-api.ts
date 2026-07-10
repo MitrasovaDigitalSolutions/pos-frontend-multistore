@@ -463,7 +463,7 @@ export function usePaymentSummary(receivingUid: string | null) {
 
                 // Filter payments belonging to this receiving and which are completed (not voided)
                 const completedPayments = (paymentsResponse.data || []).filter(
-                    (p) => (p.referensi_uid === receivingUid || p.receiving?.uid === receivingUid) && p.status === "completed"
+                    (p) => (p.referensi_uid === receivingUid || p.stock_receiving?.uid === receivingUid) && p.status === "completed"
                 );
 
                 const totalFaktur = receiving.nilai_faktur || 0;

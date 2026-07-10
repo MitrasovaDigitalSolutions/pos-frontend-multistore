@@ -113,12 +113,12 @@ export function PaymentCreatePage() {
 
     // If editing, make sure the current receiving is in options
     if (isEdit && editingPayment && !receivingOptions.some(o => o.value === editingPayment.referensi_uid)) {
-        const editSisaHutang = editingPayment.receiving?.sisa_hutang !== undefined
-            ? editingPayment.receiving.sisa_hutang
-            : (editingPayment.receiving?.nilai_faktur || 0);
+        const editSisaHutang = editingPayment.stock_receiving?.sisa_hutang !== undefined
+            ? editingPayment.stock_receiving.sisa_hutang
+            : (editingPayment.stock_receiving?.nilai_faktur || 0);
         receivingOptions.push({
             value: editingPayment.referensi_uid,
-            label: `${editingPayment.receiving?.nomor_penerimaan || "Penerimaan"} - ${editingPayment.receiving?.supplier_relationship?.nama || editingPayment.receiving?.supplier || "Supplier"}`,
+            label: `${editingPayment.stock_receiving?.nomor_penerimaan || "Penerimaan"} - ${editingPayment.stock_receiving?.supplier_relationship?.nama || editingPayment.stock_receiving?.supplier || "Supplier"}`,
             description: `Sisa Hutang: ${formatRupiah(editSisaHutang)}`,
         });
     }
