@@ -23,7 +23,7 @@ import {
 import { paymentSchema, type PaymentInput } from "../../../schemas/payment-schema";
 import { PaymentForm } from "./payment-form";
 import { DebtSummary } from "./debt-summary";
-import { todayStr, formatToISO } from "@/lib/date-utils";
+import { todayStr, formatToISO, formatUTC } from "@/lib/date-utils";
 
 export function PaymentCreatePage() {
     const router = useAppRouter();
@@ -181,6 +181,7 @@ export function PaymentCreatePage() {
             receiving_uid: pendingData.receiving_uid,
             jumlah_bayar: Number(pendingData.jumlah_bayar),
             cash_account_uid: pendingData.cash_account_uid,
+            tanggal_bayar: formatUTC(pendingData.tanggal_bayar),
         };
 
         try {
