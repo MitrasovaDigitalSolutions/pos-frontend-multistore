@@ -501,15 +501,11 @@ export function useOutstandingReceivings() {
     return useQuery<Receiving[]>({
         queryKey: [...queryKeys.purchase.receivings(), "outstanding"],
         queryFn: async () => {
-            const queryParams: PaginationParams & { status: string } = {
-                status: "completed",
-                per_page: 100,
+            const queryParams: PaginationParams = {
+                per_page: 1000,
             };
-            const res = await apiGetList<Receiving>(ENDPOINTS.PURCHASE.RECEIVING.LIST, queryParams);
-            // Fallback filtering in case backend doesn't filter status_pembayaran
-            return (res.data || []).filter(
-                (r) => r.status_pembayaran === "pending" || r.status_pembayaran === "unpaid" || r.status_pembayaran === "partial"
-            );
+            const res = await apiGetList<Receiving>(ENDPOINTS.PURCHASE.RECEIVING.DEBTS, queryParams);
+            return res.data || [];
         },
     });
 }
