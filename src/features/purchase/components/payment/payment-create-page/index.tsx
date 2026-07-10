@@ -32,13 +32,16 @@ export function PaymentCreatePage() {
     const editId = editIdParam || null;
     const isEdit = editId !== null && editId !== "";
     const preselectedReceivingId = searchParams.get("receiving_uid");
+    const fromParam = searchParams.get("from");
+    const backUrl = fromParam ? decodeURIComponent(fromParam) : "/admin/purchase/payment";
 
     // Block editing completely
     useEffect(() => {
         if (isEdit) {
             toast.error("Pembayaran yang sudah disimpan tidak dapat diubah.");
-            router.push("/admin/purchase/payment");
+            router.push(backUrl);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isEdit, router]);
 
     const createPayment = useCreatePayment();
@@ -188,7 +191,7 @@ export function PaymentCreatePage() {
             await createPayment.mutateAsync(payload);
             toast.success("Pembayaran supplier berhasil dicatat.");
             setIsConfirmOpen(false);
-            router.push("/admin/purchase/payment");
+            router.push(backUrl);
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "Gagal mencatat pembayaran.";
             toast.error(message);
@@ -223,7 +226,7 @@ export function PaymentCreatePage() {
             <div className="flex items-center gap-4">
                 <Button
                     type="button"
-                    onClick={() => router.push("/admin/purchase/payment")}
+                    onClick={() => router.push(backUrl)}
                     variant="outline"
                     className="p-2 h-9 w-9 rounded-xl border-slate-200 text-slate-500 hover:text-slate-900 bg-white cursor-pointer"
                 >
@@ -255,7 +258,7 @@ export function PaymentCreatePage() {
                             paymentMethodOptions={paymentMethodOptions}
                             receivingsLoading={receivingsLoading}
                             cashAccountsLoading={cashAccountsLoading}
-                            onCancel={() => router.push("/admin/purchase/payment")}
+                            onCancel={() => router.push(backUrl)}
                         />
                     </FormProvider>
                 </div>
