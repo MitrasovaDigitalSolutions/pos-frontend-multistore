@@ -239,6 +239,8 @@ export function BalanceSheetReport() {
             record(data?.assets?.items);
             record(data?.liabilities?.items);
             record(data?.equity?.items);
+            record(data?.revenue?.items);
+            record(data?.expense?.items);
 
             const sections: Array<"assets" | "liabilities" | "equity" | "revenue" | "expense"> = [
                 "assets", "liabilities", "equity", "revenue", "expense",
