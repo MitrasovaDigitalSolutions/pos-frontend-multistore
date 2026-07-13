@@ -186,81 +186,83 @@ export function BalanceSheetReport() {
 
         difference = Math.abs(totalDebits - totalCredits);
         isBalanced = difference === 0;
-    } else if (data) {
-        totalAssets = data.assets?.total_assets ?? 0;
-        totalLiabilities = data.liabilities?.total_liabilities ?? 0;
-        totalEquity = data.equity?.total_equity ?? 0;
-        totalLiabilitiesAndEquity = totalLiabilities + totalEquity;
-        difference = Math.abs(totalAssets - totalLiabilitiesAndEquity);
-        isBalanced = data.is_balanced ?? false;
-    }
+        } else if (data) {
+            totalAssets = data.assets?.total_assets ?? 0;
+            totalLiabilities = data.liabilities?.total_liabilities ?? 0;
+            totalEquity = data.equity?.total_equity ?? 0;
+            totalExpense = data.expense?.total_expense ?? 0;
+            totalRevenue = data.revenue?.total_revenue ?? 0;
+            totalLiabilitiesAndEquity = totalLiabilities + totalEquity + totalRevenue;
+            difference = Math.abs((totalAssets + totalExpense) - totalLiabilitiesAndEquity);
+            isBalanced = data.is_balanced ?? false;
+        }
 
     // Submit journal penyesuaian manual
     const handleSaveJournal = async (status: "draft" | "posted") => {
         if (!editedData) return;
 
-        const lines: { chart_of_account_uid: string; description: string; debit: number; credit: number }[] = [];
         const journalDesc = description || "Penyesuaian Neraca Keuangan";
+        const lines: { chart_of_account_uid: string; description: string; debit: number; credit: number }[] = [];
 
-        // 1. Assets: Normal Debit
-        editedData.assets.forEach((item) => {
-            if (item.amount !== 0) {
-                lines.push({
-                    chart_of_account_uid: item.uid,
-                    description: `${journalDesc} - ${item.nama}`,
-                    debit: item.amount >= 0 ? item.amount : 0,
-                    credit: item.amount < 0 ? Math.abs(item.amount) : 0,
-                });
-            }
-        });
+        const isEditingExisting = action === "edit" && !!journalUid;
 
-        // 2. Beban (Expense): Normal Debit
-        editedData.expense.forEach((item) => {
-            if (item.amount !== 0) {
-                lines.push({
-                    chart_of_account_uid: item.uid,
-                    description: `${journalDesc} - ${item.nama}`,
-                    debit: item.amount >= 0 ? item.amount : 0,
-                    credit: item.amount < 0 ? Math.abs(item.amount) : 0,
+        if (isEditingExisting) {
+            // Replacing an existing journal: post the full edited sheet.
+            const pushSection = (items: typeof editedData.assets, debitNormal: boolean) => {
+                items.forEach((item) => {
+                    if (item.amount !== 0) {
+                        lines.push({
+                            chart_of_account_uid: item.uid,
+                            description: `${journalDesc} - ${item.nama}`,
+                            debit: debitNormal ? Math.max(item.amount, 0) : Math.max(-item.amount, 0),
+                            credit: debitNormal ? Math.max(-item.amount, 0) : Math.max(item.amount, 0),
+                        });
+                    }
                 });
-            }
-        });
+            };
+            pushSection(editedData.assets, true);
+            pushSection(editedData.expense, true);
+            pushSection(editedData.liabilities, false);
+            pushSection(editedData.equity, false);
+            pushSection(editedData.revenue, false);
+        } else {
+            // New adjustment from the balance sheet: post ONLY the per-CoA delta vs the
+            // originally fetched sheet. BalanceSheetService UNIONs manual_journal_lines with
+            // general_ledger, so posting the full sheet would double-count every balance.
+            const originalByKode: Record<string, number> = {};
+            const record = (items?: { kode: string | null; amount?: number }[]) => {
+                (items || []).forEach((it) => {
+                    const key = it.kode ?? "__null__";
+                    originalByKode[key] = (originalByKode[key] ?? 0) + (it.amount ?? 0);
+                });
+            };
+            record(data?.assets?.items);
+            record(data?.liabilities?.items);
+            record(data?.equity?.items);
+            record(data?.revenue?.items);
+            record(data?.expense?.items);
 
-        // 3. Liabilities: Normal Credit
-        editedData.liabilities.forEach((item) => {
-            if (item.amount !== 0) {
-                lines.push({
-                    chart_of_account_uid: item.uid,
-                    description: `${journalDesc} - ${item.nama}`,
-                    debit: item.amount < 0 ? Math.abs(item.amount) : 0,
-                    credit: item.amount >= 0 ? item.amount : 0,
-                });
+            const sections: Array<"assets" | "liabilities" | "equity" | "revenue" | "expense"> = [
+                "assets", "liabilities", "equity", "revenue", "expense",
+            ];
+            for (const section of sections) {
+                const items = editedData[section];
+                const debitNormal = section === "assets" || section === "expense";
+                for (const item of items) {
+                    // Synthetic lines (e.g. Laba Rugi Berjalan, kode null) are derived, not adjustable.
+                    if (item.kode === null) continue;
+                    const original = originalByKode[item.kode] ?? 0;
+                    const delta = (item.amount ?? 0) - original;
+                    if (delta === 0) continue;
+                    lines.push({
+                        chart_of_account_uid: item.uid,
+                        description: `${journalDesc} - ${item.nama}`,
+                        debit: debitNormal ? Math.max(delta, 0) : Math.max(-delta, 0),
+                        credit: debitNormal ? Math.max(-delta, 0) : Math.max(delta, 0),
+                    });
+                }
             }
-        });
-
-        // 4. Equity: Normal Credit
-        editedData.equity.forEach((item) => {
-            if (item.amount !== 0) {
-                lines.push({
-                    chart_of_account_uid: item.uid,
-                    description: `${journalDesc} - ${item.nama}`,
-                    debit: item.amount < 0 ? Math.abs(item.amount) : 0,
-                    credit: item.amount >= 0 ? item.amount : 0,
-                });
-            }
-        });
-
-        // 5. Pendapatan (Revenue): Normal Credit
-        editedData.revenue.forEach((item) => {
-            if (item.amount !== 0) {
-                lines.push({
-                    chart_of_account_uid: item.uid,
-                    description: `${journalDesc} - ${item.nama}`,
-                    debit: item.amount < 0 ? Math.abs(item.amount) : 0,
-                    credit: item.amount >= 0 ? item.amount : 0,
-                });
-            }
-        });
+        }
 
         if (lines.length === 0) {
             toast.error("Minimal harus ada satu akun dengan nominal bukan nol untuk diposting.");
@@ -512,13 +514,13 @@ export function BalanceSheetReport() {
                     {/* Status Card (Balances debits vs credits) */}
                     <BalanceSheetStatusCard
                         isBalanced={isBalanced}
-                        totalAssets={showDraft ? (totalAssets + totalExpense) : totalAssets}
-                        totalLiabilitiesAndEquity={showDraft ? (totalLiabilities + totalEquity + totalRevenue) : totalLiabilitiesAndEquity}
+                        totalAssets={totalAssets + totalExpense}
+                        totalLiabilitiesAndEquity={totalLiabilities + totalEquity + totalRevenue}
                         difference={difference}
-                        leftLabel={showDraft ? "Total Debet (Aset + Beban)" : "Total Aset (A)"}
-                        rightLabel={showDraft ? "Total Kredit (Liabilitas + Ekuitas + Pendapatan)" : "Kewajiban + Ekuitas (K + E)"}
-                        leftLegend={showDraft ? "Debet" : "Aset"}
-                        rightLegend={showDraft ? "Kredit" : "Kewajiban & Ekuitas"}
+                        leftLabel="Total Aset + Beban (A + B)"
+                        rightLabel="Kewajiban + Ekuitas + Pendapatan (K + E + R)"
+                        leftLegend="Aset & Beban"
+                        rightLegend="Kewajiban, Ekuitas & Pendapatan"
                     />
 
                     <div className="grid gap-6 md:grid-cols-2">
@@ -537,21 +539,19 @@ export function BalanceSheetReport() {
                                 coaList={flatAccounts || []}
                             />
 
-                            {/* Expense section - visible in Edit Mode or when Draft is active */}
-                            {showDraft && editedData && (
-                                <BalanceSheetSectionCard
-                                    title="Beban (Beban Operasional & Lain-lain)"
-                                    description="Pengeluaran operasional, beban gaji, sewa, listrik, air, dan beban penyusutan lainnya dalam tahun berjalan."
-                                    items={editedData.expense}
-                                    total={totalExpense}
-                                    accentColor="amber"
-                                    totalLabel="Total Beban"
-                                    icon={<IconTrendingUp className="w-4 text-amber-500" />}
-                                    isEditing={isEditing}
-                                    sectionKey="expense"
-                                    coaList={flatAccounts || []}
-                                />
-                            )}
+                            {/* Expense section */}
+                            <BalanceSheetSectionCard
+                                title="Beban (Beban Operasional & Lain-lain)"
+                                description="Pengeluaran operasional, beban gaji, sewa, listrik, air, dan beban penyusutan lainnya dalam tahun berjalan."
+                                items={showDraft && editedData ? editedData.expense : (data?.expense?.items || [])}
+                                total={totalExpense}
+                                accentColor="amber"
+                                totalLabel="Total Beban"
+                                icon={<IconTrendingUp className="w-4 text-amber-500" />}
+                                isEditing={isEditing}
+                                sectionKey="expense"
+                                coaList={flatAccounts || []}
+                            />
                         </div>
 
                         {/* Right Side: Liabilities, Equity & Revenues (Credit Column) */}
@@ -582,21 +582,19 @@ export function BalanceSheetReport() {
                                 coaList={flatAccounts || []}
                             />
 
-                            {/* Revenue section - visible in Edit Mode or when Draft is active */}
-                            {showDraft && editedData && (
-                                <BalanceSheetSectionCard
-                                    title="Pendapatan (Omset & Operasional)"
-                                    description="Hasil penjualan produk, jasa, omset kotor, serta pendapatan non-operasional lainnya dalam tahun berjalan."
-                                    items={editedData.revenue}
-                                    total={totalRevenue}
-                                    accentColor="indigo"
-                                    totalLabel="Total Pendapatan"
-                                    icon={<IconCoin className="w-4 text-indigo-500" />}
-                                    isEditing={isEditing}
-                                    sectionKey="revenue"
-                                    coaList={flatAccounts || []}
-                                />
-                            )}
+                            {/* Revenue section */}
+                            <BalanceSheetSectionCard
+                                title="Pendapatan (Omset & Operasional)"
+                                description="Hasil penjualan produk, jasa, omset kotor, serta pendapatan non-operasional lainnya dalam tahun berjalan."
+                                items={showDraft && editedData ? editedData.revenue : (data?.revenue?.items || [])}
+                                total={totalRevenue}
+                                accentColor="indigo"
+                                totalLabel="Total Pendapatan"
+                                icon={<IconCoin className="w-4 text-indigo-500" />}
+                                isEditing={isEditing}
+                                sectionKey="revenue"
+                                coaList={flatAccounts || []}
+                            />
                         </div>
                     </div>
 

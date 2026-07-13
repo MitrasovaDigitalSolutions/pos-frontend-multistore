@@ -2,7 +2,8 @@
 
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { cn } from "@/lib/utils";
-import { IconScale } from "@tabler/icons-react";
+import { IconInfoCircle, IconScale } from "@tabler/icons-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface BalanceSheetStatusCardProps {
     isBalanced: boolean;
@@ -56,8 +57,8 @@ export function BalanceSheetStatusCard({
                         </div>
                         <p className="text-slate-500 text-xs mt-2 max-w-xl leading-relaxed">
                             {isBalanced
-                                ? "Sempurna! Nilai aset Anda tepat sama dengan gabungan kewajiban dan ekuitas. Ini menunjukkan pencatatan keuangan Anda tercatat dengan benar."
-                                : "Perhatian! Total Aset tidak sama dengan gabungan Kewajiban & Ekuitas. Mohon periksa kembali transaksi atau jurnal penyesuaian Anda."}
+                                ? "Sempurna! (Aset + Beban) tepat sama dengan (Kewajiban + Ekuitas + Pendapatan). Ini menunjukkan pencatatan keuangan Anda tercatat dengan benar."
+                                : "Perhatian! (Aset + Beban) tidak sama dengan (Kewajiban + Ekuitas + Pendapatan). Mohon periksa kembali transaksi atau jurnal penyesuaian Anda."}
                             {!isBalanced && difference > 0 && (
                                 <span className="block font-bold text-rose-600 mt-1.5">
                                     Selisih (Discrepancy): {formatRupiah(difference)}
@@ -118,6 +119,41 @@ export function BalanceSheetStatusCard({
                             <span className={cn("w-2 h-2 rounded-full block", isBalanced ? "bg-indigo-500" : "bg-rose-500")} />
                             {rightLegend || "Kewajiban & Ekuitas"}
                         </span>
+                    </div>
+
+                    {/* Debit/Credit convention — tooltip */}
+                    <div className="flex items-center gap-1.5 mt-1">
+                        <span className="text-[11px] text-slate-400">Konvensi Debit/Credit?</span>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    type="button"
+                                    className="text-slate-400 hover:text-slate-600 transition-colors"
+                                    aria-label="Konvensi akuntansi"
+                                >
+                                    <IconInfoCircle className="w-4 h-4" />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent
+                                side="top"
+                                className="text-[11px] leading-relaxed max-w-[260px] bg-slate-950 text-white rounded-lg p-2.5 shadow-lg border border-slate-800 space-y-1"
+                            >
+                                <p>Konvensi standar akuntansi:</p>
+                                <p>
+                                    <span className="text-emerald-400 font-semibold">Beban</span> bertambah di sisi{" "}
+                                    <span className="text-emerald-400 font-semibold">Debit</span>,{" "}
+                                    <span className="text-rose-400 font-semibold">Pendapatan</span> di sisi{" "}
+                                    <span className="text-rose-400 font-semibold">Credit</span>.
+                                </p>
+                                <p>
+                                    Persamaan neraca:{" "}
+                                    <span className="text-slate-200 font-semibold">
+                                        Aset + Beban = Kewajiban + Ekuitas + Pendapatan
+                                    </span>
+                                    .
+                                </p>
+                            </TooltipContent>
+                        </Tooltip>
                     </div>
                 </div>
             </div>

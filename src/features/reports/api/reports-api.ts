@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { apiGetData } from "@/shared/api/api-client";
+import { apiGetData, apiGetList } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
-import type { DailyReport, LabaRugiReport, PengeluaranReport, PurchaseReport, PenjualanReport, SalesByCategoryResponse, BalanceSheetReport } from "../types";
+import { PaginatedResponse } from "@/types/api";
+import type { DailyReport, LabaRugiReport, PengeluaranReport, PurchaseReport, PenjualanReport, SalesByCategoryResponse, BalanceSheetReport, GeneralLedgerEntry, GeneralLedgerResponse } from "../types";
 
 export function useDailyReport(date: string) {
     return useQuery<DailyReport>({
@@ -89,6 +90,27 @@ export function useBalanceSheet(asOfDate: string) {
                 `/v1/reports/balance-sheet?as_of_date=${asOfDate}`
             ),
         enabled: !!asOfDate,
+    });
+}
+
+export function useGeneralLedger(params: {
+    from?: string;
+    to?: string;
+    chart_of_account_uid?: string;
+    page?: number;
+    per_page?: number;
+}) {
+    const queryParams: Record<string, string | number> = {};
+    if (params.from) queryParams.start_date = params.from;
+    if (params.to) queryParams.end_date = params.to;
+    if (params.chart_of_account_uid) queryParams.chart_of_account_uid = params.chart_of_account_uid;
+    if (params.page) queryParams.page = params.page;
+    if (params.per_page) queryParams.per_page = params.per_page;
+
+    return useQuery<PaginatedResponse<GeneralLedgerEntry>>({
+        queryKey: [...queryKeys.reports.all, "general-ledger", queryParams],
+        queryFn: () => apiGetList<GeneralLedgerEntry>("/v1/reports/general-ledger", queryParams),
+        enabled: true,
     });
 }
 

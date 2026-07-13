@@ -1,3 +1,5 @@
+import { PaginatedResponse } from "@/types/api";
+
 export interface PaymentMethodStats {
     count: number;
     total: number;
@@ -225,8 +227,12 @@ export interface SalesByCategoryResponse {
 }
 
 export interface BalanceSheetItem {
-    kode: string;
+    kode: string | null;
     nama: string;
+    tipe?: string;
+    saldo_normal?: "debit" | "kredit" | null;
+    debit: number;
+    credit: number;
     amount: number;
 }
 
@@ -246,15 +252,42 @@ export interface BalanceSheetEquity extends BalanceSheetSection {
     total_equity: number;
 }
 
+export interface BalanceSheetRevenue extends BalanceSheetSection {
+    total_revenue: number;
+}
+
+export interface BalanceSheetExpense extends BalanceSheetSection {
+    total_expense: number;
+}
+
 export interface BalanceSheetData {
     as_of_date: string;
     assets: BalanceSheetAssets;
     liabilities: BalanceSheetLiabilities;
     equity: BalanceSheetEquity;
+    revenue: BalanceSheetRevenue;
+    expense: BalanceSheetExpense;
     is_balanced: boolean;
 }
 
 export type BalanceSheetReport = BalanceSheetData;
+
+export interface GeneralLedgerEntry {
+    uid: string;
+    transaction_date: string;
+    chart_of_account_uid: string;
+    kode: string | null;
+    nama: string;
+    saldo_normal: "debit" | "kredit" | null;
+    debit: number;
+    credit: number;
+    reference_type: string | null;
+    reference_uid: string | null;
+    description: string | null;
+    source: "gl" | "manual";
+}
+
+export type GeneralLedgerResponse = PaginatedResponse<GeneralLedgerEntry>;
 
 
 

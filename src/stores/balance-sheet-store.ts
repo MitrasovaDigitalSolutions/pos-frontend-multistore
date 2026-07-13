@@ -6,7 +6,7 @@ import type { BalanceSheetItem } from "@/features/reports/types";
 
 export interface BalanceSheetEditItem {
     uid: string;
-    kode: string;
+    kode: string | null;
     nama: string;
     amount: number;
 }
@@ -31,6 +31,8 @@ interface BalanceSheetStoreState {
             assets?: { items: BalanceSheetItem[] };
             liabilities?: { items: BalanceSheetItem[] };
             equity?: { items: BalanceSheetItem[] };
+            revenue?: { items: BalanceSheetItem[] };
+            expense?: { items: BalanceSheetItem[] };
         },
         coaList: ChartOfAccount[]
     ) => void;
@@ -81,8 +83,8 @@ export const useBalanceSheetStore = create<BalanceSheetStoreState>()(
                         assets: mapSection(data.assets?.items),
                         liabilities: mapSection(data.liabilities?.items),
                         equity: mapSection(data.equity?.items),
-                        revenue: [],
-                        expense: [],
+                        revenue: mapSection(data.revenue?.items),
+                        expense: mapSection(data.expense?.items),
                     },
                     description: "Penyesuaian Neraca Keuangan",
                     transactionDate: new Date().toISOString().split("T")[0],

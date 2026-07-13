@@ -46,7 +46,7 @@ const getAccountIcon = (nama: string) => {
 interface BalanceSheetSectionCardProps {
     title: string;
     description: string;
-    items: { uid?: string; kode: string; nama: string; amount: number }[];
+    items: { uid?: string; kode: string | null; nama: string; amount: number; debit?: number; credit?: number }[];
     total: number;
     accentColor: "emerald" | "amber" | "indigo";
     totalLabel: string;
@@ -130,7 +130,12 @@ export function BalanceSheetSectionCard({
         }
     };
 
-    const displayedItems = isEditing ? items : items.filter((item) => item.amount !== 0);
+    const displayedItems = isEditing ? items : items.filter((item) => (item.debit || 0) !== 0 || (item.credit || 0) !== 0 || (item.amount || 0) !== 0);
+
+    const totalDebit = items.reduce((sum, item) => sum + (item.debit || 0), 0);
+    const totalCredit = items.reduce((sum, item) => sum + (item.credit || 0), 0);
+
+    const fmtLedger = (n: number) => (n ? formatRupiah(n) : "-");
 
     return (
         <Card className={cn("bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden border-t-2", borderColors[accentColor])}>
@@ -145,6 +150,15 @@ export function BalanceSheetSectionCard({
             </CardHeader>
             <CardContent className="p-0">
                 <div className="px-6 pb-2 divide-y divide-slate-100">
+                    {!isEditing && (
+                        <div className="flex justify-between items-center pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                            <span>Akun</span>
+                            <div className="flex items-center gap-6">
+                                <span>Debit</span>
+                                <span>Kredit</span>
+                            </div>
+                        </div>
+                    )}
                     {displayedItems.length === 0 ? (
                         <div className="py-8 text-center text-xs text-slate-400">
                             Tidak ada item akun aktif dengan saldo non-nol untuk kategori ini.
@@ -157,7 +171,7 @@ export function BalanceSheetSectionCard({
                                     <div className="flex justify-between items-center gap-4">
                                         <div className="space-y-0.5">
                                             <span className="text-[10px] font-mono text-slate-400 block">
-                                                {item.kode}
+                                                {item.kode ?? "-"}
                                             </span>
                                             <div className="flex items-center gap-2">
                                                 {getAccountIcon(item.nama)}
@@ -188,9 +202,14 @@ export function BalanceSheetSectionCard({
                                             </div>
                                         ) : (
                                             <div className="text-right">
-                                                <span className="text-xs font-bold text-slate-800">
-                                                    {formatRupiah(item.amount)}
-                                                </span>
+                                                <div className="flex items-center justify-end gap-5">
+                                                    <span className="text-xs font-bold text-emerald-700 tabular-nums">
+                                                        {fmtLedger(item.debit || 0)}
+                                                    </span>
+                                                    <span className="text-xs font-bold text-rose-700 tabular-nums">
+                                                        {fmtLedger(item.credit || 0)}
+                                                    </span>
+                                                </div>
                                                 {percent > 0 && (
                                                     <span className="text-[10px] text-slate-400 font-semibold block mt-0.5">
                                                         {percent}%
@@ -272,14 +291,26 @@ export function BalanceSheetSectionCard({
                 )}
 
                 {/* Total Row */}
-                <div className={cn("px-6 py-4 border-t flex justify-between items-center", bgTotals[accentColor])}>
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider">
-                        {totalLabel}
-                    </span>
-                    <span className="text-sm font-extrabold">
-                        {formatRupiah(total)}
-                    </span>
-                </div>
+                {!isEditing ? (
+                    <div className={cn("px-6 py-4 border-t flex justify-between items-center", bgTotals[accentColor])}>
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider">
+                            {totalLabel}
+                        </span>
+                        <div className="flex items-center gap-5 text-sm font-extrabold tabular-nums">
+                            <span className="text-emerald-700">{fmtLedger(totalDebit)}</span>
+                            <span className="text-rose-700">{fmtLedger(totalCredit)}</span>
+                        </div>
+                    </div>
+                ) : (
+                    <div className={cn("px-6 py-4 border-t flex justify-between items-center", bgTotals[accentColor])}>
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider">
+                            {totalLabel}
+                        </span>
+                        <span className="text-sm font-extrabold">
+                            {formatRupiah(total)}
+                        </span>
+                    </div>
+                )}
             </CardContent>
         </Card>
     );
