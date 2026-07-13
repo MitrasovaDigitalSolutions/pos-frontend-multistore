@@ -22,6 +22,7 @@ import { OfflineTransactionsTable } from "./offline-transactions-table";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { useSession } from "next-auth/react";
+import { formatToReadableDateTime } from "@/lib/date-utils";
 
 interface OfflineTransactionsDialogProps {
     open: boolean;
@@ -351,7 +352,7 @@ export function OfflineTransactionsDialog({ open, onOpenChange }: OfflineTransac
                             <p>Apakah Anda yakin ingin menghapus transaksi offline ini?</p>
                             <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100 text-[10px] space-y-1 font-medium text-slate-600">
                                 <div><span className="font-bold">UID:</span> {deleteTarget.uid}</div>
-                                <div><span className="font-bold">Waktu:</span> {deleteTarget.timestamp}</div>
+                                <div><span className="font-bold">Waktu:</span> {formatToReadableDateTime(deleteTarget.timestamp)}</div>
                                 <div><span className="font-bold">Total:</span> {formatRupiah(deleteTarget.receiptData?.total ?? 0)}</div>
                                 <div><span className="font-bold">Status:</span> {deleteTarget.status === "synced" ? "Sudah Terkirim" : "Belum Terkirim / Gagal"}</div>
                             </div>
