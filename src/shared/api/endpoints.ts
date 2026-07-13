@@ -153,6 +153,12 @@ export const ENDPOINTS = {
         UPDATE: "/v1/coa-mappings",
     },
 
+    // Ledger (admin backfill / rebuild actions)
+    LEDGER: {
+        BACKFILL: "/v1/ledger/backfill",
+        BACKFILL_STATUS: "/v1/ledger/backfill/status",
+    },
+
     // Transactions (Checkout)
     TRANSACTIONS: {
         CREATE: "/v1/transactions",

@@ -1,17 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
     useCoaMappings,
     useUpdateCoaMappings,
-    type CoaMapping,
     type CoaMappingUpdate,
 } from "@/features/accounting/api/coa-mapping-api";
+import {
+    useLedgerBackfill,
+    useLedgerBackfillStatus,
+} from "@/features/accounting/api/ledger-api";
 import { useFlatChartOfAccounts } from "@/features/accounting/api/coa-api";
+import { queryKeys } from "@/lib/query-keys";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { IconDeviceFloppy } from "@tabler/icons-react";
+import { IconDeviceFloppy, IconRefresh } from "@tabler/icons-react";
+import { toast } from "sonner";
 
 const TYPE_LABELS: Record<string, string> = {
     sale: "Penjualan",
@@ -60,6 +66,28 @@ export default function CoaMappingPage() {
     const { data: mappings, isLoading } = useCoaMappings();
     const { data: coas } = useFlatChartOfAccounts();
     const updateMutation = useUpdateCoaMappings();
+    const backfillMutation = useLedgerBackfill();
+
+    const queryClient = useQueryClient();
+    const backfillStatus = useLedgerBackfillStatus(true);
+    const bfState = backfillStatus.data?.status ?? "idle";
+    const isBackfilling = bfState === "queued" || bfState === "running";
+
+    // ponytail: toast only on transition into completed/failed, never on initial load.
+    const prevBfState = useRef<string | undefined>(undefined);
+    useEffect(() => {
+        if (prevBfState.current && prevBfState.current !== bfState) {
+            if (bfState === "completed") {
+                toast.success("General ledger berhasil di-backfill ulang.");
+                queryClient.invalidateQueries({ queryKey: queryKeys.reports.all });
+            } else if (bfState === "failed") {
+                toast.error(
+                    backfillStatus.data?.message || "Backfill general ledger gagal."
+                );
+            }
+        }
+        prevBfState.current = bfState;
+    }, [bfState, backfillStatus.data?.message, queryClient]);
 
     const [selected, setSelected] = useState<Record<string, string>>({});
 
@@ -105,6 +133,15 @@ export default function CoaMappingPage() {
         updateMutation.mutate(payload);
     };
 
+    const handleBackfill = () => {
+        backfillMutation.mutate(undefined, {
+            onError: (e) =>
+                toast.error(
+                    e.message || "Gagal memulai backfill general ledger."
+                ),
+        });
+    };
+
     if (isLoading) {
         return (
             <div className="space-y-4">
@@ -124,11 +161,11 @@ export default function CoaMappingPage() {
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     Tentukan akun COA tujuan untuk setiap jenis posting otomatis dari
                     transaksi operasional. Perubahan berlaku untuk transaksi baru. Untuk
-                    menerapkan ke data historis, jalankan{" "}
-                    <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">
-                        php artisan ledger:backfill
-                    </code>{" "}
-                    di backend.
+                    menerapkan ke data historis, gunakan tombol{" "}
+                    <span className="font-medium text-slate-600 dark:text-slate-300">
+                        Backfill Historis
+                    </span>{" "}
+                    di bawah.
                 </p>
             </div>
 
@@ -171,7 +208,7 @@ export default function CoaMappingPage() {
                 </Card>
             ))}
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
                 <Button onClick={handleSave} disabled={!dirty || updateMutation.isPending}>
                     <IconDeviceFloppy className="mr-2 h-4 w-4" />
                     {updateMutation.isPending ? "Menyimpan..." : "Simpan Perubahan"}
@@ -184,6 +221,25 @@ export default function CoaMappingPage() {
                 {updateMutation.isError && (
                     <span className="text-sm text-rose-600 dark:text-rose-400">
                         Gagal menyimpan.
+                    </span>
+                )}
+
+                <Button
+                    variant="outline"
+                    onClick={handleBackfill}
+                    disabled={backfillMutation.isPending || isBackfilling}
+                >
+                    <IconRefresh className="mr-2 h-4 w-4" />
+                    {isBackfilling ? "Memproses..." : "Backfill Historis"}
+                </Button>
+                {isBackfilling && (
+                    <span className="text-sm text-slate-500 dark:text-slate-400">
+                        Sedang memproses, jangan tutup halaman…
+                    </span>
+                )}
+                {bfState === "failed" && (
+                    <span className="text-sm text-rose-600 dark:text-rose-400">
+                        Gagal backfill.
                     </span>
                 )}
             </div>
