@@ -34,6 +34,10 @@ interface BalanceSheetHeaderFiltersProps {
     showDebitCredit: boolean;
     onShowDebitCreditChange: (val: boolean) => void;
     extraAction?: React.ReactNode;
+    title?: string;
+    description?: string;
+    badge?: React.ReactNode;
+    icon?: React.ReactNode;
 }
 
 export function BalanceSheetHeaderFilters({
@@ -44,6 +48,10 @@ export function BalanceSheetHeaderFilters({
     showDebitCredit,
     onShowDebitCreditChange,
     extraAction,
+    title = "Neraca Keuangan",
+    description = "Pencatatan posisi Aset, Kewajiban (Liabilitas), dan Ekuitas Modal untuk usaha Anda.",
+    badge,
+    icon,
 }: BalanceSheetHeaderFiltersProps) {
     // Generate active date presets
     const presets = useMemo(() => {
@@ -67,6 +75,13 @@ export function BalanceSheetHeaderFilters({
         ];
     }, []);
 
+    const iconToRender = icon || <IconScale className="w-6 h-6" />;
+    const badgeToRender = badge || (
+        <span className="text-[9px] px-2 py-0.5 rounded-full font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-400 dark:border-indigo-900/30 uppercase tracking-wider shadow-sm">
+            Laporan Aktif
+        </span>
+    );
+
     return (
         <TooltipProvider>
             <div className="space-y-6 mb-6">
@@ -74,22 +89,20 @@ export function BalanceSheetHeaderFilters({
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
                     <div className="flex items-center gap-4">
                         {/* Glowing Icon Container */}
-                        <div className="relative flex items-center justify-center p-3.5 bg-gradient-to-br from-indigo-500 to-violet-600 dark:from-indigo-600 dark:to-violet-850 text-white rounded-2xl shadow-lg shadow-indigo-500/15 dark:shadow-indigo-950/30 ring-4 ring-indigo-50 dark:ring-indigo-950/20 shrink-0">
-                            <IconScale className="w-6 h-6" />
+                        <div className="relative flex items-center justify-center p-3.5 bg-gradient-to-br from-indigo-500 to-violet-650 dark:from-indigo-600 dark:to-violet-850 text-white rounded-2xl shadow-lg shadow-indigo-500/15 dark:shadow-indigo-950/30 ring-4 ring-indigo-50 dark:ring-indigo-950/20 shrink-0">
+                            {iconToRender}
                             <div className="absolute inset-0 bg-indigo-500 rounded-2xl blur-lg opacity-25 -z-10" />
                         </div>
 
                         <div className="space-y-1">
                             <div className="flex items-center gap-2.5 flex-wrap">
                                 <h2 className="text-xl md:text-2xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">
-                                    Neraca Keuangan
+                                    {title}
                                 </h2>
-                                <span className="text-[9px] px-2 py-0.5 rounded-full font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-400 dark:border-indigo-900/30 uppercase tracking-wider shadow-sm">
-                                    Laporan Aktif
-                                </span>
+                                {badgeToRender}
                             </div>
                             <p className="text-xs text-slate-450 dark:text-slate-500 leading-relaxed max-w-xl">
-                                Pencatatan posisi Aset, Kewajiban (Liabilitas), dan Ekuitas Modal untuk usaha Anda.
+                                {description}
                             </p>
                         </div>
                     </div>

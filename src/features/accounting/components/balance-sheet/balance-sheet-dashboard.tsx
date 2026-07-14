@@ -417,8 +417,8 @@ export function BalanceSheetDashboard({
                                 <span className={cn(
                                     "text-[9px] px-2 py-0.5 rounded-full font-extrabold uppercase tracking-wider shadow-sm border",
                                     journal.status === "draft"
-                                        ? "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/30"
-                                        : "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-450 dark:border-emerald-900/30"
+                                        ? "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-955/20 dark:text-amber-400 dark:border-amber-900/30"
+                                        : "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-955/20 dark:text-emerald-450 dark:border-emerald-900/30"
                                 )}>
                                     {journal.status === "draft" ? `Draft: ${journal.reference_number}` : `Posted: ${journal.reference_number}`}
                                 </span>
@@ -528,7 +528,13 @@ export function BalanceSheetDashboard({
             )}
 
             {/* Read-Only Journal Metadata Display */}
-            {action === "detail" && journal && <BalanceSheetJournalInfo journal={journal} />}
+            {action === "detail" && journal && (
+                <BalanceSheetJournalInfo 
+                    journal={journal} 
+                    showDebitCredit={showDebitCredit}
+                    onShowDebitCreditChange={setShowDebitCredit}
+                />
+            )}
 
             {/* Warning draft banner */}
             {!isEditing && hasDraft && action !== "detail" && (

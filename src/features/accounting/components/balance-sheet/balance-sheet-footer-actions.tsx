@@ -76,7 +76,7 @@ export function BalanceSheetFooterActions({
                         variant="outline"
                         onClick={onCancel}
                         disabled={isPending}
-                        className="h-10 px-4 text-xs font-bold rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
+                        className="h-10 px-4 text-xs font-bold rounded-xl border-slate-200 dark:border-rose-800 bg-white dark:bg-rose-900 hover:bg-rose-50 dark:hover:bg-rose-800 text-rose-600 dark:text-rose-400 transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
                         title="Batalkan semua perubahan dan buang draf"
                     >
                         <IconX className="w-3.5 h-3.5 text-slate-400" />

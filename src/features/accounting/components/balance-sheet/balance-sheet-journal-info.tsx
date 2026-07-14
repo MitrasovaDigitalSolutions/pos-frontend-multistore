@@ -1,29 +1,63 @@
 "use client";
 
+import { useEffect } from "react";
+import { useForm, FormProvider } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { FormSwitch } from "@/components/forms/form-switch";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { id as localeId } from "date-fns/locale";
+import { formatToReadableDate } from "@/lib/date-utils";
 import { IconBook } from "@tabler/icons-react";
 import type { ManualJournal } from "@/features/accounting/types/manual-journal";
 
 interface BalanceSheetJournalInfoProps {
     journal: ManualJournal;
+    showDebitCredit?: boolean;
+    onShowDebitCreditChange?: (val: boolean) => void;
 }
 
-export function BalanceSheetJournalInfo({ journal }: BalanceSheetJournalInfoProps) {
-    const formattedDate = journal.transaction_date 
-        ? format(new Date(journal.transaction_date), "dd MMMM yyyy", { locale: localeId }) 
-        : "-";
+export function BalanceSheetJournalInfo({ 
+    journal,
+    showDebitCredit = false,
+    onShowDebitCreditChange,
+}: BalanceSheetJournalInfoProps) {
+    const formattedDate = formatToReadableDate(journal.transaction_date) || "-";
+
+    const methods = useForm({
+        defaultValues: {
+            showDebitCredit,
+        },
+    });
+
+    const watchedShowDebitCredit = methods.watch("showDebitCredit");
+
+    useEffect(() => {
+        onShowDebitCreditChange?.(watchedShowDebitCredit);
+    }, [watchedShowDebitCredit, onShowDebitCreditChange]);
+
+    useEffect(() => {
+        methods.setValue("showDebitCredit", showDebitCredit);
+    }, [showDebitCredit, methods]);
 
     return (
         <Card className="p-5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-50 dark:border-slate-800 pb-3">
+            <div className="flex items-center justify-between border-b border-slate-50 dark:border-slate-800 pb-3 font-sans">
                 <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm flex items-center gap-2">
                     <IconBook className="w-4 h-4 text-indigo-500" />
                     Informasi Jurnal Penyesuaian
                 </h3>
+                {onShowDebitCreditChange && (
+                    <div className="w-[280px] shrink-0">
+                        <FormProvider {...methods}>
+                            <FormSwitch<{ showDebitCredit: boolean }>
+                                name="showDebitCredit"
+                                label="Detail D/K"
+                                description="Tampilkan kolom Debit/Kredit terpisah"
+                                className="!p-0 !bg-transparent !border-0 shadow-none dark:bg-transparent dark:border-0"
+                            />
+                        </FormProvider>
+                    </div>
+                )}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-xs">
                 <div>
