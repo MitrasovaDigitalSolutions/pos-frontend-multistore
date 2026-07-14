@@ -245,6 +245,7 @@ export function BukuBesarView() {
                     entityName="entri buku besar"
                     virtualize={true}
                     estimateRowHeight={44}
+                    enableSortingRemoval={false}
 
                     // Server-side Sorting
                     sortBy={sortBy}

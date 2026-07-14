@@ -127,7 +127,7 @@ export function DataTable<TData, TValue>({
     sortBy,
     sortOrder,
     onSortChange,
-    enableSortingRemoval = false,
+    enableSortingRemoval = true,
 
     // Row Actions Props destructured
     onEdit,
