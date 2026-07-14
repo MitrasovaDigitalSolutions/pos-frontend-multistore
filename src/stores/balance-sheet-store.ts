@@ -8,6 +8,8 @@ export interface BalanceSheetEditItem {
     uid: string;
     kode: string | null;
     nama: string;
+    debit: number;
+    credit: number;
     amount: number;
 }
 
@@ -37,14 +39,15 @@ interface BalanceSheetStoreState {
         coaList: ChartOfAccount[]
     ) => void;
     initializeFromJournal: (journal: ManualJournal, coaList: ChartOfAccount[]) => void;
-    updateItemAmount: (
+    updateItemDebitCredit: (
         section: "assets" | "liabilities" | "equity" | "revenue" | "expense",
         uid: string,
-        amount: number
+        debit: number,
+        credit: number
     ) => void;
     addItem: (
         section: "assets" | "liabilities" | "equity" | "revenue" | "expense",
-        item: BalanceSheetEditItem
+        item: Omit<BalanceSheetEditItem, "debit" | "credit" | "amount">
     ) => void;
     removeItem: (
         section: "assets" | "liabilities" | "equity" | "revenue" | "expense",
@@ -73,7 +76,9 @@ export const useBalanceSheetStore = create<BalanceSheetStoreState>()(
                             uid: matched?.uid || `temp-${Math.random().toString(36).substring(2, 9)}`,
                             kode: item.kode,
                             nama: item.nama,
-                            amount: item.amount,
+                            debit: item.debit || 0,
+                            credit: item.credit || 0,
+                            amount: item.amount || 0,
                         };
                     });
                 };
@@ -105,7 +110,6 @@ export const useBalanceSheetStore = create<BalanceSheetStoreState>()(
                     if (!matchedCoa) return;
 
                     const tipe = matchedCoa.tipe;
-
                     const debitVal = Number(line.debit) || 0;
                     const creditVal = Number(line.credit) || 0;
 
@@ -120,6 +124,8 @@ export const useBalanceSheetStore = create<BalanceSheetStoreState>()(
                         uid: matchedCoa.uid,
                         kode: matchedCoa.kode,
                         nama: matchedCoa.nama,
+                        debit: debitVal,
+                        credit: creditVal,
                         amount,
                     };
 
@@ -144,14 +150,16 @@ export const useBalanceSheetStore = create<BalanceSheetStoreState>()(
                 });
             },
 
-            updateItemAmount: (section, uid, amount) =>
+            updateItemDebitCredit: (section, uid, debit, credit) =>
                 set((state) => {
                     if (!state.editedData) return {};
+                    const isDebitNormal = section === "assets" || section === "expense";
+                    const amount = isDebitNormal ? debit - credit : credit - debit;
                     return {
                         editedData: {
                             ...state.editedData,
                             [section]: state.editedData[section].map((item) =>
-                                item.uid === uid ? { ...item, amount } : item
+                                item.uid === uid ? { ...item, debit, credit, amount } : item
                             ),
                         },
                     };
@@ -167,7 +175,15 @@ export const useBalanceSheetStore = create<BalanceSheetStoreState>()(
                     return {
                         editedData: {
                             ...state.editedData,
-                            [section]: [...state.editedData[section], item],
+                            [section]: [
+                                ...state.editedData[section],
+                                {
+                                    ...item,
+                                    debit: 0,
+                                    credit: 0,
+                                    amount: 0,
+                                },
+                            ],
                         },
                     };
                 }),

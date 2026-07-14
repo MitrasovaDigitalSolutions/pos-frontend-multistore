@@ -27,40 +27,38 @@ export function BalanceSheetStatusCard({
     rightLegend
 }: BalanceSheetStatusCardProps) {
     return (
-        <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm">
-
-
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm">
             <div className="flex flex-col lg:flex-row items-center justify-between gap-6 relative z-10">
                 {/* Status Message */}
                 <div className="flex items-start gap-4">
                     <div className={cn(
-                        "p-3.5 rounded-2xl shrink-0 shadow-sm",
+                        "p-3.5 rounded-2xl shrink-0 shadow-sm transition-colors",
                         isBalanced
-                            ? "bg-emerald-50 text-emerald-600 ring-4 ring-emerald-50/50"
-                            : "bg-rose-50 text-rose-600 ring-4 ring-rose-50/50"
+                            ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-450 ring-4 ring-emerald-50/50 dark:ring-emerald-950/20"
+                            : "bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-450 ring-4 ring-rose-50/50 dark:ring-rose-950/20"
                     )}>
-                        <IconScale className="w-7 h-7" />
+                        <IconScale className="w-7 h-7 animate-pulse" />
                     </div>
                     <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="font-extrabold text-sm text-slate-800">
-                                Status Persamaan Neraca
+                            <h3 className="font-extrabold text-sm text-slate-800 dark:text-slate-100">
+                                Status Keseimbangan Neraca
                             </h3>
                             <span className={cn(
-                                "text-[9px] px-2 py-0.5 rounded-full font-extrabold uppercase tracking-wider shadow-sm",
+                                "text-[9px] px-2 py-0.5 rounded-full font-extrabold uppercase tracking-wider shadow-sm border",
                                 isBalanced
-                                    ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                                    : "bg-rose-100 text-rose-800 border border-rose-200"
+                                    ? "bg-emerald-100 text-emerald-800 border-emerald-200/60 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-900/40"
+                                    : "bg-rose-100 text-rose-800 border-rose-200/60 dark:bg-rose-950/50 dark:text-rose-400 dark:border-rose-900/40"
                             )}>
                                 {isBalanced ? "Seimbang (Balanced)" : "Tidak Seimbang"}
                             </span>
                         </div>
-                        <p className="text-slate-500 text-xs mt-2 max-w-xl leading-relaxed">
+                        <p className="text-slate-500 dark:text-slate-450 text-xs mt-2 max-w-xl leading-relaxed">
                             {isBalanced
-                                ? "Sempurna! (Aset + Beban) tepat sama dengan (Kewajiban + Ekuitas + Pendapatan). Ini menunjukkan pencatatan keuangan Anda tercatat dengan benar."
-                                : "Perhatian! (Aset + Beban) tidak sama dengan (Kewajiban + Ekuitas + Pendapatan). Mohon periksa kembali transaksi atau jurnal penyesuaian Anda."}
+                                ? "Sempurna! Persamaan neraca keuangan Anda tepat seimbang. Ini menunjukkan pencatatan jurnal pembukuan Anda sudah sinkron dan akurat."
+                                : "Perhatian! Jumlah saldo tidak seimbang. Silakan periksa kembali nominal input atau entri jurnal penyesuaian Anda."}
                             {!isBalanced && difference > 0 && (
-                                <span className="block font-bold text-rose-600 mt-1.5">
+                                <span className="block font-extrabold text-rose-600 dark:text-rose-400 mt-1.5 font-mono text-[13px]">
                                     Selisih (Discrepancy): {formatRupiah(difference)}
                                 </span>
                             )}
@@ -69,23 +67,23 @@ export function BalanceSheetStatusCard({
                 </div>
 
                 {/* Balance Bar & Metrics */}
-                <div className="w-full lg:w-[420px] shrink-0 space-y-4">
+                <div className="w-full lg:w-[420px] shrink-0 space-y-3.5">
                     <div className="flex justify-between items-end">
                         <div className="space-y-1">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">
+                            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                                 {leftLabel || "Total Aset (A)"}
                             </span>
-                            <span className="text-base font-extrabold text-emerald-600">
+                            <span className="text-base font-extrabold text-emerald-600 dark:text-emerald-450 font-mono">
                                 {formatRupiah(totalAssets)}
                             </span>
                         </div>
                         <div className="text-right space-y-1">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">
+                            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                                 {rightLabel || "Kewajiban + Ekuitas (K + E)"}
                             </span>
                             <span className={cn(
-                                "text-base font-extrabold",
-                                isBalanced ? "text-indigo-600" : "text-rose-600"
+                                "text-base font-extrabold font-mono",
+                                isBalanced ? "text-indigo-600 dark:text-indigo-400" : "text-rose-650 dark:text-rose-450"
                             )}>
                                 {formatRupiah(totalLiabilitiesAndEquity)}
                             </span>
@@ -93,9 +91,9 @@ export function BalanceSheetStatusCard({
                     </div>
 
                     {/* Comparison Progress Bar */}
-                    <div className="w-full bg-slate-100 rounded-full h-2.5 relative overflow-hidden">
+                    <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 relative overflow-hidden">
                         {isBalanced ? (
-                            <div className="bg-gradient-to-r from-emerald-500 to-indigo-500 h-full rounded-full w-full animate-pulse" />
+                            <div className="bg-gradient-to-r from-emerald-500 to-indigo-500 h-full rounded-full w-full opacity-90" />
                         ) : (
                             <div className="flex h-full rounded-full overflow-hidden w-full">
                                 <div
@@ -110,7 +108,7 @@ export function BalanceSheetStatusCard({
                         )}
                     </div>
 
-                    <div className="flex justify-between items-center text-[9px] font-bold text-slate-400">
+                    <div className="flex justify-between items-center text-[9px] font-bold text-slate-400 dark:text-slate-500">
                         <span className="flex items-center gap-1.5">
                             <span className="w-2 h-2 bg-emerald-500 rounded-full block" />
                             {leftLegend || "Aset"}
@@ -122,35 +120,36 @@ export function BalanceSheetStatusCard({
                     </div>
 
                     {/* Debit/Credit convention — tooltip */}
-                    <div className="flex items-center gap-1.5 mt-1">
-                        <span className="text-[11px] text-slate-400">Konvensi Debit/Credit?</span>
+                    <div className="flex items-center gap-1.5 pt-1">
+                        <span className="text-[11px] text-slate-400 dark:text-slate-500">Konvensi Debit & Kredit?</span>
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <button
                                     type="button"
-                                    className="text-slate-400 hover:text-slate-600 transition-colors"
+                                    className="text-slate-400 hover:text-slate-650 dark:text-slate-500 dark:hover:text-slate-350 transition-colors"
                                     aria-label="Konvensi akuntansi"
                                 >
-                                    <IconInfoCircle className="w-4 h-4" />
+                                    <IconInfoCircle className="w-3.5 h-3.5" />
                                 </button>
                             </TooltipTrigger>
                             <TooltipContent
                                 side="top"
-                                className="text-[11px] leading-relaxed max-w-[260px] bg-slate-950 text-white rounded-lg p-2.5 shadow-lg border border-slate-800 space-y-1"
+                                className="text-[11px] leading-relaxed max-w-[270px] bg-slate-950 text-white rounded-xl p-3 shadow-xl border border-slate-800 space-y-1.5"
                             >
-                                <p>Konvensi standar akuntansi:</p>
+                                <p className="font-bold border-b border-slate-800 pb-1 text-slate-300">Prinsip Akuntansi Neraca:</p>
                                 <p>
-                                    <span className="text-emerald-400 font-semibold">Beban</span> bertambah di sisi{" "}
-                                    <span className="text-emerald-400 font-semibold">Debit</span>,{" "}
-                                    <span className="text-rose-400 font-semibold">Pendapatan</span> di sisi{" "}
-                                    <span className="text-rose-400 font-semibold">Credit</span>.
+                                    <span className="text-emerald-400 font-semibold">Aset & Beban</span> normalnya bersaldo{" "}
+                                    <span className="text-emerald-400 font-semibold">Debit</span>.
                                 </p>
                                 <p>
-                                    Persamaan neraca:{" "}
-                                    <span className="text-slate-200 font-semibold">
-                                        Aset + Beban = Kewajiban + Ekuitas + Pendapatan
+                                    <span className="text-indigo-400 font-semibold">Liabilitas, Ekuitas & Pendapatan</span> bersaldo{" "}
+                                    <span className="text-indigo-400 font-semibold">Kredit</span>.
+                                </p>
+                                <p className="text-slate-400 pt-0.5">
+                                    Neraca Standar:{" "}
+                                    <span className="text-slate-200 font-semibold block">
+                                        Aset = Liabilitas + Ekuitas
                                     </span>
-                                    .
                                 </p>
                             </TooltipContent>
                         </Tooltip>
