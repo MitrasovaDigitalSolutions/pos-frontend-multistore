@@ -21,8 +21,8 @@ export function useGeneralLedger(params: {
     chart_of_account_uid?: string;
     page?: number;
     per_page?: number;
-    sort_key?: string;
     sort_by?: string;
+    sort_order?: string;
 }) {
     const queryParams: Record<string, string | number> = {};
     if (params.from) queryParams.start_date = params.from;
@@ -30,8 +30,8 @@ export function useGeneralLedger(params: {
     if (params.chart_of_account_uid) queryParams.chart_of_account_uid = params.chart_of_account_uid;
     if (params.page) queryParams.page = params.page;
     if (params.per_page) queryParams.per_page = params.per_page;
-    if (params.sort_key) queryParams.sort_key = params.sort_key;
     if (params.sort_by) queryParams.sort_by = params.sort_by;
+    if (params.sort_order) queryParams.sort_order = params.sort_order;
 
     return useQuery<PaginatedResponse<GeneralLedgerEntry>>({
         queryKey: [...queryKeys.reports.all, "general-ledger", queryParams],
