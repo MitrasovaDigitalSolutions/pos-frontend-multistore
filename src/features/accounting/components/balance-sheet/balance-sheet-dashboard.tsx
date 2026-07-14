@@ -348,8 +348,8 @@ export function BalanceSheetDashboard({
                     lines.push({
                         chart_of_account_uid: item.uid,
                         description: `${journalDesc} - ${item.nama}`,
-                        debit: deltaDebit >= 0 ? deltaDebit : 0,
-                        credit: deltaCredit >= 0 ? deltaCredit : 0,
+                        debit: deltaDebit,
+                        credit: deltaCredit,
                     });
                 }
             }
