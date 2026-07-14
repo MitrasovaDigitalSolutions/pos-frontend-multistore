@@ -177,7 +177,10 @@ export function BalanceSheetSectionCard({
                         </thead>
                         <tbody className="divide-y divide-slate-100/60 dark:divide-slate-800/40">
                             {displayedItems.map((item, idx) => {
-                                const percent = total > 0 ? Math.round((item.amount / total) * 100) : 0;
+                                const percentVal = total > 0 ? (item.amount / total) * 100 : 0;
+                                const formattedPercent = percentVal > 0 && percentVal < 0.1
+                                    ? "< 0.1%"
+                                    : `${percentVal.toFixed(percentVal % 1 === 0 ? 0 : 1)}%`;
                                 return (
                                     <tr key={`${item.uid || item.kode}-${idx}`} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/20 transition-colors">
                                         <td className="py-3.5 px-6 text-left">
@@ -230,20 +233,20 @@ export function BalanceSheetSectionCard({
                                             <>
                                                 {showDebitCredit && (
                                                     <>
-                                                        <td className="py-3.5 px-4 text-right font-medium text-emerald-700 dark:text-emerald-400 tabular-nums">
+                                                        <td className="py-3.5 px-4 text-right text-xs font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
                                                             {fmtLedger(item.debit || 0)}
                                                         </td>
-                                                        <td className="py-3.5 px-4 text-right font-medium text-rose-700 dark:text-rose-450 tabular-nums">
+                                                        <td className="py-3.5 px-4 text-right text-xs font-semibold text-rose-600 dark:text-rose-400 tabular-nums">
                                                             {fmtLedger(item.credit || 0)}
                                                         </td>
                                                     </>
                                                 )}
-                                                <td className="py-3.5 px-6 text-right font-bold text-slate-800 dark:text-slate-100 tabular-nums">
+                                                <td className="py-3.5 px-6 text-right text-xs font-bold text-slate-800 dark:text-slate-100 tabular-nums">
                                                     <div className="space-y-0.5">
                                                         <span>{formatRupiah(item.amount)}</span>
-                                                        {!showDebitCredit && percent > 0 && (
+                                                        {!showDebitCredit && percentVal > 0 && (
                                                             <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold block">
-                                                                {percent}%
+                                                                {formattedPercent}
                                                             </span>
                                                         )}
                                                     </div>
@@ -261,7 +264,7 @@ export function BalanceSheetSectionCard({
                                 </td>
                                 {isEditing ? (
                                     <>
-                                        <td colSpan={2} className="py-4 px-4 text-right tabular-nums text-sm">
+                                        <td colSpan={2} className="py-4 px-4 text-right tabular-nums text-xs font-extrabold text-slate-800 dark:text-slate-100">
                                             Saldo Bersih: {formatRupiah(total)}
                                         </td>
                                         <td className="py-4 px-6"></td>
@@ -270,11 +273,11 @@ export function BalanceSheetSectionCard({
                                     <>
                                         {showDebitCredit && (
                                             <>
-                                                <td className="py-4 px-4 text-right text-emerald-700 dark:text-emerald-450 tabular-nums">{fmtLedger(totalDebit)}</td>
-                                                <td className="py-4 px-4 text-right text-rose-700 dark:text-rose-450 tabular-nums">{fmtLedger(totalCredit)}</td>
+                                                <td className="py-4 px-4 text-right text-xs font-extrabold text-emerald-600 dark:text-emerald-400 tabular-nums">{fmtLedger(totalDebit)}</td>
+                                                <td className="py-4 px-4 text-right text-xs font-extrabold text-rose-600 dark:text-rose-455 tabular-nums">{fmtLedger(totalCredit)}</td>
                                             </>
                                         )}
-                                        <td className="py-4 px-6 text-right tabular-nums text-sm">
+                                        <td className="py-4 px-6 text-right text-xs font-extrabold text-slate-800 dark:text-slate-100 tabular-nums">
                                             {formatRupiah(total)}
                                         </td>
                                     </>
