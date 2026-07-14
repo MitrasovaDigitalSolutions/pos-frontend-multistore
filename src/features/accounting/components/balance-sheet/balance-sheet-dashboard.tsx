@@ -14,7 +14,7 @@ import { formatUTC, todayStr } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import type { ChartOfAccount } from "@/features/accounting/types";
 import type { ManualJournal } from "@/features/accounting/types/manual-journal";
-import type { BalanceSheetData, BalanceSheetItem } from "@/features/reports/types";
+import type { BalanceSheetData, BalanceSheetItem } from "@/features/accounting/types";
 import {
     IconBook,
     IconEdit,

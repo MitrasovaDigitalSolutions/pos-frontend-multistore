@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { ChartOfAccount } from "@/features/accounting/types";
 import type { ManualJournal, ManualJournalLine } from "@/features/accounting/types/manual-journal";
-import type { BalanceSheetItem } from "@/features/reports/types";
+import type { BalanceSheetItem } from "@/features/accounting/types";
 
 export interface BalanceSheetEditItem {
     uid: string;

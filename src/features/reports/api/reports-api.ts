@@ -1,8 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-import { apiGetData, apiGetList } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
-import { PaginatedResponse } from "@/types/api";
-import type { DailyReport, LabaRugiReport, PengeluaranReport, PurchaseReport, PenjualanReport, SalesByCategoryResponse, BalanceSheetReport, GeneralLedgerEntry, GeneralLedgerResponse } from "../types";
+import { apiGetData } from "@/shared/api/api-client";
+import { useQuery } from "@tanstack/react-query";
+import type { DailyReport, LabaRugiReport, PengeluaranReport, PenjualanReport, PurchaseReport, SalesByCategoryResponse } from "../types";
 
 export function useDailyReport(date: string) {
     return useQuery<DailyReport>({
@@ -69,8 +68,8 @@ export function usePenjualanReport(
 }
 
 export function useSalesByCategory(from: string, to: string, categoryIds?: string[]) {
-    const categoryParam = categoryIds && categoryIds.length > 0 
-        ? `&category_ids=${categoryIds.join(",")}` 
+    const categoryParam = categoryIds && categoryIds.length > 0
+        ? `&category_ids=${categoryIds.join(",")}`
         : "";
     return useQuery<SalesByCategoryResponse>({
         queryKey: queryKeys.reports.salesByCategory(from, to, categoryIds),
@@ -82,35 +81,4 @@ export function useSalesByCategory(from: string, to: string, categoryIds?: strin
     });
 }
 
-export function useBalanceSheet(asOfDate: string) {
-    return useQuery<BalanceSheetReport>({
-        queryKey: [...queryKeys.reports.all, "balance-sheet", asOfDate],
-        queryFn: () =>
-            apiGetData<BalanceSheetReport>(
-                `/v1/reports/balance-sheet?as_of_date=${asOfDate}`
-            ),
-        enabled: !!asOfDate,
-    });
-}
-
-export function useGeneralLedger(params: {
-    from?: string;
-    to?: string;
-    chart_of_account_uid?: string;
-    page?: number;
-    per_page?: number;
-}) {
-    const queryParams: Record<string, string | number> = {};
-    if (params.from) queryParams.start_date = params.from;
-    if (params.to) queryParams.end_date = params.to;
-    if (params.chart_of_account_uid) queryParams.chart_of_account_uid = params.chart_of_account_uid;
-    if (params.page) queryParams.page = params.page;
-    if (params.per_page) queryParams.per_page = params.per_page;
-
-    return useQuery<PaginatedResponse<GeneralLedgerEntry>>({
-        queryKey: [...queryKeys.reports.all, "general-ledger", queryParams],
-        queryFn: () => apiGetList<GeneralLedgerEntry>("/v1/reports/general-ledger", queryParams),
-        enabled: true,
-    });
-}
 

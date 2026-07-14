@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useBalanceSheet } from "@/features/reports/api/reports-api";
+import { useBalanceSheet } from "@/features/accounting/api/reports-api";
 import { useFlatChartOfAccounts } from "@/features/accounting/api/coa-api";
 import { useManualJournalDetail } from "@/features/accounting/api/manual-journal-api";
 import { getThisMonthRange } from "@/lib/date-utils";
