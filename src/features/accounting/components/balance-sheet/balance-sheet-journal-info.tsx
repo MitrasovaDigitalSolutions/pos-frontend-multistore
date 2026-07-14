@@ -16,7 +16,7 @@ interface BalanceSheetJournalInfoProps {
     onShowDebitCreditChange?: (val: boolean) => void;
 }
 
-export function BalanceSheetJournalInfo({ 
+export function BalanceSheetJournalInfo({
     journal,
     showDebitCredit = false,
     onShowDebitCreditChange,
@@ -29,6 +29,7 @@ export function BalanceSheetJournalInfo({
         },
     });
 
+    // eslint-disable-next-line react-hooks/incompatible-library
     const watchedShowDebitCredit = methods.watch("showDebitCredit");
 
     useEffect(() => {
@@ -76,7 +77,7 @@ export function BalanceSheetJournalInfo({
                 </div>
                 <div>
                     <span className="text-slate-400 dark:text-slate-500 font-medium block mb-0.5">Status</span>
-                    <Badge className={cn("px-2 py-0.5 border text-[10px] font-semibold", 
+                    <Badge className={cn("px-2 py-0.5 border text-[10px] font-semibold",
                         journal.status === "draft" && "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-850 dark:text-slate-300 dark:border-slate-800",
                         journal.status === "posted" && "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30",
                         journal.status === "voided" && "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/30"
