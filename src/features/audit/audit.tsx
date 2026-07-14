@@ -9,6 +9,8 @@ import { hasPermission, hasRole } from "@/constants/roles";
 import { useActivityLogs, type ActivityLog } from "@/features/stock/api/stock-api";
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
+import { formatToReadableDateTime } from "@/lib/date-utils";
+import { ACTIVITY_MODULES, moduleLabel } from "@/constants/activity-modules";
 
 interface AuditFilterValues {
     search: string;
@@ -28,6 +30,7 @@ export function AuditLogs() {
     const [sortBy, setSortBy] = useState<string | undefined>("created_at");
     const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("desc");
     const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [selectedModules, setSelectedModules] = useState<string[]>([]);
 
     const filterMethods = useForm<AuditFilterValues>({
         defaultValues: {
@@ -43,6 +46,14 @@ export function AuditLogs() {
     const handleFilterReset = () => {
         filterMethods.reset({ search: "" });
         setDebouncedSearch("");
+        setSelectedModules([]);
+        setPage(1);
+    };
+
+    const toggleModule = (slug: string) => {
+        setSelectedModules((prev) =>
+            prev.includes(slug) ? prev.filter((m) => m !== slug) : [...prev, slug]
+        );
         setPage(1);
     };
 
@@ -52,6 +63,7 @@ export function AuditLogs() {
         sort_by: sortBy,
         sort_order: sortOrder,
         search: debouncedSearch || undefined,
+        module: selectedModules.length ? selectedModules.join(',') : undefined,
     });
 
     const getActionBadgeClass = (action: string) => {
@@ -80,10 +92,7 @@ export function AuditLogs() {
                 header: "Tanggal",
                 cell: ({ row }) => (
                     <span className="text-slate-500 font-medium text-xs">
-                        {new Date(row.original.created_at).toLocaleString("id-ID", {
-                            dateStyle: "medium",
-                            timeStyle: "short",
-                        })}
+                        {formatToReadableDateTime(row.original.created_at)}
                     </span>
                 ),
                 size: 160,
@@ -125,6 +134,27 @@ export function AuditLogs() {
                     );
                 },
                 size: 120,
+            },
+            {
+                accessorKey: "module",
+                header: "Modul",
+                cell: ({ row }) => {
+                    const modules = row.original.module ?? [];
+                    if (!modules.length) return <span className="text-slate-400 text-xs">-</span>;
+                    return (
+                        <div className="flex flex-wrap gap-1">
+                            {modules.map((m) => (
+                                <span
+                                    key={m}
+                                    className="px-2 py-0.5 rounded-md border bg-slate-50 text-slate-700 border-slate-200 text-[10px] font-bold uppercase tracking-wide"
+                                >
+                                    {moduleLabel(m)}
+                                </span>
+                            ))}
+                        </div>
+                    );
+                },
+                size: 150,
             },
             {
                 accessorKey: "description",
@@ -178,11 +208,37 @@ export function AuditLogs() {
                     onSubmit={handleFilterSubmit}
                     onReset={handleFilterReset}
                 >
-                    <FormInput<AuditFilterValues>
-                        name="search"
-                        label="Cari Log Aktivitas"
-                        placeholder="Masukkan kata kunci pencarian..."
-                    />
+                    <div className="flex flex-col gap-3 w-full">
+                        <FormInput<AuditFilterValues>
+                            name="search"
+                            label="Cari Log Aktivitas"
+                            placeholder="Masukkan kata kunci pencarian..."
+                        />
+                        <div>
+                            <label className="text-xs font-medium text-slate-700 mb-1.5 block">
+                                Filter Modul
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                                {ACTIVITY_MODULES.map((m) => {
+                                    const isSelected = selectedModules.includes(m.slug);
+                                    return (
+                                        <button
+                                            key={m.slug}
+                                            type="button"
+                                            onClick={() => toggleModule(m.slug)}
+                                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                                                isSelected
+                                                    ? "bg-indigo-100 text-indigo-700 border-indigo-200"
+                                                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                                            } border`}
+                                        >
+                                            {m.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
                 </FilterForm>
 
                 <DataTable

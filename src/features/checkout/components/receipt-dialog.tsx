@@ -7,6 +7,7 @@ import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { Receipt } from "../types";
 import { Scrollable } from "@/components/ui/scrollable";
 import { useSettingsStore } from "@/stores/settings-store";
+import { formatDate } from "@/lib/date-utils";
 
 interface ReceiptDialogProps {
     open: boolean;
@@ -74,7 +75,7 @@ export function ReceiptDialog({
                             <div className="flex justify-between">
                                 <span>TRX #{receipt?.uid}</span>
                                 <span>
-                                    {new Date().toLocaleDateString("id-ID")}
+                                    {formatDate(new Date(), "dd/MM/yyyy")}
                                 </span>
                             </div>
                             {receipt?.member && (
@@ -95,7 +96,7 @@ export function ReceiptDialog({
                                         className="flex justify-between text-[10px] text-slate-600"
                                     >
                                         <span className="truncate max-w-[170px]" title={item.nama_produk}>
-                                            {item.kuantitas}x {item.nama_produk}
+                                            {Number(item.kuantitas)}x {item.nama_produk}
                                         </span>
                                         <span className="tabular-nums font-semibold shrink-0">
                                             {formatRupiah(item.harga_satuan * item.kuantitas)}

@@ -1,6 +1,7 @@
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { ReceivingPayment } from "../../types";
+import { formatDate } from "@/lib/date-utils";
 import {
     PAYMENT_TRANSACTION_STATUS_LABELS,
     PAYMENT_TRANSACTION_STATUS_CLASSES,
@@ -13,9 +14,7 @@ export const paymentColumns: ColumnDef<ReceivingPayment>[] = [
         header: "Tanggal Bayar",
         cell: ({ row }) => (
             <span className="text-slate-600 font-medium text-xs">
-                {new Date(row.original.created_at).toLocaleString("id-ID", {
-                    dateStyle: "medium",
-                })}
+                {formatDate(row.original.created_at, "dd MMM yyyy")}
             </span>
         ),
         size: 120,
@@ -36,7 +35,7 @@ export const paymentColumns: ColumnDef<ReceivingPayment>[] = [
         enableSorting: false,
         cell: ({ row }) => (
             <span className="font-semibold text-slate-700 text-xs font-mono">
-                {row.original.receiving?.nomor_penerimaan || "-"}
+                {row.original.stock_receiving?.nomor_penerimaan || "-"}
             </span>
         ),
         size: 160,
@@ -47,7 +46,7 @@ export const paymentColumns: ColumnDef<ReceivingPayment>[] = [
         enableSorting: false,
         cell: ({ row }) => (
             <span className="text-slate-600 text-xs font-medium">
-                {row.original.receiving?.supplier_relationship?.nama || row.original.receiving?.supplier || "-"}
+                {row.original.stock_receiving?.supplier_relationship?.nama || row.original.stock_receiving?.supplier || "-"}
             </span>
         ),
         size: 240,

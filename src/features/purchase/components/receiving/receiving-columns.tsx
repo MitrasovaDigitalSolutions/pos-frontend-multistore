@@ -1,6 +1,7 @@
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Receiving } from "../../types";
+import { formatToReadableDateTime } from "@/lib/date-utils";
 import {
     PAYMENT_STATUS_LABELS,
     PAYMENT_STATUS_CLASSES,
@@ -16,10 +17,7 @@ export const receivingColumns: ColumnDef<Receiving>[] = [
         header: "Tanggal",
         cell: ({ row }) => (
             <span className="text-slate-600 font-medium text-xs">
-                {new Date(row.original.created_at).toLocaleString("id-ID", {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                })}
+                {formatToReadableDateTime(row.original.created_at)}
             </span>
         ),
         size: 160,
@@ -33,6 +31,25 @@ export const receivingColumns: ColumnDef<Receiving>[] = [
             </span>
         ),
         size: 160,
+    },
+    {
+        accessorKey: "purchase_order_uid",
+        header: "Sumber",
+        cell: ({ row }) => {
+            const isFromPo = !!row.original.purchase_order_uid;
+            return (
+                <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                        isFromPo
+                            ? "bg-indigo-50 text-indigo-700 border-indigo-100"
+                            : "bg-slate-50 text-slate-700 border-slate-100"
+                    }`}
+                >
+                    {isFromPo ? "Dari PO" : "Langsung"}
+                </span>
+            );
+        },
+        size: 100,
     },
     {
         accessorKey: "supplier",

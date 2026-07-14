@@ -100,11 +100,6 @@ export function PaymentForm({
                             }
                             disabled={isPending || cashAccountsLoading}
                         />
-                        {errors.cash_account_uid && (
-                            <p className="text-[10px] text-rose-500 font-medium">
-                                {errors.cash_account_uid.message}
-                            </p>
-                        )}
                     </div>
 
                     {/* Payment Method */}
@@ -118,11 +113,6 @@ export function PaymentForm({
                             placeholder="Pilih metode"
                             disabled={isPending}
                         />
-                        {errors.metode_pembayaran && (
-                            <p className="text-[10px] text-rose-500 font-medium">
-                                {errors.metode_pembayaran.message}
-                            </p>
-                        )}
                     </div>
 
                     {/* Reference Number */}

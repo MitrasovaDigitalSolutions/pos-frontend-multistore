@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { PageLoader } from "@/components/feedback/page-loader";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { toast } from "sonner";
@@ -25,6 +25,7 @@ import {
     useFinalizePurchaseOrder,
     usePurchaseOrderReceivings,
 } from "../../../api/purchase-api";
+import { formatDate } from "@/lib/date-utils";
 import { useActivityLogs } from "@/features/stock/api/stock-api";
 import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
 import { hasPermission, hasRole } from "@/constants/roles";
@@ -44,6 +45,82 @@ import { POLogsTab } from "./po-logs-tab";
 
 interface PODetailPageProps {
     poId: string;
+}
+
+function PODetailSkeleton() {
+    return (
+        <div className="space-y-6 animate-pulse">
+            {/* Header Area */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+                <div className="flex items-center gap-4">
+                    <Skeleton className="h-9 w-9 rounded-xl" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-5 w-72" />
+                        <Skeleton className="h-3.5 w-44" />
+                    </div>
+                </div>
+                <div className="flex gap-2">
+                    <Skeleton className="h-10 w-28 rounded-xl" />
+                    <Skeleton className="h-10 w-32 rounded-xl" />
+                </div>
+            </div>
+
+            {/* Main Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                {/* Left Column (Col-8) */}
+                <div className="lg:col-span-8 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-5 space-y-6">
+                    {/* Tabs Skeleton */}
+                    <div className="flex gap-4 border-b pb-3 border-slate-100 dark:border-slate-800">
+                        <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-4 w-36" />
+                        <Skeleton className="h-4 w-24" />
+                    </div>
+                    {/* Table skeleton */}
+                    <div className="border border-slate-100 dark:border-slate-800 rounded-2xl p-4 bg-slate-50/10 space-y-4">
+                        <div className="flex justify-between border-b pb-3 border-slate-100 dark:border-slate-800">
+                            <Skeleton className="h-4 w-40" />
+                            <Skeleton className="h-4 w-20" />
+                            <Skeleton className="h-4 w-20" />
+                            <Skeleton className="h-4 w-24" />
+                        </div>
+                        {Array.from({ length: 4 }).map((_, idx) => (
+                            <div key={idx} className="flex justify-between pt-1">
+                                <Skeleton className="h-4 w-48" />
+                                <Skeleton className="h-4 w-16" />
+                                <Skeleton className="h-4 w-16" />
+                                <Skeleton className="h-4 w-20" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Right Column PO Summary (Col-4) */}
+                <div className="lg:col-span-4 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-5 space-y-4">
+                    <Skeleton className="h-4 w-32 border-b border-slate-50 dark:border-slate-800 pb-2" />
+                    <div className="space-y-3">
+                        <div className="space-y-1">
+                            <Skeleton className="h-3 w-16" />
+                            <Skeleton className="h-4.5 w-44" />
+                        </div>
+                        <div className="space-y-1">
+                            <Skeleton className="h-3 w-20" />
+                            <Skeleton className="h-4.5 w-32" />
+                        </div>
+                        <div className="border-t pt-3 border-slate-100 dark:border-slate-800 space-y-2">
+                            <div className="flex justify-between">
+                                <Skeleton className="h-3.5 w-20" />
+                                <Skeleton className="h-3.5 w-24" />
+                            </div>
+                            <div className="flex justify-between">
+                                <Skeleton className="h-3.5 w-24" />
+                                <Skeleton className="h-3.5 w-28" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 }
 
 export function PODetailPage({ poId }: PODetailPageProps) {
@@ -100,7 +177,7 @@ export function PODetailPage({ poId }: PODetailPageProps) {
         hasPermission(userRoles, userPermissions, "manage_purchase");
 
     if (orderLoading) {
-        return <PageLoader message="Memuat detail Purchase Order..." />;
+        return <PODetailSkeleton />;
     }
 
     if (error || !order) {
@@ -229,7 +306,7 @@ export function PODetailPage({ poId }: PODetailPageProps) {
                             </span>
                         </h2>
                         <p className="text-xs text-slate-400">
-                            Supplier: <span className="font-semibold text-slate-600">{order.supplier?.nama || order.supplier_name || "-"}</span> | Tanggal PO: {new Date(order.tanggal_po).toLocaleDateString("id-ID", { dateStyle: "medium" })}
+                            Supplier: <span className="font-semibold text-slate-600">{order.supplier?.nama || order.supplier_name || "-"}</span> | Tanggal PO: {formatDate(order.tanggal_po, "dd MMM yyyy")}
                         </p>
                     </div>
                 </div>

@@ -15,6 +15,7 @@ import { FormSelect } from "@/components/forms/form-select";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { useExpenseCategories } from "./api/expenses-api";
 import { useCashAccounts } from "@/features/cash/api/cash-api";
+import { getDefaultDateRange, todayStr, formatToISO } from "@/lib/date-utils";
 
 interface ExpenseFilterValues {
     search: string;
@@ -25,6 +26,8 @@ interface ExpenseFilterValues {
 }
 
 export function Expenses() {
+    const { from: defaultStart, to: defaultEnd } = getDefaultDateRange();
+
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
     const [appliedFilters, setAppliedFilters] = useState<{
@@ -33,7 +36,10 @@ export function Expenses() {
         cash_account_uid?: string;
         date_start?: string;
         date_end?: string;
-    }>({});
+    }>({
+        date_start: defaultStart,
+        date_end: defaultEnd,
+    });
 
     const { data: categories = [] } = useExpenseCategories();
     const { data: cashAccounts = [] } = useCashAccounts();
@@ -43,8 +49,8 @@ export function Expenses() {
             search: "",
             expense_category_uid: "all",
             cash_account_uid: "all",
-            date_start: "",
-            date_end: "",
+            date_start: defaultStart,
+            date_end: defaultEnd,
         },
     });
 
@@ -64,10 +70,13 @@ export function Expenses() {
             search: "",
             expense_category_uid: "all",
             cash_account_uid: "all",
-            date_start: "",
-            date_end: "",
+            date_start: defaultStart,
+            date_end: defaultEnd,
         });
-        setAppliedFilters({});
+        setAppliedFilters({
+            date_start: defaultStart,
+            date_end: defaultEnd,
+        });
         setPage(1);
     };
 
@@ -88,7 +97,7 @@ export function Expenses() {
             amount: 0,
             nama: "",
             catatan: "",
-            tanggal: new Date().toISOString().split("T")[0],
+            tanggal: todayStr(),
         },
     });
 
@@ -100,7 +109,7 @@ export function Expenses() {
             amount: expense.amount,
             nama: expense.nama || "",
             catatan: expense.catatan || "",
-            tanggal: expense.tanggal || new Date().toISOString().split("T")[0],
+            tanggal: formatToISO(expense.tanggal) || todayStr(),
         });
         setIsDialogOpen(true);
     };
@@ -113,7 +122,7 @@ export function Expenses() {
             amount: 0,
             nama: "",
             catatan: "",
-            tanggal: new Date().toISOString().split("T")[0],
+            tanggal: todayStr(),
         });
         setIsDialogOpen(true);
     };
@@ -127,7 +136,7 @@ export function Expenses() {
             amount: 0,
             nama: `Pembayaran ${catName}`,
             catatan: "",
-            tanggal: new Date().toISOString().split("T")[0],
+            tanggal: todayStr(),
         });
         setIsDialogOpen(true);
     };
@@ -144,61 +153,57 @@ export function Expenses() {
 
     return (
         <FormProvider {...dialogMethods}>
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-                <div className="xl:col-span-8">
-                    <ExpenseList
-                        expenses={expensesData?.data || []}
-                        meta={expensesData?.meta}
-                        page={page}
-                        perPage={perPage}
-                        onPageChange={setPage}
-                        onPerPageChange={setPerPage}
-                        onEdit={handleEdit}
-                        onAddClick={handleAddClick}
-                        isLoading={isLoading}
-                        isFetching={isFetching}
-                        filterElement={
-                            <FilterForm
-                                methods={filterMethods}
-                                onSubmit={handleFilterSubmit}
-                                onReset={handleFilterReset}
-                                cols={3}
-                            >
-                                <FormInput<ExpenseFilterValues>
-                                    name="search"
-                                    label="Cari Transaksi"
-                                    placeholder="Nomor atau nama pengeluaran..."
-                                />
-                                <FormDatePicker<ExpenseFilterValues>
-                                    name="date_start"
-                                    label="Dari Tanggal"
-                                    placeholder="Tanggal awal"
-                                />
-                                <FormDatePicker<ExpenseFilterValues>
-                                    name="date_end"
-                                    label="Sampai Tanggal"
-                                    placeholder="Tanggal akhir"
-                                />
-                                <FormSelect<ExpenseFilterValues>
-                                    name="expense_category_uid"
-                                    label="Kategori"
-                                    options={categoryOptions}
-                                    placeholder="Semua Kategori"
-                                />
-                                <FormSelect<ExpenseFilterValues>
-                                    name="cash_account_uid"
-                                    label="Sumber Kas"
-                                    options={accountOptions}
-                                    placeholder="Semua Akun"
-                                />
-                            </FilterForm>
-                        }
-                    />
-                </div>
+            <div className="w-full space-y-6 relative">
+                <ExpenseList
+                    expenses={expensesData?.data || []}
+                    meta={expensesData?.meta}
+                    page={page}
+                    perPage={perPage}
+                    onPageChange={setPage}
+                    onPerPageChange={setPerPage}
+                    onEdit={handleEdit}
+                    onAddClick={handleAddClick}
+                    isLoading={isLoading}
+                    isFetching={isFetching}
+                    filterElement={
+                        <FilterForm
+                            methods={filterMethods}
+                            onSubmit={handleFilterSubmit}
+                            onReset={handleFilterReset}
+                            cols={3}
+                        >
+                            <FormInput<ExpenseFilterValues>
+                                name="search"
+                                label="Cari Transaksi"
+                                placeholder="Nomor atau nama pengeluaran..."
+                            />
+                            <FormDatePicker<ExpenseFilterValues>
+                                name="date_start"
+                                label="Dari Tanggal"
+                                placeholder="Tanggal awal"
+                            />
+                            <FormDatePicker<ExpenseFilterValues>
+                                name="date_end"
+                                label="Sampai Tanggal"
+                                placeholder="Tanggal akhir"
+                            />
+                            <FormSelect<ExpenseFilterValues>
+                                name="expense_category_uid"
+                                label="Kategori"
+                                options={categoryOptions}
+                                placeholder="Semua Kategori"
+                            />
+                            <FormSelect<ExpenseFilterValues>
+                                name="cash_account_uid"
+                                label="Sumber Kas"
+                                options={accountOptions}
+                                placeholder="Semua Akun"
+                            />
+                        </FilterForm>
+                    }
+                />
 
-                <div className="xl:col-span-4">
-                    <UpcomingExpenses onPayCategory={handlePayCategory} />
-                </div>
+                <UpcomingExpenses onPayCategory={handlePayCategory} />
 
                 <ExpenseDialog
                     open={isDialogOpen}

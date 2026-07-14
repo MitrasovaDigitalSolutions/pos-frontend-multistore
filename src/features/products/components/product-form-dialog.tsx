@@ -4,20 +4,20 @@ import { FormImageUpload } from "@/components/forms/form-image-upload";
 import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { FormNumberInput } from "@/components/forms/form-number-input";
 import { FormSelect } from "@/components/forms/form-select";
-import { Button } from "@/components/ui/button";
+import { FormSwitch } from "@/components/forms/form-switch";
 import { BaseDialog } from "@/components/ui/base-dialog";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useBrands } from "@/features/brands/api/brands-api";
 import { useCategories } from "@/features/categories/api/categories-api";
-import { IconPackage, IconInfoCircle } from "@tabler/icons-react";
+import { getImageUrl } from "@/lib/utils";
+import { IconInfoCircle, IconPackage } from "@tabler/icons-react";
 import { useEffect, useMemo } from "react";
-import { useFormContext, Controller } from "react-hook-form";
-import { Switch } from "@/components/ui/switch";
+import { useFormContext, type FieldErrors } from "react-hook-form";
 import { toast } from "sonner";
 import { useCreateProduct, useUpdateProduct } from "../api/products-api";
 import { type ProductInput } from "../schemas/product-schema";
 import type { Product } from "../types";
-import { getImageUrl } from "@/lib/utils";
 
 interface ProductFormDialogProps {
     open: boolean;
@@ -42,7 +42,6 @@ export function ProductFormDialog({
         handleSubmit,
         watch,
         setValue,
-        control,
         formState: { errors },
     } = useFormContext<ProductInput>();
 
@@ -119,8 +118,11 @@ export function ProductFormDialog({
             formData.append("barcode", data.barcode);
         }
 
-        formData.append("harga", String(data.harga));
-        formData.append("stok", String(data.stok));
+        formData.append("harga_jual", String(data.harga));
+
+        if (data.stok !== undefined && data.stok !== null) {
+            formData.append("stok", String(data.stok));
+        }
 
         if (data.harga_beli !== null && data.harga_beli !== undefined) {
             formData.append("harga_beli", String(data.harga_beli));
@@ -130,13 +132,8 @@ export function ProductFormDialog({
             formData.append("margin", String(data.margin));
         }
 
-        if (data.category_uid !== null && data.category_uid !== undefined) {
-            formData.append("category_uid", String(data.category_uid));
-        }
-
-        if (data.brand_uid !== null && data.brand_uid !== undefined) {
-            formData.append("brand_uid", String(data.brand_uid));
-        }
+        formData.append("category_uid", data.category_uid ? String(data.category_uid) : "");
+        formData.append("brand_uid", data.brand_uid ? String(data.brand_uid) : "");
 
         if (data.image instanceof File) {
             formData.append("image", data.image);
@@ -145,7 +142,7 @@ export function ProductFormDialog({
         formData.append("is_jasa", data.is_jasa ? "1" : "0");
 
         if (editingProduct) {
-            formData.append("_method", "PUT");
+            formData.append("status", editingProduct.status);
             updateProduct.mutate(
                 { uid: editingProduct.uid, data: formData },
                 {
@@ -178,6 +175,11 @@ export function ProductFormDialog({
         }
     };
 
+    const onError = (formErrors: FieldErrors<ProductInput>) => {
+        console.error("Product Form Validation Errors:", formErrors);
+        toast.error("Gagal menyimpan produk. Silakan periksa kembali input Anda.");
+    };
+
     const initialImageUrl = getImageUrl(editingProduct?.image_path);
 
     return (
@@ -195,9 +197,10 @@ export function ProductFormDialog({
                 </>
             }
             className="sm:max-w-4xl"
+            scrollable={true}
         >
             <form
-                onSubmit={handleSubmit(onSubmit)}
+                onSubmit={handleSubmit(onSubmit, onError)}
                 className="grid grid-cols-1 md:grid-cols-3 gap-6 "
             >
                 {infoMessage && (
@@ -296,28 +299,12 @@ export function ProductFormDialog({
                         />
                     </div>
 
-                    {/* Status Jasa / Layanan */}
-                    <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                        <div className="space-y-0.5">
-                            <label className="text-xs font-bold text-slate-800">
-                                Produk Jasa / Layanan
-                            </label>
-                            <p className="text-[10px] text-slate-400">
-                                Aktifkan jika produk ini berupa layanan atau jasa yang tidak memerlukan stok fisik.
-                            </p>
-                        </div>
-                        <Controller
-                            name="is_jasa"
-                            control={control}
-                            render={({ field }) => (
-                                <Switch
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                    disabled={isPending}
-                                />
-                            )}
-                        />
-                    </div>
+                    <FormSwitch<ProductInput>
+                        name="is_jasa"
+                        label="Produk Jasa / Layanan"
+                        description="Aktifkan jika produk ini berupa layanan atau jasa yang tidak memerlukan stok fisik."
+                        disabled={isPending}
+                    />
 
                     {/* Keuangan: Harga Beli, Harga Jual, Margin */}
                     <div className="grid grid-cols-3 gap-3">

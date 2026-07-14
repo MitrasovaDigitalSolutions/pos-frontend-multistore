@@ -22,7 +22,7 @@ import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { PurchaseItemLocal, Receiving } from "../../types";
 
 const receivingFinalizeSchema = z.object({
-    nomor_faktur: z.string().min(1, "Nomor faktur wajib diisi"),
+    nomor_faktur: z.string().nullable().optional().transform((val) => val || null),
     nilai_faktur: z.coerce.number().min(0, "Nilai faktur minimal 0").default(0),
     catatan: z.string().nullable().optional().transform((val) => val || null),
 });
@@ -66,20 +66,22 @@ export function ReceivingFinalizeDialog({
 
     const watchedNilaiFaktur = useWatch({ control, name: "nilai_faktur" }) ?? 0;
 
-    useEffect(() => {
-        if (open && receiving) {
-            reset({
-                nomor_faktur: receiving.nomor_faktur || "",
-                nilai_faktur: receiving.nilai_faktur || 0,
-                catatan: receiving.catatan || "",
-            });
-        }
-    }, [open, receiving, reset]);
-
     const totalItemsValue = items.reduce(
         (sum, item) => sum + item.kuantitas * item.harga_estimasi,
         0
     );
+
+    useEffect(() => {
+        if (open && receiving) {
+            reset({
+                nomor_faktur: receiving.nomor_faktur || "",
+                nilai_faktur: (receiving.nilai_faktur != null && receiving.nilai_faktur !== 0)
+                    ? receiving.nilai_faktur
+                    : totalItemsValue,
+                catatan: receiving.catatan || "",
+            });
+        }
+    }, [open, receiving, totalItemsValue, reset]);
 
     const nilaiFakturNum = Number(watchedNilaiFaktur);
     const selisih = nilaiFakturNum - totalItemsValue;
@@ -148,7 +150,7 @@ export function ReceivingFinalizeDialog({
                                 <div className="space-y-4">
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                            Nomor Faktur Supplier <span className="text-rose-500">*</span>
+                                            Nomor Faktur Supplier <span className="text-slate-400 font-normal normal-case tracking-normal">(opsional)</span>
                                         </label>
                                         <Input
                                             type="text"

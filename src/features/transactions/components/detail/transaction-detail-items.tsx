@@ -42,8 +42,20 @@ export function TransactionDetailItems({ items }: TransactionDetailItemsProps) {
             ),
         },
         {
+            accessorKey: "harga_beli",
+            header: "Harga Beli",
+            meta: {
+                headerClassName: "text-right",
+                cellClassName: "text-right font-semibold tabular-nums text-slate-500 text-xs",
+            },
+            cell: ({ row }) => {
+                const hargaBeli = row.original.harga_beli ?? 0;
+                return formatRupiah(hargaBeli);
+            },
+        },
+        {
             accessorKey: "harga_satuan",
-            header: "Harga Satuan",
+            header: "Harga Jual",
             meta: {
                 headerClassName: "text-right",
                 cellClassName: "text-right font-semibold tabular-nums text-slate-600 text-xs",
@@ -73,6 +85,26 @@ export function TransactionDetailItems({ items }: TransactionDetailItemsProps) {
                 cellClassName: "text-right font-black text-slate-900 tabular-nums text-xs",
             },
             cell: ({ row }) => formatRupiah(row.original.subtotal),
+        },
+        {
+            id: "keuntungan",
+            header: "Keuntungan",
+            meta: {
+                headerClassName: "text-right",
+                cellClassName: "text-right font-bold tabular-nums text-xs",
+            },
+            cell: ({ row }) => {
+                const hargaBeli = row.original.harga_beli ?? 0;
+                const hargaJual = row.original.harga_satuan;
+                const qty = row.original.kuantitas;
+                const profit = (hargaJual - hargaBeli) * qty;
+
+                return (
+                    <span className={profit >= 0 ? "text-emerald-600" : "text-rose-600"}>
+                        {formatRupiah(profit)}
+                    </span>
+                );
+            },
         },
     ];
 

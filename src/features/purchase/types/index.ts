@@ -108,7 +108,7 @@ export interface ReceivingPayment {
         name: string;
         username?: string;
     } | null;
-    receiving?: Receiving | null;
+    stock_receiving?: Receiving | null;
     cash_account?: CashAccount | null;
 }
 
@@ -159,4 +159,15 @@ export interface PurchaseReturn {
     } | null;
     created_at: string;
     items?: PurchaseReturnItem[];
+}
+
+export interface SupplierDebtSummary {
+    supplier_uid: string;
+    nama_supplier: string;
+    email: string | null;
+    nomor_telepon: string | null;
+    alamat: string | null;
+    total_nilai_faktur: number;
+    total_dibayar: number;
+    total_hutang: number;
 }

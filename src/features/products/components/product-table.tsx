@@ -187,7 +187,6 @@ export function ProductTable({
                 {
                     accessorKey: "margin",
                     header: "Margin",
-                    enableSorting: false,
                     meta: {
                         headerClassName: "text-right",
                         cellClassName: "text-right text-slate-500 text-xs",

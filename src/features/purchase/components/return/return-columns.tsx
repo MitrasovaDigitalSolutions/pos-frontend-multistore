@@ -1,6 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { PurchaseReturn } from "../../types";
+import { formatDate } from "@/lib/date-utils";
 import {
     RETURN_STATUS_LABELS,
     RETURN_STATUS_CLASSES,
@@ -13,9 +14,7 @@ export const returnColumns: ColumnDef<PurchaseReturn>[] = [
         header: "Tanggal Retur",
         cell: ({ row }) => (
             <span className="text-slate-600 font-medium text-xs">
-                {new Date(row.original.tanggal_retur).toLocaleString("id-ID", {
-                    dateStyle: "medium",
-                })}
+                {formatDate(row.original.tanggal_retur, "dd MMM yyyy")}
             </span>
         ),
         size: 120,

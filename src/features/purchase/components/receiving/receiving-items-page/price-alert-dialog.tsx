@@ -10,8 +10,6 @@ import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import type { ComparePricesResult } from "../../../api/purchase-api";
 
-import type { Product } from "@/features/products/types";
-
 export interface PriceAlertFormInput {
     items: {
         product_uid: string;
@@ -26,7 +24,6 @@ interface PriceAlertDialogProps {
     onOpenChange: (open: boolean) => void;
     priceAlerts: ComparePricesResult[];
     isFinalizing: boolean;
-    getProductInfo: (productId: string | number) => Product | null;
     onCompleteWithoutPrices: () => void;
     onCompleteWithPrices: (formValues: PriceAlertFormInput) => void;
 }
@@ -36,7 +33,6 @@ export function PriceAlertDialog({
     onOpenChange,
     priceAlerts,
     isFinalizing,
-    getProductInfo,
     onCompleteWithoutPrices,
     onCompleteWithPrices,
 }: PriceAlertDialogProps) {
@@ -52,8 +48,7 @@ export function PriceAlertDialog({
     useEffect(() => {
         if (open && priceAlerts.length > 0) {
             const initialItems = priceAlerts.map((alert) => {
-                const productInfo = getProductInfo(alert.product_uid);
-                const marginLama = productInfo?.margin ?? alert.margin_lama;
+                const marginLama = alert.margin_lama;
                 const buyPriceNew = alert.harga_beli_baru;
                 const calculatedHargaJualSaran = Math.round(buyPriceNew * (1 + (marginLama || 0) / 100));
 
@@ -67,7 +62,7 @@ export function PriceAlertDialog({
             prevItemsRef.current = JSON.parse(JSON.stringify(initialItems));
             alertFormMethods.reset({ items: initialItems });
         }
-    }, [open, priceAlerts, alertFormMethods, getProductInfo]);
+    }, [open, priceAlerts, alertFormMethods]);
 
     useEffect(() => {
         if (!formItems || formItems.length === 0) return;
@@ -105,8 +100,7 @@ export function PriceAlertDialog({
     }, [formItems, priceAlerts, alertFormMethods]);
 
     const handleUseSaran = (idx: number, alert: ComparePricesResult) => {
-        const productInfo = getProductInfo(alert.product_uid);
-        const marginLama = productInfo?.margin ?? alert.margin_lama;
+        const marginLama = alert.margin_lama;
         const buyPriceNew = alert.harga_beli_baru;
         const calculatedHargaJualSaran = Math.round(buyPriceNew * (1 + (marginLama || 0) / 100));
 
@@ -151,10 +145,9 @@ export function PriceAlertDialog({
                             <tbody className="divide-y divide-slate-50 font-medium">
                                 {priceAlerts.map((alert, idx) => {
                                     const isUpdateActive = formItems && formItems[idx]?.update_harga_jual;
-                                    const productInfo = getProductInfo(alert.product_uid);
-                                    const hargaBeliLama = productInfo?.harga_beli ?? alert.harga_beli_lama;
-                                    const hargaJualLama = productInfo?.harga ?? alert.harga_jual_lama;
-                                    const marginLama = productInfo?.margin ?? alert.margin_lama;
+                                    const hargaBeliLama = alert.harga_beli_lama;
+                                    const hargaJualLama = alert.harga_jual_lama;
+                                    const marginLama = alert.margin_lama;
                                     const selisihHargaBeli = alert.harga_beli_baru - hargaBeliLama;
                                     const buyPriceNew = alert.harga_beli_baru;
                                     const calculatedHargaJualSaran = Math.round(buyPriceNew * (1 + (marginLama || 0) / 100));
@@ -201,31 +194,23 @@ export function PriceAlertDialog({
                                                                 <span className="text-[9px] text-slate-400 font-bold block">Harga Jual (Rp)</span>
                                                                 <FormNominalInput<PriceAlertFormInput>
                                                                     name={`items.${idx}.harga_jual_baru`}
-                                                                    className="w-28 h-8 px-2 text-right"
+                                                                    className="w-32 h-8"
                                                                 />
                                                             </div>
+                                                        </div>
+                                                        <div className="text-[10px] text-slate-400">
+                                                            Saran Jual: <span className="font-semibold text-slate-700">{formatRupiah(calculatedHargaJualSaran)}</span>
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleUseSaran(idx, alert)}
-                                                                className="px-2 h-8 text-[9px] font-bold bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg self-end cursor-pointer border border-slate-200"
+                                                                className="text-emerald-600 hover:text-emerald-700 ml-1.5 font-bold hover:underline bg-transparent border-none p-0 cursor-pointer"
                                                             >
-                                                                Saran
+                                                                Gunakan Saran
                                                             </button>
-                                                        </div>
-                                                        <div className="text-[10px] text-emerald-600 font-semibold">
-                                                            Saran: {formatRupiah(calculatedHargaJualSaran)} (Margin {marginLama}%)
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            alertFormMethods.setValue(`items.${idx}.update_harga_jual`, true);
-                                                        }}
-                                                        className="px-3 py-1.5 text-[10px] font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg transition-colors cursor-pointer border border-emerald-100/50"
-                                                    >
-                                                        Ubah Harga Jual
-                                                    </button>
+                                                    <span className="text-slate-400 italic text-[11px]">Tidak diubah</span>
                                                 )}
                                             </td>
                                         </tr>
@@ -234,33 +219,26 @@ export function PriceAlertDialog({
                             </tbody>
                         </table>
                     </div>
-                </div>
 
-                <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t border-slate-100 shrink-0 bg-white">
-                    <button
-                        type="button"
-                        onClick={() => onOpenChange(false)}
-                        disabled={isFinalizing}
-                        className="px-5 h-10 border border-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer bg-white hover:bg-slate-50 transition-colors"
-                    >
-                        Batal & Sesuaikan
-                    </button>
-                    <Button
-                        type="button"
-                        onClick={onCompleteWithoutPrices}
-                        disabled={isFinalizing}
-                        className="px-5 h-10 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl cursor-pointer border-none"
-                    >
-                        {isFinalizing ? "Memproses..." : "Tetap Selesaikan (Tanpa Update Harga Jual)"}
-                    </Button>
-                    <Button
-                        type="button"
-                        onClick={handleFormSubmit}
-                        disabled={isFinalizing}
-                        className="px-5 h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl cursor-pointer border-none"
-                    >
-                        {isFinalizing ? "Memproses..." : "Selesaikan & Terapkan Harga Baru"}
-                    </Button>
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={onCompleteWithoutPrices}
+                            disabled={isFinalizing}
+                            className="text-xs text-slate-500 hover:text-slate-900 rounded-xl"
+                        >
+                            Lewati Update Harga Jual
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleFormSubmit}
+                            disabled={isFinalizing}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 px-4 rounded-xl border-none cursor-pointer flex items-center gap-1.5 shadow-sm"
+                        >
+                            Simpan Perubahan & Lanjutkan
+                        </Button>
+                    </div>
                 </div>
             </FormProvider>
         </BaseDialog>

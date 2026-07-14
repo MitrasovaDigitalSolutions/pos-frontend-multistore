@@ -3,6 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { PAYMENT_STATUS } from "@/constants/purchase";
 import type { PaymentSummary } from "../../../types";
+import { formatToISO } from "@/lib/date-utils";
 
 interface DebtSummaryProps {
     selectedReceivingId: number | string | undefined;
@@ -137,7 +138,7 @@ export function DebtSummary({
                                             )}
                                         </div>
                                         <div className="text-slate-400 text-[9px]">
-                                            {p.tanggal.split(" ")[0] || p.tanggal.split("T")[0]}
+                                            {formatToISO(p.tanggal)}
                                         </div>
                                     </div>
                                     <span className="font-bold text-slate-800">

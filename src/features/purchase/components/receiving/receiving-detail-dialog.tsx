@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { IconClipboardList, IconClock, IconFileDescription } from "@tabler/icons-react";
-import { useReceivingDetail } from "../../api/purchase-api";
+import { useReceivingDetail, usePurchaseOrderDetail } from "../../api/purchase-api";
 import { useActivityLogs } from "@/features/stock/api/stock-api";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { Scrollable } from "@/components/ui/scrollable";
@@ -13,6 +13,7 @@ import {
     PAYMENT_STATUS_CLASSES,
     type PaymentStatus,
 } from "@/constants/purchase";
+import { formatToReadableDateTime } from "@/lib/date-utils";
 
 interface ReceivingDetailDialogProps {
     open: boolean;
@@ -28,6 +29,7 @@ export function ReceivingDetailDialog({
     const [activeTab, setActiveTab] = useState<"items" | "logs">("items");
 
     const { data: receiving, isLoading: isDetailLoading } = useReceivingDetail(receivingId);
+    const { data: poData } = usePurchaseOrderDetail(receiving?.purchase_order_uid || null);
 
     // Fetch activity logs related to this receipt number
     const { data: logsData, isLoading: isLogsLoading } = useActivityLogs({
@@ -110,10 +112,7 @@ export function ReceivingDetailDialog({
                         <div className="space-y-1">
                             <span className="text-[10px] font-bold text-slate-400 uppercase">Tanggal Masuk</span>
                             <p className="font-semibold text-slate-700">
-                                {new Date(receiving.created_at).toLocaleString("id-ID", {
-                                    dateStyle: "medium",
-                                    timeStyle: "short",
-                                })}
+                                {formatToReadableDateTime(receiving.created_at)}
                             </p>
                         </div>
                         <div className="space-y-1">
@@ -144,6 +143,26 @@ export function ReceivingDetailDialog({
                                     {PAYMENT_STATUS_LABELS[receiving.status_pembayaran as PaymentStatus] || receiving.status_pembayaran}
                                 </span>
                             </div>
+                        </div>
+                        <div className="space-y-1">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase">Sumber Penerimaan</span>
+                            <p className="font-semibold text-slate-700">
+                                {receiving.purchase_order_uid ? "Dari PO" : "Langsung (Direct)"}
+                            </p>
+                        </div>
+                        <div className="space-y-1">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase">Referensi PO</span>
+                            <p className="font-semibold text-slate-700">
+                                {receiving.purchase_order_uid ? (
+                                    poData ? (
+                                        <span className="font-bold text-indigo-600">{poData.nomor_po}</span>
+                                    ) : (
+                                        `PO (ID: ${receiving.purchase_order_uid.substring(0, 8)})`
+                                    )
+                                ) : (
+                                    "-"
+                                )}
+                            </p>
                         </div>
                         <div className="space-y-1 col-span-2">
                             <span className="text-[10px] font-bold text-slate-400 uppercase">Catatan / Keterangan</span>
@@ -242,7 +261,7 @@ export function ReceivingDetailDialog({
                                             </p>
                                             <div className="flex gap-2 text-[10px] text-slate-400 font-mono">
                                                 <span>
-                                                    {new Date(log.created_at).toLocaleString("id-ID")}
+                                                    {formatToReadableDateTime(log.created_at)}
                                                 </span>
                                                 <span>•</span>
                                                 <span>Oleh: {log.user?.name || "System"}</span>

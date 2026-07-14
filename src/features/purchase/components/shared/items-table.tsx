@@ -129,6 +129,7 @@ export function ItemsTable({
                                                     onUpdateItem(item.temp_uid, { kuantitas: val ?? 0 });
                                                 }}
                                                 disabled={disabled}
+                                                allowDecimal={true}
                                                 className="w-full h-8 text-center text-xs font-bold text-slate-800 rounded-lg border-slate-200 focus-visible:ring-emerald-400/20 focus-visible:border-emerald-400"
                                             />
                                         </td>

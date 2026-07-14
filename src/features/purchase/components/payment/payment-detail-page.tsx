@@ -15,6 +15,7 @@ import {
     type PaymentTransactionStatus,
     PAYMENT_STATUS,
 } from "@/constants/purchase";
+import { formatToISO, formatDate, formatToReadableDateTime } from "@/lib/date-utils";
 
 interface PaymentDetailPageProps {
     paymentId: string;
@@ -140,9 +141,7 @@ export function PaymentDetailPage({ paymentId }: PaymentDetailPageProps) {
                                     Tanggal Bayar
                                 </span>
                                 <p className="font-semibold text-slate-700">
-                                    {new Date(payment.created_at).toLocaleString("id-ID", {
-                                        dateStyle: "medium",
-                                    })}
+                                    {formatDate(payment.created_at, "dd MMM yyyy")}
                                 </p>
                             </div>
 
@@ -208,7 +207,7 @@ export function PaymentDetailPage({ paymentId }: PaymentDetailPageProps) {
                                         <span className="text-slate-450 block">Tanggal Batal:</span>
                                         <span className="font-bold text-rose-800">
                                             {payment.voided_at
-                                                ? new Date(payment.voided_at).toLocaleString("id-ID")
+                                                ? formatToReadableDateTime(payment.voided_at)
                                                 : "-"}
                                         </span>
                                     </div>
@@ -280,7 +279,7 @@ export function PaymentDetailPage({ paymentId }: PaymentDetailPageProps) {
                                                 </p>
                                                 <div className="flex gap-2 text-[10px] text-slate-400 font-mono">
                                                     <span>
-                                                        {new Date(log.created_at).toLocaleString("id-ID")}
+                                                        {formatToReadableDateTime(log.created_at)}
                                                     </span>
                                                     <span>•</span>
                                                     <span>Oleh: {log.user?.name || "System"}</span>
@@ -404,7 +403,7 @@ export function PaymentDetailPage({ paymentId }: PaymentDetailPageProps) {
                                                     )}
                                                 </div>
                                                 <div className="text-slate-400 text-[9px]">
-                                                    {p.tanggal.split(" ")[0] || p.tanggal.split("T")[0]}
+                                                    {formatToISO(p.tanggal)}
                                                 </div>
                                             </div>
                                             <span className="font-bold text-slate-800">

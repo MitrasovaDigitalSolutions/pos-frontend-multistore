@@ -1,12 +1,12 @@
 "use client";
 
-import { PageLoader } from "@/components/feedback/page-loader";
 import { FormInput } from "@/components/forms/form-input";
 import { FormNumberInput } from "@/components/forms/form-number-input";
 import { BarcodeInput } from "@/components/shared/barcode-input";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
     Table,
     TableBody,
@@ -15,9 +15,9 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { ROUTES } from "@/constants/routes";
 import { OPNAME_STATUS, OPNAME_STATUS_CLASSES, OPNAME_STATUS_LABELS } from "@/constants/stock";
 import { useProducts } from "@/features/products/api/products-api";
-import { ROUTES } from "@/constants/routes";
 import type { Product } from "@/features/products/types";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { cn } from "@/lib/utils";
@@ -52,12 +52,92 @@ interface OpnameItemsPageProps {
     opnameId: string;
 }
 
+function OpnameItemsSkeleton() {
+    return (
+        <div className="space-y-6 animate-pulse">
+            {/* Header Area Skeleton */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                <div className="flex items-center gap-4">
+                    <Skeleton className="h-9 w-9 rounded-xl" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-5 w-64" />
+                        <Skeleton className="h-3.5 w-80" />
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-36 rounded-xl" />
+                    <Skeleton className="h-10 w-28 rounded-xl" />
+                    <Skeleton className="h-10 w-28 rounded-xl" />
+                    <Skeleton className="h-10 w-44 rounded-xl" />
+                </div>
+            </div>
+
+            {/* Statistics Cards Skeleton */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                {Array.from({ length: 4 }).map((_, idx) => (
+                    <div key={idx} className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex items-center justify-between">
+                        <div className="space-y-2">
+                            <Skeleton className="h-3 w-20" />
+                            <Skeleton className="h-6 w-16" />
+                        </div>
+                        <Skeleton className="h-8 w-8 rounded-lg" />
+                    </div>
+                ))}
+            </div>
+
+            {/* Scanner & Input Bar Skeleton */}
+            <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
+                <div className="flex flex-col md:flex-row gap-4 items-end">
+                    <div className="flex-1 space-y-2">
+                        <Skeleton className="h-3 w-28" />
+                        <Skeleton className="h-10 w-full rounded-xl" />
+                    </div>
+                    <div className="w-full md:w-32 space-y-2">
+                        <Skeleton className="h-3 w-16" />
+                        <Skeleton className="h-10 w-full rounded-xl" />
+                    </div>
+                    <div className="w-full md:w-48 space-y-2">
+                        <Skeleton className="h-3 w-16" />
+                        <Skeleton className="h-10 w-full rounded-xl" />
+                    </div>
+                    <Skeleton className="h-10 w-24 rounded-xl" />
+                </div>
+            </div>
+
+            {/* Table List Skeleton */}
+            <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
+                <Skeleton className="h-4 w-40" />
+                <div className="border border-slate-100 rounded-2xl p-4 space-y-4 bg-slate-50/10">
+                    <div className="flex justify-between border-b pb-3 border-slate-100">
+                        <Skeleton className="h-4 w-8" />
+                        <Skeleton className="h-4 w-40" />
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-4 w-12" />
+                    </div>
+                    {Array.from({ length: 4 }).map((_, idx) => (
+                        <div key={idx} className="flex justify-between pt-1">
+                            <Skeleton className="h-4 w-4" />
+                            <Skeleton className="h-4 w-48" />
+                            <Skeleton className="h-4 w-16" />
+                            <Skeleton className="h-4 w-16" />
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-4 w-8" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
     const { data: opname, isLoading: opnameLoading, error } = useOpnameDetail(opnameId);
     const router = useAppRouter();
 
     if (opnameLoading) {
-        return <PageLoader message="Memuat detail Stock Opname..." />;
+        return <OpnameItemsSkeleton />;
     }
 
     if (error || !opname) {
@@ -180,7 +260,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
     }, [dbItems, itemsLoading, store]);
 
     if (itemsLoading) {
-        return <PageLoader message="Memuat item draf Stock Opname..." />;
+        return <OpnameItemsSkeleton />;
     }
 
     const handleProductFound = (product: Product) => {

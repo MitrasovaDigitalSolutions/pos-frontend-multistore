@@ -4,7 +4,7 @@ import { apiClient } from "@/shared/api/axios";
 import { queryKeys } from "@/lib/query-keys";
 import { ENDPOINTS } from "@/shared/api/endpoints";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
-import type { Receiving, PurchaseOrder, ReceivingPayment, CashAccount, PurchaseReturn, PaymentSummary } from "../types";
+import type { Receiving, PurchaseOrder, ReceivingPayment, CashAccount, PurchaseReturn, PaymentSummary, SupplierDebtSummary } from "../types";
 import type { ReceivingInput, ReceivingHeaderInput } from "../schemas/receiving-schema";
 import type { PurchaseOrderHeaderInput, PurchaseOrderBulkItemsInput } from "../schemas/order-schema";
 import type { PaymentInput } from "../schemas/payment-schema";
@@ -13,17 +13,24 @@ import type { Product } from "@/features/products/types";
 
 // ─── Stock Receiving Hooks ────────────────────────────────────────────────────
 
-export function useReceivings(params?: PaginationParams & { search?: string; status?: string; supplier_uid?: string; start_date?: string; end_date?: string }) {
+export function useReceivings(params?: PaginationParams & { search?: string; status?: string; supplier_uid?: string; start_date?: string; end_date?: string; status_pembayaran?: string }) {
     return useQuery<PaginatedResponse<Receiving>>({
         queryKey: [...queryKeys.purchase.receivings(), params],
         queryFn: () => apiGetList<Receiving>(ENDPOINTS.PURCHASE.RECEIVING.LIST, params),
     });
 }
 
-export function useReceivingDebts(params?: PaginationParams & { search?: string; from?: string; to?: string; tanggal_dari?: string; tanggal_sampai?: string }) {
+export function useReceivingDebts(params?: PaginationParams & { search?: string; from?: string; to?: string; tanggal_dari?: string; tanggal_sampai?: string; supplier_uid?: string }) {
     return useQuery<PaginatedResponse<Receiving>>({
         queryKey: [...queryKeys.purchase.receivings(), "debts", params],
         queryFn: () => apiGetList<Receiving>(ENDPOINTS.PURCHASE.RECEIVING.DEBTS, params),
+    });
+}
+
+export function useReceivingDebtsSummary(params?: PaginationParams & { search?: string }) {
+    return useQuery<PaginatedResponse<SupplierDebtSummary>>({
+        queryKey: [...queryKeys.purchase.receivings(), "debts-summary", params],
+        queryFn: () => apiGetList<SupplierDebtSummary>(ENDPOINTS.PURCHASE.RECEIVING.DEBTS_SUMMARY, params),
     });
 }
 
@@ -41,6 +48,23 @@ export function useCreateReceiving() {
         mutationFn: (data) =>
             apiPost<ApiResponse<Receiving>, ReceivingInput>(
                 ENDPOINTS.PURCHASE.RECEIVING.CREATE,
+                data,
+            ),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.receivings(),
+            });
+            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+        },
+     });
+}
+
+export function useBulkCreateReceiving() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<Receiving>, Error, unknown>({
+        mutationFn: (data) =>
+            apiPost<ApiResponse<Receiving>, unknown>(
+                ENDPOINTS.PURCHASE.RECEIVING.BULK,
                 data,
             ),
         onSuccess: () => {
@@ -226,6 +250,23 @@ export function useCreatePurchaseOrderHeader() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.purchase.orders(),
             });
+        },
+    });
+}
+
+export function useBulkCreatePurchaseOrder() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<PurchaseOrder>, Error, unknown>({
+        mutationFn: (data) =>
+            apiPost<ApiResponse<PurchaseOrder>, unknown>(
+                ENDPOINTS.PURCHASE.ORDER.BULK,
+                data,
+            ),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.orders(),
+            });
+            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
     });
 }
@@ -429,7 +470,7 @@ export function usePaymentSummary(receivingUid: string | null) {
 
                 // Filter payments belonging to this receiving and which are completed (not voided)
                 const completedPayments = (paymentsResponse.data || []).filter(
-                    (p) => (p.referensi_uid === receivingUid || p.receiving?.uid === receivingUid) && p.status === "completed"
+                    (p) => (p.referensi_uid === receivingUid || p.stock_receiving?.uid === receivingUid) && p.status === "completed"
                 );
 
                 const totalFaktur = receiving.nilai_faktur || 0;
@@ -467,15 +508,11 @@ export function useOutstandingReceivings() {
     return useQuery<Receiving[]>({
         queryKey: [...queryKeys.purchase.receivings(), "outstanding"],
         queryFn: async () => {
-            const queryParams: PaginationParams & { status: string } = {
-                status: "completed",
-                per_page: 100,
+            const queryParams: PaginationParams = {
+                per_page: 1000,
             };
-            const res = await apiGetList<Receiving>(ENDPOINTS.PURCHASE.RECEIVING.LIST, queryParams);
-            // Fallback filtering in case backend doesn't filter status_pembayaran
-            return (res.data || []).filter(
-                (r) => r.status_pembayaran === "pending" || r.status_pembayaran === "unpaid" || r.status_pembayaran === "partial"
-            );
+            const res = await apiGetList<Receiving>(ENDPOINTS.PURCHASE.RECEIVING.DEBTS, queryParams);
+            return res.data || [];
         },
     });
 }
@@ -584,6 +621,23 @@ export function useCreatePurchaseReturnHeader() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.purchase.returns(),
             });
+        },
+    });
+}
+
+export function useBulkCreatePurchaseReturn() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<PurchaseReturn>, Error, unknown>({
+        mutationFn: (data) =>
+            apiPost<ApiResponse<PurchaseReturn>, unknown>(
+                ENDPOINTS.PURCHASE.RETURN.BULK,
+                data,
+            ),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.returns(),
+            });
+            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
     });
 }

@@ -8,19 +8,32 @@ import type { PurchaseItemLocal } from "@/features/purchase/types";
 
 export type ParentType = "po" | "receiving" | "return";
 
+export interface SavedHeaderData {
+    purchase_order_uid?: string | null;
+    supplier_uid?: string | null;
+    nomor_faktur?: string | null;
+    nilai_faktur?: number | null;
+    tanggal_terima?: string | null;
+    status_pembayaran?: "pending" | "unpaid" | "partial" | "paid";
+    catatan?: string | null;
+}
+
 interface PurchaseItemsState {
     parentId: string | null;
     parentType: ParentType | null;
     items: PurchaseItemLocal[];
+    headerData: SavedHeaderData | null;
     lastUpdated: number;
 
     // Actions
     setParent: (uid: string, type: ParentType) => void;
+    setHeaderData: (data: SavedHeaderData | null) => void;
     addItem: (product: {
         product_uid: string;
         barcode: string | null;
         nama: string;
         harga_estimasi: number;
+        kuantitas?: number;
         alasan?: string | null;
     }) => void;
     updateItem: (temp_uid: string, data: Partial<Pick<PurchaseItemLocal, "kuantitas" | "harga_estimasi" | "alasan">>) => void;
@@ -51,6 +64,7 @@ export function createPurchaseItemsStore(parentId: string, parentType: ParentTyp
                 parentId,
                 parentType,
                 items: [],
+                headerData: null,
                 lastUpdated: Date.now(),
 
                 setParent: (uid, type) =>
@@ -60,8 +74,15 @@ export function createPurchaseItemsStore(parentId: string, parentType: ParentTyp
                         lastUpdated: Date.now(),
                     }),
 
+                setHeaderData: (data) =>
+                    set((state) => ({
+                        headerData: data ? { ...state.headerData, ...data } : null,
+                        lastUpdated: Date.now(),
+                    })),
+
                 addItem: (product) =>
                     set((state) => {
+                        const targetQty = product.kuantitas ?? 1;
                         const existing = state.items.find(
                             (i) => i.product_uid === product.product_uid,
                         );
@@ -69,7 +90,7 @@ export function createPurchaseItemsStore(parentId: string, parentType: ParentTyp
                             return {
                                 items: state.items.map((i) =>
                                     i.product_uid === product.product_uid
-                                        ? { ...i, kuantitas: i.kuantitas + 1 }
+                                        ? { ...i, kuantitas: i.kuantitas + targetQty }
                                         : i,
                                 ),
                                 lastUpdated: Date.now(),
@@ -83,7 +104,7 @@ export function createPurchaseItemsStore(parentId: string, parentType: ParentTyp
                                     product_uid: product.product_uid,
                                     barcode: product.barcode,
                                     nama: product.nama,
-                                    kuantitas: 1,
+                                    kuantitas: targetQty,
                                     harga_estimasi: product.harga_estimasi,
                                     alasan: product.alasan || null,
                                 },
@@ -109,6 +130,7 @@ export function createPurchaseItemsStore(parentId: string, parentType: ParentTyp
                 clearAll: () =>
                     set({
                         items: [],
+                        headerData: null,
                         lastUpdated: Date.now(),
                     }),
 
@@ -151,6 +173,13 @@ export function getPurchaseItemsStore(parentId: string, parentType: ParentType):
 export function clearPurchaseItemsStore(parentId: string, parentType: ParentType): void {
     const key = `${parentType}-${parentId}`;
     const storageKey = `purchase-items-${parentType}-${parentId}`;
+
+    // Reset in-memory store state first (clears items + headerData)
+    // This prevents any lingering useWatch effects from re-persisting stale data
+    const existing = storeRegistry.get(key);
+    if (existing) {
+        existing.getState().clearAll();
+    }
 
     // Clear localStorage
     try {

@@ -10,6 +10,7 @@ import { queryKeys } from "@/lib/query-keys";
 import type { Opname } from "../types";
 import { DataTable } from "@/components/ui/data-table";
 import { hasRole, hasPermission } from "@/constants/roles";
+import { formatToReadableDateTime } from "@/lib/date-utils";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { OPNAME_STATUS, OPNAME_STATUS_LABELS, OPNAME_STATUS_CLASSES } from "@/constants/stock";
@@ -139,13 +140,7 @@ export function OpnameList({
                 header: "Tanggal",
                 cell: ({ row }) => (
                     <span className="text-slate-500 font-medium text-xs">
-                        {new Date(row.original.created_at).toLocaleString(
-                            "id-ID",
-                            {
-                                dateStyle: "medium",
-                                timeStyle: "short",
-                            },
-                        )}
+                        {formatToReadableDateTime(row.original.created_at)}
                     </span>
                 ),
                 size: 160,

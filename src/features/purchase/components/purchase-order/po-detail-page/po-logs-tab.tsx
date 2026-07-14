@@ -1,4 +1,5 @@
 import type { ActivityLog } from "@/features/stock/api/stock-api";
+import { formatToReadableDateTime } from "@/lib/date-utils";
 
 interface POLogsTabProps {
     logs: ActivityLog[];
@@ -17,7 +18,7 @@ export function POLogsTab({ logs, logsLoading }: POLogsTabProps) {
                         </p>
                         <div className="flex gap-2 text-[10px] text-slate-400 font-mono">
                             <span>
-                                {new Date(log.created_at).toLocaleString("id-ID")}
+                                {formatToReadableDateTime(log.created_at)}
                             </span>
                             <span>•</span>
                             <span>Oleh: {log.user?.name || "System"}</span>

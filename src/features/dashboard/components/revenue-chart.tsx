@@ -17,6 +17,7 @@ import {
   YAxis,
 } from "recharts";
 import type { DashboardSummary } from "../types";
+import { formatDate as utilsFormatDate } from "@/lib/date-utils";
 
 interface RevenueChartProps {
   summary: DashboardSummary | undefined;
@@ -31,6 +32,7 @@ interface ChartFilterValues {
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun"];
 
 function buildData(summary: DashboardSummary | undefined) {
+  const currentYear = new Date().getFullYear();
   const gross = summary?.gross_sales ?? 0;
   const profit = summary?.gross_profit ?? 0;
   const demoGross = gross === 0 ? 40000 : gross;
@@ -39,7 +41,7 @@ function buildData(summary: DashboardSummary | undefined) {
   const profitSeeds = [0.6, 0.4, 0.65, 0.35, 0.75, 0.8];
   const expensesSeeds = [0.1, 0.15, 0.08, 0.12, 0.05, 0.1];
   return MONTHS.map((month, i) => ({
-    month,
+    month: `${month} ${currentYear}`,
     revenue: Math.round(demoGross * grossSeeds[i]),
     profit: Math.round(demoProfit * profitSeeds[i]),
     expenses: Math.round(demoGross * expensesSeeds[i]),
@@ -72,14 +74,13 @@ const CustomTooltip = ({
   return null;
 };
 
-const formatDate = (dateStr: string) => {
-  try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
-  } catch {
-    return dateStr;
+const formatDateByInterval = (dateStr: string, interval: "daily" | "weekly" | "monthly") => {
+  if (interval === "monthly") {
+    const formatted = utilsFormatDate(dateStr, "MMM yyyy");
+    return formatted || dateStr;
   }
+  const formatted = utilsFormatDate(dateStr, "d MMM yyyy");
+  return formatted || dateStr;
 };
 
 export function RevenueChart({ summary, from, to }: RevenueChartProps) {
@@ -102,7 +103,7 @@ export function RevenueChart({ summary, from, to }: RevenueChartProps) {
 
   const data = history && history.length > 0
     ? history.map((item) => ({
-      month: formatDate(item.date),
+      month: formatDateByInterval(item.date, watchInterval || "weekly"),
       revenue: item.net_sales,
       profit: item.gross_profit,
       expenses: item.expenses || 0,

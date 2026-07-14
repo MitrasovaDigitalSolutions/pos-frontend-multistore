@@ -15,6 +15,7 @@ import { useBrands } from "@/features/brands/api/brands-api";
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
+import { FormSwitch } from "@/components/forms/form-switch";
 import { useSearchParams } from "next/navigation";
 
 interface ProductFilterValues {
@@ -22,6 +23,7 @@ interface ProductFilterValues {
   category_uid: string;
   brand_uid: string;
   status: string;
+  is_jasa: boolean;
 }
 
 export function Products() {
@@ -45,6 +47,7 @@ export function Products() {
     status?: string;
     category_uid?: string;
     brand_uid?: string;
+    is_jasa?: string;
   }>(() => ({
     search: searchParam || undefined,
     status: "active",
@@ -60,12 +63,14 @@ export function Products() {
       category_uid: "all",
       brand_uid: "all",
       status: "active",
+      is_jasa: false,
     },
   });
 
   // Sync URL search param to state and form values
   useEffect(() => {
     filterMethods.setValue("search", searchParam);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAppliedFilters((prev) => ({
       ...prev,
       search: searchParam || undefined,
@@ -78,6 +83,7 @@ export function Products() {
       status: data.status !== "all" ? data.status : undefined,
       category_uid: data.category_uid !== "all" ? (data.category_uid) : undefined,
       brand_uid: data.brand_uid !== "all" ? (data.brand_uid) : undefined,
+      is_jasa: data.is_jasa ? "1" : undefined,
     });
     setPage(1);
   };
@@ -88,6 +94,7 @@ export function Products() {
       category_uid: "all",
       brand_uid: "all",
       status: "active",
+      is_jasa: false,
     });
     setAppliedFilters({
       status: "active",
@@ -234,6 +241,14 @@ export function Products() {
                 options={statusOptions}
                 placeholder="Semua Status"
               />
+              <div className="col-span-2">
+                <FormSwitch<ProductFilterValues>
+                  name="is_jasa"
+                  label="Produk Jasa / Layanan"
+                  description="Aktifkan untuk menampilkan produk jasa / layanan saja"
+                  className="bg-white"
+                />
+              </div>
             </FilterForm>
           }
         />

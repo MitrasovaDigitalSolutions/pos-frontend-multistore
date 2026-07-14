@@ -79,6 +79,8 @@ export const ENDPOINTS = {
             COMPLETE: (uid: string) => `/v1/purchase/receiving/${uid}/complete`,
             SCAN: "/v1/purchase/receiving/scan",
             DEBTS: "/v1/purchase/receiving/debts",
+            DEBTS_SUMMARY: "/v1/purchase/receiving/debts/summary",
+            BULK: "/v1/purchase/receiving/bulk",
         },
         ORDER: {
             LIST: "/v1/purchase/order",
@@ -92,6 +94,7 @@ export const ENDPOINTS = {
             ITEMS_REPLACE: (uid: string) => `/v1/purchase/order/${uid}/items`,
             OUTSTANDING: "/v1/purchase/order/outstanding",
             RECEIVINGS: (uid: string) => `/v1/purchase/order/${uid}/receivings`,
+            BULK: "/v1/purchase/order/bulk",
         },
         PAYMENT: {
             LIST: "/v1/purchase/payment",
@@ -113,6 +116,7 @@ export const ENDPOINTS = {
             ITEMS_REPLACE: (uid: string) => `/v1/purchase/return/${uid}/items`,
             RETURNABLE_ITEMS: (receivingUid: string) => `/v1/purchase/receiving/${receivingUid}/returnable-items`,
             SCAN: "/v1/purchase/return/scan",
+            BULK: "/v1/purchase/return/bulk",
         },
     },
 
@@ -121,6 +125,38 @@ export const ENDPOINTS = {
         SUMMARY: "/v1/reports/summary",
         DAILY: (date: string) => `/v1/reports/sales/daily?date=${date}`,
         JASA_VS_PRODUCT: "/v1/reports/sales/jasa-vs-product",
+    },
+
+    // Chart of Accounts (COA)
+    CHART_OF_ACCOUNTS: {
+        LIST: "/v1/chart-of-accounts",
+        FLAT: "/v1/chart-of-accounts/flat",
+        BY_TYPE: (type: string) => `/v1/chart-of-accounts/type/${type}`,
+        DETAIL: (uid: string) => `/v1/chart-of-accounts/${uid}`,
+        CREATE: "/v1/chart-of-accounts",
+        UPDATE: (uid: string) => `/v1/chart-of-accounts/${uid}`,
+        DELETE: (uid: string) => `/v1/chart-of-accounts/${uid}`,
+    },
+
+    // Manual Journals
+    MANUAL_JOURNALS: {
+        LIST: "/v1/manual-journals",
+        DETAIL: (uid: string) => `/v1/manual-journals/${uid}`,
+        CREATE: "/v1/manual-journals",
+        UPDATE: (uid: string) => `/v1/manual-journals/${uid}`,
+        DELETE: (uid: string) => `/v1/manual-journals/${uid}`,
+    },
+
+    // COA Mappings (operational transaction → Chart of Account)
+    COA_MAPPINGS: {
+        LIST: "/v1/coa-mappings",
+        UPDATE: "/v1/coa-mappings",
+    },
+
+    // Ledger (admin backfill / rebuild actions)
+    LEDGER: {
+        BACKFILL: "/v1/ledger/backfill",
+        BACKFILL_STATUS: "/v1/ledger/backfill/status",
     },
 
     // Transactions (Checkout)

@@ -25,6 +25,8 @@ interface ReturnFinalizeDialogProps {
     onOpenChange: (open: boolean) => void;
     returnObj: PurchaseReturn | null;
     onSuccess?: () => void;
+    onConfirm?: (data: ReturnFinalizeInput) => void;
+    isPending?: boolean;
 }
 
 const returnFinalizeSchema = z.object({
@@ -56,6 +58,8 @@ export function ReturnFinalizeDialog({
     onOpenChange,
     returnObj,
     onSuccess,
+    onConfirm,
+    isPending = false,
 }: ReturnFinalizeDialogProps) {
     const finalizeReturn = useFinalizePurchaseReturn();
     const { data: cashAccounts = [], isLoading: cashLoading } = useCashAccounts();
@@ -124,6 +128,12 @@ export function ReturnFinalizeDialog({
     const handleConfirmFinalize = () => {
         if (!returnObj || !pendingData) return;
 
+        if (onConfirm) {
+            onConfirm(pendingData);
+            setIsConfirmOpen(false);
+            return;
+        }
+
         const payload = {
             resolution_type: pendingData.resolution_type,
             impact_type: pendingData.resolution_type,
@@ -154,6 +164,8 @@ export function ReturnFinalizeDialog({
         );
     };
 
+    const isLoading = finalizeReturn.isPending || isPending;
+
     return (
         <>
             <BaseDialog
@@ -166,7 +178,7 @@ export function ReturnFinalizeDialog({
                             <span>Finalisasi Retur Pembelian</span>
                         </div>
                         <p className="text-xs text-slate-400 font-normal mt-1 font-sans">
-                            Dokumen: <strong className="text-slate-700">{returnObj?.nomor_retur}</strong> (Total: {formatRupiah(returnObj?.total_nominal || 0)})
+                            Dokumen: <strong className="text-slate-700">{returnObj?.nomor_retur || "Akan Dibuat Otomatis"}</strong> (Total: {formatRupiah(returnObj?.total_nominal || 0)})
                         </p>
                     </div>
                 }
@@ -268,7 +280,7 @@ export function ReturnFinalizeDialog({
                                 type="text"
                                 placeholder="Catatan tambahan (misal: uang refund sudah diterima tunai)..."
                                 className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                                disabled={finalizeReturn.isPending}
+                                disabled={isLoading}
                                 {...register("catatan_penyelesaian")}
                             />
                             {errors.catatan_penyelesaian && (
@@ -285,16 +297,16 @@ export function ReturnFinalizeDialog({
                                 onClick={() => onOpenChange(false)}
                                 variant="outline"
                                 className="h-10 text-xs font-bold px-4 border-slate-200 text-slate-700 rounded-xl cursor-pointer bg-white"
-                                disabled={finalizeReturn.isPending}
+                                disabled={isLoading}
                             >
                                 Batal
                             </Button>
                             <Button
                                 type="submit"
                                 className="h-10 text-xs font-bold px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
-                                disabled={finalizeReturn.isPending}
+                                disabled={isLoading}
                             >
-                                {finalizeReturn.isPending ? "Memproses..." : "Ya, Finalisasi Retur"}
+                                {isLoading ? "Memproses..." : "Ya, Finalisasi Retur"}
                             </Button>
                         </div>
                     </form>
@@ -310,7 +322,7 @@ export function ReturnFinalizeDialog({
                 cancelText="Batal"
                 variant="warning"
                 onConfirm={handleConfirmFinalize}
-                isLoading={finalizeReturn.isPending}
+                isLoading={isLoading}
             />
         </>
     );

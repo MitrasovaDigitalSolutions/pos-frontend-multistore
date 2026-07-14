@@ -1,15 +1,14 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { PageLoader } from "@/components/feedback/page-loader";
-import {
-    useOpnameDetail,
-    useActivityLogs,
-    useOpnameProgress,
-    useOpnameItems,
-    useFinalizeOpname,
-} from "../api/stock-api";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { DataTable } from "@/components/ui/data-table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ROUTES } from "@/constants/routes";
+import { OPNAME_STATUS, OPNAME_STATUS_CLASSES, OPNAME_STATUS_LABELS } from "@/constants/stock";
+import { useAppRouter } from "@/hooks/use-app-router";
+import { formatToReadableDateTime } from "@/lib/date-utils";
+import { queryKeys } from "@/lib/query-keys";
 import {
     IconArrowLeft,
     IconCheck,
@@ -17,19 +16,105 @@ import {
     IconEdit,
     IconFileDescription,
 } from "@tabler/icons-react";
-import { OPNAME_STATUS, OPNAME_STATUS_CLASSES, OPNAME_STATUS_LABELS } from "@/constants/stock";
 import { useQueryClient } from "@tanstack/react-query";
-import { ROUTES } from "@/constants/routes";
-import { queryKeys } from "@/lib/query-keys";
-import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
-import type { OpnameItem } from "../types";
-import { useAppRouter } from "@/hooks/use-app-router";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+    useActivityLogs,
+    useFinalizeOpname,
+    useOpnameDetail,
+    useOpnameItems,
+    useOpnameProgress,
+} from "../api/stock-api";
+import type { OpnameItem } from "../types";
 
 interface OpnameDetailPageProps {
     opnameId: string;
+}
+
+function OpnameDetailSkeleton() {
+    return (
+        <div className="space-y-6 animate-pulse">
+            {/* Header Area */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                <div className="flex items-center gap-4">
+                    <Skeleton className="h-9 w-9 rounded-xl" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-5 w-72" />
+                        <Skeleton className="h-3.5 w-44" />
+                    </div>
+                </div>
+                <div className="flex gap-2">
+                    <Skeleton className="h-10 w-44 rounded-xl" />
+                    <Skeleton className="h-10 w-48 rounded-xl" />
+                </div>
+            </div>
+
+            {/* Metadata Section */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {Array.from({ length: 3 }).map((_, idx) => (
+                    <div key={idx} className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-3.5">
+                        <Skeleton className="h-4 w-32 border-b border-slate-50 pb-2" />
+                        <div className="space-y-2.5">
+                            <div className="flex justify-between">
+                                <Skeleton className="h-3.5 w-20" />
+                                <Skeleton className="h-3.5 w-28" />
+                            </div>
+                            <div className="flex justify-between">
+                                <Skeleton className="h-3.5 w-24" />
+                                <Skeleton className="h-3.5 w-16" />
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Core Interaction Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                {/* Items Table (Col-8) */}
+                <div className="lg:col-span-8 bg-white border border-slate-100 rounded-2xl shadow-sm p-5 space-y-4">
+                    <div className="flex items-center gap-2 pb-2 border-b border-slate-50">
+                        <Skeleton className="h-4 w-44" />
+                    </div>
+                    <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/10 space-y-4">
+                        <div className="flex justify-between border-b pb-3 border-slate-100">
+                            <Skeleton className="h-4 w-40" />
+                            <Skeleton className="h-4 w-20" />
+                            <Skeleton className="h-4 w-20" />
+                            <Skeleton className="h-4 w-20" />
+                        </div>
+                        {Array.from({ length: 4 }).map((_, idx) => (
+                            <div key={idx} className="flex justify-between pt-1">
+                                <Skeleton className="h-4 w-48" />
+                                <Skeleton className="h-4 w-16" />
+                                <Skeleton className="h-4 w-16" />
+                                <Skeleton className="h-4 w-16" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Activity Logs (Col-4) */}
+                <div className="lg:col-span-4 bg-white border border-slate-100 rounded-2xl shadow-sm p-5 space-y-4">
+                    <div className="flex items-center gap-2 pb-2 border-b border-slate-50">
+                        <Skeleton className="h-4 w-24" />
+                    </div>
+                    <div className="space-y-4 pl-3 pr-1 py-1">
+                        {Array.from({ length: 3 }).map((_, idx) => (
+                            <div key={idx} className="relative flex gap-3 pb-4 border-l border-slate-100 pl-4">
+                                <div className="absolute -left-1.5 top-1.5 w-3 h-3 bg-slate-200 rounded-full border-2 border-white" />
+                                <div className="space-y-1.5 w-full">
+                                    <Skeleton className="h-3.5 w-3/4" />
+                                    <Skeleton className="h-3 w-1/2" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 }
 
 export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
@@ -141,7 +226,7 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
     );
 
     if (isDetailLoading) {
-        return <PageLoader message="Memuat detail Stock Opname..." />;
+        return <OpnameDetailSkeleton />;
     }
 
     if (error || !opname) {
@@ -214,10 +299,7 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                         <div className="flex justify-between">
                             <span className="text-slate-400">Tanggal Dibuat</span>
                             <span className="font-semibold text-slate-700">
-                                {new Date(opname.created_at).toLocaleString("id-ID", {
-                                    dateStyle: "medium",
-                                    timeStyle: "short",
-                                })}
+                                {formatToReadableDateTime(opname.created_at)}
                             </span>
                         </div>
                         <div className="flex justify-between">
@@ -288,8 +370,16 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                     </div>
 
                     {isLogsLoading ? (
-                        <div className="py-4">
-                            <PageLoader message="Memuat logs..." variant="compact" />
+                        <div className="space-y-4 py-2 pl-3">
+                            {Array.from({ length: 4 }).map((_, idx) => (
+                                <div key={idx} className="relative flex gap-3 pb-4 last:pb-0 border-l border-slate-100 pl-4">
+                                    <div className="absolute -left-1.5 top-1.5 w-3 h-3 bg-slate-200 rounded-full border-2 border-white shadow-sm" />
+                                    <div className="space-y-1.5 w-full">
+                                        <Skeleton className="h-3.5 w-3/4 animate-pulse" />
+                                        <Skeleton className="h-3 w-1/2 animate-pulse" />
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     ) : (
                         <div className="space-y-4 pl-3 pr-1 py-1 max-h-112 overflow-y-auto scrollbar-thin">
@@ -302,7 +392,7 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                                         </p>
                                         <div className="flex flex-wrap gap-2 text-[10px] text-slate-400 font-mono">
                                             <span>
-                                                {new Date(log.created_at).toLocaleString("id-ID")}
+                                                {formatToReadableDateTime(log.created_at)}
                                             </span>
                                             <span>•</span>
                                             <span>Oleh: {log.user?.name || "System"}</span>

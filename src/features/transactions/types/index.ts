@@ -6,6 +6,7 @@ import type { Member } from "@/features/members/types";
 
 export interface TransactionItem extends BaseSaleItem {
     product?: Product | null;
+    harga_beli?: number;
 }
 
 export interface Transaction extends BaseSale {
@@ -19,6 +20,9 @@ export interface Transaction extends BaseSale {
     cash_amount?: number | null;
     card_amount?: number | null;
     debt_amount?: number | null;
+    catatan_void?: string | null;
+    voided_at?: string | null;
+    void_by_uid?: string | null;
 }
 
 export interface TransactionQueryParams extends PaginationParams {

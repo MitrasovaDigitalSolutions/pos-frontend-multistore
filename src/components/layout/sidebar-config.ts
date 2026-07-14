@@ -12,7 +12,8 @@ import {
     IconReceipt,
     IconUsers,
     IconChartBar,
-    IconNotebook
+    IconNotebook,
+    IconBuildingBank
 } from "@tabler/icons-react";
 
 export interface SidebarMenuItem {
@@ -224,6 +225,12 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasRole(roles, "admin") || hasPermission(roles, permissions, "view_members"),
                     },
                     {
+                        path: ROUTES.ADMIN_DEBTS_MEMBER_PAYMENTS,
+                        label: "Pembayaran Hutang Member",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_members"),
+                    },
+                    {
                         path: ROUTES.ADMIN_DEBTS_SALES,
                         label: "Hutang Sales",
                         permission: (roles, permissions) =>
@@ -259,6 +266,45 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     {
                         path: ROUTES.ADMIN_REPORTS_PENGELUARAN,
                         label: "Laporan Pengeluaran",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                    },
+                ],
+            },
+            {
+                type: "submenu",
+                label: "Akuntansi",
+                icon: IconBuildingBank,
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                items: [
+                    {
+                        path: ROUTES.ADMIN_ACCOUNTING_BALANCESHEET,
+                        label: "Neraca",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_ACCOUNTING_GENERAL_LEDGER,
+                        label: "Buku Besar",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_ACCOUNTING_COA,
+                        label: "Chart of Accounts (COA)",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_ACCOUNTING_COA_MAPPING,
+                        label: "Mapping COA",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_ACCOUNTING_JOURNALS,
+                        label: "Jurnal Manual",
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                     },

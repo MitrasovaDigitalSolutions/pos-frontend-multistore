@@ -1,5 +1,5 @@
-import { ReturnCreatePage } from "@/features/purchase/components/return/return-create-page";
+import { ReturnItemsPage } from "@/features/purchase/components/return/return-items-page";
 
 export default function ReturnCreateRoute() {
-    return <ReturnCreatePage />;
+    return <ReturnItemsPage returnId="new" />;
 }

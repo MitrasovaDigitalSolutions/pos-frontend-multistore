@@ -4,6 +4,7 @@ import { useTransactions } from "../api/dashboard-api";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconArrowUpRight, IconPackage, IconReceipt } from "@tabler/icons-react";
 import Link from "next/link";
+import { formatDate, formatToTime } from "@/lib/date-utils";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { Scrollable } from "@/components/ui/scrollable";
 
@@ -110,16 +111,8 @@ export function RecentOrdersTable({ from, to, paymentMethod }: RecentOrdersTable
               </tr>
             ) : (
               recentTransactions.map((trx) => {
-                const date = new Date(trx.created_at);
-                const timeStr = date.toLocaleTimeString("id-ID", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                });
-                const dateStr = date.toLocaleDateString("id-ID", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                });
+                const timeStr = formatToTime(trx.created_at);
+                const dateStr = formatDate(trx.created_at, "dd MMM yyyy");
                 
                 const statusValue = trx.status ? trx.status.toLowerCase() : "completed";
                 const statusLabel = (STATUS_LABELS[statusValue] || trx.status || "Selesai").toUpperCase();

@@ -11,6 +11,7 @@ import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form"
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { AlertTriangle } from "lucide-react";
 import {
     useCreatePayment,
     useUpdatePayment,
@@ -22,6 +23,7 @@ import {
 import { paymentSchema, type PaymentInput } from "../../../schemas/payment-schema";
 import { PaymentForm } from "./payment-form";
 import { DebtSummary } from "./debt-summary";
+import { todayStr, formatToISO, formatUTC } from "@/lib/date-utils";
 
 export function PaymentCreatePage() {
     const router = useAppRouter();
@@ -30,13 +32,16 @@ export function PaymentCreatePage() {
     const editId = editIdParam || null;
     const isEdit = editId !== null && editId !== "";
     const preselectedReceivingId = searchParams.get("receiving_uid");
+    const fromParam = searchParams.get("from");
+    const backUrl = fromParam ? decodeURIComponent(fromParam) : "/admin/purchase/payment";
 
     // Block editing completely
     useEffect(() => {
         if (isEdit) {
             toast.error("Pembayaran yang sudah disimpan tidak dapat diubah.");
-            router.push("/admin/purchase/payment");
+            router.push(backUrl);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isEdit, router]);
 
     const createPayment = useCreatePayment();
@@ -56,7 +61,7 @@ export function PaymentCreatePage() {
         defaultValues: {
             receiving_uid: "",
             jumlah_bayar: 0,
-            tanggal_bayar: new Date().toISOString().split("T")[0],
+            tanggal_bayar: todayStr(),
             cash_account_uid: "",
             metode_pembayaran: "Cash",
             nomor_referensi: "",
@@ -83,7 +88,7 @@ export function PaymentCreatePage() {
             reset({
                 receiving_uid: editingPayment.referensi_uid,
                 jumlah_bayar: editingPayment.total,
-                tanggal_bayar: editingPayment.created_at.split("T")[0] || editingPayment.created_at.split(" ")[0],
+                tanggal_bayar: formatToISO(editingPayment.created_at),
                 cash_account_uid: editingPayment.cash_account_uid,
                 metode_pembayaran: editingPayment.metode_pembayaran,
                 nomor_referensi: editingPayment.nomor_referensi || "",
@@ -111,12 +116,12 @@ export function PaymentCreatePage() {
 
     // If editing, make sure the current receiving is in options
     if (isEdit && editingPayment && !receivingOptions.some(o => o.value === editingPayment.referensi_uid)) {
-        const editSisaHutang = editingPayment.receiving?.sisa_hutang !== undefined
-            ? editingPayment.receiving.sisa_hutang
-            : (editingPayment.receiving?.nilai_faktur || 0);
+        const editSisaHutang = editingPayment.stock_receiving?.sisa_hutang !== undefined
+            ? editingPayment.stock_receiving.sisa_hutang
+            : (editingPayment.stock_receiving?.nilai_faktur || 0);
         receivingOptions.push({
             value: editingPayment.referensi_uid,
-            label: `${editingPayment.receiving?.nomor_penerimaan || "Penerimaan"} - ${editingPayment.receiving?.supplier_relationship?.nama || editingPayment.receiving?.supplier || "Supplier"}`,
+            label: `${editingPayment.stock_receiving?.nomor_penerimaan || "Penerimaan"} - ${editingPayment.stock_receiving?.supplier_relationship?.nama || editingPayment.stock_receiving?.supplier || "Supplier"}`,
             description: `Sisa Hutang: ${formatRupiah(editSisaHutang)}`,
         });
     }
@@ -179,13 +184,14 @@ export function PaymentCreatePage() {
             receiving_uid: pendingData.receiving_uid,
             jumlah_bayar: Number(pendingData.jumlah_bayar),
             cash_account_uid: pendingData.cash_account_uid,
+            tanggal_bayar: formatUTC(pendingData.tanggal_bayar),
         };
 
         try {
             await createPayment.mutateAsync(payload);
             toast.success("Pembayaran supplier berhasil dicatat.");
             setIsConfirmOpen(false);
-            router.push("/admin/purchase/payment");
+            router.push(backUrl);
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "Gagal mencatat pembayaran.";
             toast.error(message);
@@ -220,7 +226,7 @@ export function PaymentCreatePage() {
             <div className="flex items-center gap-4">
                 <Button
                     type="button"
-                    onClick={() => router.push("/admin/purchase/payment")}
+                    onClick={() => router.push(backUrl)}
                     variant="outline"
                     className="p-2 h-9 w-9 rounded-xl border-slate-200 text-slate-500 hover:text-slate-900 bg-white cursor-pointer"
                 >
@@ -252,7 +258,7 @@ export function PaymentCreatePage() {
                             paymentMethodOptions={paymentMethodOptions}
                             receivingsLoading={receivingsLoading}
                             cashAccountsLoading={cashAccountsLoading}
-                            onCancel={() => router.push("/admin/purchase/payment")}
+                            onCancel={() => router.push(backUrl)}
                         />
                     </FormProvider>
                 </div>
@@ -273,15 +279,55 @@ export function PaymentCreatePage() {
             <ConfirmDialog
                 open={isConfirmOpen}
                 onOpenChange={setIsConfirmOpen}
-                title="Konfirmasi Catat Pembayaran"
+                title="Konfirmasi Pembayaran"
                 description={
-                    <span>
-                        Apakah Anda yakin ingin menyimpan pembayaran ini?
-                        <br />
-                        <strong className="text-rose-600 font-bold mt-1 inline-block">
-                            Catatan: Setelah disimpan, data pembayaran tidak dapat diubah kembali.
-                        </strong>
-                    </span>
+                    <div className="mt-3 space-y-4 text-left w-full">
+                        <p className="text-slate-500 text-xs leading-relaxed">
+                            Apakah Anda yakin ingin menyimpan transaksi pembayaran supplier ini? Periksa kembali rincian di bawah:
+                        </p>
+
+                        <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/80 rounded-xl p-3.5 space-y-2.5 font-sans">
+                            {/* Outstanding Debt */}
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="text-slate-500 font-medium">Total Hutang</span>
+                                <span className="text-slate-900 dark:text-slate-100 font-mono font-bold">
+                                    {formatRupiah(sisaHutangLimit)}
+                                </span>
+                            </div>
+
+                            {/* Paid Amount */}
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="text-slate-500 font-medium">Jumlah Dibayar</span>
+                                <span className="text-emerald-650 dark:text-emerald-400 font-mono font-bold">
+                                    {formatRupiah(pendingData?.jumlah_bayar || 0)}
+                                </span>
+                            </div>
+
+                            {/* Divider */}
+                            <div className="border-t border-slate-200/60 dark:border-slate-800/80 my-1" />
+
+                            {/* Remaining Debt / Status */}
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="text-slate-500 font-medium">Sisa Hutang</span>
+                                {sisaHutangLimit - (pendingData?.jumlah_bayar || 0) > 0 ? (
+                                    <span className="text-rose-600 dark:text-rose-400 font-mono font-bold">
+                                        {formatRupiah(sisaHutangLimit - (pendingData?.jumlah_bayar || 0))}
+                                    </span>
+                                ) : (
+                                    <span className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-emerald-100 dark:border-emerald-900/30">
+                                        Lunas
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 p-3 rounded-xl flex gap-2.5 items-start">
+                            <AlertTriangle className="text-rose-600 dark:text-rose-455 shrink-0 mt-0.5" size={15} />
+                            <p className="text-[10px] text-rose-700 dark:text-rose-350 leading-relaxed font-semibold">
+                                Setelah disimpan, data pembayaran tidak dapat diubah atau dihapus kembali.
+                            </p>
+                        </div>
+                    </div>
                 }
                 confirmText="Ya, Simpan"
                 cancelText="Batal"

@@ -1,3 +1,4 @@
+
 export interface PaymentMethodStats {
     count: number;
     total: number;
@@ -223,4 +224,7 @@ export interface SalesByCategoryResponse {
     to: string;
     data: SalesByCategoryItem[];
 }
+
+
+
 
