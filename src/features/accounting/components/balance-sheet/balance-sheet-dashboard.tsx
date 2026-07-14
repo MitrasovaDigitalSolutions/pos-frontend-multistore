@@ -1,35 +1,34 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { useForm, FormProvider } from "react-hook-form";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { FormInput } from "@/components/forms/form-input";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
-import { useBalanceSheetStore } from "@/stores/balance-sheet-store";
+import { FormInput } from "@/components/forms/form-input";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { useCreateManualJournal, useUpdateManualJournal } from "@/features/accounting/api/manual-journal-api";
+import type { BalanceSheetData, BalanceSheetItem, ChartOfAccount } from "@/features/accounting/types";
+import type { ManualJournal } from "@/features/accounting/types/manual-journal";
 import { formatUTC, todayStr } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
-import type { ChartOfAccount } from "@/features/accounting/types";
-import type { ManualJournal } from "@/features/accounting/types/manual-journal";
-import type { BalanceSheetData, BalanceSheetItem } from "@/features/accounting/types";
+import { useBalanceSheetStore } from "@/stores/balance-sheet-store";
 import {
-    IconBook,
-    IconEdit,
-    IconWallet,
-    IconTrendingUp,
-    IconCoin,
     IconArrowLeft,
+    IconBook,
+    IconCoin,
+    IconEdit,
+    IconTrendingUp,
+    IconWallet,
 } from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { toast } from "sonner";
 
-import { BalanceSheetHeaderFilters } from "./balance-sheet-header-filters";
-import { BalanceSheetStatusCard } from "./balance-sheet-status-card";
-import { BalanceSheetSectionCard } from "./balance-sheet-section-card";
 import { BalanceSheetDraftBanner } from "./balance-sheet-draft-banner";
 import { BalanceSheetFooterActions } from "./balance-sheet-footer-actions";
+import { BalanceSheetHeaderFilters } from "./balance-sheet-header-filters";
 import { BalanceSheetJournalInfo } from "./balance-sheet-journal-info";
+import { BalanceSheetSectionCard } from "./balance-sheet-section-card";
+import { BalanceSheetStatusCard } from "./balance-sheet-status-card";
 
 interface ManualJournalDraftMeta {
     description: string;
@@ -228,8 +227,6 @@ export function BalanceSheetDashboard({
         totalEquity,
         totalRevenue,
         totalExpense,
-        totalDebitVal,
-        totalCreditVal,
     } = sectionsData;
 
     // 2. Compute Net Income (Laba Rugi Tahun Berjalan)
@@ -339,7 +336,7 @@ export function BalanceSheetDashboard({
                 for (const item of items) {
                     if (item.kode === null) continue; // Skip synthetic Laba Rugi codes
                     const orig = originalByKode[item.kode] || { debit: 0, credit: 0 };
-                    
+
                     const deltaDebit = (item.debit || 0) - orig.debit;
                     const deltaCredit = (item.credit || 0) - orig.credit;
 
@@ -529,8 +526,8 @@ export function BalanceSheetDashboard({
 
             {/* Read-Only Journal Metadata Display */}
             {action === "detail" && journal && (
-                <BalanceSheetJournalInfo 
-                    journal={journal} 
+                <BalanceSheetJournalInfo
+                    journal={journal}
                     showDebitCredit={showDebitCredit}
                     onShowDebitCreditChange={setShowDebitCredit}
                 />
@@ -654,8 +651,9 @@ export function BalanceSheetDashboard({
                 <BalanceSheetFooterActions
                     isBalanced={isBalanced}
                     difference={difference}
-                    totalDebit={totalDebitVal}
-                    totalCredit={totalCreditVal}
+                    totalDebit={totalLeftVal}
+                    totalCredit={totalRightVal}
+                    viewType={effectiveViewType}
                     onCancel={() => {
                         resetStore();
                         if (action) {
