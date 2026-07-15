@@ -27,7 +27,7 @@ export function StoreSwitcher() {
         }
     }, [stores, activeStoreUid, setActiveStore, session?.user?.store_uid]);
 
-    if (!mounted || stores.length <= 1) return null;
+    if (!mounted || stores.length === 0) return null;
 
     const currentStore = stores.find((s) => s.uid === activeStoreUid) ?? stores[0];
 
