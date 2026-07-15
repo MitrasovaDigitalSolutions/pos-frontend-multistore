@@ -62,7 +62,7 @@ export function ProductStoreDialog({ open, onOpenChange, product }: ProductStore
 
     const { data: assignments = [], isLoading: isLoadingAssignments } = useProductStores(open ? product?.uid : undefined);
     const { data: storesResponse } = useStores();
-    const stores = storesResponse?.data || [];
+    const stores = storesResponse || [];
 
     const assignMutation = useAssignProductStore();
     const updateMutation = useUpdateProductStore();
