@@ -10,6 +10,7 @@ export interface Store {
     alamat: string | null;
     telepon: string | null;
     is_active: boolean;
+    is_central?: boolean;
     users_count?: number;
 }
 

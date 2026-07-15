@@ -99,6 +99,8 @@ export const queryKeys = {
     // Inventory
     inventory: {
         all: ["inventory"] as const,
+        stockTransfers: () => [...queryKeys.inventory.all, "transfers"] as const,
+        stockTransferDetail: (uid: string) => [...queryKeys.inventory.all, "transfer", uid] as const,
         movements: () => [...queryKeys.inventory.all, "movements"] as const,
         receivings: () => [...queryKeys.inventory.all, "receivings"] as const,
         opnames: () => [...queryKeys.inventory.all, "opnames"] as const,

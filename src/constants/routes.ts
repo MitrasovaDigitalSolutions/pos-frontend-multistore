@@ -11,6 +11,7 @@ export const ROUTES = {
     ADMIN_CASH_ACCOUNTS: "/admin/cash-accounts",
     ADMIN_STOCK: "/admin/inventory/stock-opname",
     ADMIN_STOCK_LEDGER: "/admin/inventory/stock-ledger",
+    ADMIN_STOCK_TRANSFERS: "/admin/inventory/stock-transfer",
     ADMIN_SUPPLIERS: "/admin/suppliers",
     ADMIN_CATEGORIES: "/admin/categories",
     ADMIN_BRANDS: "/admin/brands",
