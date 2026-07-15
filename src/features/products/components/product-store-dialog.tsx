@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import {
     Dialog,
@@ -75,7 +75,7 @@ export function ProductStoreDialog({ open, onOpenChange, product }: ProductStore
     }, [stores]);
 
     const formMethods = useForm<ProductStoreFormValues>({
-        resolver: zodResolver(formSchema),
+        resolver: zodResolver(formSchema) as Resolver<ProductStoreFormValues>,
         defaultValues: {
             store_uid: "",
             stok: 0,
@@ -137,7 +137,7 @@ export function ProductStoreDialog({ open, onOpenChange, product }: ProductStore
             harga_beli: data.harga_beli ?? undefined,
             harga_jual: data.harga_jual ?? undefined,
             margin: data.margin ?? undefined,
-            status: data.is_active ? "active" : "inactive" as const,
+            status: (data.is_active ? "active" : "inactive") as "active" | "inactive",
         };
 
         const action = editingStore

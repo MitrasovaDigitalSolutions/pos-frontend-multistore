@@ -107,20 +107,17 @@ export function StoreFormDialog({ open, onOpenChange, editingStore }: StoreFormD
                         <FormInput
                             label="Nama Toko"
                             {...register("nama")}
-                            error={errors.nama?.message}
                             required
                         />
 
                         <FormInput
                             label="Alamat"
                             {...register("alamat")}
-                            error={errors.alamat?.message}
                         />
 
                         <FormInput
                             label="Telepon"
                             {...register("telepon")}
-                            error={errors.telepon?.message}
                         />
 
                         <FormSwitch
