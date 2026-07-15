@@ -2,7 +2,7 @@
 
 import { useScanReturnProduct } from "@/features/purchase/api/purchase-api";
 import type { PurchaseItemLocal } from "@/features/purchase/types";
-import type { Product } from "@/features/products/types";
+import type { Product } from "@/features/master/products/types";
 import { toast } from "sonner";
 
 interface UseReturnScannerProps {

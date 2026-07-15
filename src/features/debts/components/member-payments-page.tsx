@@ -4,7 +4,7 @@ import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { DataTable } from "@/components/ui/data-table";
 import { hasPermission, hasRole } from "@/constants/roles";
-import { useMemberPayments, type MemberPayment } from "@/features/members/api/members-api";
+import { useMemberPayments, type MemberPayment } from "@/features/master/members/api/members-api";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconCash, IconUser, IconCalendar, IconCreditCard } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";

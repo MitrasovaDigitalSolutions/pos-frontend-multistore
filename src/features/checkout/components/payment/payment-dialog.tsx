@@ -18,7 +18,7 @@ import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { useBulkCheckout } from "@/features/checkout/api/checkout-api";
 import { toast } from "sonner";
 import type { Receipt, CartItem } from "@/features/checkout/types";
-import type { Member } from "@/features/members/types";
+import type { Member } from "@/features/master/members/types";
 import { db } from "@/lib/db";
 import { useNetworkStatus } from "@/hooks/use-network-status";
 import { NetworkError } from "@/shared/errors/api-error";
@@ -419,13 +419,12 @@ export function PaymentDialog({
                 {/* Kembalian / Status */}
                 {cashNum > 0 && (
                     <div
-                        className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 animate-in fade-in-0 slide-in-from-bottom-1 ${
-                            isExact
+                        className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 animate-in fade-in-0 slide-in-from-bottom-1 ${isExact
                                 ? "bg-emerald-50 border border-emerald-200/80"
                                 : isSufficient
                                     ? "bg-emerald-50 border border-emerald-200/80"
                                     : "bg-red-50 border border-red-200/80"
-                        }`}
+                            }`}
                     >
                         {isExact ? (
                             <>
@@ -615,13 +614,12 @@ export function PaymentDialog({
                             <Button
                                 onClick={handlePaySubmit}
                                 disabled={isProcessing || !isSubmitEnabled}
-                                className={`w-full h-12 font-extrabold text-xs text-white rounded-xl flex items-center justify-center gap-2.5 cursor-pointer transition-all duration-200 active:scale-[0.98] border-none ${
-                                    isProcessing || !isSubmitEnabled
+                                className={`w-full h-12 font-extrabold text-xs text-white rounded-xl flex items-center justify-center gap-2.5 cursor-pointer transition-all duration-200 active:scale-[0.98] border-none ${isProcessing || !isSubmitEnabled
                                         ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
                                         : payMode === "debt"
                                             ? "bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 shadow-lg shadow-rose-500/20 hover:shadow-xl hover:shadow-rose-500/30"
                                             : "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30"
-                                }`}
+                                    }`}
                             >
                                 {isProcessing ? (
                                     <IconLoader2 size={16} className="animate-spin" />

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo, forwardRef } from "react";
 import { IconBarcode, IconSearch, IconLoader2 } from "@tabler/icons-react";
 import { lookupProductByBarcode } from "@/features/purchase/api/purchase-api";
-import type { Product } from "@/features/products/types";
+import type { Product } from "@/features/master/products/types";
 import { useQuery } from "@tanstack/react-query";
 
 interface BarcodeInputProps {

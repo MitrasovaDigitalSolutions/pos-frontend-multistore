@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { IconAlertTriangle } from "@tabler/icons-react";
-import type { Product } from "@/features/products/types";
+import type { Product } from "@/features/master/products/types";
 import { DataTable } from "@/components/ui/data-table";
 
 interface LowStockTableProps {

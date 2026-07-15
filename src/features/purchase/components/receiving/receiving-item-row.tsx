@@ -6,7 +6,7 @@ import { FormSelect } from "@/components/forms/form-select";
 import { Button } from "@/components/ui/button";
 import type { CommandOption } from "@/components/ui/command-select";
 import { Input } from "@/components/ui/input";
-import type { Product } from "@/features/products/types";
+import type { Product } from "@/features/master/products/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { cn } from "@/lib/utils";
 import { IconX, IconAlertCircle } from "@tabler/icons-react";

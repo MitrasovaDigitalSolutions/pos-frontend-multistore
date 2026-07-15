@@ -7,7 +7,7 @@ import { useAppRouter } from "@/hooks/use-app-router";
 import { useState } from "react";
 import { FormProvider } from "react-hook-form";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { ProductFormDialog } from "@/features/products/components/product-form-dialog";
+import { ProductFormDialog } from "@/features/master/products/components/product-form-dialog";
 import { toast } from "sonner";
 import {
     useReceivingDetail,
@@ -21,7 +21,7 @@ import { RECEIVING_STATUS } from "@/constants/purchase";
 import { PriceAlertDialog } from "./price-alert-dialog";
 import { ReceivingInstructionPanel } from "./receiving-instruction-panel";
 import { ReceivingHeaderCard } from "./receiving-header-card";
-import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
+import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
 import { useReceivingFlow } from "@/features/purchase/hooks/use-receiving-flow";
 
 interface ReceivingItemsPageProps {

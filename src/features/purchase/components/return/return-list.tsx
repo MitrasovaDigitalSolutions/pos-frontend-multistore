@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
 import { hasPermission, hasRole } from "@/constants/roles";
-import type { Product } from "@/features/products/types";
+import type { Product } from "@/features/master/products/types";
 import { IconPlus } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 import { useState } from "react";

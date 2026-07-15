@@ -6,7 +6,7 @@ import { FormMultiSelect } from "@/components/forms/form-multi-select";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useSalesByCategory } from "@/features/reports/api/reports-api";
-import { useCategories } from "@/features/categories/api/categories-api";
+import { useCategories } from "@/features/master/categories/api/categories-api";
 import { getDefaultDateRange, formatDate } from "@/lib/date-utils";
 import { IconChartBar, IconRefresh, IconX } from "@tabler/icons-react";
 import { useState, useMemo } from "react";

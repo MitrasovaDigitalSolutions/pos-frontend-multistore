@@ -1,4 +1,4 @@
-import { Members } from "@/features/members/members";
+import { Members } from "@/features/master/members/members";
 
 export const metadata = {
     title: "Kelola Member / Pelanggan",

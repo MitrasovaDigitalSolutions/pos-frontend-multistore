@@ -14,8 +14,8 @@ import {
     type AdjustmentInput,
 } from "../schemas/adjustment-schema";
 import { useCreateAdjustment } from "../api/stock-api";
-import { useProducts } from "@/features/products/api/products-api";
-import type { Product } from "@/features/products/types";
+import { useProducts } from "@/features/master/products/api/products-api";
+import type { Product } from "@/features/master/products/types";
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { DataTable } from "@/components/ui/data-table";

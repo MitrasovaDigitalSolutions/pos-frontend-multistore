@@ -4,11 +4,11 @@ import { useState } from "react";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { useMemberDebtHistory } from "@/features/members/api/members-api";
+import { useMemberDebtHistory } from "@/features/master/members/api/members-api";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { IconClock, IconNotebook, IconUser, IconCash } from "@tabler/icons-react";
-import type { Member } from "@/features/members/types";
+import type { Member } from "@/features/master/members/types";
 
 interface DebtHistoryDialogProps {
     open: boolean;

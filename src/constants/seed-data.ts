@@ -1,6 +1,6 @@
-import type { Category } from "@/features/categories/types";
-import type { Brand } from "@/features/brands/types";
-import type { Supplier } from "@/features/suppliers/types";
+import type { Category } from "@/features/master/categories/types";
+import type { Brand } from "@/features/master/brands/types";
+import type { Supplier } from "@/features/master/suppliers/types";
 
 export const SEED_CATEGORIES: Omit<Category, "uid">[] = [
     { nama: "Makanan Ringan", deskripsi: "Camilan, biskuit, keripik, dan makanan ringan lainnya" },

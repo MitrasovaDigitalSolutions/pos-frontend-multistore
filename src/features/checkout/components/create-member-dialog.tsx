@@ -3,15 +3,15 @@
 import React, { useEffect } from "react";
 import { useForm, FormProvider, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { memberSchema, type MemberInput } from "@/features/members/schemas/member-schema";
-import { useCreateMember } from "@/features/members/api/members-api";
+import { memberSchema, type MemberInput } from "@/features/master/members/schemas/member-schema";
+import { useCreateMember } from "@/features/master/members/api/members-api";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { FormInput } from "@/components/forms/form-input";
 import { FormTextarea } from "@/components/forms/form-textarea";
 import { Button } from "@/components/ui/button";
 import { IconUser } from "@tabler/icons-react";
 import { toast } from "sonner";
-import type { Member } from "@/features/members/types";
+import type { Member } from "@/features/master/members/types";
 
 interface CreateMemberDialogProps {
     open: boolean;

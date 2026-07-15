@@ -1,5 +1,5 @@
-import type { Category } from "@/features/categories/types";
-import type { Brand } from "@/features/brands/types";
+import type { Category } from "@/features/master/categories/types";
+import type { Brand } from "@/features/master/brands/types";
 
 export interface Product {
     uid: string;

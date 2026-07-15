@@ -2,8 +2,8 @@
 
 import { lookupBarcode } from "@/features/checkout/api/checkout-api";
 import type { CartItem, HoldTransaction, Receipt, ReceiptItem } from "@/features/checkout/types";
-import { useProducts } from "@/features/products/api/products-api";
-import type { Product } from "@/features/products/types";
+import { useProducts } from "@/features/master/products/api/products-api";
+import type { Product } from "@/features/master/products/types";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useCheckoutStore } from "@/stores/checkout-store";
 import { useSession } from "next-auth/react";

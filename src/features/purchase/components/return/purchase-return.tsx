@@ -1,7 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { useProducts } from "@/features/products/api/products-api";
+import { useProducts } from "@/features/master/products/api/products-api";
 import { usePurchaseReturns } from "@/features/purchase/api/purchase-api";
 import { useSession } from "next-auth/react";
 import { hasRole, hasPermission } from "@/constants/roles";
@@ -13,7 +13,7 @@ import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
-import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
+import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
 import { RETURN_STATUS, RETURN_STATUS_LABELS } from "@/constants/purchase";
 
 interface ReturnFilterValues {
@@ -163,7 +163,7 @@ export function PurchaseReturn() {
                         </div>
                         <Skeleton className="h-9 w-40 rounded-xl" />
                     </div>
-                    
+
                     {/* Filter Mock Skeleton */}
                     <div className="flex flex-wrap gap-3">
                         <Skeleton className="h-9 w-48 rounded-xl" />

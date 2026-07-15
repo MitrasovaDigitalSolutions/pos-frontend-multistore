@@ -10,7 +10,7 @@ import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { IconClipboardPlus } from "@tabler/icons-react";
-import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
+import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
 import { useUpdatePurchaseOrder } from "../../api/purchase-api";
 import { purchaseOrderHeaderSchema, type PurchaseOrderHeaderInput } from "../../schemas/order-schema";
 import type { PurchaseOrder } from "../../types";

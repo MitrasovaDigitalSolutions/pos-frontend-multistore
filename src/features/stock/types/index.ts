@@ -1,5 +1,5 @@
-import type { Product } from "@/features/products/types";
-import type { Supplier } from "@/features/suppliers/types";
+import type { Product } from "@/features/master/products/types";
+import type { Supplier } from "@/features/master/suppliers/types";
 
 export interface StockMovement {
     uid: string;

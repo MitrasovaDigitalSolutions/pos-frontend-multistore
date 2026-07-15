@@ -3,8 +3,8 @@
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { usePayMemberDebt, type PayDebtPayload } from "@/features/members/api/members-api";
-import type { Member } from "@/features/members/types";
+import { usePayMemberDebt, type PayDebtPayload } from "@/features/master/members/api/members-api";
+import type { Member } from "@/features/master/members/types";
 import { generateDebtSuggestions } from "@/lib/cash-suggestions";
 import { db } from "@/lib/db";
 import { IconCheck, IconLoader2, IconReceipt } from "@tabler/icons-react";
