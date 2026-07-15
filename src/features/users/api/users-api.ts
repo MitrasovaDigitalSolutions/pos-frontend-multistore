@@ -10,7 +10,7 @@ import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/a
 import type { User } from "../types";
 import type { UserInput } from "../schemas/user-schema";
 
-export function useUsers(params?: PaginationParams & { status?: string }) {
+export function useUsers(params?: PaginationParams & { status?: string; all_stores?: boolean }) {
     return useQuery<PaginatedResponse<User>>({
         queryKey: [...queryKeys.users.list(), params],
         queryFn: () => apiGetList<User>("/v1/users", params),
