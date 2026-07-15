@@ -4,12 +4,23 @@ import "next-auth/jwt";
 
 // ─── User Types ─────────────────────────────────────────────────────────────
 
+export interface Store {
+    uid: string;
+    nama: string;
+    alamat: string | null;
+    telepon: string | null;
+    is_active: boolean;
+    is_central?: boolean;
+    users_count?: number;
+}
+
 export interface User {
     uid: string;
     name: string;
     username: string;
     email: string | null;
     store_uid: string | null;
+    stores?: Store[];
     status: "active" | "inactive";
     roles: Role[];
     permissions: Permission[];

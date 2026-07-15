@@ -46,6 +46,11 @@ async function handler(req: NextRequest) {
     headers.set("X-Correlation-ID", correlationId);
   }
 
+  const storeUid = req.headers.get("X-Store-UID");
+  if (storeUid) {
+    headers.set("X-Store-UID", storeUid);
+  }
+
   try {
     const body =
       req.method !== "GET" && req.method !== "HEAD"

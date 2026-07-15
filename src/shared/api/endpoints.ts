@@ -39,6 +39,14 @@ export const ENDPOINTS = {
 
     // Inventory
     INVENTORY: {
+        STOCK_TRANSFERS: {
+            LIST: "/v1/inventory/stock-transfers",
+            DETAIL: (uid: string) => `/v1/inventory/stock-transfers/${uid}`,
+            CREATE: "/v1/inventory/stock-transfers",
+            FINALIZE: (uid: string) => `/v1/inventory/stock-transfers/${uid}/finalize`,
+            RECEIVE: (uid: string) => `/v1/inventory/stock-transfers/${uid}/receive`,
+            CANCEL: (uid: string) => `/v1/inventory/stock-transfers/${uid}/cancel`,
+        },
         MOVEMENTS: "/v1/inventory/movements",
         ADJUSTMENT: "/v1/inventory/adjustment",
         RECEIVING: {

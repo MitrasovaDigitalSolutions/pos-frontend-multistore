@@ -2,6 +2,8 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { ApiError, NetworkError } from "@/shared/errors/api-error";
 import { signOut } from "next-auth/react";
 
+import { useActiveStoreStore } from "@/stores/active-store-store";
+
 // Guard to prevent multiple concurrent signOut calls when several
 // requests simultaneously receive a 401 response.
 let isSigningOut = false;
@@ -33,6 +35,11 @@ apiClient.interceptors.request.use(
         // to dynamically set the Content-Type with the correct boundary parameter.
         if (config.data instanceof FormData) {
             config.headers.delete("Content-Type");
+        }
+
+        const activeStoreUid = useActiveStoreStore.getState().activeStoreUid;
+        if (activeStoreUid) {
+            config.headers.set("X-Store-UID", activeStoreUid);
         }
 
         return config;

@@ -163,6 +163,14 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasPermission(roles, permissions, "manage_inventory"),
                     },
                     {
+                        path: ROUTES.ADMIN_STOCK_TRANSFERS,
+                        label: "Transfer Stok",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_stock_transfers") ||
+                            hasPermission(roles, permissions, "manage_stock_transfers"),
+                    },
+                    {
                         path: ROUTES.ADMIN_STOCK_LEDGER,
                         label: "Kartu Stok",
                         permission: (roles, permissions) =>
@@ -369,6 +377,14 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasRole(roles, "admin") ||
                             hasPermission(roles, permissions, "view_members") ||
                             hasPermission(roles, permissions, "manage_members"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_STORES,
+                        label: "Kelola Toko",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_stores") ||
+                            hasPermission(roles, permissions, "manage_stores"),
                     },
                 ],
             },
