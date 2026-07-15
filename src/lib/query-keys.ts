@@ -2,12 +2,24 @@
 // Centralized query keys for cache management and invalidation.
 
 export const queryKeys = {
+    // Stores
+    stores: {
+        all: ["stores"] as const,
+        list: () => [...queryKeys.stores.all, "list"] as const,
+        detail: (uid: string) => [...queryKeys.stores.all, "detail", uid] as const,
+    },
+
     // Products
     products: {
         all: ["products"] as const,
         list: () => [...queryKeys.products.all, "list"] as const,
         detail: (uid: string) =>
             [...queryKeys.products.all, "detail", uid] as const,
+    },
+
+    productStores: {
+        all: ["productStores"] as const,
+        list: (productUid: string) => ["productStores", productUid] as const,
     },
 
     // Users

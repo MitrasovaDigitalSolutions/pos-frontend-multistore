@@ -370,6 +370,14 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasPermission(roles, permissions, "view_members") ||
                             hasPermission(roles, permissions, "manage_members"),
                     },
+                    {
+                        path: ROUTES.ADMIN_STORES,
+                        label: "Kelola Toko",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_stores") ||
+                            hasPermission(roles, permissions, "manage_stores"),
+                    },
                 ],
             },
             {

@@ -24,6 +24,7 @@ export const ROUTES = {
     ADMIN_REPORTS_PENGELUARAN: "/admin/reports/pengeluaran",
     ADMIN_USERS: "/admin/users",
     ADMIN_SETTINGS: "/admin/settings",
+    ADMIN_STORES: "/admin/stores",
     ADMIN_AUDIT: "/admin/audit",
     ADMIN_TRANSACTIONS: "/admin/transactions",
     ADMIN_PURCHASE_ORDER: "/admin/purchase/order",

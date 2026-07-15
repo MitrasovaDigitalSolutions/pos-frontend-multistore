@@ -1,6 +1,16 @@
 import type { Category } from "@/features/categories/types";
 import type { Brand } from "@/features/brands/types";
 
+export interface ProductStore {
+    product_uid: string;
+    store_uid: string;
+    stok: number;
+    harga_beli: number | null;
+    harga_jual: number | null;
+    margin: number | null;
+    status: "active" | "inactive";
+}
+
 export interface Product {
     uid: string;
     nama: string;

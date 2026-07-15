@@ -8,6 +8,7 @@ import { hasRole, hasPermission } from "@/constants/roles";
 import { useProducts } from "./api/products-api";
 import { ProductTable } from "./components/product-table";
 import { ProductFormDialog } from "./components/product-form-dialog";
+import { ProductStoreDialog } from "./components/product-store-dialog";
 import { productSchema, type ProductInput } from "./schemas/product-schema";
 import type { Product } from "./types";
 import { useCategories } from "@/features/categories/api/categories-api";
@@ -113,6 +114,9 @@ export function Products() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
+  const [isStoreDialogOpen, setIsStoreDialogOpen] = useState(false);
+  const [managingProduct, setManagingProduct] = useState<Product | null>(null);
+
   const dialogMethods = useForm<ProductInput>({
     resolver: zodResolver(productSchema) as Resolver<ProductInput>,
     defaultValues: {
@@ -202,6 +206,10 @@ export function Products() {
           onPageChange={setPage}
           onPerPageChange={setPerPage}
           onEdit={handleEdit}
+          onManageStores={(p) => {
+            setManagingProduct(p);
+            setIsStoreDialogOpen(true);
+          }}
           onAddClick={handleAddClick}
           isLoading={isLoading}
           isFetching={isFetching}
@@ -259,6 +267,12 @@ export function Products() {
           editingProduct={editingProduct}
         />
       </FormProvider>
+
+      <ProductStoreDialog
+        open={isStoreDialogOpen}
+        onOpenChange={setIsStoreDialogOpen}
+        product={managingProduct}
+      />
     </div>
   );
 }
