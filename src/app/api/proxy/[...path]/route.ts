@@ -47,7 +47,7 @@ async function handler(req: NextRequest) {
   }
 
   const storeUid = req.headers.get("X-Store-UID");
-  if (storeUid) {
+  if (storeUid && (accessToken || clientAuth)) {
     headers.set("X-Store-UID", storeUid);
   }
 

@@ -36,7 +36,7 @@ export function BaseDialog({
     className,
     children,
     showCloseButton = true,
-    scrollable = false,
+    scrollable = true,
 }: BaseDialogProps) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>

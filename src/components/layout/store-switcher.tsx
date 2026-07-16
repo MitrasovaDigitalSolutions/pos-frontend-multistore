@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm, FormProvider } from "react-hook-form";
@@ -15,8 +15,12 @@ export function StoreSwitcher() {
     const { activeStoreUid, setActiveStore } = useActiveStoreStore();
     const [mounted, setMounted] = useState(false);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const stores = session?.user?.stores ?? [];
+    const stores = useMemo(() => session?.user?.stores ?? [], [session?.user?.stores]);
+
+    const activeStore = useMemo(
+        () => stores.find((s) => s.uid === activeStoreUid),
+        [stores, activeStoreUid]
+    );
 
     const methods = useForm<{ activeStore: string }>({
         values: { activeStore: activeStoreUid ?? "" }
@@ -49,20 +53,37 @@ export function StoreSwitcher() {
 
     return (
         <FormProvider {...methods}>
-            <div className="relative flex items-center bg-white border border-slate-200 rounded-full pl-3 pr-1 py-0.5 shadow-sm hover:border-slate-300 transition-all gap-1.5 focus-within:ring-2 focus-within:ring-emerald-500/20 w-[180px] sm:w-[200px] h-9">
-                <IconBuildingStore size={14} className="text-slate-500 shrink-0" />
-                <div className="flex-1 min-w-0">
-                    <FormSelect<{ activeStore: string }>
-                        name="activeStore"
-                        options={stores.map((s) => ({
-                            value: s.uid,
-                            label: s.nama,
-                        }))}
-                        onChange={handleSelectStore}
-                        size="sm"
-                        className="border-none bg-transparent hover:bg-transparent focus:ring-0 focus:border-none p-0 h-7 text-xs font-semibold text-slate-700 w-full shadow-none"
-                    />
-                </div>
+            <div className="w-[195px] sm:w-[225px]">
+                <FormSelect<{ activeStore: string }>
+                    name="activeStore"
+                    options={stores.map((s) => ({
+                        value: s.uid,
+                        label: s.nama,
+                        description: s.is_central ? "Toko Pusat" : "Toko Cabang",
+                    }))}
+                    onChange={handleSelectStore}
+                    size="sm"
+                    className="rounded-full h-9 px-2.5 border-slate-200 shadow-sm hover:border-slate-300 focus:ring-emerald-500/20 text-xs font-bold text-slate-700 bg-white"
+                    leftIcon={
+                        <IconBuildingStore
+                            size={15}
+                            className={`shrink-0 ${
+                                activeStore?.is_central ? "text-emerald-600" : "text-slate-500"
+                            }`}
+                        />
+                    }
+                    rightElement={
+                        activeStore?.is_central ? (
+                            <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80 leading-none">
+                                Pusat
+                            </span>
+                        ) : (
+                            <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-slate-100 text-slate-600 border border-slate-200/80 leading-none">
+                                Cabang
+                            </span>
+                        )
+                    }
+                />
             </div>
         </FormProvider>
     );

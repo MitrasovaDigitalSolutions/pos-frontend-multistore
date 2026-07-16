@@ -38,7 +38,8 @@ apiClient.interceptors.request.use(
         }
 
         const activeStoreUid = useActiveStoreStore.getState().activeStoreUid;
-        if (activeStoreUid) {
+        const isAuthRequest = config.url?.includes("/auth/") || config.url?.includes("/login");
+        if (activeStoreUid && !isAuthRequest) {
             config.headers.set("X-Store-UID", activeStoreUid);
         }
 
@@ -72,6 +73,7 @@ apiClient.interceptors.response.use(
                 !isSigningOut
             ) {
                 isSigningOut = true;
+                useActiveStoreStore.getState().setActiveStore(null);
                 await signOut({ callbackUrl: "/login" });
                 // isSigningOut intentionally stays true until page reload.
             }

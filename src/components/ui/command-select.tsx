@@ -19,8 +19,11 @@ interface CommandSelectProps {
   emptyMessage?: string
   isLoading?: boolean
   onSearchChange?: (search: string) => void
+  leftIcon?: React.ReactNode
+  rightElement?: React.ReactNode
   className?: string
   wrapperClassName?: string
+  popoverClassName?: string
   disabled?: boolean
   size?: "sm" | "md" | "lg"
   maxLabelLength?: number
@@ -210,8 +213,11 @@ export function CommandSelect({
   emptyMessage = "Tidak ada hasil ditemukan.",
   isLoading = false,
   onSearchChange,
+  leftIcon,
+  rightElement,
   className,
   wrapperClassName,
+  popoverClassName,
   disabled = false,
   size = "sm",
   maxLabelLength,
@@ -241,13 +247,15 @@ export function CommandSelect({
               disabled={disabled}
               title={selectedOption ? selectedOption.label : undefined}
               className={cn(
-                "grid grid-cols-[minmax(0,1fr)_auto] w-full max-w-full items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 outline-none transition-all hover:bg-slate-50 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer overflow-hidden",
+                "flex items-center w-full max-w-full gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 outline-none transition-all hover:bg-slate-50 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer overflow-hidden min-w-0 text-left",
                 sizeClasses,
                 className
               )}
             >
-              <span className="truncate text-left">{selectedOption ? selectedOption.label : placeholder}</span>
-              <ChevronsUpDown className="ml-1.5 h-3.5 w-3.5 shrink-0 opacity-50 justify-self-end" />
+              {leftIcon}
+              <span className="truncate text-left flex-1 min-w-0">{selectedOption ? selectedOption.label : placeholder}</span>
+              <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
+              {rightElement}
             </button>
           }
         />
@@ -260,7 +268,10 @@ export function CommandSelect({
             className="isolate z-50"
           >
             <PopoverPrimitive.Popup
-              className="w-(--anchor-width) min-w-[150px] max-h-[300px] origin-(--transform-origin) animate-in fade-in-0 zoom-in-95 duration-100 outline-none overflow-hidden"
+              className={cn(
+                "w-(--anchor-width) min-w-[200px] max-h-[300px] origin-(--transform-origin) animate-in fade-in-0 zoom-in-95 duration-100 outline-none overflow-hidden",
+                popoverClassName
+              )}
             >
               <Command selectedValue={value} onSelect={handleSelect} disableLocalFilter={!!onSearchChange} className="shadow-lg">
                 <CommandInput
@@ -289,10 +300,22 @@ export function CommandSelect({
                           keywords={[opt.label, opt.description || ""]}
                           title={opt.description ? `${opt.label} (${opt.description})` : opt.label}
                         >
-                          <div className="flex flex-col gap-0.5 min-w-0">
-                            <span className="font-semibold text-slate-800 truncate block">{truncatedLabel}</span>
-                            {opt.description && (
-                              <span className="text-[10px] text-slate-400 font-normal truncate block">{opt.description}</span>
+                          <div className="flex items-center justify-between gap-2 w-full min-w-0">
+                            <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                              <span className="font-semibold text-slate-800 truncate block">{truncatedLabel}</span>
+                              {opt.description && (
+                                <span className="text-[10px] text-slate-400 font-normal truncate block">{opt.description}</span>
+                              )}
+                            </div>
+                            {opt.description === "Toko Pusat" && (
+                              <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80 leading-none">
+                                Pusat
+                              </span>
+                            )}
+                            {opt.description === "Toko Cabang" && (
+                              <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-slate-100 text-slate-600 border border-slate-200 leading-none">
+                                Cabang
+                              </span>
                             )}
                           </div>
                         </CommandItem>

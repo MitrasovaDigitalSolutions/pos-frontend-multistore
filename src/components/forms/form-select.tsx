@@ -14,8 +14,11 @@ interface FormSelectProps<T extends FieldValues> {
     isLoading?: boolean;
     onSearchChange?: (search: string) => void;
     onChange?: (value: string) => void;
+    leftIcon?: React.ReactNode;
+    rightElement?: React.ReactNode;
     className?: string;
     wrapperClassName?: string;
+    popoverClassName?: string;
     disabled?: boolean;
     size?: "sm" | "md" | "lg";
     maxLabelLength?: number;
@@ -31,8 +34,11 @@ export function FormSelect<T extends FieldValues>({
     isLoading,
     onSearchChange,
     onChange,
+    leftIcon,
+    rightElement,
     className,
     wrapperClassName,
+    popoverClassName,
     disabled,
     size = 'md',
     maxLabelLength,
@@ -94,6 +100,8 @@ export function FormSelect<T extends FieldValues>({
                         emptyMessage={emptyMessage}
                         isLoading={isLoading}
                         onSearchChange={onSearchChange}
+                        leftIcon={leftIcon}
+                        rightElement={rightElement}
                         className={cn(
                             error && "border-rose-400 focus:border-rose-400 focus:ring-rose-500/20",
                             className
@@ -101,6 +109,7 @@ export function FormSelect<T extends FieldValues>({
                         disabled={disabled}
                         size={size}
                         maxLabelLength={maxLabelLength}
+                        popoverClassName={popoverClassName}
                     />
                 )}
             />
