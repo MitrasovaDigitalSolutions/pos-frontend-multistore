@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { hasRole, hasPermission } from "@/constants/roles";
+import { useActiveStoreStore } from "@/stores/active-store-store";
 import { useUsers } from "./api/users-api";
 import { UserTable } from "./components/user-table";
 import { UserFormDialog } from "./components/user-form-dialog";
@@ -25,6 +26,8 @@ export function Users() {
   const { data: session } = useSession();
   const userRoles = session?.user?.roles || [];
   const userPermissions = session?.user?.permissions || [];
+  const activeStoreUid = useActiveStoreStore((state) => state.activeStoreUid);
+  const activeStore = session?.user?.stores?.find((s) => s.uid === activeStoreUid);
 
   const hasViewUsers =
     hasRole(userRoles, "admin") ||
@@ -153,6 +156,12 @@ export function Users() {
           <p className="text-xs text-slate-400 mt-1">
             Mengatur akun karyawan POS, tingkat pengawas (supervisor), manajer, dan konfigurasi hak akses masing-masing peran.
           </p>
+          {activeStore && (
+            <div className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full bg-brand-50 border border-brand-100">
+              <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
+              <span className="text-xs font-semibold text-brand-700">{activeStore.nama}</span>
+            </div>
+          )}
         </div>
 
         {/* Premium Tab Buttons */}

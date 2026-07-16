@@ -29,8 +29,8 @@ export function StoreUsersDialog({ open, onOpenChange, store }: StoreUsersDialog
     // Fetch users for the current store
     const { data: storeUsers = [], isLoading: isLoadingStoreUsers } = useStoreUsers(store?.uid ?? "");
     
-    // Fetch all users to populate the multi-select dropdown
-    const { data: usersRes, isLoading: isLoadingAllUsers } = useUsers({ per_page: 1000 });
+    // Fetch all users (across stores) to populate the multi-select dropdown
+    const { data: usersRes, isLoading: isLoadingAllUsers } = useUsers({ per_page: 1000, all_stores: true });
     const allUsers: User[] = usersRes?.data ?? [];
 
     const assignMutation = useAssignStoreUsers();
