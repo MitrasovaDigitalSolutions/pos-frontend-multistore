@@ -13,7 +13,8 @@ import {
     IconUsers,
     IconChartBar,
     IconNotebook,
-    IconBuildingBank
+    IconBuildingBank,
+    IconBuildingStore
 } from "@tabler/icons-react";
 
 export interface SidebarMenuItem {
@@ -378,14 +379,6 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasPermission(roles, permissions, "view_members") ||
                             hasPermission(roles, permissions, "manage_members"),
                     },
-                    {
-                        path: ROUTES.ADMIN_STORES,
-                        label: "Kelola Toko",
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") ||
-                            hasPermission(roles, permissions, "view_stores") ||
-                            hasPermission(roles, permissions, "manage_stores"),
-                    },
                 ],
             },
             {
@@ -404,6 +397,13 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     hasRole(roles, "admin") ||
                     hasPermission(roles, permissions, "view_users") ||
                     hasPermission(roles, permissions, "manage_users"),
+            },
+            {
+                type: "link",
+                path: ROUTES.ADMIN_STORES,
+                label: "Kelola Toko",
+                icon: IconBuildingStore,
+                permission: (roles) => hasRole(roles, "admin"),
             },
             {
                 type: "link",

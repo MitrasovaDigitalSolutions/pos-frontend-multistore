@@ -1,13 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiGet, apiPost, apiPatch, apiDelete } from "@/shared/api/api-client";
+import { apiGet, apiPost, apiPatch, apiDelete, apiGetList } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import type { Store, StoreUser } from "../types";
 import type { StoreInput } from "../schemas/store-schema";
+import type { PaginatedResponse, PaginationParams } from "@/types/api";
 
-export function useStores() {
-    return useQuery({
-        queryKey: queryKeys.stores.list(),
-        queryFn: () => apiGet<Store[]>("/v1/stores"),
+export function useStores(params?: PaginationParams & { search?: string; status?: string }) {
+    return useQuery<PaginatedResponse<Store>>({
+        queryKey: [...queryKeys.stores.list(), params],
+        queryFn: () => apiGetList<Store>("/v1/stores", params),
     });
 }
 

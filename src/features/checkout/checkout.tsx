@@ -34,6 +34,7 @@ export function Checkout() {
     const [isInfoSesiOpen, setIsInfoSesiOpen] = useState(false);
     const [hasAutoOpened, setHasAutoOpened] = useState(false);
     const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [isOfflineTransactionsOpen, setIsOfflineTransactionsOpen] = useState(false);
     const [activeMobileTab, setActiveMobileTab] = useState<"cart" | "totals">("cart");
 
@@ -311,7 +312,9 @@ export function Checkout() {
                 confirmText="Ya, Keluar"
                 cancelText="Batal"
                 variant="danger"
+                isLoading={isLoggingOut}
                 onConfirm={async () => {
+                    setIsLoggingOut(true);
                     await signOut({ callbackUrl: "/login" });
                 }}
             />

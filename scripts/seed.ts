@@ -252,13 +252,13 @@ async function main() {
             body: JSON.stringify({ username, password }),
         });
 
-        const loginData = await loginRes.json() as { access_token?: string; message?: string };
+        const loginData = await loginRes.json() as { data?: { access_token?: string }; message?: string };
 
-        if (!loginRes.ok || !loginData.access_token) {
+        if (!loginRes.ok || !loginData.data?.access_token) {
             throw new Error(loginData.message || "Gagal mendapatkan token login.");
         }
 
-        token = loginData.access_token;
+        token = loginData.data.access_token;
         console.log("✅ Login berhasil!");
     } catch (err: any) {
         console.error(`❌ Gagal login: ${err.message}`);

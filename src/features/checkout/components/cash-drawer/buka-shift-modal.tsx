@@ -38,6 +38,7 @@ export function BukaShiftModal({
     const userRoles = session?.user?.roles || [];
     const showAdminBtn = canAccessAdmin(userRoles);
     const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = React.useState(false);
+    const [isLoggingOut, setIsLoggingOut] = React.useState(false);
 
     const openMutation = useOpenCashDrawer();
 
@@ -189,7 +190,9 @@ export function BukaShiftModal({
                 confirmText="Ya, Keluar"
                 cancelText="Batal"
                 variant="danger"
+                isLoading={isLoggingOut}
                 onConfirm={async () => {
+                    setIsLoggingOut(true);
                     await signOut({ callbackUrl: "/login" });
                 }}
             />
