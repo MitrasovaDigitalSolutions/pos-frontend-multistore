@@ -1,12 +1,18 @@
 import { create } from "zustand";
 import { settingsApi } from "@/features/settings/api/settings-api";
+import { useActiveStoreStore } from "@/stores/active-store-store";
 
 const SETTINGS_CACHE_KEY = "pos_settings_cache";
+
+function getCacheKey(): string {
+    const storeUid = useActiveStoreStore.getState().activeStoreUid;
+    return storeUid ? `${SETTINGS_CACHE_KEY}_${storeUid}` : SETTINGS_CACHE_KEY;
+}
 
 function loadCachedSettings(): Record<string, string | null> {
     if (typeof window === "undefined") return {};
     try {
-        const raw = localStorage.getItem(SETTINGS_CACHE_KEY);
+        const raw = localStorage.getItem(getCacheKey());
         return raw ? JSON.parse(raw) : {};
     } catch {
         return {};
@@ -15,7 +21,7 @@ function loadCachedSettings(): Record<string, string | null> {
 
 function saveCachedSettings(settings: Record<string, string | null>) {
     try {
-        localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(settings));
+        localStorage.setItem(getCacheKey(), JSON.stringify(settings));
     } catch {
         // localStorage might be full — non-critical
     }

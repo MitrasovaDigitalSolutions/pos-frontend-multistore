@@ -8,6 +8,7 @@ import { type ChartOfAccount } from "@/features/accounting/types";
 import { useLedgerBackfillStatus } from "@/features/accounting/api/ledger-api";
 import {
     AlertTriangle,
+    ArrowLeftRight,
     Building2,
     Check,
     CreditCard,
@@ -80,6 +81,7 @@ export function CoaMappingManager() {
     const groupsWithStatus = useMemo(() => {
         if (!mappings) return [];
         return [
+            // 1. Siklus Pendapatan
             {
                 id: "sale",
                 label: "Penjualan",
@@ -88,18 +90,19 @@ export function CoaMappingManager() {
                 items: mappings.filter((m: CoaMapping) => m.transaction_type === "sale"),
             },
             {
+                id: "member_payment",
+                label: "Piutang Member",
+                description: "Pemetaan akun pelunasan piutang pelanggan ketika member mencicil tagihan tempo.",
+                icon: <Users className="h-4 w-4" />,
+                items: mappings.filter((m: CoaMapping) => m.transaction_type === "member_payment"),
+            },
+            // 2. Siklus Pembelian
+            {
                 id: "stock_receiving",
                 label: "Penerimaan Barang",
                 description: "Pemetaan akun untuk penambahan persediaan dan hutang usaha dari penerimaan supplier.",
                 icon: <Package className="h-4 w-4" />,
                 items: mappings.filter((m: CoaMapping) => m.transaction_type === "stock_receiving"),
-            },
-            {
-                id: "purchase_return",
-                label: "Retur Pembelian",
-                description: "Pemetaan akun untuk pengurangan hutang usaha dan nilai persediaan dari retur supplier.",
-                icon: <Undo2 className="h-4 w-4" />,
-                items: mappings.filter((m: CoaMapping) => m.transaction_type === "purchase_return"),
             },
             {
                 id: "supplier_payment",
@@ -109,19 +112,28 @@ export function CoaMappingManager() {
                 items: mappings.filter((m: CoaMapping) => m.transaction_type === "supplier_payment"),
             },
             {
+                id: "purchase_return",
+                label: "Retur Pembelian",
+                description: "Pemetaan akun untuk pengurangan hutang usaha dan nilai persediaan dari retur supplier.",
+                icon: <Undo2 className="h-4 w-4" />,
+                items: mappings.filter((m: CoaMapping) => m.transaction_type === "purchase_return"),
+            },
+            // 3. Inventori & Operasional
+            {
+                id: "stock_movement",
+                label: "Mutasi Stok",
+                description: "Pemetaan akun persediaan, selisih lebih, dan selisih kurang pada mutasi stok manual.",
+                icon: <ArrowLeftRight className="h-4 w-4" />,
+                items: mappings.filter((m: CoaMapping) => m.transaction_type === "stock_movement"),
+            },
+            {
                 id: "expense",
                 label: "Pengeluaran Operasional",
                 description: "Pemetaan akun beban operasional dan pengeluaran biaya langsung.",
                 icon: <Receipt className="h-4 w-4" />,
                 items: mappings.filter((m: CoaMapping) => m.transaction_type === "expense"),
             },
-            {
-                id: "member_payment",
-                label: "Piutang Member",
-                description: "Pemetaan akun pelunasan piutang pelanggan ketika member mencicil tagihan tempo.",
-                icon: <Users className="h-4 w-4" />,
-                items: mappings.filter((m: CoaMapping) => m.transaction_type === "member_payment"),
-            },
+            // 4. Admin & Kas
             {
                 id: "cash_ledger",
                 label: "Cash Ledger (Kas/Bank)",
@@ -143,78 +155,58 @@ export function CoaMappingManager() {
         });
     }, [mappings, formValues]);
 
-    // Scroll-Spy Setup with IntersectionObserver
+    // Scroll-Spy Setup with scroll event + getBoundingClientRect
     useEffect(() => {
-        const findScrollContainer = (el: HTMLElement | null): HTMLElement | null => {
-            if (!el) return null;
-            const style = window.getComputedStyle(el);
-            if (el.tagName === 'MAIN' || style.overflowY === 'auto' || style.overflowY === 'scroll') {
-                return el;
-            }
-            return findScrollContainer(el.parentElement);
-        };
-
-        const scrollContainer = findScrollContainer(rootRef.current);
+        // The admin layout always has a single <main> with overflow-y-auto as the scroll container.
+        // We query it directly instead of traversing the DOM, which is fragile.
+        const scrollContainer = document.querySelector<HTMLElement>("main");
         if (!scrollContainer) return;
 
         const sectionIds = [
+            // Revenue cycle
             "sale",
-            "stock_receiving",
-            "purchase_return",
-            "supplier_payment",
-            "expense",
             "member_payment",
-            "cash_ledger"
+            // Purchasing cycle
+            "stock_receiving",
+            "supplier_payment",
+            "purchase_return",
+            // Inventory & operational
+            "stock_movement",
+            "expense",
+            // Admin
+            "cash_ledger",
         ];
 
-        // Track which sections are currently intersecting in the active zone
-        const intersectingSections: Record<string, boolean> = {};
+        // OFFSET: accounts for the sticky header height (120px) plus a bit of breathing room
+        const SCROLL_OFFSET = 140;
 
-        const observerOptions = {
-            root: scrollContainer,
-            // Active zone matches the scroll-margin-top offset (120px) to about 40% from top
-            rootMargin: "-120px 0px -60% 0px",
-            threshold: 0,
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry) => {
-                intersectingSections[entry.target.id] = entry.isIntersecting;
-            });
-
-            if (isProgrammaticScroll.current) return;
-
-            // Find the first intersecting section in list order
-            const active = sectionIds.find((id) => intersectingSections[id]);
-            if (active) {
-                setActiveSection(active);
-            }
-        }, observerOptions);
-
-        sectionIds.forEach((id) => {
-            const el = document.getElementById(id);
-            if (el) observer.observe(el);
-        });
-
-        // Check if scrolled near the bottom of the container (to force-activate the last item if it's too short to scroll fully)
         const handleScroll = () => {
             if (isProgrammaticScroll.current) return;
 
-            const isScrollable = scrollContainer.scrollHeight > scrollContainer.clientHeight;
-            const isAtBottom = isScrollable && (scrollContainer.scrollHeight - scrollContainer.scrollTop <= scrollContainer.clientHeight + 40);
-
-            if (isAtBottom) {
-                setActiveSection(sectionIds[sectionIds.length - 1]);
+            // Walk through all sections and find the last one whose top is at or above the offset.
+            // This is always the section the user is currently reading.
+            let currentSection = sectionIds[0];
+            for (const id of sectionIds) {
+                const el = document.getElementById(id);
+                if (el) {
+                    const rect = el.getBoundingClientRect();
+                    const containerRect = scrollContainer.getBoundingClientRect();
+                    const relativeTop = rect.top - containerRect.top;
+                    if (relativeTop <= SCROLL_OFFSET) {
+                        currentSection = id;
+                    }
+                }
             }
+
+            setActiveSection(currentSection);
         };
 
-        scrollContainer.addEventListener("scroll", handleScroll);
+        scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
 
-        // Initial check for bottom scroll
+        // Run once on mount to set the initial active section
         handleScroll();
 
         return () => {
-            observer.disconnect();
             scrollContainer.removeEventListener("scroll", handleScroll);
             if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
         };
