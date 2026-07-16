@@ -5,7 +5,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { IconPlus } from "@tabler/icons-react";
+import { IconPlus, IconBuildingStore } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
 import { useMemo, useState } from "react";
@@ -29,6 +29,7 @@ interface ProductTableProps {
     onPageChange: (page: number) => void;
     onPerPageChange: (perPage: number) => void;
     onEdit: (product: Product) => void;
+    onManageStores?: (product: Product) => void;
     onAddClick: () => void;
     isLoading?: boolean;
     isFetching?: boolean;
@@ -46,6 +47,7 @@ export function ProductTable({
     onPageChange,
     onPerPageChange,
     onEdit,
+    onManageStores,
     onAddClick,
     isLoading = false,
     isFetching = false,
@@ -61,6 +63,11 @@ export function ProductTable({
     const hasManageProducts =
         hasRole(userRoles, "admin") ||
         hasPermission(userRoles, userPermissions, "manage_products");
+    
+    const hasManageStores =
+        hasRole(userRoles, "admin") ||
+        hasPermission(userRoles, userPermissions, "view_stores") ||
+        hasPermission(userRoles, userPermissions, "manage_stores");
 
     const handleImportSuccess = () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
@@ -256,10 +263,34 @@ export function ProductTable({
                 },
             ];
 
+            if (hasManageStores && onManageStores) {
+                baseColumns.push({
+                    id: "stores",
+                    header: "Toko",
+                    enableSorting: false,
+                    meta: {
+                        headerClassName: "text-center",
+                        cellClassName: "text-center",
+                    },
+                    size: 80,
+                    cell: ({ row }) => (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => onManageStores(row.original)}
+                            title="Kelola Toko"
+                        >
+                            <IconBuildingStore className="h-4 w-4 text-slate-500" />
+                        </Button>
+                    ),
+                });
+            }
+
             return baseColumns;
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [hasManageProducts],
+        [hasManageProducts, hasManageStores, onManageStores],
     );
 
     return (

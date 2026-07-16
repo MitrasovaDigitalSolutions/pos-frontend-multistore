@@ -6,6 +6,7 @@ import { IconCalendar, IconMenu } from "@tabler/icons-react";
 import { NAVIGATION_CONFIG } from "./sidebar-config";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { formatToReadableDate } from "@/lib/date-utils";
+import { StoreSwitcher } from "./store-switcher";
 
 export function AdminHeader() {
   const { toggleMobile } = useSidebarStore();
@@ -81,6 +82,7 @@ export function AdminHeader() {
         <h2 className="text-lg font-extrabold text-slate-900 leading-none">{getTitle()}</h2>
       </div>
       <div className="flex items-center gap-3 md:gap-4">
+        <StoreSwitcher />
         {/* Date Badge */}
         <div className="hidden sm:flex bg-yellow-50 text-yellow-500 border border-yellow-100 px-3 py-1.5 rounded-full items-center gap-2 font-bold text-xs select-none">
           <IconCalendar size={15} />

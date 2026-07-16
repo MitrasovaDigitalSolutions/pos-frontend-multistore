@@ -12,8 +12,12 @@ export type Role = (typeof ROLES)[keyof typeof ROLES];
 // ─── Permission Constants ───────────────────────────────────────────────────
 
 export const PERMISSIONS = {
+  MANAGE_STOCK_TRANSFERS: "manage_stock_transfers",
+  VIEW_STOCK_TRANSFERS: "view_stock_transfers",
   MANAGE_USERS: "manage_users",
   VIEW_USERS: "view_users",
+  MANAGE_STORES: "manage_stores",
+  VIEW_STORES: "view_stores",
   MANAGE_PRODUCTS: "manage_products",
   VIEW_PRODUCTS: "view_products",
   MANAGE_SALES: "manage_sales",
