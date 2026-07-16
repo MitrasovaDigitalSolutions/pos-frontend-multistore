@@ -17,8 +17,8 @@ import {
 } from "@/components/ui/table";
 import { ROUTES } from "@/constants/routes";
 import { OPNAME_STATUS, OPNAME_STATUS_CLASSES, OPNAME_STATUS_LABELS } from "@/constants/stock";
-import { useProducts } from "@/features/products/api/products-api";
-import type { Product } from "@/features/products/types";
+import { useProducts } from "@/features/master/products/api/products-api";
+import type { Product } from "@/features/master/products/types";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { cn } from "@/lib/utils";
 import { clearOpnameItemsStore, getOpnameItemsStore, type OpnameItemLocal } from "@/stores/opname-items-store";

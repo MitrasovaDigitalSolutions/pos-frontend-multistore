@@ -61,8 +61,9 @@ export function ProductStoreDialog({ open, onOpenChange, product }: ProductStore
     const [storeToRemove, setStoreToRemove] = useState<ProductStore | null>(null);
 
     const { data: assignments = [], isLoading: isLoadingAssignments } = useProductStores(open ? product?.uid : undefined);
-    const { data: storesResponse } = useStores();
-    const stores = storesResponse || [];
+    const { data: storesResponse } = useStores({ per_page: 1000 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const stores = storesResponse?.data || [];
 
     const assignMutation = useAssignProductStore();
     const updateMutation = useUpdateProductStore();
@@ -90,6 +91,7 @@ export function ProductStoreDialog({ open, onOpenChange, product }: ProductStore
 
     useEffect(() => {
         if (!isFormOpen) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setEditingStore(null);
             reset({
                 store_uid: "",

@@ -1,7 +1,7 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
-import type { Member } from "@/features/members/types";
+import type { Member } from "@/features/master/members/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconArrowRight, IconCheck, IconUser } from "@tabler/icons-react";
 

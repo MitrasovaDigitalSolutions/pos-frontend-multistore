@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { CartItem, HoldTransaction } from "@/features/checkout/types";
-import type { Member } from "@/features/members/types";
+import type { Member } from "@/features/master/members/types";
 
 // ─── Checkout Zustand Store ──────────────────────────────────────────────────
 // Persists the active cart and offline holdList in sessionStorage to prevent

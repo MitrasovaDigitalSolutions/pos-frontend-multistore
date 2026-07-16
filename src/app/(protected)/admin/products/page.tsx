@@ -1,4 +1,4 @@
-import { Products } from "@/features/products/products";
+import { Products } from "@/features/master/products/products";
 import { Suspense } from "react";
 
 export default function AdminProductsPage() {

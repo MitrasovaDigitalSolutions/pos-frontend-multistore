@@ -5,8 +5,8 @@ import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
-import { productSchema, type ProductInput } from "@/features/products/schemas/product-schema";
-import type { Product } from "@/features/products/types";
+import { productSchema, type ProductInput } from "@/features/master/products/schemas/product-schema";
+import type { Product } from "@/features/master/products/types";
 import { useScanReceivingProduct } from "@/features/purchase/api/purchase-api";
 import type { PurchaseItemLocal, PurchaseOrderItem, ReceivingItem, Receiving, PurchaseOrder } from "@/features/purchase/types";
 

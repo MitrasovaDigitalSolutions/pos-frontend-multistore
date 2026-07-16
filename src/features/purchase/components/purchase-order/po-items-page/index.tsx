@@ -7,7 +7,7 @@ import { useAppRouter } from "@/hooks/use-app-router";
 import { useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { ProductFormDialog } from "@/features/products/components/product-form-dialog";
+import { ProductFormDialog } from "@/features/master/products/components/product-form-dialog";
 import { toast } from "sonner";
 import { usePurchaseOrderDetail } from "../../../api/purchase-api";
 import type { PurchaseItemLocal, PurchaseOrder } from "../../../types";

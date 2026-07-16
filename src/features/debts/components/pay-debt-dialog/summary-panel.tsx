@@ -1,6 +1,6 @@
 "use client";
 
-import type { Member } from "@/features/members/types";
+import type { Member } from "@/features/master/members/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import {
     IconUser

@@ -1,4 +1,4 @@
-import type { Product } from "@/features/products/types";
+import type { Product } from "@/features/master/products/types";
 import { queryKeys } from "@/lib/query-keys";
 import { apiGet, apiPost, apiPatch } from "@/shared/api/api-client";
 import type { ApiResponse } from "@/types/api";

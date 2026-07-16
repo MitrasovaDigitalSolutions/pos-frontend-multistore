@@ -32,6 +32,7 @@ export function AdminSidebar() {
     const { isCollapsed, toggle, isMobileOpen, setMobileOpen } = useSidebarStore();
     const [mounted, setMounted] = useState(false);
     const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -274,7 +275,9 @@ export function AdminSidebar() {
                 confirmText="Ya, Keluar"
                 cancelText="Batal"
                 variant="danger"
+                isLoading={isLoggingOut}
                 onConfirm={async () => {
+                    setIsLoggingOut(true);
                     await signOut({ callbackUrl: "/login" });
                 }}
             />

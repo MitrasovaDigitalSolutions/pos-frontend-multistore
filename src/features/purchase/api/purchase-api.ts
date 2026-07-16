@@ -9,7 +9,7 @@ import type { ReceivingInput, ReceivingHeaderInput } from "../schemas/receiving-
 import type { PurchaseOrderHeaderInput, PurchaseOrderBulkItemsInput } from "../schemas/order-schema";
 import type { PaymentInput } from "../schemas/payment-schema";
 import type { PurchaseReturnInput, PurchaseReturnHeaderInput, PurchaseReturnBulkItemsInput } from "../schemas/return-schema";
-import type { Product } from "@/features/products/types";
+import type { Product } from "@/features/master/products/types";
 
 // ─── Stock Receiving Hooks ────────────────────────────────────────────────────
 
@@ -56,7 +56,7 @@ export function useCreateReceiving() {
             });
             queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
-     });
+    });
 }
 
 export function useBulkCreateReceiving() {

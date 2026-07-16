@@ -27,7 +27,8 @@ export function TransferCreatePage() {
   const activeStoreUid = useActiveStoreStore((state) => state.activeStoreUid);
   const activeStore = session?.user?.stores?.find((s) => s.uid === activeStoreUid);
 
-  const { data: stores = [] } = useStores();
+  const { data: storesRes } = useStores({ per_page: 1000 });
+  const stores = storesRes?.data ?? [];
   const destStores = stores.filter((s) => s.uid !== activeStoreUid);
   const storeOptions: CommandOption[] = destStores.map((s) => ({ value: s.uid, label: s.nama }));
 

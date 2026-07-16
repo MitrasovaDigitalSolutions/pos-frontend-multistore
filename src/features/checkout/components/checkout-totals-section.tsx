@@ -2,8 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { CommandSelect } from "@/components/ui/command-select";
-import { useAllMembers } from "@/features/members/api/members-api";
-import type { Member } from "@/features/members/types";
+import { useAllMembers } from "@/features/master/members/api/members-api";
+import type { Member } from "@/features/master/members/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import {
     IconCash,

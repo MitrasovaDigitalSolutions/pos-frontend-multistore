@@ -12,7 +12,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import type { CartItem } from "@/features/checkout/types";
-import type { Product } from "@/features/products/types";
+import type { Product } from "@/features/master/products/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconScan, IconTrash } from "@tabler/icons-react";
 import React, { useState } from "react";

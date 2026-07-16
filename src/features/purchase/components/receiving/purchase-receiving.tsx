@@ -11,7 +11,7 @@ import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
-import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
+import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
 import { RECEIVING_STATUS, RECEIVING_STATUS_LABELS, PAYMENT_STATUS, PAYMENT_STATUS_LABELS } from "@/constants/purchase";
 
 interface ReceivingFilterValues {

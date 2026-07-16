@@ -1,6 +1,6 @@
 import Dexie, { type Table } from "dexie";
-import type { Product } from "@/features/products/types";
-import type { Member } from "@/features/members/types";
+import type { Product } from "@/features/master/products/types";
+import type { Member } from "@/features/master/members/types";
 import type { Receipt } from "@/features/checkout/types";
 
 export interface OfflineTransaction {

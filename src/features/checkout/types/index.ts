@@ -1,4 +1,4 @@
-import type { Member } from "@/features/members/types";
+import type { Member } from "@/features/master/members/types";
 
 export interface CartItem {
     product_uid: string;

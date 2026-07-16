@@ -1,35 +1,74 @@
 "use client";
 
-import { useState } from "react";
+import { FilterForm } from "@/components/forms/filter-form";
+import { FormInput } from "@/components/forms/form-input";
+import { FormSelect } from "@/components/forms/form-select";
+import { hasRole } from "@/constants/roles";
+import { IconShieldLock } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
-import { IconBuildingStore, IconPlus, IconShieldLock } from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
-import { hasPermission, hasRole } from "@/constants/roles";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { useStores } from "./api/stores-api";
-import { StoreTable } from "./components/store-table";
 import { StoreFormDialog } from "./components/store-form-dialog";
+import { StoreTable } from "./components/store-table";
 import { StoreUsersDialog } from "./components/store-users-dialog";
 import type { Store } from "./types";
+
+interface StoreFilterValues {
+    search: string;
+    status: string;
+}
 
 export function Stores() {
     const { data: session } = useSession();
     const userRoles = session?.user?.roles ?? [];
-    const userPermissions = session?.user?.permissions ?? [];
+    const hasViewStores = hasRole(userRoles, "admin");
+    const hasManageStores = hasRole(userRoles, "admin");
 
-    const hasViewStores =
-        hasRole(userRoles, "admin") ||
-        hasPermission(userRoles, userPermissions, "view_stores") ||
-        hasPermission(userRoles, userPermissions, "manage_stores");
+    const [page, setPage] = useState(1);
+    const [perPage, setPerPage] = useState(10);
+    const [sortBy, setSortBy] = useState<string | undefined>("nama");
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("asc");
+    const [appliedFilters, setAppliedFilters] = useState<{
+        search?: string;
+        status?: string;
+    }>({});
 
-    const hasManageStores =
-        hasRole(userRoles, "admin") ||
-        hasPermission(userRoles, userPermissions, "manage_stores");
+    const filterMethods = useForm<StoreFilterValues>({
+        defaultValues: {
+            search: "",
+            status: "all",
+        },
+    });
 
-    const { data: stores = [], isLoading } = useStores();
+    const handleFilterSubmit = (data: StoreFilterValues) => {
+        setAppliedFilters({
+            search: data.search || undefined,
+            status: data.status !== "all" ? data.status : undefined,
+        });
+        setPage(1);
+    };
+
+    const handleFilterReset = () => {
+        filterMethods.reset({
+            search: "",
+            status: "all",
+        });
+        setAppliedFilters({});
+        setPage(1);
+    };
+
+    const { data: storesData, isLoading, isFetching } = useStores({
+        page,
+        per_page: perPage,
+        sort_by: sortBy,
+        sort_order: sortOrder,
+        ...appliedFilters,
+    });
 
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingStore, setEditingStore] = useState<Store | null>(null);
-    
+
     const [isUsersOpen, setIsUsersOpen] = useState(false);
     const [managingStoreUsers, setManagingStoreUsers] = useState<Store | null>(null);
 
@@ -63,31 +102,53 @@ export function Stores() {
         setIsUsersOpen(true);
     };
 
-    return (
-        <div className="p-4 md:p-8 space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center">
-                        <IconBuildingStore size={24} />
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-bold text-slate-900">Kelola Toko</h1>
-                        <p className="text-sm text-slate-500">Manajemen cabang dan akses toko</p>
-                    </div>
-                </div>
-                {hasManageStores && (
-                    <Button onClick={handleAdd} className="gap-2 shadow-sm w-full sm:w-auto">
-                        <IconPlus size={18} />
-                        <span>Tambah Toko</span>
-                    </Button>
-                )}
-            </div>
+    const statusOptions = [
+        { value: "all", label: "Semua Status" },
+        { value: "active", label: "Aktif" },
+        { value: "inactive", label: "Nonaktif" },
+    ];
 
+    return (
+        <div className="space-y-6">
             <StoreTable
-                stores={stores}
-                isLoading={isLoading}
+                stores={storesData?.data || []}
+                meta={storesData?.meta}
+                page={page}
+                perPage={perPage}
+                onPageChange={setPage}
+                onPerPageChange={setPerPage}
                 onEdit={handleEdit}
                 onManageUsers={handleManageUsers}
+                onAddClick={handleAdd}
+                hasManageStores={hasManageStores}
+                isLoading={isLoading}
+                isFetching={isFetching}
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortChange={(by, order) => {
+                    setSortBy(by);
+                    setSortOrder(order);
+                    setPage(1);
+                }}
+                filterElement={
+                    <FilterForm
+                        methods={filterMethods}
+                        onSubmit={handleFilterSubmit}
+                        onReset={handleFilterReset}
+                    >
+                        <FormInput<StoreFilterValues>
+                            name="search"
+                            label="Cari Toko"
+                            placeholder="Cari nama, alamat, telepon..."
+                        />
+                        <FormSelect<StoreFilterValues>
+                            name="status"
+                            label="Status"
+                            options={statusOptions}
+                            placeholder="Semua Status"
+                        />
+                    </FilterForm>
+                }
             />
 
             <StoreFormDialog

@@ -5,7 +5,7 @@ import { useForm, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { todayStr, formatToISO } from "@/lib/date-utils";
-import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
+import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
 import { useReceivings } from "@/features/purchase/api/purchase-api";
 import { purchaseReturnHeaderSchema, type PurchaseReturnHeaderInput } from "@/features/purchase/schemas/return-schema";
 import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
@@ -61,7 +61,7 @@ export function useReturnHeaderForm({
     const isClearedRef = useRef(false);
 
     // ─── Header Form Sync Effects ─────────────────────────────────────────────
-    
+
     // 1. Detect when headerData is cleared externally (e.g. via reset/clearAll)
     useEffect(() => {
         if (isCurrentNew && headerData === null) {

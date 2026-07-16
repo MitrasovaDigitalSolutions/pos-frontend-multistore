@@ -1,4 +1,4 @@
-import type { User } from "@/types/auth";
+import type { User, LoginResponse, MeResponse } from "@/types/auth";
 import { type NextAuthConfig, CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { ROUTES, PUBLIC_ROUTES, AUTH_ROUTES } from "@/constants/routes";
@@ -35,18 +35,18 @@ export default {
             }),
           });
 
-          const data = await res.json();
+          const data = await res.json() as LoginResponse;
 
-          if (!res.ok || !data.access_token) {
+          if (!res.ok || !data.data?.access_token) {
             throw new CustomAuthError(data.message || "Login gagal.");
           }
 
           return {
-            id: String(data.user.uid),
-            name: data.user.name,
-            email: data.user.email,
-            accessToken: data.access_token,
-            userData: data.user,
+            id: String(data.data.user.uid),
+            name: data.data.user.name,
+            email: data.data.user.email,
+            accessToken: data.data.access_token,
+            userData: data.data.user,
           };
         } catch (error) {
           if (error instanceof CredentialsSignin) {
@@ -99,8 +99,8 @@ export default {
         });
 
         if (res.ok) {
-          const data = await res.json();
-          token.user = data.user;
+          const data = await res.json() as MeResponse;
+          token.user = data.data.user;
           token.accessTokenExpires = Date.now() + 7 * 60 * 60 * 1000;
           return token;
         }

@@ -29,14 +29,20 @@ export interface User {
 // ─── Auth Response from Laravel Backend ─────────────────────────────────────
 
 export interface LoginResponse {
-    access_token: string;
-    token_type: string;
-    user: User;
+    status?: string;
     message?: string;
+    data: {
+        access_token: string;
+        token_type: string;
+        user: User;
+    };
 }
 
 export interface MeResponse {
-    user: User;
+    status?: string;
+    data: {
+        user: User;
+    };
 }
 
 // ─── NextAuth Extended Types ────────────────────────────────────────────────

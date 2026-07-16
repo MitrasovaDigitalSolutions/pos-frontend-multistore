@@ -1,84 +1,182 @@
 "use client";
 
-import { IconEdit, IconUsers } from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
+import { useMemo } from "react";
+import { IconUsers, IconBuildingStore, IconPlus } from "@tabler/icons-react";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { ColumnDef } from "@tanstack/react-table";
 import type { Store } from "../types";
 
 interface StoreTableProps {
     stores: Store[];
-    isLoading: boolean;
+    meta?: {
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+    };
+    page: number;
+    perPage: number;
+    onPageChange: (page: number) => void;
+    onPerPageChange: (perPage: number) => void;
     onEdit: (store: Store) => void;
     onManageUsers: (store: Store) => void;
+    isLoading?: boolean;
+    isFetching?: boolean;
+    filterElement?: React.ReactNode;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+    onSortChange?: (sortBy: string | undefined, sortOrder: "asc" | "desc" | undefined) => void;
+    onAddClick?: () => void;
+    hasManageStores?: boolean;
 }
 
-export function StoreTable({ stores, isLoading, onEdit, onManageUsers }: StoreTableProps) {
-    if (isLoading) {
-        return <div className="text-center py-8 text-slate-500">Memuat data toko...</div>;
-    }
-
-    if (stores.length === 0) {
-        return <div className="text-center py-8 text-slate-500">Belum ada toko yang ditambahkan.</div>;
-    }
+export function StoreTable({
+    stores,
+    meta,
+    page,
+    perPage,
+    onPageChange,
+    onPerPageChange,
+    onEdit,
+    onManageUsers,
+    isLoading = false,
+    isFetching = false,
+    filterElement,
+    sortBy,
+    sortOrder,
+    onSortChange,
+    onAddClick,
+    hasManageStores = false,
+}: StoreTableProps) {
+    const columns = useMemo<ColumnDef<Store>[]>(
+        () => [
+            {
+                accessorKey: "nama",
+                header: "Nama Toko",
+                cell: ({ row }) => (
+                    <div className="flex items-center gap-2">
+                        <div className="p-1 rounded bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shrink-0">
+                            <IconBuildingStore size={16} />
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                            <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-slate-900 truncate">
+                                    {row.original.nama}
+                                </span>
+                                {row.original.is_central && (
+                                    <Badge variant="default" className="bg-emerald-600 hover:bg-emerald-600 text-[9px] font-extrabold px-1.5 py-0 h-4 leading-none shrink-0 uppercase tracking-wider">
+                                        Pusat
+                                    </Badge>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                ),
+                size: 220,
+            },
+            {
+                accessorKey: "alamat",
+                header: "Alamat",
+                cell: ({ row }) => (
+                    <span className="text-slate-600 text-xs line-clamp-1 min-w-[150px]">
+                        {row.original.alamat || "-"}
+                    </span>
+                ),
+                size: 280,
+            },
+            {
+                accessorKey: "telepon",
+                header: "Telepon",
+                cell: ({ row }) => (
+                    <span className="text-slate-600 text-xs font-mono">
+                        {row.original.telepon || "-"}
+                    </span>
+                ),
+                size: 150,
+            },
+            {
+                accessorKey: "users_count",
+                header: "Jumlah User",
+                meta: {
+                    headerClassName: "text-center",
+                    cellClassName: "text-center",
+                },
+                cell: ({ row }) => (
+                    <span className="inline-flex items-center justify-center min-w-[2.25rem] h-6 px-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-xs font-bold">
+                        {row.original.users_count ?? 0}
+                    </span>
+                ),
+                size: 110,
+            },
+            {
+                accessorKey: "is_active",
+                header: "Status",
+                cell: ({ row }) => (
+                    <Badge variant={row.original.is_active ? "default" : "secondary"} className={row.original.is_active ? "bg-emerald-100 hover:bg-emerald-100 text-emerald-800 border-emerald-200" : ""}>
+                        {row.original.is_active ? "Aktif" : "Nonaktif"}
+                    </Badge>
+                ),
+                size: 100,
+            },
+        ],
+        []
+    );
 
     return (
-        <div className="border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="bg-slate-50/80 hover:bg-slate-50/80 border-b border-slate-200">
-                            <TableHead className="font-semibold text-slate-700 h-11">Nama</TableHead>
-                            <TableHead className="font-semibold text-slate-700 h-11">Alamat</TableHead>
-                            <TableHead className="font-semibold text-slate-700 h-11">Telepon</TableHead>
-                            <TableHead className="font-semibold text-slate-700 h-11 text-center">Jumlah User</TableHead>
-                            <TableHead className="font-semibold text-slate-700 h-11">Status</TableHead>
-                            <TableHead className="font-semibold text-slate-700 h-11 text-right">Aksi</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {stores.map((store) => (
-                            <TableRow key={store.uid} className="hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors">
-                                <TableCell className="font-medium text-slate-900 py-3">{store.nama}</TableCell>
-                                <TableCell className="text-slate-600 py-3">{store.alamat || "-"}</TableCell>
-                                <TableCell className="text-slate-600 py-3">{store.telepon || "-"}</TableCell>
-                                <TableCell className="text-center text-slate-600 py-3">
-                                        <div className="inline-flex items-center justify-center min-w-[2rem] h-6 rounded-full bg-slate-100 text-xs font-bold">
-                                        {store.users_count ?? 0}
-                                    </div>
-                                </TableCell>
-                                <TableCell className="py-3">
-                                    <Badge variant={store.is_active ? "default" : "secondary"}>
-                                        {store.is_active ? "Aktif" : "Nonaktif"}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell className="text-right py-3">
-                                    <div className="flex justify-end gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => onManageUsers(store)}
-                                            className="h-8 gap-1.5 px-2.5 text-slate-600 hover:text-brand-600 hover:bg-brand-50 border-slate-200"
-                                        >
-                                            <IconUsers size={14} />
-                                            <span className="hidden sm:inline">Kelola User</span>
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => onEdit(store)}
-                                            className="h-8 gap-1.5 px-2.5 text-slate-600 hover:text-brand-600 hover:bg-brand-50 border-slate-200"
-                                        >
-                                            <IconEdit size={14} />
-                                            <span className="hidden sm:inline">Edit</span>
-                                        </Button>
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+        <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-50 pb-2">
+                <div>
+                    <h3 className="text-sm font-bold text-slate-900">
+                        Daftar Cabang Toko
+                    </h3>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                        Daftar cabang toko ritel dan status operasional masing-masing.
+                    </p>
+                </div>
+                {hasManageStores && onAddClick && (
+                    <Button
+                        onClick={onAddClick}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
+                    >
+                        <IconPlus size={16} /> Tambah Toko
+                    </Button>
+                )}
             </div>
-        </div>
+
+            {filterElement}
+
+            <DataTable
+                columns={columns}
+                data={stores}
+                isLoading={isLoading}
+                isFetching={isFetching}
+                page={page}
+                perPage={perPage}
+                onPageChange={onPageChange}
+                onPerPageChange={onPerPageChange}
+                meta={meta}
+                entityName="toko"
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortChange={onSortChange}
+                onEdit={onEdit}
+                extraActions={(store) => (
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button
+                                onClick={() => onManageUsers(store)}
+                                className="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors border-none bg-transparent cursor-pointer flex items-center justify-center"
+                            >
+                                <IconUsers size={16} />
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent>Kelola User</TooltipContent>
+                    </Tooltip>
+                )}
+            />
+        </section>
     );
 }

@@ -5,7 +5,7 @@ import { FormNumberInput } from "@/components/forms/form-number-input";
 import { FormSelect } from "@/components/forms/form-select";
 import { Button } from "@/components/ui/button";
 import type { CommandOption } from "@/components/ui/command-select";
-import type { Product } from "@/features/products/types";
+import type { Product } from "@/features/master/products/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconX } from "@tabler/icons-react";
 import { useFormContext, type FieldPath } from "react-hook-form";

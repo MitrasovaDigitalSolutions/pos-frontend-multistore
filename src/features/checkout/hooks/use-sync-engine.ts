@@ -1,7 +1,7 @@
 "use client";
 
-import type { Member } from "@/features/members/types";
-import type { Product } from "@/features/products/types";
+import type { Member } from "@/features/master/members/types";
+import type { Product } from "@/features/master/products/types";
 import { useNetworkStatus } from "@/hooks/use-network-status";
 import type { PaginationParams } from "@/types/api";
 import { db } from "@/lib/db";

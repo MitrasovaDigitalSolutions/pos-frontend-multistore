@@ -4,7 +4,7 @@ import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { FormInput } from "@/components/forms/form-input";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { toast } from "sonner";
-import type { Member } from "@/features/members/types";
+import type { Member } from "@/features/master/members/types";
 import { useFormContext, useWatch } from "react-hook-form";
 import { IconAlertTriangle, IconUser } from "@tabler/icons-react";
 

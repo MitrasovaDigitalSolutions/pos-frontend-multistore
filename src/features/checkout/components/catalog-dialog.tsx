@@ -2,7 +2,7 @@
 
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Scrollable } from "@/components/ui/scrollable";
-import type { Product } from "@/features/products/types";
+import type { Product } from "@/features/master/products/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconPackage } from "@tabler/icons-react";
 

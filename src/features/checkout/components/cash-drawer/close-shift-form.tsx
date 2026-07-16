@@ -7,6 +7,7 @@ import { canAccessAdmin } from "@/constants/roles";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { signOut } from "@/lib/auth-helpers";
 import { useCheckoutStore } from "@/stores/checkout-store";
+import { useActiveStoreStore } from "@/stores/active-store-store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconChevronLeft, IconDoorExit, IconLoader2 } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
@@ -89,6 +90,9 @@ export function CloseShiftForm({
             // Clear checkout Zustand store client-side state on successful shift close
             useCheckoutStore.getState().clearCart();
             useCheckoutStore.getState().clearHoldList();
+
+            // Clear active store in local storage / Zustand
+            useActiveStoreStore.getState().setActiveStore(null);
 
             toast.success("Sesi shift laci kasir berhasil ditutup.");
             onSuccess();

@@ -10,7 +10,7 @@ import { Scrollable } from "@/components/ui/scrollable";
 import {
     PAYMENT_STATUS
 } from "@/constants/purchase";
-import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
+import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconClipboardPlus } from "@tabler/icons-react";

@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 
 import { todayStr, formatToISO } from "@/lib/date-utils";
 import { PAYMENT_STATUS } from "@/constants/purchase";
-import { useAllSuppliers } from "@/features/suppliers/api/suppliers-api";
+import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 
 import {

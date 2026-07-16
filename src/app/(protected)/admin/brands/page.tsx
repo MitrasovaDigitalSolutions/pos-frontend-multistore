@@ -1,4 +1,4 @@
-import { Brands } from "@/features/brands/brands";
+import { Brands } from "@/features/master/brands/brands";
 
 export default function AdminBrandsPage() {
     return <Brands />;

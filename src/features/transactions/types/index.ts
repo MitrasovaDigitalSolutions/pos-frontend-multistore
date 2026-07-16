@@ -1,8 +1,8 @@
 import type { Sale as BaseSale, SaleItem as BaseSaleItem } from "@/features/dashboard/types";
 import type { User } from "@/types/auth";
-import type { Product } from "@/features/products/types";
+import type { Product } from "@/features/master/products/types";
 import type { PaginationParams } from "@/types/api";
-import type { Member } from "@/features/members/types";
+import type { Member } from "@/features/master/members/types";
 
 export interface TransactionItem extends BaseSaleItem {
     product?: Product | null;
