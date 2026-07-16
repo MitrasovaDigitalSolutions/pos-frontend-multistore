@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect } from "react";
-import { FormProvider, useForm, type Resolver, Controller } from "react-hook-form";
+import { useEffect, useState, useRef } from "react";
+import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { CommandSelect } from "@/components/ui/command-select";
+import { FormInput } from "@/components/forms/form-input";
+import { FormSelect } from "@/components/forms/form-select";
+import { FormSwitch } from "@/components/forms/form-switch";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { storeSchema, type StoreInput } from "../schemas/store-schema";
 import { useCreateStore, useUpdateStore } from "../api/stores-api";
 import type { Store } from "../types";
@@ -22,6 +24,9 @@ interface StoreFormDialogProps {
 
 export function StoreFormDialog({ open, onOpenChange, editingStore }: StoreFormDialogProps) {
     const isEdit = !!editingStore;
+    const [showConfirmCentral, setShowConfirmCentral] = useState(false);
+    const hasConfirmedRef = useRef(false);
+    const isInitialized = useRef(false);
 
     const formMethods = useForm<StoreInput>({
         resolver: zodResolver(storeSchema) as Resolver<StoreInput>,
@@ -30,28 +35,33 @@ export function StoreFormDialog({ open, onOpenChange, editingStore }: StoreFormD
             alamat: "",
             telepon: "",
             is_active: true,
+            is_central: false,
         },
     });
 
     const {
-        register,
         handleSubmit,
         reset,
         setError,
-        formState: { errors },
+        setValue,
+        control,
     } = formMethods;
+
+    const isCentral = useWatch({ control, name: "is_central" });
 
     const createMutation = useCreateStore();
     const updateMutation = useUpdateStore();
 
     useEffect(() => {
         if (open) {
+            isInitialized.current = false;
             if (editingStore) {
                 reset({
                     nama: editingStore.nama,
                     alamat: editingStore.alamat ?? "",
                     telepon: editingStore.telepon ?? "",
                     is_active: editingStore.is_active,
+                    is_central: editingStore.is_central ?? false,
                 });
             } else {
                 reset({
@@ -59,10 +69,21 @@ export function StoreFormDialog({ open, onOpenChange, editingStore }: StoreFormD
                     alamat: "",
                     telepon: "",
                     is_active: true,
+                    is_central: false,
                 });
             }
+            setTimeout(() => {
+                isInitialized.current = true;
+            }, 0);
         }
     }, [open, editingStore, reset]);
+
+    useEffect(() => {
+        if (isCentral && isInitialized.current) {
+            hasConfirmedRef.current = false;
+            setShowConfirmCentral(true);
+        }
+    }, [isCentral]);
 
     const onSubmit = (data: StoreInput) => {
         const action = isEdit
@@ -91,116 +112,101 @@ export function StoreFormDialog({ open, onOpenChange, editingStore }: StoreFormD
     const isPending = createMutation.isPending || updateMutation.isPending;
 
     return (
-        <BaseDialog
-            open={open}
-            onOpenChange={onOpenChange}
-            title={
-                <div className="flex items-center gap-2">
-                    {isEdit ? (
-                        <IconEdit size={20} className="text-emerald-500" />
-                    ) : (
-                        <IconPlus size={20} className="text-emerald-500" />
-                    )}
-                    <span>{isEdit ? "Ubah Informasi Toko" : "Tambah Cabang Toko Baru"}</span>
-                </div>
-            }
-            className="max-w-[425px]"
-        >
-            <FormProvider {...formMethods}>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                    {/* Nama Toko */}
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            Nama Toko <span className="text-rose-500">*</span>
-                        </label>
-                        <Input
-                            type="text"
+        <>
+            <BaseDialog
+                open={open}
+                onOpenChange={onOpenChange}
+                title={
+                    <div className="flex items-center gap-2">
+                        {isEdit ? (
+                            <IconEdit size={20} className="text-emerald-500" />
+                        ) : (
+                            <IconPlus size={20} className="text-emerald-500" />
+                        )}
+                        <span>{isEdit ? "Ubah Informasi Toko" : "Tambah Cabang Toko Baru"}</span>
+                    </div>
+                }
+                className="max-w-[425px]"
+            >
+                <FormProvider {...formMethods}>
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                        {/* Nama Toko */}
+                        <FormInput<StoreInput>
+                            name="nama"
+                            label="Nama Toko"
                             placeholder="Nama cabang toko..."
-                            className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
                             disabled={isPending}
-                            {...register("nama")}
+                            required
                         />
-                        {errors.nama && (
-                            <p className="text-[10px] text-rose-500 font-medium mt-1">
-                                {errors.nama.message}
-                            </p>
-                        )}
-                    </div>
 
-                    {/* Alamat */}
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            Alamat
-                        </label>
-                        <Input
-                            type="text"
+                        {/* Alamat */}
+                        <FormInput<StoreInput>
+                            name="alamat"
+                            label="Alamat"
                             placeholder="Alamat lengkap cabang..."
-                            className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
                             disabled={isPending}
-                            {...register("alamat")}
                         />
-                        {errors.alamat && (
-                            <p className="text-[10px] text-rose-500 font-medium mt-1">
-                                {errors.alamat.message}
-                            </p>
-                        )}
-                    </div>
 
-                    {/* Telepon */}
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            Telepon
-                        </label>
-                        <Input
-                            type="text"
+                        {/* Telepon */}
+                        <FormInput<StoreInput>
+                            name="telepon"
+                            label="Telepon"
                             placeholder="Nomor kontak cabang..."
-                            className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
                             disabled={isPending}
-                            {...register("telepon")}
                         />
-                        {errors.telepon && (
-                            <p className="text-[10px] text-rose-500 font-medium mt-1">
-                                {errors.telepon.message}
-                            </p>
-                        )}
-                    </div>
 
-                    {/* Status */}
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            Status
-                        </label>
-                        <Controller
+                        {/* Status */}
+                        <FormSelect<StoreInput>
                             name="is_active"
-                            control={formMethods.control}
-                            render={({ field }) => (
-                                <CommandSelect
-                                    options={[
-                                        { value: "true", label: "Aktif" },
-                                        { value: "false", label: "Nonaktif" },
-                                    ]}
-                                    value={String(field.value)}
-                                    onChange={(val) => field.onChange(val === "true")}
-                                    disabled={isPending}
-                                />
-                            )}
+                            label="Status"
+                            options={[
+                                { value: "true", label: "Aktif" },
+                                { value: "false", label: "Nonaktif" },
+                            ]}
+                            disabled={isPending}
                         />
-                        {errors.is_active && (
-                            <p className="text-[10px] text-rose-500 font-medium mt-1">
-                                {errors.is_active.message}
-                            </p>
-                        )}
-                    </div>
 
-                    <Button
-                        type="submit"
-                        className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4"
-                        disabled={isPending}
-                    >
-                        {isPending ? "Menyimpan..." : "Simpan Toko"}
-                    </Button>
-                </form>
-            </FormProvider>
-        </BaseDialog>
+                        {/* Toko Pusat Switch */}
+                        <FormSwitch<StoreInput>
+                            name="is_central"
+                            label="Toko Pusat"
+                            description="Jadikan toko ini sebagai cabang pusat operasional."
+                            disabled={isPending}
+                        />
+
+                        <Button
+                            type="submit"
+                            className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4"
+                            disabled={isPending}
+                        >
+                            {isPending ? "Menyimpan..." : "Simpan Toko"}
+                        </Button>
+                    </form>
+                </FormProvider>
+            </BaseDialog>
+
+            <ConfirmDialog
+                open={showConfirmCentral}
+                onOpenChange={(open) => {
+                    setShowConfirmCentral(open);
+                    if (!open && !hasConfirmedRef.current) {
+                        setValue("is_central", false);
+                    }
+                }}
+                title="Konfirmasi Toko Pusat"
+                description={
+                    <div className="space-y-2 text-slate-600 dark:text-slate-400">
+                        <p>Toko yang dibuat akan menjadi toko pusat dan toko pusat yang sebelumnya akan berpindah ke toko yang baru dibuat ini.</p>
+                        <p className="font-semibold text-amber-600 dark:text-amber-500">Apakah Anda yakin ingin melanjutkan?</p>
+                    </div>
+                }
+                confirmText="Ya, Lanjutkan"
+                cancelText="Batal"
+                onConfirm={() => {
+                    hasConfirmedRef.current = true;
+                    setShowConfirmCentral(false);
+                }}
+            />
+        </>
     );
 }

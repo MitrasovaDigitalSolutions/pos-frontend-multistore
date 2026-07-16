@@ -222,7 +222,7 @@ export function ProductFormDialog({
                 {/* Kolom Kanan: Detail & Informasi Produk */}
                 <div className="md:col-span-2 space-y-4">
                     {/* Barcode & Nama Produk */}
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                         <div className="col-span-1 space-y-1.5">
                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                 Barcode / SKU
@@ -241,7 +241,7 @@ export function ProductFormDialog({
                             )}
                         </div>
 
-                        <div className="col-span-2 space-y-1.5">
+                        <div className="col-span-1 space-y-1.5">
                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                 Nama Produk
                             </label>
@@ -261,7 +261,7 @@ export function ProductFormDialog({
                     </div>
 
                     {/* Kategori, Brand & Stok */}
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                         <FormSelect<ProductInput>
                             name="category_uid"
                             label="Kategori"
@@ -279,23 +279,6 @@ export function ProductFormDialog({
                             searchPlaceholder="Cari brand..."
                             disabled={isPending}
                             size="md"
-                        />
-                        <FormNumberInput<ProductInput>
-                            name="stok"
-                            label="Stok"
-                            placeholder={isJasa ? "0" : "50"}
-                            disabled={isPending || !!editingProduct || isJasa}
-                            helperText={
-                                isJasa ? (
-                                    <p className="text-[9px] text-blue-500 font-semibold mt-0.5 leading-snug">
-                                        Stok produk jasa selalu bernilai 0.
-                                    </p>
-                                ) : editingProduct ? (
-                                    <p className="text-[9px] text-slate-400 font-semibold mt-0.5 leading-snug">
-                                        Stok hanya dapat disesuaikan melalui menu stok masuk/keluar.
-                                    </p>
-                                ) : undefined
-                            }
                         />
                     </div>
 

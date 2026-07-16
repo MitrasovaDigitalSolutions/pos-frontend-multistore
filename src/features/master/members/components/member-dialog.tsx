@@ -93,24 +93,14 @@ export function MemberDialog({
             }
             className="sm:max-w-lg"
         >
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4">
-                <div className="grid grid-cols-2 gap-4">
-                    {/* Kode Member */}
-                    <FormInput<MemberInput>
-                        name="kode"
-                        label="Kode Member (Opsional)"
-                        placeholder="Dibuat otomatis jika dikosongkan..."
-                        disabled={isPending}
-                    />
-
-                    {/* Nama */}
-                    <FormInput<MemberInput>
-                        name="nama"
-                        label="Nama Member *"
-                        placeholder="Masukkan nama lengkap member..."
-                        disabled={isPending}
-                    />
-                </div>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                {/* Nama */}
+                <FormInput<MemberInput>
+                    name="nama"
+                    label="Nama Member *"
+                    placeholder="Masukkan nama lengkap member..."
+                    disabled={isPending}
+                />
 
                 <div className="grid grid-cols-2 gap-4">
                     {/* Email */}

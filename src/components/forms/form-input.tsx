@@ -20,6 +20,7 @@ export function FormInput<T extends FieldValues>({
     name,
     label,
     className,
+    required,
     ...props
 }: FormInputProps<T>) {
     const {
@@ -37,6 +38,7 @@ export function FormInput<T extends FieldValues>({
                     className="text-[10px] font-bold text-slate-500 uppercase tracking-wider"
                 >
                     {label}
+                    {required && <span className="text-rose-500"> *</span>}
                 </label>
             )}
             <Input
