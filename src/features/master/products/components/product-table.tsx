@@ -5,16 +5,13 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { IconPlus, IconBuildingStore } from "@tabler/icons-react";
+import { IconPlus } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useDeleteProduct, useToggleProductStatus } from "../api/products-api";
 import type { Product } from "../types";
-import { useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/query-keys";
-import { ProductImportExport } from "./product-import-export";
 
 interface ProductTableProps {
     products: Product[];
@@ -56,22 +53,22 @@ export function ProductTable({
     sortOrder,
     onSortChange,
 }: ProductTableProps) {
-    const queryClient = useQueryClient();
+    // const queryClient = useQueryClient();
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
     const hasManageProducts =
         hasRole(userRoles, "admin") ||
         hasPermission(userRoles, userPermissions, "manage_products");
-    
+
     const hasManageStores =
         hasRole(userRoles, "admin") ||
         hasPermission(userRoles, userPermissions, "view_stores") ||
         hasPermission(userRoles, userPermissions, "manage_stores");
 
-    const handleImportSuccess = () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
-    };
+    // const handleImportSuccess = () => {
+    //     queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+    // };
 
     const deleteProduct = useDeleteProduct();
     const toggleStatus = useToggleProductStatus();
@@ -263,29 +260,29 @@ export function ProductTable({
                 },
             ];
 
-            if (hasManageStores && onManageStores) {
-                baseColumns.push({
-                    id: "stores",
-                    header: "Toko",
-                    enableSorting: false,
-                    meta: {
-                        headerClassName: "text-center",
-                        cellClassName: "text-center",
-                    },
-                    size: 80,
-                    cell: ({ row }) => (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={() => onManageStores(row.original)}
-                            title="Kelola Toko"
-                        >
-                            <IconBuildingStore className="h-4 w-4 text-slate-500" />
-                        </Button>
-                    ),
-                });
-            }
+            // if (hasManageStores && onManageStores) {
+            //     baseColumns.push({
+            //         id: "stores",
+            //         header: "Toko",
+            //         enableSorting: false,
+            //         meta: {
+            //             headerClassName: "text-center",
+            //             cellClassName: "text-center",
+            //         },
+            //         size: 80,
+            //         cell: ({ row }) => (
+            //             <Button
+            //                 variant="ghost"
+            //                 size="sm"
+            //                 className="h-8 w-8 p-0"
+            //                 onClick={() => onManageStores(row.original)}
+            //                 title="Kelola Toko"
+            //             >
+            //                 <IconBuildingStore className="h-4 w-4 text-slate-500" />
+            //             </Button>
+            //         ),
+            //     });
+            // }
 
             return baseColumns;
         },
@@ -331,11 +328,11 @@ export function ProductTable({
                 sortBy={sortBy}
                 sortOrder={sortOrder}
                 onSortChange={onSortChange}
-                extraToolbarActions={
-                    hasManageProducts ? (
-                        <ProductImportExport onImportSuccess={handleImportSuccess} />
-                    ) : null
-                }
+                // extraToolbarActions={
+                //     hasManageProducts ? (
+                //         <ProductImportExport onImportSuccess={handleImportSuccess} />
+                //     ) : null
+                // }
                 virtualize={true}
                 estimateRowHeight={44}
                 onEdit={hasManageProducts ? onEdit : undefined}

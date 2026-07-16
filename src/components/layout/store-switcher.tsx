@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useForm, FormProvider } from "react-hook-form";
 import { IconBuildingStore } from "@tabler/icons-react";
 import { useActiveStoreStore } from "@/stores/active-store-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import { FormSelect } from "@/components/forms/form-select";
 import { toast } from "sonner";
 
@@ -42,7 +43,10 @@ export function StoreSwitcher() {
             if (newStore) {
                 const toastId = toast.loading(`Sedang berpindah ke ${newStore.nama}...`);
                 setActiveStore(uid);
-                queryClient.invalidateQueries().then(() => {
+                Promise.all([
+                    queryClient.invalidateQueries(),
+                    useSettingsStore.getState().fetchSettings(),
+                ]).then(() => {
                     toast.success(`Berhasil berpindah ke ${newStore.nama}`, {
                         id: toastId,
                     });
