@@ -47,13 +47,27 @@ export function useFinalizeStockTransfer() {
   });
 }
 
+export interface ReceiveStockTransferItem {
+  product_uid: string;
+  kuantitas_diterima?: number;
+  keterangan?: string;
+}
+
+export interface ReceiveStockTransferPayload {
+  items?: ReceiveStockTransferItem[];
+}
+
 export function useReceiveStockTransfer() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (uid: string) => apiPost<ApiResponse<StockTransfer>, void>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.RECEIVE(uid)),
-    onSuccess: (_, uid) => {
+    mutationFn: ({ uid, payload }: { uid: string; payload?: ReceiveStockTransferPayload }) =>
+      apiPost<ApiResponse<StockTransfer>, ReceiveStockTransferPayload | undefined>(
+        ENDPOINTS.INVENTORY.STOCK_TRANSFERS.RECEIVE(uid),
+        payload
+      ),
+    onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers() });
-      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(uid) });
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(variables.uid) });
     },
   });
 }

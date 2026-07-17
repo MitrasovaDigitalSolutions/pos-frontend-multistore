@@ -30,7 +30,7 @@ import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FormProvider, useForm } from "react-hook-form";
 
 const STATUS_OPTIONS = [
@@ -101,14 +101,28 @@ export function TransferListPage() {
               <span className="font-mono font-bold text-slate-900 text-xs flex items-center gap-1.5">
                 {row.original.nomor_transfer}
                 {isOutgoing && (
-                  <span title="Transfer Keluar" className="text-amber-600 bg-amber-50 p-0.5 rounded">
-                    <IconArrowUpRight size={13} />
-                  </span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-amber-600 bg-amber-50 p-0.5 rounded cursor-pointer">
+                        <IconArrowUpRight size={13} />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      <p>Transfer Keluar</p>
+                    </TooltipContent>
+                  </Tooltip>
                 )}
                 {isIncoming && (
-                  <span title="Transfer Masuk" className="text-blue-600 bg-blue-50 p-0.5 rounded">
-                    <IconArrowDownLeft size={13} />
-                  </span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-blue-600 bg-blue-50 p-0.5 rounded cursor-pointer">
+                        <IconArrowDownLeft size={13} />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      <p>Transfer Masuk</p>
+                    </TooltipContent>
+                  </Tooltip>
                 )}
               </span>
               <span className="text-[10px] text-slate-400">
@@ -213,7 +227,8 @@ export function TransferListPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <TooltipProvider>
+      <div className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -377,5 +392,6 @@ export function TransferListPage() {
         />
       </section>
     </div>
+  </TooltipProvider>
   );
 }

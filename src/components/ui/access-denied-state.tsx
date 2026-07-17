@@ -19,6 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface AccessDeniedStateProps {
   title?: string;
@@ -82,16 +83,24 @@ export function AccessDeniedState({
             <div className="flex items-center gap-2 flex-wrap">
               <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100">{title}</h4>
               {requiredPermission && (
-                <button
-                  type="button"
-                  onClick={handleCopyPermission}
-                  title="Klik untuk menyalin kode izin"
-                  className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold bg-rose-100/70 dark:bg-rose-950/60 hover:bg-rose-200/70 text-rose-700 dark:text-rose-300 px-2 py-0.5 rounded-md border border-rose-200/80 dark:border-rose-800/80 transition-colors cursor-pointer"
-                >
-                  <IconKey size={10} />
-                  <span>{requiredPermission}</span>
-                  {copied ? <IconCheck size={10} className="text-emerald-600" /> : <IconCopy size={10} className="opacity-60" />}
-                </button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={handleCopyPermission}
+                        className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold bg-rose-100/70 dark:bg-rose-950/60 hover:bg-rose-200/70 text-rose-700 dark:text-rose-300 px-2 py-0.5 rounded-md border border-rose-200/80 dark:border-rose-800/80 transition-colors cursor-pointer"
+                      >
+                        <IconKey size={10} />
+                        <span>{requiredPermission}</span>
+                        {copied ? <IconCheck size={10} className="text-emerald-600" /> : <IconCopy size={10} className="opacity-60" />}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      <p>Klik untuk menyalin kode izin</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed max-w-xl">{description}</p>
@@ -120,20 +129,41 @@ export function AccessDeniedState({
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-rose-500/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* Hero Icon with Glowing Pulse effect */}
-      <div className="relative group cursor-pointer" onClick={handleCopyPermission} title={requiredPermission ? "Klik untuk menyalin kode izin" : undefined}>
-        {/* Soft Outer Halo */}
-        <div className="absolute -inset-2 rounded-full bg-rose-500/20 dark:bg-rose-500/30 blur-md animate-pulse group-hover:bg-rose-500/30 transition-all duration-300" />
+      {requiredPermission ? (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="relative group cursor-pointer" onClick={handleCopyPermission}>
+                {/* Soft Outer Halo */}
+                <div className="absolute -inset-2 rounded-full bg-rose-500/20 dark:bg-rose-500/30 blur-md animate-pulse group-hover:bg-rose-500/30 transition-all duration-300" />
 
-        {/* Main Icon Container */}
-        <div className="relative w-20 h-20 bg-gradient-to-tr from-rose-500 to-rose-600 dark:from-rose-600 dark:to-rose-700 text-white rounded-3xl flex items-center justify-center shadow-lg shadow-rose-500/25 group-hover:scale-105 group-hover:rotate-1 transition-all duration-300">
-          <IconShieldLock size={42} strokeWidth={1.75} className="drop-shadow" />
-        </div>
+                {/* Main Icon Container */}
+                <div className="relative w-20 h-20 bg-gradient-to-tr from-rose-500 to-rose-600 dark:from-rose-600 dark:to-rose-700 text-white rounded-3xl flex items-center justify-center shadow-lg shadow-rose-500/25 group-hover:scale-105 group-hover:rotate-1 transition-all duration-300">
+                  <IconShieldLock size={42} strokeWidth={1.75} className="drop-shadow" />
+                </div>
 
-        {/* Small Lock Badge */}
-        <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-slate-900 text-rose-400 border-2 border-white dark:border-slate-900 flex items-center justify-center shadow-md">
-          <IconKey size={14} />
+                {/* Small Lock Badge */}
+                <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-slate-900 text-rose-400 border-2 border-white dark:border-slate-900 flex items-center justify-center shadow-md">
+                  <IconKey size={14} />
+                </div>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              <p>Klik untuk menyalin kode izin</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <div className="relative group">
+          <div className="absolute -inset-2 rounded-full bg-rose-500/20 dark:bg-rose-500/30 blur-md animate-pulse" />
+          <div className="relative w-20 h-20 bg-gradient-to-tr from-rose-500 to-rose-600 dark:from-rose-600 dark:to-rose-700 text-white rounded-3xl flex items-center justify-center shadow-lg shadow-rose-500/25">
+            <IconShieldLock size={42} strokeWidth={1.75} className="drop-shadow" />
+          </div>
+          <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-slate-900 text-rose-400 border-2 border-white dark:border-slate-900 flex items-center justify-center shadow-md">
+            <IconKey size={14} />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Title & Main Description */}
       <div className="space-y-3 max-w-lg relative z-10">
