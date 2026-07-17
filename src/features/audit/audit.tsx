@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/data-table";
 import { hasPermission, hasRole } from "@/constants/roles";
@@ -17,6 +17,7 @@ import {
 import { AuditFilters } from "./components/audit-filters";
 import { AuditTimeline } from "./components/audit-timeline";
 import { AuditInspector } from "./components/audit-inspector";
+import { AccessDeniedState } from "@/components/ui/access-denied-state";
 
 interface AuditFilterValues {
     search: string;
@@ -47,8 +48,7 @@ export function AuditLogs() {
         },
     });
 
-    const { watch } = filterMethods;
-    const selectedModules = watch("modules") || [];
+    const selectedModules = useWatch({ control: filterMethods.control, name: "modules" }) || [];
 
     const handleFilterSubmit = (data: AuditFilterValues) => {
         setDebouncedSearch(data.search);
@@ -197,10 +197,10 @@ export function AuditLogs() {
 
     if (!hasViewAuditLogs) {
         return (
-            <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm">
-                <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
-                <p className="text-xs text-slate-400 mt-1">Anda tidak memiliki izin untuk melihat log aktivitas.</p>
-            </div>
+            <AccessDeniedState
+                description="Anda tidak memiliki izin untuk melihat log aktivitas & audit trail sistem."
+                requiredPermission="view_audit_logs"
+            />
         );
     }
 

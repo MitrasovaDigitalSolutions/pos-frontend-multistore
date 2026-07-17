@@ -18,6 +18,7 @@ import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
 import { FormSwitch } from "@/components/forms/form-switch";
 import { useSearchParams } from "next/navigation";
+import { AccessDeniedState } from "@/components/ui/access-denied-state";
 
 interface ProductFilterValues {
   search: string;
@@ -136,10 +137,10 @@ export function Products() {
 
   if (!hasViewProducts) {
     return (
-      <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm">
-        <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
-        <p className="text-xs text-slate-400 mt-1">Anda tidak memiliki izin untuk melihat data produk.</p>
-      </div>
+      <AccessDeniedState
+        description="Anda tidak memiliki izin untuk melihat atau mengelola data produk."
+        requiredPermission="view_products"
+      />
     );
   }
 

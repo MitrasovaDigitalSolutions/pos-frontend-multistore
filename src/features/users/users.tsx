@@ -16,6 +16,7 @@ import type { User } from "./types";
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
+import { AccessDeniedState } from "@/components/ui/access-denied-state";
 
 interface UserFilterValues {
   search: string;
@@ -112,10 +113,10 @@ export function Users() {
 
   if (!hasViewUsers) {
     return (
-      <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm">
-        <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
-        <p className="text-xs text-slate-400 mt-1">Anda tidak memiliki izin untuk mengakses halaman manajemen pengguna.</p>
-      </div>
+      <AccessDeniedState
+        description="Anda tidak memiliki izin untuk melihat atau mengelola data pengguna sistem."
+        requiredPermission="view_users"
+      />
     );
   }
 

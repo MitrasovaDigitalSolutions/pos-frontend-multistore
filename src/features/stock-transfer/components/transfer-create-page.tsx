@@ -14,6 +14,7 @@ import { BarcodeInput } from "@/components/shared/barcode-input";
 import { CommandSelect, type CommandOption } from "@/components/ui/command-select";
 import { IconArrowLeft, IconTrash, IconDeviceFloppy } from "@tabler/icons-react";
 import { toast } from "sonner";
+import { AccessDeniedState } from "@/components/ui/access-denied-state";
 
 interface TransferItem {
   product_uid: string;
@@ -39,11 +40,11 @@ export function TransferCreatePage() {
 
   if (!activeStore?.is_central) {
     return (
-      <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm max-w-md mx-auto mt-12">
-        <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
-        <p className="text-xs text-slate-400 mt-1">Hanya toko Pusat yang dapat membuat transfer stok.</p>
-        <Button onClick={() => router.back()} className="mt-4">Kembali</Button>
-      </div>
+      <AccessDeniedState
+        title="Restriksi Toko Pusat"
+        description="Hanya toko Pusat yang dapat membuat pengiriman / transfer stok ke cabang lain."
+        requiredPermission="store_central"
+      />
     );
   }
 

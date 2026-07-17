@@ -9,6 +9,7 @@ import { LabaRugiHeaderFilters } from "./laba-rugi-header-filters";
 import { LabaRugiSummaryCard } from "./laba-rugi-summary-card";
 import { LabaRugiDetailsTable } from "./laba-rugi-details-table";
 import { formatToISO, todayStr } from "@/lib/date-utils";
+import { AccessDeniedState } from "@/components/ui/access-denied-state";
 
 interface LabaRugiFilterValues {
     fromDate: string;
@@ -47,10 +48,10 @@ export function LabaRugiReportView() {
 
     if (!hasViewReports) {
         return (
-            <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm">
-                <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
-                <p className="text-xs text-slate-400 mt-1">Anda tidak memiliki izin untuk melihat laporan laba rugi.</p>
-            </div>
+            <AccessDeniedState
+                description="Anda tidak memiliki izin untuk melihat laporan laba rugi."
+                requiredPermission="view_reports"
+            />
         );
     }
 

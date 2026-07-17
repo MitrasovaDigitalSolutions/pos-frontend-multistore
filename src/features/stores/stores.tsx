@@ -4,7 +4,7 @@ import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
 import { hasRole } from "@/constants/roles";
-import { IconShieldLock } from "@tabler/icons-react";
+import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -74,16 +74,10 @@ export function Stores() {
 
     if (!hasViewStores) {
         return (
-            <div className="p-8 flex flex-col items-center justify-center text-center min-h-[400px] bg-white rounded-xl border border-slate-200 shadow-sm mx-4 md:mx-8 mt-6">
-                <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mb-4">
-                    <IconShieldLock size={32} />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">Akses Ditolak</h3>
-                <p className="text-slate-500 max-w-md">
-                    Anda tidak memiliki izin untuk melihat halaman ini. Hubungi administrator
-                    sistem jika Anda merasa ini adalah sebuah kesalahan.
-                </p>
-            </div>
+            <AccessDeniedState
+                description="Halaman Kelola Toko hanya dapat diakses dan dikelola oleh Admin."
+                requiredPermission="admin"
+            />
         );
     }
 
