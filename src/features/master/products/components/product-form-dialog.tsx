@@ -13,7 +13,7 @@ import { useCategories } from "@/features/master/categories/api/categories-api";
 import { getImageUrl } from "@/lib/utils";
 import { IconInfoCircle, IconPackage } from "@tabler/icons-react";
 import { useEffect, useMemo } from "react";
-import { useFormContext, type FieldErrors } from "react-hook-form";
+import { useFormContext, useWatch, type FieldErrors } from "react-hook-form";
 import { toast } from "sonner";
 import { useCreateProduct, useUpdateProduct } from "../api/products-api";
 import { type ProductInput } from "../schemas/product-schema";
@@ -40,7 +40,7 @@ export function ProductFormDialog({
     const {
         register,
         handleSubmit,
-        watch,
+        control,
         setValue,
         formState: { errors },
     } = useFormContext<ProductInput>();
@@ -67,11 +67,11 @@ export function ProductFormDialog({
         ];
     }, [brandsRes]);
 
-    // Automatic Margin & Price calculations
-    const hargaBeli = watch("harga_beli");
-    const harga = watch("harga");
-    const margin = watch("margin");
-    const isJasa = watch("is_jasa");
+    // Automatic Margin & Price calculations using useWatch
+    const hargaBeli = useWatch({ control, name: "harga_beli" });
+    const harga = useWatch({ control, name: "harga" });
+    const margin = useWatch({ control, name: "margin" });
+    const isJasa = useWatch({ control, name: "is_jasa" });
 
     useEffect(() => {
         if (isJasa) {
@@ -192,7 +192,7 @@ export function ProductFormDialog({
                     <span>
                         {editingProduct
                             ? "Edit Detail Produk"
-                            : "Tambah Produk Baru"}
+                            : "Ajukan Penambahan Produk Baru"}
                     </span>
                 </>
             }

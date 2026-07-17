@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useForm } from "react-hook-form";
+import { FormProvider, useForm, type Resolver } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { hasRole } from "@/constants/roles";
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
@@ -16,6 +17,9 @@ import { useProductCatalog } from "./api/catalog-api";
 import { CatalogTable } from "./components/catalog-table";
 import { CatalogAssignDialog } from "./components/catalog-assign-dialog";
 import type { CatalogProduct } from "./types";
+import { ProductFormDialog } from "@/features/master/products/components/product-form-dialog";
+import { productSchema, type ProductInput } from "@/features/master/products/schemas/product-schema";
+import type { Product } from "@/features/master/products/types";
 
 // ─── Filter shape ─────────────────────────────────────────────────────────────
 
@@ -66,6 +70,44 @@ export function ProductCatalog() {
             is_jasa: false,
         },
     });
+
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [editingProduct, setEditingProduct] = useState<CatalogProduct | null>(null);
+
+    const dialogMethods = useForm<ProductInput>({
+        resolver: zodResolver(productSchema) as Resolver<ProductInput>,
+        defaultValues: {
+            nama: "",
+            merek: "",
+            barcode: "",
+            harga: 0,
+            stok: 0,
+            harga_beli: 0,
+            margin: 0,
+            category_uid: null,
+            brand_uid: null,
+            image: null,
+            is_jasa: false,
+        },
+    });
+
+    const handleEdit = (product: CatalogProduct) => {
+        setEditingProduct(product);
+        dialogMethods.reset({
+            nama: product.nama,
+            merek: product.merek || "",
+            barcode: product.barcode || "",
+            harga: product.harga,
+            stok: product.stok ?? 0,
+            harga_beli: product.harga_beli ?? 0,
+            margin: product.margin ?? 0,
+            category_uid: product.category_uid ?? null,
+            brand_uid: product.brand_uid ?? null,
+            image: null,
+            is_jasa: !!product.is_jasa,
+        });
+        setIsEditDialogOpen(true);
+    };
 
     // Sync URL search param → form
     useEffect(() => {
@@ -144,64 +186,73 @@ export function ProductCatalog() {
 
     return (
         <div className="space-y-6">
-            <CatalogTable
-                products={catalogData?.data || []}
-                meta={catalogData?.meta}
-                page={page}
-                perPage={perPage}
-                onPageChange={setPage}
-                onPerPageChange={setPerPage}
-                onAssign={handleAssign}
-                isLoading={isLoading}
-                isFetching={isFetching}
-                sortBy={sortBy}
-                sortOrder={sortOrder}
-                onSortChange={(by, order) => {
-                    setSortBy(by);
-                    setSortOrder(order);
-                    setPage(1);
-                }}
-                isAdmin={isAdmin}
-                filterElement={
-                    <FilterForm
-                        methods={filterMethods}
-                        onSubmit={handleFilterSubmit}
-                        onReset={handleFilterReset}
-                    >
-                        <FormInput<CatalogFilterValues>
-                            name="search"
-                            label="Cari Produk"
-                            placeholder="Cari barcode, nama, atau merek..."
-                        />
-                        <FormSelect<CatalogFilterValues>
-                            name="category_uid"
-                            label="Kategori"
-                            options={categoryOptions}
-                            placeholder="Semua Kategori"
-                        />
-                        <FormSelect<CatalogFilterValues>
-                            name="brand_uid"
-                            label="Brand"
-                            options={brandOptions}
-                            placeholder="Semua Brand"
-                        />
-                        <FormSelect<CatalogFilterValues>
-                            name="status"
-                            label="Status"
-                            options={statusOptions}
-                            placeholder="Semua Status"
-                        />
-                        <div className="col-span-2">
-                            <FormSwitch<CatalogFilterValues>
-                                name="is_jasa"
-                                label="Produk Jasa / Layanan"
-                                description="Aktifkan untuk menampilkan produk jasa saja"
-                                className="bg-white"
+            <FormProvider {...dialogMethods}>
+                <CatalogTable
+                    products={catalogData?.data || []}
+                    meta={catalogData?.meta}
+                    page={page}
+                    perPage={perPage}
+                    onPageChange={setPage}
+                    onPerPageChange={setPerPage}
+                    onAssign={handleAssign}
+                    onEdit={handleEdit}
+                    isLoading={isLoading}
+                    isFetching={isFetching}
+                    sortBy={sortBy}
+                    sortOrder={sortOrder}
+                    onSortChange={(by, order) => {
+                        setSortBy(by);
+                        setSortOrder(order);
+                        setPage(1);
+                    }}
+                    isAdmin={isAdmin}
+                    filterElement={
+                        <FilterForm
+                            methods={filterMethods}
+                            onSubmit={handleFilterSubmit}
+                            onReset={handleFilterReset}
+                        >
+                            <FormInput<CatalogFilterValues>
+                                name="search"
+                                label="Cari Produk"
+                                placeholder="Cari barcode, nama, atau merek..."
                             />
-                        </div>
-                    </FilterForm>
-                }
-            />
+                            <FormSelect<CatalogFilterValues>
+                                name="category_uid"
+                                label="Kategori"
+                                options={categoryOptions}
+                                placeholder="Semua Kategori"
+                            />
+                            <FormSelect<CatalogFilterValues>
+                                name="brand_uid"
+                                label="Brand"
+                                options={brandOptions}
+                                placeholder="Semua Brand"
+                            />
+                            <FormSelect<CatalogFilterValues>
+                                name="status"
+                                label="Status"
+                                options={statusOptions}
+                                placeholder="Semua Status"
+                            />
+                            <div className="col-span-2">
+                                <FormSwitch<CatalogFilterValues>
+                                    name="is_jasa"
+                                    label="Produk Jasa / Layanan"
+                                    description="Aktifkan untuk menampilkan produk jasa saja"
+                                    className="bg-white"
+                                />
+                            </div>
+                        </FilterForm>
+                    }
+                />
+
+                <ProductFormDialog
+                    open={isEditDialogOpen}
+                    onOpenChange={setIsEditDialogOpen}
+                    editingProduct={editingProduct as Product | null}
+                />
+            </FormProvider>
 
             <CatalogAssignDialog
                 open={isAssignOpen}

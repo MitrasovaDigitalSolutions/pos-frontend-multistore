@@ -1,6 +1,7 @@
 import { queryKeys } from "@/lib/query-keys";
 import {
     apiDelete,
+    apiGet,
     apiGetList,
     apiPatch,
     apiPost
@@ -8,6 +9,38 @@ import {
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Product } from "../types";
+
+export interface CatalogMatchItem {
+    uid: string;
+    nama: string;
+    barcode: string | null;
+    similarity: number;
+}
+
+export interface CatalogMatchResponse {
+    query: string;
+    threshold: number;
+    matches: CatalogMatchItem[];
+}
+
+export function useCatalogMatch(nama: string, options?: { threshold?: number; limit?: number; enabled?: boolean }) {
+    const threshold = options?.threshold ?? 0.4;
+    const limit = options?.limit ?? 3;
+    const enabled = options?.enabled ?? (!!nama && nama.trim().length >= 1);
+
+    return useQuery<CatalogMatchResponse>({
+        queryKey: ["products", "catalog-match", nama, threshold, limit],
+        queryFn: () =>
+            apiGet<CatalogMatchResponse>("/v1/products/catalog/match", {
+                params: {
+                    nama: nama.trim(),
+                    threshold,
+                    limit,
+                },
+            }),
+        enabled,
+    });
+}
 
 export function useProducts(params?: PaginationParams & { status?: string; category_uid?: string; brand_uid?: string; is_jasa?: string }) {
     return useQuery<PaginatedResponse<Product>>({

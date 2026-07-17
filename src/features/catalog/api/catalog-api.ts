@@ -1,6 +1,6 @@
 import { queryKeys } from "@/lib/query-keys";
-import { apiGetList, apiPost } from "@/shared/api/api-client";
-import type { PaginatedResponse, PaginationParams } from "@/types/api";
+import { apiDelete, apiGetList, apiPost } from "@/shared/api/api-client";
+import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { BulkAssignPayload, CatalogProduct } from "../types";
 
@@ -45,6 +45,23 @@ export function useBulkAssignProductStores() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.productCatalog.all });
             queryClient.invalidateQueries({ queryKey: queryKeys.productStores.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+        },
+    });
+}
+
+/**
+ * Permanently deletes a master product from catalog.
+ * Uses DELETE /v1/products/{product_uid} — admin view.
+ */
+export function useDeleteCatalogProduct() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<void>, Error, string>({
+        mutationFn: (productUid) =>
+            apiDelete<ApiResponse<void>>(`/v1/products/${productUid}`),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.productCatalog.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
     });
 }

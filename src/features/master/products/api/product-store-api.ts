@@ -30,6 +30,7 @@ export function useAssignProductStore() {
             ),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: queryKeys.productStores.list(variables.productUid) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
     });
 }
@@ -48,6 +49,7 @@ export function useUpdateProductStore() {
             ),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: queryKeys.productStores.list(variables.productUid) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
     });
 }
@@ -59,6 +61,7 @@ export function useDetachProductStore() {
             apiDelete<void>(`/v1/products/${productUid}/stores/${storeUid}`),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: queryKeys.productStores.list(variables.productUid) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
     });
 }
