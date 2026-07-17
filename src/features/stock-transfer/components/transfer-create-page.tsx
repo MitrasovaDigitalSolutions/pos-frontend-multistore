@@ -5,7 +5,6 @@ import { useStores } from "@/features/stores/api/stores-api";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useActiveStoreStore } from "@/stores/active-store-store";
 import { useSession } from "next-auth/react";
-import { useState } from "react";
 import { useCreateStockTransfer } from "../api/stock-transfer-api";
 
 import { BarcodeInput } from "@/components/shared/barcode-input";
@@ -19,12 +18,14 @@ import {
   IconBuildingStore,
   IconDeviceFloppy,
   IconInfoCircle,
+  IconLoader2,
   IconMinus,
   IconNotes,
   IconPackage,
   IconPlus,
   IconTrash,
 } from "@tabler/icons-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import type { Product } from "@/features/master/products/types";
@@ -39,9 +40,15 @@ interface TransferItem {
 
 export function TransferCreatePage() {
   const router = useAppRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const activeStoreUid = useActiveStoreStore((state) => state.activeStoreUid);
   const activeStore = session?.user?.stores?.find((s) => s.uid === activeStoreUid);
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
 
   const { data: storesRes } = useStores({ per_page: 1000 });
   const stores = storesRes?.data ?? [];
@@ -56,12 +63,22 @@ export function TransferCreatePage() {
   const [items, setItems] = useState<TransferItem[]>([]);
   const createMutation = useCreateStockTransfer();
 
+  if (!mounted || status === "loading") {
+    return (
+      <div className="p-12 flex flex-col items-center justify-center min-h-[380px] space-y-3 bg-white rounded-2xl border border-slate-100 shadow-sm max-w-2xl mx-auto my-6">
+        <IconLoader2 size={32} className="animate-spin text-emerald-600" />
+        <p className="text-xs text-slate-400 font-medium">Memuat lokasi toko...</p>
+      </div>
+    );
+  }
+
   if (!activeStore?.is_central) {
     return (
       <AccessDeniedState
         title="Restriksi Toko Pusat"
-        description="Hanya toko Pusat yang dapat membuat pengiriman / transfer stok ke cabang lain."
+        description="Saat ini hanya toko Pusat yang dapat membuat pengiriman / transfer stok ke cabang lain."
         requiredPermission="store_central"
+        showRefreshButton
       />
     );
   }
