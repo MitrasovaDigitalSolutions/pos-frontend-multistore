@@ -23,6 +23,8 @@ export interface StockTransferItem {
   stock_transfer_uid: string;
   product_uid: string;
   kuantitas: number;
+  kuantitas_diterima?: number | null;
+  keterangan?: string | null;
   stok_sebelum_source: number | null;
   stok_sesudah_source: number | null;
   stok_sebelum_dest: number | null;
