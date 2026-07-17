@@ -59,9 +59,9 @@ export function AdminHeader() {
     return "Dashboard Admin";
   };
 
-  if (pathname.startsWith("/admin/users")) {
-    return null;
-  }
+  // if (pathname.startsWith("/admin/users")) {
+  //   return null;
+  // }
 
   const formattedDate = formatToReadableDate(new Date());
 

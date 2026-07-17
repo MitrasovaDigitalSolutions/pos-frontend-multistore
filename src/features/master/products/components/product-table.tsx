@@ -10,7 +10,9 @@ import { ColumnDef } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useDeleteProduct, useToggleProductStatus } from "../api/products-api";
+import { useToggleProductStatus } from "../api/products-api";
+import { useDetachProductStore } from "../api/product-store-api";
+import { useActiveStoreStore } from "@/stores/active-store-store";
 import type { Product } from "../types";
 
 interface ProductTableProps {
@@ -70,7 +72,8 @@ export function ProductTable({
     //     queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
     // };
 
-    const deleteProduct = useDeleteProduct();
+    const activeStoreUid = useActiveStoreStore((s) => s.activeStoreUid);
+    const detachStoreProduct = useDetachProductStore();
     const toggleStatus = useToggleProductStatus();
 
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -100,16 +103,24 @@ export function ProductTable({
 
     const handleConfirmDelete = () => {
         if (!productToDelete) return;
-        deleteProduct.mutate(productToDelete.uid, {
-            onSuccess: () => {
-                toast.success(`Produk "${productToDelete.nama}" berhasil dihapus.`);
-                setIsConfirmOpen(false);
-                setProductToDelete(null);
-            },
-            onError: () => {
-                toast.error("Gagal menghapus produk.");
-            },
-        });
+        if (!activeStoreUid) {
+            toast.error("Toko aktif tidak ditemukan untuk menghapus produk dari toko.");
+            return;
+        }
+
+        detachStoreProduct.mutate(
+            { productUid: productToDelete.uid, storeUid: activeStoreUid },
+            {
+                onSuccess: () => {
+                    toast.success(`Produk "${productToDelete.nama}" berhasil dihapus dari toko.`);
+                    setIsConfirmOpen(false);
+                    setProductToDelete(null);
+                },
+                onError: (err) => {
+                    toast.error(err.message || "Gagal menghapus produk dari toko.");
+                },
+            }
+        );
     };
 
     const columns = useMemo<ColumnDef<Product>[]>(
@@ -359,7 +370,7 @@ export function ProductTable({
                 confirmText="Ya, Hapus"
                 cancelText="Batal"
                 onConfirm={handleConfirmDelete}
-                isLoading={deleteProduct.isPending}
+                isLoading={detachStoreProduct.isPending}
                 variant="danger"
             />
         </section>

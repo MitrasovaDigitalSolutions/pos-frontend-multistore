@@ -9,6 +9,8 @@ import { useProducts } from "./api/products-api";
 import { ProductTable } from "./components/product-table";
 import { ProductFormDialog } from "./components/product-form-dialog";
 import { ProductStoreDialog } from "./components/product-store-dialog";
+import { CatalogMatchDialog } from "./components/catalog-match-dialog";
+import { StoreProductEditDialog } from "./components/store-product-edit-dialog";
 import { productSchema, type ProductInput } from "./schemas/product-schema";
 import type { Product } from "./types";
 import { useCategories } from "@/features/master/categories/api/categories-api";
@@ -112,7 +114,9 @@ export function Products() {
     ...appliedFilters,
   });
 
+  const [isCatalogMatchOpen, setIsCatalogMatchOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isStoreEditOpen, setIsStoreEditOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   const [isStoreDialogOpen, setIsStoreDialogOpen] = useState(false);
@@ -146,26 +150,17 @@ export function Products() {
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
-    dialogMethods.reset({
-      nama: product.nama,
-      merek: product.merek,
-      barcode: product.barcode || "",
-      harga: product.harga,
-      stok: product.stok,
-      harga_beli: product.harga_beli ?? 0,
-      margin: product.margin ?? 0,
-      category_uid: product.category_uid ?? null,
-      brand_uid: product.brand_uid ?? null,
-      image: null,
-      is_jasa: !!product.is_jasa,
-    });
-    setIsDialogOpen(true);
+    setIsStoreEditOpen(true);
   };
 
   const handleAddClick = () => {
+    setIsCatalogMatchOpen(true);
+  };
+
+  const handleOpenManualCreate = (prefilledNama?: string) => {
     setEditingProduct(null);
     dialogMethods.reset({
-      nama: "",
+      nama: prefilledNama || "",
       merek: "",
       barcode: "",
       harga: 0,
@@ -268,6 +263,18 @@ export function Products() {
           editingProduct={editingProduct}
         />
       </FormProvider>
+
+      <CatalogMatchDialog
+        open={isCatalogMatchOpen}
+        onOpenChange={setIsCatalogMatchOpen}
+        onSelectNewProduct={(nama) => handleOpenManualCreate(nama)}
+      />
+
+      <StoreProductEditDialog
+        open={isStoreEditOpen}
+        onOpenChange={setIsStoreEditOpen}
+        product={editingProduct}
+      />
 
       <ProductStoreDialog
         open={isStoreDialogOpen}

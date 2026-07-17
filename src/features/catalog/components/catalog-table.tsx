@@ -1,12 +1,15 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconBuildingStore } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { useDeleteCatalogProduct } from "../api/catalog-api";
 import type { CatalogProduct } from "../types";
 
 interface CatalogTableProps {
@@ -22,6 +25,7 @@ interface CatalogTableProps {
     onPageChange: (page: number) => void;
     onPerPageChange: (perPage: number) => void;
     onAssign: (product: CatalogProduct) => void;
+    onEdit?: (product: CatalogProduct) => void;
     isLoading?: boolean;
     isFetching?: boolean;
     filterElement?: React.ReactNode;
@@ -42,6 +46,7 @@ export function CatalogTable({
     onPageChange,
     onPerPageChange,
     onAssign,
+    onEdit,
     isLoading = false,
     isFetching = false,
     filterElement,
@@ -50,6 +55,29 @@ export function CatalogTable({
     onSortChange,
     isAdmin,
 }: CatalogTableProps) {
+    const deleteCatalogProduct = useDeleteCatalogProduct();
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [productToDelete, setProductToDelete] = useState<CatalogProduct | null>(null);
+
+    const handleRemoveProduct = (p: CatalogProduct) => {
+        setProductToDelete(p);
+        setIsConfirmOpen(true);
+    };
+
+    const handleConfirmDelete = () => {
+        if (!productToDelete) return;
+        deleteCatalogProduct.mutate(productToDelete.uid, {
+            onSuccess: () => {
+                toast.success(`Master produk "${productToDelete.nama}" berhasil dihapus.`);
+                setIsConfirmOpen(false);
+                setProductToDelete(null);
+            },
+            onError: (err) => {
+                toast.error(err.message || "Gagal menghapus produk master.");
+            },
+        });
+    };
+
     const columns = useMemo<ColumnDef<CatalogProduct>[]>(
         () => [
             {
@@ -72,19 +100,25 @@ export function CatalogTable({
                         <span className="font-semibold text-slate-800 text-sm leading-tight">
                             {row.original.nama}
                         </span>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                            {row.original.category && (
-                                <span className="text-[10px] text-slate-400">
-                                    {row.original.category.nama}
-                                </span>
-                            )}
-                            {row.original.is_jasa && (
+                        {row.original.is_jasa && (
+                            <div>
                                 <Badge className="text-[9px] px-1.5 py-0 bg-blue-50 text-blue-700 border-blue-100">
                                     Jasa
                                 </Badge>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
+                ),
+            },
+            {
+                accessorKey: "category.nama",
+                header: "Kategori",
+                enableSorting: false,
+                size: 130,
+                cell: ({ row }) => (
+                    <span className="text-xs text-slate-600 font-medium">
+                        {row.original.category?.nama || "—"}
+                    </span>
                 ),
             },
             {
@@ -146,33 +180,8 @@ export function CatalogTable({
                     );
                 },
             },
-            ...(isAdmin
-                ? ([
-                    {
-                        id: "actions",
-                        header: "Distribusi",
-                        enableSorting: false,
-                        size: 100,
-                        meta: {
-                            headerClassName: "text-center",
-                            cellClassName: "text-center",
-                        },
-                        cell: ({ row }) => (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 px-3 gap-1.5 text-brand-600 border-brand-200 hover:bg-brand-50 hover:border-brand-400 font-semibold text-xs"
-                                onClick={() => onAssign(row.original)}
-                            >
-                                <IconBuildingStore size={13} />
-                                Kelola
-                            </Button>
-                        ),
-                    },
-                ] as ColumnDef<CatalogProduct>[])
-                : []),
         ],
-        [isAdmin, onAssign]
+        []
     );
 
     return (
@@ -208,6 +217,47 @@ export function CatalogTable({
                 onSortChange={onSortChange}
                 virtualize={true}
                 estimateRowHeight={52}
+                onEdit={isAdmin ? onEdit : undefined}
+                onDelete={isAdmin ? handleRemoveProduct : undefined}
+                extraActions={(item) =>
+                    isAdmin ? (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    onClick={() => onAssign(item)}
+                                    className="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors border-none bg-transparent cursor-pointer"
+                                >
+                                    <IconBuildingStore size={16} />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent>Kelola Distribusi Toko</TooltipContent>
+                        </Tooltip>
+                    ) : null
+                }
+            />
+
+            <ConfirmDialog
+                open={isConfirmOpen}
+                onOpenChange={setIsConfirmOpen}
+                title="Hapus Produk Master"
+                description={
+                    productToDelete ? (
+                        <span>
+                            Apakah Anda yakin ingin menghapus produk master{" "}
+                            <strong className="font-semibold text-slate-900">
+                                {productToDelete.nama}
+                            </strong>
+                            ? Produk ini akan terhapus permanen dari Katalog Master.
+                        </span>
+                    ) : (
+                        "Apakah Anda yakin ingin menghapus produk master ini?"
+                    )
+                }
+                confirmText="Ya, Hapus Master"
+                cancelText="Batal"
+                onConfirm={handleConfirmDelete}
+                isLoading={deleteCatalogProduct.isPending}
+                variant="danger"
             />
         </section>
     );
