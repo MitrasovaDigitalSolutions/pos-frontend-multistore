@@ -5,7 +5,12 @@ import { queryKeys } from "@/lib/query-keys";
 import type { ApiResponse, PaginationParams } from "@/types/api";
 import type { StockTransfer } from "../types";
 
-export function useStockTransfers(params?: PaginationParams) {
+export interface StockTransferQueryParams extends PaginationParams {
+  direction?: "outgoing" | "incoming";
+  status?: string;
+}
+
+export function useStockTransfers(params?: StockTransferQueryParams) {
   return useQuery({
     queryKey: [...queryKeys.inventory.stockTransfers(), params],
     queryFn: () => apiGetList<StockTransfer>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.LIST, params),
@@ -25,7 +30,9 @@ export function useCreateStockTransfer() {
   return useMutation({
     mutationFn: (payload: { store_uid_destination: string; catatan?: string | null; items: { product_uid: string; kuantitas: number }[] }) =>
       apiPost<ApiResponse<StockTransfer>, typeof payload>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.CREATE, payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers() });
+    },
   });
 }
 
@@ -33,7 +40,10 @@ export function useFinalizeStockTransfer() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (uid: string) => apiPost<ApiResponse<StockTransfer>, void>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.FINALIZE(uid)),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers() }),
+    onSuccess: (_, uid) => {
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers() });
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(uid) });
+    },
   });
 }
 
@@ -41,14 +51,21 @@ export function useReceiveStockTransfer() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (uid: string) => apiPost<ApiResponse<StockTransfer>, void>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.RECEIVE(uid)),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers() }),
+    onSuccess: (_, uid) => {
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers() });
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(uid) });
+    },
   });
 }
 
 export function useCancelStockTransfer() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (uid: string) => apiPost<ApiResponse<StockTransfer>, void>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.CANCEL(uid)),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers() }),
+    mutationFn: ({ uid, alasan }: { uid: string; alasan?: string }) =>
+      apiPost<ApiResponse<StockTransfer>, { alasan?: string }>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.CANCEL(uid), { alasan }),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers() });
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(variables.uid) });
+    },
   });
 }
