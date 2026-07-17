@@ -391,7 +391,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
             {
                 type: "link",
                 path: ROUTES.ADMIN_USERS,
-                label: "Kelola Pengguna",
+                label: "Kelola Karyawan",
                 icon: IconUsers,
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") ||
@@ -400,11 +400,19 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
             },
             {
                 type: "link",
-                path: ROUTES.ADMIN_PRODUCT_CATALOG,
-                label: "Katalog Produk",
-                icon: IconBuildingWarehouse,
-                permission: (roles) => hasRole(roles, "admin"),
+                path: ROUTES.ADMIN_AUDIT,
+                label: "Log Aktivitas",
+                icon: IconShieldLock,
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") || hasPermission(roles, permissions, "view_audit_logs"),
             },
+        ],
+    },
+
+    // ─── Khusus Admin ───────────────────────────────────────────────────────────
+    {
+        title: "Admin",
+        items: [
             {
                 type: "link",
                 path: ROUTES.ADMIN_STORES,
@@ -414,11 +422,10 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
             },
             {
                 type: "link",
-                path: ROUTES.ADMIN_AUDIT,
-                label: "Log Aktivitas",
-                icon: IconShieldLock,
-                permission: (roles, permissions) =>
-                    hasRole(roles, "admin") || hasPermission(roles, permissions, "view_audit_logs"),
+                path: ROUTES.ADMIN_PRODUCT_CATALOG,
+                label: "Katalog Produk",
+                icon: IconBuildingWarehouse,
+                permission: (roles) => hasRole(roles, "admin"),
             },
         ],
     },
