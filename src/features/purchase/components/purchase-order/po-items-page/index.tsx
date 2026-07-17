@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { IconArrowLeft, IconBarcode, IconCheck, IconInfoCircle, IconX } from "@tabler/icons-react";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useEffect, useRef, useState } from "react";
@@ -54,18 +55,11 @@ export function POItemsPage({ poId }: POItemsPageProps) {
 
     if (order && order.status !== PO_STATUS.DRAFT) {
         return (
-            <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm max-w-md mx-auto mt-12">
-                <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
-                <p className="text-xs text-slate-400 mt-1">
-                    Hanya Purchase Order berstatus **Draft** yang dapat diubah daftar barangnya.
-                </p>
-                <Button
-                    onClick={() => router.push(`/admin/purchase/order/${poId}`)}
-                    className="mt-4 bg-slate-800 hover:bg-slate-900 text-white text-xs rounded-xl"
-                >
-                    Lihat Detail PO
-                </Button>
-            </div>
+            <AccessDeniedState
+                title="Status Terkunci"
+                description="Hanya Purchase Order berstatus Draft yang dapat diubah daftar barangnya."
+                showBackButton={true}
+            />
         );
     }
 

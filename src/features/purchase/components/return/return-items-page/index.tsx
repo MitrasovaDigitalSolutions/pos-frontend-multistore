@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 import { IconArrowLeft, IconBarcode, IconCheck, IconUpload } from "@tabler/icons-react";
@@ -54,18 +55,11 @@ export function ReturnItemsPage({ returnId }: ReturnItemsPageProps) {
 
     if (returnObj && returnObj.status !== RETURN_STATUS.DRAFT) {
         return (
-            <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm max-w-md mx-auto mt-12">
-                <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
-                <p className="text-xs text-slate-400 mt-1">
-                    Hanya Dokumen Retur berstatus **Draft** yang dapat diubah daftar barangnya.
-                </p>
-                <Button
-                    onClick={() => router.push(`/admin/purchase/return`)}
-                    className="mt-4 bg-slate-800 hover:bg-slate-900 text-white text-xs rounded-xl"
-                >
-                    Kembali ke Daftar Retur
-                </Button>
-            </div>
+            <AccessDeniedState
+                title="Status Terkunci"
+                description="Hanya Dokumen Retur berstatus Draft yang dapat diubah daftar barangnya."
+                showBackButton={true}
+            />
         );
     }
 

@@ -7,6 +7,7 @@ export const ROUTES = {
     // Protected - Admin
     ADMIN: "/admin",
     ADMIN_PRODUCTS: "/admin/products",
+    ADMIN_PRODUCT_CATALOG: "/admin/catalog",
     ADMIN_CASH_DRAWER: "/admin/cash-drawer",
     ADMIN_CASH_ACCOUNTS: "/admin/cash-accounts",
     ADMIN_STOCK: "/admin/inventory/stock-opname",

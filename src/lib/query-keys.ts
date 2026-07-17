@@ -22,6 +22,11 @@ export const queryKeys = {
         list: (productUid: string) => ["productStores", productUid] as const,
     },
 
+    productCatalog: {
+        all: ["productCatalog"] as const,
+        list: () => [...queryKeys.productCatalog.all, "list"] as const,
+    },
+
     // Users
     users: {
         all: ["users"] as const,

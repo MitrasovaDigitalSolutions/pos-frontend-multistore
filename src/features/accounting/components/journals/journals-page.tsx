@@ -11,6 +11,7 @@ import type { ManualJournal } from "../../types/manual-journal";
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
+import { AccessDeniedState } from "@/components/ui/access-denied-state";
 
 interface JournalFilterValues {
     search: string;
@@ -64,12 +65,10 @@ export function JournalsPage() {
 
     if (!hasViewReports) {
         return (
-            <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm">
-                <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
-                <p className="text-xs text-slate-400 mt-1">
-                    Anda tidak memiliki izin untuk mengakses daftar jurnal manual.
-                </p>
-            </div>
+            <AccessDeniedState
+                description="Anda tidak memiliki izin untuk melihat atau mengelola jurnal akuntansi manual."
+                requiredPermission="view_reports"
+            />
         );
     }
 

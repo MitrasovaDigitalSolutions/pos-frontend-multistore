@@ -14,7 +14,8 @@ import {
     IconChartBar,
     IconNotebook,
     IconBuildingBank,
-    IconBuildingStore
+    IconBuildingStore,
+    IconBuildingWarehouse
 } from "@tabler/icons-react";
 
 export interface SidebarMenuItem {
@@ -68,7 +69,6 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") || hasPermission(roles, permissions, "create_sales"),
             },
-
         ],
     },
 
@@ -397,6 +397,13 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     hasRole(roles, "admin") ||
                     hasPermission(roles, permissions, "view_users") ||
                     hasPermission(roles, permissions, "manage_users"),
+            },
+            {
+                type: "link",
+                path: ROUTES.ADMIN_PRODUCT_CATALOG,
+                label: "Katalog Produk",
+                icon: IconBuildingWarehouse,
+                permission: (roles) => hasRole(roles, "admin"),
             },
             {
                 type: "link",

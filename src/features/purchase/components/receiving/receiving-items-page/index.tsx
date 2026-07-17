@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { IconArrowLeft, IconBarcode, IconCheck, IconInfoCircle, IconUpload, IconX } from "@tabler/icons-react";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useState } from "react";
@@ -64,18 +65,11 @@ export function ReceivingItemsPage({ receivingId }: ReceivingItemsPageProps) {
 
     if (!isNew && receiving && receiving.status !== RECEIVING_STATUS.DRAFT) {
         return (
-            <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm max-w-md mx-auto mt-12">
-                <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
-                <p className="text-xs text-slate-400 mt-1">
-                    Hanya Penerimaan Barang berstatus **Draft** yang dapat diubah daftar barangnya.
-                </p>
-                <Button
-                    onClick={() => router.push(`/admin/purchase/receiving`)}
-                    className="mt-4 bg-slate-800 hover:bg-slate-900 text-white text-xs rounded-xl"
-                >
-                    Kembali ke Daftar Penerimaan
-                </Button>
-            </div>
+            <AccessDeniedState
+                title="Status Terkunci"
+                description="Hanya Penerimaan Barang berstatus Draft yang dapat diubah daftar barangnya."
+                showBackButton={true}
+            />
         );
     }
 

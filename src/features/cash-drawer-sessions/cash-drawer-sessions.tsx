@@ -12,6 +12,7 @@ import { useMemo, useState } from "react";
 import { SessionDetailDialog } from "./components/session-detail-dialog";
 import { SessionFilter } from "./components/session-filter";
 import { formatToReadableDateTime } from "@/lib/date-utils";
+import { AccessDeniedState } from "@/components/ui/access-denied-state";
 
 export function CashDrawerSessions() {
     const { data: session } = useSession();
@@ -161,10 +162,10 @@ export function CashDrawerSessions() {
 
     if (!hasViewSessions) {
         return (
-            <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm">
-                <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
-                <p className="text-xs text-slate-400 mt-1">Anda tidak memiliki izin untuk melihat sesi kasir.</p>
-            </div>
+            <AccessDeniedState
+                description="Anda tidak memiliki izin untuk melihat riwayat sesi kasir / cash drawer."
+                requiredPermission="view_cash_drawer"
+            />
         );
     }
 

@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { IconInfoCircle } from "@tabler/icons-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { AccessDeniedState } from "@/components/ui/access-denied-state";
 
 interface TransactionFilterValues {
     search: string;
@@ -132,10 +133,10 @@ export function TransactionsListPage() {
 
     if (!hasViewSales) {
         return (
-            <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-sm">
-                <p className="text-sm font-bold text-slate-800">Akses Ditolak</p>
-                <p className="text-xs text-slate-400 mt-1">Anda tidak memiliki izin untuk melihat daftar transaksi.</p>
-            </div>
+            <AccessDeniedState
+                description="Anda tidak memiliki izin untuk melihat daftar transaksi penjualan."
+                requiredPermission="view_sales"
+            />
         );
     }
 

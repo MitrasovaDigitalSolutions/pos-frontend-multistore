@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
 import { IconArrowLeft, IconCheck, IconCircleX, IconTruckDelivery } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
