@@ -1,22 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { hasRole, hasPermission } from "@/constants/roles";
-import { useActiveStoreStore } from "@/stores/active-store-store";
-import { useUsers } from "./api/users-api";
-import { UserTable } from "./components/user-table";
-import { UserFormDialog } from "./components/user-form-dialog";
-import { RolePermissionMapping } from "./components/role-permission-mapping";
-import { userSchema, type UserInput } from "./schemas/user-schema";
-import type { User } from "./types";
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
+import { hasPermission, hasRole } from "@/constants/roles";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { FormProvider, useForm, type Resolver } from "react-hook-form";
+import { useUsers } from "./api/users-api";
+import { RolePermissionMapping } from "./components/role-permission-mapping";
+import { UserFormDialog } from "./components/user-form-dialog";
+import { UserTable } from "./components/user-table";
+import { userSchema, type UserInput } from "./schemas/user-schema";
+import type { User } from "./types";
 
 interface UserFilterValues {
   search: string;
@@ -27,8 +26,6 @@ export function Users() {
   const { data: session } = useSession();
   const userRoles = session?.user?.roles || [];
   const userPermissions = session?.user?.permissions || [];
-  const activeStoreUid = useActiveStoreStore((state) => state.activeStoreUid);
-  const activeStore = session?.user?.stores?.find((s) => s.uid === activeStoreUid);
 
   const hasViewUsers =
     hasRole(userRoles, "admin") ||
@@ -157,12 +154,12 @@ export function Users() {
           <p className="text-xs text-slate-400 mt-1">
             Mengatur akun karyawan POS, tingkat pengawas (supervisor), manajer, dan konfigurasi hak akses masing-masing peran.
           </p>
-          {activeStore && (
+          {/* {activeStore && (
             <div className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full bg-brand-50 border border-brand-100">
               <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
               <span className="text-xs font-semibold text-brand-700">{activeStore.nama}</span>
             </div>
-          )}
+          )} */}
         </div>
 
         {/* Premium Tab Buttons */}
@@ -171,8 +168,8 @@ export function Users() {
             <button
               onClick={() => setActiveTab("users")}
               className={`px-4 py-2 text-xs font-extrabold rounded-lg transition-all duration-200 cursor-pointer ${activeTab === "users"
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500 hover:text-slate-800"
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-500 hover:text-slate-800"
                 }`}
             >
               Daftar Pengguna
@@ -180,8 +177,8 @@ export function Users() {
             <button
               onClick={() => setActiveTab("permissions")}
               className={`px-4 py-2 text-xs font-extrabold rounded-lg transition-all duration-200 cursor-pointer ${activeTab === "permissions"
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500 hover:text-slate-800"
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-500 hover:text-slate-800"
                 }`}
             >
               Peran & Hak Akses
