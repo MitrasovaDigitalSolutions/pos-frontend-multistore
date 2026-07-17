@@ -149,7 +149,7 @@ export function Users() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
-            Kelola Pengguna & Hak Akses
+            Kelola Karyawan & Hak Akses
           </h2>
           <p className="text-xs text-slate-400 mt-1">
             Mengatur akun karyawan POS, tingkat pengawas (supervisor), manajer, dan konfigurasi hak akses masing-masing peran.
@@ -172,7 +172,7 @@ export function Users() {
                 : "text-slate-500 hover:text-slate-800"
                 }`}
             >
-              Daftar Pengguna
+              Daftar Karyawan
             </button>
             <button
               onClick={() => setActiveTab("permissions")}

@@ -53,11 +53,11 @@ const ROLE_METADATA: Record<string, { label: string; desc: string }> = {
 
 const PERMISSION_METADATA: Record<string, { label: string; desc: string }> = {
     manage_users: {
-        label: "Kelola Pengguna",
+        label: "Kelola Karyawan",
         desc: "Mengatur user kasir/supervisor, hak akses role, serta menonaktifkan akun karyawan.",
     },
     view_users: {
-        label: "Lihat Pengguna",
+        label: "Lihat Karyawan",
         desc: "Melihat daftar karyawan dan informasi perannya tanpa hak untuk melakukan modifikasi.",
     },
     manage_products: {

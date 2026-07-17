@@ -15,6 +15,7 @@ import {
 } from "@tabler/icons-react";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
+import { Scrollable } from "@/components/ui/scrollable";
 import { useStoreUsers, useAssignStoreUsers, useDetachStoreUser } from "../api/stores-api";
 import { useUsers } from "@/features/users/api/users-api";
 import type { Store } from "../types";
@@ -89,10 +90,13 @@ function DroppableContainer({ id, children, className }: DroppableContainerProps
     return (
         <div
             ref={setNodeRef}
-            className={`border border-slate-200 rounded-xl min-h-[350px] max-h-[380px] overflow-y-auto p-2 bg-slate-50/50 transition-colors duration-200 ${isOver ? "bg-emerald-50/60 border-emerald-300 ring-2 ring-emerald-500/10" : ""
-                } ${className || ""}`}
+            className={`border border-slate-200 rounded-xl h-[380px] bg-slate-50/50 transition-colors duration-200 overflow-hidden ${
+                isOver ? "bg-emerald-50/60 border-emerald-300 ring-2 ring-emerald-500/10" : ""
+            } ${className || ""}`}
         >
-            {children}
+            <Scrollable className="h-full p-2">
+                {children}
+            </Scrollable>
         </div>
     );
 }
@@ -412,7 +416,7 @@ export function StoreUsersDialog({ open, onOpenChange, store }: StoreUsersDialog
                                 <div className="flex items-center gap-1.5">
                                     <IconUsers size={16} className="text-emerald-500" />
                                     <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                                        Akses Terdaftar
+                                        User Terdaftar
                                     </h4>
                                 </div>
                                 <span className="text-[10px] text-slate-400 font-bold bg-slate-100 px-2 py-0.5 rounded-full">
