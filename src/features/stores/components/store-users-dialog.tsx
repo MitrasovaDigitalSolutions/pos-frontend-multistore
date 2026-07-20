@@ -17,7 +17,7 @@ import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
 import { Scrollable } from "@/components/ui/scrollable";
 import { useStoreUsers, useAssignStoreUsers, useDetachStoreUser } from "../api/stores-api";
-import { useUsers } from "@/features/users/api/users-api";
+import { useGlobalUsers } from "@/features/users/api/users-api";
 import type { Store } from "../types";
 import type { User } from "@/types/auth";
 import { DndContext, useDraggable, useDroppable, DragOverlay, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
@@ -187,8 +187,8 @@ export function StoreUsersDialog({ open, onOpenChange, store }: StoreUsersDialog
     // Fetch users for the current store
     const { data: storeUsers, isLoading: isLoadingStoreUsers } = useStoreUsers(store?.uid ?? "");
 
-    // Fetch all users (across stores)
-    const { data: usersRes, isLoading: isLoadingAllUsers } = useUsers({ per_page: 1000, all_stores: true });
+    // Fetch all users (across stores without X-Store-UID)
+    const { data: usersRes, isLoading: isLoadingAllUsers } = useGlobalUsers({ per_page: 1000 });
 
     const assignMutation = useAssignStoreUsers();
     const detachMutation = useDetachStoreUser();
