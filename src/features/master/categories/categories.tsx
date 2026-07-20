@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { hasRole, hasPermission } from "@/constants/roles";
+import { hasRole } from "@/constants/roles";
 import { useCategories } from "./api/categories-api";
 import { CategoryList } from "./components/category-list";
 import { CategoryDialog } from "./components/category-dialog";
@@ -21,11 +21,7 @@ interface CategoryFilterValues {
 export function Categories() {
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
-    const userPermissions = session?.user?.permissions || [];
-
-    const hasViewProducts =
-        hasRole(userRoles, "admin") ||
-        hasPermission(userRoles, userPermissions, "view_products");
+    const isAdmin = hasRole(userRoles, "admin");
 
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
@@ -69,11 +65,10 @@ export function Categories() {
         },
     });
 
-    if (!hasViewProducts) {
+    if (!isAdmin) {
         return (
             <AccessDeniedState
-                description="Anda tidak memiliki izin untuk melihat atau mengelola data kategori produk."
-                requiredPermission="view_products"
+                description="Halaman kelola kategori produk hanya dapat diakses oleh Administrator."
             />
         );
     }

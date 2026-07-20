@@ -190,7 +190,7 @@ export function CatalogTable({
                 <div>
                     <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                         <IconBuildingStore size={16} className="text-brand-600" />
-                        Katalog Produk (Multi-Toko)
+                        Katalog Keseluruhan Produk
                     </h3>
                     <p className="text-[11px] text-slate-400 mt-0.5">
                         Produk master — kelola distribusi harga ke seluruh toko &amp; cabang.

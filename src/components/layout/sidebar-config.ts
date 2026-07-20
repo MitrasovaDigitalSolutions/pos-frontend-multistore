@@ -348,22 +348,6 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasPermission(roles, permissions, "manage_products"),
                     },
                     {
-                        path: ROUTES.ADMIN_CATEGORIES,
-                        label: "Kategori",
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") ||
-                            hasPermission(roles, permissions, "view_products") ||
-                            hasPermission(roles, permissions, "manage_products"),
-                    },
-                    {
-                        path: ROUTES.ADMIN_BRANDS,
-                        label: "Brand",
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") ||
-                            hasPermission(roles, permissions, "view_products") ||
-                            hasPermission(roles, permissions, "manage_products"),
-                    },
-                    {
                         path: ROUTES.ADMIN_SUPPLIERS,
                         label: "Supplier",
                         permission: (roles, permissions) =>
@@ -421,11 +405,27 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 permission: (roles) => hasRole(roles, "admin"),
             },
             {
-                type: "link",
-                path: ROUTES.ADMIN_PRODUCT_CATALOG,
-                label: "Katalog Produk",
+                type: "submenu",
+                label: "Katalog",
                 icon: IconBuildingWarehouse,
                 permission: (roles) => hasRole(roles, "admin"),
+                items: [
+                    {
+                        path: ROUTES.ADMIN_PRODUCT_CATALOG,
+                        label: "Produk",
+                        permission: (roles) => hasRole(roles, "admin"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_CATEGORIES,
+                        label: "Kategori",
+                        permission: (roles) => hasRole(roles, "admin"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_BRANDS,
+                        label: "Brand",
+                        permission: (roles) => hasRole(roles, "admin"),
+                    },
+                ],
             },
             {
                 type: "link",
