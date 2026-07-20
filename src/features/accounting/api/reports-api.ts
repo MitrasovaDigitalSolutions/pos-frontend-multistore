@@ -1,7 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-import { apiGetData, apiGetList } from "@/shared/api/api-client";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { apiGetData, apiGetList, apiPostData } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
-import { PaginatedResponse } from "@/types/api";
+import { ApiResponse, PaginatedResponse } from "@/types/api";
 import type { BalanceSheetReport, GeneralLedgerEntry } from "../types";
 
 export function useBalanceSheet(asOfDate: string) {
@@ -37,5 +37,34 @@ export function useGeneralLedger(params: {
         queryKey: [...queryKeys.reports.all, "general-ledger", queryParams],
         queryFn: () => apiGetList<GeneralLedgerEntry>("/v1/reports/general-ledger", queryParams),
         enabled: true,
+    });
+}
+
+export function useGeneralLedgerUnbalanced(params: {
+    from?: string;
+    to?: string;
+    page?: number;
+    per_page?: number;
+    sort_by?: string;
+    sort_order?: string;
+}) {
+    const queryParams: Record<string, string | number> = {};
+    if (params.from) queryParams.start_date = params.from;
+    if (params.to) queryParams.end_date = params.to;
+    if (params.page) queryParams.page = params.page;
+    if (params.per_page) queryParams.per_page = params.per_page;
+    if (params.sort_by) queryParams.sort_by = params.sort_by;
+    if (params.sort_order) queryParams.sort_order = params.sort_order;
+
+    return useQuery<PaginatedResponse<GeneralLedgerEntry>>({
+        queryKey: [...queryKeys.reports.all, "general-ledger-unbalanced", queryParams],
+        queryFn: () => apiGetList<GeneralLedgerEntry>("/v1/reports/general-ledger/unbalanced", queryParams),
+    });
+}
+
+export function useBalanceEntry() {
+    return useMutation<ApiResponse<null>, Error, { unbalanced_uid: string; chart_of_account_uid: string }>({
+        mutationFn: (payload) =>
+            apiPostData<ApiResponse<null>>("/v1/reports/general-ledger/balance-entry", payload),
     });
 }

@@ -44,6 +44,8 @@ const SLOT_LABELS: Record<string, string> = {
     // Kas & Bank Ledger
     cashledger_cash: "Kas Tunai — Mutasi Manual",
     cashledger_bank: "Bank — Mutasi / Transfer Dana",
+    cashledger_shortage: "Selisih Kas Kurang (Beban / Loss Kas Laci)",
+    cashledger_overage: "Selisih Kas Lebih (Pendapatan / Surplus Kas Laci)",
     // Penyesuaian & Mutasi Stok
     movement_inventory: "Persediaan — Penyesuaian Stok",
     movement_surplus: "Selisih Lebih Stok (Surplus)",
@@ -85,6 +87,8 @@ const SLOT_DESCRIPTIONS: Record<string, string> = {
     // Kas & Bank Ledger
     cashledger_cash: "Akun kas tunai yang digunakan untuk mencatat mutasi kas manual (setoran, penarikan, transfer).",
     cashledger_bank: "Akun bank yang digunakan untuk mencatat mutasi dana manual atau pemindahbukuan antar rekening.",
+    cashledger_shortage: "Mencatat kerugian atau beban akibat selisih kurang pada penutupan kasir / laci kas.",
+    cashledger_overage: "Mencatat pendapatan atau keuntungan akibat selisih lebih pada penutupan kasir / laci kas.",
     // Penyesuaian & Mutasi Stok
     movement_inventory: "Akun persediaan barang dagang yang disesuaikan saat dilakukan stock opname atau koreksi stok.",
     movement_surplus: "Mencatat keuntungan selisih lebih stok (barang lebih banyak dari catatan) saat stock opname.",
