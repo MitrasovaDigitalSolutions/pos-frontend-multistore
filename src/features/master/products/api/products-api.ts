@@ -14,6 +14,10 @@ export interface CatalogMatchItem {
     uid: string;
     nama: string;
     barcode: string | null;
+    harga_jual?: number | null;
+    harga_beli?: number | null;
+    category?: string | null;
+    brand?: string | null;
     similarity: number;
 }
 
