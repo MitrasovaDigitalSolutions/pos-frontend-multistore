@@ -390,7 +390,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
             },
             {
                 type: "link",
-                path: ROUTES.ADMIN_USERS,
+                path: ROUTES.ADMIN_EMPLOYEES,
                 label: "Kelola Karyawan",
                 icon: IconUsers,
                 permission: (roles, permissions) =>
@@ -425,6 +425,13 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 path: ROUTES.ADMIN_PRODUCT_CATALOG,
                 label: "Katalog Produk",
                 icon: IconBuildingWarehouse,
+                permission: (roles) => hasRole(roles, "admin"),
+            },
+            {
+                type: "link",
+                path: ROUTES.ADMIN_USERS,
+                label: "Kelola User",
+                icon: IconUsers,
                 permission: (roles) => hasRole(roles, "admin"),
             },
         ],

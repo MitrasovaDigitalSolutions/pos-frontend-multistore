@@ -175,10 +175,10 @@ export function UserTable({
             <div className="flex justify-between items-center border-b border-slate-50 pb-4">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">
-                        Daftar Pengguna Sistem
+                        Daftar Karyawan
                     </h3>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                        Daftar akun kasir, supervisor, dan manajer.
+                        Daftar akun karyawan (kasir, supervisor, dan manajer).
                     </p>
                 </div>
                 {hasManageUsers && (
@@ -186,7 +186,7 @@ export function UserTable({
                         onClick={onAddClick}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
                     >
-                        <IconPlus size={16} /> Tambah Pengguna
+                        <IconPlus size={16} /> Tambah Karyawan
                     </Button>
                 )}
             </div>

@@ -63,7 +63,8 @@ export async function apiPostData<T, D = unknown>(
 export async function apiGetList<T>(
     url: string,
     params?: PaginationParams,
+    config?: AxiosRequestConfig,
 ): Promise<PaginatedResponse<T>> {
-    return apiGet<PaginatedResponse<T>>(url, { params });
+    return apiGet<PaginatedResponse<T>>(url, { params, ...config });
 }
 

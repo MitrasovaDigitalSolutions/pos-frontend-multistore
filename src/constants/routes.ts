@@ -24,6 +24,7 @@ export const ROUTES = {
     ADMIN_REPORTS_LABARUGI: "/admin/reports/laba-rugi",
     ADMIN_REPORTS_PEMBELIAN: "/admin/reports/pembelian",
     ADMIN_REPORTS_PENGELUARAN: "/admin/reports/pengeluaran",
+    ADMIN_EMPLOYEES: "/admin/employees",
     ADMIN_USERS: "/admin/users",
     ADMIN_SETTINGS: "/admin/settings",
     ADMIN_STORES: "/admin/stores",

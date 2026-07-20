@@ -17,6 +17,16 @@ export function useUsers(params?: PaginationParams & { status?: string; all_stor
     });
 }
 
+export function useGlobalUsers(params?: PaginationParams & { status?: string; search?: string }) {
+    return useQuery<PaginatedResponse<User>>({
+        queryKey: [...queryKeys.users.list(), "global", params],
+        queryFn: () =>
+            apiGetList<User>("/v1/users", params, {
+                headers: { "X-Store-UID": "none" },
+            }),
+    });
+}
+
 export function useCreateUser() {
     const queryClient = useQueryClient();
     return useMutation<ApiResponse<User>, Error, UserInput>({

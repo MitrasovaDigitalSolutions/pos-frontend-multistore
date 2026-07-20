@@ -1,8 +1,8 @@
 import { Suspense } from "react";
-import { KelolaUser } from "@/features/kelola-user/kelola-user";
+import { Users } from "@/features/users/users";
 import { Skeleton } from "@/components/ui/skeleton";
 
-function KelolaUserSkeleton() {
+function EmployeesSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">
       {/* Header Area */}
@@ -11,7 +11,7 @@ function KelolaUserSkeleton() {
           <Skeleton className="h-6 w-48" />
           <Skeleton className="h-3.5 w-80" />
         </div>
-        <Skeleton className="h-9 w-48 rounded-xl" />
+        <Skeleton className="h-9 w-32 rounded-xl" />
       </div>
 
       {/* Filters Form Skeleton */}
@@ -23,20 +23,16 @@ function KelolaUserSkeleton() {
       {/* Table Skeleton */}
       <div className="space-y-4">
         <div className="flex justify-between border-b pb-3 border-slate-100 dark:border-slate-800">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-4 w-28" />
-          <Skeleton className="h-4 w-16" />
-          <Skeleton className="h-4 w-32" />
           <Skeleton className="h-4 w-12" />
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-16" />
         </div>
         {Array.from({ length: 5 }).map((_, idx) => (
           <div key={idx} className="flex justify-between py-2 border-b border-slate-50 last:border-0 dark:border-slate-800">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-6" />
+            <Skeleton className="h-4 w-44" />
             <Skeleton className="h-4 w-28" />
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-4 w-32" />
             <Skeleton className="h-4 w-12" />
           </div>
         ))}
@@ -45,10 +41,10 @@ function KelolaUserSkeleton() {
   );
 }
 
-export default function AdminKelolaUserPage() {
+export default function AdminEmployeesPage() {
   return (
-    <Suspense fallback={<KelolaUserSkeleton />}>
-      <KelolaUser />
+    <Suspense fallback={<EmployeesSkeleton />}>
+      <Users />
     </Suspense>
   );
 }
