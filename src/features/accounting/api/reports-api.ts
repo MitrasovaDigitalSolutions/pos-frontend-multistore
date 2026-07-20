@@ -1,7 +1,7 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiGetData, apiGetList, apiPostData } from "@/shared/api/api-client";
+import { useQuery } from "@tanstack/react-query";
+import { apiGetData, apiGetList } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
-import { ApiResponse, PaginatedResponse } from "@/types/api";
+import { PaginatedResponse } from "@/types/api";
 import type { BalanceSheetReport, GeneralLedgerEntry } from "../types";
 
 export function useBalanceSheet(asOfDate: string) {
@@ -62,9 +62,4 @@ export function useGeneralLedgerUnbalanced(params: {
     });
 }
 
-export function useBalanceEntry() {
-    return useMutation<ApiResponse<null>, Error, { unbalanced_uid: string; chart_of_account_uid: string }>({
-        mutationFn: (payload) =>
-            apiPostData<ApiResponse<null>>("/v1/reports/general-ledger/balance-entry", payload),
-    });
-}
+export { useBalanceEntry } from "./ledger-api";

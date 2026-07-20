@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
+
 import { Badge } from "@/components/ui/badge";
 import type { GeneralLedgerEntry } from "@/features/accounting/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";

@@ -23,24 +23,31 @@ interface UnbalancedFilterValues {
 export function UnbalancedEntriesView() {
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(50);
-    const [sortBy, setSortBy] = useState<string | undefined>("transaction_date");
-    const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("desc");
+    const [sortBy, setSortBy] = useState<string>("transaction_date");
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
+    // Modal state for balancing entry
     const [selectedEntry, setSelectedEntry] = useState<GeneralLedgerEntry | null>(null);
 
+    // Form Context for Filters
     const filterMethods = useForm<UnbalancedFilterValues>({
         defaultValues: {
-            from: todayStr(),
+            from: "",
             to: todayStr(),
         },
     });
 
-    const from = useWatch({ control: filterMethods.control, name: "from" });
-    const to = useWatch({ control: filterMethods.control, name: "to" });
+    const [from, to] = useWatch({
+        control: filterMethods.control,
+        name: ["from", "to"],
+    });
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setPage(1);
     }, [from, to]);
 
+    // Data fetching
     const { data, isLoading, isFetching, refetch } = useGeneralLedgerUnbalanced({
         from: from || undefined,
         to: to || undefined,
@@ -54,24 +61,31 @@ export function UnbalancedEntriesView() {
 
     const entries = data?.data ?? [];
     const meta = data?.meta;
-    const totalUnbalanced = meta?.total ?? 0;
+    const totalUnbalanced = meta?.total ?? entries.length;
 
     return (
         <div className="space-y-6">
             {/* Header Hero Section */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 p-5 rounded-2xl shadow-xs">
-                <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                        <div className="p-2 rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
-                            <IconScale size={20} />
-                        </div>
-                        <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-slate-100">
-                            Pemeriksaan Jurnal Tidak Seimbang
-                        </h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2">
+                <div className="flex items-center gap-4">
+                    <div className="relative flex items-center justify-center p-3.5 bg-gradient-to-br from-amber-500 to-orange-600 dark:from-amber-600 dark:to-orange-800 text-white rounded-2xl shadow-lg shadow-amber-500/15 dark:shadow-amber-950/30 ring-4 ring-amber-50 dark:ring-amber-950/20 shrink-0">
+                        <IconScale className="w-6 h-6" />
+                        <div className="absolute inset-0 bg-amber-500 rounded-2xl blur-lg opacity-25 -z-10" />
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed pl-10">
-                        Memantau entri transaksi General Ledger yang memiliki ketidakseimbangan antara nilai total Debit dan Kredit.
-                    </p>
+
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                            <h2 className="text-xl md:text-2xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">
+                                Entri Tidak Seimbang
+                            </h2>
+                            <span className="text-[9px] px-2 py-0.5 rounded-full font-extrabold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900/30 uppercase tracking-wider shadow-sm">
+                                General Ledger Unbalanced
+                            </span>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-xl">
+                            Mendeteksi dan menambahkan akun penyeimbang pada entri General Ledger yang membuat posisi Neraca tidak seimbang.
+                        </p>
+                    </div>
                 </div>
             </div>
 
@@ -80,37 +94,49 @@ export function UnbalancedEntriesView() {
 
             {/* Filter Card */}
             <FormProvider {...filterMethods}>
-                <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 p-4 rounded-2xl shadow-xs flex flex-wrap items-center gap-4">
-                    <div className="w-44">
-                        <FormDatePicker
-                            name="from"
-                            label="Dari Tanggal"
-                            placeholder="Pilih tanggal awal"
-                        />
-                    </div>
-                    <div className="w-44">
-                        <FormDatePicker
-                            name="to"
-                            label="Sampai Tanggal"
-                            placeholder="Pilih tanggal akhir"
-                        />
+                <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200/50 dark:border-slate-800/60 shadow-sm rounded-3xl p-3 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap w-full md:w-auto">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Dari:</span>
+                            <FormDatePicker
+                                name="from"
+                                size="sm"
+                                className="w-[125px] sm:w-[135px]"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Sampai:</span>
+                            <FormDatePicker
+                                name="to"
+                                size="sm"
+                                className="w-[125px] sm:w-[135px]"
+                            />
+                        </div>
                     </div>
                 </div>
             </FormProvider>
 
-            {/* Data Table Section */}
-            <section className="space-y-4">
+            {/* DataTable Section */}
+            <section className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-3xl shadow-sm p-4 sm:p-6 space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-4">
+                    <h3 className="text-xs font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider">
+                        Daftar Entri Tidak Seimbang
+                        {meta ? ` (${meta.total} entri)` : ""}
+                    </h3>
+                </div>
+
                 <DataTable
                     columns={columns}
                     data={entries}
                     isLoading={isLoading}
                     isFetching={isFetching}
+                    emptyMessage="Tidak ada entri yang tidak seimbang pada rentang tanggal ini."
                     page={page}
                     perPage={perPage}
-                    totalItems={totalUnbalanced}
-                    totalPages={meta?.last_page ?? 1}
                     onPageChange={setPage}
                     onPerPageChange={setPerPage}
+                    meta={meta}
+                    entityName="entri tidak seimbang"
                     virtualize={true}
                     estimateRowHeight={52}
                     enableSortingRemoval={false}
@@ -127,8 +153,13 @@ export function UnbalancedEntriesView() {
                     sortBy={sortBy}
                     sortOrder={sortOrder}
                     onSortChange={(key, order) => {
-                        setSortBy(key);
-                        setSortOrder(order);
+                        if (key && order) {
+                            setSortBy(key);
+                            setSortOrder(order);
+                        } else {
+                            setSortBy("transaction_date");
+                            setSortOrder("desc");
+                        }
                         setPage(1);
                     }}
                 />

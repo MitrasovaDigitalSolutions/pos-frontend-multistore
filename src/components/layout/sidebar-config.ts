@@ -300,6 +300,12 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                     },
                     {
+                        path: ROUTES.ADMIN_ACCOUNTING_UNBALANCED,
+                        label: "Entri Tidak Seimbang",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                    },
+                    {
                         path: ROUTES.ADMIN_ACCOUNTING_COA,
                         label: "Chart of Accounts (COA)",
                         permission: (roles, permissions) =>
@@ -314,12 +320,6 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     {
                         path: ROUTES.ADMIN_ACCOUNTING_JOURNALS,
                         label: "Jurnal Manual",
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
-                    },
-                    {
-                        path: ROUTES.ADMIN_ACCOUNTING_UNBALANCED,
-                        label: "Jurnal Tidak Seimbang",
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                     },
