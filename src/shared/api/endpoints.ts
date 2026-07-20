@@ -165,6 +165,7 @@ export const ENDPOINTS = {
     LEDGER: {
         BACKFILL: "/v1/ledger/backfill",
         BACKFILL_STATUS: "/v1/ledger/backfill/status",
+        BALANCE_ENTRY: "/v1/reports/general-ledger/balance-entry",
     },
 
     // Transactions (Checkout)

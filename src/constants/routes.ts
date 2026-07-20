@@ -24,6 +24,7 @@ export const ROUTES = {
     ADMIN_REPORTS_LABARUGI: "/admin/reports/laba-rugi",
     ADMIN_REPORTS_PEMBELIAN: "/admin/reports/pembelian",
     ADMIN_REPORTS_PENGELUARAN: "/admin/reports/pengeluaran",
+    ADMIN_EMPLOYEES: "/admin/employees",
     ADMIN_USERS: "/admin/users",
     ADMIN_SETTINGS: "/admin/settings",
     ADMIN_STORES: "/admin/stores",
@@ -41,6 +42,7 @@ export const ROUTES = {
     ADMIN_ACCOUNTING_COA_MAPPING: "/admin/accounting/coa-mapping",
     ADMIN_ACCOUNTING_JOURNALS: "/admin/accounting/journals",
     ADMIN_ACCOUNTING_GENERAL_LEDGER: "/admin/accounting/general-ledger",
+    ADMIN_ACCOUNTING_UNBALANCED: "/admin/accounting/unbalanced",
 
     // Protected - POS
     CHECKOUT: "/checkout",

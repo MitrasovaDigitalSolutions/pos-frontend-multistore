@@ -5,7 +5,9 @@ import { OfflineReadinessBadge } from "@/features/checkout/components/offline-re
 import type { OfflineReadinessState } from "@/hooks/use-offline-readiness";
 import { getImageUrl } from "@/lib/utils";
 import { useSettingsStore } from "@/stores/settings-store";
-import { IconCash, IconHome, IconLogout, IconScan, IconWifi } from "@tabler/icons-react";
+import { IconCash, IconHome, IconLogout, IconScan, IconWifi, IconBuildingStore } from "@tabler/icons-react";
+import { useSession } from "next-auth/react";
+import { useActiveStoreStore } from "@/stores/active-store-store";
 
 interface CheckoutTopBarProps {
     transactionId: string | null;
@@ -43,6 +45,10 @@ export function CheckoutTopBar({
     const appLogoRaw = getSetting("app_logo_url", "");
     const appLogo = getImageUrl(appLogoRaw);
 
+    const { data: session } = useSession();
+    const activeStoreUid = useActiveStoreStore((state) => state.activeStoreUid);
+    const activeStore = session?.user?.stores?.find((s) => s.uid === activeStoreUid);
+
     return (
         <div className="bg-slate-900 text-white h-10 px-3 sm:px-5 flex items-center justify-between border-b border-slate-800">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -56,6 +62,12 @@ export function CheckoutTopBar({
                     <span className="hidden sm:inline">{appName} — Cashier Terminal</span>
                     <span className="inline sm:hidden">{appName.substring(0, 8)} POS</span>
                 </span>
+                {activeStore && (
+                    <span className="inline-flex items-center gap-1 bg-slate-800 text-emerald-400 border border-slate-700 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shrink-0">
+                        <IconBuildingStore size={12} className="text-emerald-500" />
+                        <span>{activeStore.nama}</span>
+                    </span>
+                )}
                 {transactionId && (
                     <span className="bg-emerald-700 text-emerald-100 text-[9px] font-bold px-2 py-0.5 rounded-full tracking-wider shrink-0">
                         TRX #{transactionId}

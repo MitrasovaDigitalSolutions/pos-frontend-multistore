@@ -39,7 +39,11 @@ apiClient.interceptors.request.use(
 
         const activeStoreUid = useActiveStoreStore.getState().activeStoreUid;
         const isAuthRequest = config.url?.includes("/auth/") || config.url?.includes("/login");
-        if (activeStoreUid && !isAuthRequest) {
+        const storeUidHeader = config.headers.get("X-Store-UID");
+
+        if (storeUidHeader === "none" || storeUidHeader === "") {
+            config.headers.delete("X-Store-UID");
+        } else if (activeStoreUid && !isAuthRequest && !config.headers.has("X-Store-UID")) {
             config.headers.set("X-Store-UID", activeStoreUid);
         }
 

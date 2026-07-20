@@ -1,17 +1,20 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { BaseDialog } from "@/components/ui/base-dialog";
-import { FormProvider, useForm } from "react-hook-form";
-import { useSettingsStore } from "@/stores/settings-store";
-import { settingsApi } from "@/features/settings/api/settings-api";
-import QZService from "@/services/qz.service";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { FormSelect } from "@/components/forms/form-select";
-import { IconPrinter, IconSettings } from "@tabler/icons-react";
-import { Loader2, RefreshCw, Info, Save } from "lucide-react";
+import { BaseDialog } from "@/components/ui/base-dialog";
+import { Button } from "@/components/ui/button";
+import { settingsApi } from "@/features/settings/api/settings-api";
+import { cn } from "@/lib/utils";
+import QZService from "@/services/qz.service";
+import { useActiveStoreStore } from "@/stores/active-store-store";
+import { useSettingsStore } from "@/stores/settings-store";
+import { IconBuildingStore, IconPrinter, IconSettings } from "@tabler/icons-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Info, Loader2, RefreshCw, Save } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 interface CashierSettingsDialogProps {
     open: boolean;
@@ -20,10 +23,17 @@ interface CashierSettingsDialogProps {
 
 interface CashierSettingsInput {
     printer_id: string;
+    activeStore: string;
 }
 
 export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDialogProps) {
     const { settings, fetchSettings } = useSettingsStore();
+    const { data: session } = useSession();
+    const queryClient = useQueryClient();
+    const { activeStoreUid, setActiveStore } = useActiveStoreStore();
+    const stores = session?.user?.stores ?? [];
+    const activeStore = stores.find((s) => s.uid === activeStoreUid);
+
     const [activeTab, setActiveTab] = useState("printer");
     const [isSaving, setIsSaving] = useState(false);
     const [printerOptions, setPrinterOptions] = useState<{ value: string; label: string }[]>([]);
@@ -31,8 +41,9 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
     const [qzError, setQzError] = useState<string | null>(null);
 
     const methods = useForm<CashierSettingsInput>({
-        defaultValues: {
-            printer_id: "",
+        values: {
+            printer_id: settings.printer_id || "",
+            activeStore: activeStoreUid || "",
         },
     });
 
@@ -43,9 +54,10 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
         if (open && Object.keys(settings).length > 0) {
             reset({
                 printer_id: settings.printer_id || "",
+                activeStore: activeStoreUid || "",
             });
         }
-    }, [open, settings, reset]);
+    }, [open, settings, activeStoreUid, reset]);
 
     // Fetch printers from QZ Tray
     const loadPrinters = async () => {
@@ -88,18 +100,37 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
 
     const onSubmit = async (data: CashierSettingsInput) => {
         setIsSaving(true);
+        let hasChanges = false;
         try {
             if (data.printer_id !== settings.printer_id) {
                 await settingsApi.update("printer_id", data.printer_id);
                 await fetchSettings();
                 toast.success("Pengaturan printer kasir berhasil disimpan.");
-                onOpenChange(false);
+                hasChanges = true;
+            }
+
+            if (data.activeStore && data.activeStore !== activeStoreUid) {
+                const targetStore = stores.find((s) => s.uid === data.activeStore);
+                if (targetStore) {
+                    const toastId = toast.loading(`Sedang berpindah ke ${targetStore.nama}...`);
+                    setActiveStore(data.activeStore);
+                    await Promise.all([
+                        queryClient.invalidateQueries(),
+                        fetchSettings(),
+                    ]);
+                    toast.success(`Berhasil berpindah ke ${targetStore.nama}`, { id: toastId });
+                    hasChanges = true;
+                }
+            }
+
+            if (!hasChanges) {
+                toast.info("Tidak ada perubahan pengaturan.");
             } else {
-                toast.info("Tidak ada perubahan pengaturan printer.");
+                onOpenChange(false);
             }
         } catch (error) {
-            console.error("Gagal menyimpan printer kasir:", error);
-            toast.error("Gagal menyimpan pengaturan printer.");
+            console.error("Gagal menyimpan pengaturan:", error);
+            toast.error("Gagal menyimpan pengaturan.");
         } finally {
             setIsSaving(false);
         }
@@ -138,6 +169,12 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
             disabled: false,
         },
         {
+            id: "store",
+            label: "Toko",
+            icon: IconBuildingStore,
+            disabled: false,
+        },
+        {
             id: "general",
             label: "Pengaturan Lain",
             icon: IconSettings,
@@ -160,7 +197,7 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
             <FormProvider {...methods}>
                 <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
                     {/* Horizontal top tabs */}
-                    <div className="flex border-b border-slate-100  gap-1.5 bg-slate-50/40 shrink-0">
+                    <div className="flex border-b border-slate-100 gap-1.5 bg-slate-50/40 shrink-0 p-2">
                         {tabs.map((tab) => {
                             const Icon = tab.icon;
                             const isActive = activeTab === tab.id;
@@ -238,6 +275,50 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
                                 </div>
                             </div>
                         )}
+
+                        {activeTab === "store" && (
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                            Pilih Outlet / Toko Aktif
+                                        </span>
+                                        {stores.length > 0 && (
+                                            <span className="text-[10px] font-bold text-slate-400">
+                                                {stores.length} Toko Terdaftar
+                                            </span>
+                                        )}
+                                    </div>
+                                    <FormSelect<CashierSettingsInput>
+                                        name="activeStore"
+                                        options={stores.map((s) => ({
+                                            value: s.uid,
+                                            label: s.nama,
+                                            description: s.is_central ? "Toko Pusat" : "Toko Cabang",
+                                        }))}
+                                        placeholder="Pilih Toko"
+                                        leftIcon={
+                                            <IconBuildingStore
+                                                size={16}
+                                                className={`shrink-0 ${activeStore?.is_central ? "text-emerald-600" : "text-slate-500"
+                                                    }`}
+                                            />
+                                        }
+                                        rightElement={
+                                            activeStore?.is_central ? (
+                                                <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80 leading-none">
+                                                    Pusat
+                                                </span>
+                                            ) : (
+                                                <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-slate-100 text-slate-600 border border-slate-200/80 leading-none">
+                                                    Cabang
+                                                </span>
+                                            )
+                                        }
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Footer Actions */}
@@ -250,23 +331,25 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
                         >
                             Batal
                         </Button>
-                        <Button
-                            type="submit"
-                            disabled={!isDirty || isSaving}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] uppercase tracking-wider rounded-xl shadow-sm px-5 py-2 h-auto cursor-pointer border-none flex items-center gap-1.5 active:scale-[0.98] transition-all"
-                        >
-                            {isSaving ? (
-                                <>
-                                    <Loader2 className="animate-spin" size={10} />
-                                    Menyimpan...
-                                </>
-                            ) : (
-                                <>
-                                    <Save size={10} />
-                                    Simpan
-                                </>
-                            )}
-                        </Button>
+                        {activeTab !== "general" && (
+                            <Button
+                                type="submit"
+                                disabled={!isDirty || isSaving}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] uppercase tracking-wider rounded-xl shadow-sm px-5 py-2 h-auto cursor-pointer border-none flex items-center gap-1.5 active:scale-[0.98] transition-all"
+                            >
+                                {isSaving ? (
+                                    <>
+                                        <Loader2 className="animate-spin" size={10} />
+                                        Menyimpan...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save size={10} />
+                                        Simpan
+                                    </>
+                                )}
+                            </Button>
+                        )}
                     </div>
                 </form>
             </FormProvider>
