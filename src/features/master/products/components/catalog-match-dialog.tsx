@@ -138,12 +138,19 @@ export function CatalogMatchDialog({
 
     const handleSelectMatch = (item: CatalogMatchItem) => {
         setSelectedItem(item);
+        const defaultBeli = item.harga_beli ?? null;
+        const defaultJual = item.harga_jual ?? null;
+        let initialMargin: number | null = null;
+        if (defaultBeli && defaultJual && defaultBeli > 0) {
+            initialMargin = parseFloat((((defaultJual - defaultBeli) / defaultBeli) * 100).toFixed(2));
+        }
+
         reset({
             store_uid: activeStoreUid || stores[0]?.uid || "",
-            harga_jual: null,
-            harga_beli: null,
+            harga_jual: defaultJual,
+            harga_beli: defaultBeli,
             stok: 0,
-            margin: null,
+            margin: initialMargin,
             status: "active",
         });
         setStep("assign");
@@ -212,7 +219,7 @@ export function CatalogMatchDialog({
                             <IconSparkles size={18} />
                         </div>
                         <div>
-                            <h4 className="text-sm font-bold text-slate-900 leading-tight">Atur Harga &amp; Ditambahkan ke Toko</h4>
+                            <h4 className="text-sm font-bold text-slate-900 leading-tight">Atur Harga &amp; Tambahkan ke Toko</h4>
                             <p className="text-[11px] text-slate-400 font-medium">Penugasan produk dari Katalog Master ke Cabang</p>
                         </div>
                     </div>
@@ -364,9 +371,11 @@ export function CatalogMatchDialog({
                                                 {Math.round(selectedItem.similarity * 100)}% Match Katalog Master
                                             </Badge>
                                         </div>
-                                        <p className="text-[11px] text-slate-500 font-mono">
-                                            Barcode / SKU: <strong className="text-slate-700 font-semibold">{selectedItem.barcode || "—"}</strong>
-                                        </p>
+                                        <div className="flex items-center gap-3 text-[11px] text-slate-500 font-medium flex-wrap">
+                                            <span>Barcode / SKU: <strong className="text-slate-700 font-semibold">{selectedItem.barcode || "—"}</strong></span>
+                                            {selectedItem.category && <span>Kategori: <strong className="text-slate-700 font-semibold">{selectedItem.category}</strong></span>}
+                                            {selectedItem.brand && <span>Brand: <strong className="text-slate-700 font-semibold">{selectedItem.brand}</strong></span>}
+                                        </div>
                                     </div>
                                 </div>
 
@@ -379,17 +388,61 @@ export function CatalogMatchDialog({
                         )}
 
                         {/* Financial Inputs in 3 Columns (Matching StoreProductEditDialog) */}
-                        <div className="grid grid-cols-3 gap-3">
-                            <FormNominalInput<AssignCatalogFormValues>
-                                name="harga_beli"
-                                label="Harga Beli (Rp)"
-                                placeholder="Contoh: 8.000"
-                            />
-                            <FormNominalInput<AssignCatalogFormValues>
-                                name="harga_jual"
-                                label="Harga Jual (Rp) *"
-                                placeholder="Contoh: 10.000"
-                            />
+                        <div className="grid grid-cols-3 gap-3 items-start">
+                            <div>
+                                <FormNominalInput<AssignCatalogFormValues>
+                                    name="harga_beli"
+                                    label="Harga Beli (Rp)"
+                                    placeholder="Contoh: 8.500"
+                                />
+                                {selectedItem?.harga_beli != null && (
+                                    <p className="text-[10px] text-slate-500 mt-1">
+                                        Katalog:{" "}
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setValue("harga_beli", selectedItem.harga_beli!, { shouldDirty: true });
+                                                const hJual = Number(watchHargaJual) || 0;
+                                                if (selectedItem.harga_beli! > 0) {
+                                                    setValue("margin", parseFloat((((hJual - selectedItem.harga_beli!) / selectedItem.harga_beli!) * 100).toFixed(2)), { shouldDirty: true });
+                                                }
+                                            }}
+                                            className="font-bold text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer"
+                                            title="Klik untuk gunakan harga ini"
+                                        >
+                                            {formatRupiah(selectedItem.harga_beli)}
+                                        </button>
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <FormNominalInput<AssignCatalogFormValues>
+                                    name="harga_jual"
+                                    label="Harga Jual (Rp) *"
+                                    placeholder="Contoh: 11.000"
+                                />
+                                {selectedItem?.harga_jual != null && (
+                                    <p className="text-[10px] text-slate-500 mt-1">
+                                        Katalog:{" "}
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setValue("harga_jual", selectedItem.harga_jual!, { shouldDirty: true });
+                                                const hBeli = Number(watchHargaBeli) || 0;
+                                                if (hBeli > 0) {
+                                                    setValue("margin", parseFloat((((selectedItem.harga_jual! - hBeli) / hBeli) * 100).toFixed(2)), { shouldDirty: true });
+                                                }
+                                            }}
+                                            className="font-bold text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer"
+                                            title="Klik untuk gunakan harga ini"
+                                        >
+                                            {formatRupiah(selectedItem.harga_jual)}
+                                        </button>
+                                    </p>
+                                )}
+                            </div>
+
                             <FormNumberInput<AssignCatalogFormValues>
                                 name="margin"
                                 label="Margin (%)"
