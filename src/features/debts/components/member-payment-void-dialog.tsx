@@ -7,7 +7,7 @@ import { z } from "zod";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FormTextarea } from "@/components/forms/form-textarea";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import type { MemberPayment } from "@/features/members/api/members-api";
+import { MemberPayment } from "@/features/master/members/api/members-api";
 
 const voidPaymentSchema = z.object({
     alasan: z.string().min(1, "Alasan pembatalan wajib diisi."),
