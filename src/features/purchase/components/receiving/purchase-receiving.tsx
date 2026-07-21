@@ -15,6 +15,8 @@ import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
 import { RECEIVING_STATUS, RECEIVING_STATUS_LABELS, PAYMENT_STATUS, PAYMENT_STATUS_LABELS } from "@/constants/purchase";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
 
+import { clearPurchaseItemsStore } from "@/stores/purchase-items-store";
+
 interface ReceivingFilterValues {
     search: string;
     status: string;
@@ -170,7 +172,10 @@ export function PurchaseReceiving() {
                 meta={receivingsData?.meta}
                 page={receivingPage}
                 onPageChange={setReceivingPage}
-                onAddClick={() => router.push("/admin/purchase/receiving/new")}
+                onAddClick={() => {
+                    clearPurchaseItemsStore("new", "receiving");
+                    router.push("/admin/purchase/receiving/new");
+                }}
                 isLoading={receivingsLoading}
                 isFetching={receivingsFetching}
                 sortBy={sortBy}
