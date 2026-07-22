@@ -111,11 +111,11 @@ export function PaymentVoidDialog({
                         />
 
                         {/* Buttons */}
-                        <div className="w-full flex flex-col sm:flex-row gap-2 pt-2">
+                        <div className="w-full flex flex-col sm:flex-row gap-2.5 pt-2">
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="w-full sm:w-auto flex-1 h-10 text-xs font-bold border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 rounded-xl cursor-pointer order-2 sm:order-1"
+                                className="w-full sm:w-auto flex-1 h-11 sm:h-10 text-xs font-bold border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 rounded-xl cursor-pointer order-2 sm:order-1"
                                 onClick={() => onOpenChange(false)}
                                 disabled={isLoading}
                             >
@@ -124,7 +124,7 @@ export function PaymentVoidDialog({
                             <Button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full sm:w-auto flex-1 h-10 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer order-1 sm:order-2 focus-visible:ring-rose-500"
+                                className="w-full sm:w-auto flex-1 h-11 sm:h-10 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer order-1 sm:order-2 focus-visible:ring-rose-500"
                             >
                                 {isLoading ? (
                                     <IconLoader2 size={14} className="animate-spin" />
