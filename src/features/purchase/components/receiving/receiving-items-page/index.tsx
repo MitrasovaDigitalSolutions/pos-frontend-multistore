@@ -280,21 +280,19 @@ function ReceivingItemsContainer({
                 </div>
 
                 {/* Sticky Bottom Submit Bar */}
-                <div className="sticky bottom-0 z-10">
-                    <BulkSubmitBar
-                        onSubmit={onProcessClick}
-                        onSecondarySubmit={handleSaveClick}
-                        onReset={handleReset}
-                        isSubmitting={isSubmitting}
-                        itemCount={itemCount}
-                        total={totalValue}
-                        productCount={uniqueProductCount}
-                        submitLabel="Proses Penerimaan"
-                        submitIcon={<IconCheck size={16} />}
-                        secondarySubmitLabel="Simpan Penerimaan"
-                        secondarySubmitIcon={<IconUpload size={16} />}
-                    />
-                </div>
+                <BulkSubmitBar
+                    onSubmit={onProcessClick}
+                    onSecondarySubmit={handleSaveClick}
+                    onReset={handleReset}
+                    isSubmitting={isSubmitting}
+                    itemCount={itemCount}
+                    total={totalValue}
+                    productCount={uniqueProductCount}
+                    submitLabel="Proses Penerimaan"
+                    submitIcon={<IconCheck size={16} />}
+                    secondarySubmitLabel="Simpan Penerimaan"
+                    secondarySubmitIcon={<IconUpload size={16} />}
+                />
 
                 {/* Finalize Dialog */}
                 {(currentReceiving || (isCurrentNew && isFinalizeOpen)) && (
