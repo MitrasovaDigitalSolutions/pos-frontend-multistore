@@ -111,7 +111,7 @@ export function AdminSidebar() {
 
             <aside
                 className={cn(
-                    "bg-gray-950 text-gray-400 flex flex-col justify-between border-r border-gray-900 shrink-0 transition-all duration-300 h-screen select-none",
+                    "bg-gray-950 text-gray-400 flex flex-col justify-between border-r border-gray-900 shrink-0 transition-all duration-300 h-screen h-[100dvh] select-none",
                     // Mobile overlay vs Desktop inline layouts
                     "fixed inset-y-0 left-0 z-50 lg:relative lg:translate-x-0 lg:z-20",
                     mounted && isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
