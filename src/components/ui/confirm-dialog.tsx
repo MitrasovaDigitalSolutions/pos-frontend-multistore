@@ -101,11 +101,11 @@ export function ConfirmDialog({
                 </div>
 
                 {/* Actions container to bypass standard DialogFooter styles */}
-                <div className="w-full flex flex-col sm:flex-row gap-2 mt-6">
+                <div className="w-full flex flex-col sm:flex-row gap-2.5 mt-6">
                     <Button
                         type="button"
                         variant="outline"
-                        className="w-full sm:w-auto flex-1 h-10 text-xs font-bold border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 rounded-xl cursor-pointer order-2 sm:order-1"
+                        className="w-full sm:w-auto flex-1 h-11 sm:h-10 text-xs font-bold border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 rounded-xl cursor-pointer order-2 sm:order-1"
                         onClick={() => onOpenChange(false)}
                         disabled={isLoading}
                     >
@@ -114,7 +114,7 @@ export function ConfirmDialog({
                     <Button
                         type="button"
                         className={cn(
-                            "w-full sm:w-auto flex-1 h-10 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer order-1 sm:order-2",
+                            "w-full sm:w-auto flex-1 h-11 sm:h-10 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer order-1 sm:order-2",
                             style.confirmBtn
                         )}
                         onClick={handleConfirm}

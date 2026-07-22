@@ -97,18 +97,18 @@ export function PrintConfirmDialog<TFieldValues extends FieldValues & BasePrintF
                         </div>
                     )}
 
-                    <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                    <div className="flex flex-col-reverse sm:flex-row justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-800">
                         <Button
                             type="button"
                             variant="outline"
                             onClick={() => onOpenChange(false)}
-                            className="h-10 border-slate-200 text-slate-600 rounded-xl text-xs font-bold px-4"
+                            className="w-full sm:w-auto h-11 sm:h-10 border-slate-200 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold px-4"
                         >
                             Batal
                         </Button>
                         <Button
                             type="submit"
-                            className="h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold px-4 border-none cursor-pointer"
+                            className="w-full sm:w-auto h-11 sm:h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold px-4 border-none cursor-pointer"
                         >
                             Cetak Laporan
                         </Button>
