@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ROUTES } from "@/constants/routes";
@@ -33,16 +34,14 @@ export function BalanceSheetStatusCard({
 }: BalanceSheetStatusCardProps) {
     return (
         <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-6 relative z-10">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-4 relative z-10">
                 {/* Status Message */}
                 <div className="flex items-start gap-4">
                     <div className={cn(
-                        "p-3.5 rounded-2xl shrink-0 shadow-sm transition-colors",
-                        isBalanced
-                            ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-450 ring-4 ring-emerald-50/50 dark:ring-emerald-950/20"
-                            : "bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-450 ring-4 ring-rose-50/50 dark:ring-rose-950/20"
+                        "w-16 h-16 rounded-full flex items-center justify-center shrink-0",
+                        isBalanced ? "bg-gradient-to-br from-emerald-100 to-indigo-100 dark:from-emerald-950/50 dark:to-indigo-950/50" : "bg-rose-100 dark:bg-rose-950/50"
                     )}>
-                        <IconScale className="w-7 h-7 animate-pulse" />
+                        <IconScale className={cn("w-8 h-8", isBalanced ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400 animate-pulse")} />
                     </div>
                     <div>
                         <div className="flex items-center gap-2 flex-wrap">
@@ -52,7 +51,7 @@ export function BalanceSheetStatusCard({
                             <span className={cn(
                                 "text-[9px] px-2 py-0.5 rounded-full font-extrabold uppercase tracking-wider shadow-sm border",
                                 isBalanced
-                                    ? "bg-emerald-100 text-emerald-800 border-emerald-200/60 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-900/40"
+                                    ? "bg-gradient-to-r from-emerald-100 to-indigo-100 text-emerald-900 border-emerald-300/60 dark:from-emerald-950/70 dark:to-indigo-950/70 dark:text-emerald-300 dark:border-emerald-800/60"
                                     : "bg-rose-100 text-rose-800 border-rose-200/60 dark:bg-rose-950/50 dark:text-rose-400 dark:border-rose-900/40"
                             )}>
                                 {isBalanced ? "Seimbang (Balanced)" : "Tidak Seimbang"}
@@ -110,18 +109,47 @@ export function BalanceSheetStatusCard({
                     </div>
 
                     {/* Comparison Progress Bar */}
-                    <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 relative overflow-hidden">
+                    <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 relative overflow-hidden p-0.5 border border-slate-200/60 dark:border-slate-800 shadow-inner">
                         {isBalanced ? (
-                            <div className="bg-gradient-to-r from-emerald-500 to-indigo-500 h-full rounded-full w-full opacity-90" />
+                            <motion.div
+                                initial={{ width: "0%" }}
+                                animate={{
+                                    width: "100%",
+                                    backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                                }}
+                                transition={{
+                                    width: { duration: 0.8, ease: "easeOut" },
+                                    backgroundPosition: { duration: 5, ease: "linear", repeat: Infinity },
+                                }}
+                                className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-teal-300 via-cyan-400 via-indigo-500 via-purple-500 to-emerald-400 bg-[length:300%_100%] relative overflow-hidden shadow-md shadow-emerald-500/20"
+                            >
+                                {/* Fluid sheen animation overlay */}
+                                <motion.div
+                                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent w-1/2 -skew-x-12"
+                                    animate={{
+                                        x: ["-150%", "300%"],
+                                    }}
+                                    transition={{
+                                        duration: 2.2,
+                                        ease: "easeInOut",
+                                        repeat: Infinity,
+                                        repeatDelay: 0.5,
+                                    }}
+                                />
+                            </motion.div>
                         ) : (
                             <div className="flex h-full rounded-full overflow-hidden w-full">
-                                <div
-                                    className="bg-emerald-500 h-full transition-all duration-500"
-                                    style={{ width: `${(totalAssets / (totalAssets + totalLiabilitiesAndEquity || 1)) * 100}%` }}
+                                <motion.div
+                                    initial={{ width: "0%" }}
+                                    animate={{ width: `${(totalAssets / (totalAssets + totalLiabilitiesAndEquity || 1)) * 100}%` }}
+                                    transition={{ duration: 0.6, ease: "easeOut" }}
+                                    className="bg-emerald-500 h-full"
                                 />
-                                <div
-                                    className="bg-rose-500 h-full transition-all duration-500"
-                                    style={{ width: `${(totalLiabilitiesAndEquity / (totalAssets + totalLiabilitiesAndEquity || 1)) * 100}%` }}
+                                <motion.div
+                                    initial={{ width: "0%" }}
+                                    animate={{ width: `${(totalLiabilitiesAndEquity / (totalAssets + totalLiabilitiesAndEquity || 1)) * 100}%` }}
+                                    transition={{ duration: 0.6, ease: "easeOut" }}
+                                    className="bg-rose-500 h-full"
                                 />
                             </div>
                         )}

@@ -7,16 +7,27 @@ import { useBalanceSheetStore } from "@/stores/balance-sheet-store";
 import {
     IconCoin,
     IconEdit,
+    IconPrinter,
     IconTrendingUp,
     IconWallet
 } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { FormDatePicker } from "@/components/forms/form-date-picker";
+import { PrintConfirmDialog } from "@/features/reports/components/print-confirm-dialog";
 
 import { BalanceSheetDraftBanner } from "./balance-sheet-draft-banner";
 import { BalanceSheetHeaderFilters } from "./balance-sheet-header-filters";
 import { BalanceSheetSectionCard } from "./balance-sheet-section-card";
 import { BalanceSheetStatusCard } from "./balance-sheet-status-card";
+
+interface BalanceSheetPrintFilterValues {
+    paperSize: string;
+    orientation: string;
+    asOfDate: string;
+    startDate?: string;
+    endDate?: string;
+}
 
 interface BalanceSheetDashboardProps {
     asOfDate: string;
@@ -35,6 +46,19 @@ export function BalanceSheetDashboard({
 
     const [viewType, setViewType] = useState<"standard" | "equation">("standard");
     const [showDebitCredit, setShowDebitCredit] = useState<boolean>(false);
+    const [isPrintDialogOpen, setIsPrintDialogOpen] = useState<boolean>(false);
+
+    const handlePrintConfirm = (formData: BalanceSheetPrintFilterValues) => {
+        const params = new URLSearchParams();
+        if (formData.asOfDate) params.append("as_of_date", formData.asOfDate);
+        if (formData.startDate) params.append("start_date", formData.startDate);
+        if (formData.endDate) params.append("end_date", formData.endDate);
+        if (formData.paperSize) params.append("paper_size", formData.paperSize);
+        if (formData.orientation) params.append("orientation", formData.orientation);
+
+        const url = `/api/proxy/v1/reports/print/balance-sheet?${params.toString()}`;
+        window.open(url, "_blank");
+    };
 
     const {
         editedData,
@@ -110,7 +134,7 @@ export function BalanceSheetDashboard({
             const netIncomeItem = {
                 uid: "synthetic-net-income",
                 kode: null,
-                nama: "Laba (Rugi) Tahun Berjalan",
+                nama: "SHU Tahun Berjalan",
                 amount: netIncome,
                 debit: totalExpense,
                 credit: totalRevenue,
@@ -158,18 +182,30 @@ export function BalanceSheetDashboard({
                 showDebitCredit={showDebitCredit}
                 onShowDebitCreditChange={setShowDebitCredit}
                 extraAction={
-                    data && flatAccounts && (
+                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap justify-end">
                         <Button
                             type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={handleStartEditing}
-                            className="h-9 px-4 text-xs font-bold rounded-xl border-indigo-200 hover:border-indigo-300 dark:border-indigo-900/60 dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50/20 dark:hover:bg-indigo-950/10 shadow-sm cursor-pointer flex items-center gap-1.5 transition-all"
+                            onClick={() => setIsPrintDialogOpen(true)}
+                            disabled={!data}
+                            className="h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex items-center justify-center gap-1.5 font-bold text-xs shadow-sm cursor-pointer transition-all"
                         >
-                            <IconEdit className="w-3.5 h-3.5" />
-                            {hasDraft ? "Lanjutkan Draf Neraca" : "Edit Neraca"}
+                            <IconPrinter size={16} />
+                            <span>Cetak PDF</span>
                         </Button>
-                    )
+
+                        {data && flatAccounts && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={handleStartEditing}
+                                className="h-9 px-4 text-xs font-bold rounded-xl border-indigo-200 hover:border-indigo-300 dark:border-indigo-900/60 dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50/20 dark:hover:bg-indigo-950/10 shadow-sm cursor-pointer flex items-center gap-1.5 transition-all"
+                            >
+                                <IconEdit className="w-3.5 h-3.5" />
+                                {hasDraft ? "Lanjutkan Draf Neraca" : "Edit Neraca"}
+                            </Button>
+                        )}
+                    </div>
                 }
             />
 
@@ -307,6 +343,38 @@ export function BalanceSheetDashboard({
                     )}
                 </div>
             </div>
+
+            <PrintConfirmDialog<BalanceSheetPrintFilterValues>
+                open={isPrintDialogOpen}
+                onOpenChange={setIsPrintDialogOpen}
+                onConfirm={handlePrintConfirm}
+                defaultValues={{
+                    paperSize: "A4",
+                    orientation: "portrait",
+                    asOfDate: asOfDate,
+                    startDate: "",
+                    endDate: "",
+                }}
+            >
+                <FormDatePicker<BalanceSheetPrintFilterValues>
+                    name="asOfDate"
+                    label="Per Tanggal (Cutoff)"
+                    placeholder="Pilih Tanggal Cutoff..."
+                    clearable={false}
+                />
+                {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormDatePicker<BalanceSheetPrintFilterValues>
+                        name="startDate"
+                        label="Dari Tanggal (Opsional)"
+                        placeholder="Mulai..."
+                    />
+                    <FormDatePicker<BalanceSheetPrintFilterValues>
+                        name="endDate"
+                        label="Sampai Tanggal (Opsional)"
+                        placeholder="Selesai..."
+                    />
+                </div> */}
+            </PrintConfirmDialog>
         </div>
     );
 }

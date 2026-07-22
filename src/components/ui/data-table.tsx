@@ -56,6 +56,7 @@ interface DataTableProps<TData, TValue> {
     isFetching?: boolean;
     emptyMessage?: string;
     className?: string;
+    tableClassName?: string;
 
     // Virtualization Props
     virtualize?: boolean;
@@ -109,6 +110,7 @@ export function DataTable<TData, TValue>({
     isFetching = false,
     emptyMessage = "Tidak ada data ditemukan.",
     className,
+    tableClassName,
     virtualize = true,
     estimateRowHeight = 44,
     maxHeight = "450px",
@@ -523,7 +525,7 @@ export function DataTable<TData, TValue>({
                 )}
                 style={virtualize ? { maxHeight } : undefined}
             >
-                <Table className="w-full border-collapse relative">
+                <Table className={cn("w-full border-collapse relative", tableClassName)}>
                     <TableHeader className="bg-slate-50 sticky top-0 z-20 shadow-[0_1px_0_0_rgba(241,245,249,1)]">
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow
@@ -610,6 +612,10 @@ export function DataTable<TData, TValue>({
                                                 "py-4 px-4",
                                                 col.meta?.cellClassName
                                             )}
+                                            style={{
+                                                width: col.size,
+                                                minWidth: col.size,
+                                            }}
                                         >
                                             <div className="h-4 bg-slate-100/80 animate-pulse rounded-lg w-2/3" />
                                         </TableCell>
