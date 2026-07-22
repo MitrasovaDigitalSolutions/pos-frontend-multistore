@@ -109,7 +109,7 @@ export function BalanceSheetHeaderFilters({
 
                     {/* Extra Action (e.g. Edit Neraca) */}
                     {extraAction && (
-                        <div className="shrink-0 self-end sm:self-auto transition-transform hover:scale-[1.02] active:scale-[0.98]">
+                        <div>
                             {extraAction}
                         </div>
                     )}
@@ -150,7 +150,7 @@ export function BalanceSheetHeaderFilters({
                                         ) : (
                                             <>
                                                 <IconMathSymbols className="w-3.5 h-3.5 shrink-0" />
-                                                <span>Persamaan</span>
+                                                <span>Persamaan Diperluas</span>
                                             </>
                                         )}
                                     </button>
