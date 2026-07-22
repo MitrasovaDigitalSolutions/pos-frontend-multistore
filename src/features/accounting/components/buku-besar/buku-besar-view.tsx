@@ -76,7 +76,7 @@ export function BukuBesarView() {
                 accessorKey: "transaction_date",
                 header: "Tanggal",
                 cell: ({ row }) => (
-                    <span className="text-slate-600 dark:text-slate-400 text-xs whitespace-nowrap">
+                    <span className="text-slate-600 dark:text-slate-400 text-xs whitespace-nowrap block truncate">
                         {format(new Date(row.original.transaction_date), "dd MMM yyyy", {
                             locale: localeId,
                         })}
@@ -88,32 +88,38 @@ export function BukuBesarView() {
                 accessorKey: "kode",
                 header: "Akun",
                 cell: ({ row }) => (
-                    <div className="whitespace-nowrap">
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-200 text-xs">
+                    <div
+                        className="flex items-center gap-1.5 overflow-hidden"
+                        title={`[${row.original.kode ?? "-"}] ${row.original.nama ?? ""}`}
+                    >
+                        <span className="font-mono font-bold text-slate-800 dark:text-slate-200 text-xs shrink-0">
                             {row.original.kode ?? "-"}
                         </span>
-                        <span className="text-slate-500 dark:text-slate-450 text-[11px] ml-1.5">
+                        <span className="text-slate-500 dark:text-slate-450 text-[11px] truncate">
                             {row.original.nama}
                         </span>
                     </div>
                 ),
-                size: 200,
+                size: 220,
             },
             {
                 accessorKey: "description",
                 header: "Keterangan",
-                cell: ({ row }) => (
-                    <span className="text-slate-700 dark:text-slate-350 text-xs">
-                        {row.original.description || row.original.reference_type || "-"}
-                    </span>
-                ),
-                size: 280,
+                cell: ({ row }) => {
+                    const desc = row.original.description || row.original.reference_type || "-";
+                    return (
+                        <span className="text-slate-700 dark:text-slate-350 text-xs block truncate" title={desc}>
+                            {desc}
+                        </span>
+                    );
+                },
+                size: 300,
             },
             {
                 accessorKey: "debit",
                 header: "Debit",
                 cell: ({ row }) => (
-                    <span className="text-emerald-600 dark:text-emerald-400 text-xs font-semibold tabular-nums text-right block">
+                    <span className="text-emerald-600 dark:text-emerald-400 text-xs font-semibold tabular-nums text-right block truncate">
                         {Number(row.original.debit) > 0
                             ? formatRupiah(Number(row.original.debit))
                             : "-"}
@@ -125,7 +131,7 @@ export function BukuBesarView() {
                 accessorKey: "credit",
                 header: "Kredit",
                 cell: ({ row }) => (
-                    <span className="text-rose-600 dark:text-rose-455 text-xs font-semibold tabular-nums text-right block">
+                    <span className="text-rose-600 dark:text-rose-455 text-xs font-semibold tabular-nums text-right block truncate">
                         {Number(row.original.credit) > 0
                             ? formatRupiah(Number(row.original.credit))
                             : "-"}
@@ -234,6 +240,7 @@ export function BukuBesarView() {
                 <DataTable
                     columns={columns}
                     data={entries}
+                    tableClassName="table-fixed"
                     isLoading={isLoading}
                     isFetching={isFetching}
                     emptyMessage="Tidak ada entri pada rentang tanggal ini."
