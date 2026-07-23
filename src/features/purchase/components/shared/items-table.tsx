@@ -1,5 +1,6 @@
 "use client";
 
+import { AppButton } from "@/components/shared/app-button";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
@@ -155,19 +156,17 @@ export function ItemsTable({
                                             {formatRupiah(subtotal)}
                                         </td>
                                         <td className="p-3">
-                                            <button
+                                            <AppButton
                                                 type="button"
+                                                variant="ghost"
+                                                size="icon-xs"
                                                 onClick={() => onRemoveItem(item.temp_uid)}
                                                 disabled={disabled}
-                                                className="
-                                                p-1.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50
-                                                rounded-lg transition-colors cursor-pointer
-                                                disabled:opacity-40 disabled:cursor-not-allowed
-                                            "
+                                                className="text-rose-400 hover:text-rose-600 hover:bg-rose-50"
                                                 title="Hapus item"
                                             >
                                                 <IconTrash size={16} />
-                                            </button>
+                                            </AppButton>
                                         </td>
                                     </tr>
                                 );

@@ -5,6 +5,7 @@ import { FormNumberInput } from "@/components/forms/form-number-input";
 import { BarcodeInput } from "@/components/shared/barcode-input";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
+import { AppButton } from "@/components/shared/app-button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -496,23 +497,28 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
                             <div className="flex items-center gap-2">
                                 <h3 className="text-xs font-bold text-slate-900">Daftar Perhitungan Fisik</h3>
                                 {!isInstructionsOpen && (
-                                    <button
+                                    <AppButton
                                         type="button"
+                                        variant="ghost"
+                                        size="xs"
                                         onClick={() => setIsInstructionsOpen(true)}
-                                        className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded-lg border-none cursor-pointer transition-colors"
+                                        className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded-lg border-none h-auto"
                                     >
                                         <IconInfoCircle size={12} />
                                         Tampilkan Petunjuk
-                                    </button>
+                                    </AppButton>
                                 )}
                             </div>
                             {items.length > 0 && (
-                                <button
+                                <AppButton
+                                    type="button"
+                                    variant="ghost"
+                                    size="xs"
                                     onClick={handleReset}
-                                    className="text-xs font-bold text-rose-600 hover:text-rose-700 bg-transparent border-none cursor-pointer hover:underline"
+                                    className="text-xs font-bold text-rose-600 hover:text-rose-700 bg-transparent border-none cursor-pointer hover:underline h-auto p-0"
                                 >
                                     Kosongkan List
-                                </button>
+                                </AppButton>
                             )}
                         </div>
 
@@ -773,13 +779,15 @@ function OpnameItemRow({
                 </TableCell>
                 <TableCell className="p-4 text-center">
                     <div className="flex items-center justify-center gap-1">
-                        <button
+                        <AppButton
                             type="button"
+                            variant="ghost"
+                            size="icon-xs"
                             onClick={() => updateItem(item.temp_uid, { stok_fisik: Math.max(0, item.stok_fisik - 1) })}
-                            className="w-7 h-7 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg cursor-pointer border-none font-bold animate-transition"
+                            className="w-7 h-7 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg font-bold"
                         >
                             -
-                        </button>
+                        </AppButton>
                         <div className="w-20">
                             <FormNumberInput<RowInput>
                                 name="stok_fisik"
@@ -789,16 +797,18 @@ function OpnameItemRow({
                                 className="h-8 text-center rounded-lg border-slate-200 p-0 text-xs font-bold"
                             />
                         </div>
-                        <button
+                        <AppButton
                             type="button"
+                            variant="ghost"
+                            size="icon-xs"
                             onClick={() => updateItem(item.temp_uid, { stok_fisik: item.stok_fisik + 1 })}
-                            className="w-7 h-7 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg cursor-pointer border-none font-bold animate-transition"
+                            className="w-7 h-7 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg font-bold"
                         >
                             +
-                        </button>
+                        </AppButton>
                     </div>
                 </TableCell>
-                <TableCell className={`p-4 text-right font-bold font-mono ${(item.stok_fisik - item.stok_sistem) === 0
+                <TableCell className={`p-4 text-right font-mono font-bold ${(item.stok_fisik - item.stok_sistem) === 0
                     ? "text-slate-400"
                     : (item.stok_fisik - item.stok_sistem) > 0
                         ? "text-blue-600"
@@ -817,16 +827,17 @@ function OpnameItemRow({
                     />
                 </TableCell>
                 <TableCell className="p-4 text-center">
-                    <button
+                    <AppButton
                         type="button"
+                        variant="ghost"
+                        size="icon-xs"
                         onClick={() => removeItem(item.temp_uid)}
-                        className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
+                        className="p-1.5 text-rose-500 hover:bg-rose-50 hover:text-rose-600 rounded-lg"
                     >
                         <IconTrash size={16} />
-                    </button>
+                    </AppButton>
                 </TableCell>
             </TableRow>
         </FormProvider>
     );
 }
-

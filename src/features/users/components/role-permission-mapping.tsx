@@ -1,36 +1,37 @@
 "use client";
 
-import { useState } from "react";
-import { toast } from "sonner";
-import {
-    IconShield,
-    IconBuildingStore,
-    IconUserCheck,
-    IconDeviceLaptop,
-    IconKey,
-    IconSearch,
-    IconLock,
-    IconUsers,
-    IconPackage,
-    IconShoppingCart,
-    IconBox,
-    IconCoin,
-    IconFileText,
-    IconSettings,
-    IconAlertCircle,
-} from "@tabler/icons-react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { AppButton } from "@/components/shared/app-button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-    useRolesList,
-    usePermissionsList,
+    IconAlertCircle,
+    IconBox,
+    IconBuildingStore,
+    IconCoin,
+    IconDeviceLaptop,
+    IconFileText,
+    IconKey,
+    IconLock,
+    IconPackage,
+    IconSearch,
+    IconSettings,
+    IconShield,
+    IconShoppingCart,
+    IconUserCheck,
+    IconUsers,
+} from "@tabler/icons-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import {
     useAssignPermissionToRole,
+    usePermissionsList,
     useRevokePermissionFromRole,
+    useRolesList,
 } from "../api/roles-permissions-api";
-import { PermissionCategoryType } from "./role-permission-types";
-import { RolePermissionCategory } from "./role-permission-category";
 import { Permission } from "../types";
+import { RolePermissionCategory } from "./role-permission-category";
+import { PermissionCategoryType } from "./role-permission-types";
 
 const ROLE_METADATA: Record<string, { label: string; desc: string }> = {
     admin: {
@@ -431,10 +432,12 @@ export function RolePermissionMapping() {
                         const count = role.permissions.length;
 
                         return (
-                            <button
+                            <AppButton
                                 key={role.id}
+                                type="button"
+                                variant="ghost"
                                 onClick={() => setSelectedRoleName(role.name)}
-                                className={`w-full text-left p-4 rounded-2xl border transition-all duration-200 cursor-pointer ${isSelected
+                                className={`w-full text-left p-4 h-auto justify-start flex-col items-start rounded-2xl border transition-all duration-200 cursor-pointer ${isSelected
                                     ? "bg-white border-emerald-500 shadow-md ring-1 ring-emerald-500/20"
                                     : "bg-white hover:bg-slate-50/50 border-slate-100 shadow-sm"
                                     }`}
@@ -470,7 +473,7 @@ export function RolePermissionMapping() {
                                 <p className="text-[10px] text-slate-400 mt-3.5 leading-relaxed">
                                     {meta.desc}
                                 </p>
-                            </button>
+                            </AppButton>
                         );
                     })}
                 </div>
@@ -518,18 +521,24 @@ export function RolePermissionMapping() {
                             Daftar Kategori Modul
                         </span>
                         <div className="flex items-center gap-2">
-                            <button
+                            <AppButton
+                                type="button"
+                                variant="ghost"
+                                size="xs"
                                 onClick={() => handleExpandAll(categoriesWithPermissions)}
-                                className="text-[10px] font-bold text-slate-500 hover:text-emerald-600 hover:bg-slate-50 transition-colors flex items-center gap-1 cursor-pointer bg-white px-2 py-1 rounded-lg border border-slate-100 shadow-sm"
+                                className="text-[10px] font-bold text-slate-500 hover:text-emerald-600 hover:bg-slate-50 flex items-center gap-1 cursor-pointer bg-white px-2 py-1 rounded-lg border border-slate-100 shadow-sm h-auto"
                             >
                                 Buka Semua
-                            </button>
-                            <button
+                            </AppButton>
+                            <AppButton
+                                type="button"
+                                variant="ghost"
+                                size="xs"
                                 onClick={() => handleCollapseAll(categoriesWithPermissions)}
-                                className="text-[10px] font-bold text-slate-500 hover:text-emerald-600 hover:bg-slate-50 transition-colors flex items-center gap-1 cursor-pointer bg-white px-2 py-1 rounded-lg border border-slate-100 shadow-sm"
+                                className="text-[10px] font-bold text-slate-500 hover:text-emerald-600 hover:bg-slate-50 flex items-center gap-1 cursor-pointer bg-white px-2 py-1 rounded-lg border border-slate-100 shadow-sm h-auto"
                             >
                                 Tutup Semua
-                            </button>
+                            </AppButton>
                         </div>
                     </div>
 

@@ -27,8 +27,8 @@ import type { StockTransfer } from "../types";
 
 import { FormSelect } from "@/components/forms/form-select";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
+import { AppButton } from "@/components/shared/app-button";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FormProvider, useForm } from "react-hook-form";
@@ -244,12 +244,13 @@ export function TransferListPage() {
         </div>
 
         {canManage && (
-          <Button
+          <AppButton
+            type="button"
             onClick={() => router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/new`)}
             className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer shadow-sm"
           >
             <IconPlus size={16} /> Buat Transfer Baru
-          </Button>
+          </AppButton>
         )}
       </div>
 
@@ -302,7 +303,10 @@ export function TransferListPage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-50 pb-4">
           {/* Direction Tabs */}
           <div className="flex bg-slate-100/80 p-1 rounded-xl border border-slate-200/50">
-            <button
+            <AppButton
+              type="button"
+              variant="ghost"
+              size="xs"
               onClick={() => {
                 setDirection("all");
                 setPage(1);
@@ -313,8 +317,11 @@ export function TransferListPage() {
                 }`}
             >
               Semua Direction
-            </button>
-            <button
+            </AppButton>
+            <AppButton
+              type="button"
+              variant="ghost"
+              size="xs"
               onClick={() => {
                 setDirection("outgoing");
                 setPage(1);
@@ -326,8 +333,11 @@ export function TransferListPage() {
             >
               <IconArrowUpRight size={14} className="text-amber-500" />
               Transfer Keluar
-            </button>
-            <button
+            </AppButton>
+            <AppButton
+              type="button"
+              variant="ghost"
+              size="xs"
               onClick={() => {
                 setDirection("incoming");
                 setPage(1);
@@ -339,7 +349,7 @@ export function TransferListPage() {
             >
               <IconArrowDownLeft size={14} className="text-blue-500" />
               Transfer Masuk
-            </button>
+            </AppButton>
           </div>
 
           {/* Status Dropdown */}
@@ -379,12 +389,15 @@ export function TransferListPage() {
           extraActions={(item) => (
             <Tooltip>
               <TooltipTrigger asChild>
-                <button
+                <AppButton
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
                   onClick={() => router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/${item.uid}`)}
-                  className="p-1.5 text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
+                  className="text-slate-600 hover:text-emerald-600 hover:bg-emerald-50"
                 >
                   <IconInfoCircle size={16} />
-                </button>
+                </AppButton>
               </TooltipTrigger>
               <TooltipContent>Lihat Detail Transfer</TooltipContent>
             </Tooltip>

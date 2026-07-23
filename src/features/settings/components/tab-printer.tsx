@@ -8,6 +8,8 @@ import { FormSelect } from "@/components/forms/form-select";
 import { Scrollable } from "@/components/ui/scrollable";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
+import { AppButton } from "@/components/shared/app-button";
+
 interface TabPrinterProps {
     isSaving: boolean;
     printerOptions: { value: string; label: string }[];
@@ -24,9 +26,14 @@ function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }
             </span>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <button type="button" className="p-0 border-none bg-transparent cursor-help text-slate-400 hover:text-slate-500 transition-colors flex items-center">
+                    <AppButton
+                        type="button"
+                        variant="ghost"
+                        size="icon-xs"
+                        className="p-0 border-none bg-transparent cursor-help text-slate-400 hover:text-slate-500 transition-colors flex items-center h-auto w-auto"
+                    >
                         <Info size={12} />
-                    </button>
+                    </AppButton>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs max-w-xs bg-slate-950 text-white rounded-lg p-2 shadow-lg border border-slate-800">
                     {tooltip}
@@ -115,19 +122,19 @@ export function TabPrinter({
                                             label="Nama / ID Printer"
                                             tooltip="Pilih printer  default yang terhubung ke komputer Anda. Terkoneksi menggunakan aplikasi QZ Tray."
                                         />
-                                        <button
+                                        <AppButton
                                             type="button"
+                                            variant="ghost"
+                                            size="xs"
                                             onClick={loadPrinters}
-                                            disabled={isLoadingPrinters || isSaving}
-                                            className="text-xs text-emerald-600 hover:text-emerald-700 font-bold flex items-center gap-1 disabled:opacity-50 transition-colors bg-transparent border-none cursor-pointer p-0 pb-1"
+                                            isLoading={isLoadingPrinters}
+                                            loadingText="Memindai..."
+                                            leftIcon={!isLoadingPrinters ? <RefreshCw size={11} /> : null}
+                                            disabled={isSaving}
+                                            className="text-xs text-emerald-600 hover:text-emerald-700 font-bold transition-colors bg-transparent border-none p-0 pb-1 h-auto"
                                         >
-                                            {isLoadingPrinters ? (
-                                                <Loader2 className="animate-spin" size={11} />
-                                            ) : (
-                                                <RefreshCw size={11} />
-                                            )}
                                             Pindai Ulang
-                                        </button>
+                                        </AppButton>
                                     </div>
                                     <FormSelect<StoreSettingsInput>
                                         name="printer_id"

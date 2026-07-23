@@ -3,8 +3,8 @@
 import { useFormContext } from "react-hook-form";
 import { type StoreSettingsInput } from "../schemas/settings-schema";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Loader2, Save } from "lucide-react";
+import { AppButton } from "@/components/shared/app-button";
+import { Save } from "lucide-react";
 import { toast } from "sonner";
 
 interface FloatingSaveBarProps {
@@ -48,7 +48,7 @@ export function FloatingSaveBar({ isSaving }: FloatingSaveBarProps) {
                 </div>
 
                 <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end shrink-0">
-                    <Button
+                    <AppButton
                         type="button"
                         variant="outline"
                         size="sm"
@@ -63,25 +63,17 @@ export function FloatingSaveBar({ isSaving }: FloatingSaveBarProps) {
                         )}
                     >
                         Batal
-                    </Button>
-                    <Button
+                    </AppButton>
+                    <AppButton
                         type="submit"
                         size="sm"
-                        disabled={isSaving}
+                        isLoading={isSaving}
+                        loadingText="Menyimpan..."
+                        leftIcon={!isSaving ? <Save size={12} /> : null}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md hover:shadow-lg shadow-emerald-600/10 active:scale-[0.98] transition-all duration-200 px-5 py-2.5 h-auto cursor-pointer border-none flex items-center gap-1.5"
                     >
-                        {isSaving ? (
-                            <>
-                                <Loader2 className="animate-spin" size={12} />
-                                Menyimpan...
-                            </>
-                        ) : (
-                            <>
-                                <Save size={12} />
-                                Simpan
-                            </>
-                        )}
-                    </Button>
+                        Simpan
+                    </AppButton>
                 </div>
             </div>
         </div>

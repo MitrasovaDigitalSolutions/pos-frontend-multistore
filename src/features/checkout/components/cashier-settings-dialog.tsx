@@ -13,7 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Info, Loader2, RefreshCw, Save } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
 interface CashierSettingsDialogProps {
@@ -32,7 +32,6 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
     const queryClient = useQueryClient();
     const { activeStoreUid, setActiveStore } = useActiveStoreStore();
     const stores = session?.user?.stores ?? [];
-    const activeStore = stores.find((s) => s.uid === activeStoreUid);
 
     const [activeTab, setActiveTab] = useState("printer");
     const [isSaving, setIsSaving] = useState(false);
@@ -48,6 +47,8 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
     });
 
     const { handleSubmit, reset, formState: { isDirty } } = methods;
+    const selectedStoreUid = useWatch({ control: methods.control, name: "activeStore" });
+    const selectedStore = stores.find((s) => s.uid === selectedStoreUid);
 
     // Load settings values into form
     useEffect(() => {
@@ -300,12 +301,12 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
                                         leftIcon={
                                             <IconBuildingStore
                                                 size={16}
-                                                className={`shrink-0 ${activeStore?.is_central ? "text-emerald-600" : "text-slate-500"
+                                                className={`shrink-0 ${selectedStore?.is_central ? "text-emerald-600" : "text-slate-500"
                                                     }`}
                                             />
                                         }
                                         rightElement={
-                                            activeStore?.is_central ? (
+                                            selectedStore?.is_central ? (
                                                 <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80 leading-none">
                                                     Pusat
                                                 </span>

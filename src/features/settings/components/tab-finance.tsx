@@ -10,6 +10,8 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/comp
 import { useFormContext, Controller } from "react-hook-form";
 import { Switch } from "@/components/ui/switch";
 
+import { AppButton } from "@/components/shared/app-button";
+
 interface TabFinanceProps {
     isSaving: boolean;
 }
@@ -22,9 +24,14 @@ function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }
             </span>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <button type="button" className="p-0 border-none bg-transparent cursor-help text-slate-400 hover:text-slate-500 transition-colors flex items-center">
+                    <AppButton
+                        type="button"
+                        variant="ghost"
+                        size="icon-xs"
+                        className="p-0 border-none bg-transparent cursor-help text-slate-400 hover:text-slate-500 transition-colors flex items-center h-auto w-auto"
+                    >
                         <Info size={12} />
-                    </button>
+                    </AppButton>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs max-w-xs bg-slate-950 text-white rounded-lg p-2 shadow-lg border border-slate-800">
                     {tooltip}

@@ -14,7 +14,7 @@ import {
     IconArrowLeft
 } from "@tabler/icons-react";
 import { BaseDialog } from "@/components/ui/base-dialog";
-import { Button } from "@/components/ui/button";
+import { AppButton } from "@/components/shared/app-button";
 import { Scrollable } from "@/components/ui/scrollable";
 import { useStoreUsers, useAssignStoreUsers, useDetachStoreUser } from "../api/stores-api";
 import { useGlobalUsers } from "@/features/users/api/users-api";
@@ -117,13 +117,15 @@ function UserCard({ user, actionButton, isDragging, dragHandleProps }: UserCardP
         >
             <div className="flex items-center gap-2 min-w-0">
                 {/* Grip Drag Handle */}
-                <button
+                <AppButton
                     type="button"
+                    variant="ghost"
+                    size="icon-xs"
                     {...dragHandleProps}
                     className="p-1 text-slate-400 hover:text-slate-600 cursor-grab active:cursor-grabbing rounded hover:bg-slate-50 border-none bg-transparent flex items-center justify-center shrink-0"
                 >
                     <IconGripVertical size={16} />
-                </button>
+                </AppButton>
 
                 {/* Initials Avatar */}
                 <div className={`w-8 h-8 rounded-full border flex items-center justify-center text-[10px] font-extrabold shrink-0 ${getAvatarBg(user.name)}`}>
@@ -394,14 +396,14 @@ export function StoreUsersDialog({ open, onOpenChange, store }: StoreUsersDialog
                                                 key={user.uid}
                                                 user={user}
                                                 actionButton={
-                                                    <Button
+                                                    <AppButton
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() => handleMoveToAssigned(user)}
                                                         className="h-8 w-8 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 cursor-pointer rounded-lg flex items-center justify-center border-none"
                                                     >
                                                         <IconArrowRight size={16} />
-                                                    </Button>
+                                                    </AppButton>
                                                 }
                                             />
                                         ))}
@@ -446,14 +448,14 @@ export function StoreUsersDialog({ open, onOpenChange, store }: StoreUsersDialog
                                                 key={user.uid}
                                                 user={user}
                                                 actionButton={
-                                                    <Button
+                                                    <AppButton
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() => handleMoveToAvailable(user)}
                                                         className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 cursor-pointer rounded-lg flex items-center justify-center border-none"
                                                     >
                                                         <IconArrowLeft size={16} />
-                                                    </Button>
+                                                    </AppButton>
                                                 }
                                             />
                                         ))}
