@@ -5,7 +5,7 @@ import { IconUsers, IconBuildingStore, IconPlus } from "@tabler/icons-react";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
+import { AppButton } from "@/components/shared/app-button";
 import { ColumnDef } from "@tanstack/react-table";
 import type { Store } from "../types";
 
@@ -137,12 +137,13 @@ export function StoreTable({
                     </p>
                 </div>
                 {hasManageStores && onAddClick && (
-                    <Button
+                    <AppButton
+                        type="button"
                         onClick={onAddClick}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
                     >
                         <IconPlus size={16} /> Tambah Toko
-                    </Button>
+                    </AppButton>
                 )}
             </div>
 
@@ -166,12 +167,15 @@ export function StoreTable({
                 extraActions={(store) => (
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <button
+                            <AppButton
+                                type="button"
+                                variant="ghost"
+                                size="icon-xs"
                                 onClick={() => onManageUsers(store)}
-                                className="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors border-none bg-transparent cursor-pointer flex items-center justify-center"
+                                className="text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
                             >
                                 <IconUsers size={16} />
-                            </button>
+                            </AppButton>
                         </TooltipTrigger>
                         <TooltipContent>Kelola User</TooltipContent>
                     </Tooltip>

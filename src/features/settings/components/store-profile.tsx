@@ -16,6 +16,7 @@ import { Card } from "@/components/ui/card";
 import { IconAdjustments, IconPrinter } from "@tabler/icons-react";
 import { Store, Wallet } from "lucide-react";
 import { Scrollable } from "@/components/ui/scrollable";
+import { AppButton } from "@/components/shared/app-button";
 
 // Subcomponents
 import { TabProfile } from "./tab-profile";
@@ -312,14 +313,15 @@ export function StoreProfile() {
                                         const isActive = activeTab === tab.id;
 
                                         return (
-                                            <button
+                                            <AppButton
                                                 key={tab.id}
                                                 type="button"
+                                                variant="ghost"
                                                 onClick={() => setActiveTab(tab.id)}
                                                 className={cn(
-                                                    "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-left cursor-pointer shrink-0 md:shrink-1 select-none",
+                                                    "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-left cursor-pointer shrink-0 md:shrink-1 select-none h-auto justify-start",
                                                     isActive
-                                                        ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/10"
+                                                        ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/10 hover:bg-emerald-600 hover:text-white"
                                                         : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
                                                 )}
                                             >
@@ -349,7 +351,7 @@ export function StoreProfile() {
                                                         <span className="w-2 h-2 rounded-full bg-amber-500 ring-4 ring-amber-500/20 animate-pulse" />
                                                     ) : null}
                                                 </div>
-                                            </button>
+                                            </AppButton>
                                         );
                                     })}
                                 </div>

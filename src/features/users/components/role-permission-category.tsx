@@ -5,6 +5,7 @@ import {
     IconChevronUp,
     IconLoader,
 } from "@tabler/icons-react";
+import { AppButton } from "@/components/shared/app-button";
 import { RoleWithPermissions } from "../types";
 import { PermissionCategoryType } from "./role-permission-types";
 import { RolePermissionItem } from "./role-permission-item";
@@ -90,34 +91,40 @@ export function RolePermissionCategory({
                     ) : (
                         <div className="flex items-center gap-2 shrink-0">
                             {activeCount < totalCount && (
-                                <button
+                                <AppButton
+                                    variant="ghost"
+                                    size="xs"
                                     onClick={() => onBulkAction("assign")}
-                                    className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100/50 px-2 py-1 rounded-lg border border-emerald-100/40 cursor-pointer transition-colors"
+                                    className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100/50 px-2 py-1 h-auto"
                                 >
                                     Pilih Semua
-                                </button>
+                                </AppButton>
                             )}
                             {activeCount > 0 && (
-                                <button
+                                <AppButton
+                                    variant="ghost"
+                                    size="xs"
                                     onClick={() => onBulkAction("revoke")}
-                                    className="text-[10px] font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-100/50 px-2 py-1 rounded-lg border border-rose-100/40 cursor-pointer transition-colors"
+                                    className="text-[10px] font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-100/50 px-2 py-1 h-auto"
                                 >
                                     Hapus Semua
-                                </button>
+                                </AppButton>
                             )}
                         </div>
                     )}
 
-                    <button
+                    <AppButton
+                        variant="ghost"
+                        size="icon-xs"
                         onClick={onToggleCategory}
-                        className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 cursor-pointer shrink-0"
+                        className="text-slate-400 hover:text-slate-600"
                     >
                         {isExpanded ? (
                             <IconChevronUp size={16} />
                         ) : (
                             <IconChevronDown size={16} />
                         )}
-                    </button>
+                    </AppButton>
                 </div>
             </div>
 

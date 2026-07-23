@@ -6,6 +6,7 @@ import { Wallet, Coins, Vault, Landmark, Info } from "lucide-react";
 import { FormSelect } from "@/components/forms/form-select";
 import { Scrollable } from "@/components/ui/scrollable";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { AppButton } from "@/components/shared/app-button";
 
 interface TabCashProps {
     isSaving: boolean;
@@ -44,9 +45,14 @@ export function TabCash({ isSaving, cashAccountOptions = [] }: TabCashProps) {
                                             <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Kas Kasir (Register)</h4>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
-                                                    <button type="button" className="p-0 border-none bg-transparent cursor-help text-slate-400 hover:text-slate-500 transition-colors flex items-center">
+                                                    <AppButton
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon-xs"
+                                                        className="p-0 border-none bg-transparent cursor-help text-slate-400 hover:text-slate-500 transition-colors flex items-center h-auto w-auto"
+                                                    >
                                                         <Info size={11} />
-                                                    </button>
+                                                    </AppButton>
                                                 </TooltipTrigger>
                                                 <TooltipContent side="top" className="text-xs max-w-xs bg-slate-950 text-white rounded-lg p-2 shadow-lg border border-slate-800">
                                                     Akun kas penampung utama uang tunai hasil transaksi kasir harian.
@@ -79,9 +85,14 @@ export function TabCash({ isSaving, cashAccountOptions = [] }: TabCashProps) {
                                             <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Kas Utama (Brankas)</h4>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
-                                                    <button type="button" className="p-0 border-none bg-transparent cursor-help text-slate-400 hover:text-slate-500 transition-colors flex items-center">
+                                                    <AppButton
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon-xs"
+                                                        className="p-0 border-none bg-transparent cursor-help text-slate-400 hover:text-slate-500 transition-colors flex items-center h-auto w-auto"
+                                                    >
                                                         <Info size={11} />
-                                                    </button>
+                                                    </AppButton>
                                                 </TooltipTrigger>
                                                 <TooltipContent side="top" className="text-xs max-w-xs bg-slate-950 text-white rounded-lg p-2 shadow-lg border border-slate-800">
                                                     Akun kas pusat untuk menampung pemindahan saldo kasir harian.
@@ -114,9 +125,14 @@ export function TabCash({ isSaving, cashAccountOptions = [] }: TabCashProps) {
                                             <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Kas Bank (Transfer / QRIS)</h4>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
-                                                    <button type="button" className="p-0 border-none bg-transparent cursor-help text-slate-400 hover:text-slate-500 transition-colors flex items-center">
+                                                    <AppButton
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon-xs"
+                                                        className="p-0 border-none bg-transparent cursor-help text-slate-400 hover:text-slate-500 transition-colors flex items-center h-auto w-auto"
+                                                    >
                                                         <Info size={11} />
-                                                    </button>
+                                                    </AppButton>
                                                 </TooltipTrigger>
                                                 <TooltipContent side="top" className="text-xs max-w-xs bg-slate-950 text-white rounded-lg p-2 shadow-lg border border-slate-800">
                                                     Akun bank penampung utama pembayaran non-tunai (Qris, debit, transfer).

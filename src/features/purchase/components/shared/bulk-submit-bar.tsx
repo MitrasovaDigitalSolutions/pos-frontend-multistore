@@ -1,7 +1,6 @@
-"use client";
-
+import { AppButton } from "@/components/shared/app-button";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { IconAlertCircle, IconLoader2, IconUpload } from "@tabler/icons-react";
+import { IconAlertCircle, IconUpload } from "@tabler/icons-react";
 import { RefreshCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -82,55 +81,50 @@ export function BulkSubmitBar({
                     {/* Right: Actions */}
                     <div className="grid grid-cols-12 gap-2 w-full sm:w-auto sm:flex sm:items-center sm:gap-3">
                         {/* Reset */}
-                        <button
+                        <AppButton
                             type="button"
+                            variant="outline"
                             onClick={onReset}
                             disabled={isSubmitting || disabled}
                             title="Reset Form"
+                            leftIcon={<RefreshCcw size={15} className="shrink-0" />}
                             className={cn(
-                                "flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 hover:border-rose-300 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 disabled:opacity-40 disabled:cursor-not-allowed",
+                                "flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 hover:border-rose-300 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 disabled:opacity-40 disabled:cursor-not-allowed h-auto",
                                 onSecondarySubmit ? "col-span-2 sm:col-auto px-2.5 sm:px-4" : "col-span-3 sm:col-auto px-3 sm:px-4"
                             )}
                         >
-                            <RefreshCcw size={15} className="shrink-0" />
                             <span className="hidden sm:inline">Reset</span>
-                        </button>
+                        </AppButton>
 
                         {/* Secondary Submit (Simpan Penerimaan/PO/Retur) */}
                         {onSecondarySubmit && (
-                            <button
+                            <AppButton
                                 type="button"
+                                variant="outline"
                                 onClick={onSecondarySubmit}
                                 disabled={!hasItems || isSubmitting || disabled}
-                                className="col-span-5 sm:col-auto flex-1 flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-bold border border-emerald-600 text-emerald-700 dark:text-emerald-400 bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:shadow-md disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none transition-all cursor-pointer truncate"
+                                leftIcon={secondarySubmitIcon || <IconUpload size={15} />}
+                                className="col-span-5 sm:col-auto flex-1 flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-bold border border-emerald-600 text-emerald-700 dark:text-emerald-400 bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:shadow-md disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none transition-all cursor-pointer truncate h-auto"
                             >
-                                <span className="shrink-0">{secondarySubmitIcon || <IconUpload size={15} />}</span>
                                 <span className="truncate">{secondarySubmitLabel || "Simpan"}</span>
-                            </button>
+                            </AppButton>
                         )}
 
                         {/* Main Submit (Proses Penerimaan/PO/Retur) */}
-                        <button
+                        <AppButton
                             type="button"
                             onClick={onSubmit}
-                            disabled={!hasItems || isSubmitting || disabled}
+                            disabled={!hasItems || disabled}
+                            isLoading={isSubmitting}
+                            loadingText="Mengirim..."
+                            leftIcon={!isSubmitting ? (submitIcon || <IconUpload size={15} />) : null}
                             className={cn(
-                                "flex-1 flex items-center justify-center gap-1.5 px-3 sm:px-6 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 hover:shadow-lg hover:shadow-emerald-600/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none transition-all cursor-pointer truncate",
+                                "flex-1 flex items-center justify-center gap-1.5 px-3 sm:px-6 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 hover:shadow-lg hover:shadow-emerald-600/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none transition-all cursor-pointer truncate h-auto",
                                 onSecondarySubmit ? "col-span-5 sm:col-auto" : "col-span-9 sm:col-auto"
                             )}
                         >
-                            {isSubmitting ? (
-                                <>
-                                    <IconLoader2 size={15} className="animate-spin shrink-0" />
-                                    <span className="truncate">Mengirim...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <span className="shrink-0">{submitIcon || <IconUpload size={15} />}</span>
-                                    <span className="truncate">{submitLabel || "Simpan Semua"}</span>
-                                </>
-                            )}
-                        </button>
+                            <span className="truncate">{submitLabel || "Simpan Semua"}</span>
+                        </AppButton>
                     </div>
                 </div>
             </div>

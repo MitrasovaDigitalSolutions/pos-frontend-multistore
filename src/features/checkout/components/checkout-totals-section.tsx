@@ -1,27 +1,26 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { AppButton } from "@/components/shared/app-button";
 import { CommandSelect } from "@/components/ui/command-select";
+import { PayDebtDialog } from "@/features/debts/components/pay-debt-dialog";
 import { useAllMembers } from "@/features/master/members/api/members-api";
 import type { Member } from "@/features/master/members/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { useNetworkStatus } from "@/hooks/use-network-status";
+import { db } from "@/lib/db";
+import { cn } from "@/lib/utils";
+import { useSettingsStore } from "@/stores/settings-store";
 import {
     IconCash,
-    IconLoader2,
     IconPlayerPause,
     IconPlayerPlay,
     IconPrinter,
     IconTrash,
     IconUser,
-    IconX,
+    IconX
 } from "@tabler/icons-react";
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { CreateMemberDialog } from "./create-member-dialog";
-import { PayDebtDialog } from "@/features/debts/components/pay-debt-dialog";
-import { db } from "@/lib/db";
-import { useNetworkStatus } from "@/hooks/use-network-status";
-import { cn } from "@/lib/utils";
-import { useSettingsStore } from "@/stores/settings-store";
 
 
 interface CheckoutTotalsSectionProps {
@@ -388,10 +387,10 @@ export function CheckoutTotalsSection({
                         </div>
                     </div>
                 </div>
-
                 {/* Action Buttons Grid - Compact height */}
                 <div className="grid grid-cols-4 gap-1.5">
-                    <Button
+                    <AppButton
+                        type="button"
                         variant="outline"
                         onClick={onHold}
                         disabled={cartLength === 0 || isProcessing}
@@ -400,8 +399,9 @@ export function CheckoutTotalsSection({
                     >
                         <IconPlayerPause size={12} className="shrink-0 text-slate-550 mb-0.5" />
                         <span>Hold (F5)</span>
-                    </Button>
-                    <Button
+                    </AppButton>
+                    <AppButton
+                        type="button"
                         variant="outline"
                         onClick={onRecallOpen}
                         className="bg-white hover:bg-slate-50 border-slate-205 text-slate-700 h-8 font-bold text-[8.5px] rounded-xl flex flex-col justify-center items-center gap-0 leading-none cursor-pointer px-1"
@@ -409,8 +409,9 @@ export function CheckoutTotalsSection({
                     >
                         <IconPlayerPlay size={12} className="shrink-0 text-slate-550 mb-0.5" />
                         <span>Recall (F6)</span>
-                    </Button>
-                    <Button
+                    </AppButton>
+                    <AppButton
+                        type="button"
                         variant="outline"
                         onClick={onVoid}
                         disabled={cartLength === 0 || isProcessing}
@@ -419,8 +420,9 @@ export function CheckoutTotalsSection({
                     >
                         <IconTrash size={12} className="shrink-0 mb-0.5" />
                         <span>Void (F10)</span>
-                    </Button>
-                    <Button
+                    </AppButton>
+                    <AppButton
+                        type="button"
                         variant="outline"
                         onClick={onReprint}
                         className="bg-white hover:bg-slate-50 border-slate-205 text-slate-750 h-8 font-bold text-[8.5px] rounded-xl flex flex-col justify-center items-center gap-0 leading-none cursor-pointer px-1"
@@ -428,7 +430,7 @@ export function CheckoutTotalsSection({
                     >
                         <IconPrinter size={12} className="shrink-0 text-slate-550 mb-0.5" />
                         <span>Reprint</span>
-                    </Button>
+                    </AppButton>
                 </div>
             </div>
 
@@ -459,25 +461,23 @@ export function CheckoutTotalsSection({
 
                 <div className="border-t border-dashed border-slate-200 pt-2 flex justify-between items-center gap-3">
                     <div className="flex flex-col min-w-0">
-                        <span className="text-[9px] font-extrabold text-slate-450 uppercase tracking-widest leading-none">
+                        <span className="text-[9px] font-extrabold text-slate-455 uppercase tracking-widest leading-none">
                             Total Belanja
                         </span>
                         <span className="text-2xl font-black text-emerald-600 tracking-tight tabular-nums mt-0.5 leading-none truncate font-mono">
                             {formatRupiah(grandTotal)}
                         </span>
                     </div>
-                    <Button
+                    <AppButton
+                        type="button"
                         onClick={onPayOpen}
-                        disabled={cartLength === 0 || isProcessing}
+                        disabled={cartLength === 0}
+                        isLoading={isProcessing}
+                        leftIcon={!isProcessing ? <IconCash size={16} /> : null}
                         className="h-11 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 transition-all active:scale-[0.98] disabled:opacity-50 border-none text-white px-5 shrink-0"
                     >
-                        {isProcessing ? (
-                            <IconLoader2 size={16} className="animate-spin" />
-                        ) : (
-                            <IconCash size={16} />
-                        )}
                         <span>BAYAR (F1)</span>
-                    </Button>
+                    </AppButton>
                 </div>
             </div>
             <CreateMemberDialog

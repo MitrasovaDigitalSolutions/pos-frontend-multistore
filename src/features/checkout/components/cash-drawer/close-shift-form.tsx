@@ -92,8 +92,13 @@ export function CloseShiftForm({
             useCheckoutStore.getState().clearCart();
             useCheckoutStore.getState().clearHoldList();
 
-            // Clear active store in local storage / Zustand
-            useActiveStoreStore.getState().setActiveStore(null);
+            // Clear active store in local storage / Zustand if the user cannot access the admin menu
+            // or has only one store, since users who can access the admin menu and manage multiple stores
+            // should not have their active store context reset when closing a cashier session.
+            const hasMultipleStores = (session?.user?.stores || []).length > 1;
+            if (!(isAdmin && hasMultipleStores)) {
+                useActiveStoreStore.getState().setActiveStore(null);
+            }
 
             toast.success("Sesi shift laci kasir berhasil ditutup.");
             onSuccess();

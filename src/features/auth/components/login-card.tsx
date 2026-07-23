@@ -6,11 +6,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { AppButton } from "@/components/shared/app-button";
 import {
     IconEye,
     IconEyeOff,
-    IconLoader2,
     IconLock,
     IconUser,
 } from "@tabler/icons-react";
@@ -120,8 +119,10 @@ export function LoginCard({
                                 disabled={isLoading}
                                 {...register("password")}
                             />
-                            <button
+                            <AppButton
                                 type="button"
+                                variant="ghost"
+                                size="icon-xs"
                                 onClick={() => setShowPassword(!showPassword)}
                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors duration-200"
                                 disabled={isLoading}
@@ -131,7 +132,7 @@ export function LoginCard({
                                 ) : (
                                     <IconEye size={18} />
                                 )}
-                            </button>
+                            </AppButton>
                         </div>
                         {errors.password && (
                             <p className="text-[10px] text-rose-500 font-medium">
@@ -140,20 +141,14 @@ export function LoginCard({
                         )}
                     </div>
 
-                    <Button
+                    <AppButton
                         type="submit"
                         className="w-full h-10 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-[13px] rounded-xl flex items-center justify-center gap-2 mt-4 cursor-pointer shadow-lg shadow-emerald-600/15 hover:shadow-emerald-600/25 active:scale-[0.98] transition-all duration-300"
-                        disabled={isLoading}
+                        isLoading={isLoading}
+                        loadingText="Mohon tunggu..."
                     >
-                        {isLoading ? (
-                            <>
-                                <IconLoader2 className="animate-spin" size={18} />
-                                <span>Mohon tunggu...</span>
-                            </>
-                        ) : (
-                            <span>Masuk</span>
-                        )}
-                    </Button>
+                        Masuk
+                    </AppButton>
                 </form>
             </CardContent>
         </Card>

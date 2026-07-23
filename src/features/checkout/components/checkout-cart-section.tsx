@@ -2,6 +2,7 @@
 
 import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { BarcodeInput } from "@/components/shared/barcode-input";
+import { AppButton } from "@/components/shared/app-button";
 import { NumberInput } from "@/components/ui/number-input";
 import {
     Table,
@@ -203,14 +204,16 @@ export function CheckoutCartSection({
                                             </TableCell>
                                             <TableCell className="p-2">
                                                 <div className="flex items-center justify-center gap-0.5">
-                                                    <button
+                                                    <AppButton
                                                         type="button"
+                                                        variant="ghost"
+                                                        size="icon-xs"
                                                         onClick={() => onUpdateQty(item, item.qty - 1)}
                                                         disabled={isProcessing}
-                                                        className="w-5 h-5 border border-slate-200 rounded flex items-center justify-center hover:bg-emerald-50 text-emerald-600 font-bold disabled:opacity-40 cursor-pointer active:scale-90 transition-transform text-[10px]"
+                                                        className="w-5 h-5 border border-slate-200 rounded flex items-center justify-center hover:bg-emerald-50 text-emerald-600 font-bold disabled:opacity-40 cursor-pointer text-[10px]"
                                                     >
                                                         -
-                                                    </button>
+                                                    </AppButton>
                                                     <CheckoutQtyInput
                                                         value={item.qty}
                                                         onChange={(num) => onUpdateQty(item, num)}
@@ -224,14 +227,16 @@ export function CheckoutCartSection({
                                                         className="w-10 h-5 text-center text-[10px] font-bold text-slate-800 border border-slate-200 rounded-md outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                         disabled={isProcessing}
                                                     />
-                                                    <button
+                                                    <AppButton
                                                         type="button"
+                                                        variant="ghost"
+                                                        size="icon-xs"
                                                         onClick={() => onUpdateQty(item, item.qty + 1)}
                                                         disabled={isProcessing}
-                                                        className="w-5 h-5 border border-slate-200 rounded flex items-center justify-center hover:bg-emerald-50 text-emerald-600 font-bold disabled:opacity-40 cursor-pointer active:scale-90 transition-transform text-[10px]"
+                                                        className="w-5 h-5 border border-slate-200 rounded flex items-center justify-center hover:bg-emerald-50 text-emerald-600 font-bold disabled:opacity-40 cursor-pointer text-[10px]"
                                                     >
                                                         +
-                                                    </button>
+                                                    </AppButton>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="p-2 text-right text-slate-700 font-medium tabular-nums text-[11px]">
@@ -250,14 +255,16 @@ export function CheckoutCartSection({
                                                 {formatRupiah(item.price * item.qty)}
                                             </TableCell>
                                             <TableCell className="p-2 text-center">
-                                                <button
+                                                <AppButton
                                                     type="button"
+                                                    variant="ghost"
+                                                    size="icon-xs"
                                                     onClick={() => onRemoveItem(item)}
                                                     disabled={isProcessing}
-                                                    className="text-rose-500 hover:bg-rose-50 p-1 rounded transition-colors disabled:opacity-40 cursor-pointer border-none bg-transparent active:scale-90"
+                                                    className="text-rose-500 hover:bg-rose-50 hover:text-rose-600 p-1 rounded transition-colors disabled:opacity-40"
                                                 >
                                                     <IconTrash size={14} />
-                                                </button>
+                                                </AppButton>
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -288,14 +295,16 @@ export function CheckoutCartSection({
                                                 </div>
                                             )}
                                         </div>
-                                        <button
+                                        <AppButton
                                             type="button"
+                                            variant="ghost"
+                                            size="icon-xs"
                                             onClick={() => onRemoveItem(item)}
                                             disabled={isProcessing}
-                                            className="text-rose-500 hover:bg-rose-50 p-1.5 rounded transition-colors disabled:opacity-40 cursor-pointer border-none bg-transparent shrink-0"
+                                            className="text-rose-500 hover:bg-rose-50 hover:text-rose-600 p-1.5 rounded transition-colors disabled:opacity-40 shrink-0"
                                         >
                                             <IconTrash size={16} />
-                                        </button>
+                                        </AppButton>
                                     </div>
 
                                     <div className="flex justify-between items-center bg-slate-50/50 p-2 rounded-lg border border-slate-100">
@@ -322,28 +331,32 @@ export function CheckoutCartSection({
                                             Jumlah (Qty)
                                         </span>
                                         <div className="flex items-center gap-1">
-                                            <button
+                                            <AppButton
                                                 type="button"
+                                                variant="ghost"
+                                                size="icon-xs"
                                                 onClick={() => onUpdateQty(item, item.qty - 1)}
                                                 disabled={isProcessing}
                                                 className="w-7 h-7 border border-slate-200 rounded flex items-center justify-center hover:bg-emerald-50 text-emerald-600 font-bold disabled:opacity-40 cursor-pointer"
                                             >
                                                 -
-                                            </button>
+                                            </AppButton>
                                             <CheckoutQtyInput
                                                 value={item.qty}
                                                 onChange={(num) => onUpdateQty(item, num)}
                                                 className="w-14 h-7 text-center text-xs font-bold text-slate-800 border border-slate-200 rounded-lg outline-none focus:border-emerald-500 px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                 disabled={isProcessing}
                                             />
-                                            <button
+                                            <AppButton
                                                 type="button"
+                                                variant="ghost"
+                                                size="icon-xs"
                                                 onClick={() => onUpdateQty(item, item.qty + 1)}
                                                 disabled={isProcessing}
                                                 className="w-7 h-7 border border-slate-200 rounded flex items-center justify-center hover:bg-emerald-50 text-emerald-600 font-bold disabled:opacity-40 cursor-pointer"
                                             >
                                                 +
-                                            </button>
+                                            </AppButton>
                                         </div>
                                     </div>
                                 </div>
