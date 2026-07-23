@@ -206,12 +206,7 @@ export function useReturnFlow({
         // Header Form States
         suppliersLoading: headerState.suppliersLoading,
         supplierOptions: headerState.supplierOptions,
-        receivingsLoading: headerState.receivingsLoading,
-        receivingsLoadingMore: headerState.receivingsLoadingMore,
-        receivingsHasMore: headerState.receivingsHasMore,
-        fetchNextReceivingsPage: headerState.fetchNextReceivingsPage,
-        setReceivingSearch: headerState.setReceivingSearch,
-        receivingOptions: headerState.receivingOptions,
+        receivingSelectProps: headerState.receivingSelectProps,
         receivingId: headerState.receivingId,
 
         // Finalizer States

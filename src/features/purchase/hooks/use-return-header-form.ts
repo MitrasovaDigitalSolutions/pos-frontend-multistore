@@ -1,18 +1,14 @@
-"use client";
-
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useForm, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { todayStr, formatToISO } from "@/lib/date-utils";
 import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
-import { useInfiniteReceivings } from "@/features/purchase/api/purchase-api";
+import { useReceivingDetail } from "@/features/purchase/api/purchase-api";
 import { purchaseReturnHeaderSchema, type PurchaseReturnHeaderInput } from "@/features/purchase/schemas/return-schema";
 import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
 import type { PurchaseReturn } from "@/features/purchase/types";
-import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { RECEIVING_STATUS } from "@/constants/purchase";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useReceivingSelectConfig } from "./use-receiving-select";
 
 interface UseReturnHeaderFormProps {
     currentId: string;
@@ -41,51 +37,22 @@ export function useReturnHeaderForm({
     const headerData = store((state) => state.headerData);
     const setHeaderData = store((state) => state.setHeaderData);
 
-    const [receivingSearch, setReceivingSearch] = useState("");
-    const debouncedReceivingSearch = useDebounce(receivingSearch, 400);
-
     const { data: suppliers = [], isLoading: suppliersLoading } = useAllSuppliers();
-    const {
-        data: receivingsInfiniteData,
-        isLoading: receivingsLoading,
-        isFetchingNextPage: receivingsLoadingMore,
-        hasNextPage: receivingsHasMore,
-        fetchNextPage: fetchNextReceivingsPage,
-    } = useInfiniteReceivings({
-        status: RECEIVING_STATUS.COMPLETED,
-        search: debouncedReceivingSearch || undefined,
-        per_page: 10,
-    });
-
     const supplierOptions = suppliers.map((s) => ({
         value: String(s.uid),
         label: s.nama,
     }));
 
-    const receivingsList = (receivingsInfiniteData?.pages || []).flatMap((page) => page.data || []);
-
-    const receivingOptions = receivingsList.map((r) => ({
-        value: String(r.uid),
-        label: `${r.nomor_penerimaan} - ${r.supplier_relationship?.nama || r.supplier || "Supplier"}`,
-        description: `Faktur: ${r.nomor_faktur || "-"} • Total: ${formatRupiah(r.nilai_faktur || 0)}`,
-    }));
-
-    if (currentReturn?.stock_receiving_uid) {
-        const hasCurrent = receivingOptions.some((r) => r.value === String(currentReturn.stock_receiving_uid));
-        if (!hasCurrent && currentReturn.stock_receiving) {
-            receivingOptions.unshift({
-                value: String(currentReturn.stock_receiving_uid),
-                label: `${currentReturn.stock_receiving.nomor_penerimaan || `Penerimaan ID: ${currentReturn.stock_receiving_uid}`}`,
-                description: `Faktur: ${currentReturn.stock_receiving.nomor_faktur || "-"} • Terkait`,
-            });
-        }
-    }
+    const receivingSelectProps = useReceivingSelectConfig({
+        targetUid: currentReturn?.stock_receiving_uid,
+        targetReceiving: currentReturn?.stock_receiving,
+    });
 
     const hasInitializedRef = useRef(false);
     const isClearedRef = useRef(false);
 
     // ─── Header Form Sync Effects ─────────────────────────────────────────────
-
+    
     // 1. Detect when headerData is cleared externally (e.g. via reset/clearAll)
     useEffect(() => {
         if (isCurrentNew && headerData === null) {
@@ -105,7 +72,7 @@ export function useReturnHeaderForm({
     useEffect(() => {
         if (isCurrentNew && isHeaderDirty && !isClearedRef.current) {
             setHeaderData({
-                purchase_order_uid: watchedHeaderValues.receiving_uid || null, // we map receiving_uid to purchase_order_uid for Zustand store compatibility
+                purchase_order_uid: watchedHeaderValues.receiving_uid || null,
                 supplier_uid: watchedHeaderValues.supplier_uid || null,
                 tanggal_terima: watchedHeaderValues.tanggal_retur || null,
                 catatan: watchedHeaderValues.catatan || null,
@@ -126,7 +93,7 @@ export function useReturnHeaderForm({
         }
     }, [isCurrentNew, headerData, resetHeader]);
 
-    // 4. Synchronize default values when Return draft loads/changes from backend
+    // 4. Load initial values when editing existing Return
     useEffect(() => {
         if (!isCurrentNew && currentReturn) {
             resetHeader({
@@ -141,32 +108,22 @@ export function useReturnHeaderForm({
     // 5. Auto-select and lock supplier if Receiving reference is chosen
     const receivingId = useWatch({ name: "receiving_uid", control: headerForm.control });
     const currentSupplierId = useWatch({ name: "supplier_uid", control: headerForm.control });
-    useEffect(() => {
-        if (receivingId) {
-            let targetSupplierId: string | null = null;
-            const selectedReceiving = receivingsList.find(
-                (r) => String(r.uid) === receivingId
-            );
-            if (selectedReceiving && selectedReceiving.supplier_uid) {
-                targetSupplierId = String(selectedReceiving.supplier_uid);
-            }
+    const { data: selectedReceiving } = useReceivingDetail(receivingId || null);
 
-            if (targetSupplierId && currentSupplierId !== targetSupplierId) {
+    useEffect(() => {
+        if (selectedReceiving && selectedReceiving.supplier_uid) {
+            const targetSupplierId = String(selectedReceiving.supplier_uid);
+            if (currentSupplierId !== targetSupplierId) {
                 setHeaderValue("supplier_uid", targetSupplierId);
             }
         }
-    }, [receivingId, currentSupplierId, receivingsList, setHeaderValue]);
+    }, [selectedReceiving, currentSupplierId, setHeaderValue]);
 
     return {
         headerForm,
         suppliersLoading,
         supplierOptions,
-        receivingsLoading,
-        receivingsLoadingMore,
-        receivingsHasMore,
-        fetchNextReceivingsPage,
-        setReceivingSearch,
-        receivingOptions,
+        receivingSelectProps,
         receivingId,
     };
 }

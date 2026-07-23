@@ -6,17 +6,14 @@ import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { Input } from "@/components/ui/input";
 import { IconClipboardPlus } from "@tabler/icons-react";
 import type { PurchaseReturnHeaderInput } from "@/features/purchase/schemas/return-schema";
+import type { useReceivingSelectConfig } from "@/features/purchase/hooks/use-receiving-select";
+import type { Receiving } from "@/features/purchase/types";
 
 interface ReturnHeaderCardProps {
     form: UseFormReturn<PurchaseReturnHeaderInput>;
     supplierOptions: { value: string; label: string }[];
     suppliersLoading: boolean;
-    receivingOptions: { value: string; label: string; description?: string }[];
-    receivingsLoading: boolean;
-    receivingsLoadingMore?: boolean;
-    receivingsHasMore?: boolean;
-    fetchNextReceivingsPage?: () => void;
-    onReceivingSearchChange?: (search: string) => void;
+    receivingSelectProps: ReturnType<typeof useReceivingSelectConfig>;
     receivingId?: string | null;
     disabled?: boolean;
 }
@@ -25,12 +22,7 @@ export function ReturnHeaderCard({
     form,
     supplierOptions,
     suppliersLoading,
-    receivingOptions,
-    receivingsLoading,
-    receivingsLoadingMore,
-    receivingsHasMore,
-    fetchNextReceivingsPage,
-    onReceivingSearchChange,
+    receivingSelectProps,
     receivingId,
     disabled = false,
 }: ReturnHeaderCardProps) {
@@ -55,19 +47,11 @@ export function ReturnHeaderCard({
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             Referensi Faktur Penerimaan *
                         </label>
-                        <FormSelect<PurchaseReturnHeaderInput>
+                        <FormSelect<PurchaseReturnHeaderInput, Receiving>
                             name="receiving_uid"
-                            options={receivingOptions}
-                            placeholder={
-                                receivingsLoading
-                                    ? "Memuat daftar penerimaan..."
-                                    : "-- Pilih Faktur Penerimaan (Completed) --"
-                            }
-                            disabled={disabled || receivingsLoading}
-                            onSearchChange={onReceivingSearchChange}
-                            onScrollBottom={fetchNextReceivingsPage}
-                            hasMore={receivingsHasMore}
-                            isLoadingMore={receivingsLoadingMore}
+                            {...receivingSelectProps}
+                            placeholder="-- Pilih Faktur Penerimaan (Completed) --"
+                            disabled={disabled}
                         />
                     </div>
 

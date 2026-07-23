@@ -88,12 +88,7 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: string; retur
         returnLimitsMap,
         suppliersLoading,
         supplierOptions,
-        receivingsLoading,
-        receivingsLoadingMore,
-        receivingsHasMore,
-        fetchNextReceivingsPage,
-        setReceivingSearch,
-        receivingOptions,
+        receivingSelectProps,
         receivingId,
         isFinalizeOpen,
         setIsFinalizeOpen,
@@ -191,12 +186,7 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: string; retur
                             form={headerForm}
                             supplierOptions={supplierOptions}
                             suppliersLoading={suppliersLoading}
-                            receivingOptions={receivingOptions}
-                            receivingsLoading={receivingsLoading}
-                            receivingsLoadingMore={receivingsLoadingMore}
-                            receivingsHasMore={receivingsHasMore}
-                            fetchNextReceivingsPage={fetchNextReceivingsPage}
-                            onReceivingSearchChange={setReceivingSearch}
+                            receivingSelectProps={receivingSelectProps}
                             receivingId={receivingId}
                             disabled={isPending}
                         />

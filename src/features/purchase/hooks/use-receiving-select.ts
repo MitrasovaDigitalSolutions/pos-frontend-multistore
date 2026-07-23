@@ -1,20 +1,11 @@
 "use client";
 
-import { useCallback } from "react";
+import { useFormSelectAsync } from "@/hooks/use-form-select-async";
 import { useInfiniteReceivings } from "../api/purchase-api";
 import { RECEIVING_STATUS } from "@/constants/purchase";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import type { AsyncQueryParams } from "@/components/forms/form-select";
 import type { Receiving } from "../types";
-import { CommandOption } from "@/components/ui/command-select";
-
-/**
- * Custom React Hook for FormSelect useAsyncQuery to fetch completed stock receivings.
- * Must start with "use" to comply with React Rules of Hooks.
- */
-export function useCompletedReceivingsAsyncQuery(params: AsyncQueryParams) {
-    return useInfiniteReceivings({ status: RECEIVING_STATUS.COMPLETED, ...params });
-}
+import type { CommandOption } from "@/components/ui/command-select";
 
 /**
  * Maps a Receiving entity into a CommandOption structure for FormSelect.
@@ -27,6 +18,14 @@ export function mapReceivingToOption(r: Receiving): CommandOption {
     };
 }
 
+/**
+ * Custom React Hook wrapper for useInfiniteReceivings with status COMPLETED.
+ * Must be a top-level hook starting with 'use' to satisfy ESLint rules-of-hooks.
+ */
+export function useCompletedReceivingsQueryHook(params: Record<string, unknown>) {
+    return useInfiniteReceivings({ status: RECEIVING_STATUS.COMPLETED, ...params });
+}
+
 export interface UseReceivingSelectConfigOptions {
     targetReceiving?: Receiving | null;
     targetUid?: string | null;
@@ -34,16 +33,16 @@ export interface UseReceivingSelectConfigOptions {
 
 /**
  * Reusable hook that provides useAsyncQuery, mapOption, and getExtraOption configuration
- * for FormSelect components selecting Stock Receivings (Faktur Penerimaan).
+ * for FormSelect components selecting Stock Receivings (Faktur Penerimaan), using useFormSelectAsync.
  */
 export function useReceivingSelectConfig(options?: UseReceivingSelectConfigOptions) {
     const targetReceiving = options?.targetReceiving;
     const targetUid = options?.targetUid;
 
-    const mapOption = useCallback((r: Receiving) => mapReceivingToOption(r), []);
-
-    const getExtraOption = useCallback(
-        (uid: string) => {
+    return useFormSelectAsync<Receiving>({
+        queryHook: useCompletedReceivingsQueryHook,
+        mapOption: mapReceivingToOption,
+        getExtraOption: (uid: string) => {
             if (targetUid === uid && targetReceiving) {
                 return {
                     value: uid,
@@ -53,12 +52,5 @@ export function useReceivingSelectConfig(options?: UseReceivingSelectConfigOptio
             }
             return undefined;
         },
-        [targetUid, targetReceiving]
-    );
-
-    return {
-        useAsyncQuery: useCompletedReceivingsAsyncQuery,
-        mapOption,
-        getExtraOption,
-    };
+    });
 }
