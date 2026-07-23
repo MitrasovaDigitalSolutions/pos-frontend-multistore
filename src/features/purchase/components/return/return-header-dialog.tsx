@@ -46,7 +46,6 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
         register,
         handleSubmit,
         reset,
-        setValue,
         formState: { errors },
     } = methods;
 
