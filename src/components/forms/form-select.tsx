@@ -129,6 +129,8 @@ export function FormSelect<T extends FieldValues, TData = unknown>({
     const effectiveIsLoadingMore = isLoadingMore || (useAsyncQuery ? !!asyncResult.isFetchingNextPage : false);
     const effectiveHasMore = hasMore !== undefined ? hasMore : (useAsyncQuery ? !!asyncResult.hasNextPage : false);
 
+    const isAsyncMode = !!useAsyncQuery || !!onSearchChange;
+
     const handleSearchChange = (val: string) => {
         if (useAsyncQuery) {
             setInternalSearch(val);
@@ -221,7 +223,8 @@ export function FormSelect<T extends FieldValues, TData = unknown>({
                             searchPlaceholder={searchPlaceholder}
                             emptyMessage={emptyMessage}
                             isLoading={effectiveIsLoading}
-                            onSearchChange={handleSearchChange}
+                            onSearchChange={isAsyncMode ? handleSearchChange : undefined}
+                            disableLocalFilter={isAsyncMode}
                             onScrollBottom={handleScrollBottom}
                             hasMore={effectiveHasMore}
                             isLoadingMore={effectiveIsLoadingMore}
