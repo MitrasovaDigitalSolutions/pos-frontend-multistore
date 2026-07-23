@@ -48,44 +48,44 @@ export function RolePermissionCategory({
         <div className="bg-white overflow-hidden transition-all duration-200">
             {/* Category Header */}
             <div
-                className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 border-b border-slate-50 select-none ${isExpanded ? "bg-slate-50/30" : "hover:bg-slate-50/30"
+                className={`flex flex-col sm:flex-row sm:items-center justify-between p-4.5 gap-3.5 border-b border-slate-100 select-none ${isExpanded ? "bg-slate-50/50" : "hover:bg-slate-50/40"
                     }`}
             >
                 {/* Left Section: Info & Title */}
                 <div
-                    className="flex items-start gap-3 flex-1 cursor-pointer"
+                    className="flex items-start gap-3.5 flex-1 cursor-pointer"
                     onClick={onToggleCategory}
                 >
-                    <div className={`p-2 rounded-xl border shrink-0 mt-0.5 ${category.colorClass}`}>
+                    <div className={`p-2.5 rounded-xl border shrink-0 mt-0.5 ${category.colorClass}`}>
                         <Icon size={18} />
                     </div>
-                    <div className="space-y-0.5">
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <h4 className="text-xs font-extrabold text-slate-800">
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                            <h4 className="text-xs sm:text-sm font-extrabold text-slate-900">
                                 {category.label}
                             </h4>
                             <span
-                                className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${activeCount === totalCount
-                                    ? "bg-emerald-100 text-emerald-800 border border-emerald-200/50"
+                                className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${activeCount === totalCount
+                                    ? "bg-emerald-100/80 text-emerald-800 border-emerald-200"
                                     : activeCount > 0
-                                        ? "bg-amber-100 text-amber-800 border border-amber-200/50"
-                                        : "bg-slate-100 text-slate-500 border border-slate-200/50"
+                                        ? "bg-amber-100/80 text-amber-800 border-amber-200"
+                                        : "bg-slate-100 text-slate-500 border-slate-200"
                                     }`}
                             >
                                 {activeCount} dari {totalCount} Aktif
                             </span>
                         </div>
-                        <p className="text-[10px] text-slate-400 leading-normal max-w-md">
+                        <p className="text-[11px] text-slate-500 leading-relaxed max-w-xl">
                             {category.desc}
                         </p>
                     </div>
                 </div>
 
                 {/* Right Section: Actions & Toggle */}
-                <div className="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-50">
+                <div className="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
                     {isBulkLoading ? (
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400 pr-1">
-                            <IconLoader size={12} className="animate-spin text-emerald-500" />
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 pr-1">
+                            <IconLoader size={13} className="animate-spin text-emerald-500" />
                             <span>Memproses...</span>
                         </div>
                     ) : (
@@ -95,7 +95,7 @@ export function RolePermissionCategory({
                                     variant="ghost"
                                     size="xs"
                                     onClick={() => onBulkAction("assign")}
-                                    className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100/50 px-2 py-1 h-auto"
+                                    className="text-[10px] font-extrabold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border border-emerald-200/60 px-2.5 py-1 h-auto rounded-lg"
                                 >
                                     Pilih Semua
                                 </AppButton>
@@ -105,7 +105,7 @@ export function RolePermissionCategory({
                                     variant="ghost"
                                     size="xs"
                                     onClick={() => onBulkAction("revoke")}
-                                    className="text-[10px] font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-100/50 px-2 py-1 h-auto"
+                                    className="text-[10px] font-extrabold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200/60 px-2.5 py-1 h-auto rounded-lg"
                                 >
                                     Hapus Semua
                                 </AppButton>
@@ -117,7 +117,7 @@ export function RolePermissionCategory({
                         variant="ghost"
                         size="icon-xs"
                         onClick={onToggleCategory}
-                        className="text-slate-400 hover:text-slate-600"
+                        className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg"
                     >
                         {isExpanded ? (
                             <IconChevronUp size={16} />
