@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import type { PurchaseItemLocal, Receiving } from "@/features/purchase/types";
-import { getPurchaseItemsStore, selectItemCount, selectTotal } from "@/stores/purchase-items-store";
+import { getPurchaseItemsStore, clearPurchaseItemsStore, selectItemCount, selectTotal } from "@/stores/purchase-items-store";
 
 import { useReceivingFinalizer } from "./use-receiving-finalizer";
 import { useReceivingHeaderForm } from "./use-receiving-header-form";
@@ -45,6 +45,15 @@ export function useReceivingFlow({
     }
 
     const isCurrentNew = !currentId || currentId === "new";
+
+    // ─── Clear Stale Local Store on Mount for New Receiving ────────────────────
+    const isInitialMountRef = useRef(true);
+    useEffect(() => {
+        if (isCurrentNew && isInitialMountRef.current) {
+            isInitialMountRef.current = false;
+            clearPurchaseItemsStore("new", "receiving");
+        }
+    }, [isCurrentNew]);
 
     // ─── Zustand Store ────────────────────────────────────────────────────────
     const store = getPurchaseItemsStore(currentId, "receiving");

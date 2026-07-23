@@ -86,10 +86,8 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: string; retur
         activeItems,
         activeTotalValue,
         returnLimitsMap,
-        suppliersLoading,
-        supplierOptions,
-        receivingsLoading,
-        receivingOptions,
+        supplierSelectProps,
+        receivingSelectProps,
         receivingId,
         isFinalizeOpen,
         setIsFinalizeOpen,
@@ -185,10 +183,8 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: string; retur
                     <div className="lg:col-span-4 space-y-6">
                         <ReturnHeaderCard
                             form={headerForm}
-                            supplierOptions={supplierOptions}
-                            suppliersLoading={suppliersLoading}
-                            receivingOptions={receivingOptions}
-                            receivingsLoading={receivingsLoading}
+                            supplierSelectProps={supplierSelectProps}
+                            receivingSelectProps={receivingSelectProps}
                             receivingId={receivingId}
                             disabled={isPending}
                         />

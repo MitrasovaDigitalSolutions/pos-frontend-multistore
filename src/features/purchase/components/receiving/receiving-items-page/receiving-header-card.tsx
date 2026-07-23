@@ -8,22 +8,30 @@ import { IconClipboardPlus, IconChevronDown, IconChevronUp } from "@tabler/icons
 import { useState } from "react";
 import { FormProvider, useWatch, type UseFormReturn } from "react-hook-form";
 import type { ReceivingHeaderInput } from "../../../schemas/receiving-schema";
+import type { useSupplierSelectConfig } from "@/features/master/suppliers/hooks/use-supplier-select";
+import type { usePOSelectConfig } from "../../../hooks/use-po-select";
+import type { Supplier } from "@/features/master/suppliers/types";
+import type { PurchaseOrder } from "../../../types";
 
 interface ReceivingHeaderCardProps {
     form: UseFormReturn<ReceivingHeaderInput>;
-    suppliersLoading: boolean;
-    supplierOptions: { value: string; label: string }[];
-    posLoading: boolean;
-    poOptions: { value: string; label: string; description: string }[];
+    suppliersLoading?: boolean;
+    supplierOptions?: { value: string; label: string }[];
+    supplierSelectProps?: ReturnType<typeof useSupplierSelectConfig>;
+    posLoading?: boolean;
+    poOptions?: { value: string; label: string; description: string }[];
+    poSelectProps?: ReturnType<typeof usePOSelectConfig>;
     isPending: boolean;
 }
 
 export function ReceivingHeaderCard({
     form,
-    suppliersLoading,
-    supplierOptions,
-    posLoading,
-    poOptions,
+    suppliersLoading = false,
+    supplierOptions = [],
+    supplierSelectProps,
+    posLoading = false,
+    poOptions = [],
+    poSelectProps,
     isPending,
 }: ReceivingHeaderCardProps) {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -62,12 +70,21 @@ export function ReceivingHeaderCard({
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             Supplier {!purchaseOrderId && " *"}
                         </label>
-                        <FormSelect<ReceivingHeaderInput>
-                            name="supplier_uid"
-                            options={supplierOptions}
-                            placeholder={suppliersLoading ? "Memuat supplier..." : "-- Pilih Supplier --"}
-                            disabled={isPending || suppliersLoading || !!purchaseOrderId}
-                        />
+                        {supplierSelectProps ? (
+                            <FormSelect<ReceivingHeaderInput, Supplier>
+                                name="supplier_uid"
+                                {...supplierSelectProps}
+                                placeholder="-- Pilih Supplier --"
+                                disabled={isPending || !!purchaseOrderId}
+                            />
+                        ) : (
+                            <FormSelect<ReceivingHeaderInput>
+                                name="supplier_uid"
+                                options={supplierOptions}
+                                placeholder={suppliersLoading ? "Memuat supplier..." : "-- Pilih Supplier --"}
+                                disabled={isPending || suppliersLoading || !!purchaseOrderId}
+                            />
+                        )}
                     </div>
 
                     {/* Tanggal Penerimaan */}
@@ -104,62 +121,64 @@ export function ReceivingHeaderCard({
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                     Referensi Purchase Order (PO)
                                 </label>
-                                <FormSelect<ReceivingHeaderInput>
-                                    name="purchase_order_uid"
-                                    options={poOptions}
-                                    placeholder={posLoading ? "Memuat daftar PO..." : "-- Pembelian Langsung --"}
-                                    disabled={isPending || posLoading}
-                                />
-                                {errors.purchase_order_uid && (
-                                    <p className="text-[9px] text-rose-500 font-medium">
-                                        {errors.purchase_order_uid.message}
-                                    </p>
+                                {poSelectProps ? (
+                                    <FormSelect<ReceivingHeaderInput, PurchaseOrder>
+                                        name="purchase_order_uid"
+                                        {...poSelectProps}
+                                        placeholder="-- Pembelian Langsung --"
+                                        disabled={isPending}
+                                    />
+                                ) : (
+                                    <FormSelect<ReceivingHeaderInput>
+                                        name="purchase_order_uid"
+                                        options={poOptions}
+                                        placeholder={posLoading ? "Memuat daftar PO..." : "-- Pembelian Langsung --"}
+                                        disabled={isPending || posLoading}
+                                    />
                                 )}
                             </div>
 
-                            {/* No. Faktur */}
+                            {/* Nomor Faktur Supplier */}
                             <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                    No. Faktur (Opsional)
+                                    Nomor Faktur / Nota Supplier
                                 </label>
                                 <Input
                                     type="text"
-                                    placeholder="FAK-XXXX..."
-                                    className="h-9 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                                    placeholder="Misal: INV-2024-001..."
+                                    className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
                                     disabled={isPending}
                                     {...register("nomor_faktur")}
                                 />
                                 {errors.nomor_faktur && (
-                                    <p className="text-[9px] text-rose-500 font-medium">
+                                    <p className="text-[10px] text-rose-500 font-medium">
                                         {errors.nomor_faktur.message}
                                     </p>
                                 )}
                             </div>
 
-                            {/* Nilai Faktur */}
-                            <div>
-                                <FormNominalInput<ReceivingHeaderInput>
-                                    name="nilai_faktur"
-                                    label="Nilai Total Faktur *"
-                                    placeholder="Total tagihan Rp..."
-                                    disabled={isPending}
-                                />
-                            </div>
+                            {/* Nilai Faktur / Tagihan */}
+                            <FormNominalInput<ReceivingHeaderInput>
+                                name="nilai_faktur"
+                                label="Nilai Tagihan / Faktur Supplier (Rp)"
+                                placeholder="Total tagihan dari supplier..."
+                                disabled={isPending}
+                            />
 
-                            {/* Catatan */}
+                            {/* Catatan / Keterangan */}
                             <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                    Catatan
+                                    Catatan Penerimaan
                                 </label>
                                 <Input
                                     type="text"
-                                    placeholder="Keterangan tambahan..."
-                                    className="h-9 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                                    placeholder="Catatan tambahan untuk penerimaan..."
+                                    className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
                                     disabled={isPending}
                                     {...register("catatan")}
                                 />
                                 {errors.catatan && (
-                                    <p className="text-[9px] text-rose-500 font-medium">
+                                    <p className="text-[10px] text-rose-500 font-medium">
                                         {errors.catatan.message}
                                     </p>
                                 )}

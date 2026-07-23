@@ -72,7 +72,7 @@ export function ReturnItemsTable({
                                 const subtotal = item.kuantitas * item.harga_estimasi;
 
                                 return (
-                                    <tr key={item.temp_uid} className="hover:bg-slate-50/50 transition-colors">
+                                    <tr key={`${item.temp_uid || item.product_uid}-${idx}`} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="p-3 text-slate-400 font-mono font-bold">{idx + 1}</td>
                                         <td className="p-3">
                                             <span className="font-mono text-slate-500 text-[11px]">

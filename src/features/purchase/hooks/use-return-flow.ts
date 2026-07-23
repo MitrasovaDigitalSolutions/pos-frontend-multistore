@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
+import { getPurchaseItemsStore, clearPurchaseItemsStore } from "@/stores/purchase-items-store";
 import type { PurchaseReturn } from "@/features/purchase/types";
 import { useReturnableItems } from "@/features/purchase/api/purchase-api";
 
@@ -37,6 +37,15 @@ export function useReturnFlow({
     }
 
     const isCurrentNew = !currentId || currentId === "new";
+
+    // ─── Clear Stale Local Store on Mount for New Return ───────────────────────
+    const isInitialMountRef = useRef(true);
+    useEffect(() => {
+        if (isCurrentNew && isInitialMountRef.current) {
+            isInitialMountRef.current = false;
+            clearPurchaseItemsStore("new", "return");
+        }
+    }, [isCurrentNew]);
 
     // ─── Zustand Store ────────────────────────────────────────────────────────
     const store = getPurchaseItemsStore(currentId, "return");
@@ -195,10 +204,8 @@ export function useReturnFlow({
         isScanningPending: scannerState.isPending,
 
         // Header Form States
-        suppliersLoading: headerState.suppliersLoading,
-        supplierOptions: headerState.supplierOptions,
-        receivingsLoading: headerState.receivingsLoading,
-        receivingOptions: headerState.receivingOptions,
+        supplierSelectProps: headerState.supplierSelectProps,
+        receivingSelectProps: headerState.receivingSelectProps,
         receivingId: headerState.receivingId,
 
         // Finalizer States

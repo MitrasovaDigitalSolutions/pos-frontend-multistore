@@ -6,23 +6,23 @@ import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { Input } from "@/components/ui/input";
 import { IconClipboardPlus } from "@tabler/icons-react";
 import type { PurchaseReturnHeaderInput } from "@/features/purchase/schemas/return-schema";
+import type { useSupplierSelectConfig } from "@/features/master/suppliers/hooks/use-supplier-select";
+import type { Supplier } from "@/features/master/suppliers/types";
+import type { useReceivingSelectConfig } from "@/features/purchase/hooks/use-receiving-select";
+import type { Receiving } from "@/features/purchase/types";
 
 interface ReturnHeaderCardProps {
     form: UseFormReturn<PurchaseReturnHeaderInput>;
-    supplierOptions: { value: string; label: string }[];
-    suppliersLoading: boolean;
-    receivingOptions: { value: string; label: string; description?: string }[];
-    receivingsLoading: boolean;
+    supplierSelectProps: ReturnType<typeof useSupplierSelectConfig>;
+    receivingSelectProps: ReturnType<typeof useReceivingSelectConfig>;
     receivingId?: string | null;
     disabled?: boolean;
 }
 
 export function ReturnHeaderCard({
     form,
-    supplierOptions,
-    suppliersLoading,
-    receivingOptions,
-    receivingsLoading,
+    supplierSelectProps,
+    receivingSelectProps,
     receivingId,
     disabled = false,
 }: ReturnHeaderCardProps) {
@@ -47,15 +47,11 @@ export function ReturnHeaderCard({
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             Referensi Faktur Penerimaan *
                         </label>
-                        <FormSelect<PurchaseReturnHeaderInput>
+                        <FormSelect<PurchaseReturnHeaderInput, Receiving>
                             name="receiving_uid"
-                            options={receivingOptions}
-                            placeholder={
-                                receivingsLoading
-                                    ? "Memuat daftar penerimaan..."
-                                    : "-- Pilih Faktur Penerimaan (Completed) --"
-                            }
-                            disabled={disabled || receivingsLoading}
+                            {...receivingSelectProps}
+                            placeholder="-- Pilih Faktur Penerimaan (Completed) --"
+                            disabled={disabled}
                         />
                     </div>
 
@@ -64,15 +60,11 @@ export function ReturnHeaderCard({
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             Supplier *
                         </label>
-                        <FormSelect<PurchaseReturnHeaderInput>
+                        <FormSelect<PurchaseReturnHeaderInput, Supplier>
                             name="supplier_uid"
-                            options={supplierOptions}
-                            placeholder={
-                                suppliersLoading
-                                    ? "Memuat supplier..."
-                                    : "-- Pilih Supplier --"
-                            }
-                            disabled={disabled || suppliersLoading || !!receivingId}
+                            {...supplierSelectProps}
+                            placeholder="-- Pilih Supplier --"
+                            disabled={disabled || !!receivingId}
                         />
                     </div>
 
@@ -82,6 +74,7 @@ export function ReturnHeaderCard({
                             name="tanggal_retur"
                             label="Tanggal Retur *"
                             disabled={disabled}
+                            size="md"
                         />
                     </div>
                 </div>

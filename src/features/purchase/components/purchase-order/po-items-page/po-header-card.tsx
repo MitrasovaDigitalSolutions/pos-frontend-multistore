@@ -6,18 +6,22 @@ import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { Input } from "@/components/ui/input";
 import { IconClipboardPlus } from "@tabler/icons-react";
 import type { PurchaseOrderHeaderInput } from "@/features/purchase/schemas/order-schema";
+import type { useSupplierSelectConfig } from "@/features/master/suppliers/hooks/use-supplier-select";
+import type { Supplier } from "@/features/master/suppliers/types";
 
 interface POHeaderCardProps {
     form: UseFormReturn<PurchaseOrderHeaderInput>;
-    supplierOptions: { value: string; label: string }[];
-    suppliersLoading: boolean;
+    supplierOptions?: { value: string; label: string }[];
+    suppliersLoading?: boolean;
+    supplierSelectProps?: ReturnType<typeof useSupplierSelectConfig>;
     disabled?: boolean;
 }
 
 export function POHeaderCard({
     form,
-    supplierOptions,
-    suppliersLoading,
+    supplierOptions = [],
+    suppliersLoading = false,
+    supplierSelectProps,
     disabled = false,
 }: POHeaderCardProps) {
     const { register, formState: { errors } } = form;
@@ -41,16 +45,21 @@ export function POHeaderCard({
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             Supplier *
                         </label>
-                        <FormSelect<PurchaseOrderHeaderInput>
-                            name="supplier_uid"
-                            options={supplierOptions}
-                            placeholder={
-                                suppliersLoading
-                                    ? "Memuat supplier..."
-                                    : "-- Pilih Supplier --"
-                            }
-                            disabled={disabled || suppliersLoading}
-                        />
+                        {supplierSelectProps ? (
+                            <FormSelect<PurchaseOrderHeaderInput, Supplier>
+                                name="supplier_uid"
+                                {...supplierSelectProps}
+                                placeholder="-- Pilih Supplier --"
+                                disabled={disabled}
+                            />
+                        ) : (
+                            <FormSelect<PurchaseOrderHeaderInput>
+                                name="supplier_uid"
+                                options={supplierOptions}
+                                placeholder={suppliersLoading ? "Memuat supplier..." : "-- Pilih Supplier --"}
+                                disabled={disabled || suppliersLoading}
+                            />
+                        )}
                     </div>
 
                     {/* Tanggal PO */}
@@ -59,6 +68,7 @@ export function POHeaderCard({
                             name="tanggal_po"
                             label="Tanggal PO *"
                             disabled={disabled}
+                            size="md"
                         />
                     </div>
                 </div>
@@ -66,11 +76,11 @@ export function POHeaderCard({
                 {/* Catatan */}
                 <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                        Catatan / Keterangan PO
+                        Catatan PO
                     </label>
                     <Input
                         type="text"
-                        placeholder="Misal: Harap kirim menggunakan box kayu, termin pembayaran 30 hari..."
+                        placeholder="Catatan tambahan untuk PO..."
                         className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
                         disabled={disabled}
                         {...register("catatan")}

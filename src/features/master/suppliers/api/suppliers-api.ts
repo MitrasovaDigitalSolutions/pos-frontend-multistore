@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiGetData, apiGetList, apiPost, apiPut, apiDelete } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
@@ -9,6 +9,24 @@ export function useSuppliers(params?: PaginationParams & { search?: string }) {
     return useQuery<PaginatedResponse<Supplier>>({
         queryKey: [...queryKeys.suppliers.all, params],
         queryFn: () => apiGetList<Supplier>("/v1/inventory/suppliers", params),
+    });
+}
+
+export function useInfiniteSuppliers(params?: PaginationParams & { search?: string }) {
+    return useInfiniteQuery<PaginatedResponse<Supplier>>({
+        queryKey: [...queryKeys.suppliers.all, "infinite", params],
+        queryFn: ({ pageParam = 1 }) =>
+            apiGetList<Supplier>("/v1/inventory/suppliers", {
+                ...params,
+                page: pageParam as number,
+            }),
+        getNextPageParam: (lastPage) => {
+            if (lastPage.meta && lastPage.meta.current_page < lastPage.meta.last_page) {
+                return lastPage.meta.current_page + 1;
+            }
+            return undefined;
+        },
+        initialPageParam: 1,
     });
 }
 

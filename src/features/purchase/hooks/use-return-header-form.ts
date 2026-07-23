@@ -1,17 +1,14 @@
-"use client";
-
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useRef } from "react";
 import { useForm, useWatch, type Resolver } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 
-import { todayStr, formatToISO } from "@/lib/date-utils";
-import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
-import { useReceivings } from "@/features/purchase/api/purchase-api";
+import { useSupplierSelectConfig } from "@/features/master/suppliers/hooks/use-supplier-select";
+import { useReceivingDetail } from "@/features/purchase/api/purchase-api";
 import { purchaseReturnHeaderSchema, type PurchaseReturnHeaderInput } from "@/features/purchase/schemas/return-schema";
-import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
 import type { PurchaseReturn } from "@/features/purchase/types";
-import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { RECEIVING_STATUS } from "@/constants/purchase";
+import { formatToISO, todayStr } from "@/lib/date-utils";
+import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
+import { useReceivingSelectConfig } from "./use-receiving-select";
 
 interface UseReturnHeaderFormProps {
     currentId: string;
@@ -40,22 +37,19 @@ export function useReturnHeaderForm({
     const headerData = store((state) => state.headerData);
     const setHeaderData = store((state) => state.setHeaderData);
 
-    const { data: suppliers = [], isLoading: suppliersLoading } = useAllSuppliers();
-    const { data: receivingsData, isLoading: receivingsLoading } = useReceivings({
-        status: RECEIVING_STATUS.COMPLETED,
-        per_page: 100,
+    const receivingId = useWatch({ name: "receiving_uid", control: headerForm.control });
+    const currentSupplierId = useWatch({ name: "supplier_uid", control: headerForm.control });
+    const { data: selectedReceiving } = useReceivingDetail(receivingId || null);
+
+    const receivingSelectProps = useReceivingSelectConfig({
+        targetUid: currentReturn?.stock_receiving_uid,
+        targetReceiving: currentReturn?.stock_receiving,
     });
 
-    const supplierOptions = suppliers.map((s) => ({
-        value: String(s.uid),
-        label: s.nama,
-    }));
-
-    const receivingOptions = (receivingsData?.data || []).map((r) => ({
-        value: String(r.uid),
-        label: `${r.nomor_penerimaan} - ${r.supplier_relationship?.nama || r.supplier || "Supplier"}`,
-        description: `Faktur: ${r.nomor_faktur || "-"} • Total: ${formatRupiah(r.nilai_faktur || 0)}`,
-    }));
+    const supplierSelectProps = useSupplierSelectConfig({
+        targetUid: currentReturn?.supplier_uid || (selectedReceiving?.supplier_uid ? String(selectedReceiving.supplier_uid) : null),
+        targetSupplier: currentReturn?.supplier || selectedReceiving?.supplier_relationship,
+    });
 
     const hasInitializedRef = useRef(false);
     const isClearedRef = useRef(false);
@@ -81,7 +75,7 @@ export function useReturnHeaderForm({
     useEffect(() => {
         if (isCurrentNew && isHeaderDirty && !isClearedRef.current) {
             setHeaderData({
-                purchase_order_uid: watchedHeaderValues.receiving_uid || null, // we map receiving_uid to purchase_order_uid for Zustand store compatibility
+                purchase_order_uid: watchedHeaderValues.receiving_uid || null,
                 supplier_uid: watchedHeaderValues.supplier_uid || null,
                 tanggal_terima: watchedHeaderValues.tanggal_retur || null,
                 catatan: watchedHeaderValues.catatan || null,
@@ -102,7 +96,7 @@ export function useReturnHeaderForm({
         }
     }, [isCurrentNew, headerData, resetHeader]);
 
-    // 4. Synchronize default values when Return draft loads/changes from backend
+    // 4. Load initial values when editing existing Return
     useEffect(() => {
         if (!isCurrentNew && currentReturn) {
             resetHeader({
@@ -115,30 +109,19 @@ export function useReturnHeaderForm({
     }, [isCurrentNew, currentReturn, resetHeader]);
 
     // 5. Auto-select and lock supplier if Receiving reference is chosen
-    const receivingId = useWatch({ name: "receiving_uid", control: headerForm.control });
-    const currentSupplierId = useWatch({ name: "supplier_uid", control: headerForm.control });
     useEffect(() => {
-        if (receivingId) {
-            let targetSupplierId: string | null = null;
-            const selectedReceiving = (receivingsData?.data || []).find(
-                (r) => String(r.uid) === receivingId
-            );
-            if (selectedReceiving && selectedReceiving.supplier_uid) {
-                targetSupplierId = String(selectedReceiving.supplier_uid);
-            }
-
-            if (targetSupplierId && currentSupplierId !== targetSupplierId) {
+        if (selectedReceiving && selectedReceiving.supplier_uid) {
+            const targetSupplierId = String(selectedReceiving.supplier_uid);
+            if (currentSupplierId !== targetSupplierId) {
                 setHeaderValue("supplier_uid", targetSupplierId);
             }
         }
-    }, [receivingId, currentSupplierId, receivingsData, setHeaderValue]);
+    }, [selectedReceiving, currentSupplierId, setHeaderValue]);
 
     return {
         headerForm,
-        suppliersLoading,
-        supplierOptions,
-        receivingsLoading,
-        receivingOptions,
+        supplierSelectProps,
+        receivingSelectProps,
         receivingId,
     };
 }
