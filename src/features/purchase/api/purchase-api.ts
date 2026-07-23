@@ -248,6 +248,25 @@ export function usePurchaseOrders(params?: PaginationParams & { search?: string;
     });
 }
 
+export function useInfinitePurchaseOrders(params?: { search?: string; status?: string; supplier_uid?: string; start_date?: string; end_date?: string; per_page?: number }) {
+    const perPage = params?.per_page || 10;
+    return useInfiniteQuery<PaginatedResponse<PurchaseOrder>>({
+        queryKey: [...queryKeys.purchase.orders(), "infinite", params],
+        queryFn: ({ pageParam = 1 }) =>
+            apiGetList<PurchaseOrder>(ENDPOINTS.PURCHASE.ORDER.LIST, {
+                ...params,
+                page: pageParam as number,
+                per_page: perPage,
+            }),
+        initialPageParam: 1,
+        getNextPageParam: (lastPage) => {
+            const currentPage = lastPage.meta?.current_page ?? 1;
+            const lastPageNum = lastPage.meta?.last_page ?? 1;
+            return currentPage < lastPageNum ? currentPage + 1 : undefined;
+        },
+    });
+}
+
 export function usePurchaseOrderDetail(uid: string | null) {
     return useQuery<PurchaseOrder>({
         queryKey: [...queryKeys.purchase.orders(), "detail", uid || ""],

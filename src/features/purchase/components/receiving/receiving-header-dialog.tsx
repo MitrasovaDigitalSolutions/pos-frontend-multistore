@@ -7,20 +7,19 @@ import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Scrollable } from "@/components/ui/scrollable";
-import {
-    PAYMENT_STATUS
-} from "@/constants/purchase";
-import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
-import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { PAYMENT_STATUS } from "@/constants/purchase";
+import { useUpdateReceiving, usePurchaseOrderDetail } from "../../api/purchase-api";
+import { receivingHeaderSchema, type ReceivingHeaderInput } from "../../schemas/receiving-schema";
+import type { Receiving, PurchaseOrder } from "../../types";
+import { useSupplierSelectConfig } from "@/features/master/suppliers/hooks/use-supplier-select";
+import { usePOSelectConfig } from "@/features/purchase/hooks/use-po-select";
+import type { Supplier } from "@/features/master/suppliers/types";
+import { formatToISO } from "@/lib/date-utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IconClipboardPlus } from "@tabler/icons-react";
 import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
-import { useOutstandingPurchaseOrders, useUpdateReceiving } from "../../api/purchase-api";
-import { receivingHeaderSchema, type ReceivingHeaderInput } from "../../schemas/receiving-schema";
-import type { Receiving } from "../../types";
-import { formatToISO } from "@/lib/date-utils";
+import { IconClipboardPlus } from "@tabler/icons-react";
 
 interface ReceivingHeaderDialogProps {
     open: boolean;
@@ -30,37 +29,16 @@ interface ReceivingHeaderDialogProps {
 
 export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: ReceivingHeaderDialogProps) {
     const updateReceiving = useUpdateReceiving();
-    const { data: suppliers = [], isLoading: suppliersLoading } = useAllSuppliers();
-    const { data: outstandingPosData, isLoading: posLoading } = useOutstandingPurchaseOrders({
-        per_page: 100,
+
+    const supplierSelectConfig = useSupplierSelectConfig({
+        targetUid: receiving?.supplier_uid,
+        targetSupplier: receiving?.supplier_relationship,
     });
 
-    const supplierOptions = suppliers.map((s) => ({
-        value: String(s.uid),
-        label: s.nama,
-    }));
-
-    // In edit mode, we want to allow selecting the currently linked PO as well.
-    // If the receiving already has a purchase_order_uid, let's make sure it is in options.
-    const poOptions = [
-        { value: "", label: "-- Tanpa PO (Pembelian Langsung) --" },
-        ...(outstandingPosData?.data || []).map((po) => ({
-            value: String(po.uid),
-            label: `${po.nomor_po} - ${po.supplier?.nama || po.supplier_name || "Tanpa Supplier"}`,
-            description: `Estimasi: ${formatRupiah(po.nilai_estimasi || 0)}`,
-        })),
-    ];
-
-    // Ensure currently selected PO is added if it isn't already in list
-    if (receiving.purchase_order_uid) {
-        const hasCurrentPo = (outstandingPosData?.data || []).some(po => po.uid === receiving.purchase_order_uid);
-        if (!hasCurrentPo) {
-            poOptions.push({
-                value: String(receiving.purchase_order_uid),
-                label: `PO ID: ${receiving.purchase_order_uid} (Terkait)`,
-            });
-        }
-    }
+    const poSelectConfig = usePOSelectConfig({
+        targetUid: receiving?.purchase_order_uid,
+        targetPO: undefined,
+    });
 
     const methods = useForm<ReceivingHeaderInput>({
         resolver: zodResolver(receivingHeaderSchema) as Resolver<ReceivingHeaderInput>,
@@ -84,6 +62,7 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
     } = methods;
 
     const purchaseOrderId = useWatch({ name: "purchase_order_uid", control: methods.control });
+    const { data: poData } = usePurchaseOrderDetail(purchaseOrderId || null);
 
     // Reset default values when receiving is loaded or dialog opens
     useEffect(() => {
@@ -103,16 +82,17 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
     // Auto-select and lock supplier if PO is chosen
     useEffect(() => {
         if (purchaseOrderId) {
-            const selectedPo = (outstandingPosData?.data || []).find(
-                (po) => po.uid === purchaseOrderId
-            );
-            if (selectedPo && selectedPo.supplier_uid) {
-                setValue("supplier_uid", String(selectedPo.supplier_uid));
-            } else if (receiving && receiving.purchase_order_uid === purchaseOrderId) {
-                setValue("supplier_uid", receiving.supplier_uid ? String(receiving.supplier_uid) : null);
+            let targetSupplierId: string | null = null;
+            if (poData && poData.uid === purchaseOrderId && poData.supplier_uid) {
+                targetSupplierId = String(poData.supplier_uid);
+            } else if (receiving && receiving.purchase_order_uid === purchaseOrderId && receiving.supplier_uid) {
+                targetSupplierId = String(receiving.supplier_uid);
+            }
+            if (targetSupplierId) {
+                setValue("supplier_uid", targetSupplierId);
             }
         }
-    }, [purchaseOrderId, outstandingPosData, setValue, receiving]);
+    }, [purchaseOrderId, poData, setValue, receiving]);
 
     const onSubmit = (data: ReceivingHeaderInput) => {
         // Send the update. We must also include existing items to avoid deletion.
@@ -169,13 +149,11 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                     Referensi Purchase Order (PO)
                                 </label>
-                                <FormSelect<ReceivingHeaderInput>
+                                <FormSelect<ReceivingHeaderInput, PurchaseOrder>
                                     name="purchase_order_uid"
-                                    options={poOptions}
-                                    placeholder={
-                                        posLoading ? "Memuat daftar PO..." : "-- Pilih PO (Kosongkan jika beli langsung) --"
-                                    }
-                                    disabled={updateReceiving.isPending || posLoading}
+                                    {...poSelectConfig}
+                                    placeholder="-- Pilih PO (Kosongkan jika beli langsung) --"
+                                    disabled={updateReceiving.isPending}
                                 />
                                 {errors.purchase_order_uid && (
                                     <p className="text-[10px] text-rose-500 font-medium">
@@ -189,13 +167,11 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                     Supplier {!purchaseOrderId && " *"}
                                 </label>
-                                <FormSelect<ReceivingHeaderInput>
+                                <FormSelect<ReceivingHeaderInput, Supplier>
                                     name="supplier_uid"
-                                    options={supplierOptions}
-                                    placeholder={
-                                        suppliersLoading ? "Memuat supplier..." : "-- Pilih Supplier --"
-                                    }
-                                    disabled={updateReceiving.isPending || suppliersLoading || !!purchaseOrderId}
+                                    {...supplierSelectConfig}
+                                    placeholder="-- Pilih Supplier --"
+                                    disabled={updateReceiving.isPending || !!purchaseOrderId}
                                 />
                                 {errors.supplier_uid && (
                                     <p className="text-[10px] text-rose-500 font-medium">

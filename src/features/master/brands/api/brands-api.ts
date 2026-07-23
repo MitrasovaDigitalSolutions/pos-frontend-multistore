@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiGetList, apiPost, apiPut, apiDelete } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
@@ -9,6 +9,24 @@ export function useBrands(params?: PaginationParams & { search?: string }) {
     return useQuery<PaginatedResponse<Brand>>({
         queryKey: [...queryKeys.brands.all, params],
         queryFn: () => apiGetList<Brand>("/v1/brands", params),
+    });
+}
+
+export function useInfiniteBrands(params?: PaginationParams & { search?: string }) {
+    return useInfiniteQuery<PaginatedResponse<Brand>>({
+        queryKey: [...queryKeys.brands.all, "infinite", params],
+        queryFn: ({ pageParam = 1 }) =>
+            apiGetList<Brand>("/v1/brands", {
+                ...params,
+                page: pageParam as number,
+            }),
+        getNextPageParam: (lastPage) => {
+            if (lastPage.meta && lastPage.meta.current_page < lastPage.meta.last_page) {
+                return lastPage.meta.current_page + 1;
+            }
+            return undefined;
+        },
+        initialPageParam: 1,
     });
 }
 

@@ -4,32 +4,33 @@ import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { IconClipboard } from "@tabler/icons-react";
+
 import { BaseDialog } from "@/components/ui/base-dialog";
+import { Button } from "@/components/ui/button";
 import { FormSelect } from "@/components/forms/form-select";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { IconClipboardPlus } from "@tabler/icons-react";
-import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
-import { useUpdatePurchaseOrder } from "../../api/purchase-api";
-import { purchaseOrderHeaderSchema, type PurchaseOrderHeaderInput } from "../../schemas/order-schema";
-import type { PurchaseOrder } from "../../types";
+
+import { useSupplierSelectConfig } from "@/features/master/suppliers/hooks/use-supplier-select";
+import type { Supplier } from "@/features/master/suppliers/types";
+import { useUpdatePurchaseOrder } from "@/features/purchase/api/purchase-api";
+import { purchaseOrderHeaderSchema, type PurchaseOrderHeaderInput } from "@/features/purchase/schemas/order-schema";
+import type { PurchaseOrder } from "@/features/purchase/types";
 import { formatToISO } from "@/lib/date-utils";
 
 interface POHeaderDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    order: PurchaseOrder;
+    order?: PurchaseOrder;
 }
 
 export function POHeaderDialog({ open, onOpenChange, order }: POHeaderDialogProps) {
     const updateHeader = useUpdatePurchaseOrder();
-    const { data: suppliers = [], isLoading: suppliersLoading } = useAllSuppliers();
-
-    const supplierOptions = suppliers.map((s) => ({
-        value: s.uid,
-        label: s.nama,
-    }));
+    const supplierSelectConfig = useSupplierSelectConfig({
+        targetUid: order?.supplier_uid,
+        targetSupplier: order?.supplier,
+    });
 
     const methods = useForm<PurchaseOrderHeaderInput>({
         resolver: zodResolver(purchaseOrderHeaderSchema) as Resolver<PurchaseOrderHeaderInput>,
@@ -51,7 +52,7 @@ export function POHeaderDialog({ open, onOpenChange, order }: POHeaderDialogProp
     useEffect(() => {
         if (open && order) {
             reset({
-                supplier_uid: order.supplier_uid || undefined,
+                supplier_uid: order.supplier_uid ? String(order.supplier_uid) : (undefined as unknown as string),
                 tanggal_po: order.tanggal_po ? formatToISO(order.tanggal_po) : "",
                 catatan: order.catatan || "",
             });
@@ -59,11 +60,20 @@ export function POHeaderDialog({ open, onOpenChange, order }: POHeaderDialogProp
     }, [open, order, reset]);
 
     const onSubmit = (data: PurchaseOrderHeaderInput) => {
+        if (!order) return;
+
         updateHeader.mutate(
-            { uid: order.uid, data },
+            {
+                uid: order.uid,
+                data: {
+                    supplier_uid: data.supplier_uid,
+                    tanggal_po: data.tanggal_po,
+                    catatan: data.catatan || null,
+                },
+            },
             {
                 onSuccess: () => {
-                    toast.success("Informasi header Purchase Order berhasil diperbarui!");
+                    toast.success("Informasi PO berhasil diperbarui.");
                     onOpenChange(false);
                 },
                 onError: (err) => {
@@ -79,11 +89,11 @@ export function POHeaderDialog({ open, onOpenChange, order }: POHeaderDialogProp
             onOpenChange={onOpenChange}
             title={
                 <>
-                    <IconClipboardPlus size={20} className="text-emerald-500" />
+                    <IconClipboard size={20} className="text-emerald-500" />
                     <span>Edit Informasi Purchase Order</span>
                 </>
             }
-            className="max-w-md flex flex-col"
+            className="max-w-md flex flex-col max-h-[90vh]"
         >
             <FormProvider {...methods}>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4">
@@ -92,15 +102,11 @@ export function POHeaderDialog({ open, onOpenChange, order }: POHeaderDialogProp
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             Supplier *
                         </label>
-                        <FormSelect<PurchaseOrderHeaderInput>
+                        <FormSelect<PurchaseOrderHeaderInput, Supplier>
                             name="supplier_uid"
-                            options={supplierOptions}
-                            placeholder={
-                                suppliersLoading
-                                    ? "Memuat supplier..."
-                                    : "-- Pilih Supplier --"
-                            }
-                            disabled={updateHeader.isPending || suppliersLoading}
+                            {...supplierSelectConfig}
+                            placeholder="-- Pilih Supplier --"
+                            disabled={updateHeader.isPending}
                         />
                         {errors.supplier_uid && (
                             <p className="text-[10px] text-rose-500 font-medium">
@@ -135,21 +141,21 @@ export function POHeaderDialog({ open, onOpenChange, order }: POHeaderDialogProp
                         )}
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                    {/* Dialog Actions */}
+                    <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
                         <Button
                             type="button"
+                            variant="ghost"
                             onClick={() => onOpenChange(false)}
-                            variant="outline"
-                            className="px-5 h-10 border-slate-200 text-slate-700 font-bold text-xs rounded-xl bg-white"
                             disabled={updateHeader.isPending}
+                            className="text-xs text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
                         >
                             Batal
                         </Button>
                         <Button
                             type="submit"
-                            className="px-5 h-10 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl"
                             disabled={updateHeader.isPending}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl cursor-pointer"
                         >
                             {updateHeader.isPending ? "Menyimpan..." : "Simpan Perubahan"}
                         </Button>

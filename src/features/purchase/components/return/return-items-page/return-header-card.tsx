@@ -6,13 +6,14 @@ import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { Input } from "@/components/ui/input";
 import { IconClipboardPlus } from "@tabler/icons-react";
 import type { PurchaseReturnHeaderInput } from "@/features/purchase/schemas/return-schema";
+import type { useSupplierSelectConfig } from "@/features/master/suppliers/hooks/use-supplier-select";
+import type { Supplier } from "@/features/master/suppliers/types";
 import type { useReceivingSelectConfig } from "@/features/purchase/hooks/use-receiving-select";
 import type { Receiving } from "@/features/purchase/types";
 
 interface ReturnHeaderCardProps {
     form: UseFormReturn<PurchaseReturnHeaderInput>;
-    supplierOptions: { value: string; label: string }[];
-    suppliersLoading: boolean;
+    supplierSelectProps: ReturnType<typeof useSupplierSelectConfig>;
     receivingSelectProps: ReturnType<typeof useReceivingSelectConfig>;
     receivingId?: string | null;
     disabled?: boolean;
@@ -20,8 +21,7 @@ interface ReturnHeaderCardProps {
 
 export function ReturnHeaderCard({
     form,
-    supplierOptions,
-    suppliersLoading,
+    supplierSelectProps,
     receivingSelectProps,
     receivingId,
     disabled = false,
@@ -60,15 +60,11 @@ export function ReturnHeaderCard({
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             Supplier *
                         </label>
-                        <FormSelect<PurchaseReturnHeaderInput>
+                        <FormSelect<PurchaseReturnHeaderInput, Supplier>
                             name="supplier_uid"
-                            options={supplierOptions}
-                            placeholder={
-                                suppliersLoading
-                                    ? "Memuat supplier..."
-                                    : "-- Pilih Supplier --"
-                            }
-                            disabled={disabled || suppliersLoading || !!receivingId}
+                            {...supplierSelectProps}
+                            placeholder="-- Pilih Supplier --"
+                            disabled={disabled || !!receivingId}
                         />
                     </div>
 

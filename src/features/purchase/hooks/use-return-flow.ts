@@ -204,8 +204,7 @@ export function useReturnFlow({
         isScanningPending: scannerState.isPending,
 
         // Header Form States
-        suppliersLoading: headerState.suppliersLoading,
-        supplierOptions: headerState.supplierOptions,
+        supplierSelectProps: headerState.supplierSelectProps,
         receivingSelectProps: headerState.receivingSelectProps,
         receivingId: headerState.receivingId,
 

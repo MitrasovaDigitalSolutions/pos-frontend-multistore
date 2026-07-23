@@ -10,9 +10,10 @@ import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { IconClipboardPlus } from "@tabler/icons-react";
-import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
-import { useUpdatePurchaseReturn } from "../../api/purchase-api";
+import { useUpdatePurchaseReturn, useReceivingDetail } from "../../api/purchase-api";
 import { useReceivingSelectConfig } from "../../hooks/use-receiving-select";
+import { useSupplierSelectConfig } from "@/features/master/suppliers/hooks/use-supplier-select";
+import type { Supplier } from "@/features/master/suppliers/types";
 import { purchaseReturnHeaderSchema, type PurchaseReturnHeaderInput } from "../../schemas/return-schema";
 import type { PurchaseReturn, Receiving } from "../../types";
 import { formatToISO } from "@/lib/date-utils";
@@ -25,12 +26,6 @@ interface ReturnHeaderDialogProps {
 
 export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHeaderDialogProps) {
     const updateReturn = useUpdatePurchaseReturn();
-    const { data: suppliers = [], isLoading: suppliersLoading } = useAllSuppliers();
-
-    const supplierOptions = suppliers.map((s) => ({
-        value: String(s.uid),
-        label: s.nama,
-    }));
 
     const methods = useForm<PurchaseReturnHeaderInput>({
         resolver: zodResolver(purchaseReturnHeaderSchema) as Resolver<PurchaseReturnHeaderInput>,
@@ -50,6 +45,23 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
     } = methods;
 
     const receivingId = useWatch({ name: "receiving_uid", control: methods.control });
+    const currentSupplierId = useWatch({ name: "supplier_uid", control: methods.control });
+    const { data: selectedReceiving } = useReceivingDetail(receivingId || null);
+
+    const supplierSelectConfig = useSupplierSelectConfig({
+        targetUid: returnObj?.supplier_uid || (selectedReceiving?.supplier_uid ? String(selectedReceiving.supplier_uid) : null),
+        targetSupplier: returnObj?.supplier || selectedReceiving?.supplier_relationship,
+    });
+
+    // Auto-select and lock supplier if Receiving reference is chosen
+    useEffect(() => {
+        if (selectedReceiving && selectedReceiving.supplier_uid) {
+            const targetSupplierId = String(selectedReceiving.supplier_uid);
+            if (currentSupplierId !== targetSupplierId) {
+                methods.setValue("supplier_uid", targetSupplierId);
+            }
+        }
+    }, [selectedReceiving, currentSupplierId, methods]);
 
     // Reset default values when returnObj is loaded or dialog opens
     useEffect(() => {
@@ -130,13 +142,11 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             Supplier *
                         </label>
-                        <FormSelect<PurchaseReturnHeaderInput>
+                        <FormSelect<PurchaseReturnHeaderInput, Supplier>
                             name="supplier_uid"
-                            options={supplierOptions}
-                            placeholder={
-                                suppliersLoading ? "Memuat supplier..." : "-- Pilih Supplier --"
-                            }
-                            disabled={updateReturn.isPending || suppliersLoading || !!receivingId}
+                            {...supplierSelectConfig}
+                            placeholder="-- Pilih Supplier --"
+                            disabled={updateReturn.isPending || !!receivingId}
                         />
                         {errors.supplier_uid && (
                             <p className="text-[10px] text-rose-500 font-medium">

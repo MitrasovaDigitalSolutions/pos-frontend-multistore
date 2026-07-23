@@ -8,11 +8,15 @@ import { FormSwitch } from "@/components/forms/form-switch";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useBrands } from "@/features/master/brands/api/brands-api";
-import { useCategories } from "@/features/master/categories/api/categories-api";
+import { useBrandSelectConfig } from "@/features/master/brands/hooks/use-brand-select";
+import type { Brand } from "@/features/master/brands/types";
+import { useCategorySelectConfig } from "@/features/master/categories/hooks/use-category-select";
+import type { Category } from "@/features/master/categories/types";
+import { queryKeys } from "@/lib/query-keys";
 import { getImageUrl } from "@/lib/utils";
 import { IconInfoCircle, IconPackage } from "@tabler/icons-react";
-import { useEffect, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useFormContext, useWatch, type FieldErrors } from "react-hook-form";
 import { toast } from "sonner";
 import { useCreateProduct, useUpdateProduct } from "../api/products-api";
@@ -36,6 +40,7 @@ export function ProductFormDialog({
 }: ProductFormDialogProps) {
     const createProduct = useCreateProduct();
     const updateProduct = useUpdateProduct();
+    const queryClient = useQueryClient();
 
     const {
         register,
@@ -47,25 +52,15 @@ export function ProductFormDialog({
 
     const isPending = createProduct.isPending || updateProduct.isPending;
 
-    // Load categories and brands
-    const { data: categoriesRes } = useCategories({ per_page: 1000 });
-    const { data: brandsRes } = useBrands({ per_page: 1000 });
+    const categorySelectProps = useCategorySelectConfig({
+        targetUid: editingProduct?.category_uid,
+        targetCategory: editingProduct?.category,
+    });
 
-    const categoryOptions = useMemo(() => {
-        const list = categoriesRes?.data || [];
-        return [
-            { value: "", label: "Tanpa Kategori" },
-            ...list.map((c) => ({ value: String(c.uid), label: c.nama }))
-        ];
-    }, [categoriesRes]);
-
-    const brandOptions = useMemo(() => {
-        const list = brandsRes?.data || [];
-        return [
-            { value: "", label: "Tanpa Brand" },
-            ...list.map((b) => ({ value: String(b.uid), label: b.nama }))
-        ];
-    }, [brandsRes]);
+    const brandSelectProps = useBrandSelectConfig({
+        targetUid: editingProduct?.brand_uid,
+        targetBrand: editingProduct?.brand,
+    });
 
     // Automatic Margin & Price calculations using useWatch
     const hargaBeli = useWatch({ control, name: "harga_beli" });
@@ -110,8 +105,31 @@ export function ProductFormDialog({
         const formData = new FormData();
         formData.append("nama", data.nama);
 
-        const selectedBrandOption = brandOptions.find((b) => b.value === String(data.brand_uid));
-        const brandName = selectedBrandOption && data.brand_uid ? selectedBrandOption.label : "Umum";
+        const brandUid = data.brand_uid;
+        let brandName = "Umum";
+        if (brandUid) {
+            const caches = queryClient.getQueriesData<{ pages?: { data?: Brand[] }[] }>({
+                queryKey: [...queryKeys.brands.all, "infinite"],
+            });
+            let foundBrandName: string | null = null;
+            for (const [, cacheData] of caches) {
+                if (cacheData?.pages) {
+                    for (const page of cacheData.pages) {
+                        const brand = page.data?.find((b) => String(b.uid) === String(brandUid));
+                        if (brand) {
+                            foundBrandName = brand.nama;
+                            break;
+                        }
+                    }
+                }
+                if (foundBrandName) break;
+            }
+            if (foundBrandName) {
+                brandName = foundBrandName;
+            } else if (editingProduct?.brand_uid === brandUid && editingProduct.brand) {
+                brandName = editingProduct.brand.nama;
+            }
+        }
         formData.append("merek", brandName);
 
         if (data.barcode) {
@@ -262,19 +280,19 @@ export function ProductFormDialog({
 
                     {/* Kategori, Brand & Stok */}
                     <div className="grid grid-cols-2 gap-3">
-                        <FormSelect<ProductInput>
+                        <FormSelect<ProductInput, Category>
                             name="category_uid"
                             label="Kategori"
-                            options={categoryOptions}
+                            {...categorySelectProps}
                             placeholder="Pilih Kategori"
                             searchPlaceholder="Cari kategori..."
                             disabled={isPending}
                             size="md"
                         />
-                        <FormSelect<ProductInput>
+                        <FormSelect<ProductInput, Brand>
                             name="brand_uid"
                             label="Brand"
-                            options={brandOptions}
+                            {...brandSelectProps}
                             placeholder="Pilih Brand"
                             searchPlaceholder="Cari brand..."
                             disabled={isPending}
