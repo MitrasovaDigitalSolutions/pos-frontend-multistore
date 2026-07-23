@@ -13,6 +13,10 @@ interface ReturnHeaderCardProps {
     suppliersLoading: boolean;
     receivingOptions: { value: string; label: string; description?: string }[];
     receivingsLoading: boolean;
+    receivingsLoadingMore?: boolean;
+    receivingsHasMore?: boolean;
+    fetchNextReceivingsPage?: () => void;
+    onReceivingSearchChange?: (search: string) => void;
     receivingId?: string | null;
     disabled?: boolean;
 }
@@ -23,6 +27,10 @@ export function ReturnHeaderCard({
     suppliersLoading,
     receivingOptions,
     receivingsLoading,
+    receivingsLoadingMore,
+    receivingsHasMore,
+    fetchNextReceivingsPage,
+    onReceivingSearchChange,
     receivingId,
     disabled = false,
 }: ReturnHeaderCardProps) {
@@ -56,6 +64,10 @@ export function ReturnHeaderCard({
                                     : "-- Pilih Faktur Penerimaan (Completed) --"
                             }
                             disabled={disabled || receivingsLoading}
+                            onSearchChange={onReceivingSearchChange}
+                            onScrollBottom={fetchNextReceivingsPage}
+                            hasMore={receivingsHasMore}
+                            isLoadingMore={receivingsLoadingMore}
                         />
                     </div>
 
@@ -82,6 +94,7 @@ export function ReturnHeaderCard({
                             name="tanggal_retur"
                             label="Tanggal Retur *"
                             disabled={disabled}
+                            size="md"
                         />
                     </div>
                 </div>

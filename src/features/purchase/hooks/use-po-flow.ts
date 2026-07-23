@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { getPurchaseItemsStore, selectItemCount, selectTotal } from "@/stores/purchase-items-store";
+import { useEffect, useRef, useState } from "react";
+import { getPurchaseItemsStore, clearPurchaseItemsStore, selectItemCount, selectTotal } from "@/stores/purchase-items-store";
 import type { PurchaseOrder } from "@/features/purchase/types";
 
 import { usePoHeaderForm } from "./use-po-header-form";
@@ -33,6 +33,15 @@ export function usePoFlow({ poId, order, onSaveSuccess }: UsePoFlowProps) {
     }
 
     const isCurrentNew = !currentId || currentId === "new";
+
+    // ─── Clear Stale Local Store on Mount for New PO ───────────────────────────
+    const isInitialMountRef = useRef(true);
+    useEffect(() => {
+        if (isCurrentNew && isInitialMountRef.current) {
+            isInitialMountRef.current = false;
+            clearPurchaseItemsStore("new", "po");
+        }
+    }, [isCurrentNew]);
 
     // ─── Zustand Store ────────────────────────────────────────────────────────
     const store = getPurchaseItemsStore(currentId, "po");

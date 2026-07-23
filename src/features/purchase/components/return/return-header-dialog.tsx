@@ -11,11 +11,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { IconClipboardPlus } from "@tabler/icons-react";
 import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
-import { useUpdatePurchaseReturn, useReceivings } from "../../api/purchase-api";
+import { useUpdatePurchaseReturn } from "../../api/purchase-api";
+import { useReceivingSelectConfig } from "../../hooks/use-receiving-select";
 import { purchaseReturnHeaderSchema, type PurchaseReturnHeaderInput } from "../../schemas/return-schema";
-import type { PurchaseReturn } from "../../types";
-import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { RECEIVING_STATUS } from "@/constants/purchase";
+import type { PurchaseReturn, Receiving } from "../../types";
 import { formatToISO } from "@/lib/date-utils";
 
 interface ReturnHeaderDialogProps {
@@ -27,33 +26,11 @@ interface ReturnHeaderDialogProps {
 export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHeaderDialogProps) {
     const updateReturn = useUpdatePurchaseReturn();
     const { data: suppliers = [], isLoading: suppliersLoading } = useAllSuppliers();
-    const { data: receivingsData, isLoading: receivingsLoading } = useReceivings({
-        status: RECEIVING_STATUS.COMPLETED,
-        per_page: 100,
-    });
 
     const supplierOptions = suppliers.map((s) => ({
         value: String(s.uid),
         label: s.nama,
     }));
-
-    const receivingOptions = (receivingsData?.data || []).map((r) => ({
-        value: String(r.uid),
-        label: `${r.nomor_penerimaan} - ${r.supplier_relationship?.nama || r.supplier || "Supplier"}`,
-        description: `Faktur: ${r.nomor_faktur || "-"} • Total: ${formatRupiah(r.nilai_faktur || 0)}`,
-    }));
-
-    // In edit mode, if currently linked receiving is not in the list (e.g. because it's not in the first 100 or has another state), make sure it is added.
-    if (returnObj.stock_receiving_uid) {
-        const hasCurrentReceiving = (receivingsData?.data || []).some(r => r.uid === returnObj.stock_receiving_uid);
-        if (!hasCurrentReceiving) {
-            receivingOptions.push({
-                value: String(returnObj.stock_receiving_uid),
-                label: `${returnObj.stock_receiving?.nomor_penerimaan || `Penerimaan ID: ${returnObj.stock_receiving_uid}`}`,
-                description: `Terkait`,
-            });
-        }
-    }
 
     const methods = useForm<PurchaseReturnHeaderInput>({
         resolver: zodResolver(purchaseReturnHeaderSchema) as Resolver<PurchaseReturnHeaderInput>,
@@ -87,20 +64,6 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
         }
     }, [open, returnObj, reset]);
 
-    // Auto-select and lock supplier based on selected receiving
-    useEffect(() => {
-        if (receivingId) {
-            const selectedReceiving = (receivingsData?.data || []).find(
-                (r) => r.uid === receivingId
-            );
-            if (selectedReceiving && selectedReceiving.supplier_uid) {
-                setValue("supplier_uid", String(selectedReceiving.supplier_uid));
-            } else if (returnObj && returnObj.stock_receiving_uid === receivingId) {
-                setValue("supplier_uid", String(returnObj.supplier_uid));
-            }
-        }
-    }, [receivingId, receivingsData, setValue, returnObj]);
-
     const onSubmit = (data: PurchaseReturnHeaderInput) => {
         // Prepare payload including existing items to prevent deletion.
         const itemsPayload = (returnObj.items || []).map((item) => ({
@@ -133,6 +96,11 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
         );
     };
 
+    const receivingSelectConfig = useReceivingSelectConfig({
+        targetUid: returnObj?.stock_receiving_uid,
+        targetReceiving: returnObj?.stock_receiving,
+    });
+
     return (
         <BaseDialog
             open={open}
@@ -149,22 +117,13 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4">
                     {/* Referensi Faktur Penerimaan */}
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            Referensi Faktur Penerimaan *
-                        </label>
-                        <FormSelect<PurchaseReturnHeaderInput>
+                        <FormSelect<PurchaseReturnHeaderInput, Receiving>
                             name="receiving_uid"
-                            options={receivingOptions}
-                            placeholder={
-                                receivingsLoading ? "Memuat daftar penerimaan..." : "-- Pilih Faktur Penerimaan (Completed) --"
-                            }
-                            disabled={updateReturn.isPending || receivingsLoading}
+                            label="Referensi Faktur Penerimaan *"
+                            {...receivingSelectConfig}
+                            placeholder="-- Pilih Faktur Penerimaan (Completed) --"
+                            searchPlaceholder="Cari nomor penerimaan / faktur..."
                         />
-                        {errors.receiving_uid && (
-                            <p className="text-[10px] text-rose-500 font-medium">
-                                {errors.receiving_uid.message}
-                            </p>
-                        )}
                     </div>
 
                     {/* Supplier Selector */}
@@ -192,6 +151,7 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
                         name="tanggal_retur"
                         label="Tanggal Retur *"
                         disabled={updateReturn.isPending}
+                        size="md"
                     />
 
                     {/* Catatan */}

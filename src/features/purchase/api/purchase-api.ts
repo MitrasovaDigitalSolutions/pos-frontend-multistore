@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { apiGetData, apiGetList, apiPost, apiPut, apiPatch, apiDelete, apiGet } from "@/shared/api/api-client";
 import { apiClient } from "@/shared/api/axios";
 import { queryKeys } from "@/lib/query-keys";
@@ -17,6 +17,25 @@ export function useReceivings(params?: PaginationParams & { search?: string; sta
     return useQuery<PaginatedResponse<Receiving>>({
         queryKey: [...queryKeys.purchase.receivings(), params],
         queryFn: () => apiGetList<Receiving>(ENDPOINTS.PURCHASE.RECEIVING.LIST, params),
+    });
+}
+
+export function useInfiniteReceivings(params?: { search?: string; status?: string; supplier_uid?: string; start_date?: string; end_date?: string; status_pembayaran?: string; per_page?: number }) {
+    const perPage = params?.per_page || 10;
+    return useInfiniteQuery<PaginatedResponse<Receiving>>({
+        queryKey: [...queryKeys.purchase.receivings(), "infinite", params],
+        queryFn: ({ pageParam = 1 }) =>
+            apiGetList<Receiving>(ENDPOINTS.PURCHASE.RECEIVING.LIST, {
+                ...params,
+                page: pageParam as number,
+                per_page: perPage,
+            }),
+        initialPageParam: 1,
+        getNextPageParam: (lastPage) => {
+            const currentPage = lastPage.meta?.current_page ?? 1;
+            const lastPageNum = lastPage.meta?.last_page ?? 1;
+            return currentPage < lastPageNum ? currentPage + 1 : undefined;
+        },
     });
 }
 

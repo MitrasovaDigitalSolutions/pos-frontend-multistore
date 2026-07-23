@@ -1,17 +1,18 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { todayStr, formatToISO } from "@/lib/date-utils";
 import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
-import { useReceivings } from "@/features/purchase/api/purchase-api";
+import { useInfiniteReceivings } from "@/features/purchase/api/purchase-api";
 import { purchaseReturnHeaderSchema, type PurchaseReturnHeaderInput } from "@/features/purchase/schemas/return-schema";
 import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
 import type { PurchaseReturn } from "@/features/purchase/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { RECEIVING_STATUS } from "@/constants/purchase";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface UseReturnHeaderFormProps {
     currentId: string;
@@ -40,10 +41,20 @@ export function useReturnHeaderForm({
     const headerData = store((state) => state.headerData);
     const setHeaderData = store((state) => state.setHeaderData);
 
+    const [receivingSearch, setReceivingSearch] = useState("");
+    const debouncedReceivingSearch = useDebounce(receivingSearch, 400);
+
     const { data: suppliers = [], isLoading: suppliersLoading } = useAllSuppliers();
-    const { data: receivingsData, isLoading: receivingsLoading } = useReceivings({
+    const {
+        data: receivingsInfiniteData,
+        isLoading: receivingsLoading,
+        isFetchingNextPage: receivingsLoadingMore,
+        hasNextPage: receivingsHasMore,
+        fetchNextPage: fetchNextReceivingsPage,
+    } = useInfiniteReceivings({
         status: RECEIVING_STATUS.COMPLETED,
-        per_page: 100,
+        search: debouncedReceivingSearch || undefined,
+        per_page: 10,
     });
 
     const supplierOptions = suppliers.map((s) => ({
@@ -51,11 +62,24 @@ export function useReturnHeaderForm({
         label: s.nama,
     }));
 
-    const receivingOptions = (receivingsData?.data || []).map((r) => ({
+    const receivingsList = (receivingsInfiniteData?.pages || []).flatMap((page) => page.data || []);
+
+    const receivingOptions = receivingsList.map((r) => ({
         value: String(r.uid),
         label: `${r.nomor_penerimaan} - ${r.supplier_relationship?.nama || r.supplier || "Supplier"}`,
         description: `Faktur: ${r.nomor_faktur || "-"} • Total: ${formatRupiah(r.nilai_faktur || 0)}`,
     }));
+
+    if (currentReturn?.stock_receiving_uid) {
+        const hasCurrent = receivingOptions.some((r) => r.value === String(currentReturn.stock_receiving_uid));
+        if (!hasCurrent && currentReturn.stock_receiving) {
+            receivingOptions.unshift({
+                value: String(currentReturn.stock_receiving_uid),
+                label: `${currentReturn.stock_receiving.nomor_penerimaan || `Penerimaan ID: ${currentReturn.stock_receiving_uid}`}`,
+                description: `Faktur: ${currentReturn.stock_receiving.nomor_faktur || "-"} • Terkait`,
+            });
+        }
+    }
 
     const hasInitializedRef = useRef(false);
     const isClearedRef = useRef(false);
@@ -120,7 +144,7 @@ export function useReturnHeaderForm({
     useEffect(() => {
         if (receivingId) {
             let targetSupplierId: string | null = null;
-            const selectedReceiving = (receivingsData?.data || []).find(
+            const selectedReceiving = receivingsList.find(
                 (r) => String(r.uid) === receivingId
             );
             if (selectedReceiving && selectedReceiving.supplier_uid) {
@@ -131,13 +155,17 @@ export function useReturnHeaderForm({
                 setHeaderValue("supplier_uid", targetSupplierId);
             }
         }
-    }, [receivingId, currentSupplierId, receivingsData, setHeaderValue]);
+    }, [receivingId, currentSupplierId, receivingsList, setHeaderValue]);
 
     return {
         headerForm,
         suppliersLoading,
         supplierOptions,
         receivingsLoading,
+        receivingsLoadingMore,
+        receivingsHasMore,
+        fetchNextReceivingsPage,
+        setReceivingSearch,
         receivingOptions,
         receivingId,
     };
