@@ -147,6 +147,8 @@ NODE_ENV=development
 ```bash
 bun dev
 # atau
+bun dev
+# atau
 npm run dev
 ```
 
