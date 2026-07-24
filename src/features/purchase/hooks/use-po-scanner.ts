@@ -52,7 +52,7 @@ export function usePoScanner({
     const handleProductFound = (product: Product) => {
         addItem({
             product_uid: product.uid,
-            barcode: product.barcode,
+            barcode: product.barcode ?? null,
             nama: product.nama,
             harga_estimasi: product.harga_beli || 0,
         });

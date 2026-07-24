@@ -6,29 +6,29 @@ export interface ReceiptItem {
 }
 
 export interface ReceiptSale {
-    metode_pembayaran?: string;
+    metode_pembayaran?: string | null;
     subtotal: number;
-    debt_amount?: number;
-    nominal_bayar?: number;
-    cash_amount?: number;
-    cash_received?: number;
-    card_amount?: number;
-    jenis_kartu?: string;
-    nomor_kartu_akhir?: string;
-    kembalian?: number;
-    created_at?: string;
-    user?: { name?: string };
-    member?: { nama?: string };
-    nomor_transaksi?: string;
-    nama_transaksi?: string;
-    diskon?: number;
+    debt_amount?: number | null;
+    nominal_bayar?: number | null;
+    cash_amount?: number | null;
+    cash_received?: number | null;
+    card_amount?: number | null;
+    jenis_kartu?: string | null;
+    nomor_kartu_akhir?: string | null;
+    kembalian?: number | null;
+    created_at?: string | null;
+    user?: { name?: string } | null;
+    member?: { nama?: string } | null;
+    nomor_transaksi?: string | null;
+    nama_transaksi?: string | null;
+    diskon?: number | null;
     items: ReceiptItem[];
 }
 
 export interface ReceiptSetting {
-    app_name?: string;
-    app_address?: string;
-    app_phone?: string;
+    app_name?: string | null;
+    app_address?: string | null;
+    app_phone?: string | null;
 }
 
 export interface ReceiptData {

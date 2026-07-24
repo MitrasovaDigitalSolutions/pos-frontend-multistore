@@ -60,7 +60,7 @@ export function useReceivingScanner({
         if (!poId) {
             addItem({
                 product_uid: product.uid,
-                barcode: product.barcode,
+                barcode: product.barcode ?? null,
                 nama: product.nama,
                 harga_estimasi: product.harga_beli || 0,
             });
@@ -77,7 +77,7 @@ export function useReceivingScanner({
             if (!res || !res.data || !res.data.product) {
                 addItem({
                     product_uid: product.uid,
-                    barcode: product.barcode,
+                    barcode: product.barcode ?? null,
                     nama: product.nama,
                     harga_estimasi: product.harga_beli || 0,
                 });
@@ -99,7 +99,7 @@ export function useReceivingScanner({
 
             addItem({
                 product_uid: product.uid,
-                barcode: product.barcode,
+                barcode: product.barcode ?? null,
                 nama: product.nama,
                 harga_estimasi: product.harga_beli || scanResult.product.harga_beli || scanResult.product.harga_beli_terakhir || poItem?.harga_estimasi || 0,
             });
@@ -107,7 +107,7 @@ export function useReceivingScanner({
         } catch {
             addItem({
                 product_uid: product.uid,
-                barcode: product.barcode,
+                barcode: product.barcode ?? null,
                 nama: product.nama,
                 harga_estimasi: product.harga_beli || 0,
             });
