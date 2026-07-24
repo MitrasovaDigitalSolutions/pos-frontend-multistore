@@ -62,9 +62,19 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
     const selectedDate = React.useMemo(() => {
       if (!value) return undefined
       if (value instanceof Date) return isValid(value) ? value : undefined
-      const parsed = parse(value, "yyyy-MM-dd", new Date())
+      let parsed = parse(value, "yyyy-MM-dd", new Date())
+      if (isValid(parsed)) return parsed
+      parsed = new Date(value)
       return isValid(parsed) ? parsed : undefined
     }, [value])
+
+    const [month, setMonth] = React.useState<Date | undefined>(selectedDate || new Date())
+
+    React.useEffect(() => {
+      if (open) {
+        setMonth(selectedDate || new Date())
+      }
+    }, [open, selectedDate])
 
     const defaultStartMonth = React.useMemo(() => new Date(new Date().getFullYear() - 100, 0), [])
     const defaultEndMonth = React.useMemo(() => new Date(new Date().getFullYear() + 20, 11), [])
@@ -126,6 +136,8 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
                 mode="single"
                 selected={selectedDate}
                 onSelect={handleSelect}
+                month={month}
+                onMonthChange={setMonth}
                 className="p-3"
                 captionLayout={captionLayout}
                 startMonth={resolvedStartMonth}

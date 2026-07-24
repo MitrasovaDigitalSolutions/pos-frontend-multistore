@@ -44,7 +44,7 @@ function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }
 export function TabProfile({ isSaving, initialLogoUrl }: TabProfileProps) {
     return (
         <TooltipProvider delayDuration={150}>
-            <Card className="border border-slate-100 rounded-2xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] bg-white overflow-hidden h-[500px] flex flex-col w-full">
+            <Card className="border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-[0_4px_20px_rgba(15,23,42,0.03)] bg-white dark:bg-slate-900 overflow-hidden flex flex-col w-full min-h-[460px]">
                 {/* Header (pinned) */}
                 <div className="p-5 pb-3 border-b border-slate-100 shrink-0">
                     <div className="flex items-center gap-2.5">
