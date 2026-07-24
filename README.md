@@ -4,7 +4,7 @@
 [![React](https://img.shields.io/badge/React-19.0-blue?style=flat-square&logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
-[![License](https://img.shields.io/badge/License-MIT-green.style=flat-square)](LICENSE)
+[![License](https://img.shields.io/badge/License-Proprietary-red.svg?style=flat-square)](LICENSE)
 
 Aplikasi Web Point of Sale (POS) & Manajemen Multi-Toko modern, responsif, dan kaya fitur yang dirancang khusus untuk bisnis ritel, grosir, dan bisnis cabang bertingkat. Dibangun dengan ekosistem Next.js 16 App Router, React 19, dan arsitektur berbasis fitur (*feature-based architecture*).
 
@@ -177,34 +177,6 @@ Untuk menggunakan fitur cetak struk otomatis di Kasir:
 
 ## 📄 Lisensi & Hak Cipta
 
-Hak Cipta © 2026 **Mitrasova Digital Solutions**. Seluruh hak dilindungi undang-undang.
+Hak Cipta © 2026 **Mitrasova Digital Solutions**. Seluruh Hak Dilindungi Undang-Undang (*All Rights Reserved*).
 
-Proyek ini dilisensikan di bawah [MIT License](LICENSE) - Anda bebas menggunakan, memodifikasi, dan mendistribusikan perangkat lunak ini sesuai dengan ketentuan yang tercantum dalam lisensi.
-Buka [http://localhost:3000](http://localhost:3000) di peramban web Anda.
-
-### 5. Build untuk Produksi
-
-```bash
-bun run build
-bun run start
-# atau
-npm run build
-npm run start
-```
-
----
-
-## 🖨️ Integrasi Printer Struk Thermal (QZ Tray)
-
-Untuk menggunakan fitur cetak struk otomatis di Kasir:
-1. Unduh dan pasang aplikasi client **[QZ Tray](https://qz.io/download/)** di komputer kasir.
-2. Pastikan printer thermal (contoh: POS-58, EPSON TM-series, dsb.) telah terhubung & terinstal driver-nya di komputer.
-3. Buka halaman Kasir pada aplikasi web ini; sistem akan secara otomatis mendeteksi koneksi QZ Tray untuk mengirimkan perintah cetak ESC/POS.
-
----
-
-## 📄 Lisensi & Hak Cipta
-
-Hak Cipta © 2026 **Mitrasova Digital Solutions**. Seluruh hak dilindungi undang-undang.
-
-Proyek ini dilisensikan di bawah [MIT License](LICENSE) - Anda bebas menggunakan, memodifikasi, dan mendistribusikan perangkat lunak ini sesuai dengan ketentuan yang tercantum dalam lisensi.
+Perangkat lunak ini berada di bawah lisensi **Proprietary / Hak Cipta Hak Milik** ([LICENSE](LICENSE)). Kode sumber ini **TIDAK BOLEH** diperjualbelikan, disewakan, diubah/dimodifikasi, maupun didistribusikan ulang tanpa izin tertulis dari Mitrasova Digital Solutions.
