@@ -6,7 +6,6 @@ import { id } from "date-fns/locale"
 import { IconCalendar, IconX } from "@tabler/icons-react"
 
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import {
   Popover,
@@ -53,9 +52,9 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
     const [open, setOpen] = React.useState(false)
 
     const sizeClasses = {
-      sm: "h-8 text-xs font-normal text-slate-700",
-      md: "h-10 text-xs font-normal text-slate-800",
-      lg: "h-12 text-sm font-normal text-slate-800",
+      sm: "h-8 text-xs font-normal text-slate-700 px-2.5",
+      md: "h-10 text-xs font-normal text-slate-800 px-3",
+      lg: "h-12 text-sm font-normal text-slate-800 px-4",
     }[size]
 
     // Parse value to Date
@@ -108,27 +107,28 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger
               render={
-                <Button
+                <button
                   ref={ref}
                   type="button"
-                  variant="outline"
                   disabled={disabled}
                   className={cn(
-                    "w-full justify-start text-left border-slate-200 bg-white dark:bg-slate-950 hover:border-emerald-500/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:text-emerald-800 rounded-xl relative pr-10 transition-colors focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500",
+                    "flex w-full items-center justify-start text-left border border-slate-200 bg-white dark:bg-slate-950 hover:border-emerald-500/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:text-emerald-800 rounded-xl relative pr-10 transition-all outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 cursor-pointer overflow-hidden",
                     sizeClasses,
                     !selectedDate && "text-slate-400",
-                    error && "border-rose-400 focus-visible:ring-rose-500/20",
-                    disabled && "opacity-50 pointer-events-none bg-slate-50"
+                    error && "border-rose-400 focus:border-rose-400 focus:ring-2 focus:ring-rose-500/20",
+                    disabled && "opacity-50 pointer-events-none bg-slate-50 cursor-not-allowed"
                   )}
                   {...props}
                 >
                   <IconCalendar className={cn("mr-2 h-4 w-4 shrink-0 text-slate-400 transition-colors", selectedDate && "text-emerald-600")} />
-                  {selectedDate ? (
-                    format(selectedDate, "dd MMMM yyyy", { locale: id })
-                  ) : (
-                    <span>{placeholder}</span>
-                  )}
-                </Button>
+                  <span className="truncate">
+                    {selectedDate ? (
+                      format(selectedDate, "dd MMMM yyyy", { locale: id })
+                    ) : (
+                      <span>{placeholder}</span>
+                    )}
+                  </span>
+                </button>
               }
             />
             <PopoverContent className="w-auto p-0" align="start">

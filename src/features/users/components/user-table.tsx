@@ -4,6 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { IconPlus } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
@@ -148,19 +149,7 @@ export function UserTable({
                         headerClassName: "text-center",
                         cellClassName: "text-center",
                     },
-                    cell: ({ row }) => {
-                        const u = row.original;
-                        return (
-                            <span
-                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${u.status === "active"
-                                    ? "bg-emerald-50 text-emerald-700"
-                                    : "bg-rose-50 text-rose-700"
-                                    }`}
-                            >
-                                {u.status === "active" ? "Aktif" : "Nonaktif"}
-                            </span>
-                        );
-                    },
+                    cell: ({ row }) => <StatusBadge status={row.original.status} />,
                     size: 80,
                 },
             ];

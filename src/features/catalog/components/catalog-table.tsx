@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { getImageUrl } from "@/lib/utils";
@@ -203,31 +204,7 @@ export function CatalogTable({
                     headerClassName: "text-center",
                     cellClassName: "text-center",
                 },
-                cell: ({ row }) => {
-                    const s = row.original.status;
-                    if (s === "active") {
-                        return (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                                Aktif
-                            </span>
-                        );
-                    }
-                    if (s === "inactive") {
-                        return (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200/80 shadow-2xs">
-                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
-                                Nonaktif
-                            </span>
-                        );
-                    }
-                    return (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs">
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
-                            Diarsipkan
-                        </span>
-                    );
-                },
+                cell: ({ row }) => <StatusBadge status={row.original.status} />,
             },
             {
                 accessorKey: "created_by_toko",

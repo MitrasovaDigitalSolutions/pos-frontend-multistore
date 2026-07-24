@@ -1,5 +1,7 @@
 "use client";
 
+import { StatusBadge } from "@/components/ui/status-badge";
+
 import React, { useState, useEffect } from "react";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Scrollable } from "@/components/ui/scrollable";
@@ -106,15 +108,10 @@ export function SessionDetailDialog({
             }
             headerRight={
                 <div className="flex items-center gap-2 shrink-0">
-                    {session.status === "open" ? (
-                        <span className="bg-emerald-50 text-emerald-700 text-[9px] font-black px-2.5 py-0.5 rounded-full border border-emerald-100 uppercase tracking-wider animate-pulse">
-                            Terbuka
-                        </span>
-                    ) : (
-                        <span className="bg-slate-100 text-slate-700 text-[9px] font-black px-2.5 py-0.5 rounded-full border border-slate-200 uppercase tracking-wider">
-                            Ditutup
-                        </span>
-                    )}
+                    <StatusBadge
+                        status={session.status === "open" ? "open" : "closed"}
+                        label={session.status === "open" ? "Terbuka" : "Ditutup"}
+                    />
                 </div>
             }
             className="max-w-3xl sm:max-w-3xl flex flex-col max-h-[90vh]"

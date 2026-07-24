@@ -1,15 +1,14 @@
-import { formatRupiah } from "@/hooks/use-format-rupiah";
-import type { ColumnDef } from "@tanstack/react-table";
-import type { Receiving } from "../../types";
-import { formatToReadableDateTime } from "@/lib/date-utils";
+import { StatusBadge } from "@/components/ui/status-badge";
 import {
     PAYMENT_STATUS_LABELS,
-    PAYMENT_STATUS_CLASSES,
     type PaymentStatus,
     RECEIVING_STATUS_LABELS,
-    RECEIVING_STATUS_CLASSES,
-    type ReceivingStatus,
+    type ReceivingStatus
 } from "@/constants/purchase";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { formatToReadableDateTime } from "@/lib/date-utils";
+import type { ColumnDef } from "@tanstack/react-table";
+import type { Receiving } from "../../types";
 
 export const receivingColumns: ColumnDef<Receiving>[] = [
     {
@@ -39,11 +38,10 @@ export const receivingColumns: ColumnDef<Receiving>[] = [
             const isFromPo = !!row.original.purchase_order_uid;
             return (
                 <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                        isFromPo
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${isFromPo
                             ? "bg-indigo-50 text-indigo-700 border-indigo-100"
                             : "bg-slate-50 text-slate-700 border-slate-100"
-                    }`}
+                        }`}
                 >
                     {isFromPo ? "Dari PO" : "Langsung"}
                 </span>
@@ -92,15 +90,8 @@ export const receivingColumns: ColumnDef<Receiving>[] = [
         header: "Pembayaran",
         cell: ({ row }) => {
             const status = row.original.status_pembayaran as PaymentStatus;
-            return (
-                <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                        PAYMENT_STATUS_CLASSES[status] || "bg-slate-50 text-slate-700 border-slate-100"
-                    }`}
-                >
-                    {PAYMENT_STATUS_LABELS[status] || status}
-                </span>
-            );
+            const label = PAYMENT_STATUS_LABELS[status] || status;
+            return <StatusBadge status={status} label={label} />;
         },
         size: 120,
     },
@@ -109,15 +100,8 @@ export const receivingColumns: ColumnDef<Receiving>[] = [
         header: "Status",
         cell: ({ row }) => {
             const status = row.original.status as ReceivingStatus;
-            return (
-                <span
-                    className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
-                        RECEIVING_STATUS_CLASSES[status] || "bg-slate-50 text-slate-700"
-                    }`}
-                >
-                    {RECEIVING_STATUS_LABELS[status] || status}
-                </span>
-            );
+            const label = RECEIVING_STATUS_LABELS[status] || status;
+            return <StatusBadge status={status} label={label} />;
         },
         size: 80,
     },

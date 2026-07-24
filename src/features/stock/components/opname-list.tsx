@@ -1,19 +1,20 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { ColumnDef } from "@tanstack/react-table";
-import { useFinalizeOpname, useDeleteOpname, useOpnameProgress } from "../api/stock-api";
-import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/query-keys";
-import type { Opname } from "../types";
-import { DataTable } from "@/components/ui/data-table";
-import { hasRole, hasPermission } from "@/constants/roles";
-import { formatToReadableDateTime } from "@/lib/date-utils";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { DataTable } from "@/components/ui/data-table";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { hasPermission, hasRole } from "@/constants/roles";
+import { OPNAME_STATUS, OPNAME_STATUS_LABELS } from "@/constants/stock";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { OPNAME_STATUS, OPNAME_STATUS_LABELS, OPNAME_STATUS_CLASSES } from "@/constants/stock";
+import { formatToReadableDateTime } from "@/lib/date-utils";
+import { queryKeys } from "@/lib/query-keys";
+import { useQueryClient } from "@tanstack/react-query";
+import { ColumnDef } from "@tanstack/react-table";
+import { useSession } from "next-auth/react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { useDeleteOpname, useFinalizeOpname, useOpnameProgress } from "../api/stock-api";
+import type { Opname } from "../types";
 
 interface OpnameListProps {
     opnames: Opname[];
@@ -167,15 +168,8 @@ export function OpnameList({
                     if (op.status === OPNAME_STATUS.PROCESSING) {
                         return <OpnameProgressBadge uid={op.uid} />;
                     }
-                    const statusClass = OPNAME_STATUS_CLASSES[op.status] || "bg-slate-50 text-slate-700 border-slate-100";
                     const statusLabel = OPNAME_STATUS_LABELS[op.status] || op.status;
-                    return (
-                        <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusClass}`}
-                        >
-                            {statusLabel}
-                        </span>
-                    );
+                    return <StatusBadge status={op.status} label={statusLabel} />;
                 },
                 size: 80,
             },

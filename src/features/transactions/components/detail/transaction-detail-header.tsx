@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { IconArrowLeft, IconChevronRight, IconPrinter, IconX } from "@tabler/icons-react";
 
@@ -23,49 +24,6 @@ export function TransactionDetailHeader({
     const router = useAppRouter();
 
     const currentStatus = status?.toLowerCase() || "completed";
-
-    // Status definitions
-    const statusConfig: Record<
-        string,
-        { label: string; bg: string; text: string; border: string; dot: string }
-    > = {
-        completed: {
-            label: "Selesai",
-            bg: "bg-emerald-50/80 dark:bg-emerald-950/20",
-            text: "text-emerald-700 dark:text-emerald-400",
-            border: "border-emerald-200 dark:border-emerald-800/60",
-            dot: "bg-emerald-500 shadow-emerald-400",
-        },
-        canceled: {
-            label: "Void / Dibatalkan",
-            bg: "bg-rose-50/80 dark:bg-rose-950/20",
-            text: "text-rose-700 dark:text-rose-400",
-            border: "border-rose-200 dark:border-rose-800/60",
-            dot: "bg-rose-500 shadow-rose-400",
-        },
-        void: {
-            label: "Void / Dibatalkan",
-            bg: "bg-rose-50/80 dark:bg-rose-950/20",
-            text: "text-rose-700 dark:text-rose-400",
-            border: "border-rose-200 dark:border-rose-800/60",
-            dot: "bg-rose-500 shadow-rose-400",
-        },
-        draft: {
-            label: "Draft",
-            bg: "bg-amber-50/80 dark:bg-amber-950/20",
-            text: "text-amber-700 dark:text-amber-400",
-            border: "border-amber-200 dark:border-amber-800/60",
-            dot: "bg-amber-500 shadow-amber-400",
-        },
-    };
-
-    const config = statusConfig[currentStatus] || {
-        label: status || "Unknown",
-        bg: "bg-slate-50 dark:bg-slate-900/40",
-        text: "text-slate-700 dark:text-slate-400",
-        border: "border-slate-200 dark:border-slate-800",
-        dot: "bg-slate-400 shadow-slate-350",
-    };
 
     return (
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -105,15 +63,7 @@ export function TransactionDetailHeader({
                             )}
                         </h2>
 
-                        <div
-                            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border transition-all duration-300 shadow-sm ${config.bg} ${config.text} ${config.border}`}
-                        >
-                            <span className="relative flex h-1.5 w-1.5 shrink-0">
-                                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${config.dot}`}></span>
-                                <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${config.dot}`}></span>
-                            </span>
-                            <span>{config.label}</span>
-                        </div>
+                        <StatusBadge status={currentStatus} />
                     </div>
                 </div>
             </div>

@@ -22,14 +22,14 @@ import { ROUTES } from "@/constants/routes";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useActiveStoreStore } from "@/stores/active-store-store";
 import { useStockTransfers } from "../api/stock-transfer-api";
-import { TRANSFER_STATUS_CLASSES, TRANSFER_STATUS_LABELS } from "../constants";
+import { TRANSFER_STATUS_LABELS } from "../constants";
 import type { StockTransfer } from "../types";
 
 import { FormSelect } from "@/components/forms/form-select";
-import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { AppButton } from "@/components/shared/app-button";
-import { Badge } from "@/components/ui/badge";
+import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { DataTable } from "@/components/ui/data-table";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FormProvider, useForm } from "react-hook-form";
 
@@ -194,11 +194,7 @@ export function TransferListPage() {
         meta: { headerClassName: "text-center", cellClassName: "text-center" },
         cell: ({ row }) => {
           const st = row.original.status;
-          return (
-            <Badge variant="outline" className={`text-[10px] px-2 py-0.5 font-bold border ${TRANSFER_STATUS_CLASSES[st] || "bg-slate-50 text-slate-700"}`}>
-              {TRANSFER_STATUS_LABELS[st] || st}
-            </Badge>
-          );
+          return <StatusBadge status={st} label={TRANSFER_STATUS_LABELS[st] || st} />;
         },
       },
       {
@@ -229,182 +225,182 @@ export function TransferListPage() {
   return (
     <TooltipProvider>
       <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
-              <IconTruckDelivery size={22} />
+        {/* Page Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+                <IconTruckDelivery size={22} />
+              </div>
+              <span>Transfer Stok Cabang</span>
+            </h2>
+            <p className="text-xs text-slate-400 mt-1">
+              Kelola pengiriman, penerimaan, dan mutasi inventori barang antar cabang toko.
+            </p>
+          </div>
+
+          {canManage && (
+            <AppButton
+              type="button"
+              onClick={() => router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/new`)}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer shadow-sm"
+            >
+              <IconPlus size={16} /> Buat Transfer Baru
+            </AppButton>
+          )}
+        </div>
+
+        {/* Top Stat Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 shrink-0">
+              <IconArrowsLeftRight size={20} />
             </div>
-            <span>Transfer Stok Cabang</span>
-          </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Kelola pengiriman, penerimaan, dan mutasi inventori barang antar cabang toko.
-          </p>
-        </div>
-
-        {canManage && (
-          <AppButton
-            type="button"
-            onClick={() => router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/new`)}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer shadow-sm"
-          >
-            <IconPlus size={16} /> Buat Transfer Baru
-          </AppButton>
-        )}
-      </div>
-
-      {/* Top Stat Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 shrink-0">
-            <IconArrowsLeftRight size={20} />
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Transfer</p>
+              <p className="text-lg font-black text-slate-900 leading-tight">{totalCount}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Transfer</p>
-            <p className="text-lg font-black text-slate-900 leading-tight">{totalCount}</p>
-          </div>
-        </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-blue-50 shadow-sm flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
-            <IconClock size={20} />
+          <div className="bg-white p-4 rounded-2xl border border-blue-50 shadow-sm flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+              <IconClock size={20} />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">Dalam Pengiriman</p>
+              <p className="text-lg font-black text-blue-900 leading-tight">{inTransitCount}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">Dalam Pengiriman</p>
-            <p className="text-lg font-black text-blue-900 leading-tight">{inTransitCount}</p>
+
+          <div className="bg-white p-4 rounded-2xl border border-emerald-50 shadow-sm flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+              <IconCheck size={20} />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Selesai / Diterima</p>
+              <p className="text-lg font-black text-emerald-900 leading-tight">{receivedCount}</p>
+            </div>
+          </div>
+
+          <div className="bg-white p-4 rounded-2xl border border-amber-50 shadow-sm flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+              <IconBuildingStore size={20} />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Draft Disiapkan</p>
+              <p className="text-lg font-black text-amber-900 leading-tight">{draftCount}</p>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-emerald-50 shadow-sm flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-            <IconCheck size={20} />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Selesai / Diterima</p>
-            <p className="text-lg font-black text-emerald-900 leading-tight">{receivedCount}</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl border border-amber-50 shadow-sm flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0">
-            <IconBuildingStore size={20} />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Draft Disiapkan</p>
-            <p className="text-lg font-black text-amber-900 leading-tight">{draftCount}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Table Card with Custom Filters */}
-      <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4">
-        {/* Filter Controls Bar */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-50 pb-4">
-          {/* Direction Tabs */}
-          <div className="flex bg-slate-100/80 p-1 rounded-xl border border-slate-200/50">
-            <AppButton
-              type="button"
-              variant="ghost"
-              size="xs"
-              onClick={() => {
-                setDirection("all");
-                setPage(1);
-              }}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${direction === "all"
-                ? "bg-white text-slate-900 shadow-xs"
-                : "text-slate-500 hover:text-slate-800"
-                }`}
-            >
-              Semua Direction
-            </AppButton>
-            <AppButton
-              type="button"
-              variant="ghost"
-              size="xs"
-              onClick={() => {
-                setDirection("outgoing");
-                setPage(1);
-              }}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer ${direction === "outgoing"
-                ? "bg-white text-amber-700 shadow-xs"
-                : "text-slate-500 hover:text-slate-800"
-                }`}
-            >
-              <IconArrowUpRight size={14} className="text-amber-500" />
-              Transfer Keluar
-            </AppButton>
-            <AppButton
-              type="button"
-              variant="ghost"
-              size="xs"
-              onClick={() => {
-                setDirection("incoming");
-                setPage(1);
-              }}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer ${direction === "incoming"
-                ? "bg-white text-blue-700 shadow-xs"
-                : "text-slate-500 hover:text-slate-800"
-                }`}
-            >
-              <IconArrowDownLeft size={14} className="text-blue-500" />
-              Transfer Masuk
-            </AppButton>
-          </div>
-
-          {/* Status Dropdown */}
-          <div className="w-full sm:w-48">
-            <FormProvider {...filterMethods}>
-              <FormSelect
-                name="status"
-                options={STATUS_OPTIONS}
-                placeholder="Semua Status"
-                size="sm"
-                onChange={(val) => {
-                  setStatusFilter(val);
+        {/* Main Table Card with Custom Filters */}
+        <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4">
+          {/* Filter Controls Bar */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-50 pb-4">
+            {/* Direction Tabs */}
+            <div className="flex bg-slate-100/80 p-1 rounded-xl border border-slate-200/50">
+              <AppButton
+                type="button"
+                variant="ghost"
+                size="xs"
+                onClick={() => {
+                  setDirection("all");
                   setPage(1);
                 }}
-              />
-            </FormProvider>
-          </div>
-        </div>
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${direction === "all"
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-500 hover:text-slate-800"
+                  }`}
+              >
+                Semua Direction
+              </AppButton>
+              <AppButton
+                type="button"
+                variant="ghost"
+                size="xs"
+                onClick={() => {
+                  setDirection("outgoing");
+                  setPage(1);
+                }}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer ${direction === "outgoing"
+                  ? "bg-white text-amber-700 shadow-xs"
+                  : "text-slate-500 hover:text-slate-800"
+                  }`}
+              >
+                <IconArrowUpRight size={14} className="text-amber-500" />
+                Transfer Keluar
+              </AppButton>
+              <AppButton
+                type="button"
+                variant="ghost"
+                size="xs"
+                onClick={() => {
+                  setDirection("incoming");
+                  setPage(1);
+                }}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer ${direction === "incoming"
+                  ? "bg-white text-blue-700 shadow-xs"
+                  : "text-slate-500 hover:text-slate-800"
+                  }`}
+              >
+                <IconArrowDownLeft size={14} className="text-blue-500" />
+                Transfer Masuk
+              </AppButton>
+            </div>
 
-        <DataTable
-          columns={columns}
-          data={transfers}
-          isLoading={isLoading}
-          isFetching={isFetching}
-          emptyMessage="Belum ada transaksi transfer stok ditemukan."
-          page={page}
-          onPageChange={setPage}
-          meta={meta}
-          entityName="transfer"
-          sortBy={sortBy}
-          sortOrder={sortOrder}
-          onSortChange={(by, order) => {
-            setSortBy(by);
-            setSortOrder(order);
-            setPage(1);
-          }}
-          extraActions={(item) => (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <AppButton
-                  type="button"
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={() => router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/${item.uid}`)}
-                  className="text-slate-600 hover:text-emerald-600 hover:bg-emerald-50"
-                >
-                  <IconInfoCircle size={16} />
-                </AppButton>
-              </TooltipTrigger>
-              <TooltipContent>Lihat Detail Transfer</TooltipContent>
-            </Tooltip>
-          )}
-        />
-      </section>
-    </div>
-  </TooltipProvider>
+            {/* Status Dropdown */}
+            <div className="w-full sm:w-48">
+              <FormProvider {...filterMethods}>
+                <FormSelect
+                  name="status"
+                  options={STATUS_OPTIONS}
+                  placeholder="Semua Status"
+                  size="sm"
+                  onChange={(val) => {
+                    setStatusFilter(val);
+                    setPage(1);
+                  }}
+                />
+              </FormProvider>
+            </div>
+          </div>
+
+          <DataTable
+            columns={columns}
+            data={transfers}
+            isLoading={isLoading}
+            isFetching={isFetching}
+            emptyMessage="Belum ada transaksi transfer stok ditemukan."
+            page={page}
+            onPageChange={setPage}
+            meta={meta}
+            entityName="transfer"
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSortChange={(by, order) => {
+              setSortBy(by);
+              setSortOrder(order);
+              setPage(1);
+            }}
+            extraActions={(item) => (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <AppButton
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={() => router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/${item.uid}`)}
+                    className="text-slate-600 hover:text-emerald-600 hover:bg-emerald-50"
+                  >
+                    <IconInfoCircle size={16} />
+                  </AppButton>
+                </TooltipTrigger>
+                <TooltipContent>Lihat Detail Transfer</TooltipContent>
+              </Tooltip>
+            )}
+          />
+        </section>
+      </div>
+    </TooltipProvider>
   );
 }
