@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormContext, Controller, type FieldPath, type FieldValues } from "react-hook-form";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { IconUpload, IconTrash, IconAlertCircle } from "@tabler/icons-react";
 import { cn, getImageUrl } from "@/lib/utils";
 
@@ -31,29 +31,33 @@ export function FormImageUpload<T extends FieldValues>({
     const error = errors[name];
     const fieldValue = watch(name);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
 
-    // Synchronize previewUrl with RHF fieldValue and initialUrl
-    useEffect(() => {
+    // Derive previewUrl directly during render using useMemo
+    const previewUrl = useMemo(() => {
         if (typeof window !== "undefined" && (fieldValue as unknown) instanceof File) {
-            const url = URL.createObjectURL(fieldValue as unknown as File);
-            setPreviewUrl(url);
-            return () => {
-                if (url.startsWith("blob:")) {
-                    URL.revokeObjectURL(url);
-                }
-            };
-        } else if (typeof fieldValue === "string" && fieldValue.trim() !== "") {
-            setPreviewUrl(getImageUrl(fieldValue));
-        } else if (fieldValue === null) {
-            setPreviewUrl(null);
-        } else if (initialUrl) {
-            setPreviewUrl(getImageUrl(initialUrl));
-        } else {
-            setPreviewUrl(null);
+            return URL.createObjectURL(fieldValue as unknown as File);
         }
+        if (typeof fieldValue === "string" && fieldValue.trim() !== "") {
+            return getImageUrl(fieldValue);
+        }
+        if (fieldValue === null) {
+            return null;
+        }
+        if (initialUrl) {
+            return getImageUrl(initialUrl);
+        }
+        return null;
     }, [fieldValue, initialUrl]);
+
+    // Clean up blob URL when previewUrl changes or component unmounts
+    useEffect(() => {
+        return () => {
+            if (previewUrl && previewUrl.startsWith("blob:")) {
+                URL.revokeObjectURL(previewUrl);
+            }
+        };
+    }, [previewUrl]);
 
     const handleFileChange = (file: File | null, onChange: (val: File | null) => void) => {
         if (!file) {
