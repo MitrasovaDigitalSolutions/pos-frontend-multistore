@@ -15,8 +15,8 @@ export interface CreatedByToko {
 export interface CatalogProduct {
     uid: string;
     nama: string;
-    merek?: string | null;
-    barcode?: string | null;
+    merek: string | null;
+    barcode: string | null;
     harga: number;
     harga_jual?: number | null;
     harga_beli?: number | null;
