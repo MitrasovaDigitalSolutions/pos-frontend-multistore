@@ -1,9 +1,8 @@
-"use client";
-
 import { AppButton } from "@/components/shared/app-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import {
     IconAlertCircle,
     IconBox,
@@ -19,7 +18,7 @@ import {
     IconShield,
     IconShoppingCart,
     IconUserCheck,
-    IconUsers,
+    IconUsers
 } from "@tabler/icons-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -415,12 +414,17 @@ export function RolePermissionMapping() {
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-            {/* Left Column: Roles Cards */}
-            <div className="space-y-3">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-1">
-                    Pilih Peran Pengguna
-                </span>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Column: Roles Cards Sidebar */}
+            <div className="lg:col-span-4 space-y-3.5">
+                <div className="flex items-center justify-between px-1">
+                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+                        Pilih Peran Pengguna
+                    </span>
+                    <span className="text-[10px] font-medium text-slate-400">
+                        {roles?.length || 0} Peran Tersedia
+                    </span>
+                </div>
                 <div className="space-y-3">
                     {roles?.map((role) => {
                         const meta = ROLE_METADATA[role.name] || {
@@ -432,61 +436,72 @@ export function RolePermissionMapping() {
                         const count = role.permissions.length;
 
                         return (
-                            <AppButton
+                            <button
                                 key={role.id}
                                 type="button"
-                                variant="ghost"
                                 onClick={() => setSelectedRoleName(role.name)}
-                                className={`w-full text-left p-4 h-auto justify-start flex-col items-start rounded-2xl border transition-all duration-200 cursor-pointer ${isSelected
-                                    ? "bg-white border-emerald-500 shadow-md ring-1 ring-emerald-500/20"
-                                    : "bg-white hover:bg-slate-50/50 border-slate-100 shadow-sm"
-                                    }`}
+                                className={cn(
+                                    "w-full text-left p-4.5 rounded-2xl border transition-all duration-200 cursor-pointer block relative overflow-hidden group outline-none",
+                                    isSelected
+                                        ? "bg-gradient-to-br from-emerald-50/70 via-white to-emerald-50/30 border-2 border-emerald-500 shadow-md ring-4 ring-emerald-500/10"
+                                        : "bg-white hover:bg-slate-50/80 border-slate-200/80 hover:border-slate-300 shadow-xs"
+                                )}
                             >
-                                <div className="flex justify-between items-start gap-2">
-                                    <div className="flex gap-3 items-center">
+                                {isSelected && (
+                                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-500 rounded-l-2xl" />
+                                )}
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-center gap-3 min-w-0 flex-1">
                                         <div
-                                            className={`p-2.5 rounded-xl ${isSelected
-                                                ? "bg-emerald-50 text-emerald-600"
-                                                : "bg-slate-50 text-slate-500"
-                                                }`}
+                                            className={cn(
+                                                "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors",
+                                                isSelected
+                                                    ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
+                                                    : "bg-slate-100 text-slate-600 group-hover:bg-slate-200/60"
+                                            )}
                                         >
                                             <Icon size={20} />
                                         </div>
-                                        <div>
-                                            <h4 className="text-xs font-extrabold text-slate-900 capitalize">
+                                        <div className="min-w-0 flex-1">
+                                            <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 capitalize truncate">
                                                 {meta.label}
                                             </h4>
-                                            <span className="text-[9px] text-slate-400 font-mono">
+                                            <span className="text-[10px] text-slate-400 font-mono block mt-0.5">
                                                 guard: {role.guard_name}
                                             </span>
                                         </div>
                                     </div>
+
                                     <span
-                                        className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${isSelected
-                                            ? "bg-emerald-100 text-emerald-700"
-                                            : "bg-slate-100 text-slate-600"
-                                            }`}
+                                        className={cn(
+                                            "text-[10px] font-extrabold px-2.5 py-1 rounded-full shrink-0 leading-none whitespace-nowrap",
+                                            isSelected
+                                                ? "bg-emerald-100 text-emerald-800 border border-emerald-200/60"
+                                                : "bg-slate-100 text-slate-600 border border-slate-200/60"
+                                        )}
                                     >
                                         {count} Akses
                                     </span>
                                 </div>
-                                <p className="text-[10px] text-slate-400 mt-3.5 leading-relaxed">
+                                <p className="text-[11px] text-slate-500 mt-3 leading-relaxed font-normal">
                                     {meta.desc}
                                 </p>
-                            </AppButton>
+                            </button>
                         );
                     })}
                 </div>
             </div>
 
             {/* Right Column: Permissions Toggle Panel */}
-            <div className="md:col-span-2">
-                <Card className="border-slate-100 rounded-2xl shadow-sm bg-white overflow-hidden py-0">
-                    <CardHeader className="border-b border-slate-50 p-6">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="lg:col-span-8">
+                <Card className="border-slate-200/80 rounded-2xl shadow-sm bg-white overflow-hidden py-0">
+                    <CardHeader className="border-b border-slate-100 p-6 bg-slate-50/30">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div>
-                                <CardTitle className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                                    <IconKey size={18} className="text-emerald-500" />
+                                <CardTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100/80">
+                                        <IconKey size={18} />
+                                    </div>
                                     <span>
                                         Konfigurasi Hak Akses:{" "}
                                         <span className="text-emerald-600 capitalize">
@@ -494,13 +509,13 @@ export function RolePermissionMapping() {
                                         </span>
                                     </span>
                                 </CardTitle>
-                                <CardDescription className="text-[11px] text-slate-400 mt-0.5">
-                                    Aktifkan atau matikan hak akses spesifik di bawah ini. Perubahan akan langsung disimpan.
+                                <CardDescription className="text-[11px] text-slate-400 mt-1 pl-10">
+                                    Aktifkan atau matikan hak akses spesifik di bawah ini. Perubahan akan langsung disimpan secara otomatis.
                                 </CardDescription>
                             </div>
 
                             {/* Search Input */}
-                            <div className="relative w-full md:w-64">
+                            <div className="relative w-full sm:w-64 shrink-0">
                                 <span className="absolute inset-y-0 left-3 flex items-center text-slate-400">
                                     <IconSearch size={14} />
                                 </span>
@@ -509,15 +524,15 @@ export function RolePermissionMapping() {
                                     placeholder="Cari hak akses..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="h-8.5 pl-9 text-[11px] border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                                    className="h-9 pl-9 text-[11px] border-slate-200 focus-visible:ring-emerald-600 rounded-xl bg-white shadow-xs"
                                 />
                             </div>
                         </div>
                     </CardHeader>
 
                     {/* Expand / Collapse All Controls */}
-                    <div className="flex justify-between items-center px-6 py-3 bg-slate-50/50 border-b border-slate-100">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    <div className="flex justify-between items-center px-6 py-3 bg-slate-50/70 border-b border-slate-100">
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
                             Daftar Kategori Modul
                         </span>
                         <div className="flex items-center gap-2">
@@ -526,7 +541,7 @@ export function RolePermissionMapping() {
                                 variant="ghost"
                                 size="xs"
                                 onClick={() => handleExpandAll(categoriesWithPermissions)}
-                                className="text-[10px] font-bold text-slate-500 hover:text-emerald-600 hover:bg-slate-50 flex items-center gap-1 cursor-pointer bg-white px-2 py-1 rounded-lg border border-slate-100 shadow-sm h-auto"
+                                className="text-[10px] font-bold text-slate-600 hover:text-emerald-600 hover:bg-white flex items-center gap-1 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-slate-200/80 shadow-2xs h-auto"
                             >
                                 Buka Semua
                             </AppButton>
@@ -535,7 +550,7 @@ export function RolePermissionMapping() {
                                 variant="ghost"
                                 size="xs"
                                 onClick={() => handleCollapseAll(categoriesWithPermissions)}
-                                className="text-[10px] font-bold text-slate-500 hover:text-emerald-600 hover:bg-slate-50 flex items-center gap-1 cursor-pointer bg-white px-2 py-1 rounded-lg border border-slate-100 shadow-sm h-auto"
+                                className="text-[10px] font-bold text-slate-600 hover:text-emerald-600 hover:bg-white flex items-center gap-1 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-slate-200/80 shadow-2xs h-auto"
                             >
                                 Tutup Semua
                             </AppButton>
