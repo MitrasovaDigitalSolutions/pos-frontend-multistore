@@ -132,30 +132,6 @@ export function CatalogTable({
                 },
             },
             {
-                accessorKey: "created_by_toko",
-                header: "Toko & Pembuat",
-                enableSorting: false,
-                size: 160,
-                cell: ({ row }) => {
-                    const p = row.original;
-                    const tokoNama = p.created_by_toko?.nama || "Pusat";
-                    const userName = p.created_by_user?.name || "Sistem";
-
-                    return (
-                        <div className="flex flex-col gap-0.5">
-                            <span className="inline-flex items-center gap-1 font-semibold text-xs text-slate-800">
-                                <IconBuildingStore size={13} className="text-slate-400 shrink-0" />
-                                {tokoNama}
-                            </span>
-                            <span className="inline-flex items-center gap-1 text-[11px] text-slate-500">
-                                <IconUser size={12} className="text-slate-400 shrink-0" />
-                                {userName}
-                            </span>
-                        </div>
-                    );
-                },
-            },
-            {
                 accessorKey: "category.nama",
                 header: "Kategori",
                 enableSorting: false,
@@ -222,23 +198,58 @@ export function CatalogTable({
                 accessorKey: "status",
                 header: "Status",
                 enableSorting: false,
-                size: 90,
+                size: 110,
                 meta: {
                     headerClassName: "text-center",
                     cellClassName: "text-center",
                 },
                 cell: ({ row }) => {
                     const s = row.original.status;
-                    const label =
-                        s === "active" ? "Aktif" : s === "inactive" ? "Nonaktif" : "Diarsipkan";
-                    const cls =
-                        s === "active"
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                            : s === "inactive"
-                                ? "bg-rose-50 text-rose-700 border-rose-100"
-                                : "bg-slate-50 text-slate-500 border-slate-200";
+                    if (s === "active") {
+                        return (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                                Aktif
+                            </span>
+                        );
+                    }
+                    if (s === "inactive") {
+                        return (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200/80 shadow-2xs">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                                Nonaktif
+                            </span>
+                        );
+                    }
                     return (
-                        <span className={`badge text-[10px] border ${cls}`}>{label}</span>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
+                            Diarsipkan
+                        </span>
+                    );
+                },
+            },
+            {
+                accessorKey: "created_by_toko",
+                header: "Toko & Pembuat",
+                enableSorting: false,
+                size: 160,
+                cell: ({ row }) => {
+                    const p = row.original;
+                    const tokoNama = p.created_by_toko?.nama || "Pusat";
+                    const userName = p.created_by_user?.name || "Sistem";
+
+                    return (
+                        <div className="flex flex-col gap-0.5">
+                            <span className="inline-flex items-center gap-1.5 font-bold text-xs text-slate-800">
+                                <IconBuildingStore size={13} className="text-emerald-600 shrink-0" />
+                                {tokoNama}
+                            </span>
+                            <span className="inline-flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+                                <IconUser size={12} className="text-slate-400 shrink-0" />
+                                {userName}
+                            </span>
+                        </div>
                     );
                 },
             },
