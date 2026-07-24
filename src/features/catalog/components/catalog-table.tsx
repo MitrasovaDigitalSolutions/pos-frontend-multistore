@@ -6,7 +6,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { getImageUrl } from "@/lib/utils";
-import { IconBuildingStore, IconPackage } from "@tabler/icons-react";
+import { IconBuildingStore, IconPackage, IconUser } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -95,42 +95,57 @@ export function CatalogTable({
             {
                 accessorKey: "nama",
                 header: "Nama Produk",
-                size: 260,
+                size: 280,
                 cell: ({ row }) => {
                     const p = row.original;
                     const imgUrl = getImageUrl(p.image_url || p.image_path);
+                    const tokoNama = p.created_by_toko?.nama;
+                    const userName = p.created_by_user?.name;
 
                     return (
-                        <div className="flex items-center gap-2.5">
+                        <div className="flex items-center gap-3 py-1">
                             {imgUrl ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img
                                     src={imgUrl}
                                     alt={p.nama}
-                                    className="w-9 h-9 object-cover rounded-lg border border-slate-200 shrink-0"
+                                    className="w-10 h-10 object-cover rounded-xl border border-slate-200 shrink-0 shadow-2xs"
                                 />
                             ) : (
-                                <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
-                                    <IconPackage size={18} />
+                                <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
+                                    <IconPackage size={20} />
                                 </div>
                             )}
 
-                            <div className="flex flex-col gap-0.5 min-w-0">
-                                <span className="font-semibold text-slate-800 text-sm leading-tight truncate">
-                                    {p.nama}
-                                </span>
-                                <div className="flex items-center gap-1.5 flex-wrap">
+                            <div className="flex flex-col gap-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                    <span className="font-bold text-slate-800 text-sm leading-tight truncate">
+                                        {p.nama}
+                                    </span>
                                     {p.is_jasa && (
-                                        <Badge className="text-[9px] px-1.5 py-0 bg-blue-50 text-blue-700 border-blue-100">
+                                        <Badge className="text-[9px] px-1.5 py-0 bg-blue-50 text-blue-700 border-blue-100 shrink-0">
                                             Jasa
                                         </Badge>
                                     )}
-                                    {p.created_by_toko?.nama && (
-                                        <span className="text-[10px] text-slate-400 font-medium">
-                                            Toko: {p.created_by_toko.nama}
-                                        </span>
-                                    )}
                                 </div>
+
+                                {/* Baris baru khusus untuk Toko Asal & Pembuat Produk */}
+                                {(tokoNama || userName) && (
+                                    <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium flex-wrap">
+                                        {tokoNama && (
+                                            <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200/70 font-semibold text-[10px] shrink-0">
+                                                <IconBuildingStore size={12} className="text-slate-500" />
+                                                Toko: {tokoNama}
+                                            </span>
+                                        )}
+                                        {userName && (
+                                            <span className="inline-flex items-center gap-1 text-slate-500 text-[10px] shrink-0">
+                                                <IconUser size={12} className="text-slate-400" />
+                                                Oleh: {userName}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     );
