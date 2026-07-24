@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { IconUsers, IconBuildingStore, IconPlus } from "@tabler/icons-react";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { DataTable } from "@/components/ui/data-table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AppButton } from "@/components/shared/app-button";
@@ -115,9 +116,7 @@ export function StoreTable({
                 accessorKey: "is_active",
                 header: "Status",
                 cell: ({ row }) => (
-                    <Badge variant={row.original.is_active ? "default" : "secondary"} className={row.original.is_active ? "bg-emerald-100 hover:bg-emerald-100 text-emerald-800 border-emerald-200" : ""}>
-                        {row.original.is_active ? "Aktif" : "Nonaktif"}
-                    </Badge>
+                    <StatusBadge status={row.original.is_active ? "active" : "inactive"} />
                 ),
                 size: 100,
             },

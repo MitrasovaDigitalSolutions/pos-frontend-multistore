@@ -2,6 +2,7 @@
 
 import { useAppRouter } from "@/hooks/use-app-router";
 import { DataTable } from "@/components/ui/data-table";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { useSession } from "next-auth/react";
 import { hasPermission, hasRole } from "@/constants/roles";
@@ -140,15 +141,9 @@ export function TransactionsListPage() {
         );
     }
 
-    const statusBadges: Record<string, string> = {
-        completed: "bg-emerald-50 text-emerald-700 border-emerald-100/50",
-        void: "bg-rose-50 text-rose-700 border-rose-100/50",
-        draft: "bg-amber-50 text-amber-700 border-amber-100/50",
-    };
-
     const statusLabels: Record<string, string> = {
         completed: "Selesai",
-        void: "Void / Batal",
+        void: "Dibatalkan",
         draft: "Draft",
     };
 
@@ -198,25 +193,7 @@ export function TransactionsListPage() {
             header: "Pembayaran",
             cell: ({ row }) => {
                 const method = row.original.metode_pembayaran?.toLowerCase() || "draft";
-                const methodLabel: Record<string, string> = {
-                    cash: "Tunai",
-                    card: "EDC/Card",
-                    split: "Split",
-                    draft: "Draft",
-                    debt: "Hutang",
-                };
-                const methodClasses: Record<string, string> = {
-                    cash: "bg-emerald-50 text-emerald-700 border-emerald-100",
-                    card: "bg-blue-50 text-blue-700 border-blue-100",
-                    split: "bg-indigo-50 text-indigo-700 border-indigo-100",
-                    draft: "bg-slate-50 text-slate-500 border-slate-100",
-                    debt: "bg-rose-50 text-rose-700 border-rose-100",
-                };
-                return (
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border uppercase tracking-wide ${methodClasses[method] || "bg-slate-50 text-slate-500 border-slate-100"}`}>
-                        {methodLabel[method] || method}
-                    </span>
-                );
+                return <StatusBadge status={method} />;
             },
         },
         {
@@ -271,13 +248,8 @@ export function TransactionsListPage() {
             header: "Status",
             cell: ({ row }) => {
                 const status = row.original.status?.toLowerCase() || "completed";
-                const badgeClass = statusBadges[status] || "bg-emerald-50 text-emerald-700 border-emerald-100/50";
                 const label = statusLabels[status] || row.original.status;
-                return (
-                    <span className={`text-[9px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded-full border ${badgeClass}`}>
-                        {label}
-                    </span>
-                );
+                return <StatusBadge status={status} label={label} />;
             },
         },
     ];

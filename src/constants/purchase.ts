@@ -96,7 +96,7 @@ export type PaymentTransactionStatus = typeof PAYMENT_TRANSACTION_STATUS[keyof t
 
 export const PAYMENT_TRANSACTION_STATUS_LABELS: Record<PaymentTransactionStatus, string> = {
     [PAYMENT_TRANSACTION_STATUS.COMPLETED]: "Selesai",
-    [PAYMENT_TRANSACTION_STATUS.VOID]: "Batal (Void)",
+    [PAYMENT_TRANSACTION_STATUS.VOID]: "Dibatalkan",
 };
 
 export const PAYMENT_TRANSACTION_STATUS_CLASSES: Record<PaymentTransactionStatus, string> = {

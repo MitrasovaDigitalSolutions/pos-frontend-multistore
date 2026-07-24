@@ -9,6 +9,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { IconPlus } from "@tabler/icons-react";
 import type { Expense } from "../types";
 import { DataTable } from "@/components/ui/data-table";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { useDeleteExpense } from "../api/expenses-api";
 import { toast } from "sonner";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
@@ -168,21 +169,7 @@ export function ExpenseList({
             {
                 accessorKey: "status",
                 header: "Status",
-                cell: ({ row }) => {
-                    const status = row.original.status || "completed";
-                    if (status === "void") {
-                        return (
-                            <span className="bg-rose-50 text-rose-600 border border-rose-200 px-2 py-0.5 rounded-full font-bold text-[10px] whitespace-nowrap">
-                                Batal (Void)
-                            </span>
-                        );
-                    }
-                    return (
-                        <span className="bg-emerald-50 text-emerald-600 border border-emerald-200 px-2 py-0.5 rounded-full font-bold text-[10px] whitespace-nowrap">
-                            Selesai
-                        </span>
-                    );
-                },
+                cell: ({ row }) => <StatusBadge status={row.original.status || "completed"} />,
                 size: 110,
             },
             {
@@ -236,8 +223,10 @@ export function ExpenseList({
                 entityName="pengeluaran"
                 virtualize={true}
                 estimateRowHeight={44}
-                onEdit={hasManageExpenses ? (item) => item.status !== "void" && onEdit(item) : undefined}
-                onDelete={hasManageExpenses ? (item) => item.status !== "void" && handleDelete(item) : undefined}
+                onEdit={hasManageExpenses ? onEdit : undefined}
+                hideEdit={(item) => item.status === "void" || item.status === "cancelled" || item.status === "dibatalkan"}
+                onDelete={hasManageExpenses ? handleDelete : undefined}
+                hideDelete={(item) => item.status === "void" || item.status === "cancelled" || item.status === "dibatalkan"}
             />
 
             <ConfirmDialog

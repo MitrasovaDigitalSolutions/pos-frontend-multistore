@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconPlus } from "@tabler/icons-react";
@@ -245,26 +246,14 @@ export function ProductTable({
                     cell: ({ row }) => {
                         const p = row.original;
                         if (!hasManageProducts) {
-                            return (
-                                <span
-                                    className={`badge text-[10px] border-none ${p.status === "active"
-                                        ? "bg-emerald-50 text-emerald-700"
-                                        : "bg-rose-50 text-rose-700"
-                                        }`}
-                                >
-                                    {p.status === "active" ? "Aktif" : "Nonaktif"}
-                                </span>
-                            );
+                            return <StatusBadge status={p.status} />;
                         }
                         return (
                             <button
                                 onClick={() => handleToggleStatus(p)}
-                                className={`badge text-[10px] border-none cursor-pointer ${p.status === "active"
-                                    ? "bg-emerald-50 text-emerald-700"
-                                    : "bg-rose-50 text-rose-700"
-                                    }`}
+                                className="bg-transparent border-none p-0 cursor-pointer focus:outline-none"
                             >
-                                {p.status === "active" ? "Aktif" : "Nonaktif"}
+                                <StatusBadge status={p.status} />
                             </button>
                         );
                     },

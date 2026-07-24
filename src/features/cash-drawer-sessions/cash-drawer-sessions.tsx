@@ -1,5 +1,7 @@
 "use client";
 
+import { StatusBadge } from "@/components/ui/status-badge";
+
 import { DataTable } from "@/components/ui/data-table";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { useCashDrawerSessions } from "@/features/checkout/api/cash-drawer-api";
@@ -142,18 +144,12 @@ export function CashDrawerSessions() {
                 accessorKey: "status",
                 header: "Status",
                 enableSorting: false,
-                cell: ({ row }) => {
-                    const status = row.original.status;
-                    return status === "open" ? (
-                        <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                            Terbuka
-                        </span>
-                    ) : (
-                        <span className="bg-slate-100 text-slate-500 border border-slate-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                            Ditutup
-                        </span>
-                    );
-                },
+                cell: ({ row }) => (
+                    <StatusBadge
+                        status={row.original.status === "open" ? "open" : "closed"}
+                        label={row.original.status === "open" ? "Terbuka" : "Ditutup"}
+                    />
+                ),
                 size: 80,
             },
         ],

@@ -4,6 +4,7 @@ import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
 import { DataTable } from "@/components/ui/data-table";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { useMemberDebts } from "@/features/master/members/api/members-api";
 import type { Member } from "@/features/master/members/types";
@@ -132,19 +133,7 @@ export function MemberDebtsPage() {
         {
             accessorKey: "status",
             header: "Status",
-            cell: ({ row }) => {
-                const isActive = row.original.status === "active";
-                return (
-                    <span
-                        className={`text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${isActive
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                            : "bg-slate-50 text-slate-500 border-slate-200"
-                            }`}
-                    >
-                        {isActive ? "Aktif" : "Nonaktif"}
-                    </span>
-                );
-            },
+            cell: ({ row }) => <StatusBadge status={row.original.status} />,
         },
         {
             id: "actions",

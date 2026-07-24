@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { Transaction } from "@/features/transactions/types";
 import {
@@ -87,48 +88,7 @@ export function SessionTransactionsTab({ transactions }: SessionTransactionsTabP
                                             })}
                                         </td>
                                         <td className="py-3 px-4 text-center">
-                                            {isVoid ? (
-                                                <span className="bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 text-[10px] font-black px-2 py-0.5 rounded border border-rose-100 dark:border-rose-900/30 uppercase tracking-wide inline-flex items-center gap-0.5">
-                                                    <IconAlertTriangle size={10} /> Void
-                                                </span>
-                                            ) : (
-                                                (() => {
-                                                    const method = tx.metode_pembayaran?.toLowerCase();
-                                                    if (method === "cash") {
-                                                        return (
-                                                            <span className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-450 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-100 dark:border-emerald-900/30 uppercase">
-                                                                Tunai
-                                                            </span>
-                                                        );
-                                                    }
-                                                    if (method === "card") {
-                                                        return (
-                                                            <span className="bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-450 text-[10px] font-bold px-2 py-0.5 rounded border border-blue-100 dark:border-blue-900/30 uppercase">
-                                                                Kartu
-                                                            </span>
-                                                        );
-                                                    }
-                                                    if (method === "debt") {
-                                                        return (
-                                                            <span className="bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-450 text-[10px] font-bold px-2 py-0.5 rounded border border-rose-100 dark:border-rose-900/30 uppercase">
-                                                                Hutang
-                                                            </span>
-                                                        );
-                                                    }
-                                                    if (method === "split") {
-                                                        return (
-                                                            <span className="bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:text-orange-450 text-[10px] font-bold px-2 py-0.5 rounded border border-orange-100 dark:border-orange-900/30 uppercase">
-                                                                Split
-                                                            </span>
-                                                        );
-                                                    }
-                                                    return (
-                                                        <span className="bg-slate-50 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400 text-[10px] font-bold px-2 py-0.5 rounded border border-slate-100 dark:border-slate-800/30 uppercase">
-                                                            {tx.metode_pembayaran || "Draft"}
-                                                        </span>
-                                                    );
-                                                })()
-                                            )}
+                                            <StatusBadge status={isVoid ? "void" : tx.metode_pembayaran?.toLowerCase() || "draft"} />
                                         </td>
                                         <td className="py-3 px-4 text-center">
                                             <TooltipProvider delayDuration={150}>

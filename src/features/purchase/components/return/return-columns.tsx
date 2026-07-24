@@ -1,10 +1,10 @@
+import { StatusBadge } from "@/components/ui/status-badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { PurchaseReturn } from "../../types";
 import { formatDate } from "@/lib/date-utils";
 import {
     RETURN_STATUS_LABELS,
-    RETURN_STATUS_CLASSES,
     type ReturnStatus,
 } from "@/constants/purchase";
 
@@ -58,15 +58,8 @@ export const returnColumns: ColumnDef<PurchaseReturn>[] = [
         header: "Status",
         cell: ({ row }) => {
             const status = row.original.status as ReturnStatus;
-            const colorClass = RETURN_STATUS_CLASSES[status] || "bg-amber-50 text-amber-700 border-amber-100";
             const label = RETURN_STATUS_LABELS[status] || status;
-            return (
-                <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${colorClass}`}
-                >
-                    {label}
-                </span>
-            );
+            return <StatusBadge status={status} label={label} />;
         },
         size: 160,
     },

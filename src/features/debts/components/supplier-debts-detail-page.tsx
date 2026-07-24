@@ -4,6 +4,7 @@ import { FilterForm } from "@/components/forms/filter-form";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { FormInput } from "@/components/forms/form-input";
 import { DataTable } from "@/components/ui/data-table";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { useReceivingDebts } from "@/features/purchase/api/purchase-api";
 import type { Receiving } from "@/features/purchase/types";
@@ -175,25 +176,13 @@ export function SupplierDebtsDetailPage({ supplierUid, supplierName }: SupplierD
             header: "Status",
             cell: ({ row }) => {
                 const status = row.original.status_pembayaran;
-                const styles: Record<string, string> = {
-                    paid: "bg-emerald-50 text-emerald-700 border-emerald-100",
-                    partial: "bg-amber-50 text-amber-700 border-amber-100",
-                    unpaid: "bg-rose-50 text-rose-700 border-rose-100",
-                    pending: "bg-slate-50 text-slate-500 border-slate-200",
-                };
                 const labels: Record<string, string> = {
                     paid: "Lunas",
                     partial: "Sebagian",
                     unpaid: "Belum Bayar",
                     pending: "Pending",
                 };
-                return (
-                    <span
-                        className={`text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${styles[status] ?? styles.pending}`}
-                    >
-                        {labels[status] ?? status}
-                    </span>
-                );
+                return <StatusBadge status={status} label={labels[status] ?? status} />;
             },
         },
         {

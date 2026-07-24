@@ -3,10 +3,11 @@
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { getImageUrl } from "@/lib/utils";
-import { IconBuildingStore, IconPackage } from "@tabler/icons-react";
+import { IconBuildingStore, IconPackage, IconUser } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -95,7 +96,7 @@ export function CatalogTable({
             {
                 accessorKey: "nama",
                 header: "Nama Produk",
-                size: 260,
+                size: 240,
                 cell: ({ row }) => {
                     const p = row.original;
                     const imgUrl = getImageUrl(p.image_url || p.image_path);
@@ -119,18 +120,13 @@ export function CatalogTable({
                                 <span className="font-semibold text-slate-800 text-sm leading-tight truncate">
                                     {p.nama}
                                 </span>
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                    {p.is_jasa && (
+                                {p.is_jasa && (
+                                    <div>
                                         <Badge className="text-[9px] px-1.5 py-0 bg-blue-50 text-blue-700 border-blue-100">
                                             Jasa
                                         </Badge>
-                                    )}
-                                    {p.created_by_toko?.nama && (
-                                        <span className="text-[10px] text-slate-400 font-medium">
-                                            Toko: {p.created_by_toko.nama}
-                                        </span>
-                                    )}
-                                </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     );
@@ -203,23 +199,34 @@ export function CatalogTable({
                 accessorKey: "status",
                 header: "Status",
                 enableSorting: false,
-                size: 90,
+                size: 110,
                 meta: {
                     headerClassName: "text-center",
                     cellClassName: "text-center",
                 },
+                cell: ({ row }) => <StatusBadge status={row.original.status} />,
+            },
+            {
+                accessorKey: "created_by_toko",
+                header: "Toko & Pembuat",
+                enableSorting: false,
+                size: 160,
                 cell: ({ row }) => {
-                    const s = row.original.status;
-                    const label =
-                        s === "active" ? "Aktif" : s === "inactive" ? "Nonaktif" : "Diarsipkan";
-                    const cls =
-                        s === "active"
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                            : s === "inactive"
-                                ? "bg-rose-50 text-rose-700 border-rose-100"
-                                : "bg-slate-50 text-slate-500 border-slate-200";
+                    const p = row.original;
+                    const tokoNama = p.created_by_toko?.nama || "Pusat";
+                    const userName = p.created_by_user?.name || "Sistem";
+
                     return (
-                        <span className={`badge text-[10px] border ${cls}`}>{label}</span>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="inline-flex items-center gap-1.5 font-bold text-xs text-slate-800">
+                                <IconBuildingStore size={13} className="text-emerald-600 shrink-0" />
+                                {tokoNama}
+                            </span>
+                            <span className="inline-flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+                                <IconUser size={12} className="text-slate-400 shrink-0" />
+                                {userName}
+                            </span>
+                        </div>
                     );
                 },
             },

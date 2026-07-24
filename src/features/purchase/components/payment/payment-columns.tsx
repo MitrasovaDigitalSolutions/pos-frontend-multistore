@@ -1,10 +1,10 @@
+import { StatusBadge } from "@/components/ui/status-badge";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { ReceivingPayment } from "../../types";
 import { formatDate } from "@/lib/date-utils";
 import {
     PAYMENT_TRANSACTION_STATUS_LABELS,
-    PAYMENT_TRANSACTION_STATUS_CLASSES,
     type PaymentTransactionStatus,
 } from "@/constants/purchase";
 
@@ -76,15 +76,8 @@ export const paymentColumns: ColumnDef<ReceivingPayment>[] = [
         header: "Status",
         cell: ({ row }) => {
             const status = row.original.status as PaymentTransactionStatus;
-            const colorClass = PAYMENT_TRANSACTION_STATUS_CLASSES[status] || "bg-slate-50 text-slate-700 border-slate-100";
             const label = PAYMENT_TRANSACTION_STATUS_LABELS[status] || status;
-            return (
-                <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${colorClass}`}
-                >
-                    {label}
-                </span>
-            );
+            return <StatusBadge status={status} label={label} />;
         },
         size: 120,
     },
