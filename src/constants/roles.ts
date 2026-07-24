@@ -12,18 +12,15 @@ export type Role = (typeof ROLES)[keyof typeof ROLES];
 // ─── Permission Constants ───────────────────────────────────────────────────
 
 export const PERMISSIONS = {
-  MANAGE_STOCK_TRANSFERS: "manage_stock_transfers",
-  VIEW_STOCK_TRANSFERS: "view_stock_transfers",
   MANAGE_USERS: "manage_users",
   VIEW_USERS: "view_users",
-  MANAGE_STORES: "manage_stores",
-  VIEW_STORES: "view_stores",
   MANAGE_PRODUCTS: "manage_products",
   VIEW_PRODUCTS: "view_products",
   MANAGE_SALES: "manage_sales",
   VIEW_REPORTS: "view_reports",
   CREATE_SALES: "create_sales",
   VIEW_SALES: "view_sales",
+  VOID_SALES: "void_sales",
   MANAGE_INVENTORY: "manage_inventory",
   VIEW_INVENTORY: "view_inventory",
   MANAGE_SUPPLIERS: "manage_suppliers",
@@ -34,11 +31,20 @@ export const PERMISSIONS = {
   OPERATE_CASH_DRAWER: "operate_cash_drawer",
   MANAGE_CASH_DRAWER: "manage_cash_drawer",
   VIEW_CASH_DRAWER: "view_cash_drawer",
-  MANAGE_CASH_ACCOUNTS: "manage_cash_accounts",
-  MANAGE_PURCHASE: "manage_purchase",
   VIEW_PURCHASE: "view_purchase",
+  MANAGE_PURCHASE: "manage_purchase",
+  MANAGE_CASH_ACCOUNTS: "manage_cash_accounts",
   MANAGE_EXPENSES: "manage_expenses",
   VIEW_EXPENSES: "view_expenses",
+  MANAGE_CHART_OF_ACCOUNTS: "manage_chart_of_accounts",
+  VIEW_CHART_OF_ACCOUNTS: "view_chart_of_accounts",
+  MANAGE_SETTINGS: "manage_settings",
+  MANAGE_STORES: "manage_stores",
+  VIEW_STORES: "view_stores",
+  MANAGE_MANUAL_JOURNALS: "manage_manual_journals",
+  VIEW_MANUAL_JOURNALS: "view_manual_journals",
+  MANAGE_STOCK_TRANSFERS: "manage_stock_transfers",
+  VIEW_STOCK_TRANSFERS: "view_stock_transfers",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

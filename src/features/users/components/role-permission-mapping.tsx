@@ -70,11 +70,11 @@ const PERMISSION_METADATA: Record<string, { label: string; desc: string }> = {
     },
     manage_sales: {
         label: "Kelola Transaksi Penjualan",
-        desc: "Melihat, merevisi, atau membatalkan transaksi penjualan dan pesanan yang sudah tercatat.",
+        desc: "Melihat, merevisi, atau mengelola transaksi penjualan dan pesanan yang sudah tercatat.",
     },
     view_reports: {
-        label: "Lihat Laporan Penjualan",
-        desc: "Mengakses dashboard statistik, ringkasan shift, dan riwayat laporan penjualan harian.",
+        label: "Lihat Laporan Penjualan & Keuangan",
+        desc: "Mengakses dashboard statistik, ringkasan shift, dan riwayat laporan penjualan/keuangan.",
     },
     create_sales: {
         label: "Melakukan Penjualan (POS)",
@@ -83,6 +83,10 @@ const PERMISSION_METADATA: Record<string, { label: string; desc: string }> = {
     view_sales: {
         label: "Lihat Transaksi Penjualan",
         desc: "Melihat riwayat dan detail transaksi penjualan tanpa hak mengubah atau membatalkan.",
+    },
+    void_sales: {
+        label: "Void / Pembatalan Transaksi",
+        desc: "Melakukan void atau pembatalan transaksi penjualan di kasir / riwayat transaksi.",
     },
     manage_inventory: {
         label: "Kelola Stok & Inventori",
@@ -124,6 +128,14 @@ const PERMISSION_METADATA: Record<string, { label: string; desc: string }> = {
         label: "Lihat Laporan Cash Drawer",
         desc: "Melihat laporan aktivitas, riwayat buka/tutup, dan selisih saldo cash drawer.",
     },
+    view_purchase: {
+        label: "Lihat Pembelian (PO)",
+        desc: "Melihat riwayat pemesanan barang, penerimaan, retur, dan pembayaran ke supplier.",
+    },
+    manage_purchase: {
+        label: "Kelola Pembelian (PO)",
+        desc: "Membuat, merevisi, dan memproses transaksi pembelian (PO), penerimaan barang, dan pembayaran.",
+    },
     manage_cash_accounts: {
         label: "Kelola Kas & Bank",
         desc: "Melakukan transfer antar kas, penyesuaian debit manual, dan kredit manual saldo kas.",
@@ -135,6 +147,42 @@ const PERMISSION_METADATA: Record<string, { label: string; desc: string }> = {
     view_expenses: {
         label: "Lihat Pengeluaran",
         desc: "Melihat riwayat dan rincian pengeluaran operasional toko tanpa hak mengubah.",
+    },
+    manage_chart_of_accounts: {
+        label: "Kelola Chart of Accounts (COA)",
+        desc: "Menambah, mengedit, dan mengatur bagan akun perkiraan (COA) akuntansi.",
+    },
+    view_chart_of_accounts: {
+        label: "Lihat Chart of Accounts (COA)",
+        desc: "Melihat daftar bagan akun perkiraan (COA) akuntansi dan saldo akun.",
+    },
+    manage_settings: {
+        label: "Kelola Pengaturan Toko & Sistem",
+        desc: "Mengatur identitas toko, PPN, sistem poin member, kas default, dan printer.",
+    },
+    manage_stores: {
+        label: "Kelola Cabang & Toko",
+        desc: "Menambah, mengedit, dan mengatur profil serta konfigurasi cabang toko.",
+    },
+    view_stores: {
+        label: "Lihat Cabang & Toko",
+        desc: "Melihat daftar cabang toko dan informasi operasional cabang.",
+    },
+    manage_manual_journals: {
+        label: "Kelola Jurnal Manual",
+        desc: "Membuat dan memposting ayat jurnal umum manual pada sistem akuntansi.",
+    },
+    view_manual_journals: {
+        label: "Lihat Jurnal Manual",
+        desc: "Melihat riwayat dan rincian entri jurnal manual akuntansi.",
+    },
+    manage_stock_transfers: {
+        label: "Kelola Transfer Stok",
+        desc: "Membuat dan memproses pengiriman/pemindahan stok antar cabang atau gudang.",
+    },
+    view_stock_transfers: {
+        label: "Lihat Transfer Stok",
+        desc: "Melihat riwayat dan status pemindahan stok barang antar cabang toko/gudang.",
     },
 };
 
@@ -158,16 +206,16 @@ interface StaticPermissionCategory {
 const PERMISSION_CATEGORIES: StaticPermissionCategory[] = [
     {
         id: "users",
-        label: "Manajemen Pengguna & Akses",
-        desc: "Mengatur data karyawan, member loyalitas pelanggan, hak akses role, serta menonaktifkan akun karyawan.",
+        label: "Manajemen Pengguna & Cabang",
+        desc: "Mengatur data karyawan, member loyalitas pelanggan, cabang toko, serta hak akses role.",
         icon: IconUsers,
         colorClass: "text-emerald-600 bg-emerald-50 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/20",
-        permissions: ["manage_users", "view_users", "manage_members", "view_members"],
+        permissions: ["manage_users", "view_users", "manage_members", "view_members", "manage_stores", "view_stores"],
     },
     {
         id: "products",
         label: "Master Produk & Katalog",
-        desc: "Menambah, mengubah, dan menghapus data barang, kategori, serta harga jual.",
+        desc: "Menambah, mengubah, dan menghapus data barang, kategori, merek, serta harga jual.",
         icon: IconPackage,
         colorClass: "text-blue-600 bg-blue-50 border-blue-100 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/20",
         permissions: ["manage_products", "view_products"],
@@ -175,34 +223,50 @@ const PERMISSION_CATEGORIES: StaticPermissionCategory[] = [
     {
         id: "sales",
         label: "Transaksi & POS Harian",
-        desc: "Layar kasir checkout POS, pembayaran, dan pencatatan riwayat transaksi penjualan.",
+        desc: "Layar kasir checkout POS, pembayaran, void/batal transaksi, dan riwayat penjualan.",
         icon: IconShoppingCart,
         colorClass: "text-indigo-600 bg-indigo-50 border-indigo-100 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-900/20",
-        permissions: ["create_sales", "view_sales", "manage_sales"],
+        permissions: ["create_sales", "view_sales", "manage_sales", "void_sales"],
+    },
+    {
+        id: "purchase",
+        label: "Pembelian & Pemasok (Supplier)",
+        desc: "Pemesanan barang (PO), penerimaan barang, pembayaran supplier, retur, dan data distributor.",
+        icon: IconFileText,
+        colorClass: "text-amber-600 bg-amber-50 border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/20",
+        permissions: ["view_purchase", "manage_purchase", "manage_suppliers", "view_suppliers"],
     },
     {
         id: "inventory",
-        label: "Stok & Pemasok (Supplier)",
-        desc: "Penerimaan barang, stock opname fisik, penyesuaian stok, serta data distributor.",
+        label: "Stok & Mutasi Inventori",
+        desc: "Stock opname fisik, penyesuaian stok, kartu stok, serta transfer stok antar cabang.",
         icon: IconBox,
         colorClass: "text-amber-600 bg-amber-50 border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/20",
-        permissions: ["manage_inventory", "view_inventory", "manage_suppliers", "view_suppliers"],
+        permissions: ["manage_inventory", "view_inventory", "manage_stock_transfers", "view_stock_transfers"],
     },
     {
         id: "cash_drawer",
-        label: "Laci Kas & Rekening (Finance)",
-        desc: "Operasional shift kasir, saldo awal/akhir laci, kas masuk/keluar, transfer kas, credit/debit kas, dan pengeluaran operasional toko.",
+        label: "Laci Kas, Rekening & Pengeluaran",
+        desc: "Operasional shift kasir, saldo awal/akhir laci, kas masuk/keluar, transfer kas, dan pencatatan pengeluaran toko.",
         icon: IconCoin,
         colorClass: "text-teal-600 bg-teal-50 border-teal-100 dark:bg-teal-950/20 dark:text-teal-400 dark:border-teal-900/20",
         permissions: ["operate_cash_drawer", "manage_cash_drawer", "view_cash_drawer", "manage_cash_accounts", "manage_expenses", "view_expenses"],
     },
     {
-        id: "reports",
-        label: "Laporan & Audit Keamanan",
-        desc: "Mengakses dashboard statistik laporan penjualan, penutupan shift, dan log audit keamanan.",
-        icon: IconFileText,
+        id: "accounting",
+        label: "Akuntansi, COA & Jurnal Manual",
+        desc: "Bagan akun perkiraan (Chart of Accounts), pembuatan entri jurnal manual, neraca, dan buku besar.",
+        icon: IconBuildingStore,
+        colorClass: "text-purple-600 bg-purple-50 border-purple-100 dark:bg-purple-950/20 dark:text-purple-400 dark:border-purple-900/20",
+        permissions: ["manage_chart_of_accounts", "view_chart_of_accounts", "manage_manual_journals", "view_manual_journals"],
+    },
+    {
+        id: "reports_settings",
+        label: "Pengaturan, Laporan & Audit",
+        desc: "Pengaturan toko & printer, dashboard laporan statistik, serta log riwayat audit aktivitas.",
+        icon: IconSettings,
         colorClass: "text-violet-600 bg-violet-50 border-violet-100 dark:bg-violet-950/20 dark:text-violet-400 dark:border-violet-900/20",
-        permissions: ["view_reports", "view_audit_logs"],
+        permissions: ["manage_settings", "view_reports", "view_audit_logs"],
     },
 ];
 

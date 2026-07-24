@@ -267,7 +267,7 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
     const handleProductFound = (product: Product) => {
         addItem({
             product_uid: product.uid,
-            barcode: product.barcode,
+            barcode: product.barcode ?? null,
             nama: product.nama,
             stok_sistem: product.stok,
             alasan: "Opname rutin",

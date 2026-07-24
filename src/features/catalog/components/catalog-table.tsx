@@ -5,7 +5,8 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { IconBuildingStore } from "@tabler/icons-react";
+import { getImageUrl } from "@/lib/utils";
+import { IconBuildingStore, IconPackage } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -84,7 +85,7 @@ export function CatalogTable({
                 accessorKey: "barcode",
                 header: "Barcode / SKU",
                 enableSorting: false,
-                size: 120,
+                size: 130,
                 cell: ({ row }) => (
                     <span className="font-mono text-xs text-slate-600">
                         {row.original.barcode || "—"}
@@ -94,21 +95,46 @@ export function CatalogTable({
             {
                 accessorKey: "nama",
                 header: "Nama Produk",
-                size: 240,
-                cell: ({ row }) => (
-                    <div className="flex flex-col gap-0.5">
-                        <span className="font-semibold text-slate-800 text-sm leading-tight">
-                            {row.original.nama}
-                        </span>
-                        {row.original.is_jasa && (
-                            <div>
-                                <Badge className="text-[9px] px-1.5 py-0 bg-blue-50 text-blue-700 border-blue-100">
-                                    Jasa
-                                </Badge>
+                size: 260,
+                cell: ({ row }) => {
+                    const p = row.original;
+                    const imgUrl = getImageUrl(p.image_url || p.image_path);
+
+                    return (
+                        <div className="flex items-center gap-2.5">
+                            {imgUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                    src={imgUrl}
+                                    alt={p.nama}
+                                    className="w-9 h-9 object-cover rounded-lg border border-slate-200 shrink-0"
+                                />
+                            ) : (
+                                <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
+                                    <IconPackage size={18} />
+                                </div>
+                            )}
+
+                            <div className="flex flex-col gap-0.5 min-w-0">
+                                <span className="font-semibold text-slate-800 text-sm leading-tight truncate">
+                                    {p.nama}
+                                </span>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                    {p.is_jasa && (
+                                        <Badge className="text-[9px] px-1.5 py-0 bg-blue-50 text-blue-700 border-blue-100">
+                                            Jasa
+                                        </Badge>
+                                    )}
+                                    {p.created_by_toko?.nama && (
+                                        <span className="text-[10px] text-slate-400 font-medium">
+                                            Toko: {p.created_by_toko.nama}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
-                        )}
-                    </div>
-                ),
+                        </div>
+                    );
+                },
             },
             {
                 accessorKey: "category.nama",
@@ -154,7 +180,24 @@ export function CatalogTable({
                     headerClassName: "text-right",
                     cellClassName: "text-right font-bold text-slate-800",
                 },
-                cell: ({ row }) => formatRupiah(row.original.harga),
+                cell: ({ row }) => {
+                    const price = row.original.harga_jual ?? row.original.harga;
+                    return formatRupiah(price);
+                },
+            },
+            {
+                accessorKey: "margin",
+                header: "Margin",
+                enableSorting: false,
+                size: 100,
+                meta: {
+                    headerClassName: "text-right",
+                    cellClassName: "text-right text-slate-500 text-xs",
+                },
+                cell: ({ row }) =>
+                    row.original.margin != null
+                        ? `${row.original.margin}%`
+                        : "—",
             },
             {
                 accessorKey: "status",

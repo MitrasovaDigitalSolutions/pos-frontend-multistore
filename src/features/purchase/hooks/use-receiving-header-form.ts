@@ -53,7 +53,6 @@ export function useReceivingHeaderForm({
     const store = getPurchaseItemsStore(currentId, "receiving");
     const headerData = store((state) => state.headerData);
     const setHeaderData = store((state) => state.setHeaderData);
-    const clearAll = store((state) => state.clearAll);
 
     const { data: suppliers = [], isLoading: suppliersLoading } = useAllSuppliers();
     const { data: outstandingPosData, isLoading: posLoading } = useOutstandingPurchaseOrders({
@@ -163,7 +162,7 @@ export function useReceivingHeaderForm({
                 nomor_faktur: headerData.nomor_faktur || "",
                 nilai_faktur: headerData.nilai_faktur || 0,
                 tanggal_terima: headerData.tanggal_terima || todayStr(),
-                status_pembayaran: (headerData.status_pembayaran as any) || PAYMENT_STATUS.PENDING,
+                status_pembayaran: (headerData.status_pembayaran as ReceivingHeaderInput["status_pembayaran"]) || PAYMENT_STATUS.PENDING,
                 catatan: headerData.catatan || "",
             });
         }

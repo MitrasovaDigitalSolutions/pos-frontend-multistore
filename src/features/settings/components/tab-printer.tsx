@@ -43,6 +43,8 @@ function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }
     );
 }
 
+import { useSettingsStore } from "@/stores/settings-store";
+
 export function TabPrinter({
     isSaving,
     printerOptions,
@@ -50,6 +52,8 @@ export function TabPrinter({
     loadPrinters,
     qzError,
 }: TabPrinterProps) {
+    const { getSettingMeta } = useSettingsStore();
+    const printerMeta = getSettingMeta("printer_id");
     const renderStatusBadge = () => {
         if (isLoadingPrinters) {
             return (
@@ -119,8 +123,8 @@ export function TabPrinter({
                                 <div className="flex flex-col gap-1">
                                     <div className="flex items-center justify-between">
                                         <LabelWithTooltip
-                                            label="Nama / ID Printer"
-                                            tooltip="Pilih printer  default yang terhubung ke komputer Anda. Terkoneksi menggunakan aplikasi QZ Tray."
+                                            label={printerMeta?.label || "ID Printer Struk"}
+                                            tooltip={printerMeta?.description || "ID Printer thermal default yang digunakan untuk mencetak struk."}
                                         />
                                         <AppButton
                                             type="button"

@@ -1,6 +1,39 @@
+export interface ReceiptItem {
+    kuantitas: number;
+    nama_produk: string;
+    harga_satuan: number;
+    subtotal: number;
+}
+
+export interface ReceiptSale {
+    metode_pembayaran?: string | null;
+    subtotal: number;
+    debt_amount?: number | null;
+    nominal_bayar?: number | null;
+    cash_amount?: number | null;
+    cash_received?: number | null;
+    card_amount?: number | null;
+    jenis_kartu?: string | null;
+    nomor_kartu_akhir?: string | null;
+    kembalian?: number | null;
+    created_at?: string | null;
+    user?: { name?: string } | null;
+    member?: { nama?: string } | null;
+    nomor_transaksi?: string | null;
+    nama_transaksi?: string | null;
+    diskon?: number | null;
+    items: ReceiptItem[];
+}
+
+export interface ReceiptSetting {
+    app_name?: string | null;
+    app_address?: string | null;
+    app_phone?: string | null;
+}
+
 export interface ReceiptData {
-    sale: any;
-    setting: any;
+    sale: ReceiptSale;
+    setting: ReceiptSetting;
 }
 
 const WIDTH = 80;
@@ -25,13 +58,6 @@ const padLeft = (value: string, length: number) =>
 const leftRight = (left: string, right: string) => {
     const space = Math.max(1, WIDTH - left.length - right.length);
     return left + " ".repeat(space) + right;
-};
-
-const rightTotal = (label: string, value: number | string) => {
-    const text =
-        `${label.padEnd(10)}Rp. ${money(value).padStart(15)}`;
-
-    return text.padStart(WIDTH);
 };
 
 const wrapText = (text: string, width: number) => {
@@ -92,12 +118,12 @@ export function buildReceipt(data: ReceiptData) {
         : "FAKTUR PENJUALAN CASH";
 
     const bayar = isDebt
-        ? sale.subtotal - sale.debt_amount
-        : sale.nominal_bayar;
+        ? sale.subtotal - (sale.debt_amount ?? 0)
+        : (sale.nominal_bayar ?? 0);
 
     const kembali = isDebt
-        ? sale.debt_amount
-        : sale.kembalian;
+        ? (sale.debt_amount ?? 0)
+        : (sale.kembalian ?? 0);
 
     let txt = "";
 
@@ -118,12 +144,12 @@ export function buildReceipt(data: ReceiptData) {
     ) + "\n";
 
     txt += leftRight(
-        `Kasir   : ${sale.user.name}`,
+        `Kasir   : ${sale.user?.name ?? "-"}`,
         sale.member?.nama ?? "-"
     ) + "\n";
 
     txt += leftRight(
-        `No. TRX : ${sale.nomor_transaksi}`,
+        `No. TRX : ${sale.nomor_transaksi ?? "-"}`,
         sale.nama_transaksi ?? "-"
     ) + "\n";
 
@@ -145,7 +171,7 @@ export function buildReceipt(data: ReceiptData) {
 
     // ================= ITEMS =================
 
-    sale.items.forEach((item: any) => {
+    (sale.items || []).forEach((item) => {
         txt +=
             pad(String(item.kuantitas), 5) +
             pad("PCS", 5) +
@@ -159,13 +185,13 @@ export function buildReceipt(data: ReceiptData) {
 
     // ================= FOOTER =================
 
-    txt += footerLine("Terima kasih atas kepercayaan Anda.","Jumlah  :",sale.subtotal) + "\n";
-    txt += footerLine("Silahkan Datang Kembali.","Diskon  :",sale.diskon ?? 0 ) + "\n";
-    
+    txt += footerLine("Terima kasih atas kepercayaan Anda.", "Jumlah  :", sale.subtotal) + "\n";
+    txt += footerLine("Silahkan Datang Kembali.", "Diskon  :", sale.diskon ?? 0) + "\n";
+
     if (isDebt) {
         const cashAmount = sale.cash_amount ?? sale.cash_received ?? 0;
         const cardAmount = sale.card_amount ?? 0;
-        
+
         if (cardAmount > 0) {
             txt += footerLine("", "DP Tunai:", cashAmount) + "\n";
             txt += footerLine("", "DP Transfer:", cardAmount) + "\n";

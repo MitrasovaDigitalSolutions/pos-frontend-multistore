@@ -157,7 +157,7 @@ export function useReceivingFlow({
                     if (sisa > 0 && item.product) {
                         addItem({
                             product_uid: item.product_uid,
-                            barcode: item.product.barcode,
+                            barcode: item.product.barcode ?? null,
                             nama: item.product.nama,
                             harga_estimasi: item.harga_estimasi,
                             kuantitas: sisa,
