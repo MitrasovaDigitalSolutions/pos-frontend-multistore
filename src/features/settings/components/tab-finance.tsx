@@ -41,9 +41,16 @@ function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }
     );
 }
 
+import { useSettingsStore } from "@/stores/settings-store";
+
 export function TabFinance({ isSaving }: TabFinanceProps) {
     const { control, watch } = useFormContext<StoreSettingsInput>();
+    const { getSettingMeta } = useSettingsStore();
     const pointSystemEnable = watch("point_system_enabled") === "true";
+
+    const taxMeta = getSettingMeta("tax_rate_ppn");
+    const pointSysMeta = getSettingMeta("point_system_enabled");
+    const pointRateMeta = getSettingMeta("point_rate");
 
     return (
         <TooltipProvider delayDuration={150}>
@@ -69,8 +76,8 @@ export function TabFinance({ isSaving }: TabFinanceProps) {
                             <div className="lg:col-span-7 space-y-5">
                                 <div className="flex flex-col">
                                     <LabelWithTooltip
-                                        label="Tarif PPN (%)"
-                                        tooltip="Persentase PPN default yang otomatis ditambahkan di kasir saat checkout pajak aktif."
+                                        label={taxMeta?.label || "Pajak (PPN %)"}
+                                        tooltip={taxMeta?.description || "Persentase pajak default yang dikenakan pada penjualan."}
                                     />
                                     <div className="relative flex items-center">
                                         <div className="w-full">
@@ -88,8 +95,8 @@ export function TabFinance({ isSaving }: TabFinanceProps) {
                                 <div className="flex items-center justify-between border border-slate-100/80 rounded-xl p-4 bg-slate-50/30">
                                     <div className="space-y-0.5">
                                         <LabelWithTooltip
-                                            label="Sistem Poin Member"
-                                            tooltip="Aktifkan atau nonaktifkan sistem akumulasi poin untuk member."
+                                            label={pointSysMeta?.label || "Sistem Poin Aktif"}
+                                            tooltip={pointSysMeta?.description || "Apakah sistem poin untuk member diaktifkan (true/false)."}
                                         />
                                         <p className="text-[11px] text-slate-400">
                                             Aktifkan loyalitas member dan akumulasi poin transaksi
@@ -111,12 +118,12 @@ export function TabFinance({ isSaving }: TabFinanceProps) {
                                 {pointSystemEnable && (
                                     <div className="flex flex-col animate-in fade-in duration-200">
                                         <LabelWithTooltip
-                                            label="Konversi Poin (Rupiah per Poin)"
-                                            tooltip="Kelipatan nominal belanja Rupiah untuk mendapat 1 poin member (dibulatkan kebawah)."
+                                            label={pointRateMeta?.label || "Point Rate (Rp per Poin)"}
+                                            tooltip={pointRateMeta?.description || "Berapa Rupiah transaksi yang dibutuhkan untuk mendapatkan 1 poin."}
                                         />
                                         <FormNumberInput<StoreSettingsInput>
                                             name="point_rate"
-                                            placeholder="Contoh: 1000"
+                                            placeholder="Contoh: 10000"
                                             disabled={isSaving}
                                             min={1}
                                         />

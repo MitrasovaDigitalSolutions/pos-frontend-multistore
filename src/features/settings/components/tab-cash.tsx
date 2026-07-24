@@ -8,12 +8,20 @@ import { Scrollable } from "@/components/ui/scrollable";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { AppButton } from "@/components/shared/app-button";
 
+import { useSettingsStore } from "@/stores/settings-store";
+
 interface TabCashProps {
     isSaving: boolean;
     cashAccountOptions: { value: string; label: string }[] | undefined;
 }
 
 export function TabCash({ isSaving, cashAccountOptions = [] }: TabCashProps) {
+    const { getSettingMeta } = useSettingsStore();
+
+    const registerMeta = getSettingMeta("cash_account_register_uid");
+    const mainMeta = getSettingMeta("cash_account_main_uid");
+    const bankMeta = getSettingMeta("cash_account_bank_uid");
+
     return (
         <TooltipProvider delayDuration={150}>
             <Card className="border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-[0_4px_20px_rgba(15,23,42,0.03)] bg-white dark:bg-slate-900 overflow-hidden flex flex-col w-full min-h-[460px]">
@@ -42,7 +50,9 @@ export function TabCash({ isSaving, cashAccountOptions = [] }: TabCashProps) {
                                     </div>
                                     <div className="space-y-1">
                                         <div className="flex items-center gap-1.5">
-                                            <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Kas Kasir (Register)</h4>
+                                            <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wide">
+                                                {registerMeta?.label || "Kas Kasir"}
+                                            </h4>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <AppButton
@@ -55,12 +65,12 @@ export function TabCash({ isSaving, cashAccountOptions = [] }: TabCashProps) {
                                                     </AppButton>
                                                 </TooltipTrigger>
                                                 <TooltipContent side="top" className="text-xs max-w-xs bg-slate-950 text-white rounded-lg p-2 shadow-lg border border-slate-800">
-                                                    Akun kas penampung utama uang tunai hasil transaksi kasir harian.
+                                                    {registerMeta?.description || "Akun kas yang dipakai untuk transaksi penjualan tunai dan split."}
                                                 </TooltipContent>
                                             </Tooltip>
                                         </div>
-                                        <p className="text-xs text-slate-400  max-w-md">
-                                            Digunakan untuk menampung pendapatan uang tunai langsung dari meja kasir selama shift berjalan.
+                                        <p className="text-xs text-slate-400 max-w-md">
+                                            {registerMeta?.description || "Akun kas yang dipakai untuk transaksi penjualan tunai dan split."}
                                         </p>
                                     </div>
                                 </div>
@@ -82,7 +92,9 @@ export function TabCash({ isSaving, cashAccountOptions = [] }: TabCashProps) {
                                     </div>
                                     <div className="space-y-1">
                                         <div className="flex items-center gap-1.5">
-                                            <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Kas Utama (Brankas)</h4>
+                                            <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wide">
+                                                {mainMeta?.label || "Kas Utama"}
+                                            </h4>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <AppButton
@@ -95,12 +107,12 @@ export function TabCash({ isSaving, cashAccountOptions = [] }: TabCashProps) {
                                                     </AppButton>
                                                 </TooltipTrigger>
                                                 <TooltipContent side="top" className="text-xs max-w-xs bg-slate-950 text-white rounded-lg p-2 shadow-lg border border-slate-800">
-                                                    Akun kas pusat untuk menampung pemindahan saldo kasir harian.
+                                                    {mainMeta?.description || "Akun kas utama untuk penampungan saldo internal."}
                                                 </TooltipContent>
                                             </Tooltip>
                                         </div>
-                                        <p className="text-xs text-slate-400  max-w-md">
-                                            Brankas utama toko untuk menyimpan uang cash cadangan dan menerima setoran akhir dari kasir.
+                                        <p className="text-xs text-slate-400 max-w-md">
+                                            {mainMeta?.description || "Akun kas utama untuk penampungan saldo internal."}
                                         </p>
                                     </div>
                                 </div>
@@ -122,7 +134,9 @@ export function TabCash({ isSaving, cashAccountOptions = [] }: TabCashProps) {
                                     </div>
                                     <div className="space-y-1">
                                         <div className="flex items-center gap-1.5">
-                                            <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Kas Bank (Transfer / QRIS)</h4>
+                                            <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wide">
+                                                {bankMeta?.label || "Saldo Bank"}
+                                            </h4>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <AppButton
@@ -135,12 +149,12 @@ export function TabCash({ isSaving, cashAccountOptions = [] }: TabCashProps) {
                                                     </AppButton>
                                                 </TooltipTrigger>
                                                 <TooltipContent side="top" className="text-xs max-w-xs bg-slate-950 text-white rounded-lg p-2 shadow-lg border border-slate-800">
-                                                    Akun bank penampung utama pembayaran non-tunai (Qris, debit, transfer).
+                                                    {bankMeta?.description || "Akun bank untuk dana yang sudah dipindahkan dari kas fisik."}
                                                 </TooltipContent>
                                             </Tooltip>
                                         </div>
-                                        <p className="text-xs text-slate-400  max-w-md">
-                                            Digunakan untuk pencatatan transaksi non-tunai seperti kartu debit/kredit, transfer bank, dan QRIS.
+                                        <p className="text-xs text-slate-400 max-w-md">
+                                            {bankMeta?.description || "Akun bank untuk dana yang sudah dipindahkan dari kas fisik."}
                                         </p>
                                     </div>
                                 </div>

@@ -11,6 +11,8 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/comp
 
 import { AppButton } from "@/components/shared/app-button";
 
+import { useSettingsStore } from "@/stores/settings-store";
+
 interface TabProfileProps {
     isSaving: boolean;
     initialLogoUrl: string;
@@ -42,6 +44,13 @@ function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }
 }
 
 export function TabProfile({ isSaving, initialLogoUrl }: TabProfileProps) {
+    const { getSettingMeta } = useSettingsStore();
+
+    const logoMeta = getSettingMeta("app_logo_url");
+    const nameMeta = getSettingMeta("app_name");
+    const phoneMeta = getSettingMeta("app_phone");
+    const addressMeta = getSettingMeta("app_address");
+
     return (
         <TooltipProvider delayDuration={150}>
             <Card className="border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-[0_4px_20px_rgba(15,23,42,0.03)] bg-white dark:bg-slate-900 overflow-hidden flex flex-col w-full min-h-[460px]">
@@ -63,20 +72,21 @@ export function TabProfile({ isSaving, initialLogoUrl }: TabProfileProps) {
                     <CardContent className="p-5 space-y-5">
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
                             {/* Logo Uploader Panel */}
-                            <div className="md:col-span-4 lg:col-span-3 space-y-2">
+                            <div className="md:col-span-4 lg:col-span-3 space-y-2 flex flex-col items-center md:items-start">
                                 <LabelWithTooltip
-                                    label="Logo Toko"
-                                    tooltip="Logo resmi toko format JPG/PNG/WEBP maks 2MB."
+                                    label={logoMeta?.label || "Logo Toko (URL)"}
+                                    tooltip={logoMeta?.description || "Tautan gambar logo toko."}
                                 />
-                                <div className="border border-slate-150 rounded-2xl p-2.5 bg-slate-50/50">
+                                <div className="w-full max-w-[200px] aspect-square border border-slate-150 rounded-2xl p-2 bg-slate-50/50 flex items-center justify-center">
                                     <FormImageUpload<StoreSettingsInput>
                                         name="app_logo_url"
                                         initialUrl={initialLogoUrl}
                                         disabled={isSaving}
-                                        className="h-[180px] min-h-0 [&>div]:h-[180px] [&>div]:min-h-0 [&>div]:md:min-h-0"
+                                        className="w-full h-full aspect-square"
+                                        dropzoneClassName="w-full h-full aspect-square min-h-0 md:min-h-0 p-3 flex flex-col items-center justify-center"
                                     />
                                 </div>
-                                <p className="text-xs text-slate-400 leading-relaxed text-center">
+                                <p className="text-xs text-slate-400 leading-relaxed text-center md:text-left w-full max-w-[200px]">
                                     Rasio 1:1, JPG/PNG/WEBP maks 2MB.
                                 </p>
                             </div>
@@ -86,8 +96,8 @@ export function TabProfile({ isSaving, initialLogoUrl }: TabProfileProps) {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="flex flex-col">
                                         <LabelWithTooltip
-                                            label="Nama Toko"
-                                            tooltip="Nama resmi toko yang dicetak pada bagian paling atas kop struk belanja."
+                                            label={nameMeta?.label || "Nama Toko"}
+                                            tooltip={nameMeta?.description || "Nama aplikasi atau toko yang akan ditampilkan di struk dan aplikasi."}
                                         />
                                         <FormInput<StoreSettingsInput>
                                             name="app_name"
@@ -97,8 +107,8 @@ export function TabProfile({ isSaving, initialLogoUrl }: TabProfileProps) {
                                     </div>
                                     <div className="flex flex-col">
                                         <LabelWithTooltip
-                                            label="Nomor Telepon"
-                                            tooltip="Nomor kontak resmi toko Anda untuk keperluan transaksi atau informasi."
+                                            label={phoneMeta?.label || "Nomor Telepon Toko"}
+                                            tooltip={phoneMeta?.description || "Nomor kontak toko untuk dicetak di struk."}
                                         />
                                         <FormInput<StoreSettingsInput>
                                             name="app_phone"
@@ -109,8 +119,8 @@ export function TabProfile({ isSaving, initialLogoUrl }: TabProfileProps) {
                                 </div>
                                 <div className="flex flex-col">
                                     <LabelWithTooltip
-                                        label="Alamat Toko"
-                                        tooltip="Alamat fisik lengkap toko yang dicetak di baris alamat kop struk belanja."
+                                        label={addressMeta?.label || "Alamat Toko"}
+                                        tooltip={addressMeta?.description || "Alamat lengkap toko untuk dicetak di struk."}
                                     />
                                     <FormTextarea<StoreSettingsInput>
                                         name="app_address"

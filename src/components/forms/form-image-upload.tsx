@@ -3,13 +3,14 @@
 import { useFormContext, Controller, type FieldPath, type FieldValues } from "react-hook-form";
 import { useState, useEffect, useRef } from "react";
 import { IconUpload, IconTrash, IconAlertCircle } from "@tabler/icons-react";
-import { cn } from "@/lib/utils";
+import { cn, getImageUrl } from "@/lib/utils";
 
 interface FormImageUploadProps<T extends FieldValues> {
     name: FieldPath<T>;
     label?: string;
     disabled?: boolean;
     className?: string;
+    dropzoneClassName?: string;
     initialUrl?: string | null;
 }
 
@@ -18,31 +19,44 @@ export function FormImageUpload<T extends FieldValues>({
     label,
     disabled = false,
     className,
+    dropzoneClassName,
     initialUrl,
 }: FormImageUploadProps<T>) {
     const {
         control,
+        watch,
         formState: { errors },
     } = useFormContext<T>();
 
     const error = errors[name];
+    const fieldValue = watch(name);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
 
-    // Synchronize initialUrl with previewUrl when editing states change
+    // Synchronize previewUrl with RHF fieldValue and initialUrl
     useEffect(() => {
-        if (initialUrl) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setPreviewUrl(initialUrl);
+        if (typeof window !== "undefined" && (fieldValue as unknown) instanceof File) {
+            const url = URL.createObjectURL(fieldValue as unknown as File);
+            setPreviewUrl(url);
+            return () => {
+                if (url.startsWith("blob:")) {
+                    URL.revokeObjectURL(url);
+                }
+            };
+        } else if (typeof fieldValue === "string" && fieldValue.trim() !== "") {
+            setPreviewUrl(getImageUrl(fieldValue));
+        } else if (fieldValue === null) {
+            setPreviewUrl(null);
+        } else if (initialUrl) {
+            setPreviewUrl(getImageUrl(initialUrl));
         } else {
             setPreviewUrl(null);
         }
-    }, [initialUrl]);
+    }, [fieldValue, initialUrl]);
 
     const handleFileChange = (file: File | null, onChange: (val: File | null) => void) => {
         if (!file) {
-            setPreviewUrl(initialUrl || null);
             onChange(null);
             return;
         }
@@ -59,8 +73,6 @@ export function FormImageUpload<T extends FieldValues>({
             return;
         }
 
-        const url = URL.createObjectURL(file);
-        setPreviewUrl(url);
         onChange(file);
     };
 
@@ -89,11 +101,6 @@ export function FormImageUpload<T extends FieldValues>({
         e.stopPropagation();
         e.preventDefault();
 
-        if (previewUrl && previewUrl.startsWith("blob:")) {
-            URL.revokeObjectURL(previewUrl);
-        }
-
-        setPreviewUrl(null);
         onChange(null);
 
         if (fileInputRef.current) {
@@ -126,7 +133,7 @@ export function FormImageUpload<T extends FieldValues>({
                                     ? "border-rose-300 bg-rose-50/10 hover:border-rose-400"
                                     : "border-slate-200 bg-slate-50/20 hover:border-emerald-500 hover:bg-slate-50/50",
                             disabled && "opacity-50 cursor-not-allowed",
-                            "h-full min-h-[220px] md:min-h-[300px]"
+                            dropzoneClassName || "h-full min-h-[220px] md:min-h-[300px]"
                         )}
                     >
                         <input
