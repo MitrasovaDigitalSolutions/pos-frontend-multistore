@@ -14,9 +14,7 @@ import QZService from "@/services/qz.service";
 // UI Components
 import { Card } from "@/components/ui/card";
 import { IconAdjustments, IconPrinter } from "@tabler/icons-react";
-import { Store, Wallet } from "lucide-react";
-import { Scrollable } from "@/components/ui/scrollable";
-import { AppButton } from "@/components/shared/app-button";
+import { Store, Wallet, Settings2, ChevronRight } from "lucide-react";
 
 // Subcomponents
 import { TabProfile } from "./tab-profile";
@@ -61,14 +59,14 @@ export function StoreProfile() {
         {
             id: "profile",
             label: "Identitas Toko",
-            description: "Profil dasar & logo",
+            description: "Profil dasar & logo toko",
             icon: Store,
             fields: ["app_name", "app_phone", "app_address", "app_logo_url"] as const,
         },
         {
             id: "finance",
             label: "Keuangan & Pajak",
-            description: "PPN & loyalitas member",
+            description: "Tarif PPN & poin member",
             icon: IconAdjustments,
             fields: ["tax_rate_ppn", "point_rate", "point_system_enabled"] as const,
         },
@@ -247,16 +245,17 @@ export function StoreProfile() {
     if (isSettingsLoading || isCashAccountsLoading) {
         return (
             <div className="w-full space-y-6 animate-pulse">
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     {/* Left Column - Navigation Skeleton */}
-                    <div className="md:col-span-4 lg:col-span-3">
-                        <div className="bg-white border border-slate-100 rounded-2xl p-2 shadow-sm space-y-2">
+                    <div className="lg:col-span-4 xl:col-span-3.5">
+                        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm space-y-3">
+                            <div className="h-4 bg-slate-200 rounded w-1/2 mb-4" />
                             {[1, 2, 3, 4].map((i) => (
-                                <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl border border-transparent">
-                                    <div className="w-8 h-8 bg-slate-200 rounded-lg" />
+                                <div key={i} className="flex items-center gap-3.5 p-3 rounded-xl border border-slate-100">
+                                    <div className="w-9 h-9 bg-slate-200 rounded-xl" />
                                     <div className="flex-1 space-y-1.5">
-                                        <div className="h-2.5 bg-slate-200 rounded w-2/3" />
-                                        <div className="h-2 bg-slate-100 rounded w-1/2" />
+                                        <div className="h-3 bg-slate-200 rounded w-2/3" />
+                                        <div className="h-2 bg-slate-100 rounded w-4/5" />
                                     </div>
                                 </div>
                             ))}
@@ -264,30 +263,30 @@ export function StoreProfile() {
                     </div>
 
                     {/* Right Column - Card Skeleton */}
-                    <div className="md:col-span-8 lg:col-span-9">
-                        <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4 h-[500px]">
-                            <div className="flex items-center gap-2 border-b border-slate-100 pb-3 mb-1">
-                                <div className="w-8 h-8 bg-slate-200 rounded-lg" />
+                    <div className="lg:col-span-8 xl:col-span-8.5">
+                        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-5 min-h-[460px]">
+                            <div className="flex items-center gap-3 border-b border-slate-100 pb-4 mb-2">
+                                <div className="w-9 h-9 bg-slate-200 rounded-xl" />
                                 <div className="space-y-1.5 flex-1">
-                                    <div className="h-3 bg-slate-200 rounded w-1/4" />
-                                    <div className="h-2 bg-slate-100 rounded w-1/3" />
+                                    <div className="h-3.5 bg-slate-200 rounded w-1/4" />
+                                    <div className="h-2.5 bg-slate-100 rounded w-1/3" />
                                 </div>
                             </div>
 
-                            <div className="space-y-4">
+                            <div className="space-y-5">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="space-y-1.5">
-                                        <div className="h-2.5 bg-slate-100 rounded w-1/3" />
+                                    <div className="space-y-2">
+                                        <div className="h-3 bg-slate-100 rounded w-1/3" />
                                         <div className="h-10 bg-slate-50 rounded-xl w-full" />
                                     </div>
-                                    <div className="space-y-1.5">
-                                        <div className="h-2.5 bg-slate-100 rounded w-1/3" />
+                                    <div className="space-y-2">
+                                        <div className="h-3 bg-slate-100 rounded w-1/3" />
                                         <div className="h-10 bg-slate-50 rounded-xl w-full" />
                                     </div>
                                 </div>
-                                <div className="space-y-1.5">
-                                    <div className="h-2.5 bg-slate-100 rounded w-1/4" />
-                                    <div className="h-24 bg-slate-50 rounded-xl w-full" />
+                                <div className="space-y-2">
+                                    <div className="h-3 bg-slate-100 rounded w-1/4" />
+                                    <div className="h-28 bg-slate-50 rounded-xl w-full" />
                                 </div>
                             </div>
                         </div>
@@ -300,67 +299,95 @@ export function StoreProfile() {
     return (
         <FormProvider {...methods}>
             <form onSubmit={methods.handleSubmit(onSubmit, onError)} className="w-full space-y-6 relative">
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     {/* Tab Nav - Left Column */}
-                    <div className="md:col-span-4 lg:col-span-3">
-                        <Card className="border border-slate-100 rounded-2xl shadow-[0_2px_12px_rgba(15,23,42,0.015)] bg-white p-2 h-auto md:h-[500px] flex flex-col">
-                            <Scrollable orientation="both" className="h-full w-full pr-1">
-                                <div className="flex flex-row md:flex-col gap-1 pb-2 md:pb-0">
-                                    {tabs.map((tab) => {
-                                        const Icon = tab.icon;
-                                        const dirty = isTabDirty(tab.fields);
-                                        const error = hasTabError(tab.fields);
-                                        const isActive = activeTab === tab.id;
-
-                                        return (
-                                            <AppButton
-                                                key={tab.id}
-                                                type="button"
-                                                variant="ghost"
-                                                onClick={() => setActiveTab(tab.id)}
-                                                className={cn(
-                                                    "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-left cursor-pointer shrink-0 md:shrink-1 select-none h-auto justify-start",
-                                                    isActive
-                                                        ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/10 hover:bg-emerald-600 hover:text-white"
-                                                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                                                )}
-                                            >
-                                                <div className={cn(
-                                                    "p-1.5 rounded-lg transition-colors flex items-center justify-center shrink-0",
-                                                    isActive ? "bg-emerald-700/60 text-white" : "bg-slate-100 text-slate-500"
-                                                )}>
-                                                    <Icon size={16} />
-                                                </div>
-                                                <div className="flex-1 min-w-0 pr-2">
-                                                    <p className="text-sm font-bold tracking-wide whitespace-normal md:whitespace-nowrap">
-                                                        {tab.label}
-                                                    </p>
-                                                    <p className={cn(
-                                                        "text-xs md:block hidden font-medium mt-0.5 whitespace-normal",
-                                                        isActive ? "text-emerald-100" : "text-slate-400"
-                                                    )}>
-                                                        {tab.description}
-                                                    </p>
-                                                </div>
-
-                                                {/* Badges/Indicators */}
-                                                <div className="flex items-center gap-1.5 ml-auto shrink-0">
-                                                    {error ? (
-                                                        <span className="w-2 h-2 rounded-full bg-rose-500 ring-4 ring-rose-500/20 animate-pulse" />
-                                                    ) : dirty ? (
-                                                        <span className="w-2 h-2 rounded-full bg-amber-500 ring-4 ring-amber-500/20 animate-pulse" />
-                                                    ) : null}
-                                                </div>
-                                            </AppButton>
-                                        );
-                                    })}
+                    <div className="lg:col-span-4 xl:col-span-3.5">
+                        <Card className="border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-[0_4px_20px_rgba(15,23,42,0.03)] bg-white dark:bg-slate-900 p-3.5 flex flex-col">
+                            {/* Card Header Title */}
+                            <div className="hidden lg:flex items-center gap-2.5 px-2 py-2 mb-2 pb-3 border-b border-slate-100 dark:border-slate-800">
+                                <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-100 dark:border-emerald-900/50 shrink-0">
+                                    <Settings2 size={16} />
                                 </div>
-                            </Scrollable>
+                                <div>
+                                    <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                                        Pengaturan Toko
+                                    </h3>
+                                    <p className="text-[11px] text-slate-400 dark:text-slate-400 font-medium">
+                                        Pilih kategori untuk dikelola
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Nav Tab List */}
+                            <div className="flex flex-row lg:flex-col overflow-x-auto lg:overflow-visible gap-2 p-0.5 scrollbar-none">
+                                {tabs.map((tab) => {
+                                    const Icon = tab.icon;
+                                    const dirty = isTabDirty(tab.fields);
+                                    const error = hasTabError(tab.fields);
+                                    const isActive = activeTab === tab.id;
+
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            type="button"
+                                            onClick={() => setActiveTab(tab.id)}
+                                            className={cn(
+                                                "group relative flex items-center gap-3.5 px-3.5 py-3 rounded-xl transition-all duration-200 text-left cursor-pointer shrink-0 lg:shrink-1 select-none justify-start border",
+                                                isActive
+                                                    ? "bg-gradient-to-r from-emerald-600 via-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/20 border-transparent scale-[1.01]"
+                                                    : "bg-slate-50/70 hover:bg-slate-100/90 dark:bg-slate-800/40 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200 border-slate-100 dark:border-slate-800/60"
+                                            )}
+                                        >
+                                            <div className={cn(
+                                                "w-9 h-9 rounded-xl transition-all flex items-center justify-center shrink-0 border",
+                                                isActive
+                                                    ? "bg-white/20 backdrop-blur-md text-white border-white/25 shadow-inner"
+                                                    : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 border-slate-200/60 dark:border-slate-700 shadow-sm"
+                                            )}>
+                                                <Icon size={18} />
+                                            </div>
+                                            <div className="flex-1 min-w-0 pr-1">
+                                                <p className={cn(
+                                                    "text-sm font-bold tracking-tight whitespace-nowrap lg:whitespace-normal",
+                                                    isActive ? "text-white" : "text-slate-800 dark:text-slate-200 group-hover:text-slate-900"
+                                                )}>
+                                                    {tab.label}
+                                                </p>
+                                                <p className={cn(
+                                                    "text-xs hidden lg:block font-normal mt-0.5 leading-snug",
+                                                    isActive ? "text-emerald-100/90" : "text-slate-400 dark:text-slate-400"
+                                                )}>
+                                                    {tab.description}
+                                                </p>
+                                            </div>
+
+                                            {/* Badges & Active Arrow */}
+                                            <div className="flex items-center gap-2 ml-auto shrink-0">
+                                                {error ? (
+                                                    <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500 text-white shadow-sm ring-2 ring-rose-500/20">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                                                        <span className="hidden sm:inline">Periksa</span>
+                                                    </span>
+                                                ) : dirty ? (
+                                                    <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-white shadow-sm ring-2 ring-amber-500/20">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                                                        <span className="hidden sm:inline">Diubah</span>
+                                                    </span>
+                                                ) : null}
+
+                                                {isActive && (
+                                                    <ChevronRight className="hidden lg:block size-4 text-emerald-200 shrink-0" />
+                                                )}
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </Card>
                     </div>
 
                     {/* Content - Right Column */}
-                    <div className="md:col-span-8 lg:col-span-9 space-y-6">
+                    <div className="lg:col-span-8 xl:col-span-8.5 space-y-6">
                         {/* Tab 1: Profil Toko */}
                         <div className={activeTab === "profile" ? "block animate-fade-in" : "hidden"}>
                             <TabProfile isSaving={isSaving} initialLogoUrl={getImageUrl(settings.app_logo_url)} />
