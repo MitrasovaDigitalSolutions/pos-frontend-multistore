@@ -147,9 +147,39 @@ NODE_ENV=development
 ```bash
 bun dev
 # atau
+bun dev
+# atau
 npm run dev
 ```
 
+Buka [http://localhost:3000](http://localhost:3000) di peramban web Anda.
+
+### 5. Build untuk Produksi
+
+```bash
+bun run build
+bun run start
+# atau
+npm run build
+npm run start
+```
+
+---
+
+## 🖨️ Integrasi Printer Struk Thermal (QZ Tray)
+
+Untuk menggunakan fitur cetak struk otomatis di Kasir:
+1. Unduh dan pasang aplikasi client **[QZ Tray](https://qz.io/download/)** di komputer kasir.
+2. Pastikan printer thermal (contoh: POS-58, EPSON TM-series, dsb.) telah terhubung & terinstal driver-nya di komputer.
+3. Buka halaman Kasir pada aplikasi web ini; sistem akan secara otomatis mendeteksi koneksi QZ Tray untuk mengirimkan perintah cetak ESC/POS.
+
+---
+
+## 📄 Lisensi & Hak Cipta
+
+Hak Cipta © 2026 **Mitrasova Digital Solutions**. Seluruh hak dilindungi undang-undang.
+
+Proyek ini dilisensikan di bawah [MIT License](LICENSE) - Anda bebas menggunakan, memodifikasi, dan mendistribusikan perangkat lunak ini sesuai dengan ketentuan yang tercantum dalam lisensi.
 Buka [http://localhost:3000](http://localhost:3000) di peramban web Anda.
 
 ### 5. Build untuk Produksi
