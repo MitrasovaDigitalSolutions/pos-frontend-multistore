@@ -18,6 +18,13 @@ export interface ChartOfAccount {
     parent?: ChartOfAccount | null;
 }
 
+export interface BalanceSheetDetailCategory {
+    kategori: string;
+    debit?: number;
+    credit?: number;
+    amount: number;
+}
+
 export interface BalanceSheetItem {
     kode: string | null;
     nama: string;
@@ -26,6 +33,7 @@ export interface BalanceSheetItem {
     debit: number;
     credit: number;
     amount: number;
+    detail?: BalanceSheetDetailCategory[];
 }
 
 export interface BalanceSheetSection {
