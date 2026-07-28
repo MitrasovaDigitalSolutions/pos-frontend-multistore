@@ -3,10 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
-import { IconPlus, IconCircleX } from "@tabler/icons-react";
+import { IconPlus, IconCircleX, IconChevronRight } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useDeferredValue, useMemo, useState } from "react";
@@ -22,7 +23,10 @@ import type { PurchaseOrder } from "../../types";
 import {
     PO_STATUS,
     PO_STATUS_LABELS,
+    type POStatus,
 } from "@/constants/purchase";
+import { formatDate } from "@/lib/date-utils";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { poColumns } from "./po-columns";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { FilterForm } from "@/components/forms/filter-form";
@@ -370,6 +374,101 @@ export function POListPage() {
                                 </TooltipTrigger>
                                 <TooltipContent>Batalkan PO</TooltipContent>
                             </Tooltip>
+                        );
+                    }}
+                    renderCardItem={(row) => {
+                        const order = row.original;
+                        const status = order.status as POStatus;
+                        const statusLabel = PO_STATUS_LABELS[status] || status;
+                        const supplierName = order.supplier ? order.supplier.nama : order.supplier_name || "-";
+                        const formattedDate = order.tanggal_po ? formatDate(order.tanggal_po, "dd MMM yyyy") : "-";
+
+                        const canEdit = order.status === PO_STATUS.DRAFT && hasManagePurchase;
+                        const canFinalize = order.status === PO_STATUS.DRAFT && hasManagePurchase;
+
+                        return (
+                            <div
+                                key={order.uid || order.nomor_po}
+                                onClick={() => router.push(`/admin/purchase/order/${order.uid}`)}
+                                className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-2.5 shadow-2xs hover:border-emerald-500/50 transition-all cursor-pointer group"
+                            >
+                                {/* Header: Nomor PO + Status */}
+                                <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-2">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0 font-mono">
+                                            PO
+                                        </div>
+                                        <div className="min-w-0 truncate">
+                                            <div className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate group-hover:text-emerald-600 transition-colors font-mono">
+                                                {order.nomor_po}
+                                            </div>
+                                            <div className="text-[10px] text-slate-400 font-medium truncate">
+                                                {formattedDate}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <StatusBadge status={status} label={statusLabel} />
+                                </div>
+
+                                {/* Content Body: Supplier & Estimasi */}
+                                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                                    <div className="space-y-0.5">
+                                        <span className="text-[10px] text-slate-400 font-medium">Supplier:</span>
+                                        <p className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                                            {supplierName}
+                                        </p>
+                                    </div>
+                                    <div className="space-y-0.5 text-right">
+                                        <span className="text-[10px] text-slate-400 font-medium">Nilai Estimasi:</span>
+                                        <p className="font-extrabold text-slate-900 dark:text-slate-100 tabular-nums">
+                                            {formatRupiah(order.nilai_estimasi)}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Footer: Action Buttons */}
+                                <div className="flex items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800/80 pt-2.5">
+                                    <div className="flex items-center gap-1.5">
+                                        {canEdit && (
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    router.push(`/admin/purchase/order/${order.uid}/items`);
+                                                }}
+                                                className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-bold text-[10px] transition-all cursor-pointer"
+                                            >
+                                                Edit
+                                            </button>
+                                        )}
+                                        {canFinalize && (
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleFinalize(order);
+                                                }}
+                                                className="px-2 py-1 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 hover:bg-blue-600 hover:text-white font-bold text-[10px] transition-all cursor-pointer"
+                                            >
+                                                Finalisasi
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            router.push(`/admin/purchase/order/${order.uid}`);
+                                        }}
+                                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs transition-all cursor-pointer flex items-center gap-1 shadow-xs shadow-emerald-600/20 shrink-0 ml-auto"
+                                    >
+                                        <span>Detail</span>
+                                        <IconChevronRight size={14} className="stroke-[2.5]" />
+                                    </button>
+                                </div>
+                            </div>
                         );
                     }}
                 />
