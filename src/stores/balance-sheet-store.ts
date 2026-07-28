@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { ChartOfAccount } from "@/features/accounting/types";
 import type { ManualJournal, ManualJournalLine } from "@/features/accounting/types/manual-journal";
-import type { BalanceSheetItem } from "@/features/accounting/types";
+import type { BalanceSheetItem, BalanceSheetDetailCategory } from "@/features/accounting/types";
 
 export interface BalanceSheetEditItem {
     uid: string;
@@ -11,6 +11,7 @@ export interface BalanceSheetEditItem {
     debit: number;
     credit: number;
     amount: number;
+    detail?: BalanceSheetDetailCategory[];
 }
 
 export interface BalanceSheetEditData {
@@ -79,6 +80,7 @@ export const useBalanceSheetStore = create<BalanceSheetStoreState>()(
                             debit: item.debit || 0,
                             credit: item.credit || 0,
                             amount: item.amount || 0,
+                            detail: item.detail,
                         };
                     });
                 };

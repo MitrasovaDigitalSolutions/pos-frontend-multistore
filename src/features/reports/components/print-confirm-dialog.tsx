@@ -64,6 +64,7 @@ export function PrintConfirmDialog<TFieldValues extends FieldValues & BasePrintF
                     <span>Konfigurasi Cetak PDF</span>
                 </div>
             }
+            scrollable
             className="max-w-md sm:max-w-md"
         >
             <FormProvider {...methods}>
