@@ -131,28 +131,58 @@ export function BalanceSheetDashboard({
         totalExpense,
     } = sectionsData;
 
-    // 2. Compute Net Income (Laba Rugi Tahun Berjalan)
+    // 2. Compute Net Income / SHU
+    const shuData = data?.shu;
     const netIncome = useMemo(() => {
+        if (shuData?.berjalan !== undefined) {
+            return shuData.berjalan;
+        }
         return totalRevenue - totalExpense;
-    }, [totalRevenue, totalExpense]);
+    }, [shuData, totalRevenue, totalExpense]);
 
-    // 3. Reorganize Equity in standard view to append Laba Tahun Berjalan
+    const shuLalu = shuData?.lalu || 0;
+    const shuLaluLabel = shuData?.lalu_label ? `SHU (${shuData.lalu_label})` : "SHU Tahun Lalu / Sebelumnya";
+    const totalSHU = shuData?.total !== undefined ? shuData.total : (netIncome + shuLalu);
+
+    // 3. Reorganize Equity in standard view to append SHU
     const equityItems = useMemo(() => {
         if (viewType === "standard") {
-            const netIncomeItem = {
-                uid: "synthetic-net-income",
-                kode: null,
-                nama: "SHU Tahun Berjalan",
-                amount: netIncome,
-                debit: totalExpense,
-                credit: totalRevenue,
-            };
-            return [...equity, netIncomeItem];
+            const items = [...equity];
+            if (shuData) {
+                if (shuData.lalu !== 0) {
+                    items.push({
+                        uid: "synthetic-shu-lalu",
+                        kode: null,
+                        nama: shuLaluLabel,
+                        amount: shuData.lalu,
+                        debit: 0,
+                        credit: shuData.lalu,
+                    });
+                }
+                items.push({
+                    uid: "synthetic-shu-berjalan",
+                    kode: null,
+                    nama: "SHU Tahun Berjalan",
+                    amount: shuData.berjalan,
+                    debit: totalExpense,
+                    credit: totalRevenue,
+                });
+            } else {
+                items.push({
+                    uid: "synthetic-net-income",
+                    kode: null,
+                    nama: "SHU Tahun Berjalan",
+                    amount: netIncome,
+                    debit: totalExpense,
+                    credit: totalRevenue,
+                });
+            }
+            return items;
         }
         return equity;
-    }, [equity, viewType, netIncome, totalExpense, totalRevenue]);
+    }, [equity, viewType, shuData, shuLaluLabel, netIncome, totalExpense, totalRevenue]);
 
-    const finalEquityTotal = viewType === "standard" ? totalEquity + netIncome : totalEquity;
+    const finalEquityTotal = viewType === "standard" ? totalEquity + totalSHU : totalEquity;
 
     // 4. Compute balance metrics
     const { totalLeftVal, totalRightVal, isBalanced, difference } = useMemo(() => {
@@ -163,7 +193,7 @@ export function BalanceSheetDashboard({
             return {
                 totalLeftVal: leftVal,
                 totalRightVal: rightVal,
-                isBalanced: diff < 0.1,
+                isBalanced: data?.is_balanced ?? (diff < 0.1),
                 difference: diff,
             };
         } else {
@@ -173,11 +203,11 @@ export function BalanceSheetDashboard({
             return {
                 totalLeftVal: leftVal,
                 totalRightVal: rightVal,
-                isBalanced: diff < 0.1,
+                isBalanced: data?.is_balanced ?? (diff < 0.1),
                 difference: diff,
             };
         }
-    }, [viewType, totalAssets, totalLiabilities, finalEquityTotal, totalExpense, totalEquity, totalRevenue]);
+    }, [viewType, totalAssets, totalLiabilities, finalEquityTotal, totalExpense, totalEquity, totalRevenue, data?.is_balanced]);
 
     return (
         <div className="space-y-6">
