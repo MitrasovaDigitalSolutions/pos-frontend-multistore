@@ -58,7 +58,7 @@ export function VoidTransactionDialog({
             open={open}
             onOpenChange={onOpenChange}
             title={titleContent}
-            className="sm:max-w-md bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-2xl p-6"
+            className="w-[95vw] sm:w-full max-w-full sm:max-w-md bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-2xl p-4 sm:p-6"
             showCloseButton={!isLoading}
         >
             <div className="flex flex-col items-start w-full">

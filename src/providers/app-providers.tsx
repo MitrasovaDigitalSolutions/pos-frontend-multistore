@@ -9,6 +9,7 @@ import { PageLoadingTracker } from "@/components/shared/page-loading-tracker";
 import { PageLoader } from "@/components/shared/page-loader";
 import { Suspense } from "react";
 import { SettingsProvider } from "./settings-provider";
+import { DeviceProvider } from "./device-provider";
 
 interface AppProvidersProps {
     children: ReactNode;
@@ -19,14 +20,16 @@ export function AppProviders({ children }: AppProvidersProps) {
         <SessionProvider>
             <QueryProvider>
                 <SettingsProvider>
-                    <TooltipProvider delayDuration={200}>
-                        <Suspense fallback={null}>
-                            <PageLoadingTracker />
-                        </Suspense>
-                        <PageLoader />
-                        {children}
-                    </TooltipProvider>
-                    <Toaster position="top-right" />
+                    <DeviceProvider>
+                        <TooltipProvider delayDuration={200}>
+                            <Suspense fallback={null}>
+                                <PageLoadingTracker />
+                            </Suspense>
+                            <PageLoader />
+                            {children}
+                        </TooltipProvider>
+                        <Toaster position="top-right" />
+                    </DeviceProvider>
                 </SettingsProvider>
             </QueryProvider>
         </SessionProvider>

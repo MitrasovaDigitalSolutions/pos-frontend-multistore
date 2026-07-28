@@ -183,18 +183,18 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
                 />
 
                 {transaction.status === "void" && (
-                    <div className="group relative overflow-hidden bg-gradient-to-br from-rose-50 via-rose-50/70 to-white dark:from-rose-950/20 dark:via-rose-950/10 dark:to-slate-950 border-l-4 border-l-rose-500 border border-rose-100 dark:border-rose-900/30 rounded-2xl p-4.5 shadow-sm hover:shadow-md transition-all duration-300 space-y-3.5">
+                    <div className="group relative overflow-hidden bg-gradient-to-br from-rose-50 via-rose-50/70 to-white dark:from-rose-950/20 dark:via-rose-950/10 dark:to-slate-950 border-l-4 border-l-rose-500 border border-rose-100 dark:border-rose-900/30 rounded-2xl p-3.5 sm:p-4.5 shadow-sm hover:shadow-md transition-all duration-300 space-y-2.5 sm:space-y-3.5">
                         {/* Header Section */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-rose-100/50 dark:border-rose-900/20 pb-3">
-                            <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-xl bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-rose-200 dark:shadow-none animate-pulse">
-                                    <IconAlertTriangle size={18} stroke={2.5} />
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 border-b border-rose-100/50 dark:border-rose-900/20 pb-2.5 sm:pb-3">
+                            <div className="flex items-center gap-2.5 sm:gap-3">
+                                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-rose-200 dark:shadow-none animate-pulse">
+                                    <IconAlertTriangle size={17} stroke={2.5} />
                                 </div>
-                                <div>
-                                    <h4 className="text-sm font-black text-rose-850 dark:text-rose-455 tracking-tight uppercase">
+                                <div className="min-w-0">
+                                    <h4 className="text-xs sm:text-sm font-black text-rose-850 dark:text-rose-455 tracking-tight uppercase truncate">
                                         Transaksi Telah Dibatalkan
                                     </h4>
-                                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
+                                    <p className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-bold truncate">
                                         ID REFERENSI: <span className="text-slate-600 dark:text-slate-350">{transaction.uid}</span>
                                     </p>
                                 </div>
@@ -202,16 +202,16 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
                         </div>
 
                         {/* Content Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 items-center">
 
                             {/* Left Side: General description & inline metadata */}
-                            <div className="md:col-span-7 space-y-3">
-                                <p className="text-xs text-rose-600 dark:text-rose-400/80 leading-relaxed font-medium">
+                            <div className="md:col-span-7 space-y-2.5 sm:space-y-3">
+                                <p className="text-[11px] sm:text-xs text-rose-600 dark:text-rose-400/80 leading-relaxed font-medium">
                                     Seluruh item penjualan di bawah ini telah dibatalkan dan pencatatan keuangan dikembalikan. Transaksi ini tidak valid lagi untuk pelaporan kasir.
                                 </p>
 
                                 {/* Metadata Info Row (Horizontal list) */}
-                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-rose-100/30 dark:border-rose-900/10 pt-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-rose-100/30 dark:border-rose-900/10 pt-2.5 sm:pt-3 text-[10px] sm:text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                                     {transaction.voided_at && (
                                         <div className="flex items-center gap-1.5">
                                             <span className="text-slate-400 dark:text-slate-500">Dibatalkan pada:</span>
@@ -234,17 +234,17 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
                             {/* Right Side: Reason box */}
                             {transaction.catatan_void && (
                                 <div className="md:col-span-5 flex h-full">
-                                    <div className="w-full bg-rose-100/25 dark:bg-rose-950/15 border border-rose-250/40 dark:border-rose-900/30 rounded-xl p-3.5 flex flex-col justify-between hover:border-rose-300 dark:hover:border-rose-800 hover:shadow-xs transition-all duration-300">
-                                        <div className="space-y-1.5">
+                                    <div className="w-full bg-rose-100/25 dark:bg-rose-950/15 border border-rose-250/40 dark:border-rose-900/30 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between hover:border-rose-300 dark:hover:border-rose-800 hover:shadow-xs transition-all duration-300">
+                                        <div className="space-y-1">
                                             <span className="text-[10px] font-extrabold text-rose-650 dark:text-rose-400 uppercase tracking-wider block">
                                                 Alasan Pembatalan:
                                             </span>
-                                            <p className="text-xs italic text-slate-800 dark:text-slate-250 font-semibold leading-relaxed break-words font-sans">
+                                            <p className="text-[11px] sm:text-xs italic text-slate-800 dark:text-slate-250 font-semibold leading-relaxed break-words font-sans">
                                                 &ldquo;{transaction.catatan_void}&rdquo;
                                             </p>
                                         </div>
 
-                                        <span className="text-[9px] font-bold text-rose-600/60 dark:text-rose-400/60 text-right block mt-2">
+                                        <span className="text-[9px] font-bold text-rose-600/60 dark:text-rose-400/60 text-right block mt-1.5">
                                             * tercatat otomatis pada sistem audit log
                                         </span>
                                     </div>

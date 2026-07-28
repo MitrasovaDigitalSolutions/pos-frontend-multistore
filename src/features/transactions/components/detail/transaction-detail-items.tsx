@@ -109,33 +109,35 @@ export function TransactionDetailItems({ items }: TransactionDetailItemsProps) {
     ];
 
     return (
-        <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-col p-4.5 space-y-4 transition-all duration-300 hover:shadow-md">
+        <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-col p-3.5 sm:p-4.5 space-y-3 sm:space-y-4 transition-all duration-300 hover:shadow-md">
             {/* Header section with decorative card header */}
-            <div className="flex items-center justify-between border-b border-slate-50 pb-3">
-                <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-indigo-50/70 text-indigo-650 flex items-center justify-center shrink-0 border border-indigo-100 shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-50 pb-2.5 sm:pb-3">
+                <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-indigo-50/70 text-indigo-650 flex items-center justify-center shrink-0 border border-indigo-100 shadow-sm">
                         <IconReceipt size={16} className="stroke-[2.2]" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                         <h3 className="text-xs font-bold text-slate-900 leading-none">Daftar Item</h3>
-                        <p className="text-[10px] text-slate-400 mt-1.5 leading-none">
-                            Daftar suku cadang, barang, atau jasa layanan yang tercatat.
+                        <p className="text-[10px] text-slate-400 mt-1 leading-none truncate">
+                            Daftar barang / jasa layanan yang tercatat.
                         </p>
                     </div>
                 </div>
-                <div className="text-[10px] font-bold text-slate-400 bg-slate-50 border border-slate-100 rounded-lg px-2 py-0.5">
+                <div className="text-[10px] font-bold text-slate-400 bg-slate-50 border border-slate-100 rounded-lg px-2 py-0.5 shrink-0">
                     {items.length} Item
                 </div>
             </div>
 
-            {/* DataTable */}
-            <div className="overflow-hidden rounded-xl border border-slate-100">
-                <DataTable
-                    columns={columns}
-                    data={items}
-                    emptyMessage="Tidak ada item dalam transaksi ini."
-                    virtualize={false}
-                />
+            {/* DataTable Wrapper */}
+            <div className="overflow-x-auto rounded-xl border border-slate-100">
+                <div className="min-w-[500px]">
+                    <DataTable
+                        columns={columns}
+                        data={items}
+                        emptyMessage="Tidak ada item dalam transaksi ini."
+                        virtualize={false}
+                    />
+                </div>
             </div>
         </div>
     );
