@@ -67,10 +67,10 @@ export function InfoSesiAktifModal({
                 }
             }}
             className={cn(
-                "transition-all duration-300",
+                "transition-all duration-300 w-[95vw] sm:w-full",
                 showHistory && subView === "info"
-                    ? "max-w-3xl sm:max-w-3xl"
-                    : "max-w-lg sm:max-w-lg"
+                    ? "max-w-full sm:max-w-xl md:max-w-3xl"
+                    : "max-w-full sm:max-w-lg"
             )}
             showCloseButton={false}
         >

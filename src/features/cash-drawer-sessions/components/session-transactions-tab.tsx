@@ -14,7 +14,6 @@ import {
     IconInfoCircle,
     IconUser,
     IconTag,
-    IconAlertTriangle,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 
