@@ -1,5 +1,8 @@
 "use client";
 
+import React, { useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { BarcodeInput } from "@/components/shared/barcode-input";
 import { AppButton } from "@/components/shared/app-button";
@@ -16,9 +19,7 @@ import type { CartItem } from "@/features/checkout/types";
 import type { Product } from "@/features/master/products/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconScan, IconTrash } from "@tabler/icons-react";
-import React, { useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { useDeviceResponsive } from "@/hooks/use-device";
 import { ProductSearchDialog } from "./product-search-dialog";
 
 interface ServicePriceInputProps {
@@ -114,6 +115,7 @@ export function CheckoutCartSection({
     onAddProduct,
     products = [],
 }: CheckoutCartSectionProps) {
+    const { isMobile } = useDeviceResponsive();
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -132,7 +134,7 @@ export function CheckoutCartSection({
                         onProductFound={onAddProduct}
                         onError={(msg) => toast.error(msg)}
                         disabled={isProcessing}
-                        placeholder="Scan Barcode atau ketik nama produk... (Enter)"
+                        placeholder={isMobile ? "Scan Barcode / ketik nama produk..." : "Scan Barcode atau ketik nama produk... (Enter)"}
                         mode="sell"
                         products={products}
                         searchLabel="Cari Selengkapnya"
@@ -273,94 +275,115 @@ export function CheckoutCartSection({
                         </div>
 
                         {/* Mobile Card List View */}
-                        <div className="block sm:hidden space-y-3">
-                            {cart.map((item) => (
-                                <div
-                                    key={item.itemId ?? item.product_uid}
-                                    className="bg-white border border-slate-100 rounded-xl p-3.5 shadow-sm flex flex-col gap-3"
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <div className="min-w-0 flex-1 pr-2">
-                                            <div className="font-bold text-slate-800 text-xs break-words flex items-center gap-2">
-                                                {item.name}
-                                                {item.is_jasa && (
-                                                    <span className="bg-emerald-100 text-emerald-700 text-[9px] px-1.5 py-0.5 rounded-sm font-bold uppercase tracking-wider whitespace-nowrap">
-                                                        Jasa
+                        <div className="block sm:hidden space-y-2.5">
+                            <div className="flex justify-between items-center px-1 pb-1 text-[11px] font-bold text-slate-500 border-b border-slate-100 dark:border-slate-800 pb-2 mb-2">
+                                <span className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse" />
+                                    Item Belanja ({cart.length})
+                                </span>
+                                <span className="text-[10px] font-extrabold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                                    Total Qty: {cart.reduce((acc, i) => acc + i.qty, 0)}
+                                </span>
+                            </div>
+                            {cart.map((item, idx) => {
+                                const itemTotal = item.price * item.qty;
+                                return (
+                                    <div
+                                        key={item.itemId ?? item.product_uid ?? idx}
+                                        className="bg-white dark:bg-slate-950 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-3 shadow-2xs flex flex-col gap-2.5 transition-all hover:border-slate-300"
+                                    >
+                                        {/* Top Row: Item Name, Badges & Trash */}
+                                        <div className="flex justify-between items-start gap-2">
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                    <span className="font-extrabold text-slate-900 dark:text-slate-100 text-xs sm:text-sm leading-snug">
+                                                        {item.name}
                                                     </span>
+                                                    {item.is_jasa && (
+                                                        <span className="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 text-[9px] px-1.5 py-0.2 rounded-md font-black uppercase tracking-wider shrink-0">
+                                                            Jasa
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {item.barcode && (
+                                                    <div className="text-[10px] text-slate-400 font-mono font-medium mt-0.5">
+                                                        {item.barcode}
+                                                    </div>
                                                 )}
                                             </div>
-                                            {item.barcode && (
-                                                <div className="text-[10px] text-slate-400 font-medium mt-0.5">
-                                                    Barcode: {item.barcode}
+                                            <AppButton
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon-xs"
+                                                onClick={() => onRemoveItem(item)}
+                                                disabled={isProcessing}
+                                                className="text-rose-500 hover:bg-rose-50 hover:text-rose-600 p-1.5 rounded-xl transition-colors disabled:opacity-40 shrink-0 cursor-pointer"
+                                                title="Hapus Item"
+                                            >
+                                                <IconTrash size={16} />
+                                            </AppButton>
+                                        </div>
+
+                                        {/* Bottom Row: Price & Quantity Controls */}
+                                        <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/60">
+                                            {/* Price Breakdown */}
+                                            <div className="flex flex-col min-w-0">
+                                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                                                    Harga &amp; Subtotal
+                                                </span>
+                                                <div className="flex items-center gap-1.5 mt-0.5">
+                                                    {item.is_jasa ? (
+                                                        <ServicePriceInput
+                                                            item={item}
+                                                            onUpdatePrice={onUpdatePrice}
+                                                            isProcessing={isProcessing}
+                                                            className="w-24 h-7 text-right text-xs font-bold text-slate-800 border border-slate-200 rounded-lg outline-none focus-visible:ring-emerald-500 px-2"
+                                                        />
+                                                    ) : (
+                                                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 tabular-nums">
+                                                            {formatRupiah(item.price)}
+                                                        </span>
+                                                    )}
+                                                    <span className="text-slate-300 font-bold text-xs">&rarr;</span>
+                                                    <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 tabular-nums bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-900/30">
+                                                        {formatRupiah(itemTotal)}
+                                                    </span>
                                                 </div>
-                                            )}
-                                        </div>
-                                        <AppButton
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon-xs"
-                                            onClick={() => onRemoveItem(item)}
-                                            disabled={isProcessing}
-                                            className="text-rose-500 hover:bg-rose-50 hover:text-rose-600 p-1.5 rounded transition-colors disabled:opacity-40 shrink-0"
-                                        >
-                                            <IconTrash size={16} />
-                                        </AppButton>
-                                    </div>
+                                            </div>
 
-                                    <div className="flex justify-between items-center bg-slate-50/50 p-2 rounded-lg border border-slate-100">
-                                        <div className="text-[10px] font-bold text-slate-400 flex items-center">
-                                            Harga:
-                                            {item.is_jasa ? (
-                                                <ServicePriceInput
-                                                    item={item}
-                                                    onUpdatePrice={onUpdatePrice}
-                                                    isProcessing={isProcessing}
-                                                    className="w-28 ml-2 h-7 text-right text-xs font-bold text-slate-800 border border-slate-200 rounded-md outline-none focus-visible:ring-emerald-500 focus-visible:border-emerald-500 px-2"
+                                            {/* Touch-Friendly Qty Controls */}
+                                            <div className="flex items-center gap-1 shrink-0">
+                                                <AppButton
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon-xs"
+                                                    onClick={() => onUpdateQty(item, item.qty - 1)}
+                                                    disabled={isProcessing}
+                                                    className="w-8 h-8 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-center bg-slate-50 hover:bg-emerald-50 dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 font-black disabled:opacity-40 cursor-pointer text-sm shadow-2xs active:scale-95 transition-all"
+                                                >
+                                                    -
+                                                </AppButton>
+                                                <CheckoutQtyInput
+                                                    value={item.qty}
+                                                    onChange={(num) => onUpdateQty(item, num)}
+                                                    className="w-12 h-8 text-center text-xs font-extrabold text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-emerald-500 px-1 shadow-2xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                    disabled={isProcessing}
                                                 />
-                                            ) : (
-                                                <span className="text-slate-700 font-semibold ml-1">{formatRupiah(item.price)}</span>
-                                            )}
-                                        </div>
-                                        <div className="text-[10px] font-bold text-slate-400">
-                                            Total: <span className="text-emerald-600 font-extrabold ml-1">{formatRupiah(item.price * item.qty)}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                            Jumlah (Qty)
-                                        </span>
-                                        <div className="flex items-center gap-1">
-                                            <AppButton
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon-xs"
-                                                onClick={() => onUpdateQty(item, item.qty - 1)}
-                                                disabled={isProcessing}
-                                                className="w-7 h-7 border border-slate-200 rounded flex items-center justify-center hover:bg-emerald-50 text-emerald-600 font-bold disabled:opacity-40 cursor-pointer"
-                                            >
-                                                -
-                                            </AppButton>
-                                            <CheckoutQtyInput
-                                                value={item.qty}
-                                                onChange={(num) => onUpdateQty(item, num)}
-                                                className="w-14 h-7 text-center text-xs font-bold text-slate-800 border border-slate-200 rounded-lg outline-none focus:border-emerald-500 px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                disabled={isProcessing}
-                                            />
-                                            <AppButton
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon-xs"
-                                                onClick={() => onUpdateQty(item, item.qty + 1)}
-                                                disabled={isProcessing}
-                                                className="w-7 h-7 border border-slate-200 rounded flex items-center justify-center hover:bg-emerald-50 text-emerald-600 font-bold disabled:opacity-40 cursor-pointer"
-                                            >
-                                                +
-                                            </AppButton>
+                                                <AppButton
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon-xs"
+                                                    onClick={() => onUpdateQty(item, item.qty + 1)}
+                                                    disabled={isProcessing}
+                                                    className="w-8 h-8 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-center bg-slate-50 hover:bg-emerald-50 dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 font-black disabled:opacity-40 cursor-pointer text-sm shadow-2xs active:scale-95 transition-all"
+                                                >
+                                                    +
+                                                </AppButton>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </>
                 )}

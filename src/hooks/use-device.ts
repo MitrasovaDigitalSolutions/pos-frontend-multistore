@@ -35,8 +35,12 @@ export function useDevice() {
 }
 
 /**
- * Helper hook to quickly check if current viewport is mobile (< 768px)
+ * Helper hook to check if current viewport is mobile (< 768px)
  */
-export function useIsMobile() {
-    return useDeviceStore((state) => state.isMobile);
+export function useDeviceResponsive() {
+    const isMobile = useDeviceStore((state) => state.isMobile);
+    const isTablet = useDeviceStore((state) => state.isTablet);
+    const isDesktop = useDeviceStore((state) => state.isDesktop);
+
+    return { isMobile, isTablet, isDesktop };
 }
