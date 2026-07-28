@@ -248,6 +248,15 @@ export function BalanceSheetEditor({
 
     const hasChanges = adjustmentLines.length > 0;
 
+    const handleCancel = () => {
+        resetStore();
+        if (typeof window !== "undefined" && window.history.length > 1) {
+            router.back();
+        } else {
+            router.push("/admin/accounting/balance-sheet");
+        }
+    };
+
     // Save adjustment journal line items
     const handleSaveJournal = async (status: "draft" | "posted") => {
         if (!editedData || !hasChanges) return;
@@ -281,7 +290,11 @@ export function BalanceSheetEditor({
             }
             resetStore();
             refetch();
-            router.push("/admin/accounting/journals");
+            if (action === "edit") {
+                router.push("/admin/accounting/journals");
+            } else {
+                router.push("/admin/accounting/balance-sheet");
+            }
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : "Gagal menyimpan jurnal.";
             toast.error(msg);
@@ -435,10 +448,7 @@ export function BalanceSheetEditor({
                     totalDebit={totalLeftVal}
                     totalCredit={totalRightVal}
                     viewType={effectiveViewType}
-                    onCancel={() => {
-                        resetStore();
-                        router.push("/admin/accounting/journals");
-                    }}
+                    onCancel={handleCancel}
                     onSaveDraft={() => handleSaveJournal("draft")}
                     onPost={() => handleSaveJournal("posted")}
                     isPending={isPending}
