@@ -264,32 +264,35 @@ export function ReceivingList({
                                 <StatusBadge status={status} label={statusLabel} />
                             </div>
 
-                            {/* Content Body: Supplier & Faktur & Total */}
-                            <div className="grid grid-cols-2 gap-2 text-[11px]">
-                                <div className="space-y-0.5">
-                                    <span className="text-[10px] text-slate-400 font-medium">Supplier:</span>
-                                    <p className="font-semibold text-slate-800 dark:text-slate-200 truncate">
-                                        {supplierName}
-                                    </p>
-                                </div>
-                                <div className="space-y-0.5 text-right">
-                                    <span className="text-[10px] text-slate-400 font-medium">Nilai Faktur:</span>
-                                    <p className="font-extrabold text-slate-900 dark:text-slate-100 tabular-nums">
-                                        {rec.nilai_faktur !== null ? formatRupiah(rec.nilai_faktur) : "-"}
-                                    </p>
-                                </div>
-                                {rec.nomor_faktur && (
+                            {/* Content Body: Supplier & No. Faktur (Left) | Nilai Faktur & Status Bayar (Right) */}
+                            <div className="grid grid-cols-2 gap-3 text-[11px] py-1">
+                                <div className="space-y-2 min-w-0">
                                     <div className="space-y-0.5">
-                                        <span className="text-[10px] text-slate-400 font-medium">No. Faktur:</span>
-                                        <p className="font-mono text-slate-600 dark:text-slate-400 truncate">
-                                            {rec.nomor_faktur}
+                                        <span className="text-[10px] text-slate-400 font-medium block">Supplier</span>
+                                        <p className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                                            {supplierName}
                                         </p>
                                     </div>
-                                )}
-                                <div className="space-y-0.5 text-right ml-auto">
-                                    <span className="text-[10px] text-slate-400 font-medium">Pembayaran:</span>
-                                    <div>
-                                        <StatusBadge status={paymentStatus} label={paymentLabel} />
+                                    <div className="space-y-0.5">
+                                        <span className="text-[10px] text-slate-400 font-medium block">No. Faktur</span>
+                                        <p className="font-mono text-slate-600 dark:text-slate-400 truncate">
+                                            {rec.nomor_faktur || "-"}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2 text-right">
+                                    <div className="space-y-0.5">
+                                        <span className="text-[10px] text-slate-400 font-medium block">Nilai Faktur</span>
+                                        <p className="font-extrabold text-slate-900 dark:text-slate-100 tabular-nums">
+                                            {rec.nilai_faktur !== null ? formatRupiah(rec.nilai_faktur) : "-"}
+                                        </p>
+                                    </div>
+                                    <div className="space-y-0.5 flex flex-col items-end">
+                                        <span className="text-[10px] text-slate-400 font-medium block">Status Bayar</span>
+                                        <div>
+                                            <StatusBadge status={paymentStatus} label={paymentLabel} />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
