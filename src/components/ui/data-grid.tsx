@@ -33,7 +33,7 @@ export function DataGrid<TData>({
 
     if (isLoading) {
         return (
-            <div className={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 p-3.5", gridClassName)}>
+            <div className={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3.5 p-3.5", gridClassName)}>
                 {Array.from({ length: 6 }).map((_, i) => (
                     <div
                         key={i}
@@ -62,7 +62,7 @@ export function DataGrid<TData>({
     }
 
     return (
-        <div className={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 p-3.5", gridClassName)}>
+        <div className={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3.5 p-3.5", gridClassName)}>
             {rows.map((row) => {
                 if (renderCardItem) {
                     return <React.Fragment key={row.id}>{renderCardItem(row)}</React.Fragment>;
