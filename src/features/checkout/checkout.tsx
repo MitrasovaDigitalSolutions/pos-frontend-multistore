@@ -260,8 +260,8 @@ export function Checkout() {
                 </div>
             </div>
 
-            {/* Shortcuts Bar */}
-            <div className="hidden md:flex absolute left-0 right-0 bottom-0 h-8 bg-slate-900 border-t border-slate-800 text-slate-400 items-center px-6 text-[10px] justify-between font-semibold select-none z-10">
+            {/* Shortcuts Bar (Flex child footer - never overlaps content) */}
+            <div className="hidden md:flex bg-slate-900 border-t border-slate-800 text-slate-400 items-center px-6 text-[10px] justify-between font-semibold select-none shrink-0 h-8 z-10">
                 <div className="flex gap-6 items-center">
                     <div className="flex gap-1.5 items-center">
                         <kbd className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold shadow border border-slate-700">F1</kbd> Bayar
@@ -290,13 +290,14 @@ export function Checkout() {
                 </button>
             </div>
 
-            {/* Mobile Settings Button - Floating bottom-right */}
+            {/* Mobile Settings Button - Floating top-right inside topbar zone */}
             <button
                 type="button"
                 onClick={() => state.setIsSettingsOpen(true)}
-                className="flex md:hidden fixed bottom-4 right-4 z-30 items-center justify-center w-9 h-9 rounded-full bg-slate-900 text-white shadow-lg border border-slate-800 cursor-pointer active:scale-95 transition-all"
+                className="flex md:hidden fixed top-2 right-2 z-40 items-center justify-center w-7 h-7 rounded-lg bg-slate-800 text-slate-300 hover:text-white shadow-xs border border-slate-700 cursor-pointer active:scale-95 transition-all"
+                title="Pengaturan Kasir"
             >
-                <IconSettings size={16} />
+                <IconSettings size={15} />
             </button>
 
             {/* Dialogs */}
