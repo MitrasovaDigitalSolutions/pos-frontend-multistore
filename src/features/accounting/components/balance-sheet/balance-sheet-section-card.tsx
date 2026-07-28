@@ -9,6 +9,7 @@ import { NumberInput } from "@/components/ui/number-input";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { cn } from "@/lib/utils";
 import { useBalanceSheetStore } from "@/stores/balance-sheet-store";
+import { useDeviceResponsive } from "@/hooks/use-device";
 import type { ChartOfAccount, BalanceSheetDetailCategory } from "@/features/accounting/types";
 import {
     IconWallet,
@@ -59,6 +60,7 @@ function BalanceSheetItemDetailTable({
     parentName,
     showDebitCredit = false,
 }: BalanceSheetItemDetailTableProps) {
+    const { isMobile } = useDeviceResponsive();
     const [search, setSearch] = useState("");
 
     const filteredDetail = useMemo(() => {
@@ -80,19 +82,19 @@ function BalanceSheetItemDetailTable({
     }, [detail]);
 
     return (
-        <div className="bg-slate-50/90 dark:bg-slate-950/60 rounded-xl border border-slate-200/80 dark:border-slate-800 p-3.5 space-y-3 my-1.5 shadow-xs">
+        <div className="bg-slate-50/90 dark:bg-slate-950/60 rounded-xl border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3.5 space-y-2.5 sm:space-y-3 my-1.5 shadow-xs">
             {/* Header info & Search bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b border-slate-200/60 dark:border-slate-800">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-2.5 pb-2 border-b border-slate-200/60 dark:border-slate-800">
                 <div className="flex items-center gap-2">
                     <div className="p-1.5 rounded-lg bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 shrink-0">
-                        <IconListDetails className="w-4 h-4" />
+                        <IconListDetails className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </div>
                     <div>
-                        <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                            Rincian Kategori: {parentName}
+                        <h5 className="text-[11px] sm:text-xs font-bold text-slate-800 dark:text-slate-200 line-clamp-1">
+                            Rincian: {parentName}
                         </h5>
                         <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 block">
-                            Total {detail.length} kategori terdaftar
+                            {detail.length} kategori
                         </span>
                     </div>
                 </div>
@@ -111,104 +113,152 @@ function BalanceSheetItemDetailTable({
                 )}
             </div>
 
-            {/* Scrollable Sub-table */}
-            <div className="max-h-64 overflow-y-auto rounded-lg border border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-900 shadow-xs">
-                <table className="w-full text-left text-[11px] border-collapse">
-                    <thead className="sticky top-0 bg-slate-100/90 dark:bg-slate-900/90 backdrop-blur-xs text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 select-none z-10">
-                        <tr>
-                            <th className="py-2 px-3">Kategori</th>
-                            {showDebitCredit && (
-                                <>
-                                    <th className="py-2 px-3 text-right">Debit</th>
-                                    <th className="py-2 px-3 text-right">Kredit</th>
-                                </>
-                            )}
-                            <th className="py-2 px-3 text-right">Saldo Bersih</th>
-                            <th className="py-2 px-3 text-right w-24">Persentase</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40 font-medium">
-                        {filteredDetail.length === 0 ? (
-                            <tr>
-                                <td
-                                    colSpan={showDebitCredit ? 5 : 3}
-                                    className="py-4 text-center text-slate-400 dark:text-slate-500 italic text-xs"
+            {/* Mobile: Card list — Desktop: Table */}
+            {isMobile ? (
+                <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                    {filteredDetail.length === 0 ? (
+                        <p className="py-3 text-center text-slate-400 dark:text-slate-500 italic text-xs">
+                            Tidak ada kategori yang cocok dengan &quot;{search}&quot;.
+                        </p>
+                    ) : (
+                        filteredDetail.map((d, dIdx) => {
+                            const absParent = Math.abs(parentAmount) || 1;
+                            const portion = Math.min(100, Math.max(0, (Math.abs(d.amount) / absParent) * 100));
+                            const formattedPortion = portion > 0 && portion < 0.1
+                                ? "< 0.1%"
+                                : `${portion.toFixed(portion % 1 === 0 ? 0 : 1)}%`;
+                            return (
+                                <div
+                                    key={`${d.kategori}-${dIdx}`}
+                                    className="flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/60"
                                 >
-                                    Tidak ada kategori yang cocok dengan &quot;{search}&quot;.
+                                    <div className="min-w-0 flex-1">
+                                        <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-200 block truncate">
+                                            {d.kategori || "Tanpa Kategori"}
+                                        </span>
+                                        {showDebitCredit && (
+                                            <div className="flex items-center gap-2 mt-0.5 text-[10px]">
+                                                <span className="text-emerald-600 dark:text-emerald-400 tabular-nums">D: {d.debit ? formatRupiah(d.debit) : "0"}</span>
+                                                <span className="text-rose-600 dark:text-rose-400 tabular-nums">K: {d.credit ? formatRupiah(d.credit) : "0"}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                        <span className="text-[11px] font-bold text-slate-800 dark:text-slate-100 tabular-nums block">
+                                            {formatRupiah(d.amount)}
+                                        </span>
+                                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500">{formattedPortion}</span>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                    {/* Mobile total */}
+                    <div className="flex items-center justify-between px-2.5 py-2 rounded-lg bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 mt-1">
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Total ({detail.length})</span>
+                        <span className="text-[11px] font-extrabold text-slate-800 dark:text-slate-100 tabular-nums">{formatRupiah(detailTotalAmount)}</span>
+                    </div>
+                </div>
+            ) : (
+                /* Desktop: Original table */
+                <div className="max-h-64 overflow-y-auto rounded-lg border border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-900 shadow-xs">
+                    <table className="w-full text-left text-[11px] border-collapse">
+                        <thead className="sticky top-0 bg-slate-100/90 dark:bg-slate-900/90 backdrop-blur-xs text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 select-none z-10">
+                            <tr>
+                                <th className="py-2 px-3">Kategori</th>
+                                {showDebitCredit && (
+                                    <>
+                                        <th className="py-2 px-3 text-right">Debit</th>
+                                        <th className="py-2 px-3 text-right">Kredit</th>
+                                    </>
+                                )}
+                                <th className="py-2 px-3 text-right">Saldo Bersih</th>
+                                <th className="py-2 px-3 text-right w-24">Persentase</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40 font-medium">
+                            {filteredDetail.length === 0 ? (
+                                <tr>
+                                    <td
+                                        colSpan={showDebitCredit ? 5 : 3}
+                                        className="py-4 text-center text-slate-400 dark:text-slate-500 italic text-xs"
+                                    >
+                                        Tidak ada kategori yang cocok dengan &quot;{search}&quot;.
+                                    </td>
+                                </tr>
+                            ) : (
+                                filteredDetail.map((d, dIdx) => {
+                                    const absParent = Math.abs(parentAmount) || 1;
+                                    const portion = Math.min(100, Math.max(0, (Math.abs(d.amount) / absParent) * 100));
+                                    const formattedPortion = portion > 0 && portion < 0.1
+                                        ? "< 0.1%"
+                                        : `${portion.toFixed(portion % 1 === 0 ? 0 : 1)}%`;
+
+                                    return (
+                                        <tr
+                                            key={`${d.kategori}-${dIdx}`}
+                                            className="hover:bg-slate-50/80 dark:hover:bg-slate-850/40 transition-colors"
+                                        >
+                                            <td className="py-2 px-3 text-slate-700 dark:text-slate-200 font-semibold">
+                                                {d.kategori || "Tanpa Kategori"}
+                                            </td>
+                                            {showDebitCredit && (
+                                                <>
+                                                    <td className="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400 tabular-nums">
+                                                        {d.debit ? formatRupiah(d.debit) : "Rp 0"}
+                                                    </td>
+                                                    <td className="py-2 px-3 text-right text-rose-600 dark:text-rose-400 tabular-nums">
+                                                        {d.credit ? formatRupiah(d.credit) : "Rp 0"}
+                                                    </td>
+                                                </>
+                                            )}
+                                            <td className="py-2 px-3 text-right font-bold text-slate-800 dark:text-slate-100 tabular-nums">
+                                                {formatRupiah(d.amount)}
+                                            </td>
+                                            <td className="py-2 px-3 text-right tabular-nums">
+                                                <div className="flex items-center justify-end gap-1.5">
+                                                    <div className="w-12 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden hidden sm:block">
+                                                        <div
+                                                            className="h-full bg-indigo-500 rounded-full"
+                                                            style={{ width: `${portion}%` }}
+                                                        />
+                                                    </div>
+                                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                                                        {formattedPortion}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
+                        </tbody>
+                        <tfoot className="bg-slate-50 dark:bg-slate-900 font-bold border-t border-slate-200 dark:border-slate-800 sticky bottom-0 z-10">
+                            <tr>
+                                <td className="py-2.5 px-3 text-[10px] uppercase text-slate-500 dark:text-slate-400">
+                                    Total Detail ({detail.length})
+                                </td>
+                                {showDebitCredit && (
+                                    <>
+                                        <td className="py-2.5 px-3 text-right text-emerald-600 dark:text-emerald-400 tabular-nums">
+                                            {formatRupiah(detailTotalDebit)}
+                                        </td>
+                                        <td className="py-2.5 px-3 text-right text-rose-600 dark:text-rose-400 tabular-nums">
+                                            {formatRupiah(detailTotalCredit)}
+                                        </td>
+                                    </>
+                                )}
+                                <td className="py-2.5 px-3 text-right text-slate-800 dark:text-slate-100 tabular-nums">
+                                    {formatRupiah(detailTotalAmount)}
+                                </td>
+                                <td className="py-2.5 px-3 text-right text-[10px] text-slate-400">
+                                    100%
                                 </td>
                             </tr>
-                        ) : (
-                            filteredDetail.map((d, dIdx) => {
-                                const absParent = Math.abs(parentAmount) || 1;
-                                const portion = Math.min(100, Math.max(0, (Math.abs(d.amount) / absParent) * 100));
-                                const formattedPortion = portion > 0 && portion < 0.1
-                                    ? "< 0.1%"
-                                    : `${portion.toFixed(portion % 1 === 0 ? 0 : 1)}%`;
-
-                                return (
-                                    <tr
-                                        key={`${d.kategori}-${dIdx}`}
-                                        className="hover:bg-slate-50/80 dark:hover:bg-slate-850/40 transition-colors"
-                                    >
-                                        <td className="py-2 px-3 text-slate-700 dark:text-slate-200 font-semibold">
-                                            {d.kategori || "Tanpa Kategori"}
-                                        </td>
-                                        {showDebitCredit && (
-                                            <>
-                                                <td className="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400 tabular-nums">
-                                                    {d.debit ? formatRupiah(d.debit) : "Rp 0"}
-                                                </td>
-                                                <td className="py-2 px-3 text-right text-rose-600 dark:text-rose-400 tabular-nums">
-                                                    {d.credit ? formatRupiah(d.credit) : "Rp 0"}
-                                                </td>
-                                            </>
-                                        )}
-                                        <td className="py-2 px-3 text-right font-bold text-slate-800 dark:text-slate-100 tabular-nums">
-                                            {formatRupiah(d.amount)}
-                                        </td>
-                                        <td className="py-2 px-3 text-right tabular-nums">
-                                            <div className="flex items-center justify-end gap-1.5">
-                                                <div className="w-12 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden hidden sm:block">
-                                                    <div
-                                                        className="h-full bg-indigo-500 rounded-full"
-                                                        style={{ width: `${portion}%` }}
-                                                    />
-                                                </div>
-                                                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                                                    {formattedPortion}
-                                                </span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })
-                        )}
-                    </tbody>
-                    <tfoot className="bg-slate-50 dark:bg-slate-900 font-bold border-t border-slate-200 dark:border-slate-800 sticky bottom-0 z-10">
-                        <tr>
-                            <td className="py-2.5 px-3 text-[10px] uppercase text-slate-500 dark:text-slate-400">
-                                Total Detail ({detail.length})
-                            </td>
-                            {showDebitCredit && (
-                                <>
-                                    <td className="py-2.5 px-3 text-right text-emerald-600 dark:text-emerald-400 tabular-nums">
-                                        {formatRupiah(detailTotalDebit)}
-                                    </td>
-                                    <td className="py-2.5 px-3 text-right text-rose-600 dark:text-rose-400 tabular-nums">
-                                        {formatRupiah(detailTotalCredit)}
-                                    </td>
-                                </>
-                            )}
-                            <td className="py-2.5 px-3 text-right text-slate-800 dark:text-slate-100 tabular-nums">
-                                {formatRupiah(detailTotalAmount)}
-                            </td>
-                            <td className="py-2.5 px-3 text-right text-[10px] text-slate-400">
-                                100%
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
+                        </tfoot>
+                    </table>
+                </div>
+            )}
         </div>
     );
 }
@@ -248,6 +298,7 @@ export function BalanceSheetSectionCard({
     sectionKey,
     coaList = []
 }: BalanceSheetSectionCardProps) {
+    // const { isMobile } = useDeviceResponsive();
     const { updateItemDebitCredit, removeItem, addItem } = useBalanceSheetStore();
     const [isAdding, setIsAdding] = useState(false);
     const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
@@ -327,17 +378,156 @@ export function BalanceSheetSectionCard({
 
     return (
         <Card className={cn("bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-2xl shadow-xs overflow-hidden border-t-2", borderColors[accentColor])}>
-            <CardHeader className="pb-4 px-6 pt-5">
+            <CardHeader className="pb-3 sm:pb-4 px-3.5 sm:px-6 pt-3.5 sm:pt-5">
                 <div className="flex items-center gap-2">
                     {icon}
                     <CardTitle className="text-xs font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider">{title}</CardTitle>
                 </div>
-                <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 leading-relaxed">
+                <p className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 mt-1 leading-relaxed hidden sm:block">
                     {description}
                 </p>
             </CardHeader>
             <CardContent className="p-0">
-                <div className="overflow-x-auto w-full">
+                {/* MOBILE LAYOUT */}
+                <div className="block md:hidden px-3 pb-3 space-y-1.5">
+                    {displayedItems.map((item, idx) => {
+                        const percentVal = total > 0 ? (item.amount / total) * 100 : 0;
+                        const formattedPercent = percentVal > 0 && percentVal < 0.1
+                            ? "< 0.1%"
+                            : `${percentVal.toFixed(percentVal % 1 === 0 ? 0 : 1)}%`;
+
+                        const itemKey = `${item.uid || item.kode || item.nama}-${idx}`;
+                        const isExpanded = !!expandedRows[itemKey];
+                        const hasDetail = Array.isArray(item.detail) && item.detail.length > 0;
+
+                        return (
+                            <Fragment key={itemKey}>
+                                <div className="rounded-xl border border-slate-100 dark:border-slate-800/60 bg-slate-50/40 dark:bg-slate-950/30 overflow-hidden">
+                                    {/* Card header — account info */}
+                                    <div className="px-3 pt-2.5 pb-2">
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="min-w-0 flex-1">
+                                                <span className="text-[9px] font-mono text-slate-400 dark:text-slate-500 block">
+                                                    {item.kode ?? "-"}
+                                                </span>
+                                                <div className="flex items-center gap-1.5 mt-0.5">
+                                                    {getAccountIcon(item.nama)}
+                                                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate">
+                                                        {item.nama}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            {isEditing && sectionKey && (
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => removeItem(sectionKey, item.uid || "")}
+                                                    className="h-7 w-7 rounded-lg text-rose-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 shrink-0"
+                                                >
+                                                    <IconTrash className="w-3.5 h-3.5" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Edit mode: Debit/Kredit inputs */}
+                                    {isEditing && sectionKey ? (
+                                        <div className="px-3 pb-2.5">
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div className="space-y-0.5">
+                                                    <label className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase">Debit</label>
+                                                    <NumberInput
+                                                        value={item.debit ?? 0}
+                                                        onChange={(val) => updateItemDebitCredit(sectionKey, item.uid || "", val || 0, item.credit ?? 0)}
+                                                        allowNegative={false}
+                                                        className="w-full text-right font-bold text-slate-800 dark:text-slate-200 text-[11px] h-8 rounded-lg border-slate-200 dark:border-slate-800 focus-visible:ring-indigo-500"
+                                                        placeholder="0"
+                                                    />
+                                                </div>
+                                                <div className="space-y-0.5">
+                                                    <label className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase">Kredit</label>
+                                                    <NumberInput
+                                                        value={item.credit ?? 0}
+                                                        onChange={(val) => updateItemDebitCredit(sectionKey, item.uid || "", item.debit ?? 0, val || 0)}
+                                                        allowNegative={false}
+                                                        className="w-full text-right font-bold text-slate-800 dark:text-slate-200 text-[11px] h-8 rounded-lg border-slate-200 dark:border-slate-800 focus-visible:ring-indigo-500"
+                                                        placeholder="0"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="mt-1.5 text-right">
+                                                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                                                    Saldo: <span className="text-slate-800 dark:text-slate-100">{formatRupiah(item.amount)}</span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        /* View mode: Saldo display */
+                                        <div className="px-3 pb-2.5 flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2">
+                                                {hasDetail && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => toggleRow(itemKey)}
+                                                        className={cn(
+                                                            "h-5 px-1.5 text-[9px] font-bold rounded-md flex items-center gap-0.5 shrink-0 border transition-all cursor-pointer select-none",
+                                                            isExpanded
+                                                                ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
+                                                                : "bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 border-indigo-200/60 dark:border-indigo-800/40"
+                                                        )}
+                                                    >
+                                                        <span>{isExpanded ? "Tutup" : `Detail (${item.detail!.length})`}</span>
+                                                        <IconChevronDown className={cn("w-2.5 h-2.5 transition-transform duration-200", isExpanded && "rotate-180")} />
+                                                    </Button>
+                                                )}
+                                                {showDebitCredit && (
+                                                    <div className="flex items-center gap-1.5 text-[10px]">
+                                                        <span className="text-emerald-600 dark:text-emerald-400 tabular-nums">D: {fmtLedger(item.debit || 0)}</span>
+                                                        <span className="text-rose-600 dark:text-rose-400 tabular-nums">K: {fmtLedger(item.credit || 0)}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="text-right shrink-0">
+                                                <span className="text-[11px] font-bold text-slate-800 dark:text-slate-100 tabular-nums block">
+                                                    {formatRupiah(item.amount)}
+                                                </span>
+                                                {!showDebitCredit && percentVal > 0 && (
+                                                    <span className="text-[9px] text-slate-400 dark:text-slate-500 font-semibold">
+                                                        {formattedPercent}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Expanded detail (mobile) */}
+                                {isExpanded && hasDetail && (
+                                    <div className="pl-1">
+                                        <BalanceSheetItemDetailTable
+                                            detail={item.detail!}
+                                            parentAmount={item.amount}
+                                            parentName={item.nama}
+                                            showDebitCredit={showDebitCredit}
+                                        />
+                                    </div>
+                                )}
+                            </Fragment>
+                        );
+                    })}
+
+                    {/* Mobile total footer */}
+                    <div className={cn("rounded-xl px-3 py-2.5 border font-extrabold text-[11px] flex items-center justify-between select-none", bgTotals[accentColor])}>
+                        <span className="text-[9px] font-extrabold uppercase tracking-wider">{totalLabel}</span>
+                        <span className="tabular-nums">{formatRupiah(total)}</span>
+                    </div>
+                </div>
+
+                {/* DESKTOP TABLE LAYOUT */}
+                <div className="hidden md:block overflow-x-auto w-full">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b border-slate-100 dark:border-slate-800/80 text-[10px] font-bold uppercase tracking-wider text-slate-400/80 select-none">
@@ -518,45 +708,43 @@ export function BalanceSheetSectionCard({
 
                 {/* Edit Mode Inline CoA Adder */}
                 {isEditing && sectionKey && (
-                    <div className="px-6 py-3.5 bg-slate-50/50 dark:bg-slate-950/40 border-t border-slate-100 dark:border-slate-850/60">
+                    <div className="px-3 sm:px-6 py-3 sm:py-3.5 bg-slate-50/50 dark:bg-slate-950/40 border-t border-slate-100 dark:border-slate-850/60">
                         {isAdding ? (
                             <FormProvider {...addMethods}>
                                 <div className="flex flex-col gap-2 pt-1">
-                                    <div className="flex items-end gap-2">
-                                        <FormSelect<{ selectedAccountUid: string }>
-                                            name="selectedAccountUid"
-                                            label="Pilih Akun Baru"
-                                            options={availableCoas.map((coa) => ({
-                                                label: `${coa.kode} - ${coa.nama}`,
-                                                value: coa.uid,
-                                            }))}
-                                            placeholder="Pilih akun..."
-                                        />
-                                        <div className="flex items-center gap-1.5 shrink-0 mb-0.5">
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                onClick={handleAddAccount}
-                                                disabled={!watchedAccountUid}
-                                                className="h-9 px-3 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer"
-                                            >
-                                                <IconCheck className="w-3.5 h-3.5 mr-1" />
-                                                Tambah
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => {
-                                                    addMethods.reset({ selectedAccountUid: "" });
-                                                    setIsAdding(false);
-                                                }}
-                                                className="h-9 px-3 text-xs font-bold rounded-xl text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 cursor-pointer"
-                                            >
-                                                <IconX className="w-3.5 h-3.5 mr-1" />
-                                                Batal
-                                            </Button>
-                                        </div>
+                                    <FormSelect<{ selectedAccountUid: string }>
+                                        name="selectedAccountUid"
+                                        label="Pilih Akun Baru"
+                                        options={availableCoas.map((coa) => ({
+                                            label: `${coa.kode} - ${coa.nama}`,
+                                            value: coa.uid,
+                                        }))}
+                                        placeholder="Pilih akun..."
+                                    />
+                                    <div className="flex items-center gap-1.5 justify-end">
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            onClick={handleAddAccount}
+                                            disabled={!watchedAccountUid}
+                                            className="h-8 sm:h-9 px-3 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer"
+                                        >
+                                            <IconCheck className="w-3.5 h-3.5 mr-1" />
+                                            Tambah
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => {
+                                                addMethods.reset({ selectedAccountUid: "" });
+                                                setIsAdding(false);
+                                            }}
+                                            className="h-8 sm:h-9 px-3 text-xs font-bold rounded-xl text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 cursor-pointer"
+                                        >
+                                            <IconX className="w-3.5 h-3.5 mr-1" />
+                                            Batal
+                                        </Button>
                                     </div>
                                 </div>
                             </FormProvider>
@@ -566,7 +754,7 @@ export function BalanceSheetSectionCard({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setIsAdding(true)}
-                                className="w-full text-xs font-bold text-slate-650 dark:text-slate-400 border-dashed border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850 hover:border-slate-350 dark:hover:border-slate-700 rounded-xl py-2 h-9 flex items-center justify-center gap-1.5 transition-colors"
+                                className="w-full text-xs font-bold text-slate-650 dark:text-slate-400 border-dashed border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850 hover:border-slate-350 dark:hover:border-slate-700 rounded-xl py-2 h-8 sm:h-9 flex items-center justify-center gap-1.5 transition-colors"
                             >
                                 <IconPlus className="w-4 h-4 text-indigo-500" />
                                 Tambah Akun {title} Baru

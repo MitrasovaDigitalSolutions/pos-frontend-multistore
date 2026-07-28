@@ -33,19 +33,19 @@ export function BalanceSheetStatusCard({
     hideUnbalancedButton = false,
 }: BalanceSheetStatusCardProps) {
     return (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-4 relative z-10">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-2xl p-3.5 sm:p-6 shadow-sm">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-3 sm:gap-4 relative z-10">
                 {/* Status Message */}
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-3 sm:gap-4">
                     <div className={cn(
-                        "w-16 h-16 rounded-full flex items-center justify-center shrink-0",
+                        "w-10 h-10 sm:w-16 sm:h-16 rounded-full flex items-center justify-center shrink-0",
                         isBalanced ? "bg-gradient-to-br from-emerald-100 to-indigo-100 dark:from-emerald-950/50 dark:to-indigo-950/50" : "bg-rose-100 dark:bg-rose-950/50"
                     )}>
-                        <IconScale className={cn("w-8 h-8", isBalanced ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400 animate-pulse")} />
+                        <IconScale className={cn("w-5 h-5 sm:w-8 sm:h-8", isBalanced ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400 animate-pulse")} />
                     </div>
                     <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="font-extrabold text-sm text-slate-800 dark:text-slate-100">
+                            <h3 className="font-extrabold text-xs sm:text-sm text-slate-800 dark:text-slate-100">
                                 Status Keseimbangan Neraca
                             </h3>
                             <span className={cn(
@@ -57,7 +57,7 @@ export function BalanceSheetStatusCard({
                                 {isBalanced ? "Seimbang (Balanced)" : "Tidak Seimbang"}
                             </span>
                         </div>
-                        <p className="text-slate-500 dark:text-slate-450 text-xs mt-2 max-w-xl leading-relaxed">
+                        <p className="text-slate-500 dark:text-slate-450 text-[11px] sm:text-xs mt-1.5 sm:mt-2 max-w-xl leading-relaxed hidden sm:block">
                             {isBalanced
                                 ? "Sempurna! Persamaan neraca keuangan Anda tepat seimbang. Ini menunjukkan pencatatan jurnal pembukuan Anda sudah sinkron dan akurat."
                                 : "Perhatian! Jumlah saldo tidak seimbang. Silakan periksa kembali nominal input atau entri jurnal penyesuaian Anda."}
@@ -85,13 +85,13 @@ export function BalanceSheetStatusCard({
                 </div>
 
                 {/* Balance Bar & Metrics */}
-                <div className="w-full lg:w-[420px] shrink-0 space-y-3.5">
+                <div className="w-full lg:w-[420px] shrink-0 space-y-2.5 sm:space-y-3.5">
                     <div className="flex justify-between items-end">
                         <div className="space-y-1">
                             <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                                 {leftLabel || "Total Aset (A)"}
                             </span>
-                            <span className="text-base font-extrabold text-emerald-600 dark:text-emerald-450 font-mono">
+                            <span className="text-sm sm:text-base font-extrabold text-emerald-600 dark:text-emerald-450 font-mono">
                                 {formatRupiah(totalAssets)}
                             </span>
                         </div>
@@ -100,7 +100,7 @@ export function BalanceSheetStatusCard({
                                 {rightLabel || "Kewajiban + Ekuitas (K + E)"}
                             </span>
                             <span className={cn(
-                                "text-base font-extrabold font-mono",
+                                "text-sm sm:text-base font-extrabold font-mono",
                                 isBalanced ? "text-indigo-600 dark:text-indigo-400" : "text-rose-650 dark:text-rose-450"
                             )}>
                                 {formatRupiah(totalLiabilitiesAndEquity)}
