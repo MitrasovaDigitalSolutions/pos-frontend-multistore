@@ -60,6 +60,13 @@ export interface BalanceSheetExpense extends BalanceSheetSection {
     total_expense: number;
 }
 
+export interface BalanceSheetSHU {
+    total: number;
+    berjalan: number;
+    lalu: number;
+    lalu_label?: string;
+}
+
 export interface BalanceSheetData {
     as_of_date: string;
     assets: BalanceSheetAssets;
@@ -67,6 +74,7 @@ export interface BalanceSheetData {
     equity: BalanceSheetEquity;
     revenue: BalanceSheetRevenue;
     expense: BalanceSheetExpense;
+    shu?: BalanceSheetSHU;
     is_balanced: boolean;
 }
 

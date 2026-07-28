@@ -131,28 +131,58 @@ export function BalanceSheetDashboard({
         totalExpense,
     } = sectionsData;
 
-    // 2. Compute Net Income (Laba Rugi Tahun Berjalan)
+    // 2. Compute Net Income / SHU
+    const shuData = data?.shu;
     const netIncome = useMemo(() => {
+        if (shuData?.berjalan !== undefined) {
+            return shuData.berjalan;
+        }
         return totalRevenue - totalExpense;
-    }, [totalRevenue, totalExpense]);
+    }, [shuData, totalRevenue, totalExpense]);
 
-    // 3. Reorganize Equity in standard view to append Laba Tahun Berjalan
+    const shuLalu = shuData?.lalu || 0;
+    const shuLaluLabel = shuData?.lalu_label ? `SHU (${shuData.lalu_label})` : "SHU Tahun Lalu / Sebelumnya";
+    const totalSHU = shuData?.total !== undefined ? shuData.total : (netIncome + shuLalu);
+
+    // 3. Reorganize Equity in standard view to append SHU
     const equityItems = useMemo(() => {
         if (viewType === "standard") {
-            const netIncomeItem = {
-                uid: "synthetic-net-income",
-                kode: null,
-                nama: "SHU Tahun Berjalan",
-                amount: netIncome,
-                debit: totalExpense,
-                credit: totalRevenue,
-            };
-            return [...equity, netIncomeItem];
+            const items = [...equity];
+            if (shuData) {
+                if (shuData.lalu !== 0) {
+                    items.push({
+                        uid: "synthetic-shu-lalu",
+                        kode: null,
+                        nama: shuLaluLabel,
+                        amount: shuData.lalu,
+                        debit: 0,
+                        credit: shuData.lalu,
+                    });
+                }
+                items.push({
+                    uid: "synthetic-shu-berjalan",
+                    kode: null,
+                    nama: "SHU Tahun Berjalan",
+                    amount: shuData.berjalan,
+                    debit: totalExpense,
+                    credit: totalRevenue,
+                });
+            } else {
+                items.push({
+                    uid: "synthetic-net-income",
+                    kode: null,
+                    nama: "SHU Tahun Berjalan",
+                    amount: netIncome,
+                    debit: totalExpense,
+                    credit: totalRevenue,
+                });
+            }
+            return items;
         }
         return equity;
-    }, [equity, viewType, netIncome, totalExpense, totalRevenue]);
+    }, [equity, viewType, shuData, shuLaluLabel, netIncome, totalExpense, totalRevenue]);
 
-    const finalEquityTotal = viewType === "standard" ? totalEquity + netIncome : totalEquity;
+    const finalEquityTotal = viewType === "standard" ? totalEquity + totalSHU : totalEquity;
 
     // 4. Compute balance metrics
     const { totalLeftVal, totalRightVal, isBalanced, difference } = useMemo(() => {
@@ -163,7 +193,7 @@ export function BalanceSheetDashboard({
             return {
                 totalLeftVal: leftVal,
                 totalRightVal: rightVal,
-                isBalanced: diff < 0.1,
+                isBalanced: data?.is_balanced ?? (diff < 0.1),
                 difference: diff,
             };
         } else {
@@ -173,11 +203,11 @@ export function BalanceSheetDashboard({
             return {
                 totalLeftVal: leftVal,
                 totalRightVal: rightVal,
-                isBalanced: diff < 0.1,
+                isBalanced: data?.is_balanced ?? (diff < 0.1),
                 difference: diff,
             };
         }
-    }, [viewType, totalAssets, totalLiabilities, finalEquityTotal, totalExpense, totalEquity, totalRevenue]);
+    }, [viewType, totalAssets, totalLiabilities, finalEquityTotal, totalExpense, totalEquity, totalRevenue, data?.is_balanced]);
 
     return (
         <div className="space-y-6">
@@ -224,38 +254,6 @@ export function BalanceSheetDashboard({
                     onEdit={() => router.push("/admin/accounting/balance-sheet?action=new")}
                 />
             )}
-
-            {/* Unbalanced Warning Banner with direct shortcut to Entri Tidak Seimbang */}
-            {/* {!isBalanced && (
-                <div className="p-4 rounded-2xl border border-amber-200 bg-amber-50/80 dark:bg-amber-950/30 dark:border-amber-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 shadow-sm text-amber-900 dark:text-amber-200 transition-all">
-                    <div className="flex items-start gap-3">
-                        <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 shrink-0 mt-0.5 sm:mt-0">
-                            <IconAlertTriangle className="w-5 h-5 animate-pulse" />
-                        </div>
-                        <div className="space-y-0.5 text-xs">
-                            <h4 className="font-extrabold text-sm text-amber-950 dark:text-amber-100 flex items-center gap-2 flex-wrap">
-                                Posisi Neraca Tidak Seimbang
-                                <span className="font-mono text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-200/60 dark:bg-amber-900/60 px-2 py-0.5 rounded-md">
-                                    Selisih: {formatRupiah(difference)}
-                                </span>
-                            </h4>
-                            <p className="text-amber-800 dark:text-amber-300 leading-relaxed">
-                                Terdapat ketidakseimbangan nilai pada neraca keuangan. Anda dapat menentukan COA penyeimbang di menu <strong>Entri Tidak Seimbang</strong>.
-                            </p>
-                        </div>
-                    </div>
-                    <Link href={ROUTES.ADMIN_ACCOUNTING_UNBALANCED} className="shrink-0">
-                        <Button
-                            size="sm"
-                            className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl h-9 px-3.5 shadow-sm flex items-center gap-1.5 cursor-pointer w-full sm:w-auto justify-center"
-                        >
-                            <IconScale size={15} />
-                            <span>Entri Tidak Seimbang</span>
-                            <IconArrowRight size={14} />
-                        </Button>
-                    </Link>
-                </div>
-            )} */}
 
             {/* Balance Status Visual Card */}
             <BalanceSheetStatusCard
@@ -381,17 +379,14 @@ export function BalanceSheetDashboard({
                     <FormSwitch<BalanceSheetPrintFilterValues>
                         name="detailRevenue"
                         label="Rincian Detail Pendapatan"
-                        description="Lampirkan halaman rincian detail kategori pendapatan (detail_revenue=1)"
                     />
                     <FormSwitch<BalanceSheetPrintFilterValues>
                         name="detailExpense"
                         label="Rincian Detail Beban Operasional"
-                        description="Lampirkan halaman rincian detail kategori beban (detail_expense=1)"
                     />
                     <FormSwitch<BalanceSheetPrintFilterValues>
                         name="detailHpp"
                         label="Rincian Detail Beban Pembelian (HPP)"
-                        description="Lampirkan halaman rincian detail HPP / pembelian (detail_hpp=1)"
                     />
                 </div>
             </PrintConfirmDialog>

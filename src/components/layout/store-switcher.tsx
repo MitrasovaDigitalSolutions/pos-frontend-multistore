@@ -57,7 +57,7 @@ export function StoreSwitcher() {
 
     return (
         <FormProvider {...methods}>
-            <div className="w-[195px] sm:w-[225px]">
+            <div className="w-[125px] xs:w-[155px] sm:w-[225px] shrink-0">
                 <FormSelect<{ activeStore: string }>
                     name="activeStore"
                     options={stores.map((s) => ({
@@ -67,10 +67,10 @@ export function StoreSwitcher() {
                     }))}
                     onChange={handleSelectStore}
                     size="sm"
-                    className="rounded-full h-9 px-2.5 border-slate-200 shadow-sm hover:border-slate-300 focus:ring-emerald-500/20 text-xs font-bold text-slate-700 bg-white"
+                    className="rounded-full h-8 sm:h-9 px-2 sm:px-2.5 border-slate-200 shadow-sm hover:border-slate-300 focus:ring-emerald-500/20 text-[11px] sm:text-xs font-bold text-slate-700 bg-white min-w-0"
                     leftIcon={
                         <IconBuildingStore
-                            size={15}
+                            size={14}
                             className={`shrink-0 ${
                                 activeStore?.is_central ? "text-emerald-600" : "text-slate-500"
                             }`}
@@ -78,11 +78,11 @@ export function StoreSwitcher() {
                     }
                     rightElement={
                         activeStore?.is_central ? (
-                            <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80 leading-none">
+                            <span className="hidden xs:inline-flex shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80 leading-none">
                                 Pusat
                             </span>
                         ) : (
-                            <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-slate-100 text-slate-600 border border-slate-200/80 leading-none">
+                            <span className="hidden xs:inline-flex shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-slate-100 text-slate-600 border border-slate-200/80 leading-none">
                                 Cabang
                             </span>
                         )

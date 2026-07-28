@@ -43,7 +43,7 @@ export function BaseDialog({
             {/* Always hide the default absolute-positioned close button */}
             <DialogContent
                 className={cn(
-                    "bg-white rounded-2xl border-slate-100 p-6 shadow-2xl flex flex-col max-h-[90vh]",
+                    "bg-white rounded-2xl border-slate-100 p-4 sm:p-6 shadow-2xl flex flex-col max-h-[90vh]",
                     className,
                 )}
                 showCloseButton={false}

@@ -109,34 +109,108 @@ export function TransactionDetailItems({ items }: TransactionDetailItemsProps) {
     ];
 
     return (
-        <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-col p-4.5 space-y-4 transition-all duration-300 hover:shadow-md">
+        <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-col p-3.5 sm:p-4.5 space-y-3 sm:space-y-4 transition-all duration-300 hover:shadow-md">
             {/* Header section with decorative card header */}
-            <div className="flex items-center justify-between border-b border-slate-50 pb-3">
-                <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-indigo-50/70 text-indigo-650 flex items-center justify-center shrink-0 border border-indigo-100 shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-50 pb-2.5 sm:pb-3">
+                <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-indigo-50/70 text-indigo-650 flex items-center justify-center shrink-0 border border-indigo-100 shadow-sm">
                         <IconReceipt size={16} className="stroke-[2.2]" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                         <h3 className="text-xs font-bold text-slate-900 leading-none">Daftar Item</h3>
-                        <p className="text-[10px] text-slate-400 mt-1.5 leading-none">
-                            Daftar suku cadang, barang, atau jasa layanan yang tercatat.
+                        <p className="text-[10px] text-slate-400 mt-1 leading-none truncate">
+                            Daftar barang / jasa layanan yang tercatat.
                         </p>
                     </div>
                 </div>
-                <div className="text-[10px] font-bold text-slate-400 bg-slate-50 border border-slate-100 rounded-lg px-2 py-0.5">
+                <div className="text-[10px] font-bold text-slate-400 bg-slate-50 border border-slate-100 rounded-lg px-2 py-0.5 shrink-0">
                     {items.length} Item
                 </div>
             </div>
 
-            {/* DataTable */}
-            <div className="overflow-hidden rounded-xl border border-slate-100">
-                <DataTable
-                    columns={columns}
-                    data={items}
-                    emptyMessage="Tidak ada item dalam transaksi ini."
-                    virtualize={false}
-                />
-            </div>
+            {/* DataTable Wrapper */}
+            <DataTable
+                columns={columns}
+                data={items}
+                emptyMessage="Tidak ada item dalam transaksi ini."
+                virtualize={false}
+                entityName="item"
+                renderCardItem={(row) => {
+                    const item = row.original;
+                    const hargaBeli = item.harga_beli ?? 0;
+                    const hargaJual = item.harga_satuan;
+                    const qty = item.kuantitas;
+                    const profit = (hargaJual - hargaBeli) * qty;
+
+                    return (
+                        <div
+                            key={item.uid || item.nama_produk}
+                            className="p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-2 shadow-2xs"
+                        >
+                            {/* Header: Nama Produk + Qty */}
+                            <div className="flex items-start justify-between gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-2">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                                        <IconPackage size={14} className="stroke-[2]" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            <span className="font-bold text-slate-900 dark:text-slate-100 text-xs leading-tight">
+                                                {item.nama_produk}
+                                            </span>
+                                            {item.product?.is_jasa && (
+                                                <span className="text-[8px] bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-1.5 py-0.2 rounded font-extrabold tracking-wide uppercase shrink-0">
+                                                    Jasa
+                                                </span>
+                                            )}
+                                        </div>
+                                        {item.barcode && (
+                                            <span className="text-[9px] font-mono text-slate-400 block truncate">
+                                                {item.barcode}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <span className="inline-flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-extrabold text-[10px] px-2 py-0.5 rounded-md tabular-nums shrink-0">
+                                    {item.kuantitas} pcs
+                                </span>
+                            </div>
+
+                            {/* Body: Price Details Grid */}
+                            <div className="grid grid-cols-2 gap-2 text-[11px] pt-0.5">
+                                <div>
+                                    <span className="text-[10px] text-slate-400 block font-medium">Harga Jual</span>
+                                    <span className="font-semibold text-slate-700 dark:text-slate-300 tabular-nums">
+                                        {formatRupiah(item.harga_satuan)}
+                                    </span>
+                                </div>
+
+                                <div className="text-right">
+                                    <span className="text-[10px] text-slate-400 block font-medium">Subtotal</span>
+                                    <span className="font-extrabold text-slate-900 dark:text-slate-100 tabular-nums">
+                                        {formatRupiah(item.subtotal)}
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <span className="text-[10px] text-slate-400 block font-medium">Harga Beli</span>
+                                    <span className="font-semibold text-slate-500 tabular-nums">
+                                        {formatRupiah(hargaBeli)}
+                                    </span>
+                                </div>
+
+                                <div className="text-right">
+                                    <span className="text-[10px] text-slate-400 block font-medium">Keuntungan</span>
+                                    <span className={`font-bold tabular-nums ${profit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                                        {formatRupiah(profit)}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                }}
+            />
         </div>
     );
 }

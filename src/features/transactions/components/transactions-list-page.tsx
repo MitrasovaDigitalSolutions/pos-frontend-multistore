@@ -17,7 +17,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { Transaction } from "../types";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { IconInfoCircle } from "@tabler/icons-react";
+import { IconInfoCircle, IconChevronRight } from "@tabler/icons-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
 
@@ -342,6 +342,87 @@ export function TransactionsListPage() {
                     virtualize={true}
                     estimateRowHeight={44}
                     onView={(trx) => router.push(`/admin/transactions/${trx.uid}`)}
+                    renderCardItem={(row) => {
+                        const trx = row.original;
+                        const status = trx.status?.toLowerCase() || "completed";
+                        const statusLabel = statusLabels[status] || trx.status;
+                        const method = trx.metode_pembayaran?.toLowerCase() || "cash";
+                        const date = trx.created_at ? new Date(trx.created_at) : null;
+                        const formattedDate = date ? format(date, "dd MMM yyyy, HH:mm", { locale: id }) : "-";
+
+                        return (
+                            <div
+                                key={trx.uid || trx.nomor_transaksi}
+                                onClick={() => router.push(`/admin/transactions/${trx.uid}`)}
+                                className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-2.5 shadow-2xs hover:border-emerald-500/50 transition-all cursor-pointer group"
+                            >
+                                {/* Header: Nomor TRX + Status */}
+                                <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-2">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">
+                                            #
+                                        </div>
+                                        <div className="min-w-0 truncate">
+                                            <div className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate group-hover:text-emerald-600 transition-colors">
+                                                {trx.nomor_transaksi}
+                                            </div>
+                                            <div className="text-[10px] text-slate-400 font-medium truncate">
+                                                {formattedDate}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <StatusBadge status={status} label={statusLabel} />
+                                </div>
+
+                                {/* Content Body: Info Grid */}
+                                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                                    <div className="space-y-0.5">
+                                        <span className="text-[10px] text-slate-400 font-medium">Kasir:</span>
+                                        <p className="font-semibold text-slate-700 dark:text-slate-300 truncate">
+                                            {trx.user?.name || "Kasir"}
+                                        </p>
+                                    </div>
+                                    <div className="space-y-0.5 text-right">
+                                        <span className="text-[10px] text-slate-400 font-medium">Metode:</span>
+                                        <div>
+                                            <StatusBadge status={method} />
+                                        </div>
+                                    </div>
+                                    {trx.nama_transaksi && (
+                                        <div className="col-span-2 space-y-0.5 border-t border-dashed border-slate-100 dark:border-slate-800/60 pt-1.5">
+                                            <span className="text-[10px] text-slate-400 font-medium">Keterangan:</span>
+                                            <p className="font-medium text-slate-600 dark:text-slate-400 truncate">
+                                                {trx.nama_transaksi}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Footer: Total Nominal & Button Detail */}
+                                <div className="flex items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800/80 pt-2.5">
+                                    <div>
+                                        <span className="text-[10px] text-slate-400 block font-medium">Total Transaksi</span>
+                                        <span className="text-sm font-extrabold text-slate-900 dark:text-slate-100 tabular-nums">
+                                            {formatRupiah(trx.total)}
+                                        </span>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            router.push(`/admin/transactions/${trx.uid}`);
+                                        }}
+                                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs transition-all cursor-pointer flex items-center gap-1 shadow-xs shadow-emerald-600/20 shrink-0"
+                                    >
+                                        <span>Detail</span>
+                                        <IconChevronRight size={14} className="stroke-[2.5]" />
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    }}
                 />
             </section>
         </div>

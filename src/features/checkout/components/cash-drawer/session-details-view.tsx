@@ -97,17 +97,20 @@ export function SessionDetailsView({
     const totalOutflow = activeSession.cash_out_total + activeSession.cash_refunds_total;
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3.5 sm:space-y-4">
             {/* ── Header ── */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-slate-100 gap-2">
                 {/* Left: icon + title */}
-                <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm">
-                        <IconLockOpen size={18} />
+                <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+                        <IconLockOpen size={16} className="sm:hidden" />
+                        <IconLockOpen size={18} className="hidden sm:block" />
                     </div>
-                    <div>
-                        <span className="block text-sm font-extrabold text-slate-900 leading-tight">Laci Kasir — Shift Aktif</span>
-                        <span className="block text-[10px] font-semibold text-slate-400 mt-0.5">
+                    <div className="min-w-0">
+                        <span className="block text-xs sm:text-sm font-extrabold text-slate-900 leading-tight truncate">
+                            Laci Kasir — Shift Aktif
+                        </span>
+                        <span className="block text-[9px] sm:text-[10px] font-semibold text-slate-400 mt-0.5 truncate">
                             Sesi <span className="text-emerald-600 font-bold">@{activeSession.user?.username}</span> &bull; Status:{" "}
                             <span className="bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-extrabold uppercase text-[8px] border border-emerald-100">Aktif</span>
                         </span>
@@ -115,13 +118,13 @@ export function SessionDetailsView({
                 </div>
 
                 {/* Right: history toggle + close */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                     <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setShowHistory(!showHistory)}
                         className={cn(
-                            "h-7 px-2.5 text-[10px] rounded-lg flex items-center gap-1.5 font-bold cursor-pointer transition-all border text-emerald-600 hover:text-emerald-600 hover:bg-emerald-50 border-emerald-250",
+                            "h-7 px-2 sm:px-2.5 text-[10px] rounded-lg flex items-center gap-1 sm:gap-1.5 font-bold cursor-pointer transition-all border text-emerald-600 hover:text-emerald-600 hover:bg-emerald-50 border-emerald-250",
                             showHistory && "bg-emerald-50 border-emerald-300"
                         )}
                     >
@@ -140,49 +143,49 @@ export function SessionDetailsView({
             </div>
 
             {!isOnline && (
-                <div className="bg-amber-50 border border-amber-250 text-amber-800 p-3.5 rounded-xl text-xs font-semibold shadow-sm flex gap-2">
+                <div className="bg-amber-50 border border-amber-250 text-amber-800 p-3 sm:p-3.5 rounded-xl text-xs font-semibold shadow-sm flex gap-2">
                     <IconInfoCircle size={16} className="shrink-0 mt-0.5" />
                     <span>Koneksi internet terputus. Penyesuaian kas laci (Cash In/Out) dan Akhiri Shift dinonaktifkan hingga Anda kembali online.</span>
                 </div>
             )}
 
-            <div className="flex gap-0 transition-all duration-300 overflow-hidden w-full">
+            <div className="flex flex-col md:flex-row gap-0 transition-all duration-300 overflow-hidden w-full">
                 {/* Left Column (Main details) */}
-                <div className="flex-1 min-w-0 space-y-4">
+                <div className="flex-1 min-w-0 space-y-3 sm:space-y-4">
                     {/* Summary Metadata Grid */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-white border border-slate-100 shadow-sm rounded-xl p-3 space-y-1">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                        <div className="bg-white border border-slate-100 shadow-sm rounded-xl p-2.5 sm:p-3 space-y-0.5 sm:space-y-1">
                             <div className="flex items-center gap-1 text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">
                                 <IconClock size={11} />
                                 <span>Waktu Buka Shift</span>
                             </div>
-                            <div className="text-[11px] font-bold text-slate-700">
+                            <div className="text-[10px] sm:text-[11px] font-bold text-slate-700 truncate">
                                 {formattedTime(activeSession.opened_at)}
                             </div>
                         </div>
 
-                        <div className="bg-white border border-slate-100 shadow-sm rounded-xl p-3 space-y-1">
+                        <div className="bg-white border border-slate-100 shadow-sm rounded-xl p-2.5 sm:p-3 space-y-0.5 sm:space-y-1">
                             <div className="flex items-center gap-1 text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">
                                 <IconUser size={11} />
                                 <span>Kasir / Operator</span>
                             </div>
-                            <div className="text-[11px] font-bold text-slate-700 truncate">
+                            <div className="text-[10px] sm:text-[11px] font-bold text-slate-700 truncate">
                                 {activeSession.user?.name || "Kasir"}
                             </div>
                         </div>
                     </div>
 
                     {/* Main Expected Cash */}
-                    <div className="bg-emerald-50/50 border border-emerald-100/60 rounded-2xl p-5 flex flex-col items-center justify-center text-center space-y-1 shadow-sm">
-                        <span className="text-[10px] font-extrabold text-emerald-700 uppercase tracking-wider">
+                    <div className="bg-emerald-50/50 border border-emerald-100/60 rounded-2xl p-3.5 sm:p-5 flex flex-col items-center justify-center text-center space-y-1 shadow-sm">
+                        <span className="text-[9px] sm:text-[10px] font-extrabold text-emerald-700 uppercase tracking-wider">
                             Perkiraan Saldo Laci Saat Ini (Expected Cash)
                         </span>
-                        <span className="text-2xl font-black text-emerald-600 tracking-tight block tabular-nums">
+                        <span className="text-xl sm:text-2xl font-black text-emerald-600 tracking-tight block tabular-nums">
                             {formatRupiah(activeSession.expected_cash)}
                         </span>
                         {activeSession.opening_note && (
-                            <span className="text-[9px] text-slate-500 font-bold bg-white px-2 py-0.5 rounded-full border border-slate-100 shadow-sm mt-2 flex items-center gap-1">
-                                <IconNotes size={10} className="text-slate-400" /> &quot;{activeSession.opening_note}&quot;
+                            <span className="text-[9px] text-slate-500 font-bold bg-white px-2 py-0.5 rounded-full border border-slate-100 shadow-sm mt-1 sm:mt-2 flex items-center gap-1 max-w-full truncate">
+                                <IconNotes size={10} className="text-slate-400 shrink-0" /> <span className="truncate">&quot;{activeSession.opening_note}&quot;</span>
                             </span>
                         )}
                     </div>
@@ -191,47 +194,47 @@ export function SessionDetailsView({
                     <div className="border border-slate-100 rounded-xl overflow-hidden bg-white shadow-sm text-xs">
                         <div className="grid grid-cols-2 divide-x divide-slate-100">
                             {/* Inflow Summary */}
-                            <div className="p-3.5 space-y-2">
+                            <div className="p-2.5 sm:p-3.5 space-y-1.5 sm:space-y-2">
                                 <span className="text-[9px] font-extrabold text-emerald-700 uppercase tracking-wider flex items-center gap-1">
                                     <IconTrendingUp size={11} /> Pemasukan
                                 </span>
-                                <div className="space-y-1.5 font-semibold text-slate-500">
-                                    <div className="flex justify-between text-[11px]">
-                                        <span>Modal Awal</span>
-                                        <span className="text-slate-800 font-bold">{formatRupiah(activeSession.opening_balance)}</span>
+                                <div className="space-y-1 sm:space-y-1.5 font-semibold text-slate-500">
+                                    <div className="flex justify-between text-[10px] sm:text-[11px] gap-1">
+                                        <span className="truncate">Modal Awal</span>
+                                        <span className="text-slate-800 font-bold shrink-0">{formatRupiah(activeSession.opening_balance)}</span>
                                     </div>
-                                    <div className="flex justify-between text-[11px]">
-                                        <span>Penjualan</span>
-                                        <span className="text-emerald-600 font-bold">+{formatRupiah(activeSession.cash_sales_total)}</span>
+                                    <div className="flex justify-between text-[10px] sm:text-[11px] gap-1">
+                                        <span className="truncate">Penjualan</span>
+                                        <span className="text-emerald-600 font-bold shrink-0">+{formatRupiah(activeSession.cash_sales_total)}</span>
                                     </div>
-                                    <div className="flex justify-between text-[11px]">
-                                        <span>Cash In</span>
-                                        <span className="text-emerald-600 font-bold">+{formatRupiah(activeSession.cash_in_total)}</span>
+                                    <div className="flex justify-between text-[10px] sm:text-[11px] gap-1">
+                                        <span className="truncate">Cash In</span>
+                                        <span className="text-emerald-600 font-bold shrink-0">+{formatRupiah(activeSession.cash_in_total)}</span>
                                     </div>
-                                    <div className="flex justify-between border-t border-slate-55 border-slate-50 pt-1.5 font-bold text-slate-700 text-[11px]">
-                                        <span>Total Masuk</span>
-                                        <span className="font-extrabold font-mono">{formatRupiah(totalInflow)}</span>
+                                    <div className="flex justify-between border-t border-slate-50 pt-1 sm:pt-1.5 font-bold text-slate-700 text-[10px] sm:text-[11px] gap-1">
+                                        <span className="truncate">Total Masuk</span>
+                                        <span className="font-extrabold font-mono shrink-0">{formatRupiah(totalInflow)}</span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Outflow Summary */}
-                            <div className="p-3.5 space-y-2">
+                            <div className="p-2.5 sm:p-3.5 space-y-1.5 sm:space-y-2">
                                 <span className="text-[9px] font-extrabold text-rose-700 uppercase tracking-wider flex items-center gap-1">
                                     <IconTrendingDown size={11} /> Pengeluaran
                                 </span>
-                                <div className="space-y-1.5 font-semibold text-slate-500">
-                                    <div className="flex justify-between text-[11px]">
-                                        <span>Cash Out</span>
-                                        <span className="text-rose-500 font-bold">-{formatRupiah(activeSession.cash_out_total)}</span>
+                                <div className="space-y-1 sm:space-y-1.5 font-semibold text-slate-500">
+                                    <div className="flex justify-between text-[10px] sm:text-[11px] gap-1">
+                                        <span className="truncate">Cash Out</span>
+                                        <span className="text-rose-500 font-bold shrink-0">-{formatRupiah(activeSession.cash_out_total)}</span>
                                     </div>
-                                    <div className="flex justify-between text-[11px]">
-                                        <span>Refund Tunai</span>
-                                        <span className="text-rose-500 font-bold">-{formatRupiah(activeSession.cash_refunds_total)}</span>
+                                    <div className="flex justify-between text-[10px] sm:text-[11px] gap-1">
+                                        <span className="truncate">Refund Tunai</span>
+                                        <span className="text-rose-500 font-bold shrink-0">-{formatRupiah(activeSession.cash_refunds_total)}</span>
                                     </div>
-                                    <div className="flex justify-between border-t border-slate-50 pt-1.5 font-bold text-slate-700 text-[11px]">
-                                        <span>Total Keluar</span>
-                                        <span className="font-extrabold font-mono text-rose-600">-{formatRupiah(totalOutflow)}</span>
+                                    <div className="flex justify-between border-t border-slate-50 pt-1 sm:pt-1.5 font-bold text-slate-700 text-[10px] sm:text-[11px] gap-1">
+                                        <span className="truncate">Total Keluar</span>
+                                        <span className="font-extrabold font-mono text-rose-600 shrink-0">-{formatRupiah(totalOutflow)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -239,50 +242,50 @@ export function SessionDetailsView({
                     </div>
 
                     {/* Actions Grid */}
-                    <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3 pt-0.5 sm:pt-1">
                         <Button
                             variant="outline"
                             onClick={() => onAction("cash_in")}
                             disabled={!isOnline}
-                            className="h-10 border-dashed border-emerald-500 hover:bg-emerald-50/50 text-emerald-600 font-extrabold text-[11px] rounded-xl flex items-center justify-center gap-1.5 cursor-pointer bg-white"
+                            className="h-9 sm:h-10 border-dashed border-emerald-500 hover:bg-emerald-50/50 text-emerald-600 font-extrabold text-[10px] sm:text-[11px] rounded-xl flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer bg-white px-1.5 sm:px-3"
                         >
-                            <IconArrowDownLeft size={15} />
-                            <span>Cash In (Uang Masuk)</span>
+                            <IconArrowDownLeft size={14} className="shrink-0" />
+                            <span className="truncate">Cash In <span className="hidden xs:inline">(Uang Masuk)</span></span>
                         </Button>
                         <Button
                             variant="outline"
                             onClick={() => onAction("cash_out")}
                             disabled={!isOnline}
-                            className="h-10 border-dashed border-rose-500 hover:bg-rose-50/50 text-rose-600 font-extrabold text-[11px] rounded-xl flex items-center justify-center gap-1.5 cursor-pointer bg-white"
+                            className="h-9 sm:h-10 border-dashed border-rose-500 hover:bg-rose-50/50 text-rose-600 font-extrabold text-[10px] sm:text-[11px] rounded-xl flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer bg-white px-1.5 sm:px-3"
                         >
-                            <IconArrowUpRight size={15} />
-                            <span>Cash Out (Uang Keluar)</span>
+                            <IconArrowUpRight size={14} className="shrink-0" />
+                            <span className="truncate">Cash Out <span className="hidden xs:inline">(Uang Keluar)</span></span>
                         </Button>
 
                         <Button
                             onClick={() => onAction("close_shift")}
                             disabled={!isOnline}
                             className={cn(
-                                "col-span-2 h-11 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-[11px] rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-rose-600/10 active:scale-[0.99] transition-all border-none",
+                                "col-span-2 h-10 sm:h-11 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-[10px] sm:text-[11px] rounded-xl flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer shadow-md shadow-rose-600/10 active:scale-[0.99] transition-all border-none px-2",
                                 !isOnline && "bg-slate-200 hover:bg-slate-200 text-slate-400 shadow-none cursor-not-allowed"
                             )}
                         >
-                            <IconDoorExit size={15} />
+                            <IconDoorExit size={15} className="shrink-0" />
                             <span>Akhiri Shift Kasir (Tutup Sesi)</span>
                         </Button>
                     </div>
                 </div>
 
-                {/* Right Column (History Timeline Sidebar) */}
+                {/* Right Column (History Timeline Sidebar on Desktop / Stacked Section on Mobile) */}
                 <div
                     className={cn(
-                        "transition-all duration-300 ease-in-out flex flex-col max-h-[420px] shrink-0",
+                        "transition-all duration-300 ease-in-out flex flex-col shrink-0 min-w-0",
                         showHistory
-                            ? "w-[300px] opacity-100 pl-5 border-l border-slate-100 ml-5"
-                            : "w-0 opacity-0 pl-0 border-l-0 ml-0 overflow-hidden"
+                            ? "w-full md:w-[300px] max-h-[300px] sm:max-h-[380px] md:max-h-[420px] opacity-100 pt-3.5 mt-3.5 border-t md:border-t-0 md:pt-0 md:mt-0 md:pl-5 md:border-l border-slate-100 md:ml-5"
+                            : "w-0 max-h-0 md:max-h-0 opacity-0 p-0 m-0 border-0 overflow-hidden"
                     )}
                 >
-                    <div className="w-[275px] flex flex-col h-full">
+                    <div className="w-full md:w-[275px] flex flex-col h-full">
                         <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1 shrink-0 mb-2.5 whitespace-nowrap">
                             <IconHistory size={12} /> Log Aktivitas Sesi
                         </span>

@@ -80,16 +80,17 @@ export function SessionDetailDialog({
             open={open}
             onOpenChange={onOpenChange}
             title={
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
                     <div className={cn(
-                        "w-9 h-9 rounded-xl text-white flex items-center justify-center shrink-0 shadow-sm transition-all duration-300",
+                        "w-8 h-8 sm:w-9 sm:h-9 rounded-xl text-white flex items-center justify-center shrink-0 shadow-sm transition-all duration-300",
                         session.status === "open" ? "bg-emerald-500 shadow-emerald-100 animate-pulse" : "bg-slate-500 shadow-slate-100"
                     )}>
-                        <IconCash size={20} />
+                        <IconCash size={18} className="sm:hidden" />
+                        <IconCash size={20} className="hidden sm:block" />
                     </div>
                     <div className="text-left min-w-0">
-                        <div className="flex items-center gap-1.5">
-                            <span className="block text-sm font-extrabold text-slate-900 leading-tight">
+                        <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
+                            <span className="block text-xs sm:text-sm font-extrabold text-slate-900 leading-tight truncate">
                                 Detail Sesi #{session.uid.slice(0, 8).toUpperCase()}
                             </span>
                             <button
@@ -100,7 +101,7 @@ export function SessionDetailDialog({
                                 {copied ? <IconCheck size={12} className="text-emerald-500" /> : <IconCopy size={12} />}
                             </button>
                         </div>
-                        <span className="block text-[11px] font-medium text-slate-400 mt-0.5">
+                        <span className="block text-[10px] sm:text-[11px] font-medium text-slate-400 mt-0.5 truncate">
                             Kasir: <span className="text-slate-800 font-bold">{session.user?.name || "Kasir"}</span>
                         </span>
                     </div>
@@ -114,33 +115,33 @@ export function SessionDetailDialog({
                     />
                 </div>
             }
-            className="max-w-3xl sm:max-w-3xl flex flex-col max-h-[90vh]"
+            className="w-[95vw] sm:w-full max-w-full sm:max-w-3xl flex flex-col max-h-[92vh] sm:max-h-[90vh]"
         >
 
             <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as TabType)} className="w-full flex-1 flex flex-col min-h-0">
-                <TabsList className="shrink-0 my-2 border-b border-slate-100 rounded-none w-full justify-start bg-transparent gap-4 h-9 p-0" variant="line">
+                <TabsList className="shrink-0 my-1 sm:my-2 border-b border-slate-100 dark:border-slate-800 rounded-none w-full justify-start bg-transparent gap-1.5 sm:gap-4 h-8 sm:h-9 p-0 overflow-x-auto no-scrollbar scrollbar-none whitespace-nowrap" variant="line">
                     <TabsTrigger
                         value="summary"
-                        className="px-4 py-2 text-xs font-bold transition-all data-active:text-emerald-600 after:bg-emerald-600 rounded-none h-full bg-transparent shadow-none cursor-pointer"
+                        className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold transition-all data-active:text-emerald-600 after:bg-emerald-600 rounded-none h-full bg-transparent shadow-none cursor-pointer shrink-0"
                     >
                         Ringkasan
                     </TabsTrigger>
                     <TabsTrigger
                         value="movements"
-                        className="px-4 py-2 text-xs font-bold transition-all data-active:text-emerald-600 after:bg-emerald-600 rounded-none h-full bg-transparent shadow-none cursor-pointer"
+                        className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold transition-all data-active:text-emerald-600 after:bg-emerald-600 rounded-none h-full bg-transparent shadow-none cursor-pointer shrink-0"
                     >
                         Riwayat Arus Kas ({movements.length})
                     </TabsTrigger>
                     <TabsTrigger
                         value="transactions"
-                        className="px-4 py-2 text-xs font-bold transition-all data-active:text-emerald-600 after:bg-emerald-600 rounded-none h-full bg-transparent shadow-none cursor-pointer"
+                        className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold transition-all data-active:text-emerald-600 after:bg-emerald-600 rounded-none h-full bg-transparent shadow-none cursor-pointer shrink-0"
                     >
                         Daftar Penjualan ({transactions.length})
                     </TabsTrigger>
                 </TabsList>
 
                 {/* Tab content area - Scrollable */}
-                <Scrollable className="flex-1 pr-1 py-2">
+                <Scrollable className="flex-1 pr-1 py-1.5 sm:py-2">
                     <TabsContent value="summary" className="outline-none">
                         <SessionSummaryTab session={session} />
                     </TabsContent>

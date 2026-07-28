@@ -3,9 +3,10 @@
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { hasPermission, hasRole } from "@/constants/roles";
 import type { Product } from "@/features/master/products/types";
-import { IconPlus } from "@tabler/icons-react";
+import { IconPlus, IconChevronRight } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useMemo, useState } from "react";
@@ -19,7 +20,13 @@ import { clearPurchaseItemsStore } from "@/stores/purchase-items-store";
 import type { Receiving } from "../../types";
 import {
     RECEIVING_STATUS,
+    RECEIVING_STATUS_LABELS,
+    type ReceivingStatus,
+    PAYMENT_STATUS_LABELS,
+    type PaymentStatus,
 } from "@/constants/purchase";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { formatToReadableDateTime } from "@/lib/date-utils";
 import { receivingColumns } from "./receiving-columns";
 
 interface ReceivingListProps {
@@ -215,6 +222,98 @@ export function ReceivingList({
                 hideCheck={(rec) => !(rec.status === RECEIVING_STATUS.DRAFT && hasManagePurchase)}
                 onDelete={(rec) => handleDelete(rec.uid)}
                 hideDelete={(rec) => !(rec.status === RECEIVING_STATUS.DRAFT && canDeleteDraft)}
+                renderCardItem={(row) => {
+                    const rec = row.original;
+                    const status = rec.status as ReceivingStatus;
+                    const statusLabel = RECEIVING_STATUS_LABELS[status] || status;
+                    const paymentStatus = (rec.status_pembayaran || "unpaid") as PaymentStatus;
+                    const paymentLabel = PAYMENT_STATUS_LABELS[paymentStatus] || paymentStatus;
+                    const supplierName = rec.supplier_relationship ? rec.supplier_relationship.nama : rec.supplier || "-";
+                    const formattedDate = rec.created_at ? formatToReadableDateTime(rec.created_at) : "-";
+                    const isFromPo = !!rec.purchase_order_uid;
+
+                    return (
+                        <div
+                            key={rec.uid || rec.nomor_penerimaan}
+                            onClick={() => handleDetailClick(rec)}
+                            className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-2.5 shadow-2xs hover:border-emerald-500/50 transition-all cursor-pointer group"
+                        >
+                            {/* Header: Nomor Penerimaan + Status */}
+                            <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-2">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0 font-mono">
+                                        RC
+                                    </div>
+                                    <div className="min-w-0 truncate">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate group-hover:text-blue-600 transition-colors font-mono">
+                                                {rec.nomor_penerimaan}
+                                            </span>
+                                            <span className={`px-1.5 py-0.2 rounded text-[9px] font-extrabold border ${
+                                                isFromPo ? "bg-indigo-50 text-indigo-700 border-indigo-100" : "bg-slate-50 text-slate-700 border-slate-100"
+                                            }`}>
+                                                {isFromPo ? "PO" : "Langsung"}
+                                            </span>
+                                        </div>
+                                        <div className="text-[10px] text-slate-400 font-medium truncate">
+                                            {formattedDate}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <StatusBadge status={status} label={statusLabel} />
+                            </div>
+
+                            {/* Content Body: Supplier & No. Faktur (Left) | Nilai Faktur & Status Bayar (Right) */}
+                            <div className="grid grid-cols-2 gap-3 text-[11px] py-1">
+                                <div className="space-y-2 min-w-0">
+                                    <div className="space-y-0.5">
+                                        <span className="text-[10px] text-slate-400 font-medium block">Supplier</span>
+                                        <p className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                                            {supplierName}
+                                        </p>
+                                    </div>
+                                    <div className="space-y-0.5">
+                                        <span className="text-[10px] text-slate-400 font-medium block">No. Faktur</span>
+                                        <p className="font-mono text-slate-600 dark:text-slate-400 truncate">
+                                            {rec.nomor_faktur || "-"}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2 text-right">
+                                    <div className="space-y-0.5">
+                                        <span className="text-[10px] text-slate-400 font-medium block">Nilai Faktur</span>
+                                        <p className="font-extrabold text-slate-900 dark:text-slate-100 tabular-nums">
+                                            {rec.nilai_faktur !== null ? formatRupiah(rec.nilai_faktur) : "-"}
+                                        </p>
+                                    </div>
+                                    <div className="space-y-0.5 flex flex-col items-end">
+                                        <span className="text-[10px] text-slate-400 font-medium block">Status Bayar</span>
+                                        <div>
+                                            <StatusBadge status={paymentStatus} label={paymentLabel} />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer: Action Buttons */}
+                            <div className="flex items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800/80 pt-2.5">
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDetailClick(rec);
+                                    }}
+                                    className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs transition-all cursor-pointer flex items-center gap-1 shadow-xs shadow-emerald-600/20 shrink-0 ml-auto"
+                                >
+                                    <span>Detail</span>
+                                    <IconChevronRight size={14} className="stroke-[2.5]" />
+                                </button>
+                            </div>
+                        </div>
+                    );
+                }}
             />
 
             {/* Details & Logs Dialog */}

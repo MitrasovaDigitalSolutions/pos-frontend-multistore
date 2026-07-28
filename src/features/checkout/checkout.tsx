@@ -23,6 +23,7 @@ import { useSyncEngine } from "@/features/checkout/hooks/use-sync-engine";
 import { PrintReceiptLayout } from "@/features/checkout/components/print-receipt-layout";
 import type { CashDrawerSession } from "@/features/checkout/types";
 import { db } from "@/lib/db";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
 
 export function Checkout() {
     const state = useCheckoutState();
@@ -161,7 +162,7 @@ export function Checkout() {
     };
 
     return (
-        <div className="grow flex flex-col h-screen overflow-hidden bg-slate-100 relative pb-0 md:pb-8">
+        <div className="flex flex-col h-screen overflow-hidden bg-slate-100 relative">
             {/* Top Bar */}
             <CheckoutTopBar
                 transactionId={state.transactionId}
@@ -180,32 +181,42 @@ export function Checkout() {
             />
 
             {/* Mobile Tab Switcher */}
-            <div className="flex md:hidden bg-white border-b border-slate-200 shrink-0">
+            <div className="flex md:hidden bg-white border-b border-slate-200 shrink-0 z-10 shadow-xs">
                 <button
+                    type="button"
                     onClick={() => setActiveMobileTab("cart")}
                     className={cn(
-                        "flex-1 py-3 text-xs font-bold text-center border-b-2 transition-all outline-none cursor-pointer",
+                        "flex-1 py-2.5 text-xs font-bold text-center border-b-2 transition-all outline-none cursor-pointer flex items-center justify-center gap-1.5",
                         activeMobileTab === "cart"
-                            ? "border-emerald-600 text-emerald-600"
+                            ? "border-emerald-600 text-emerald-600 bg-emerald-50/40"
                             : "border-transparent text-slate-500 hover:text-slate-700"
                     )}
                 >
-                    Keranjang ({state.cart.length})
+                    <span>Keranjang</span>
+                    <span className="bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold">
+                        {state.cart.length}
+                    </span>
                 </button>
                 <button
+                    type="button"
                     onClick={() => setActiveMobileTab("totals")}
                     className={cn(
-                        "flex-1 py-3 text-xs font-bold text-center border-b-2 transition-all outline-none cursor-pointer",
+                        "flex-1 py-2.5 text-xs font-bold text-center border-b-2 transition-all outline-none cursor-pointer flex items-center justify-center gap-1.5",
                         activeMobileTab === "totals"
-                            ? "border-emerald-600 text-emerald-600"
+                            ? "border-emerald-600 text-emerald-600 bg-emerald-50/40"
                             : "border-transparent text-slate-500 hover:text-slate-700"
                     )}
                 >
-                    Ringkasan & Bayar
+                    <span>Ringkasan &amp; Bayar</span>
+                    {state.grandTotal > 0 && (
+                        <span className="bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded-full text-[10px] font-black">
+                            {formatRupiah(state.grandTotal)}
+                        </span>
+                    )}
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-[60%_40%] lg:grid-cols-[65%_35%] h-[calc(100vh-80px)] md:h-[calc(100vh-72px)] overflow-hidden">
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-[58%_42%] lg:grid-cols-[65%_35%] min-h-0 overflow-hidden">
                 {/* Left: Cart */}
                 <div className={cn("h-full flex flex-col min-h-0", activeMobileTab !== "cart" && "hidden md:flex")}>
                     <CheckoutCartSection
@@ -221,7 +232,7 @@ export function Checkout() {
                 </div>
 
                 {/* Right: Totals & Actions */}
-                <div className={cn("h-full min-h-0", activeMobileTab !== "totals" && "hidden md:block")}>
+                <div className={cn("h-full flex flex-col min-h-0", activeMobileTab !== "totals" && "hidden md:flex")}>
                     <CheckoutTotalsSection
                         transactionId={state.transactionId}
                         cashierName={state.user?.name || ""}
@@ -249,8 +260,8 @@ export function Checkout() {
                 </div>
             </div>
 
-            {/* Shortcuts Bar */}
-            <div className="hidden md:flex absolute left-0 right-0 bottom-0 h-8 bg-slate-900 border-t border-slate-800 text-slate-400 items-center px-6 text-[10px] justify-between font-semibold select-none z-10">
+            {/* Shortcuts Bar (Flex child footer - never overlaps content) */}
+            <div className="hidden md:flex bg-slate-900 border-t border-slate-800 text-slate-400 items-center px-6 text-[10px] justify-between font-semibold select-none shrink-0 h-8 z-10">
                 <div className="flex gap-6 items-center">
                     <div className="flex gap-1.5 items-center">
                         <kbd className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold shadow border border-slate-700">F1</kbd> Bayar
@@ -279,13 +290,14 @@ export function Checkout() {
                 </button>
             </div>
 
-            {/* Mobile Settings Button - Floating bottom-right */}
+            {/* Mobile Settings Button - Floating top-right inside topbar zone */}
             <button
                 type="button"
                 onClick={() => state.setIsSettingsOpen(true)}
-                className="flex md:hidden fixed bottom-4 right-4 z-30 items-center justify-center w-9 h-9 rounded-full bg-slate-900 text-white shadow-lg border border-slate-800 cursor-pointer active:scale-95 transition-all"
+                className="flex md:hidden fixed top-2 right-2 z-40 items-center justify-center w-7 h-7 rounded-lg bg-slate-800 text-slate-300 hover:text-white shadow-xs border border-slate-700 cursor-pointer active:scale-95 transition-all"
+                title="Pengaturan Kasir"
             >
-                <IconSettings size={16} />
+                <IconSettings size={15} />
             </button>
 
             {/* Dialogs */}

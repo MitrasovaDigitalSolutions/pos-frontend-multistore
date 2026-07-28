@@ -248,6 +248,15 @@ export function BalanceSheetEditor({
 
     const hasChanges = adjustmentLines.length > 0;
 
+    const handleCancel = () => {
+        resetStore();
+        if (typeof window !== "undefined" && window.history.length > 1) {
+            router.back();
+        } else {
+            router.push("/admin/accounting/balance-sheet");
+        }
+    };
+
     // Save adjustment journal line items
     const handleSaveJournal = async (status: "draft" | "posted") => {
         if (!editedData || !hasChanges) return;
@@ -281,7 +290,11 @@ export function BalanceSheetEditor({
             }
             resetStore();
             refetch();
-            router.push("/admin/accounting/journals");
+            if (action === "edit") {
+                router.push("/admin/accounting/journals");
+            } else {
+                router.push("/admin/accounting/balance-sheet");
+            }
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : "Gagal menyimpan jurnal.";
             toast.error(msg);
@@ -295,9 +308,9 @@ export function BalanceSheetEditor({
             {/* Header Edit Mode */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
                 <div className="flex items-center gap-4">
-                    <div className="relative flex items-center justify-center p-3.5 bg-gradient-to-br from-amber-500 to-orange-600 dark:from-amber-600 dark:to-orange-850 text-white rounded-2xl shadow-lg shadow-amber-500/15 dark:shadow-amber-950/30 ring-4 ring-amber-50 dark:ring-amber-950/20 shrink-0">
-                        <IconEdit className="w-6 h-6" />
-                        <div className="absolute inset-0 bg-amber-500 rounded-2xl blur-lg opacity-25 -z-10" />
+                    <div className="relative flex items-center justify-center p-2.5 sm:p-3.5 bg-gradient-to-br from-amber-500 to-orange-600 dark:from-amber-600 dark:to-orange-850 text-white rounded-xl sm:rounded-2xl shadow-lg shadow-amber-500/15 dark:shadow-amber-950/30 ring-2 sm:ring-4 ring-amber-50 dark:ring-amber-950/20 shrink-0">
+                        <IconEdit className="w-5 h-5 sm:w-6 sm:h-6" />
+                        <div className="absolute inset-0 bg-amber-500 rounded-xl sm:rounded-2xl blur-lg opacity-25 -z-10" />
                     </div>
 
                     <div className="space-y-1">
@@ -309,7 +322,7 @@ export function BalanceSheetEditor({
                                 Mode Penyesuaian
                             </span>
                         </div>
-                        <p className="text-xs text-slate-450 dark:text-slate-500 leading-relaxed max-w-xl">
+                        <p className="text-xs text-slate-450 dark:text-slate-500 leading-relaxed max-w-xl hidden sm:block">
                             Masukkan nominal Debit dan Kredit untuk masing-masing akun neraca. Nilai total selisih wajib seimbang (nol).
                         </p>
                     </div>
@@ -317,7 +330,7 @@ export function BalanceSheetEditor({
             </div>
 
             {/* Form Metadata Card */}
-            <Card className="p-5 bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-800/65 rounded-3xl shadow-sm space-y-4">
+            <Card className="p-3.5 sm:p-5 bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-800/65 rounded-2xl sm:rounded-3xl shadow-sm space-y-3 sm:space-y-4">
                 <FormProvider {...methods}>
                     <div className="flex flex-col sm:flex-row items-end gap-5">
                         <div className="flex-1 w-full">
@@ -435,10 +448,7 @@ export function BalanceSheetEditor({
                     totalDebit={totalLeftVal}
                     totalCredit={totalRightVal}
                     viewType={effectiveViewType}
-                    onCancel={() => {
-                        resetStore();
-                        router.push("/admin/accounting/journals");
-                    }}
+                    onCancel={handleCancel}
                     onSaveDraft={() => handleSaveJournal("draft")}
                     onPost={() => handleSaveJournal("posted")}
                     isPending={isPending}

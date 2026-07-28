@@ -40,17 +40,17 @@ export function TransactionDetailSummary({ transaction, formattedDate }: Transac
     const profitMargin = transaction.total > 0 ? (totalProfit / transaction.total) * 100 : 0;
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3.5 sm:space-y-4">
             {/* 1. Unified Hero Metrics Card (Compact side-by-side) */}
-            <div className="bg-white dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 flex items-center justify-between divide-x divide-slate-200/60 dark:divide-slate-800/80 shadow-xs">
+            <div className="bg-white dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800 rounded-2xl p-3 sm:p-4 flex items-center justify-between divide-x divide-slate-200/60 dark:divide-slate-800/80 shadow-xs">
                 {/* Total Jual Column */}
-                <div className="flex-1 pr-3 flex items-start gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-650 flex items-center justify-center shrink-0 border border-indigo-100/50 shadow-xs">
+                <div className="flex-1 pr-2.5 sm:pr-3 flex items-start gap-2 sm:gap-2.5">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-indigo-50 text-indigo-650 flex items-center justify-center shrink-0 border border-indigo-100/50 shadow-xs">
                         <IconReceipt size={15} className="stroke-[2.2]" />
                     </div>
-                    <div className="space-y-0.5">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Total Jual</span>
-                        <p className="text-xs sm:text-sm font-black tracking-tight text-slate-800 dark:text-slate-100 tabular-nums">
+                    <div className="space-y-0.5 min-w-0">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">Total Jual</span>
+                        <p className="text-xs sm:text-sm font-black tracking-tight text-slate-800 dark:text-slate-100 tabular-nums truncate">
                             {formatRupiah(transaction.total)}
                         </p>
                         <span className="text-[8px] font-medium text-slate-400 block">
@@ -60,14 +60,14 @@ export function TransactionDetailSummary({ transaction, formattedDate }: Transac
                 </div>
 
                 {/* Keuntungan Column */}
-                <div className="flex-1 pl-4 flex items-start gap-2.5">
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border shadow-xs ${totalProfit >= 0 ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-rose-50 text-rose-600 border-rose-100"
+                <div className="flex-1 pl-3 sm:pl-4 flex items-start gap-2 sm:gap-2.5">
+                    <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center shrink-0 border shadow-xs ${totalProfit >= 0 ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-rose-50 text-rose-600 border-rose-100"
                         }`}>
                         <IconTrendingUp size={15} className="stroke-[2.2]" />
                     </div>
-                    <div className="space-y-0.5">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Keuntungan</span>
-                        <p className={`text-xs sm:text-sm font-black tracking-tight tabular-nums ${totalProfit >= 0 ? "text-emerald-600" : "text-rose-600"
+                    <div className="space-y-0.5 min-w-0">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">Keuntungan</span>
+                        <p className={`text-xs sm:text-sm font-black tracking-tight tabular-nums truncate ${totalProfit >= 0 ? "text-emerald-600" : "text-rose-600"
                             }`}>
                             {formatRupiah(totalProfit)}
                         </p>
@@ -80,7 +80,7 @@ export function TransactionDetailSummary({ transaction, formattedDate }: Transac
             </div>
 
             {/* 2. Rincian Biaya & Aliran Pembayaran (Merged Card) */}
-            <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-4 space-y-4 hover:shadow-md transition-shadow duration-200">
+            <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-3.5 sm:p-4 space-y-3 sm:space-y-4 hover:shadow-md transition-shadow duration-200">
                 <div>
                     <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                         Rincian &amp; Pembayaran
@@ -119,7 +119,7 @@ export function TransactionDetailSummary({ transaction, formattedDate }: Transac
                     )}
 
                     {/* Divider line */}
-                    <div className="border-t border-slate-100 pt-3" />
+                    <div className="border-t border-slate-100 pt-2.5 sm:pt-3" />
 
                     {/* Payment badge & subdetails */}
                     <div className="flex items-center justify-between mb-2">
@@ -135,7 +135,7 @@ export function TransactionDetailSummary({ transaction, formattedDate }: Transac
                         </span>
                     </div>
 
-                    <div className="bg-slate-50 border border-slate-100/80 p-3 rounded-xl space-y-2 text-xs">
+                    <div className="bg-slate-50 border border-slate-100/80 p-2.5 sm:p-3 rounded-xl space-y-2 text-xs">
                         {paymentMethod === "cash" && (
                             <div className="grid grid-cols-2 gap-3 divide-x divide-slate-200/50">
                                 <div>
@@ -157,13 +157,13 @@ export function TransactionDetailSummary({ transaction, formattedDate }: Transac
                             <div className="grid grid-cols-2 gap-3 divide-x divide-slate-200/50">
                                 <div>
                                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Mesin EDC</span>
-                                    <p className="font-bold text-slate-800 mt-0.5 uppercase text-xs">
+                                    <p className="font-bold text-slate-800 mt-0.5 uppercase text-xs truncate">
                                         {transaction.jenis_kartu || "Debit"}
                                     </p>
                                 </div>
                                 <div className="pl-3">
                                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">No. Kartu</span>
-                                    <p className="font-mono text-slate-700 mt-0.5 text-xs">
+                                    <p className="font-mono text-slate-700 mt-0.5 text-xs truncate">
                                         {transaction.nomor_kartu_akhir ? `**** ${transaction.nomor_kartu_akhir}` : "-"}
                                     </p>
                                 </div>
@@ -224,7 +224,7 @@ export function TransactionDetailSummary({ transaction, formattedDate }: Transac
             </div>
 
             {/* 3. Otorisasi & Pelanggan (Metadata Card) */}
-            <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-4 space-y-3.5 hover:shadow-md transition-shadow duration-200">
+            <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-3.5 sm:p-4 space-y-2.5 sm:space-y-3 hover:shadow-md transition-shadow duration-200">
                 <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                     Otorisasi &amp; Waktu
                 </h3>

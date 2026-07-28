@@ -2,19 +2,19 @@
 
 import { StatusBadge } from "@/components/ui/status-badge";
 
+import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { DataTable } from "@/components/ui/data-table";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { useCashDrawerSessions } from "@/features/checkout/api/cash-drawer-api";
 import type { CashDrawerSession } from "@/features/checkout/types/cash-drawer";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { ColumnDef } from "@tanstack/react-table";
-import { Hourglass } from "lucide-react";
+import { formatToReadableDateTime } from "@/lib/date-utils";
+import { ColumnDef, Row } from "@tanstack/react-table";
+import { ChevronRight, Hourglass } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useMemo, useState } from "react";
 import { SessionDetailDialog } from "./components/session-detail-dialog";
 import { SessionFilter } from "./components/session-filter";
-import { formatToReadableDateTime } from "@/lib/date-utils";
-import { AccessDeniedState } from "@/components/ui/access-denied-state";
 
 export function CashDrawerSessions() {
     const { data: session } = useSession();
@@ -208,6 +208,96 @@ export function CashDrawerSessions() {
                     virtualize={true}
                     estimateRowHeight={50}
                     onView={handleView}
+                    renderCardItem={(row: Row<CashDrawerSession>) => {
+                        const sessionItem = row.original;
+                        const diff = sessionItem.difference;
+                        return (
+                            <div
+                                key={sessionItem.uid}
+                                className="bg-white dark:bg-slate-950 border border-slate-200/90 dark:border-slate-800 rounded-xl p-3 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col gap-2.5"
+                            >
+                                {/* Header: User & Status & Detail Icon */}
+                                <div className="flex justify-between items-center gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-2">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <div className="w-7.5 h-7.5 rounded-lg bg-emerald-600 dark:bg-emerald-700 text-white font-extrabold text-xs flex items-center justify-center shrink-0">
+                                            {sessionItem.user?.name ? sessionItem.user.name.charAt(0).toUpperCase() : "K"}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <div className="font-bold text-slate-900 dark:text-slate-100 text-xs truncate">
+                                                {sessionItem.user?.name || "Kasir"}
+                                            </div>
+                                            <div className="text-[10px] text-slate-400 font-mono truncate">
+                                                @{sessionItem.user?.username || "kasir"}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                        <StatusBadge
+                                            status={sessionItem.status === "open" ? "open" : "closed"}
+                                            label={sessionItem.status === "open" ? "Aktif" : "Tutup"}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => handleView(sessionItem)}
+                                            className="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-[10px] transition-all cursor-pointer flex items-center gap-1 shadow-2xs shadow-emerald-600/20"
+                                            title="Detail Sesi"
+                                        >
+                                            <span>Detail</span>
+                                            <ChevronRight size={12} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Body Grid: Shift Timings */}
+                                <div className="grid grid-cols-2 gap-1.5 text-[11px] bg-slate-50/70 dark:bg-slate-900/50 p-2 rounded-lg border border-slate-100 dark:border-slate-800/80">
+                                    <div>
+                                        <span className="text-[9px] font-bold text-slate-400 uppercase block">Buka</span>
+                                        <span className="font-semibold text-slate-700 dark:text-slate-300 text-[10px] block truncate">
+                                            {formatToReadableDateTime(sessionItem.opened_at)}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span className="text-[9px] font-bold text-slate-400 uppercase block">Tutup</span>
+                                        <span className="font-semibold text-slate-700 dark:text-slate-300 text-[10px] block truncate">
+                                            {sessionItem.closed_at ? (
+                                                formatToReadableDateTime(sessionItem.closed_at)
+                                            ) : (
+                                                <span className="text-emerald-600 dark:text-emerald-400 font-bold">Terbuka</span>
+                                            )}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Footer: Expected Cash & Difference */}
+                                <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-slate-100 dark:border-slate-800 text-[11px]">
+                                    <div className="flex items-center gap-1 min-w-0">
+                                        <span className="text-[10px] text-slate-400 font-bold">Kas:</span>
+                                        <span className="font-extrabold text-slate-900 dark:text-slate-100 tabular-nums truncate">
+                                            {formatRupiah(sessionItem.expected_cash)}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        <span className="text-[10px] text-slate-400 font-bold">Selisih:</span>
+                                        {sessionItem.status === "open" || diff === null || diff === undefined ? (
+                                            <span className="text-slate-400 font-medium">-</span>
+                                        ) : diff > 0 ? (
+                                            <span className="text-teal-700 dark:text-teal-400 font-bold tabular-nums">
+                                                +{formatRupiah(diff)}
+                                            </span>
+                                        ) : diff < 0 ? (
+                                            <span className="text-rose-600 dark:text-rose-400 font-bold tabular-nums">
+                                                {formatRupiah(diff)}
+                                            </span>
+                                        ) : (
+                                            <span className="text-slate-600 dark:text-slate-400 font-bold tabular-nums">Rp 0</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    }}
                 />
             </section>
 

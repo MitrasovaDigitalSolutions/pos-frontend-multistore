@@ -170,28 +170,53 @@ export function ReceivingDetailDialog({
                         </div>
                     </div>
 
-                    {/* Tabs Navigation */}
-                    <div className="flex border-b border-slate-100 shrink-0">
-                        <button
-                            onClick={() => setActiveTab("items")}
-                            className={`px-4 py-2 text-xs font-bold border-b-2 flex items-center gap-1.5 cursor-pointer transition-colors ${activeTab === "items"
-                                ? "border-emerald-600 text-emerald-600"
-                                : "border-transparent text-slate-400 hover:text-slate-600"
+                    {/* Dribbble-Style Segmented Pill Header */}
+                    <div className="border-b border-slate-100 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-900/50 p-2 sm:p-2.5 overflow-x-auto whitespace-nowrap scrollbar-none flex-nowrap">
+                        <div className="inline-flex items-center gap-1.5 p-1 bg-slate-200/60 dark:bg-zinc-800/80 rounded-xl border border-slate-200/50 dark:border-zinc-700/50 shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab("items")}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer shrink-0 ${
+                                    activeTab === "items"
+                                        ? "bg-white dark:bg-zinc-900 text-slate-900 dark:text-slate-100 font-extrabold shadow-sm border border-slate-200/60 dark:border-zinc-700/80"
+                                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/40 dark:hover:bg-zinc-700/40"
                                 }`}
-                        >
-                            <IconFileDescription size={16} />
-                            Daftar Barang ({receiving.items?.length || 0})
-                        </button>
-                        <button
-                            onClick={() => setActiveTab("logs")}
-                            className={`px-4 py-2 text-xs font-bold border-b-2 flex items-center gap-1.5 cursor-pointer transition-colors ${activeTab === "logs"
-                                ? "border-emerald-600 text-emerald-600"
-                                : "border-transparent text-slate-400 hover:text-slate-600"
+                            >
+                                <IconFileDescription size={15} className={activeTab === "items" ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"} />
+                                <span>Daftar Barang</span>
+                                <span
+                                    className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono transition-colors ${
+                                        activeTab === "items"
+                                            ? "bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300"
+                                            : "bg-slate-200/80 dark:bg-zinc-700 text-slate-600 dark:text-slate-300"
+                                    }`}
+                                >
+                                    {receiving.items?.length || 0}
+                                </span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab("logs")}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer shrink-0 ${
+                                    activeTab === "logs"
+                                        ? "bg-white dark:bg-zinc-900 text-slate-900 dark:text-slate-100 font-extrabold shadow-sm border border-slate-200/60 dark:border-zinc-700/80"
+                                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/40 dark:hover:bg-zinc-700/40"
                                 }`}
-                        >
-                            <IconClock size={16} />
-                            Log Aktivitas ({logs.length})
-                        </button>
+                            >
+                                <IconClock size={15} className={activeTab === "logs" ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"} />
+                                <span>Log Aktivitas</span>
+                                <span
+                                    className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono transition-colors ${
+                                        activeTab === "logs"
+                                            ? "bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300"
+                                            : "bg-slate-200/80 dark:bg-zinc-700 text-slate-600 dark:text-slate-300"
+                                    }`}
+                                >
+                                    {logs.length}
+                                </span>
+                            </button>
+                        </div>
                     </div>
 
                     {/* Tab Content */}

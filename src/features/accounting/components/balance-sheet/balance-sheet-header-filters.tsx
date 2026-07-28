@@ -89,9 +89,9 @@ export function BalanceSheetHeaderFilters({
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
                     <div className="flex items-center gap-4">
                         {/* Glowing Icon Container */}
-                        <div className="relative flex items-center justify-center p-3.5 bg-gradient-to-br from-indigo-500 to-violet-650 dark:from-indigo-600 dark:to-violet-850 text-white rounded-2xl shadow-lg shadow-indigo-500/15 dark:shadow-indigo-950/30 ring-4 ring-indigo-50 dark:ring-indigo-950/20 shrink-0">
-                            {iconToRender}
-                            <div className="absolute inset-0 bg-indigo-500 rounded-2xl blur-lg opacity-25 -z-10" />
+                        <div className="relative flex items-center justify-center p-2.5 sm:p-3.5 bg-gradient-to-br from-indigo-500 to-violet-650 dark:from-indigo-600 dark:to-violet-850 text-white rounded-xl sm:rounded-2xl shadow-lg shadow-indigo-500/15 dark:shadow-indigo-950/30 ring-2 sm:ring-4 ring-indigo-50 dark:ring-indigo-950/20 shrink-0">
+                            <span className="[&>svg]:w-5 [&>svg]:h-5 sm:[&>svg]:w-6 sm:[&>svg]:h-6">{iconToRender}</span>
+                            <div className="absolute inset-0 bg-indigo-500 rounded-xl sm:rounded-2xl blur-lg opacity-25 -z-10" />
                         </div>
 
                         <div className="space-y-1">
@@ -101,7 +101,7 @@ export function BalanceSheetHeaderFilters({
                                 </h2>
                                 {badgeToRender}
                             </div>
-                            <p className="text-xs text-slate-450 dark:text-slate-500 leading-relaxed max-w-xl">
+                            <p className="text-[11px] text-slate-450 dark:text-slate-500 leading-relaxed max-w-xl hidden sm:block">
                                 {description}
                             </p>
                         </div>
@@ -120,7 +120,7 @@ export function BalanceSheetHeaderFilters({
                     {/* Left Side: Segmented control & switch */}
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full md:w-auto">
                         {/* Segmented Tab Selector for viewType */}
-                        <div className="relative flex bg-slate-100/80 dark:bg-slate-950/80 p-0.5 rounded-xl border border-slate-200/30 dark:border-slate-800/50 w-fit">
+                        <div className="relative flex bg-slate-100/80 dark:bg-slate-950/80 p-0.5 rounded-xl border border-slate-200/30 dark:border-slate-800/50 w-full sm:w-fit overflow-x-auto">
                             {(["standard", "equation"] as const).map((mode) => {
                                 const isActive = viewType === mode;
                                 return (
@@ -129,7 +129,7 @@ export function BalanceSheetHeaderFilters({
                                         type="button"
                                         onClick={() => onViewTypeChange(mode)}
                                         className={cn(
-                                            "relative z-10 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors duration-250 cursor-pointer flex items-center gap-1.5 select-none",
+                                            "relative z-10 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-colors duration-250 cursor-pointer flex items-center gap-1 sm:gap-1.5 select-none flex-1 sm:flex-none justify-center",
                                             isActive
                                                 ? "text-indigo-950 dark:text-indigo-50 font-extrabold"
                                                 : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
