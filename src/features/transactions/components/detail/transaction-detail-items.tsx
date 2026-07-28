@@ -129,16 +129,88 @@ export function TransactionDetailItems({ items }: TransactionDetailItemsProps) {
             </div>
 
             {/* DataTable Wrapper */}
-            <div className="overflow-x-auto rounded-xl border border-slate-100">
-                <div className="min-w-[500px]">
-                    <DataTable
-                        columns={columns}
-                        data={items}
-                        emptyMessage="Tidak ada item dalam transaksi ini."
-                        virtualize={false}
-                    />
-                </div>
-            </div>
+            <DataTable
+                columns={columns}
+                data={items}
+                emptyMessage="Tidak ada item dalam transaksi ini."
+                virtualize={false}
+                entityName="item"
+                renderCardItem={(row) => {
+                    const item = row.original;
+                    const hargaBeli = item.harga_beli ?? 0;
+                    const hargaJual = item.harga_satuan;
+                    const qty = item.kuantitas;
+                    const profit = (hargaJual - hargaBeli) * qty;
+
+                    return (
+                        <div
+                            key={item.uid || item.nama_produk}
+                            className="p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-2 shadow-2xs"
+                        >
+                            {/* Header: Nama Produk + Qty */}
+                            <div className="flex items-start justify-between gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-2">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                                        <IconPackage size={14} className="stroke-[2]" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            <span className="font-bold text-slate-900 dark:text-slate-100 text-xs leading-tight">
+                                                {item.nama_produk}
+                                            </span>
+                                            {item.product?.is_jasa && (
+                                                <span className="text-[8px] bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-1.5 py-0.2 rounded font-extrabold tracking-wide uppercase shrink-0">
+                                                    Jasa
+                                                </span>
+                                            )}
+                                        </div>
+                                        {item.barcode && (
+                                            <span className="text-[9px] font-mono text-slate-400 block truncate">
+                                                {item.barcode}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <span className="inline-flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-extrabold text-[10px] px-2 py-0.5 rounded-md tabular-nums shrink-0">
+                                    {item.kuantitas} pcs
+                                </span>
+                            </div>
+
+                            {/* Body: Price Details Grid */}
+                            <div className="grid grid-cols-2 gap-2 text-[11px] pt-0.5">
+                                <div>
+                                    <span className="text-[10px] text-slate-400 block font-medium">Harga Jual</span>
+                                    <span className="font-semibold text-slate-700 dark:text-slate-300 tabular-nums">
+                                        {formatRupiah(item.harga_satuan)}
+                                    </span>
+                                </div>
+
+                                <div className="text-right">
+                                    <span className="text-[10px] text-slate-400 block font-medium">Subtotal</span>
+                                    <span className="font-extrabold text-slate-900 dark:text-slate-100 tabular-nums">
+                                        {formatRupiah(item.subtotal)}
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <span className="text-[10px] text-slate-400 block font-medium">Harga Beli</span>
+                                    <span className="font-semibold text-slate-500 tabular-nums">
+                                        {formatRupiah(hargaBeli)}
+                                    </span>
+                                </div>
+
+                                <div className="text-right">
+                                    <span className="text-[10px] text-slate-400 block font-medium">Keuntungan</span>
+                                    <span className={`font-bold tabular-nums ${profit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                                        {formatRupiah(profit)}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                }}
+            />
         </div>
     );
 }
