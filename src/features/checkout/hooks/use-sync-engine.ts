@@ -409,10 +409,28 @@ export function useSyncEngine() {
         }
     }, [isOnline]);
 
-    // Initialize pending count on mount
+    // Initialize pending count on mount and listen to global pending count updates
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         updatePendingCount();
+
+        const handlePendingCountUpdated = () => {
+            updatePendingCount();
+        };
+
+        if (typeof window !== "undefined") {
+            window.addEventListener("pos_pending_count_updated", handlePendingCountUpdated);
+            window.addEventListener("pos_member_updated", handlePendingCountUpdated);
+            window.addEventListener("pos_catalog_synced", handlePendingCountUpdated);
+        }
+
+        return () => {
+            if (typeof window !== "undefined") {
+                window.removeEventListener("pos_pending_count_updated", handlePendingCountUpdated);
+                window.removeEventListener("pos_member_updated", handlePendingCountUpdated);
+                window.removeEventListener("pos_catalog_synced", handlePendingCountUpdated);
+            }
+        };
     }, [updatePendingCount]);
 
     // Sync catalog when coming back online (one-time trigger)

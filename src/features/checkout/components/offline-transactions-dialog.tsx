@@ -149,6 +149,9 @@ export function OfflineTransactionsDialog({ open, onOpenChange }: OfflineTransac
 
             await loadRecords();
             await updatePendingCount();
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(new Event("pos_pending_count_updated"));
+            }
             setSelectedUids(new Set());
         } catch (err) {
             console.error("Gagal sinkronisasi terpilih:", err);
@@ -322,6 +325,7 @@ export function OfflineTransactionsDialog({ open, onOpenChange }: OfflineTransac
             setIsDeleting(false);
             if (typeof window !== "undefined") {
                 window.dispatchEvent(new Event("pos_member_updated"));
+                window.dispatchEvent(new Event("pos_pending_count_updated"));
             }
 
             // Reload records & counts
