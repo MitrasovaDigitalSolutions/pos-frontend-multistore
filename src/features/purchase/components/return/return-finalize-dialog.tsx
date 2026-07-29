@@ -293,7 +293,7 @@ export function ReturnFinalizeDialog({
                                                 ⚠ Nilai retur ({formatRupiah(totalNominal)}) lebih besar dari sisa utang faktur ({formatRupiah(sisaHutang)}).
                                             </p>
                                             <p className="text-[11px] text-amber-700 dark:text-amber-400 font-medium leading-normal">
-                                                Sisa utang sebesar {formatRupiah(sisaHutang)} akan lunas terpotong, dan kelebihan nilai retur sebesar <strong className="font-bold underline">{formatRupiah(overflowAmount)}</strong> wajib dimasukkan sebagai refund ke Kas / Rekening.
+                                                Sisa utang sebesar {formatRupiah(sisaHutang)} akan lunas terpotong, dan kelebihan nilai retur sebesar <strong className="font-bold underline">{formatRupiah(overflowAmount)}</strong> akan dimasukkan sebagai refund ke Kas / Rekening.
                                             </p>
                                         </div>
                                     ) : (
