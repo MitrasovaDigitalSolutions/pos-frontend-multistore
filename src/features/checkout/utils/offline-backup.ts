@@ -1,26 +1,28 @@
 import { db } from "@/lib/db";
-import type { OfflineTransactionRecord, OfflineTransaction } from "@/lib/db";
+import type { OfflineTransactionRecord, OfflineTransaction, OfflineDebtPaymentRecord } from "@/lib/db";
 import { toast } from "sonner";
 import { todayStr } from "@/lib/date-utils";
 
 /**
- * Exports all offline transactions and queue items from IndexedDB into a JSON file download.
+ * Exports all offline transactions, queue items, and debt payments from IndexedDB into a JSON file download.
  */
 export async function exportOfflineBackup(): Promise<boolean> {
     try {
         const txs = await db.offlineTransactions.toArray();
         const queue = await db.offlineQueue.toArray();
+        const debtPayments = await db.offlineDebtPayments.toArray();
 
-        if (txs.length === 0 && queue.length === 0) {
+        if (txs.length === 0 && queue.length === 0 && debtPayments.length === 0) {
             toast.warning("Tidak ada data transaksi offline untuk di-backup.");
             return false;
         }
 
         const data = {
-            version: 1,
+            version: 2,
             exportedAt: new Date().toISOString(),
             offlineTransactions: txs,
             offlineQueue: queue,
+            offlineDebtPayments: debtPayments,
         };
 
         const jsonString = JSON.stringify(data, null, 2);
@@ -72,12 +74,15 @@ export async function importOfflineBackup(
 
                 const importedTxs = data.offlineTransactions as OfflineTransactionRecord[];
                 const importedQueue = data.offlineQueue as OfflineTransaction[];
+                const importedDebtPayments = (data.offlineDebtPayments || []) as OfflineDebtPaymentRecord[];
 
                 const currentTxs = await db.offlineTransactions.toArray();
                 const currentQueue = await db.offlineQueue.toArray();
+                const currentDebtPayments = await db.offlineDebtPayments.toArray();
 
                 const currentTxUids = new Set(currentTxs.map((t) => t.uid));
                 const currentQueueUids = new Set(currentQueue.map((q) => q.uid));
+                const currentDebtUids = new Set(currentDebtPayments.map((d) => d.uid));
 
                 const txsToInsert = importedTxs.filter((t) => !currentTxUids.has(t.uid));
                 const queueToInsert = importedQueue
@@ -87,8 +92,11 @@ export async function importOfflineBackup(
                         delete rest.id;
                         return rest;
                     });
+                const debtPaymentsToInsert = importedDebtPayments.filter(
+                    (d) => !currentDebtUids.has(d.uid)
+                );
 
-                if (txsToInsert.length === 0 && queueToInsert.length === 0) {
+                if (txsToInsert.length === 0 && queueToInsert.length === 0 && debtPaymentsToInsert.length === 0) {
                     toast.info("Semua transaksi dalam backup sudah ada di database lokal.");
                     resolve(false);
                     return;
@@ -100,9 +108,13 @@ export async function importOfflineBackup(
                 if (queueToInsert.length > 0) {
                     await db.offlineQueue.bulkAdd(queueToInsert);
                 }
+                if (debtPaymentsToInsert.length > 0) {
+                    await db.offlineDebtPayments.bulkPut(debtPaymentsToInsert);
+                }
 
+                const totalInserted = txsToInsert.length + debtPaymentsToInsert.length;
                 toast.success(
-                    `Berhasil memulihkan ${txsToInsert.length} riwayat transaksi dan ${queueToInsert.length} antrean transaksi.`
+                    `Berhasil memulihkan ${totalInserted} riwayat (${txsToInsert.length} transaksi, ${debtPaymentsToInsert.length} bayar hutang) dan ${queueToInsert.length} antrean.`
                 );
 
                 await onImported(txsToInsert.length, queueToInsert.length);

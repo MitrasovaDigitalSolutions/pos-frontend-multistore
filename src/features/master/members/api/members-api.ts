@@ -72,6 +72,8 @@ export interface MemberDebtResponse {
 }
 
 export interface PayDebtPayload {
+    uid?: string;
+    tanggal_bayar?: string;
     amount: number;
     metode_pembayaran: "cash" | "card";
     cash_received?: number;

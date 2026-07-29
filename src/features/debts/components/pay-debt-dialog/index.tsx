@@ -15,6 +15,9 @@ import { CardFields, PayMethodToggle } from "./payment-method";
 import { QuickCashButtons } from "./quick-cash-buttons";
 import { SummaryPanel } from "./summary-panel";
 import type { CardType, PayMethod } from "../../types/types";
+import { useNetworkStatus } from "@/hooks/use-network-status";
+import { NetworkError } from "@/shared/errors/api-error";
+import { format } from "date-fns";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -29,6 +32,7 @@ interface PayDebtDialogProps {
 
 export function PayDebtDialog({ open, onOpenChange, member, onSuccess }: PayDebtDialogProps) {
     const payDebtMutation = usePayMemberDebt();
+    const isOnline = useNetworkStatus();
 
     // ── Form state ────────────────────────────────────────────────────────────
     const [cashReceived, setCashReceived] = useState("");
@@ -71,12 +75,84 @@ export function PayDebtDialog({ open, onOpenChange, member, onSuccess }: PayDebt
     const isValid = actualPayAmount > 0;
     const isPending = payDebtMutation.isPending;
 
+    // ── Save offline helper ───────────────────────────────────────────────────
+    const saveOffline = async (notice: string) => {
+        const clientUid = crypto.randomUUID();
+        const now = new Date().toISOString();
+        const todayDateStr = format(new Date(), "yyyy-MM-dd");
+
+        const payload: PayDebtPayload & { uid: string; tanggal_bayar: string } = {
+            uid: clientUid,
+            tanggal_bayar: todayDateStr,
+            amount: actualPayAmount,
+            metode_pembayaran: payMethod,
+            catatan: catatan || undefined,
+        };
+
+        if (payMethod === "cash") {
+            payload.cash_received = receivedNum;
+        } else {
+            payload.jenis_kartu = cardType;
+            payload.nomor_kartu_akhir = cardLast4 || undefined;
+            payload.referensi_edc = cardRef || undefined;
+        }
+
+        try {
+            // Save to offline debt payments table
+            await db.offlineDebtPayments.add({
+                uid: clientUid,
+                member_uid: member.uid,
+                member_nama: member.nama,
+                payload: { ...payload },
+                status: "pending",
+                timestamp: now,
+                amount: actualPayAmount,
+                metode_pembayaran: payMethod,
+            });
+
+            // Update local member debt in IndexedDB
+            const newDebt = Math.max(0, (member.hutang || 0) - actualPayAmount);
+            const existingMember = await db.members.get(member.uid);
+            if (existingMember) {
+                await db.members.update(member.uid, { hutang: newDebt });
+            } else {
+                await db.members.put({ ...member, hutang: newDebt });
+            }
+
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(new Event("pos_member_updated"));
+            }
+
+            toast.warning(notice);
+
+            // Return a synthetic updated member to the parent
+            const updatedMember: Member = { ...member, hutang: newDebt };
+            onSuccess?.(updatedMember);
+            onOpenChange(false);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            toast.error(`Gagal menyimpan pembayaran hutang offline: ${message}`);
+        }
+    };
+
     // ── Submit ────────────────────────────────────────────────────────────────
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!isValid) return;
 
+        // Offline mode: save directly to local DB
+        if (!isOnline) {
+            await saveOffline("Koneksi offline. Pembayaran hutang disimpan secara lokal.");
+            return;
+        }
+
+        // Online mode: send to API
+        const clientUid = crypto.randomUUID();
+        const todayDateStr = format(new Date(), "yyyy-MM-dd");
+
         const payload: PayDebtPayload = {
+            uid: clientUid,
+            tanggal_bayar: todayDateStr,
             amount: actualPayAmount,
             metode_pembayaran: payMethod,
             catatan: catatan || undefined,
@@ -107,7 +183,11 @@ export function PayDebtDialog({ open, onOpenChange, member, onSuccess }: PayDebt
                         onSuccess?.(updatedMember);
                     }
                 },
-                onError: (err) => {
+                onError: async (err) => {
+                    if (err instanceof NetworkError) {
+                        await saveOffline("Koneksi terputus saat memproses. Pembayaran hutang disimpan secara lokal.");
+                        return;
+                    }
                     toast.error(err.message || "Gagal mencatat pembayaran hutang.");
                 },
             }
