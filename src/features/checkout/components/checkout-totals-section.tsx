@@ -19,7 +19,7 @@ import {
     IconUser,
     IconX
 } from "@tabler/icons-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CreateMemberDialog } from "./create-member-dialog";
 
 
@@ -112,8 +112,35 @@ export function CheckoutTotalsSection({
         }
     };
 
+    const [pendingDebtMap, setPendingDebtMap] = useState<Record<string, number>>({});
+
+    const loadPendingDebts = useCallback(async () => {
+        try {
+            const pending = await db.offlineDebtPayments
+                .where("status")
+                .equals("pending")
+                .toArray();
+            const map: Record<string, number> = {};
+            for (const p of pending) {
+                map[p.member_uid] = (map[p.member_uid] || 0) + (p.amount || 0);
+            }
+            setPendingDebtMap(map);
+        } catch (err) {
+            console.error("Gagal membaca pending debt payments:", err);
+        }
+    }, []);
+
+    const reloadLocalMembers = useCallback(() => {
+        db.members.toArray().then((items) => {
+            setLocalMembers(items);
+        });
+        loadPendingDebts();
+    }, [loadPendingDebts]);
+
     useEffect(() => {
         let isMounted = true;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        loadPendingDebts();
         if (!isOnline || membersData.length === 0) {
             db.members.toArray().then((items) => {
                 if (isMounted) {
@@ -121,16 +148,54 @@ export function CheckoutTotalsSection({
                 }
             });
         }
+
+        const handleMemberUpdated = () => {
+            if (isMounted) {
+                reloadLocalMembers();
+            }
+        };
+
+        if (typeof window !== "undefined") {
+            window.addEventListener("pos_member_updated", handleMemberUpdated);
+            window.addEventListener("pos_catalog_synced", handleMemberUpdated);
+        }
+
         return () => {
             isMounted = false;
+            if (typeof window !== "undefined") {
+                window.removeEventListener("pos_member_updated", handleMemberUpdated);
+                window.removeEventListener("pos_catalog_synced", handleMemberUpdated);
+            }
         };
-    }, [membersData, isOnline]);
+    }, [membersData, isOnline, reloadLocalMembers, loadPendingDebts]);
 
-    const members = isOnline && membersData.length > 0 ? membersData : localMembers;
+    const members = useMemo(() => {
+        if (isOnline && membersData.length > 0) {
+            return membersData.map((m) => {
+                const pendingDeduction = pendingDebtMap[m.uid] || 0;
+                if (pendingDeduction > 0) {
+                    return {
+                        ...m,
+                        hutang: Math.max(0, (m.hutang || 0) - pendingDeduction),
+                    };
+                }
+                return m;
+            });
+        }
+        return localMembers;
+    }, [isOnline, membersData, localMembers, pendingDebtMap]);
 
-    const activeMember = selectedMember
-        ? (members.find((m) => m.uid === selectedMember.uid) || selectedMember)
-        : null;
+    const activeMember = useMemo(() => {
+        if (!selectedMember) return null;
+        const match = members.find((m) => m.uid === selectedMember.uid);
+        if (!match) return selectedMember;
+
+        return {
+            ...match,
+            ...selectedMember,
+            hutang: match.hutang,
+        };
+    }, [selectedMember, members]);
 
     const memberOptions = members
         .filter((m) => m.status === "active")
@@ -493,6 +558,10 @@ export function CheckoutTotalsSection({
                 member={activeMember}
                 onSuccess={(updatedMember) => {
                     onMemberChange(updatedMember);
+                    setLocalMembers((prev) =>
+                        prev.map((m) => (m.uid === updatedMember.uid ? updatedMember : m))
+                    );
+                    db.members.toArray().then((items) => setLocalMembers(items));
                 }}
             />
         </div>

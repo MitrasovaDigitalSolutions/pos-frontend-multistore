@@ -1,6 +1,6 @@
 "use client";
 
-import type { OfflineTransactionRecord } from "@/lib/db";
+import type { OfflineRecord } from "./offline-transactions-dialog";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import {
     IconCheck,
@@ -11,6 +11,7 @@ import {
     IconCreditCard,
     IconNotebook,
     IconTrash,
+    IconReceipt,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { formatDate, formatToTime } from "@/lib/date-utils";
@@ -52,14 +53,14 @@ function formatDateTime(iso: string) {
 }
 
 interface OfflineTransactionsTableProps {
-    records: OfflineTransactionRecord[];
+    records: OfflineRecord[];
     isLoading: boolean;
     selectedUids: Set<string>;
-    syncableRecords: OfflineTransactionRecord[];
+    syncableRecords: OfflineRecord[];
     isAllSelected: boolean;
     onSelectAllToggle: () => void;
     onRowSelectToggle: (uid: string) => void;
-    onDeleteClick: (record: OfflineTransactionRecord) => void;
+    onDeleteClick: (record: OfflineRecord) => void;
 }
 
 export function OfflineTransactionsTable({
@@ -89,7 +90,7 @@ export function OfflineTransactionsTable({
                                     />
                                 )}
                             </th>
-                            {["Waktu", "UID", "Metode", "Total", "Produk", "Status", "Aksi"].map((h) => (
+                            {["Tipe", "Waktu", "UID", "Metode", "Total", "Detail", "Status", "Aksi"].map((h) => (
                                 <th
                                     key={h}
                                     className={cn(
@@ -106,14 +107,14 @@ export function OfflineTransactionsTable({
                         {isLoading ? (
                             Array.from({ length: 3 }).map((_, i) => (
                                 <tr key={i} className="border-b border-slate-50">
-                                    <td colSpan={8} className="px-4 py-3">
+                                    <td colSpan={9} className="px-4 py-3">
                                         <div className="h-4 bg-slate-100 rounded animate-pulse" />
                                     </td>
                                 </tr>
                             ))
                         ) : records.length === 0 ? (
                             <tr>
-                                <td colSpan={8} className="py-12 text-center">
+                                <td colSpan={9} className="py-12 text-center">
                                     <div className="flex flex-col items-center gap-2 text-slate-300">
                                         <IconPackage size={32} strokeWidth={1.5} />
                                         <span className="text-xs text-slate-400 font-semibold">
@@ -127,13 +128,27 @@ export function OfflineTransactionsTable({
                                 const { date, time } = formatDateTime(record.timestamp);
                                 const status = STATUS_CONFIG[record.status] || STATUS_CONFIG.pending;
                                 const StatusIcon = status.icon;
-                                const payMode = String(record.payload.metode_pembayaran || "cash") as "cash" | "card" | "debt";
-                                const payment = PAYMENT_LABELS[payMode] || PAYMENT_LABELS.cash;
-                                const PayIcon = payment.icon;
-                                const total = record.receiptData?.total ?? 0;
-                                const itemCount = record.receiptData?.items?.length ?? 0;
                                 const isSyncable = record.status === "pending" || record.status === "failed";
                                 const isChecked = selectedUids.has(record.uid);
+
+                                const isDebtPayment = record.recordType === "debt_payment";
+
+                                // Payment method
+                                const payMode = isDebtPayment
+                                    ? record.metode_pembayaran
+                                    : String(record.payload.metode_pembayaran || "cash") as "cash" | "card" | "debt";
+                                const payment = PAYMENT_LABELS[payMode] || PAYMENT_LABELS.cash;
+                                const PayIcon = payment.icon;
+
+                                // Total / Amount
+                                const displayTotal = isDebtPayment
+                                    ? record.amount
+                                    : record.receiptData?.total ?? 0;
+
+                                // Detail column
+                                const detailContent = isDebtPayment
+                                    ? record.member_nama
+                                    : `${record.receiptData?.items?.length ?? 0} item`;
 
                                 return (
                                     <tr
@@ -155,6 +170,21 @@ export function OfflineTransactionsTable({
                                                 />
                                             ) : (
                                                 <IconCheck size={14} className="text-emerald-500 mx-auto" />
+                                            )}
+                                        </td>
+
+                                        {/* Type badge */}
+                                        <td className="px-3 py-2.5">
+                                            {isDebtPayment ? (
+                                                <span className="inline-flex items-center gap-1 text-[8px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded-full border bg-violet-50 text-violet-700 border-violet-200">
+                                                    <IconReceipt size={9} />
+                                                    Hutang
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 text-[8px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded-full border bg-sky-50 text-sky-700 border-sky-200">
+                                                    <IconCash size={9} />
+                                                    Penjualan
+                                                </span>
                                             )}
                                         </td>
 
@@ -191,14 +221,14 @@ export function OfflineTransactionsTable({
                                         {/* Total */}
                                         <td className="px-3 py-2.5">
                                             <span className="text-[10px] font-bold text-slate-800 tabular-nums">
-                                                {formatRupiah(total)}
+                                                {formatRupiah(displayTotal)}
                                             </span>
                                         </td>
 
-                                        {/* Items */}
+                                        {/* Detail */}
                                         <td className="px-3 py-2.5">
                                             <span className="text-[10px] text-slate-500">
-                                                {itemCount} item
+                                                {detailContent}
                                             </span>
                                         </td>
 
@@ -229,7 +259,7 @@ export function OfflineTransactionsTable({
                                                 type="button"
                                                 onClick={() => onDeleteClick(record)}
                                                 className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer border-none bg-transparent"
-                                                title="Hapus Transaksi"
+                                                title="Hapus"
                                             >
                                                 <IconTrash size={14} />
                                             </button>

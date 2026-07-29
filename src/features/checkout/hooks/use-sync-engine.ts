@@ -5,16 +5,21 @@ import type { Product } from "@/features/master/products/types";
 import { useNetworkStatus } from "@/hooks/use-network-status";
 import type { PaginationParams } from "@/types/api";
 import { db } from "@/lib/db";
-import { apiGetData, apiGetList, apiPost } from "@/shared/api/api-client";
+import { apiGetData, apiGetList, apiPatch, apiPost } from "@/shared/api/api-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { toUTC7String } from "@/lib/date-utils";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
+import { useCheckoutStore } from "@/stores/checkout-store";
+import type { ApiResponse } from "@/types/api";
+import type { MemberPayment } from "@/features/master/members/api/members-api";
 
 // Catalog auto-sync interval: every 30 minutes when online
 const CATALOG_SYNC_INTERVAL_MS = 30 * 60 * 1000;
 
 export function useSyncEngine() {
     const isOnline = useNetworkStatus();
+    const queryClient = useQueryClient();
     const [isSyncing, setIsSyncing] = useState(false);
     const [isCatalogSyncing, setIsCatalogSyncing] = useState(false);
     const [pendingCount, setPendingCount] = useState(0);
@@ -27,19 +32,21 @@ export function useSyncEngine() {
     // Update the pending transactions count from IndexedDB
     const updatePendingCount = useCallback(async () => {
         try {
-            const count = await db.offlineTransactions
+            const txCount = await db.offlineTransactions
                 .where("status")
                 .equals("pending")
                 .count();
-            setPendingCount(count);
+            const debtCount = await db.offlineDebtPayments
+                .where("status")
+                .equals("pending")
+                .count();
+            setPendingCount(txCount + debtCount);
         } catch (err) {
             console.error("Gagal membaca jumlah antrean offline:", err);
         }
     }, []);
 
     // ─── Sync a Single Offline Transaction to /v1/transactions ──────────────────
-    // Sends each transaction individually with uid, created_at, updated_at fields.
-    // Does NOT auto-trigger — must be called manually from the monitoring page.
     const syncSingleTransaction = useCallback(async (uid: string): Promise<"success" | "failed"> => {
         if (!isOnline) return "failed";
 
@@ -47,24 +54,18 @@ export function useSyncEngine() {
             const record = await db.offlineTransactions.get(uid);
             if (!record) return "failed";
 
-            const now = toUTC7String();
-            const syncPayload = {
-                ...record.payload,
-                uid: record.uid,
-                created_at: record.timestamp,
-                updated_at: now,
-            };
+            await apiPost("/v1/transactions", record.payload);
 
-            await apiPost("/v1/transactions", syncPayload);
+            const now = new Date().toISOString();
 
-            // Mark as synced in offlineTransactions
+            // 1. Update permanent offline history
             await db.offlineTransactions.update(uid, {
                 status: "synced",
                 syncedAt: now,
                 errorMessage: undefined,
             });
 
-            // Remove from offlineQueue (if still present)
+            // 2. Remove from active sync queue table
             await db.offlineQueue.where("uid").equals(uid).delete();
 
             setLastSyncedAt(new Date());
@@ -74,7 +75,74 @@ export function useSyncEngine() {
             const error = err as Error;
             const errorMsg = error.message || "Gagal menghubungi server";
 
+            // Mark as failed in offline history
             await db.offlineTransactions.update(uid, {
+                status: "failed",
+                errorMessage: errorMsg,
+            });
+
+            // Update status in active queue too
+            const queueEntry = await db.offlineQueue.where("uid").equals(uid).first();
+            if (queueEntry?.id) {
+                await db.offlineQueue.update(queueEntry.id, {
+                    status: "failed",
+                    errorMessage: errorMsg,
+                });
+            }
+
+            await updatePendingCount();
+            return "failed";
+        }
+    }, [isOnline, updatePendingCount]);
+
+    // ─── Sync a Single Offline Debt Payment to /v1/members/pay-debt/{member_uid} ─
+    const syncSingleDebtPayment = useCallback(async (uid: string): Promise<"success" | "failed"> => {
+        if (!isOnline) return "failed";
+
+        try {
+            const record = await db.offlineDebtPayments.get(uid);
+            if (!record) return "failed";
+
+            const now = new Date().toISOString();
+            const dateOnly = String(record.payload.tanggal_bayar || record.timestamp).split("T")[0];
+            const syncPayload = {
+                ...record.payload,
+                uid: record.uid,
+                tanggal_bayar: dateOnly,
+            };
+
+            const res = await apiPatch<ApiResponse<{ member: Member; payment: MemberPayment }>>(
+                `/v1/members/pay-debt/${record.member_uid}`,
+                syncPayload
+            );
+
+            if (res.data?.member) {
+                const updatedMember = res.data.member;
+                await db.members.put(updatedMember);
+
+                const currentSelected = useCheckoutStore.getState().selectedMember;
+                if (currentSelected?.uid === updatedMember.uid) {
+                    useCheckoutStore.getState().setSelectedMember(updatedMember);
+                }
+            }
+
+            queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
+
+            // Mark as synced
+            await db.offlineDebtPayments.update(uid, {
+                status: "synced",
+                syncedAt: now,
+                errorMessage: undefined,
+            });
+
+            setLastSyncedAt(new Date());
+            await updatePendingCount();
+            return "success";
+        } catch (err) {
+            const error = err as Error;
+            const errorMsg = error.message || "Gagal menghubungi server";
+
+            await db.offlineDebtPayments.update(uid, {
                 status: "failed",
                 errorMessage: errorMsg,
             });
@@ -82,7 +150,7 @@ export function useSyncEngine() {
             await updatePendingCount();
             return "failed";
         }
-    }, [isOnline, updatePendingCount]);
+    }, [isOnline, updatePendingCount, queryClient]);
 
     // ─── Sync Cash In/Out Offline Actions ──────────────────────────────────────────
     const syncOfflineDrawerActions = useCallback(async () => {
@@ -94,13 +162,15 @@ export function useSyncEngine() {
                 .equals("pending")
                 .sortBy("timestamp");
 
-            if (pendingActions.length === 0) return;
-
             for (const action of pendingActions) {
                 try {
                     await db.offlineDrawerActions.update(action.id!, { status: "syncing" });
-                    const url = `/v1/cash-drawer/sessions/${action.session_uid}/${action.type === "cash_in" ? "cash-in" : "cash-out"}`;
-                    await apiPost(url, action.payload);
+
+                    const endpoint = action.type === "cash_in"
+                        ? `/v1/cash-drawer-sessions/${action.session_uid}/cash-in`
+                        : `/v1/cash-drawer-sessions/${action.session_uid}/cash-out`;
+
+                    await apiPost(endpoint, action.payload);
 
                     // Successfully synced, delete it from local table
                     await db.offlineDrawerActions.delete(action.id!);
@@ -117,6 +187,38 @@ export function useSyncEngine() {
             console.error("Gagal menjalankan sinkronisasi aksi laci kasir offline:", err);
         }
     }, [isOnline]);
+
+    // ─── Sync ALL Pending Offline Debt Payments ─────────────────────────────────
+    const syncOfflineDebtPayments = useCallback(async () => {
+        if (!isOnline) return;
+
+        try {
+            const pendingPayments = await db.offlineDebtPayments
+                .where("status")
+                .equals("pending")
+                .sortBy("timestamp");
+
+            if (pendingPayments.length === 0) return;
+
+            let successCount = 0;
+            let failCount = 0;
+
+            for (const payment of pendingPayments) {
+                const result = await syncSingleDebtPayment(payment.uid);
+                if (result === "success") successCount++;
+                else failCount++;
+            }
+
+            if (successCount > 0) {
+                toast.success(`${successCount} pembayaran hutang offline berhasil disinkronisasi.`);
+            }
+            if (failCount > 0) {
+                toast.error(`${failCount} pembayaran hutang gagal disinkronisasi.`);
+            }
+        } catch (err) {
+            console.error("Gagal menjalankan sinkronisasi pembayaran hutang offline:", err);
+        }
+    }, [isOnline, syncSingleDebtPayment]);
 
     // ─── Sync ALL Pending Transactions (manual trigger) ──────────────────────────
     const syncOfflineTransactions = useCallback(async () => {
@@ -146,31 +248,32 @@ export function useSyncEngine() {
 
             for (const record of pendingRecords) {
                 const result = await syncSingleTransaction(record.uid);
-                if (result === "success") successCount++;
-                else failCount++;
+                if (result === "success") {
+                    successCount++;
+                } else {
+                    failCount++;
+                }
             }
 
             if (successCount > 0) {
                 toast.success(`${successCount} transaksi offline berhasil disinkronisasi.`);
             }
+
             if (failCount > 0) {
-                const msg = `${failCount} transaksi gagal disinkronisasi.`;
-                setSyncError(msg);
-                toast.error(msg);
+                toast.error(`${failCount} transaksi offline gagal disinkronisasi.`);
             }
         } catch (err) {
             const error = err as Error;
-            console.error("Gagal menjalankan sync engine:", error);
-            setSyncError(error.message || "Unknown error");
+            setSyncError(error.message || "Terjadi kesalahan saat sinkronisasi.");
+            toast.error("Gagal menjalankan sinkronisasi transaksi.");
         } finally {
             isSyncingRef.current = false;
             setIsSyncing(false);
             await updatePendingCount();
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOnline, syncSingleTransaction, updatePendingCount]);
+    }, [isOnline, syncSingleTransaction, syncOfflineDrawerActions, updatePendingCount]);
 
-    // ─── Sync SELECTED Pending Transactions (manual checkbox trigger) ─────────────
+    // ─── Sync Selected Transactions Only ───────────────────────────────────────
     const syncSelectedTransactions = useCallback(async (uids: string[]) => {
         if (!isOnline || isSyncingRef.current || uids.length === 0) return;
 
@@ -184,22 +287,24 @@ export function useSyncEngine() {
 
             for (const uid of uids) {
                 const result = await syncSingleTransaction(uid);
-                if (result === "success") successCount++;
-                else failCount++;
+                if (result === "success") {
+                    successCount++;
+                } else {
+                    failCount++;
+                }
             }
 
             if (successCount > 0) {
                 toast.success(`${successCount} transaksi offline berhasil disinkronisasi.`);
             }
+
             if (failCount > 0) {
-                const msg = `${failCount} transaksi gagal disinkronisasi.`;
-                setSyncError(msg);
-                toast.error(msg);
+                toast.error(`${failCount} transaksi offline gagal disinkronisasi.`);
             }
         } catch (err) {
             const error = err as Error;
-            console.error("Gagal menjalankan sync terpilih:", error);
-            setSyncError(error.message || "Unknown error");
+            setSyncError(error.message || "Terjadi kesalahan saat sinkronisasi.");
+            toast.error("Gagal menjalankan sinkronisasi transaksi.");
         } finally {
             isSyncingRef.current = false;
             setIsSyncing(false);
@@ -207,8 +312,7 @@ export function useSyncEngine() {
         }
     }, [isOnline, syncSingleTransaction, updatePendingCount]);
 
-
-    // ─── Delta Catalog Syncing ────────────────────────────────────────────────────
+    // ─── Sync Catalog (Products + Members) into IndexedDB ─────────────────────────
     const syncCatalog = useCallback(async () => {
         if (!isOnline || isCatalogSyncingRef.current) return;
 
@@ -216,19 +320,23 @@ export function useSyncEngine() {
             isCatalogSyncingRef.current = true;
             setIsCatalogSyncing(true);
 
-            // 1. Sync Products (Incremental Delta Sync)
-            let lastProductUpdate = "";
-            const hasSyncedBefore = typeof window !== "undefined" ? localStorage.getItem("catalog_last_synced_at") : null;
-            if (hasSyncedBefore) {
-                const lastProduct = await db.products.orderBy("updated_at").last();
-                if (lastProduct && lastProduct.updated_at) {
-                    lastProductUpdate = lastProduct.updated_at;
+            // 1. Sync Products (Incremental based on updated_after)
+            const localProducts = await db.products.toArray();
+            let lastProductUpdate: string | undefined;
+
+            if (localProducts.length > 0) {
+                const timestamps = localProducts
+                    .map((p) => p.updated_at)
+                    .filter((t): t is string => !!t)
+                    .sort();
+                if (timestamps.length > 0) {
+                    lastProductUpdate = timestamps[timestamps.length - 1];
                 }
             }
 
             let currentPage = 1;
             let lastPage = 1;
-            const perPage = 250;
+            const perPage = 100;
 
             while (currentPage <= lastPage) {
                 const params: PaginationParams & { updated_after?: string } = {
@@ -252,8 +360,38 @@ export function useSyncEngine() {
             try {
                 const members = await apiGetData<Member[]>("/v1/members/all");
                 if (members && members.length > 0) {
+                    // Find pending offline debt payments to preserve un-synced debt reductions
+                    const pendingDebts = await db.offlineDebtPayments
+                        .where("status")
+                        .equals("pending")
+                        .toArray();
+
+                    const pendingDeductions: Record<string, number> = {};
+                    for (const p of pendingDebts) {
+                        pendingDeductions[p.member_uid] = (pendingDeductions[p.member_uid] || 0) + (p.amount || 0);
+                    }
+
+                    const adjustedMembers = members.map((m) => {
+                        const deduction = pendingDeductions[m.uid] || 0;
+                        if (deduction > 0) {
+                            return {
+                                ...m,
+                                hutang: Math.max(0, (m.hutang || 0) - deduction),
+                            };
+                        }
+                        return m;
+                    });
+
                     await db.members.clear();
-                    await db.members.bulkPut(members);
+                    await db.members.bulkPut(adjustedMembers);
+
+                    const currentSelected = useCheckoutStore.getState().selectedMember;
+                    if (currentSelected) {
+                        const match = adjustedMembers.find((m) => m.uid === currentSelected.uid);
+                        if (match) {
+                            useCheckoutStore.getState().setSelectedMember(match);
+                        }
+                    }
                 }
             } catch (err) {
                 console.warn("Gagal sinkronisasi data member:", err);
@@ -284,8 +422,8 @@ export function useSyncEngine() {
             syncCatalog();
             syncOfflineDrawerActions();
         }
-        // NOTE: syncOfflineTransactions is intentionally NOT called here.
-        // Offline transactions must be synced manually from the monitoring page.
+        // NOTE: syncOfflineTransactions and syncOfflineDebtPayments are intentionally NOT called here.
+        // Offline items must be synced manually from the monitoring dialog.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOnline, syncOfflineDrawerActions]);
 
@@ -311,6 +449,8 @@ export function useSyncEngine() {
         triggerSingleSync: syncSingleTransaction,
         triggerSelectedSync: syncSelectedTransactions,
         triggerCatalogSync: syncCatalog,
+        triggerSingleDebtPaymentSync: syncSingleDebtPayment,
+        triggerDebtPaymentSync: syncOfflineDebtPayments,
         updatePendingCount,
     };
 }

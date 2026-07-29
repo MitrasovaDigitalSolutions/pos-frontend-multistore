@@ -39,6 +39,20 @@ export interface OfflineTransactionRecord {
     errorMessage?: string;
 }
 
+// Offline debt payment record (for member debt payments made while offline)
+export interface OfflineDebtPaymentRecord {
+    uid: string;              // Client-generated UUID for idempotency
+    member_uid: string;       // UID of the member paying
+    member_nama: string;      // Member name snapshot for display
+    payload: Record<string, unknown>; // The pay-debt payload + uid + tanggal_bayar
+    status: "pending" | "synced" | "failed";
+    timestamp: string;        // created_at (ISO string)
+    syncedAt?: string;
+    errorMessage?: string;
+    amount: number;           // Payment amount for display
+    metode_pembayaran: "cash" | "card"; // Payment method for display
+}
+
 class POSDatabase extends Dexie {
     products!: Table<Product, string>;
     members!: Table<Member, string>;
@@ -47,6 +61,7 @@ class POSDatabase extends Dexie {
     cashDrawerSessions!: Table<CashDrawerSession, string>;
     cashDrawerMovements!: Table<CashDrawerMovement, string>;
     offlineDrawerActions!: Table<OfflineDrawerAction, number>;
+    offlineDebtPayments!: Table<OfflineDebtPaymentRecord, string>;
 
     constructor() {
         super("POSDatabase");
@@ -69,6 +84,16 @@ class POSDatabase extends Dexie {
             cashDrawerSessions: "uid, status, opened_at",
             cashDrawerMovements: "uid, cash_drawer_session_uid, type, created_at",
             offlineDrawerActions: "++id, session_uid, type, timestamp, status",
+        });
+        this.version(5).stores({
+            products: "uid, nama, barcode, status, updated_at",
+            members: "uid, nama, kode, status, updated_at",
+            offlineQueue: "++id, uid, timestamp, status",
+            offlineTransactions: "uid, timestamp, status",
+            cashDrawerSessions: "uid, status, opened_at",
+            cashDrawerMovements: "uid, cash_drawer_session_uid, type, created_at",
+            offlineDrawerActions: "++id, session_uid, type, timestamp, status",
+            offlineDebtPayments: "uid, member_uid, timestamp, status",
         });
     }
 }
