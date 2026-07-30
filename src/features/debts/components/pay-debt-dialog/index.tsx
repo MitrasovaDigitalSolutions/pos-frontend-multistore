@@ -121,6 +121,7 @@ export function PayDebtDialog({ open, onOpenChange, member, onSuccess }: PayDebt
 
             if (typeof window !== "undefined") {
                 window.dispatchEvent(new Event("pos_member_updated"));
+                window.dispatchEvent(new Event("pos_pending_count_updated"));
             }
 
             toast.warning(notice);

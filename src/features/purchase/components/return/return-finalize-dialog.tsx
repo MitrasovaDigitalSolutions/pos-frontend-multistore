@@ -15,6 +15,7 @@ import {
     useCashAccounts,
     useFinalizePurchaseReturn,
     useReceivingDetail,
+    type FinalizeReturnInput,
 } from "../../api/purchase-api";
 import type { PurchaseReturn } from "../../types";
 import { PAYMENT_STATUS } from "@/constants/purchase";
@@ -36,6 +37,8 @@ const returnFinalizeSchema = z.object({
     cash_account_uid: z.string().nullable().optional(),
     stock_receiving_uid: z.string().nullable().optional(),
     catatan_penyelesaian: z.string().nullable().optional().transform(v => v || null),
+    total_nominal: z.number().optional(),
+    sisa_hutang: z.number().optional(),
 }).superRefine((data, ctx) => {
     if (data.resolution_type === "refund" && !data.cash_account_uid) {
         ctx.addIssue({
@@ -49,6 +52,19 @@ const returnFinalizeSchema = z.object({
             code: z.ZodIssueCode.custom,
             message: "Faktur Penerimaan wajib dipilih untuk potong utang",
             path: ["stock_receiving_uid"],
+        });
+    }
+    if (
+        data.resolution_type === "credit" &&
+        typeof data.total_nominal === "number" &&
+        typeof data.sisa_hutang === "number" &&
+        data.total_nominal > data.sisa_hutang &&
+        !data.cash_account_uid
+    ) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Kas/Rekening wajib dipilih untuk menerima sisa kelebihan retur",
+            path: ["cash_account_uid"],
         });
     }
 });
@@ -80,7 +96,12 @@ export function ReturnFinalizeDialog({
             (receiving.sisa_hutang !== undefined && receiving.sisa_hutang <= 0))
     );
 
-    const resolutionOptions = isPaid
+    const totalNominal = returnObj?.total_nominal || 0;
+    const sisaHutang = receiving?.sisa_hutang ?? 0;
+
+    // Jika fakturnya belum lunas, hanya boleh menggunakan "credit" (potong utang).
+    // Hanya boleh "refund" ketika fakturnya lunas (isPaid) atau tanpa referensi faktur (!receivingUid).
+    const resolutionOptions = (isPaid || !receivingUid)
         ? [
             {
                 value: "refund",
@@ -89,22 +110,22 @@ export function ReturnFinalizeDialog({
         ]
         : [
             {
-                value: "refund",
-                label: "Refund Tunai (Kas Masuk)",
-            },
-            {
                 value: "credit",
                 label: "Potong Utang (Kredit Faktur Supplier)",
             },
         ];
 
+    const defaultResolutionType = resolutionOptions[0].value as "refund" | "credit";
+
     const methods = useForm<ReturnFinalizeInput>({
         resolver: zodResolver(returnFinalizeSchema) as Resolver<ReturnFinalizeInput>,
         defaultValues: {
-            resolution_type: undefined as unknown as "refund",
+            resolution_type: defaultResolutionType,
             cash_account_uid: null,
-            stock_receiving_uid: returnObj?.stock_receiving_uid || null,
+            stock_receiving_uid: receivingUid,
             catatan_penyelesaian: "",
+            total_nominal: totalNominal,
+            sisa_hutang: sisaHutang,
         },
     });
 
@@ -116,17 +137,21 @@ export function ReturnFinalizeDialog({
     } = methods;
 
     const resolutionType = useWatch({ control: methods.control, name: "resolution_type" });
+    const isOverflow = resolutionType === "credit" && totalNominal > sisaHutang;
+    const overflowAmount = Math.max(0, totalNominal - sisaHutang);
 
     useEffect(() => {
         if (open && returnObj) {
             reset({
-                resolution_type: undefined as unknown as "refund",
+                resolution_type: defaultResolutionType,
                 cash_account_uid: null,
-                stock_receiving_uid: returnObj.stock_receiving_uid || null,
+                stock_receiving_uid: receivingUid,
                 catatan_penyelesaian: "",
+                total_nominal: totalNominal,
+                sisa_hutang: sisaHutang,
             });
         }
-    }, [open, returnObj, reset]);
+    }, [open, returnObj, reset, receivingUid, defaultResolutionType, totalNominal, sisaHutang]);
 
     const cashAccountOptions = cashAccounts.map((c) => ({
         value: String(c.uid),
@@ -148,12 +173,16 @@ export function ReturnFinalizeDialog({
             return;
         }
 
-        const payload = {
+        const payload: FinalizeReturnInput = {
             resolution_type: pendingData.resolution_type,
             impact_type: pendingData.resolution_type,
-            cash_account_uid: pendingData.resolution_type === "refund" ? pendingData.cash_account_uid : null,
-            stock_receiving_uid: pendingData.resolution_type === "credit" ? (pendingData.stock_receiving_uid || returnObj.stock_receiving_uid) : null,
-            catatan_penyelesaian: pendingData.catatan_penyelesaian,
+            cash_account_uid: (pendingData.resolution_type === "refund" || pendingData.cash_account_uid)
+                ? (pendingData.cash_account_uid || null)
+                : null,
+            stock_receiving_uid: pendingData.resolution_type === "credit"
+                ? (pendingData.stock_receiving_uid || returnObj.stock_receiving_uid || null)
+                : null,
+            catatan_penyelesaian: pendingData.catatan_penyelesaian || null,
         };
 
         finalizeReturn.mutate(
@@ -229,28 +258,6 @@ export function ReturnFinalizeDialog({
                             )}
                         </div>
 
-                        {/* Cash Account Select if Refund */}
-                        {resolutionType === "refund" && (
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                    Kas / Rekening Penerima Refund *
-                                </label>
-                                <FormSelect<ReturnFinalizeInput>
-                                    name="cash_account_uid"
-                                    options={cashAccountOptions}
-                                    placeholder={
-                                        cashLoading ? "Memuat rekening..." : "-- Pilih Rekening --"
-                                    }
-                                    disabled={cashLoading}
-                                />
-                                {errors.cash_account_uid && (
-                                    <p className="text-[10px] text-rose-500 font-medium">
-                                        {errors.cash_account_uid.message}
-                                    </p>
-                                )}
-                            </div>
-                        )}
-
                         {/* Stock Receiving Auto Card if Credit */}
                         {resolutionType === "credit" && (
                             <div className="space-y-1.5 font-sans">
@@ -280,12 +287,52 @@ export function ReturnFinalizeDialog({
                                             </span>
                                         </div>
                                     )}
-                                    <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/30 p-2.5 rounded-lg mt-2">
-                                        <p className="text-[11px] text-emerald-700 dark:text-emerald-300 font-semibold leading-normal">
-                                            ✓ Nilai retur ({formatRupiah(returnObj?.total_nominal || 0)}) otomatis memotong utang pada faktur penerimaan yang terpilih.
-                                        </p>
-                                    </div>
+                                    {isOverflow ? (
+                                        <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/30 p-2.5 rounded-lg mt-2 space-y-1">
+                                            <p className="text-[11px] text-amber-800 dark:text-amber-300 font-bold leading-normal">
+                                                ⚠ Nilai retur ({formatRupiah(totalNominal)}) lebih besar dari sisa utang faktur ({formatRupiah(sisaHutang)}).
+                                            </p>
+                                            <p className="text-[11px] text-amber-700 dark:text-amber-400 font-medium leading-normal">
+                                                Sisa utang sebesar {formatRupiah(sisaHutang)} akan lunas terpotong, dan kelebihan nilai retur sebesar <strong className="font-bold underline">{formatRupiah(overflowAmount)}</strong> akan dimasukkan sebagai refund ke Kas / Rekening.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/30 p-2.5 rounded-lg mt-2">
+                                            <p className="text-[11px] text-emerald-700 dark:text-emerald-300 font-semibold leading-normal">
+                                                ✓ Nilai retur ({formatRupiah(totalNominal)}) otomatis memotong utang pada faktur penerimaan yang terpilih.
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
+                                {errors.stock_receiving_uid && (
+                                    <p className="text-[10px] text-rose-500 font-medium">
+                                        {errors.stock_receiving_uid.message}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Cash Account Select if Refund OR Credit Overflow */}
+                        {(resolutionType === "refund" || isOverflow) && (
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    {isOverflow
+                                        ? `Kas / Rekening Penerima Kelebihan Refund (${formatRupiah(overflowAmount)}) *`
+                                        : "Kas / Rekening Penerima Refund *"}
+                                </label>
+                                <FormSelect<ReturnFinalizeInput>
+                                    name="cash_account_uid"
+                                    options={cashAccountOptions}
+                                    placeholder={
+                                        cashLoading ? "Memuat rekening..." : "-- Pilih Rekening --"
+                                    }
+                                    disabled={cashLoading}
+                                />
+                                {errors.cash_account_uid && (
+                                    <p className="text-[10px] text-rose-500 font-medium">
+                                        {errors.cash_account_uid.message}
+                                    </p>
+                                )}
                             </div>
                         )}
 
