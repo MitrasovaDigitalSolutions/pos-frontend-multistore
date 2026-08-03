@@ -60,11 +60,17 @@ export interface BalanceSheetExpense extends BalanceSheetSection {
     total_expense: number;
 }
 
+export interface BalanceSheetSHULaluDetail {
+    tahun: number;
+    amount: number;
+}
+
 export interface BalanceSheetSHU {
     total: number;
     berjalan: number;
     lalu: number;
     lalu_label?: string;
+    lalu_detail?: BalanceSheetSHULaluDetail[];
 }
 
 export interface BalanceSheetData {

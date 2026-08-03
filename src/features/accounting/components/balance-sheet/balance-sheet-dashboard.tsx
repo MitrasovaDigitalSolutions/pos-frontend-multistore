@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import type { BalanceSheetData, ChartOfAccount } from "@/features/accounting/types";
+import type { BalanceSheetData, BalanceSheetDetailCategory, ChartOfAccount } from "@/features/accounting/types";
 import { cn } from "@/lib/utils";
 import { useBalanceSheetStore } from "@/stores/balance-sheet-store";
 import {
@@ -149,7 +149,17 @@ export function BalanceSheetDashboard({
         if (viewType === "standard") {
             const items = [...equity];
             if (shuData) {
-                if (shuData.lalu !== 0) {
+                if (shuData.lalu !== 0 || (shuData.lalu_detail && shuData.lalu_detail.length > 0)) {
+                    const detailCategories: BalanceSheetDetailCategory[] | undefined =
+                        shuData.lalu_detail && shuData.lalu_detail.length > 0
+                            ? shuData.lalu_detail.map((d) => ({
+                                kategori: `SHU Tahun ${d.tahun}`,
+                                amount: d.amount,
+                                debit: d.amount < 0 ? Math.abs(d.amount) : 0,
+                                credit: d.amount > 0 ? d.amount : 0,
+                            }))
+                            : undefined;
+
                     items.push({
                         uid: "synthetic-shu-lalu",
                         kode: null,
@@ -157,6 +167,7 @@ export function BalanceSheetDashboard({
                         amount: shuData.lalu,
                         debit: 0,
                         credit: shuData.lalu,
+                        detail: detailCategories,
                     });
                 }
                 items.push({
