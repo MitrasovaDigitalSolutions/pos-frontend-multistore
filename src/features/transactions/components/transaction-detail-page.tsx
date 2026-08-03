@@ -10,8 +10,10 @@ import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { toast } from "sonner";
 import QZService from "@/services/qz.service";
+import PrinterService from "@/services/printer.service";
 import axios from "axios";
 import { buildReceipt } from "@/utils/ReceiptFormatter";
+import { buildReceipt58 } from "@/utils/ReceiptFormatter58";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
@@ -132,9 +134,10 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
             const toastId = toast.success("Mencetak struk...");
             const { data } = await axios.get(`/api/proxy/v1/transactions-print/${transaction.uid}`);
 
-            const receipt = buildReceipt(data);
+            // const receipt = buildReceipt(data);
+            const receipt = buildReceipt58(data);
             const printerName = getSetting("printer_id") || "EPSON LX-310 ESC/P";
-            await QZService.print(printerName, receipt);
+            await PrinterService.print(printerName, receipt);
 
             setTimeout(() => {
                 toast.dismiss(toastId);

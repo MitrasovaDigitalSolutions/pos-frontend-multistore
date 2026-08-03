@@ -13,7 +13,7 @@ export interface CashDepositReceiptData {
     }
 }
 
-const WIDTH = 32
+const WIDTH = 42
 
 function center(text: string) {
     const left = Math.max(0, Math.floor((WIDTH - text.length) / 2))
@@ -43,13 +43,7 @@ export function buildCashDepositText(
 ): string {
 
     const lines: string[] = []
-
-    lines.push(center(data.app_setting.app_name.toUpperCase()))
-
-    if (data.app_setting.app_address) {
-        lines.push(center(data.app_setting.app_address))
-    }
-
+    lines.push("")
     lines.push("")
     lines.push(center("STRUK SETORAN KASIR"))
     lines.push(hr())
@@ -70,10 +64,14 @@ export function buildCashDepositText(
     lines.push(center(`Rp ${rupiah(data.session.cash_sales_total)}`))
 
     lines.push(hr())
-    lines.push(center("Terima Kasih"))
 
+    lines.push(center("TOTAL SETORAN "))
     lines.push("")
-    lines.push("")
+    lines.push(center(`Rp ${rupiah(data.session.cash_sales_total + data.session.opening_balance)}`))
+
+    lines.push(hr())
+    lines.push(center("Selamat Istirahat"))
+
     lines.push("")
 
     return lines.join("\n")

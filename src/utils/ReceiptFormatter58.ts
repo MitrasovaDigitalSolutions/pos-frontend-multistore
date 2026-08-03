@@ -3,21 +3,31 @@ export interface ReceiptData {
     setting: any;
 }
 
-const WIDTH = 42;
+// ============================================================
+// CONSTANTS
+// ============================================================
 
-const line = () => "-".repeat(WIDTH);
-const thin = () => "-".repeat(WIDTH);
-const TOTAL_COL = 24; // lebar kolom subtotal (kanan)
-const PRICE_COL = WIDTH - 2 - TOTAL_COL; // sisa untuk harga
+const WIDTH = 42;
+const VALUE_COL = 16;
+const LABEL_COL = WIDTH - VALUE_COL; // 16
+
+
+// ============================================================
+// PRIMITIVES
+// ============================================================
+
+const separator = (char = "-") => char.repeat(WIDTH);
 
 const money = (value: number | string) =>
     new Intl.NumberFormat("id-ID").format(Number(value));
 
+/** Potong / pad kanan sampai `length` karakter */
 const pad = (value: string, length: number) =>
     value.length > length
         ? value.substring(0, length)
         : value.padEnd(length, " ");
 
+/** Potong / pad kiri sampai `length` karakter */
 const padLeft = (value: string, length: number) =>
     value.length > length
         ? value.substring(0, length)
@@ -29,7 +39,7 @@ const center = (value: string) => {
     return " ".repeat(left) + value;
 };
 
-const wrapText = (text: string, width: number) => {
+const wrapText = (text: string, width: number): string => {
     const words = text.split(" ");
     const lines: string[] = [];
     let current = "";
@@ -43,11 +53,12 @@ const wrapText = (text: string, width: number) => {
             current = word;
         }
     }
+
     if (current) lines.push(current);
     return lines.join("\n");
 };
 
-const formatDate = (value?: string | Date | null) => {
+const formatDate = (value?: string | Date | null): string => {
     if (!value) return "-";
     return new Intl.DateTimeFormat("id-ID", {
         timeZone: "Asia/Jakarta",
@@ -60,104 +71,129 @@ const formatDate = (value?: string | Date | null) => {
     }).format(new Date(value));
 };
 
-const itemLine = (qty: number, name: string, price: number, total: number) => {
+// ============================================================
+// ROW BUILDERS — semua pakai VALUE_COL agar angka sejajar
+// ============================================================
+
+/**
+ * Baris item:
+ *   Baris 1 → "Nx NamaProduk"
+ *   Baris 2 → "  [harga satuan ........] [subtotal .............]"
+ *              <- LABEL_COL (18) ->       <- VALUE_COL (24) ->
+ */
+const itemLine = (qty: number, name: string, price: number, total: number): string => {
     const qtyStr = `${qty}x`;
     const nameStr = name.substring(0, WIDTH - qtyStr.length - 1);
-    let txt = `${qtyStr} ${nameStr}\n`;
-
-    const priceStr = padLeft(money(price), PRICE_COL);
-    const totalStr = padLeft(money(total), TOTAL_COL);
-    txt += " ".repeat(2) + priceStr + totalStr + "\n";
-
-    return txt;
+    const priceStr = padLeft(money(price), LABEL_COL - 2); // -2 untuk indent
+    const totalStr = padLeft(money(total), VALUE_COL);
+    return `${qtyStr} ${nameStr}\n  ${priceStr}${totalStr}\n`;
 };
 
-export function buildReceipt58(data: ReceiptData) {
-    const { sale, setting: app } = data;
+/**
+ * Baris total / ringkasan:
+ *   "[label ...........] [nilai ................]"
+ *   <- LABEL_COL (18) -> <- VALUE_COL (24) ->
+ *
+ * Label yang lebih panjang dari LABEL_COL akan dipotong.
+ */
+const fmtTotal = (label: string, value: number): string => {
+    const labelStr = pad(label, LABEL_COL);
+    const valStr = padLeft(money(value), VALUE_COL);
+    return `${labelStr}${valStr}\n`;
+};
 
-    const isDebt = sale.metode_pembayaran === "debt";
-    const faktur = isDebt
-        ? "FAKTUR KREDIT"
-        : "FAKTUR CASH";
+// ============================================================
+// MAIN BUILDER
+// ============================================================
+
+export function buildReceipt58(data: ReceiptData): string {
+    const { sale, setting: app } = data
+
+    const isDebt = sale.metode_pembayaran === "debt"
 
     const bayar = isDebt
-        ? sale.subtotal - sale.debt_amount
-        : sale.nominal_bayar;
+        ? (sale.cash_amount ?? sale.cash_received ?? 0)
+        : sale.nominal_bayar
 
     const kembali = isDebt
-        ? sale.debt_amount
-        : sale.kembalian;
+        ? (sale.debt_amount ?? 0)
+        : sale.kembalian
 
-    let txt = "\n\n";
+    const lines: string[] = []
 
-    // ================= HEADER =================
-    txt += "\n";
-    txt += center(app.app_name ?? "Mitrasova POS") + "\n";
-    txt += wrapText(app.app_address ?? "", WIDTH) + "\n";
+    // ── HEADER ──────────────────────────────────────────────
+    lines.push("")
+    lines.push(center(app.app_name ?? "Mitrasova POS"))
+
+    if (app.app_address) {
+        lines.push(center(app.app_address))
+    }
 
     if (app.app_phone) {
-        txt += `Telp: ${app.app_phone}\n`;
+        lines.push(center(`Telp: ${app.app_phone}`))
     }
 
-    txt += thin() + "\n";
+    lines.push(separator())
 
-    txt += `Tgl  : ${formatDate(sale.created_at)}\n`;
-    txt += `Kasir: ${sale.user.name}\n`;
-    txt += `No   : ${sale.nomor_transaksi}\n`;
+    lines.push(`Tgl  : ${formatDate(sale.created_at)}`)
+    lines.push(`Kasir: ${sale.user.name}`)
+    lines.push(`No   : ${sale.nomor_transaksi}`)
 
     if (sale.member?.nama) {
-        txt += `Member: ${sale.member.nama}\n`;
+        lines.push(`Member: ${sale.member.nama}`)
     }
 
-    txt += line() + "\n";
+    lines.push(separator())
 
-    // ================= ITEMS =================
-
+    // ── ITEMS ────────────────────────────────────────────────
     sale.items.forEach((item: any) => {
-        txt += itemLine(
-            Number(item.kuantitas),
-            item.nama_produk,
-            Number(item.harga_satuan),
-            Number(item.subtotal)
-        );
-    });
+        lines.push(
+            itemLine(
+                Number(item.kuantitas),
+                item.nama_produk,
+                Number(item.harga_satuan),
+                Number(item.subtotal)
+            ).trimEnd()
+        )
+    })
 
-    txt += line() + "\n";
+    lines.push(separator())
 
-    // ================= TOTALS =================
-
-    const fmtTotal = (label: string, value: number) => {
-        const val = money(value);
-        return label + padLeft(val, WIDTH - label.length) + "\n";
-    };
-
-    txt += fmtTotal("Jumlah:", Number(sale.subtotal));
-    txt += fmtTotal("Diskon:", Number(sale.diskon ?? 0));
+    // ── TOTALS ───────────────────────────────────────────────
+    lines.push(fmtTotal("Jumlah:", Number(sale.subtotal)).trimEnd())
+    lines.push(fmtTotal("Diskon:", Number(sale.diskon ?? 0)).trimEnd())
+    lines.push(fmtTotal("Pajak (PPN 11%):", Number(sale.pajak ?? 0)).trimEnd())
 
     if (isDebt) {
-        const cashAmount = sale.cash_amount ?? sale.cash_received ?? 0;
-        const cardAmount = sale.card_amount ?? 0;
+        const cashAmount = sale.cash_amount ?? sale.cash_received ?? 0
+        const cardAmount = sale.card_amount ?? 0
 
-        txt += fmtTotal("DP Tunai:", Number(cashAmount));
+        lines.push(fmtTotal("DP Tunai:", Number(cashAmount)).trimEnd())
+
         if (cardAmount > 0) {
-            txt += fmtTotal("DP Transfer:", Number(cardAmount));
+            lines.push(fmtTotal("DP Transfer:", Number(cardAmount)).trimEnd())
+
             if (sale.nomor_kartu_akhir) {
-                const kartu = `${sale.jenis_kartu || "Debit"} ****${sale.nomor_kartu_akhir}`;
-                txt += pad(kartu, WIDTH) + "\n";
+                lines.push(
+                    pad(
+                        `${sale.jenis_kartu ?? "Debit"} ****${sale.nomor_kartu_akhir}`,
+                        WIDTH
+                    )
+                )
             }
         }
-        txt += fmtTotal("Kurang:", Number(sale.debt_amount ?? 0));
+
+        lines.push(fmtTotal("Kurang:", Number(sale.debt_amount ?? 0)).trimEnd())
     } else {
-        txt += fmtTotal("Tunai:", Number(bayar));
-        txt += fmtTotal("Kembali:", Number(kembali));
+        lines.push(fmtTotal("Tunai:", Number(bayar)).trimEnd())
+        lines.push(fmtTotal("Kembali:", Number(kembali)).trimEnd())
     }
 
-    txt += line() + "\n";
+    lines.push(separator())
 
-    // ================= FOOTER =================
+    // ── FOOTER ───────────────────────────────────────────────
+    lines.push(center("Terima kasih"))
+    lines.push(center("Silahkan datang kembali"))
 
-    txt += center("Terima kasih") + "\n";
-    txt += center("Silahkan datang kembali") + "\n";
-
-    return txt;
+    return "\n" + lines.join("\n")
 }

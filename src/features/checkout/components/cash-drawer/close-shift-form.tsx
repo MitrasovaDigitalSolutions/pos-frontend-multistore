@@ -9,13 +9,18 @@ import { signOut } from "@/lib/auth-helpers";
 import { useCheckoutStore } from "@/stores/checkout-store";
 import { useActiveStoreStore } from "@/stores/active-store-store";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IconChevronLeft, IconDoorExit, IconLoader2 } from "@tabler/icons-react";
+import { IconChevronLeft, IconDoorExit, IconLoader2,IconPrinter } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { useCloseCashDrawer } from "../../api/cash-drawer-api";
 import { closeCashDrawerSchema, type CloseCashDrawerInput } from "../../schemas/cash-drawer-schema";
 import { db } from "@/lib/db";
+import axios from 'axios'
+import { useSettingsStore } from "@/stores/settings-store";
+import PrinterService from "@/services/printer.service";
+import { buildCashDepositText } from '@/utils/ReceiptCashierSession'
+import printerService from "@/services/printer.service";
 
 interface CloseShiftFormProps {
     sessionId: string;
@@ -45,10 +50,17 @@ export function CloseShiftForm({
     });
 
     const { handleSubmit, formState: { isSubmitting } } = methods;
+    const getSetting = useSettingsStore((state) => state.getSetting);
 
     const actualClosing = useWatch({ control: methods.control, name: "actual_closing_balance" });
     const hasEnteredBalance = actualClosing !== null && actualClosing !== undefined && actualClosing !== ("" as unknown as number);
     const diff = hasEnteredBalance ? Number(actualClosing) - expectedCash : 0;
+
+    const onPrint = async() => {
+        const { data } = await axios.get(`/api/proxy/v1/cash-drawer/sessions/${sessionId}/struk-setoran`)
+        const printerName = getSetting("printer_id") || "EPSON LX-310 ESC/P";
+        await PrinterService.print(printerName,buildCashDepositText(data))
+    }
 
     const onSubmit = async (data: CloseCashDrawerInput) => {
         const storeCart = useCheckoutStore.getState().cart;
@@ -174,6 +186,15 @@ export function CloseShiftForm({
                         disabled={closeMutation.isPending || isSubmitting}
                     >
                         Kembali
+                    </Button>
+                    <Button
+                        type="button"
+                        onClick={onPrint}
+                        disabled={closeMutation.isPending || isSubmitting}
+                        className="grow h-11 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer border-none shadow-lg shadow-rose-600/10"
+                    >
+                        <IconPrinter size={16} />
+                        <span>Cetak Struk</span>
                     </Button>
                     <Button
                         type="submit"

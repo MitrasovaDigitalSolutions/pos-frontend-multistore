@@ -17,6 +17,10 @@ import {
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { useBulkCheckout } from "@/features/checkout/api/checkout-api";
 import { toast } from "sonner";
+import axios from "axios";
+import PrinterService from "@/services/printer.service";
+import { buildReceipt58 } from "@/utils/ReceiptFormatter58";
+import { useSettingsStore } from "@/stores/settings-store";
 import type { Receipt, CartItem } from "@/features/checkout/types";
 import type { Member } from "@/features/master/members/types";
 import { db } from "@/lib/db";
@@ -62,6 +66,7 @@ export function PaymentDialog({
     const bulkCheckout = useBulkCheckout();
     const isOnline = useNetworkStatus();
     const { data: session } = useSession();
+    const getSetting = useSettingsStore((state) => state.getSetting);
 
     const [payMode, setPayMode] = useState<"cash" | "card" | "debt">("cash");
 
@@ -129,6 +134,19 @@ export function PaymentDialog({
             }
         }
         onLocalProductsReload?.();
+    };
+
+    const printReceipt = async (receiptText: string) => {
+        const printerName = getSetting("printer_id") || "EPSON LX-310 ESC/P";
+        const toastId = toast.success("Mencetak struk...");
+        try {
+            await PrinterService.print(printerName, receiptText);
+        } catch (err) {
+            console.error("Gagal mencetak struk:", err);
+            toast.error("Gagal mencetak struk. Pastikan local printer service aktif.");
+        } finally {
+            setTimeout(() => toast.dismiss(toastId), 3000);
+        }
     };
 
     const handlePaySubmit = async () => {
@@ -338,6 +356,28 @@ export function PaymentDialog({
                 toast.warning(notice);
                 onPaySuccess(mockReceipt);
                 onOpenChange(false);
+
+                void printReceipt(
+                    buildReceipt58({
+                        sale: {
+                            ...mockReceipt,
+                            nomor_transaksi: mockReceipt.uid,
+                            created_at: now,
+                            user: { name: session?.user?.name || "Kasir Offline" },
+                            items: cartList.map((item) => ({
+                                nama_produk: item.name,
+                                kuantitas: item.qty,
+                                harga_satuan: item.price,
+                                subtotal: item.price * item.qty,
+                            })),
+                        },
+                        setting: {
+                            app_name: getSetting("app_name", "Mitrasova POS"),
+                            app_address: getSetting("app_address", "Indonesia"),
+                            app_phone: getSetting("app_phone", ""),
+                        },
+                    })
+                );
             } catch (err) {
                 const message = err instanceof Error ? err.message : String(err);
                 toast.error(`Gagal menyimpan transaksi offline: ${message}`);
@@ -356,6 +396,15 @@ export function PaymentDialog({
                         await decrementLocalStock();
                         if (res.data) onPaySuccess(res.data);
                         onOpenChange(false);
+                        if (res.data?.uid) {
+                            try {
+                                const { data } = await axios.get(`/api/proxy/v1/transactions-print/${res.data.uid}`);
+                                void printReceipt(buildReceipt58(data));
+                            } catch (err) {
+                                console.error("Gagal mengambil data struk:", err);
+                                toast.error("Gagal mencetak struk.");
+                            }
+                        }
                     },
                     onError: (err) => {
                         if (err instanceof NetworkError) {
