@@ -31,6 +31,7 @@ interface BalanceSheetPrintFilterValues {
     detailRevenue: boolean;
     detailExpense: boolean;
     detailHpp: boolean;
+    detailShu: boolean;
 }
 
 interface BalanceSheetDashboardProps {
@@ -63,6 +64,7 @@ export function BalanceSheetDashboard({
         params.append("detail_revenue", formData.detailRevenue ? "1" : "0");
         params.append("detail_expense", formData.detailExpense ? "1" : "0");
         params.append("detail_hpp", formData.detailHpp ? "1" : "0");
+        params.append("detail_shu", formData.detailShu ? "1" : "0");
 
         const url = `/api/proxy/v1/reports/print/balance-sheet?${params.toString()}`;
         window.open(url, "_blank");
@@ -374,6 +376,7 @@ export function BalanceSheetDashboard({
                     detailRevenue: true,
                     detailExpense: true,
                     detailHpp: true,
+                    detailShu: true,
                 }}
             >
                 <FormDatePicker<BalanceSheetPrintFilterValues>
@@ -398,6 +401,10 @@ export function BalanceSheetDashboard({
                     <FormSwitch<BalanceSheetPrintFilterValues>
                         name="detailHpp"
                         label="Rincian Detail Beban Pembelian (HPP)"
+                    />
+                    <FormSwitch<BalanceSheetPrintFilterValues>
+                        name="detailShu"
+                        label="Rincian Detail SHU (Sisa Hasil Usaha)"
                     />
                 </div>
             </PrintConfirmDialog>
