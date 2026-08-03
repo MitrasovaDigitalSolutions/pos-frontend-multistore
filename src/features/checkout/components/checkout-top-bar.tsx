@@ -7,7 +7,6 @@ import { getImageUrl } from "@/lib/utils";
 import { useSettingsStore } from "@/stores/settings-store";
 import { IconCash, IconHome, IconLogout, IconScan, IconWifi, IconBuildingStore } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
-import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { useActiveStoreStore } from "@/stores/active-store-store";
 
 interface CheckoutTopBarProps {
@@ -24,7 +23,6 @@ interface CheckoutTopBarProps {
     offlineReadiness?: OfflineReadinessState;
     onCatalogSyncRequest?: () => void;
     isCatalogSyncing?: boolean;
-    grandTotal?: number;
 }
 
 export function CheckoutTopBar({
@@ -41,7 +39,6 @@ export function CheckoutTopBar({
     offlineReadiness,
     onCatalogSyncRequest,
     isCatalogSyncing = false,
-    grandTotal = 0,
 }: CheckoutTopBarProps) {
     const getSetting = useSettingsStore((state) => state.getSetting);
     const appName = getSetting("app_name", "Mitrasova POS");
@@ -75,12 +72,6 @@ export function CheckoutTopBar({
                     <span className="bg-emerald-700 text-emerald-100 text-[9px] font-bold px-2 py-0.5 rounded-full tracking-wider shrink-0">
                         TRX #{transactionId}
                     </span>
-                )}
-                {grandTotal > 0 && (
-                    <div className="flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[11px] font-black px-3 py-0.5 rounded-full shrink-0 shadow-xs animate-in fade-in-0 duration-200">
-                        <span className="text-[9px] uppercase tracking-wider text-emerald-400 font-extrabold">Total Bayar:</span>
-                        <span className="font-mono text-white text-xs font-black">{formatRupiah(grandTotal)}</span>
-                    </div>
                 )}
             </div>
 

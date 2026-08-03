@@ -357,11 +357,6 @@ export function CheckoutTotalsSection({
                 <div className="bg-white border border-slate-200/80 rounded-xl p-3 shadow-xs space-y-2.5">
                     <div className="flex justify-between items-center text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
                         <span>Diskon Transaksi</span>
-                        {discountAmount > 0 && (
-                            <span className="text-emerald-600 font-bold normal-case">
-                                Terpasang: -{formatRupiah(discountAmount)}
-                            </span>
-                        )}
                     </div>
 
                     <div className="flex gap-2">
