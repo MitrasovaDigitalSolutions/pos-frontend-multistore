@@ -346,10 +346,10 @@ export function PastTransactionsDialog({
             }
             className="sm:max-w-5xl max-h-[90vh] flex flex-col"
         >
-            <div className="space-y-4 pt-3 flex-1 flex flex-col min-h-0 overflow-y-auto">
+            <div className="space-y-3 pt-3 flex-1 flex flex-col min-h-0">
                 {/* Header Top Quick Actions & FilterForm */}
-                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-3 shrink-0">
-                    <div className="flex items-center justify-between border-b border-slate-200/60 pb-2.5">
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 space-y-3 shrink-0">
+                    <div className="flex items-center justify-between border-b border-slate-200/60 pb-2 flex-wrap gap-2">
                         <span className="text-xs font-bold text-slate-800">Filter & Pencarian Transaksi</span>
                         <Button
                             type="button"
@@ -405,8 +405,8 @@ export function PastTransactionsDialog({
                     </FilterForm>
                 </div>
 
-                {/* Data Table with DataTable's native extraActions action column */}
-                <div className="flex-1 min-h-[300px] overflow-hidden">
+                {/* Data Table */}
+                <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
                     <DataTable
                         columns={columns}
                         data={transactions}
