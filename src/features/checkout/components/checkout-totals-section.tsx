@@ -207,36 +207,53 @@ export function CheckoutTotalsSection({
         }));
 
     return (
-        <div className="bg-slate-50/70 border-l border-slate-200 flex flex-col h-full overflow-hidden">
-            {/* Scrollable Top Area */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
-                {/* Header */}
-                <div className="flex items-center gap-1.5 pb-0.5 select-none">
-                    <div className="w-1 h-3 bg-emerald-600 rounded-full" />
-                    <h3 className="text-[9px] font-black text-slate-700 uppercase tracking-widest leading-none">
-                        Ringkasan Penjualan
-                    </h3>
-                </div>
-
-                {/* Trx Info - Combined 1-row info */}
-                <div className="bg-white border border-slate-150 rounded-xl px-2.5 py-2 flex justify-between items-center gap-2 text-[9px] font-bold text-slate-500 shadow-sm leading-none select-none">
-                    <div className="truncate">
-                        No: <span className="text-slate-800">{transactionId ? `TRX-${transactionId}` : "Belum mulai"}</span>
+        <div className="bg-slate-50/80 border-l border-slate-200 flex flex-col h-full overflow-hidden select-none">
+            {/* Top Header & Live Customer Total Display */}
+            <div className="p-3.5 bg-white border-b border-slate-200/80 shrink-0 space-y-3 shadow-xs">
+                {/* Cashier & Trx Header Info */}
+                <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
+                    <div className="flex items-center gap-1.5 truncate">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                        <span className="text-slate-800 font-extrabold truncate">
+                            {transactionId ? `TRX-${transactionId}` : "Transaksi Baru"}
+                        </span>
                     </div>
-                    <div className="w-px h-3 bg-slate-200 shrink-0" />
-                    <div className="truncate">
-                        Kasir: <span className="text-slate-800">{cashierName}</span>
-                    </div>
-                    <div className="w-px h-3 bg-slate-200 shrink-0" />
-                    <div className="truncate text-slate-800">
-                        {trxTime.split(" ").slice(-1)[0] || trxTime}
+                    <div className="flex items-center gap-2 shrink-0">
+                        <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md text-[10px] font-bold">
+                            {cashierName || "Kasir"}
+                        </span>
+                        <span className="text-slate-400 text-[10px]">
+                            {trxTime.split(" ").slice(-1)[0] || trxTime}
+                        </span>
                     </div>
                 </div>
 
-                {/* Nama Transaksi Input */}
-                <div className="bg-white border border-slate-100 rounded-xl p-2.5 shadow-sm space-y-1.5">
-                    <label htmlFor="nama-transaksi-input" className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block select-none">
-                        Nama Transaksi (Opsional)
+                {/* High-Visibility Hero Total Display Card */}
+                <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white rounded-2xl p-4 shadow-lg shadow-emerald-600/20 relative overflow-hidden border border-emerald-500/30">
+                    <div className="absolute -right-6 -bottom-6 w-28 h-28 bg-white/10 rounded-full blur-xl pointer-events-none" />
+                    <div className="flex items-center justify-between relative z-10">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-100 flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
+                            TOTAL HARUS DIBAYAR
+                        </span>
+                        <span className="bg-emerald-950/40 text-emerald-100 border border-emerald-400/30 text-[10px] font-mono font-extrabold px-2.5 py-0.5 rounded-full">
+                            {cartLength} Item
+                        </span>
+                    </div>
+                    <div className="mt-2.5 flex items-baseline justify-between relative z-10">
+                        <h2 className="text-3xl sm:text-4xl font-black tracking-tight tabular-nums font-mono text-white drop-shadow-sm leading-none">
+                            {formatRupiah(grandTotal)}
+                        </h2>
+                    </div>
+                </div>
+            </div>
+
+            {/* Scrollable Middle Body */}
+            <div className="flex-1 overflow-y-auto p-3.5 space-y-3 min-h-0">
+                {/* Nama Transaksi Card */}
+                <div className="bg-white border border-slate-200/80 rounded-xl p-3 shadow-xs space-y-1.5">
+                    <label htmlFor="nama-transaksi-input" className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
+                        Nama Transaksi / Catatan
                     </label>
                     <input
                         id="nama-transaksi-input"
@@ -245,71 +262,77 @@ export function CheckoutTotalsSection({
                         onChange={(e) => setLocalNama(e.target.value)}
                         onBlur={() => handleParentChange(localNama)}
                         onKeyDown={handleInputKeyDown}
-                        placeholder="Misal: Meja 5, Pak Budi..."
-                        className="w-full h-7 px-2.5 rounded-lg border border-slate-200 bg-transparent text-[11px] font-bold transition-all outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 text-slate-800"
+                        placeholder="Misal: Meja 5, Budi, Order GoFood..."
+                        className="w-full h-8 px-3 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-bold transition-all outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-slate-800"
                     />
                 </div>
 
-                {/* Member Info */}
-                <div className="bg-white border border-slate-100 rounded-xl p-2.5 shadow-sm space-y-1.5">
-                    <div className="flex justify-between items-center text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">
+                {/* Member Selection Card */}
+                <div className="bg-white border border-slate-200/80 rounded-xl p-3 shadow-xs space-y-2">
+                    <div className="flex justify-between items-center text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
                         <span>Pelanggan / Member</span>
-                        <div className="flex items-center gap-1.5 select-none">
-                            {!selectedMember && (
+                        <div>
+                            {!selectedMember ? (
                                 <button
                                     type="button"
                                     onClick={() => setIsAddMemberOpen(true)}
-                                    className="text-emerald-750 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800 px-2 py-0.5 rounded-md transition-colors cursor-pointer border border-emerald-200 font-extrabold text-[9px] flex items-center gap-0.5 leading-none shadow-sm"
+                                    className="text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded-md transition-colors cursor-pointer border border-emerald-200 font-black text-[9px] flex items-center gap-0.5 leading-none shadow-xs"
                                 >
                                     + Member Baru
                                 </button>
-                            )}
-                            {selectedMember && (
+                            ) : (
                                 <button
                                     onClick={() => onMemberChange(null)}
-                                    className="text-rose-550 hover:bg-rose-50 p-0.5 rounded transition-colors cursor-pointer border-none bg-transparent"
+                                    className="text-rose-500 hover:bg-rose-50 p-0.5 rounded transition-colors cursor-pointer border-none bg-transparent"
                                     title="Hapus Member"
                                 >
-                                    <IconX size={12} />
+                                    <IconX size={13} />
                                 </button>
                             )}
                         </div>
                     </div>
+
                     {selectedMember ? (
-                        <div className="space-y-2 animate-in fade-in duration-300">
-                            {/* Member basic info card */}
-                            <div className="flex items-center gap-3 bg-white border border-slate-200/80 p-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
-                                <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100/50">
-                                    <IconUser size={16} className="stroke-[2.2]" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <div className="text-[12px] font-black text-slate-800 truncate leading-tight">
-                                        {selectedMember.nama}
+                        <div className="space-y-2 animate-in fade-in duration-200">
+                            <div className="flex items-center justify-between bg-slate-50 border border-slate-200/80 p-2.5 rounded-xl gap-2">
+                                <div className="flex items-center gap-3 min-w-0 flex-1">
+                                    <div className="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-200/60 font-bold">
+                                        <IconUser size={18} />
                                     </div>
-                                    <div className="text-[10px] font-bold text-slate-400 truncate leading-none mt-1">
-                                        {selectedMember.kode}{pointSystemEnabled && ` • `}{pointSystemEnabled && <span className="text-emerald-600 font-extrabold">{selectedMember.poin} Poin</span>}
+                                    <div className="min-w-0 flex-1">
+                                        <div className="text-xs font-black text-slate-800 truncate leading-tight">
+                                            {selectedMember.nama}
+                                        </div>
+                                        <div className="text-[10px] font-bold text-slate-400 truncate leading-none mt-1">
+                                            {selectedMember.kode}{pointSystemEnabled && ` • `}{pointSystemEnabled && <span className="text-emerald-600 font-extrabold">{selectedMember.poin} Poin</span>}
+                                        </div>
                                     </div>
                                 </div>
+                                {pointSystemEnabled && grandTotal > 0 && (
+                                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-extrabold px-2.5 py-1 rounded-lg shrink-0 flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                        <span>+{Math.floor(grandTotal / pointRate)} Poin</span>
+                                    </div>
+                                )}
                             </div>
 
-                            {/* Highly interactive debt notification banner */}
                             {activeMember && (activeMember.hutang || 0) > 0 && (
-                                <div className="bg-gradient-to-r from-rose-50 to-rose-100/50 border border-rose-200/80 p-3 rounded-xl flex items-center justify-between gap-3 shadow-sm shadow-rose-100 animate-in slide-in-from-top-2 duration-300">
-                                    <div className="space-y-0.5">
+                                <div className="bg-rose-50 border border-rose-200 p-2.5 rounded-xl flex items-center justify-between gap-2 shadow-xs">
+                                    <div>
                                         <span className="text-[9px] font-black text-rose-500 uppercase tracking-wider block">
-                                            Ada Tunggakan Hutang
+                                            Tunggakan Hutang
                                         </span>
-                                        <span className="text-[14px] font-black text-rose-700 font-mono tracking-tight block leading-none">
+                                        <span className="text-xs font-black text-rose-700 font-mono">
                                             {formatRupiah(activeMember.hutang || 0)}
                                         </span>
                                     </div>
                                     <button
                                         type="button"
                                         onClick={() => setIsPayDebtOpen(true)}
-                                        className="h-8 px-3 bg-rose-600 hover:bg-rose-700 active:scale-[0.96] text-white border-none rounded-lg text-[10px] font-black flex items-center gap-1.5 cursor-pointer transition-all duration-200 shadow-md shadow-rose-600/20 hover:shadow-lg hover:shadow-rose-650/30"
+                                        className="h-7 px-2.5 bg-rose-600 hover:bg-rose-700 text-white border-none rounded-lg text-[9.5px] font-black flex items-center gap-1 cursor-pointer transition-all shadow-xs"
                                     >
-                                        <IconCash size={14} className="stroke-[2.2]" />
-                                        <span>BAYAR HUTANG</span>
+                                        <IconCash size={13} />
+                                        <span>BAYAR</span>
                                     </button>
                                 </div>
                             )}
@@ -330,47 +353,14 @@ export function CheckoutTotalsSection({
                     )}
                 </div>
 
-                <div className="bg-white border border-slate-100 rounded-xl p-2.5 shadow-sm space-y-1.5 select-none">
-                    <div className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">
-                        Status Keranjang & Loyalti
-                    </div>
-                    <div className={cn("grid gap-2 text-[11px]", pointSystemEnabled ? "grid-cols-2" : "grid-cols-1")}>
-                        <div className="space-y-0.5">
-                            <span className="text-[9px] font-medium text-slate-455">Total Item</span>
-                            <div className="font-extrabold text-slate-800">{cartLength} Jenis Produk</div>
-                        </div>
-                        {pointSystemEnabled && (
-                            <div className="space-y-0.5 animate-in fade-in duration-200">
-                                <span className="text-[9px] font-medium text-slate-455">Loyalty Poin</span>
-                                <div className="font-extrabold text-emerald-600 flex items-center gap-1">
-                                    {selectedMember ? (
-                                        <>
-                                            <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
-                                            <span>+{Math.floor(grandTotal / pointRate)} Poin</span>
-                                        </>
-                                    ) : (
-                                        <span className="text-slate-400 font-bold">Non-Member</span>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Diskon Transaksi */}
-                <div className="bg-white border border-slate-100 rounded-xl p-2.5 shadow-sm space-y-1.5">
-                    <div className="flex justify-between items-center text-[9px] font-extrabold text-slate-400 uppercase tracking-wider select-none">
+                {/* Cart Status & Diskon Transaksi Card */}
+                <div className="bg-white border border-slate-200/80 rounded-xl p-3 shadow-xs space-y-2.5">
+                    <div className="flex justify-between items-center text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
                         <span>Diskon Transaksi</span>
-                        {discountAmount > 0 && (
-                            <span className="text-emerald-600 font-bold normal-case">
-                                Terpasang: -{formatRupiah(discountAmount)}
-                            </span>
-                        )}
                     </div>
 
                     <div className="flex gap-2">
-                        {/* Toggle Button Group */}
-                        <div className="flex bg-slate-100 p-0.5 rounded-lg shrink-0 select-none">
+                        <div className="flex bg-slate-100 p-0.5 rounded-lg shrink-0">
                             <button
                                 type="button"
                                 onClick={() => {
@@ -378,9 +368,9 @@ export function CheckoutTotalsSection({
                                     setDiscountValue(0);
                                 }}
                                 className={cn(
-                                    "px-2 py-0.5 text-[9px] font-black rounded-md transition-all cursor-pointer border-none outline-none",
+                                    "px-2.5 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer border-none outline-none",
                                     discountType === "nominal"
-                                        ? "bg-white text-slate-800 shadow-sm"
+                                        ? "bg-white text-slate-800 shadow-xs"
                                         : "text-slate-500 hover:text-slate-700 bg-transparent"
                                 )}
                             >
@@ -393,9 +383,9 @@ export function CheckoutTotalsSection({
                                     setDiscountValue(0);
                                 }}
                                 className={cn(
-                                    "px-2 py-0.5 text-[9px] font-black rounded-md transition-all cursor-pointer border-none outline-none",
+                                    "px-2.5 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer border-none outline-none",
                                     discountType === "percent"
-                                        ? "bg-white text-slate-800 shadow-sm"
+                                        ? "bg-white text-slate-800 shadow-xs"
                                         : "text-slate-500 hover:text-slate-700 bg-transparent"
                                 )}
                             >
@@ -403,7 +393,6 @@ export function CheckoutTotalsSection({
                             </button>
                         </div>
 
-                        {/* Input Field */}
                         <div className="relative flex-1">
                             {discountType === "nominal" ? (
                                 <input
@@ -418,8 +407,8 @@ export function CheckoutTotalsSection({
                                             setDiscountValue(val);
                                         }
                                     }}
-                                    placeholder="Contoh: 50.000"
-                                    className="w-full h-7 pl-2.5 pr-8 rounded-lg border border-slate-200 bg-transparent text-[11px] font-bold transition-all outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50"
+                                    placeholder="Nominal diskon (misal 10.000)..."
+                                    className="w-full h-8 pl-3 pr-8 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-bold transition-all outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                                 />
                             ) : (
                                 <input
@@ -436,43 +425,44 @@ export function CheckoutTotalsSection({
                                             setDiscountValue(val);
                                         }
                                     }}
-                                    placeholder="Contoh: 10"
-                                    className="w-full h-7 pl-2.5 pr-8 rounded-lg border border-slate-200 bg-transparent text-[11px] font-bold transition-all outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    placeholder="Persen diskon (misal 10)..."
+                                    className="w-full h-8 pl-3 pr-8 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-bold transition-all outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 />
                             )}
                             {discountValue > 0 && (
                                 <button
                                     type="button"
                                     onClick={() => setDiscountValue(0)}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 p-0.5 rounded transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center"
+                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 p-0.5 rounded transition-colors cursor-pointer border-none bg-transparent"
                                 >
-                                    <IconX size={12} />
+                                    <IconX size={13} />
                                 </button>
                             )}
                         </div>
                     </div>
                 </div>
-                {/* Action Buttons Grid - Compact height */}
+
+                {/* Quick Actions Bar (Hold, Recall, Void, Reprint) */}
                 <div className="grid grid-cols-4 gap-1.5">
                     <AppButton
                         type="button"
                         variant="outline"
                         onClick={onHold}
                         disabled={cartLength === 0 || isProcessing}
-                        className="bg-white hover:bg-slate-50 border-slate-205 text-slate-700 h-8 font-bold text-[8.5px] rounded-xl flex flex-col justify-center items-center gap-0 leading-none cursor-pointer disabled:opacity-50 px-1"
+                        className="bg-white hover:bg-slate-100 border-slate-200 text-slate-700 h-9 font-extrabold text-[9px] rounded-xl flex flex-col justify-center items-center gap-0.5 cursor-pointer disabled:opacity-50 transition-all shadow-xs"
                         title="Hold Transaksi (F5)"
                     >
-                        <IconPlayerPause size={12} className="shrink-0 text-slate-550 mb-0.5" />
+                        <IconPlayerPause size={13} className="text-slate-600" />
                         <span>Hold (F5)</span>
                     </AppButton>
                     <AppButton
                         type="button"
                         variant="outline"
                         onClick={onRecallOpen}
-                        className="bg-white hover:bg-slate-50 border-slate-205 text-slate-700 h-8 font-bold text-[8.5px] rounded-xl flex flex-col justify-center items-center gap-0 leading-none cursor-pointer px-1"
+                        className="bg-white hover:bg-slate-100 border-slate-200 text-slate-700 h-9 font-extrabold text-[9px] rounded-xl flex flex-col justify-center items-center gap-0.5 cursor-pointer transition-all shadow-xs"
                         title="Recall Transaksi (F6)"
                     >
-                        <IconPlayerPlay size={12} className="shrink-0 text-slate-550 mb-0.5" />
+                        <IconPlayerPlay size={13} className="text-slate-600" />
                         <span>Recall (F6)</span>
                     </AppButton>
                     <AppButton
@@ -480,71 +470,66 @@ export function CheckoutTotalsSection({
                         variant="outline"
                         onClick={onVoid}
                         disabled={cartLength === 0 || isProcessing}
-                        className="bg-white hover:bg-rose-50 border-slate-205 hover:border-rose-200 text-rose-600 h-8 font-bold text-[8.5px] rounded-xl flex flex-col justify-center items-center gap-0 leading-none cursor-pointer disabled:opacity-50 px-1"
+                        className="bg-white hover:bg-rose-50 border-slate-200 hover:border-rose-200 text-rose-600 h-9 font-extrabold text-[9px] rounded-xl flex flex-col justify-center items-center gap-0.5 cursor-pointer disabled:opacity-50 transition-all shadow-xs"
                         title="Batal Transaksi (F10)"
                     >
-                        <IconTrash size={12} className="shrink-0 mb-0.5" />
+                        <IconTrash size={13} />
                         <span>Void (F10)</span>
                     </AppButton>
                     <AppButton
                         type="button"
                         variant="outline"
                         onClick={onReprint}
-                        className="bg-white hover:bg-slate-50 border-slate-205 text-slate-750 h-8 font-bold text-[8.5px] rounded-xl flex flex-col justify-center items-center gap-0 leading-none cursor-pointer px-1"
+                        className="bg-white hover:bg-slate-100 border-slate-200 text-slate-700 h-9 font-extrabold text-[9px] rounded-xl flex flex-col justify-center items-center gap-0.5 cursor-pointer transition-all shadow-xs"
                         title="Cetak Ulang Struk"
                     >
-                        <IconPrinter size={12} className="shrink-0 text-slate-550 mb-0.5" />
+                        <IconPrinter size={13} className="text-slate-600" />
                         <span>Reprint</span>
                     </AppButton>
                 </div>
             </div>
 
-            {/* Fixed Bottom Area (Totals & Pay Button) */}
-            <div className="bg-white border-t border-slate-200 p-3 shadow-[0_-4px_12px_rgba(0,0,0,0.03)] shrink-0 space-y-2">
-                <div className="space-y-1 text-[10px] font-semibold text-slate-400 select-none">
+            {/* Fixed Bottom Action Footer */}
+            <div className="bg-white border-t border-slate-200/80 p-3.5 shrink-0 space-y-3 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
+                <div className="space-y-1 text-xs font-semibold text-slate-500 px-0.5">
                     <div className="flex justify-between">
                         <span>Subtotal</span>
-                        <span className="text-slate-800 tabular-nums font-bold">
+                        <span className="text-slate-800 tabular-nums font-bold font-mono">
                             {formatRupiah(subtotal)}
                         </span>
                     </div>
-                    <div className="flex justify-between">
-                        <span>Diskon Belanja</span>
-                        <span className={cn("font-bold", discountAmount > 0 ? "text-rose-550" : "text-slate-800")}>
-                            - {formatRupiah(discountAmount)}
-                        </span>
-                    </div>
+                    {discountAmount > 0 && (
+                        <div className="flex justify-between">
+                            <span>Diskon Belanja</span>
+                            <span className="font-bold text-rose-500 font-mono">
+                                - {formatRupiah(discountAmount)}
+                            </span>
+                        </div>
+                    )}
                     {ppn > 0 && (
                         <div className="flex justify-between">
                             <span>Pajak (PPN {ppnRate}%)</span>
-                            <span className="text-slate-800 tabular-nums font-bold">
+                            <span className="text-slate-800 tabular-nums font-bold font-mono">
                                 {formatRupiah(ppn)}
                             </span>
                         </div>
                     )}
                 </div>
 
-                <div className="border-t border-dashed border-slate-200 pt-2 flex justify-between items-center gap-3">
-                    <div className="flex flex-col min-w-0">
-                        <span className="text-[9px] font-extrabold text-slate-455 uppercase tracking-widest leading-none">
-                            Total Belanja
-                        </span>
-                        <span className="text-2xl font-black text-emerald-600 tracking-tight tabular-nums mt-0.5 leading-none truncate font-mono">
-                            {formatRupiah(grandTotal)}
-                        </span>
-                    </div>
+                <div className="pt-1.5 border-t border-slate-100">
                     <AppButton
                         type="button"
                         onClick={onPayOpen}
                         disabled={cartLength === 0}
                         isLoading={isProcessing}
-                        leftIcon={!isProcessing ? <IconCash size={16} /> : null}
-                        className="h-11 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 transition-all active:scale-[0.98] disabled:opacity-50 border-none text-white px-5 shrink-0"
+                        leftIcon={!isProcessing ? <IconCash size={20} /> : null}
+                        className="w-full h-12 bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold text-sm rounded-xl flex items-center justify-center gap-2.5 cursor-pointer shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/35 hover:scale-[1.01] active:scale-[0.98] transition-all disabled:opacity-40 border-none"
                     >
-                        <span>BAYAR (F1)</span>
+                        <span>BAYAR SEKARANG (F1)</span>
                     </AppButton>
                 </div>
             </div>
+
             <CreateMemberDialog
                 open={isAddMemberOpen}
                 onOpenChange={setIsAddMemberOpen}

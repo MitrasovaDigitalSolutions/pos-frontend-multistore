@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import type { BalanceSheetData, ChartOfAccount } from "@/features/accounting/types";
+import type { BalanceSheetData, BalanceSheetDetailCategory, ChartOfAccount } from "@/features/accounting/types";
 import { cn } from "@/lib/utils";
 import { useBalanceSheetStore } from "@/stores/balance-sheet-store";
 import {
@@ -14,7 +14,6 @@ import {
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
-import { FormSwitch } from "@/components/forms/form-switch";
 import { PrintConfirmDialog } from "@/features/reports/components/print-confirm-dialog";
 
 import { BalanceSheetDraftBanner } from "./balance-sheet-draft-banner";
@@ -28,9 +27,6 @@ interface BalanceSheetPrintFilterValues {
     asOfDate: string;
     startDate?: string;
     endDate?: string;
-    detailRevenue: boolean;
-    detailExpense: boolean;
-    detailHpp: boolean;
 }
 
 interface BalanceSheetDashboardProps {
@@ -59,10 +55,6 @@ export function BalanceSheetDashboard({
         if (formData.endDate) params.append("end_date", formData.endDate);
         if (formData.paperSize) params.append("paper_size", formData.paperSize);
         if (formData.orientation) params.append("orientation", formData.orientation);
-
-        params.append("detail_revenue", formData.detailRevenue ? "1" : "0");
-        params.append("detail_expense", formData.detailExpense ? "1" : "0");
-        params.append("detail_hpp", formData.detailHpp ? "1" : "0");
 
         const url = `/api/proxy/v1/reports/print/balance-sheet?${params.toString()}`;
         window.open(url, "_blank");
@@ -141,7 +133,7 @@ export function BalanceSheetDashboard({
     }, [shuData, totalRevenue, totalExpense]);
 
     const shuLalu = shuData?.lalu || 0;
-    const shuLaluLabel = shuData?.lalu_label ? `SHU (${shuData.lalu_label})` : "SHU Tahun Lalu / Sebelumnya";
+    const shuLaluLabel = "SHU Tahun Lalu";
     const totalSHU = shuData?.total !== undefined ? shuData.total : (netIncome + shuLalu);
 
     // 3. Reorganize Equity in standard view to append SHU
@@ -149,7 +141,17 @@ export function BalanceSheetDashboard({
         if (viewType === "standard") {
             const items = [...equity];
             if (shuData) {
-                if (shuData.lalu !== 0) {
+                if (shuData.lalu !== 0 || (shuData.lalu_detail && shuData.lalu_detail.length > 0)) {
+                    const detailCategories: BalanceSheetDetailCategory[] | undefined =
+                        shuData.lalu_detail && shuData.lalu_detail.length > 0
+                            ? shuData.lalu_detail.map((d) => ({
+                                kategori: `SHU Tahun ${d.tahun}`,
+                                amount: d.amount,
+                                debit: d.amount < 0 ? Math.abs(d.amount) : 0,
+                                credit: d.amount > 0 ? d.amount : 0,
+                            }))
+                            : undefined;
+
                     items.push({
                         uid: "synthetic-shu-lalu",
                         kode: null,
@@ -157,6 +159,7 @@ export function BalanceSheetDashboard({
                         amount: shuData.lalu,
                         debit: 0,
                         credit: shuData.lalu,
+                        detail: detailCategories,
                     });
                 }
                 items.push({
@@ -360,9 +363,6 @@ export function BalanceSheetDashboard({
                     asOfDate: asOfDate,
                     startDate: "",
                     endDate: "",
-                    detailRevenue: true,
-                    detailExpense: true,
-                    detailHpp: true,
                 }}
             >
                 <FormDatePicker<BalanceSheetPrintFilterValues>
@@ -371,24 +371,6 @@ export function BalanceSheetDashboard({
                     placeholder="Pilih Tanggal Cutoff..."
                     clearable={false}
                 />
-
-                <div className="space-y-2 pt-2">
-                    <h5 className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                        Opsi Rincian Detail Halaman Cetak
-                    </h5>
-                    <FormSwitch<BalanceSheetPrintFilterValues>
-                        name="detailRevenue"
-                        label="Rincian Detail Pendapatan"
-                    />
-                    <FormSwitch<BalanceSheetPrintFilterValues>
-                        name="detailExpense"
-                        label="Rincian Detail Beban Operasional"
-                    />
-                    <FormSwitch<BalanceSheetPrintFilterValues>
-                        name="detailHpp"
-                        label="Rincian Detail Beban Pembelian (HPP)"
-                    />
-                </div>
             </PrintConfirmDialog>
         </div>
     );

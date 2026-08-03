@@ -9,6 +9,7 @@ import { PaymentDialog } from "@/features/checkout/components/payment/payment-di
 import { HoldListDialog } from "@/features/checkout/components/hold-list-dialog";
 import { ReceiptDialog } from "@/features/checkout/components/receipt-dialog";
 import { OfflineTransactionsDialog } from "@/features/checkout/components/offline-transactions-dialog";
+import { PastTransactionsDialog } from "@/features/checkout/components/past-transactions-dialog";
 import { CashierSettingsDialog } from "@/features/checkout/components/cashier-settings-dialog";
 import { BukaShiftModal, InfoSesiAktifModal } from "@/features/checkout/components/cash-drawer";
 import { useCurrentCashDrawer } from "@/features/checkout/api/cash-drawer-api";
@@ -37,6 +38,7 @@ export function Checkout() {
     const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [isOfflineTransactionsOpen, setIsOfflineTransactionsOpen] = useState(false);
+    const [isPastTransactionsOpen, setIsPastTransactionsOpen] = useState(false);
     const [activeMobileTab, setActiveMobileTab] = useState<"cart" | "totals">("cart");
 
     const cashDrawerToken = state.session?.accessToken;
@@ -131,27 +133,12 @@ export function Checkout() {
     };
 
     /**
-     * Reprint handler that fetches the last sales transaction UID from
-     * the active cash drawer session's movements (type: "cash_sale").
-     * Falls back to the default handleReprint (localStorage-based) when
-     * no drawer session or sales movement is found.
+     * Opens the past transactions dialog so cashiers can search & reprint
+     * any sales transaction directly from the cashier screen.
      */
     const handleReprintFromDrawer = useCallback(() => {
-        const movements = activeDrawerSession?.movements;
-        if (movements && movements.length > 0) {
-            // Find the latest cash_sale movement (movements are sorted newest-first)
-            const lastSale = [...movements]
-                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-                .find((m) => m.type === "cash_sale");
-
-            if (lastSale?.reference_uid) {
-                state.handleReprint(lastSale.reference_uid);
-                return;
-            }
-        }
-        // Fallback: use the default handler (localStorage lastTransactionId)
-        state.handleReprint();
-    }, [activeDrawerSession, state]);
+        setIsPastTransactionsOpen(true);
+    }, []);
 
     const handleLogout = () => {
         if (!isOnline) {
@@ -403,6 +390,16 @@ export function Checkout() {
             <OfflineTransactionsDialog
                 open={isOfflineTransactionsOpen}
                 onOpenChange={setIsOfflineTransactionsOpen}
+            />
+
+            <PastTransactionsDialog
+                open={isPastTransactionsOpen}
+                onOpenChange={setIsPastTransactionsOpen}
+                onReprint={(uid) => {
+                    state.handleReprint(uid);
+                    setIsPastTransactionsOpen(false);
+                }}
+                lastTransactionId={state.lastTransactionId}
             />
 
             <CashierSettingsDialog
