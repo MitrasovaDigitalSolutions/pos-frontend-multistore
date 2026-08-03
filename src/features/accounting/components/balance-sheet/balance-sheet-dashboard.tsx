@@ -133,7 +133,7 @@ export function BalanceSheetDashboard({
     }, [shuData, totalRevenue, totalExpense]);
 
     const shuLalu = shuData?.lalu || 0;
-    const shuLaluLabel = shuData?.lalu_label ? `SHU (${shuData.lalu_label})` : "SHU Tahun Lalu / Sebelumnya";
+    const shuLaluLabel = "SHU Tahun Lalu";
     const totalSHU = shuData?.total !== undefined ? shuData.total : (netIncome + shuLalu);
 
     // 3. Reorganize Equity in standard view to append SHU
