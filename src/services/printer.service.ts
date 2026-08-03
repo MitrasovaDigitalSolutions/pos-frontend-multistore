@@ -52,15 +52,6 @@ class PrinterService {
             { timeout: 10000 }
         );
     }
-    async printReceipt(printer: string, text: string) {
-        await this.connect();
-
-        await axios.post(
-            `${BASE_URL}/print/receipt`,
-            { printer, content: text },
-            { timeout: 10000 }
-        );
-    }
 }
 
 // eslint-disable-next-line import/no-anonymous-default-export
