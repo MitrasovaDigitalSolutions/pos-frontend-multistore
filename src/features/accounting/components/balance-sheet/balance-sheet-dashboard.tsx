@@ -14,7 +14,6 @@ import {
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
-import { FormSwitch } from "@/components/forms/form-switch";
 import { PrintConfirmDialog } from "@/features/reports/components/print-confirm-dialog";
 
 import { BalanceSheetDraftBanner } from "./balance-sheet-draft-banner";
@@ -28,10 +27,6 @@ interface BalanceSheetPrintFilterValues {
     asOfDate: string;
     startDate?: string;
     endDate?: string;
-    detailRevenue: boolean;
-    detailExpense: boolean;
-    detailHpp: boolean;
-    detailShu: boolean;
 }
 
 interface BalanceSheetDashboardProps {
@@ -60,11 +55,6 @@ export function BalanceSheetDashboard({
         if (formData.endDate) params.append("end_date", formData.endDate);
         if (formData.paperSize) params.append("paper_size", formData.paperSize);
         if (formData.orientation) params.append("orientation", formData.orientation);
-
-        params.append("detail_revenue", formData.detailRevenue ? "1" : "0");
-        params.append("detail_expense", formData.detailExpense ? "1" : "0");
-        params.append("detail_hpp", formData.detailHpp ? "1" : "0");
-        params.append("detail_shu", formData.detailShu ? "1" : "0");
 
         const url = `/api/proxy/v1/reports/print/balance-sheet?${params.toString()}`;
         window.open(url, "_blank");
@@ -373,10 +363,6 @@ export function BalanceSheetDashboard({
                     asOfDate: asOfDate,
                     startDate: "",
                     endDate: "",
-                    detailRevenue: true,
-                    detailExpense: true,
-                    detailHpp: true,
-                    detailShu: true,
                 }}
             >
                 <FormDatePicker<BalanceSheetPrintFilterValues>
@@ -385,28 +371,6 @@ export function BalanceSheetDashboard({
                     placeholder="Pilih Tanggal Cutoff..."
                     clearable={false}
                 />
-
-                <div className="space-y-2 pt-2">
-                    <h5 className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                        Opsi Rincian Detail Halaman Cetak
-                    </h5>
-                    <FormSwitch<BalanceSheetPrintFilterValues>
-                        name="detailRevenue"
-                        label="Rincian Detail Pendapatan"
-                    />
-                    <FormSwitch<BalanceSheetPrintFilterValues>
-                        name="detailExpense"
-                        label="Rincian Detail Beban Operasional"
-                    />
-                    <FormSwitch<BalanceSheetPrintFilterValues>
-                        name="detailHpp"
-                        label="Rincian Detail Beban Pembelian (HPP)"
-                    />
-                    <FormSwitch<BalanceSheetPrintFilterValues>
-                        name="detailShu"
-                        label="Rincian Detail SHU (Sisa Hasil Usaha)"
-                    />
-                </div>
             </PrintConfirmDialog>
         </div>
     );
