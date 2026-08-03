@@ -10,6 +10,7 @@ import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { storeSettingsSchema, type StoreSettingsInput } from "../schemas/settings-schema";
 import QZService from "@/services/qz.service";
+import PrinterService from "@/services/printer.service";
 
 // UI Components
 import { Card } from "@/components/ui/card";
@@ -117,24 +118,24 @@ export function StoreProfile() {
         }
     }, [settings, methods]);
 
-    // Load printers from QZ Tray
+    // Load printers from local printer service
     const loadPrinters = async () => {
         setIsLoadingPrinters(true);
         setQzError(null);
         try {
-            const list = await QZService.findAllPrinters();
-            const options = list.map((p) => ({ value: p, label: p }));
+            const list = await PrinterService.findAllPrinters();
+            const options = list.map((p : any) => ({ value: p.name, label: p.name }));
 
             // Ensure currently saved printer_id is in the options list
             const currentPrinter = methods.getValues("printer_id") || settings.printer_id;
-            if (currentPrinter && !list.includes(currentPrinter)) {
+            if (currentPrinter && !list.some((p : any) => p.name === currentPrinter)) {
                 options.push({ value: currentPrinter, label: currentPrinter });
             }
 
             setPrinterOptions(options);
         } catch (err) {
-            console.error("Gagal mendeteksi printer dari QZ Tray:", err);
-            setQzError("Gagal menghubungkan ke QZ Tray. Pastikan aplikasi QZ Tray telah berjalan.");
+            console.error("Gagal mendeteksi printer dari printer service:", err);
+            setQzError("Gagal menghubungkan ke printer service. Pastikan aplikasi printer service telah berjalan.");
 
             // Fallback: show the currently selected printer as the only option so it's not blank
             const currentPrinter = methods.getValues("printer_id") || settings.printer_id;

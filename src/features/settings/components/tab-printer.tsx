@@ -74,7 +74,7 @@ export function TabPrinter({
         return (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100/60 text-[10px] font-bold font-sans">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                QZ Tray: Aktif
+                Printer Service: Aktif
             </div>
         );
     };
@@ -115,7 +115,7 @@ export function TabPrinter({
                                     ) : (
                                         <div className="flex items-center gap-2.5 text-emerald-600 bg-emerald-50/50 border border-emerald-100/50 rounded-xl p-3">
                                             <CheckCircle2 size={16} className="shrink-0" />
-                                            <span className="text-xs font-bold leading-relaxed">QZ Tray terhubung secara aktif. Siap melakukan cetak struk belanja.</span>
+                                            <span className="text-xs font-bold leading-relaxed">Printer Service terhubung secara aktif. Siap melakukan cetak struk belanja.</span>
                                         </div>
                                     )}
                                 </div>
@@ -145,7 +145,7 @@ export function TabPrinter({
                                         options={printerOptions}
                                         placeholder={isLoadingPrinters ? "Memuat printer..." : "Pilih Printer"}
                                         disabled={isSaving || isLoadingPrinters}
-                                        emptyMessage={qzError ? "Gagal terhubung ke QZ Tray. Pastikan QZ Tray berjalan." : "Tidak ada printer yang terdeteksi"}
+                                        emptyMessage={qzError ? "Gagal terhubung ke Printer Service. Pastikan Printer Service berjalan." : "Tidak ada printer yang terdeteksi"}
                                     />
                                 </div>
                             </div>
