@@ -7,11 +7,13 @@ import { IconAlertCircle, IconCircleX } from "@tabler/icons-react";
 import { ROUTES } from "@/constants/routes";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useActiveStoreStore } from "@/stores/active-store-store";
+import { ENDPOINTS } from "@/shared/api/endpoints";
 import {
   useCancelStockTransfer,
   useFinalizeStockTransfer,
   useReceiveStockTransfer,
   useStockTransferDetail,
+  type ReceiveStockTransferItem,
 } from "../api/stock-transfer-api";
 import { TRANSFER_STATUS } from "../constants";
 
@@ -64,6 +66,8 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
       formMethods.reset({
         items: transfer.items.map((item) => ({
           product_uid: item.product_uid,
+          status: item.status || "received",
+          jenis_selisih: item.jenis_selisih || null,
           kuantitas_diterima: item.kuantitas_diterima ?? item.kuantitas,
           keterangan: item.keterangan || "",
         })),
@@ -134,11 +138,29 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
 
   const handleReceiveConfirm = () => {
     const currentValues = formMethods.getValues();
-    const payloadItems = (currentValues.items || []).map((item) => ({
-      product_uid: item.product_uid,
-      kuantitas_diterima: item.kuantitas_diterima,
-      keterangan: item.keterangan?.trim() || undefined,
-    }));
+    
+    // Validation
+    const hasError = (currentValues.items || []).some(
+      (item) => item.status === "rejected" && !item.jenis_selisih
+    );
+    
+    if (hasError) {
+      toast.error("Semua item yang ditolak harus memilih Alasan Selisih.");
+      return;
+    }
+
+    const payloadItems = (currentValues.items || []).map((item) => {
+      const payload: ReceiveStockTransferItem = {
+        product_uid: item.product_uid,
+        kuantitas_diterima: item.kuantitas_diterima,
+        keterangan: item.keterangan?.trim() || undefined,
+      };
+      if (item.status === "rejected") {
+        payload.status = "rejected";
+        payload.jenis_selisih = item.jenis_selisih ?? undefined;
+      }
+      return payload;
+    });
 
     receive.mutate(
       {
@@ -169,6 +191,10 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
     );
   };
 
+  const handlePrint = () => {
+    window.open(`/api/proxy${ENDPOINTS.INVENTORY.STOCK_TRANSFERS.PRINT_SURAT_JALAN(uid)}`, "_blank");
+  };
+
   return (
     <FormProvider {...formMethods}>
       <div className="space-y-6">
@@ -182,6 +208,7 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
           onFinalize={() => setConfirmFinalizeOpen(true)}
           onReceiveClick={() => setConfirmReceiveOpen(true)}
           onCancelClick={() => setCancelModalOpen(true)}
+          onPrint={handlePrint}
         />
 
         {/* Visual Stepper Bar */}

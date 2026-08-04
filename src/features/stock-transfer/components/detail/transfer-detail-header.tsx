@@ -8,11 +8,16 @@ import {
   IconCheck,
   IconCircleX,
   IconTruckDelivery,
+  IconPrinter,
 } from "@tabler/icons-react";
 import { ROUTES } from "@/constants/routes";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { TRANSFER_STATUS_CLASSES, TRANSFER_STATUS_LABELS } from "../../constants";
 import type { StockTransfer } from "../../types";
+import { useActiveStoreStore } from "@/stores/active-store-store";
+import { useReviewStockTransfer } from "../../api/stock-transfer-api";
+import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 
 interface TransferDetailHeaderProps {
   transfer: StockTransfer;
@@ -23,6 +28,7 @@ interface TransferDetailHeaderProps {
   onFinalize: () => void;
   onReceiveClick: () => void;
   onCancelClick: () => void;
+  onPrint?: () => void;
 }
 
 export function TransferDetailHeader({
@@ -34,8 +40,22 @@ export function TransferDetailHeader({
   onFinalize,
   onReceiveClick,
   onCancelClick,
+  onPrint,
 }: TransferDetailHeaderProps) {
   const router = useAppRouter();
+  const { data: session } = useSession();
+  const activeStoreUid = useActiveStoreStore((state) => state.activeStoreUid);
+  const activeStore = session?.user?.stores?.find((s) => s.uid === activeStoreUid);
+  const review = useReviewStockTransfer();
+
+  const isCentral = activeStore?.is_central || false;
+
+  const handleReview = () => {
+    review.mutate(transfer.uid, {
+      onSuccess: () => toast.success("Transfer ditandai sudah direview"),
+      onError: (err) => toast.error(err.message || "Gagal mereview"),
+    });
+  };
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -57,6 +77,16 @@ export function TransferDetailHeader({
             >
               {TRANSFER_STATUS_LABELS[transfer.status] || transfer.status}
             </Badge>
+            {transfer.perlu_review && (
+              <Badge variant="outline" className="text-xs px-2.5 py-0.5 font-bold border bg-amber-50 text-amber-700 border-amber-200">
+                Perlu Review
+              </Badge>
+            )}
+            {transfer.perlu_review && isCentral && (
+               <Button type="button" onClick={handleReview} disabled={review.isPending} size="sm" variant="outline" className="h-6 text-[10px] px-2 py-0 border-amber-300 text-amber-700 hover:bg-amber-100">
+                 Tandai Sudah Dicek
+               </Button>
+            )}
           </div>
           <p className="text-xs text-slate-400 mt-0.5">Rincian mutasi stok produk antarcabang</p>
         </div>
@@ -64,6 +94,16 @@ export function TransferDetailHeader({
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-2">
+        {onPrint && (transfer.status === "draft" || transfer.status === "in_transit") && (
+          <Button
+            type="button"
+            onClick={onPrint}
+            variant="outline"
+            className="border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer bg-white"
+          >
+            <IconPrinter size={16} /> Cetak Surat Jalan
+          </Button>
+        )}
         {canFinalize && (
           <Button
             type="button"

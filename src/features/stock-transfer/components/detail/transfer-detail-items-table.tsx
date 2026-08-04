@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { FormNumberInput } from "@/components/forms/form-number-input";
 import { FormInput } from "@/components/forms/form-input";
+import { FormSelect } from "@/components/forms/form-select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ColumnDef } from "@tanstack/react-table";
 import { useFormContext } from "react-hook-form";
 import type { StockTransferItem } from "../../types";
 import type { ReceiveFormValues } from "./types";
+import { JENIS_SELISIH_LABELS, JENIS_SELISIH_CLASSES } from "../../constants";
 
 interface TransferDetailItemsTableProps {
   items: StockTransferItem[];
@@ -26,36 +28,69 @@ function ReceivingItemRowControls({
   index: number;
   item: StockTransferItem;
 }) {
-  const { watch } = useFormContext<ReceiveFormValues>();
+  const { watch, setValue } = useFormContext<ReceiveFormValues>();
   const currentQty = watch(`items.${index}.kuantitas_diterima`);
+  const status = watch(`items.${index}.status`) || "received";
   const isDifferent =
     currentQty !== undefined &&
     currentQty !== null &&
     Number(currentQty) !== Number(item.kuantitas);
 
   return (
-    <div className="flex items-center justify-center gap-1.5">
-      <FormNumberInput<ReceiveFormValues>
-        name={`items.${index}.kuantitas_diterima`}
-        min={0}
-        className={`h-8 w-24 text-xs text-center font-extrabold ${isDifferent
-          ? "border-amber-400 bg-amber-50 text-amber-900 focus-visible:ring-amber-500"
-          : "bg-white border-slate-200"
-          }`}
-      />
-      {isDifferent && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="text-amber-500 shrink-0 cursor-pointer">
-                <IconAlertTriangle size={15} />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Jumlah diterima berbeda dari jumlah dikirim</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center gap-1.5">
+          <FormNumberInput<ReceiveFormValues>
+            name={`items.${index}.kuantitas_diterima`}
+            min={0}
+            className={`h-8 w-24 text-xs text-center font-extrabold ${isDifferent
+              ? "border-amber-400 bg-amber-50 text-amber-900 focus-visible:ring-amber-500"
+              : "bg-white border-slate-200"
+              }`}
+          />
+          {isDifferent && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-amber-500 shrink-0 cursor-pointer">
+                    <IconAlertTriangle size={15} />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Jumlah diterima berbeda dari jumlah dikirim</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
+        <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+          <button
+            type="button"
+            onClick={() => { setValue(`items.${index}.status`, "received"); setValue(`items.${index}.jenis_selisih`, null); }}
+            className={`text-[10px] font-bold px-2 py-1 rounded-md transition-colors ${status === "received" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+          >
+            Terima
+          </button>
+          <button
+            type="button"
+            onClick={() => setValue(`items.${index}.status`, "rejected")}
+            className={`text-[10px] font-bold px-2 py-1 rounded-md transition-colors ${status === "rejected" ? "bg-white text-rose-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+          >
+            Tolak
+          </button>
+        </div>
+      </div>
+      {status === "rejected" && (
+         <FormSelect<ReceiveFormValues>
+           name={`items.${index}.jenis_selisih`}
+           options={[
+             { label: "Pilih Alasan", value: "" },
+             { label: "Salah Input", value: "salah_input" },
+             { label: "Rusak", value: "rusak" },
+             { label: "Hilang", value: "hilang" }
+           ]}
+           className="h-7 text-[10px] border-rose-300 bg-rose-50 text-rose-900"
+         />
       )}
     </div>
   );
@@ -99,9 +134,9 @@ export function TransferDetailItemsTable({
         },
         {
           id: "input_kuantitas_diterima",
-          header: "Jumlah Diterima (Pcs)",
-          size: 140,
-          meta: { headerClassName: "text-center", cellClassName: "text-center" },
+          header: "Penerimaan & Status",
+          size: 260,
+          meta: { headerClassName: "text-left", cellClassName: "text-left" },
           cell: ({ row }) => (
             <ReceivingItemRowControls index={row.index} item={row.original} />
           ),
@@ -161,6 +196,25 @@ export function TransferDetailItemsTable({
           const qRec = row.original.kuantitas_diterima;
           const qSent = row.original.kuantitas;
           if (qRec == null) return <span className="text-slate-400 text-xs">—</span>;
+          const status = row.original.status;
+          const isRejected = status === "rejected";
+          const jenisSelisih = row.original.jenis_selisih;
+          
+          if (isRejected) {
+            return (
+              <div className="flex flex-col items-center gap-1">
+                <span className="inline-block px-2 py-0.5 rounded-md text-xs font-extrabold bg-rose-50 text-rose-700 border border-rose-200">
+                  Ditolak
+                </span>
+                {jenisSelisih && (
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold border ${JENIS_SELISIH_CLASSES[jenisSelisih]}`}>
+                    {JENIS_SELISIH_LABELS[jenisSelisih]}
+                  </span>
+                )}
+              </div>
+            );
+          }
+          
           const isMatch = qRec === qSent;
           return (
             <span
@@ -219,6 +273,19 @@ export function TransferDetailItemsTable({
     ];
   }, [canReceive]);
 
+  const { watch } = useFormContext<ReceiveFormValues>();
+  const formItems = watch("items");
+  
+  const summary = useMemo(() => {
+    let accepted = 0;
+    let rejected = 0;
+    (formItems || []).forEach(item => {
+      if (item.status === "rejected") rejected++;
+      else accepted++;
+    });
+    return { accepted, rejected };
+  }, [formItems]);
+
   return (
     <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4">
       {/* Table Header / Banner */}
@@ -226,6 +293,11 @@ export function TransferDetailItemsTable({
         <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
           <IconPackage size={18} className="text-emerald-600" />
           <span>Daftar Produk Dikirim</span>
+          {canReceive && (
+            <span className="text-xs font-normal text-slate-500 ml-2">
+              ({summary.accepted} diterima / {summary.rejected} ditolak)
+            </span>
+          )}
         </h3>
 
         {canReceive ? (
