@@ -49,7 +49,9 @@ export function useFinalizeStockTransfer() {
 
 export interface ReceiveStockTransferItem {
   product_uid: string;
+  status?: "received" | "rejected";
   kuantitas_diterima?: number;
+  jenis_selisih?: "salah_input" | "rusak" | "hilang";
   keterangan?: string;
 }
 
@@ -68,6 +70,17 @@ export function useReceiveStockTransfer() {
     onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers() });
       qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(variables.uid) });
+    },
+  });
+}
+
+export function useReviewStockTransfer() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (uid: string) => apiPost<ApiResponse<StockTransfer>, void>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.REVIEWED(uid)),
+    onSuccess: (_, uid) => {
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers() });
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(uid) });
     },
   });
 }

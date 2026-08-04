@@ -10,6 +10,7 @@ import {
 import { useMemo } from "react";
 import type { StockTransferItem } from "../../types";
 import type { ReceiveItemFormValue } from "./types";
+import { JENIS_SELISIH_LABELS, JENIS_SELISIH_CLASSES } from "../../constants";
 
 interface TransferReceiveConfirmDialogProps {
   open: boolean;
@@ -40,6 +41,8 @@ export function TransferReceiveConfirmDialog({
       qtyReceived: number;
       keterangan: string;
       diff: number;
+      status?: "received" | "rejected";
+      jenis_selisih?: string | null;
     }[] = [];
 
     items.forEach((item) => {
@@ -47,19 +50,23 @@ export function TransferReceiveConfirmDialog({
       const qtySent = Number(item.kuantitas);
       const qtyReceived = Number(formItem?.kuantitas_diterima ?? qtySent);
       const keterangan = formItem?.keterangan?.trim() || "";
+      const status = formItem?.status || "received";
+      const jenis_selisih = formItem?.jenis_selisih;
 
       totalSent += qtySent;
-      totalReceived += qtyReceived;
+      totalReceived += status === "rejected" ? 0 : qtyReceived;
 
-      if (qtySent !== qtyReceived || keterangan !== "") {
+      if (status === "rejected" || qtySent !== qtyReceived || keterangan !== "") {
         discrepancies.push({
           productUid: item.product_uid,
           nama: item.product?.nama || "Produk",
           barcode: item.product?.barcode,
           qtySent,
-          qtyReceived,
+          qtyReceived: status === "rejected" ? 0 : qtyReceived,
           keterangan,
-          diff: qtyReceived - qtySent,
+          diff: (status === "rejected" ? 0 : qtyReceived) - qtySent,
+          status,
+          jenis_selisih,
         });
       }
     });
@@ -156,7 +163,14 @@ export function TransferReceiveConfirmDialog({
               {summary.discrepancies.map((disc) => (
                 <div key={disc.productUid} className="p-3 space-y-1 text-xs">
                   <div className="flex items-center justify-between font-bold text-slate-900">
-                    <span>{disc.nama}</span>
+                    <div className="flex flex-col gap-0.5">
+                      <span>{disc.nama}</span>
+                      {disc.status === "rejected" && disc.jenis_selisih && (
+                        <span className={`self-start text-[9px] px-1.5 py-0.5 rounded-md font-bold border ${JENIS_SELISIH_CLASSES[disc.jenis_selisih]}`}>
+                          Ditolak: {JENIS_SELISIH_LABELS[disc.jenis_selisih]}
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-1.5">
                       <span className="text-slate-400 font-normal line-through text-[11px]">
                         {disc.qtySent} pcs
