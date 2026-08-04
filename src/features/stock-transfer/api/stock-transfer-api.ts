@@ -47,24 +47,19 @@ export function useFinalizeStockTransfer() {
   });
 }
 
-export interface ReceiveStockTransferItem {
-  product_uid: string;
+export interface ReceiveStockTransferPayload {
   status?: "received" | "rejected";
   kuantitas_diterima?: number;
   jenis_selisih?: "salah_input" | "rusak" | "hilang";
   keterangan?: string;
 }
 
-export interface ReceiveStockTransferPayload {
-  items?: ReceiveStockTransferItem[];
-}
-
 export function useReceiveStockTransfer() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ uid, payload }: { uid: string; payload?: ReceiveStockTransferPayload }) =>
+    mutationFn: ({ uid, itemUid, payload }: { uid: string; itemUid: string; payload?: ReceiveStockTransferPayload }) =>
       apiPost<ApiResponse<StockTransfer>, ReceiveStockTransferPayload | undefined>(
-        ENDPOINTS.INVENTORY.STOCK_TRANSFERS.RECEIVE(uid),
+        ENDPOINTS.INVENTORY.STOCK_TRANSFERS.RECEIVE_ITEM(uid, itemUid),
         payload
       ),
     onSuccess: (_, variables) => {
@@ -74,13 +69,17 @@ export function useReceiveStockTransfer() {
   });
 }
 
-export function useReviewStockTransfer() {
+export function useValidateStockTransferReturn() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (uid: string) => apiPost<ApiResponse<StockTransfer>, void>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.REVIEWED(uid)),
-    onSuccess: (_, uid) => {
+    mutationFn: ({ uid, itemUid, kuantitas_return }: { uid: string; itemUid: string; kuantitas_return?: number }) =>
+      apiPost<ApiResponse<StockTransfer>, { kuantitas_return?: number }>(
+        ENDPOINTS.INVENTORY.STOCK_TRANSFERS.RETURN_ITEM(uid, itemUid), 
+        { kuantitas_return }
+      ),
+    onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers() });
-      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(uid) });
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(variables.uid) });
     },
   });
 }

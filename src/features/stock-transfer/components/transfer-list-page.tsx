@@ -32,12 +32,13 @@ import { DataTable } from "@/components/ui/data-table";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FormProvider, useForm } from "react-hook-form";
-import { Badge } from "@/components/ui/badge";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "Semua Status" },
   { value: "draft", label: "Draft" },
   { value: "in_transit", label: "Dalam Pengiriman" },
+  { value: "partially_received", label: "Diterima Sebagian" },
+  { value: "return_pending", label: "Menunggu Return" },
   { value: "received", label: "Diterima" },
   { value: "cancelled", label: "Dibatalkan" },
 ];
@@ -101,11 +102,6 @@ export function TransferListPage() {
             <div className="flex flex-col gap-0.5">
               <span className="font-mono font-bold text-slate-900 text-xs flex items-center gap-1.5 flex-wrap">
                 {row.original.nomor_transfer}
-                {row.original.perlu_review && (
-                  <Badge variant="outline" className="text-[9px] px-1 py-0 font-bold border bg-amber-50 text-amber-700 border-amber-200 uppercase tracking-wider">
-                    Perlu Review
-                  </Badge>
-                )}
                 {isOutgoing && (
                   <Tooltip>
                     <TooltipTrigger asChild>

@@ -107,6 +107,17 @@ export function TransactionDetailSummary({ transaction, formattedDate }: Transac
                         </div>
                     )}
 
+                    {transaction.diskon_grosir !== undefined && transaction.diskon_grosir > 0 && (
+                        <div className="flex justify-between items-center text-emerald-700 bg-emerald-50/50 px-2 py-1 rounded-lg border border-emerald-200/60">
+                            <span className="flex items-center gap-1 font-bold">
+                                <IconTag size={12} className="text-emerald-600" /> Diskon Grosir
+                            </span>
+                            <span className="font-black tabular-nums">
+                                -{formatRupiah(transaction.diskon_grosir)}
+                            </span>
+                        </div>
+                    )}
+
                     {transaction.pajak > 0 && (
                         <div className="flex justify-between items-center text-slate-500 font-medium">
                             <span className="flex items-center gap-1">

@@ -12,8 +12,9 @@ import {
   useCancelStockTransfer,
   useFinalizeStockTransfer,
   useReceiveStockTransfer,
+  useValidateStockTransferReturn,
   useStockTransferDetail,
-  type ReceiveStockTransferItem,
+  type ReceiveStockTransferPayload,
 } from "../api/stock-transfer-api";
 import { TRANSFER_STATUS } from "../constants";
 
@@ -26,8 +27,8 @@ import { TransferDetailHeader } from "./detail/transfer-detail-header";
 import { TransferDetailStepper } from "./detail/transfer-detail-stepper";
 import { TransferDetailItemsTable } from "./detail/transfer-detail-items-table";
 import { TransferDetailInfoCards } from "./detail/transfer-detail-info-cards";
-import { TransferReceiveConfirmDialog } from "./detail/transfer-receive-confirm-dialog";
 import type { ReceiveFormValues } from "./detail/types";
+import type { StockTransferItem } from "../types";
 
 interface TransferDetailPageProps {
   uid: string;
@@ -40,6 +41,7 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
   const { data: transfer, isLoading, error } = useStockTransferDetail(uid);
   const finalize = useFinalizeStockTransfer();
   const receive = useReceiveStockTransfer();
+  const validateReturn = useValidateStockTransferReturn();
   const cancel = useCancelStockTransfer();
 
   // React Hook Form for receiving items
@@ -55,10 +57,11 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
     name: "items",
   }) || [];
 
-  const [confirmReceiveOpen, setConfirmReceiveOpen] = useState(false);
   const [confirmFinalizeOpen, setConfirmFinalizeOpen] = useState(false);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  const [processingItemUid, setProcessingItemUid] = useState<string | null>(null);
+  const [validatingItemUid, setValidatingItemUid] = useState<string | null>(null);
 
   // Sync default values when transfer data is fetched
   useEffect(() => {
@@ -104,7 +107,8 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
   const isDest = activeStoreUid === transfer.store_uid_destination;
 
   const canFinalize = transfer.status === TRANSFER_STATUS.DRAFT && isSource;
-  const canReceive = transfer.status === TRANSFER_STATUS.IN_TRANSIT && isDest;
+  const canReceive = (transfer.status === TRANSFER_STATUS.IN_TRANSIT || transfer.status === TRANSFER_STATUS.PARTIALLY_RECEIVED) && isDest;
+  const canValidateReturn = transfer.status === TRANSFER_STATUS.RETURN_PENDING && isSource;
   const canCancel =
     (transfer.status === TRANSFER_STATUS.DRAFT || transfer.status === TRANSFER_STATUS.IN_TRANSIT) &&
     isSource;
@@ -136,45 +140,51 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
     });
   };
 
-  const handleReceiveConfirm = () => {
+  const handleReceiveItem = async (item: StockTransferItem, status: "received" | "rejected") => {
     const currentValues = formMethods.getValues();
-    
-    // Validation
-    const hasError = (currentValues.items || []).some(
-      (item) => item.status === "rejected" && !item.jenis_selisih
-    );
-    
-    if (hasError) {
-      toast.error("Semua item yang ditolak harus memilih Alasan Selisih.");
+    const formItem = currentValues.items?.find((i) => i.product_uid === item.product_uid);
+    if (!formItem) return;
+
+    if (status === "rejected" && !formItem.jenis_selisih) {
+      toast.error("Pilih alasan selisih terlebih dahulu.");
       return;
     }
 
-    const payloadItems = (currentValues.items || []).map((item) => {
-      const payload: ReceiveStockTransferItem = {
-        product_uid: item.product_uid,
-        kuantitas_diterima: item.kuantitas_diterima,
-        keterangan: item.keterangan?.trim() || undefined,
-      };
-      if (item.status === "rejected") {
-        payload.status = "rejected";
-        payload.jenis_selisih = item.jenis_selisih ?? undefined;
-      }
-      return payload;
-    });
+    setProcessingItemUid(item.uid);
+    const payload: ReceiveStockTransferPayload = {
+      status,
+      kuantitas_diterima: formItem.kuantitas_diterima,
+      keterangan: formItem.keterangan?.trim() || undefined,
+    };
+    
+    if (status === "rejected") {
+      payload.jenis_selisih = formItem.jenis_selisih as "salah_input" | "rusak" | "hilang" | undefined;
+    }
 
-    receive.mutate(
-      {
+    try {
+      await receive.mutateAsync({
         uid,
-        payload: { items: payloadItems },
-      },
-      {
-        onSuccess: () => {
-          toast.success("Transfer stok berhasil diterima dan ditambahkan ke inventori!");
-          setConfirmReceiveOpen(false);
-        },
-        onError: (err) => toast.error(err.message || "Gagal menerima transfer"),
-      }
-    );
+        itemUid: item.uid,
+        payload
+      });
+      toast.success(`Item ${item.product?.nama || "berhasil"} diproses.`);
+    } catch (err: any) {
+      toast.error(`Gagal memproses item: ${err.message}`);
+    } finally {
+      setProcessingItemUid(null);
+    }
+  };
+
+  const handleValidateReturnItem = async (item: StockTransferItem, kuantitasReturn: number) => {
+    setValidatingItemUid(item.uid);
+    try {
+      await validateReturn.mutateAsync({ uid, itemUid: item.uid, kuantitas_return: kuantitasReturn });
+      toast.success(`Return item ${item.product?.nama || "berhasil"} divalidasi.`);
+    } catch (err: any) {
+      toast.error(`Gagal memvalidasi return: ${err.message}`);
+    } finally {
+      setValidatingItemUid(null);
+    }
   };
 
   const handleCancelSubmit = () => {
@@ -206,7 +216,6 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
           canCancel={canCancel}
           hasDiscrepancies={hasDiscrepancies}
           onFinalize={() => setConfirmFinalizeOpen(true)}
-          onReceiveClick={() => setConfirmReceiveOpen(true)}
           onCancelClick={() => setCancelModalOpen(true)}
           onPrint={handlePrint}
         />
@@ -222,6 +231,11 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
               items={transfer.items || []}
               canReceive={canReceive}
               onResetAllQty={handleResetAllQty}
+              onReceiveItem={handleReceiveItem}
+              processingItemUid={processingItemUid}
+              canValidateReturn={canValidateReturn}
+              onValidateReturnItem={handleValidateReturnItem}
+              validatingItemUid={validatingItemUid}
             />
           </div>
 
@@ -242,16 +256,6 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
           variant="success"
           onConfirm={handleFinalizeConfirm}
           isLoading={finalize.isPending}
-        />
-
-        {/* Confirmation Modal for Receiving Stock */}
-        <TransferReceiveConfirmDialog
-          open={confirmReceiveOpen}
-          onOpenChange={setConfirmReceiveOpen}
-          items={transfer.items || []}
-          formItems={formItems}
-          onConfirm={handleReceiveConfirm}
-          isLoading={receive.isPending}
         />
 
         {/* Cancel Transfer Dialog */}
