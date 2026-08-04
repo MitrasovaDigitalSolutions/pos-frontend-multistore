@@ -155,6 +155,7 @@ hr{
 <body>
 
 <div class="header">
+    <div style="height:12px;"></div>
     <div class="title">${app.app_name ?? "Mitrasova POS"}</div>
 
     ${
@@ -206,8 +207,10 @@ ${
 
 ${items.map((item: any) => `
 <div class="item">
+    <div>${item.qty} x ${item.nama_produk}</div>
 
     <div class="item-detail">
+        <span style="padding-left:50px">${money(item.harga_satuan)}</span>
         <span>${money(item.qty * item.harga_satuan)}</span>
     </div>
 
@@ -327,6 +330,7 @@ hasCardDp
     <div>Terima Kasih Atas Kunjungan Anda</div>
     <div>Barang yang sudah dibeli</div>
     <div>tidak dapat ditukar/dikembalikan</div>
+    <div style="height:24px;">&nbsp;</div>
 </div>
 
 </body>
