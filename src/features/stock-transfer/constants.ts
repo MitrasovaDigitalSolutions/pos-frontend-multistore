@@ -3,6 +3,7 @@ export const TRANSFER_STATUS = {
   IN_TRANSIT: "in_transit",
   PARTIALLY_RECEIVED: "partially_received",
   RECEIVED: "received",
+  REJECTED: "rejected",
   CANCELLED: "cancelled",
 } as const;
 
@@ -11,6 +12,7 @@ export const TRANSFER_STATUS_LABELS: Record<string, string> = {
   in_transit: "Dalam Pengiriman",
   partially_received: "Diterima Sebagian",
   received: "Diterima",
+  rejected: "Semua Ditolak",
   cancelled: "Dibatalkan",
 };
 
@@ -19,6 +21,7 @@ export const TRANSFER_STATUS_CLASSES: Record<string, string> = {
   in_transit: "bg-blue-50 text-blue-700 border-blue-200",
   partially_received: "bg-amber-50 text-amber-700 border-amber-200",
   received: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  rejected: "bg-rose-50 text-rose-700 border-rose-200",
   cancelled: "bg-rose-50 text-rose-700 border-rose-200",
 };
 

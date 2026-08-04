@@ -69,17 +69,6 @@ export function useReceiveStockTransfer() {
   });
 }
 
-export function useReviewStockTransfer() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (uid: string) => apiPost<ApiResponse<StockTransfer>, void>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.REVIEWED(uid)),
-    onSuccess: (_, uid) => {
-      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers() });
-      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(uid) });
-    },
-  });
-}
-
 export function useCancelStockTransfer() {
   const qc = useQueryClient();
   return useMutation({

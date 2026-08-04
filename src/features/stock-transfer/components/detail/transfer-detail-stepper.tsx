@@ -32,6 +32,18 @@ export function TransferDetailStepper({ status }: TransferDetailStepperProps) {
     );
   }
 
+  if (status === TRANSFER_STATUS.REJECTED) {
+    return (
+      <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800 flex items-center gap-3">
+        <IconCircleX size={20} className="text-rose-600 shrink-0" />
+        <div>
+          <h4 className="text-xs font-bold text-rose-900">Semua Item Ditolak</h4>
+          <p className="text-[11px] text-rose-700">Seluruh item pada pengiriman ini ditolak oleh toko tujuan.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
       <div className="grid grid-cols-3 gap-2 relative">
