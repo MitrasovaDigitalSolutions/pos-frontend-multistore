@@ -13,7 +13,7 @@ import {
   useFinalizeStockTransfer,
   useReceiveStockTransfer,
   useStockTransferDetail,
-  type ReceiveStockTransferItem,
+  type ReceiveStockTransferPayload,
 } from "../api/stock-transfer-api";
 import { TRANSFER_STATUS } from "../constants";
 
@@ -104,7 +104,7 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
   const isDest = activeStoreUid === transfer.store_uid_destination;
 
   const canFinalize = transfer.status === TRANSFER_STATUS.DRAFT && isSource;
-  const canReceive = transfer.status === TRANSFER_STATUS.IN_TRANSIT && isDest;
+  const canReceive = (transfer.status === TRANSFER_STATUS.IN_TRANSIT || transfer.status === TRANSFER_STATUS.PARTIALLY_RECEIVED) && isDest;
   const canCancel =
     (transfer.status === TRANSFER_STATUS.DRAFT || transfer.status === TRANSFER_STATUS.IN_TRANSIT) &&
     isSource;
@@ -136,7 +136,7 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
     });
   };
 
-  const handleReceiveConfirm = () => {
+  const handleReceiveConfirm = async () => {
     const currentValues = formMethods.getValues();
     
     // Validation
@@ -149,32 +149,46 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
       return;
     }
 
-    const payloadItems = (currentValues.items || []).map((item) => {
-      const payload: ReceiveStockTransferItem = {
-        product_uid: item.product_uid,
-        kuantitas_diterima: item.kuantitas_diterima,
-        keterangan: item.keterangan?.trim() || undefined,
-      };
-      if (item.status === "rejected") {
-        payload.status = "rejected";
-        payload.jenis_selisih = item.jenis_selisih ?? undefined;
-      }
-      return payload;
-    });
+    // Only process items that haven't been processed by server yet (status === null in transfer.items)
+    const pendingItems = transfer?.items?.filter(ti => ti.status === null) || [];
+    if (pendingItems.length === 0) {
+      toast.error("Tidak ada item yang perlu diproses.");
+      return;
+    }
 
-    receive.mutate(
-      {
-        uid,
-        payload: { items: payloadItems },
-      },
-      {
-        onSuccess: () => {
-          toast.success("Transfer stok berhasil diterima dan ditambahkan ke inventori!");
-          setConfirmReceiveOpen(false);
-        },
-        onError: (err) => toast.error(err.message || "Gagal menerima transfer"),
+    let hasErrorProcessing = false;
+
+    // Process sequentially
+    for (const pendingItem of pendingItems) {
+      const formItem = currentValues.items?.find(i => i.product_uid === pendingItem.product_uid);
+      if (!formItem) continue;
+
+      const payload: ReceiveStockTransferPayload = {
+        status: formItem.status as "received" | "rejected" | undefined,
+        kuantitas_diterima: formItem.kuantitas_diterima,
+        keterangan: formItem.keterangan?.trim() || undefined,
+      };
+      
+      if (formItem.status === "rejected") {
+        payload.jenis_selisih = formItem.jenis_selisih as "salah_input" | "rusak" | "hilang" | undefined;
       }
-    );
+
+      try {
+        await receive.mutateAsync({
+          uid,
+          itemUid: pendingItem.uid,
+          payload
+        });
+      } catch (err: any) {
+        hasErrorProcessing = true;
+        toast.error(`Gagal memproses item ${pendingItem.product?.nama || pendingItem.product_uid}: ${err.message}`);
+      }
+    }
+
+    if (!hasErrorProcessing) {
+      toast.success("Transfer stok berhasil diterima dan ditambahkan ke inventori!");
+      setConfirmReceiveOpen(false);
+    }
   };
 
   const handleCancelSubmit = () => {

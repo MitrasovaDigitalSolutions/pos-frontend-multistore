@@ -14,7 +14,7 @@ export function TransferDetailStepper({ status }: TransferDetailStepperProps) {
   const stepIndex =
     status === TRANSFER_STATUS.DRAFT
       ? 1
-      : status === TRANSFER_STATUS.IN_TRANSIT
+      : (status === TRANSFER_STATUS.IN_TRANSIT || status === TRANSFER_STATUS.PARTIALLY_RECEIVED)
       ? 2
       : status === TRANSFER_STATUS.RECEIVED
       ? 3
