@@ -56,11 +56,16 @@ export function CloseShiftForm({
     const hasEnteredBalance = actualClosing !== null && actualClosing !== undefined && actualClosing !== ("" as unknown as number);
     const diff = hasEnteredBalance ? Number(actualClosing) - expectedCash : 0;
 
-    const onPrint = async() => {
-        const { data } = await axios.get(`/api/proxy/v1/cash-drawer/sessions/${sessionId}/struk-setoran`)
-        const printerName = getSetting("printer_id") || "EPSON LX-310 ESC/P";
-        await PrinterService.print(printerName,buildCashDepositText(data))
-    }
+    const onPrint = async () => {
+        try {
+            const { data } = await axios.get(`/api/proxy/v1/cash-drawer/sessions/${sessionId}/struk-setoran`);
+            const printerName = getSetting("printer_id") || "EPSON LX-310 ESC/P";
+            await PrinterService.print(printerName,buildCashDepositText(data));
+        } catch (error: any) {
+            console.error("Print failed:", error);
+            toast.error(`Gagal Mencetak Struk`,error);
+        }
+    };
 
     const onSubmit = async (data: CloseCashDrawerInput) => {
         const storeCart = useCheckoutStore.getState().cart;
