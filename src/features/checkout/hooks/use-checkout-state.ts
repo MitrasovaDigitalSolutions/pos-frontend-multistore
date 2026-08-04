@@ -15,9 +15,11 @@ import { useNetworkStatus } from "@/hooks/use-network-status";
 import axios from "axios";
 import { buildReceipt } from "@/utils/ReceiptFormatter";
 import QZService from "@/services/qz.service";
+import PrinterService from "@/services/printer.service";
 import { formatDate } from "@/lib/date-utils";
 
 import { calculateItemSubtotal } from "@/features/checkout/utils/cart-utils";
+import { buildReceipt58 } from "@/utils/ReceiptFormatter58";
 
 export function useCheckoutState() {
     const router = useAppRouter();
@@ -382,8 +384,10 @@ export function useCheckoutState() {
         const toastId = toast.success("Mencetak struk...");
         try {
             const { data } = await axios.get(`/api/proxy/v1/transactions-print/${uid}`);
-            const receiptText = buildReceipt(data);
-            await QZService.print(printerName, receiptText);
+            // const receiptText = buildReceipt(data);
+            // await QZService.print(printerName, receiptText);
+            const receiptText = buildReceipt58(data);
+            await PrinterService.print(printerName,receiptText)
         } catch (err) {
             console.error("Gagal mencetak struk:", err);
             toast.error("Gagal mencetak struk. Pastikan QZ Tray aktif.");
@@ -446,8 +450,11 @@ export function useCheckoutState() {
                 app_phone: getSetting("app_phone", ""),
             };
 
-            const receiptText = buildReceipt({ sale, setting });
-            await QZService.print(printerName, receiptText);
+            // const receiptText = buildReceipt({ sale, setting });
+            // await QZService.print(printerName, receiptText);
+            const receiptText = buildReceipt58({sale, setting})
+            await PrinterService.print(printerName,receiptText)
+
         } catch (err) {
             console.error("Gagal mencetak struk offline:", err);
             toast.error("Gagal mencetak struk offline. Pastikan QZ Tray aktif.");

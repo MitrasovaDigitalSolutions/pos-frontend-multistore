@@ -217,7 +217,7 @@ ${items.map((item: any) => `
         item.diskon_item && item.diskon_item > 0
             ? `
     <div class="item-detail" style="font-weight:bold">
-        <span>*Potongan Grosir (${item.product.min_qty_grosir} Pcs) :</span>
+        <span>*Potongan Grosir :</span>
         <span>-${money(item.diskon_item)}</span>
     </div>`
             : ""
