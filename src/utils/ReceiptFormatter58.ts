@@ -206,10 +206,8 @@ ${
 
 ${items.map((item: any) => `
 <div class="item">
-    <div>${item.nama_produk}</div>
 
     <div class="item-detail">
-        <span>${item.qty} x ${money(item.harga_satuan)}</span>
         <span>${money(item.qty * item.harga_satuan)}</span>
     </div>
 
