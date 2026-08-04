@@ -26,7 +26,6 @@ interface TransferDetailHeaderProps {
   canCancel: boolean;
   hasDiscrepancies?: boolean;
   onFinalize: () => void;
-  onReceiveClick: () => void;
   onCancelClick: () => void;
   onPrint?: () => void;
 }
@@ -38,7 +37,6 @@ export function TransferDetailHeader({
   canCancel,
   hasDiscrepancies = false,
   onFinalize,
-  onReceiveClick,
   onCancelClick,
   onPrint,
 }: TransferDetailHeaderProps) {
@@ -111,19 +109,6 @@ export function TransferDetailHeader({
             className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer shadow-xs"
           >
             <IconTruckDelivery size={16} /> Kirim / Finalize Transfer
-          </Button>
-        )}
-        {canReceive && (
-          <Button
-            type="button"
-            onClick={onReceiveClick}
-            className={`font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer shadow-xs text-white ${
-              hasDiscrepancies
-                ? "bg-amber-600 hover:bg-amber-700 ring-2 ring-amber-300"
-                : "bg-emerald-600 hover:bg-emerald-700"
-            }`}
-          >
-            <IconCheck size={16} /> Terima & Konfirmasi Stok
           </Button>
         )}
         {canCancel && (

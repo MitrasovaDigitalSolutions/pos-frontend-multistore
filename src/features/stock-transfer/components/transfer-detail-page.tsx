@@ -26,8 +26,8 @@ import { TransferDetailHeader } from "./detail/transfer-detail-header";
 import { TransferDetailStepper } from "./detail/transfer-detail-stepper";
 import { TransferDetailItemsTable } from "./detail/transfer-detail-items-table";
 import { TransferDetailInfoCards } from "./detail/transfer-detail-info-cards";
-import { TransferReceiveConfirmDialog } from "./detail/transfer-receive-confirm-dialog";
 import type { ReceiveFormValues } from "./detail/types";
+import type { StockTransferItem } from "../types";
 
 interface TransferDetailPageProps {
   uid: string;
@@ -55,10 +55,10 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
     name: "items",
   }) || [];
 
-  const [confirmReceiveOpen, setConfirmReceiveOpen] = useState(false);
   const [confirmFinalizeOpen, setConfirmFinalizeOpen] = useState(false);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  const [processingItemUid, setProcessingItemUid] = useState<string | null>(null);
 
   // Sync default values when transfer data is fetched
   useEffect(() => {
@@ -136,58 +136,38 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
     });
   };
 
-  const handleReceiveConfirm = async () => {
+  const handleReceiveItem = async (item: StockTransferItem, status: "received" | "rejected") => {
     const currentValues = formMethods.getValues();
-    
-    // Validation
-    const hasError = (currentValues.items || []).some(
-      (item) => item.status === "rejected" && !item.jenis_selisih
-    );
-    
-    if (hasError) {
-      toast.error("Semua item yang ditolak harus memilih Alasan Selisih.");
+    const formItem = currentValues.items?.find((i) => i.product_uid === item.product_uid);
+    if (!formItem) return;
+
+    if (status === "rejected" && !formItem.jenis_selisih) {
+      toast.error("Pilih alasan selisih terlebih dahulu.");
       return;
     }
 
-    // Only process items that haven't been processed by server yet (status === null in transfer.items)
-    const pendingItems = transfer?.items?.filter(ti => ti.status === null) || [];
-    if (pendingItems.length === 0) {
-      toast.error("Tidak ada item yang perlu diproses.");
-      return;
+    setProcessingItemUid(item.uid);
+    const payload: ReceiveStockTransferPayload = {
+      status,
+      kuantitas_diterima: formItem.kuantitas_diterima,
+      keterangan: formItem.keterangan?.trim() || undefined,
+    };
+    
+    if (status === "rejected") {
+      payload.jenis_selisih = formItem.jenis_selisih as "salah_input" | "rusak" | "hilang" | undefined;
     }
 
-    let hasErrorProcessing = false;
-
-    // Process sequentially
-    for (const pendingItem of pendingItems) {
-      const formItem = currentValues.items?.find(i => i.product_uid === pendingItem.product_uid);
-      if (!formItem) continue;
-
-      const payload: ReceiveStockTransferPayload = {
-        status: formItem.status as "received" | "rejected" | undefined,
-        kuantitas_diterima: formItem.kuantitas_diterima,
-        keterangan: formItem.keterangan?.trim() || undefined,
-      };
-      
-      if (formItem.status === "rejected") {
-        payload.jenis_selisih = formItem.jenis_selisih as "salah_input" | "rusak" | "hilang" | undefined;
-      }
-
-      try {
-        await receive.mutateAsync({
-          uid,
-          itemUid: pendingItem.uid,
-          payload
-        });
-      } catch (err: any) {
-        hasErrorProcessing = true;
-        toast.error(`Gagal memproses item ${pendingItem.product?.nama || pendingItem.product_uid}: ${err.message}`);
-      }
-    }
-
-    if (!hasErrorProcessing) {
-      toast.success("Transfer stok berhasil diterima dan ditambahkan ke inventori!");
-      setConfirmReceiveOpen(false);
+    try {
+      await receive.mutateAsync({
+        uid,
+        itemUid: item.uid,
+        payload
+      });
+      toast.success(`Item ${item.product?.nama || "berhasil"} diproses.`);
+    } catch (err: any) {
+      toast.error(`Gagal memproses item: ${err.message}`);
+    } finally {
+      setProcessingItemUid(null);
     }
   };
 
@@ -220,7 +200,6 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
           canCancel={canCancel}
           hasDiscrepancies={hasDiscrepancies}
           onFinalize={() => setConfirmFinalizeOpen(true)}
-          onReceiveClick={() => setConfirmReceiveOpen(true)}
           onCancelClick={() => setCancelModalOpen(true)}
           onPrint={handlePrint}
         />
@@ -236,6 +215,8 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
               items={transfer.items || []}
               canReceive={canReceive}
               onResetAllQty={handleResetAllQty}
+              onReceiveItem={handleReceiveItem}
+              processingItemUid={processingItemUid}
             />
           </div>
 
@@ -256,16 +237,6 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
           variant="success"
           onConfirm={handleFinalizeConfirm}
           isLoading={finalize.isPending}
-        />
-
-        {/* Confirmation Modal for Receiving Stock */}
-        <TransferReceiveConfirmDialog
-          open={confirmReceiveOpen}
-          onOpenChange={setConfirmReceiveOpen}
-          items={transfer.items || []}
-          formItems={formItems}
-          onConfirm={handleReceiveConfirm}
-          isLoading={receive.isPending}
         />
 
         {/* Cancel Transfer Dialog */}
