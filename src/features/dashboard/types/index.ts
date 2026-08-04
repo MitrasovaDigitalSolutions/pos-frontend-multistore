@@ -50,13 +50,17 @@ export interface DashboardSummaryParams {
 
 export interface SaleItem {
     uid: string;
-    transaction_uid: string;
+    transaction_uid?: string;
+    sale_uid?: string;
     product_uid: string | null;
     nama_produk: string;
     barcode: string | null;
     harga_satuan: number;
     kuantitas: number;
     subtotal: number;
+    diskon_item?: number;
+    is_jasa?: boolean;
+    harga_beli?: number;
 }
 
 export interface Sale {
@@ -68,6 +72,7 @@ export interface Sale {
     subtotal: number;
     pajak: number;
     diskon: number;
+    diskon_grosir?: number;
     total: number;
     status: string;
     metode_pembayaran: string | null;

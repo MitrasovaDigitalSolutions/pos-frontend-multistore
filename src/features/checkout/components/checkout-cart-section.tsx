@@ -298,8 +298,21 @@ export function CheckoutCartSection({
                                                         formatRupiah(item.price)
                                                     )}
                                                 </TableCell>
-                                                <TableCell className="p-2 text-right font-bold text-slate-900 tabular-nums text-[11px]">
-                                                    {formatRupiah(itemTotal)}
+                                                <TableCell className="p-2 text-right tabular-nums text-[11px]">
+                                                    {itemTotal < (item.qty * item.price) ? (
+                                                        <div className="flex flex-col items-end leading-tight">
+                                                            <span className="line-through text-rose-500 font-bold decoration-rose-500 text-[9.5px]">
+                                                                {formatRupiah(item.qty * item.price)}
+                                                            </span>
+                                                            <span className="font-black text-emerald-700 text-[11px]">
+                                                                {formatRupiah(itemTotal)}
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="font-bold text-slate-900">
+                                                            {formatRupiah(itemTotal)}
+                                                        </span>
+                                                    )}
                                                 </TableCell>
                                                 <TableCell className="p-2 text-center">
                                                     <AppButton
@@ -392,9 +405,20 @@ export function CheckoutCartSection({
                                                         </span>
                                                     )}
                                                     <span className="text-slate-300 font-bold text-xs">&rarr;</span>
-                                                    <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 tabular-nums bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-900/30">
-                                                        {formatRupiah(itemTotal)}
-                                                    </span>
+                                                    {itemTotal < (item.qty * item.price) ? (
+                                                        <div className="flex items-center gap-1">
+                                                            <span className="line-through text-rose-500 font-bold decoration-rose-500 text-[10px]">
+                                                                {formatRupiah(item.qty * item.price)}
+                                                            </span>
+                                                            <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 tabular-nums bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-900/30">
+                                                                {formatRupiah(itemTotal)}
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 tabular-nums bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-900/30">
+                                                            {formatRupiah(itemTotal)}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
 
