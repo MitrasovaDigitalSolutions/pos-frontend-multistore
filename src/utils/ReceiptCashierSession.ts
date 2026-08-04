@@ -13,17 +13,6 @@ export interface CashDepositReceiptData {
     }
 }
 
-const WIDTH = 42
-
-function center(text: string) {
-    const left = Math.max(0, Math.floor((WIDTH - text.length) / 2))
-    return " ".repeat(left) + text
-}
-
-function hr() {
-    return "-".repeat(WIDTH)
-}
-
 function rupiah(value: number) {
     return new Intl.NumberFormat("id-ID").format(value)
 }
@@ -42,37 +31,153 @@ export function buildCashDepositText(
     data: CashDepositReceiptData
 ): string {
 
-    const lines: string[] = []
-    lines.push("")
-    lines.push("")
-    lines.push(center("STRUK SETORAN KASIR"))
-    lines.push(hr())
+    const total =
+        data.session.opening_balance +
+        data.session.cash_sales_total
 
-    lines.push(`Waktu : ${formatDate(data.waktu)}`)
-    lines.push(`Kasir : ${data.session.user.name}`)
+    return `
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<title>Struk Setoran Kasir</title>
 
-    lines.push(hr())
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
 
-    lines.push(center("SAlDO AWAL"))
-    lines.push("")
-    lines.push(center(`Rp ${rupiah(data.session.opening_balance)}`))
+@page{
+    size:58mm auto;
+    margin:2mm;
+}
 
-    lines.push(hr())
+body{
+    width:54mm;
+    font-family:monospace;
+    font-size:11px;
+    line-height:1.35;
+    color:#000;
+}
 
-    lines.push(center("PENDAPATAN"))
-    lines.push("")
-    lines.push(center(`Rp ${rupiah(data.session.cash_sales_total)}`))
+.receipt{
+    width:100%;
+}
 
-    lines.push(hr())
+.center{
+    text-align:center;
+}
 
-    lines.push(center("TOTAL SETORAN "))
-    lines.push("")
-    lines.push(center(`Rp ${rupiah(data.session.cash_sales_total + data.session.opening_balance)}`))
+.row{
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+}
 
-    lines.push(hr())
-    lines.push(center("Selamat Istirahat"))
+.section{
+    margin:10px 0;
+}
 
-    lines.push("")
+hr{
+    border:none;
+    border-top:1px dashed #000;
+    margin:8px 0;
+}
 
-    return lines.join("\n")
+.amount{
+    text-align:center;
+    font-size:16px;
+    font-weight:bold;
+    margin-top:4px;
+}
+
+.title{
+    font-weight:bold;
+    font-size:13px;
+    text-align:center;
+    margin-bottom:8px;
+}
+
+.store{
+    text-align:center;
+    margin-bottom:8px;
+}
+
+.footer{
+    text-align:center;
+    margin-top:10px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="receipt">
+
+    <div class="store">
+        <div><strong>${data.app_setting.app_name}</strong></div>
+        ${
+            data.app_setting.app_address
+                ? `<div>${data.app_setting.app_address}</div>`
+                : ""
+        }
+    </div>
+
+    <div class="title">
+        STRUK SETORAN KASIR
+    </div>
+
+    <hr>
+
+    <div class="row">
+        <span>Waktu</span>
+        <span>${formatDate(data.waktu)}</span>
+    </div>
+
+    <div class="row">
+        <span>Kasir</span>
+        <span>${data.session.user.name}</span>
+    </div>
+
+    <hr>
+
+    <div class="section">
+        <div class="center"><strong>SALDO AWAL</strong></div>
+        <div class="amount">
+            Rp ${rupiah(data.session.opening_balance)}
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="section">
+        <div class="center"><strong>PENDAPATAN</strong></div>
+        <div class="amount">
+            Rp ${rupiah(data.session.cash_sales_total)}
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="section">
+        <div class="center"><strong>TOTAL SETORAN</strong></div>
+        <div class="amount">
+            Rp ${rupiah(total)}
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="footer">
+        Selamat Istirahat
+    </div>
+
+</div>
+
+</body>
+</html>
+`
 }
