@@ -8,6 +8,8 @@ export interface ProductStore {
     stok: number;
     harga_beli: number | null;
     harga_jual: number | null;
+    harga_grosir?: number | null;
+    min_qty_grosir?: number | null;
     margin: number | null;
     status: "active" | "inactive";
 }
@@ -19,6 +21,8 @@ export interface Product {
     barcode: string | null;
     harga: number;
     harga_jual?: number | null;
+    harga_grosir?: number | null;
+    min_qty_grosir?: number | null;
     stok: number;
     status: "active" | "inactive" | "archived";
     harga_beli?: number | null;
@@ -35,6 +39,7 @@ export interface Product {
     created_by_toko?: CreatedByToko | null;
     category?: Category | null;
     brand?: Brand | null;
+    product_stores?: ProductStore[];
     created_at?: string;
     updated_at?: string;
 }

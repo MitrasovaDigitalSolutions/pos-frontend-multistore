@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useForm, FormProvider, type Resolver, type FieldErrors } from "react-hook-form";
+import { useForm, FormProvider, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Input } from "@/components/ui/input";
@@ -248,8 +248,8 @@ export function AdjustmentFormDialog({
         });
     };
 
-    const onErrorSubmit = (formErrors: FieldErrors<AdjustmentInput>) => {
-        console.error("Adjustment Form errors:", formErrors);
+    const onErrorSubmit = () => {
+        toast.error("Harap lengkapi semua bidang form yang wajib diisi.");
     };
 
     if (!product) return null;

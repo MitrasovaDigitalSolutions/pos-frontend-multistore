@@ -24,6 +24,9 @@ interface StoreProductEditDialogProps {
 interface StoreProductEditFormValues {
     harga_jual: number | null;
     harga_beli: number | null;
+    harga_grosir: number | null;
+    min_qty_grosir: number | null;
+    harga_grosir_total: number | null;
     margin: number | null;
     stok: number;
 }
@@ -40,6 +43,9 @@ export function StoreProductEditDialog({
         defaultValues: {
             harga_jual: null,
             harga_beli: null,
+            harga_grosir: null,
+            min_qty_grosir: null,
+            harga_grosir_total: null,
             margin: null,
             stok: 0,
         },
@@ -49,19 +55,31 @@ export function StoreProductEditDialog({
 
     useEffect(() => {
         if (open && product) {
+            const activeStore = product.product_stores?.find(s => s.store_uid === activeStoreUid) || product.product_stores?.[0];
+            const rawHGrosir = product.harga_grosir ?? activeStore?.harga_grosir ?? null;
+            const rawMinQty = product.min_qty_grosir ?? activeStore?.min_qty_grosir ?? null;
+            const hGrosir = rawHGrosir !== null && rawHGrosir !== undefined ? Number(rawHGrosir) : null;
+            const minQty = rawMinQty !== null && rawMinQty !== undefined ? Number(rawMinQty) : null;
+            const hGrosirTotal = (hGrosir && minQty) ? Math.round(hGrosir * minQty) : null;
             reset({
-                harga_jual: product.harga ?? null,
-                harga_beli: product.harga_beli ?? null,
-                margin: product.margin ?? null,
-                stok: product.stok ?? 0,
+                harga_jual: product.harga ?? activeStore?.harga_jual ?? null,
+                harga_beli: product.harga_beli ?? activeStore?.harga_beli ?? null,
+                harga_grosir: hGrosir,
+                min_qty_grosir: minQty,
+                harga_grosir_total: hGrosirTotal,
+                margin: product.margin ?? activeStore?.margin ?? null,
+                stok: product.stok ?? activeStore?.stok ?? 0,
             });
         }
-    }, [open, product, reset]);
+    }, [open, product, activeStoreUid, reset]);
 
     // Automatic margin calculation using useWatch
     const watchHargaBeli = useWatch({ control, name: "harga_beli" });
     const watchHargaJual = useWatch({ control, name: "harga_jual" });
     const watchMargin = useWatch({ control, name: "margin" });
+    const watchHargaGrosir = useWatch({ control, name: "harga_grosir" });
+    const watchMinQtyGrosir = useWatch({ control, name: "min_qty_grosir" });
+    const watchHargaGrosirTotal = useWatch({ control, name: "harga_grosir_total" });
 
     useEffect(() => {
         const activeId = document.activeElement?.id;
@@ -87,6 +105,35 @@ export function StoreProductEditDialog({
         }
     }, [watchMargin, watchHargaBeli, setValue]);
 
+    // Bi-directional calculation for wholesale price per unit <-> wholesale total
+    useEffect(() => {
+        const activeId = document.activeElement?.id;
+        const minQty = Number(watchMinQtyGrosir) || 0;
+
+        if (activeId === "harga_grosir" || activeId === "min_qty_grosir") {
+            const unitPrice = Number(watchHargaGrosir) || 0;
+            if (minQty > 0 && unitPrice > 0) {
+                setValue("harga_grosir_total", Math.round(unitPrice * minQty));
+            } else if (!watchHargaGrosir) {
+                setValue("harga_grosir_total", null);
+            }
+        }
+    }, [watchHargaGrosir, watchMinQtyGrosir, setValue]);
+
+    useEffect(() => {
+        const activeId = document.activeElement?.id;
+        const minQty = Number(watchMinQtyGrosir) || 0;
+
+        if (activeId === "harga_grosir_total") {
+            const totalPrice = Number(watchHargaGrosirTotal) || 0;
+            if (minQty > 0 && totalPrice > 0) {
+                setValue("harga_grosir", Math.round(totalPrice / minQty));
+            } else if (!watchHargaGrosirTotal) {
+                setValue("harga_grosir", null);
+            }
+        }
+    }, [watchHargaGrosirTotal, watchMinQtyGrosir, setValue]);
+
     const onSubmit = (data: StoreProductEditFormValues) => {
         if (!product) return;
         if (!activeStoreUid) {
@@ -100,6 +147,8 @@ export function StoreProductEditDialog({
                 storeUid: activeStoreUid,
                 harga_jual: data.harga_jual ?? undefined,
                 harga_beli: data.harga_beli ?? undefined,
+                harga_grosir: data.harga_grosir ?? undefined,
+                min_qty_grosir: data.min_qty_grosir ?? undefined,
                 margin: data.margin ?? undefined,
             },
             {
@@ -220,6 +269,34 @@ export function StoreProductEditDialog({
                                 placeholder="Contoh: 20"
                                 disabled={updateProductStore.isPending}
                             />
+                        </div>
+
+                        {/* Fitur Grosir */}
+                        <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-2.5">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-slate-800">Harga Grosir Toko (Opsional)</span>
+                                <span className="text-[10px] text-slate-400 font-medium">Auto-sync unit &amp; akumulasi</span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2.5">
+                                <FormNumberInput<StoreProductEditFormValues>
+                                    name="min_qty_grosir"
+                                    label="Min Qty Grosir"
+                                    placeholder="Contoh: 12"
+                                    disabled={updateProductStore.isPending}
+                                />
+                                <FormNominalInput<StoreProductEditFormValues>
+                                    name="harga_grosir"
+                                    label="Harga Unit Grosir"
+                                    placeholder="Contoh: 4.800"
+                                    disabled={updateProductStore.isPending}
+                                />
+                                <FormNominalInput<StoreProductEditFormValues>
+                                    name="harga_grosir_total"
+                                    label="Total Akumulasi"
+                                    placeholder="Contoh: 57.600"
+                                    disabled={updateProductStore.isPending}
+                                />
+                            </div>
                         </div>
 
                         {/* Interactive Profit Live Preview */}

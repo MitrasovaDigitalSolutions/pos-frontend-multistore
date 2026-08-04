@@ -5,6 +5,8 @@ export interface CartItem {
     itemId?: number; // backend transaction_item id
     name: string;
     price: number;
+    harga_grosir?: number | null;
+    min_qty_grosir?: number | null;
     qty: number;
     stock: number;
     barcode: string | null;
@@ -28,6 +30,8 @@ export interface ReceiptItem {
     nama_produk: string;
     kuantitas: number;
     harga_satuan: number;
+    harga_grosir?: number | null;
+    min_qty_grosir?: number | null;
 }
 
 export interface Receipt {

@@ -345,7 +345,7 @@ export function CatalogMatchDialog({
                             className="h-9 px-3.5 text-xs font-bold text-slate-700 border-slate-200 rounded-xl gap-1.5 hover:bg-slate-100 cursor-pointer"
                         >
                             <IconPlus size={15} />
-                            Ajukan Penambahan Produk Baru
+                            Tambah Produk Baru
                         </Button>
                     </div>
                 </div>
