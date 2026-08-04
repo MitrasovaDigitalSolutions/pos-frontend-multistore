@@ -8,7 +8,6 @@ import { useSession } from "next-auth/react";
 import { useCreateStockTransfer } from "../api/stock-transfer-api";
 
 import { BarcodeInput } from "@/components/shared/barcode-input";
-import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { Button } from "@/components/ui/button";
 import { CommandSelect, type CommandOption } from "@/components/ui/command-select";
 import { NumberInput } from "@/components/ui/number-input";
@@ -69,17 +68,6 @@ export function TransferCreatePage() {
         <IconLoader2 size={32} className="animate-spin text-emerald-600" />
         <p className="text-xs text-slate-400 font-medium">Memuat lokasi toko...</p>
       </div>
-    );
-  }
-
-  if (!activeStore?.is_central) {
-    return (
-      <AccessDeniedState
-        title="Restriksi Toko Pusat"
-        description="Saat ini hanya toko Pusat yang dapat membuat pengiriman / transfer stok ke cabang lain."
-        requiredPermission="store_central"
-        showRefreshButton
-      />
     );
   }
 
@@ -149,7 +137,7 @@ export function TransferCreatePage() {
         </Button>
         <div>
           <h2 className="text-lg font-bold text-slate-900">Buat Transfer Stok Baru</h2>
-          <p className="text-xs text-slate-400">Pilih cabang tujuan dan tentukan jumlah barang yang dikirim.</p>
+          <p className="text-xs text-slate-400">Pilih toko tujuan (cabang/pusat) dan tentukan jumlah barang yang dikirim.</p>
         </div>
       </div>
 
@@ -170,9 +158,9 @@ export function TransferCreatePage() {
                 <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">
                   Toko Asal (Pengirim)
                 </span>
-                <p className="font-bold text-slate-900 text-sm">{activeStore?.nama || "Toko Pusat"}</p>
+                <p className="font-bold text-slate-900 text-sm">{activeStore?.nama || "Toko Asal"}</p>
                 <span className="inline-block text-[9px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded">
-                  Pusat Aktif
+                  {activeStore?.is_central ? "Toko Pusat" : "Toko Cabang"}
                 </span>
               </div>
 
@@ -192,9 +180,9 @@ export function TransferCreatePage() {
                   options={storeOptions}
                   value={destinationUid}
                   onChange={setDestinationUid}
-                  placeholder="Pilih cabang tujuan..."
-                  searchPlaceholder="Cari toko cabang..."
-                  emptyMessage="Tidak ada toko cabang terdaftar"
+                  placeholder="Pilih toko tujuan..."
+                  searchPlaceholder="Cari toko tujuan..."
+                  emptyMessage="Tidak ada toko lain terdaftar"
                 />
               </div>
             </div>
