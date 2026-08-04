@@ -7,7 +7,8 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { getImageUrl } from "@/lib/utils";
-import { IconBuildingStore, IconPackage, IconUser } from "@tabler/icons-react";
+import { Button } from "@/components/ui/button";
+import { IconBuildingStore, IconPackage, IconPlus, IconUser } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -28,6 +29,7 @@ interface CatalogTableProps {
     onPerPageChange: (perPage: number) => void;
     onAssign: (product: CatalogProduct) => void;
     onEdit?: (product: CatalogProduct) => void;
+    onAddClick?: () => void;
     isLoading?: boolean;
     isFetching?: boolean;
     filterElement?: React.ReactNode;
@@ -49,6 +51,7 @@ export function CatalogTable({
     onPerPageChange,
     onAssign,
     onEdit,
+    onAddClick,
     isLoading = false,
     isFetching = false,
     filterElement,
@@ -171,14 +174,28 @@ export function CatalogTable({
             {
                 accessorKey: "harga",
                 header: "Harga Jual (Master)",
-                size: 140,
+                size: 150,
                 meta: {
                     headerClassName: "text-right",
                     cellClassName: "text-right font-bold text-slate-800",
                 },
                 cell: ({ row }) => {
-                    const price = row.original.harga_jual ?? row.original.harga;
-                    return formatRupiah(price);
+                    const p = row.original;
+                    const price = p.harga_jual ?? p.harga;
+                    const storeProduct = p.product_stores?.[0];
+                    const hargaGrosir = p.harga_grosir ?? storeProduct?.harga_grosir;
+                    const minQtyGrosir = p.min_qty_grosir ?? storeProduct?.min_qty_grosir;
+                    const hasGrosir = hargaGrosir && minQtyGrosir;
+                    return (
+                        <div className="flex flex-col items-end">
+                            <span className="font-bold text-slate-800">{formatRupiah(price)}</span>
+                            {hasGrosir ? (
+                                <span className="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-1.5 py-0.2 rounded mt-0.5 whitespace-nowrap">
+                                    Grosir: {formatRupiah(Number(hargaGrosir))} (≥{minQtyGrosir} Pcs)
+                                </span>
+                            ) : null}
+                        </div>
+                    );
                 },
             },
             {
@@ -246,6 +263,14 @@ export function CatalogTable({
                         Produk master — kelola distribusi harga ke seluruh toko &amp; cabang.
                     </p>
                 </div>
+                {isAdmin && onAddClick && (
+                    <Button
+                        onClick={onAddClick}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
+                    >
+                        <IconPlus size={16} /> Tambah Produk
+                    </Button>
+                )}
             </div>
 
             {filterElement}

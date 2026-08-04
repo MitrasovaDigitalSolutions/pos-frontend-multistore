@@ -90,19 +90,47 @@ export function ReceiptDialog({
                         {/* Scrollable Items List inside receipt */}
                         <Scrollable className="max-h-[140px] pr-1">
                             <div className="space-y-1.5 pb-1">
-                                {(receipt?.items || []).map((item) => (
-                                    <div
-                                        key={item.uid}
-                                        className="flex justify-between text-[10px] text-slate-600"
-                                    >
-                                        <span className="truncate max-w-[170px]" title={item.nama_produk}>
-                                            {Number(item.kuantitas)}x {item.nama_produk}
-                                        </span>
-                                        <span className="tabular-nums font-semibold shrink-0">
-                                            {formatRupiah(item.harga_satuan * item.kuantitas)}
-                                        </span>
-                                    </div>
-                                ))}
+                                {(receipt?.items || []).map((item) => {
+                                    const qty = Number(item.kuantitas);
+                                    const normalPrice = item.harga_satuan;
+                                    const hGrosir = item.harga_grosir;
+                                    const minQty = item.min_qty_grosir;
+
+                                    const isWholesaleActive =
+                                        hGrosir !== null &&
+                                        hGrosir !== undefined &&
+                                        hGrosir > 0 &&
+                                        minQty !== null &&
+                                        minQty !== undefined &&
+                                        minQty > 0 &&
+                                        qty >= minQty;
+
+                                    const wholesalePackages = isWholesaleActive ? Math.floor(qty / minQty!) : 0;
+                                    const wholesaleQty = wholesalePackages * (minQty || 0);
+                                    const normalQty = qty - wholesaleQty;
+                                    const totalSavings = isWholesaleActive
+                                        ? Math.max(0, (qty * normalPrice) - ((wholesaleQty * hGrosir!) + (normalQty * normalPrice)))
+                                        : 0;
+
+                                    return (
+                                        <div key={item.uid} className="space-y-0.5">
+                                            <div className="flex justify-between text-[10px] text-slate-700">
+                                                <span className="truncate max-w-[170px]" title={item.nama_produk}>
+                                                    {qty}x {item.nama_produk}
+                                                </span>
+                                                <span className="tabular-nums font-semibold shrink-0">
+                                                    {formatRupiah(qty * normalPrice)}
+                                                </span>
+                                            </div>
+                                            {isWholesaleActive && totalSavings > 0 && (
+                                                <div className="flex justify-between text-[9px] text-emerald-600 font-medium pl-2">
+                                                    <span>↳ Potongan Grosir:</span>
+                                                    <span className="tabular-nums font-bold">-{formatRupiah(totalSavings)}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </Scrollable>
 

@@ -1,5 +1,6 @@
 import type { Category } from "@/features/master/categories/types";
 import type { Brand } from "@/features/master/brands/types";
+import type { ProductStore } from "@/features/master/products/types";
 
 export interface CreatedByUser {
     uid: string;
@@ -19,6 +20,8 @@ export interface CatalogProduct {
     barcode: string | null;
     harga: number;
     harga_jual?: number | null;
+    harga_grosir?: number | null;
+    min_qty_grosir?: number | null;
     harga_beli?: number | null;
     harga_beli_avg?: number | null;
     margin?: number | null;
@@ -35,6 +38,7 @@ export interface CatalogProduct {
     created_by_toko?: CreatedByToko | null;
     category?: Category | null;
     brand?: Brand | null;
+    product_stores?: ProductStore[];
     created_at?: string;
     updated_at?: string;
 }
@@ -44,6 +48,8 @@ export interface BulkAssignmentItem {
     stok?: number;
     harga_beli?: number | null;
     harga_jual?: number | null;
+    harga_grosir?: number | null;
+    min_qty_grosir?: number | null;
     margin?: number | null;
     status?: "active" | "inactive";
 }

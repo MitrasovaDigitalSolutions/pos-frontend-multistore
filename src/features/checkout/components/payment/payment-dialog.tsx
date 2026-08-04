@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -420,6 +420,31 @@ export function PaymentDialog({
         }
     };
 
+    const handlePaySubmitRef = useRef(handlePaySubmit);
+    useEffect(() => {
+        handlePaySubmitRef.current = handlePaySubmit;
+    });
+
+    useEffect(() => {
+        if (!open) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                const target = e.target as HTMLElement | null;
+                const isTextArea = target?.tagName === "TEXTAREA";
+                if (isTextArea) return;
+
+                if (isSubmitEnabled && !isProcessing) {
+                    e.preventDefault();
+                    handlePaySubmitRef.current();
+                }
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [open, isSubmitEnabled, isProcessing]);
+
     // Payment mode tab config
     const payModes = [
         {
@@ -469,10 +494,10 @@ export function PaymentDialog({
                 {cashNum > 0 && (
                     <div
                         className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 animate-in fade-in-0 slide-in-from-bottom-1 ${isExact
+                            ? "bg-emerald-950/80 border border-emerald-600/80"
+                            : isSufficient
                                 ? "bg-emerald-950/80 border border-emerald-600/80"
-                                : isSufficient
-                                    ? "bg-emerald-950/80 border border-emerald-600/80"
-                                    : "bg-red-950/80 border border-red-800/80"
+                                : "bg-red-950/80 border border-red-800/80"
                             }`}
                     >
                         {isExact ? (
@@ -527,13 +552,9 @@ export function PaymentDialog({
                             <span className="text-[10px] font-bold text-slate-500 leading-none">{cartList.length} item di keranjang</span>
                         </div>
                     </div>
-                    <div className="bg-emerald-50 border border-emerald-200/80 px-3 py-1 rounded-xl flex items-center gap-1.5">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700">Total:</span>
-                        <span className="text-sm sm:text-base font-black font-mono text-emerald-700">{formatRupiah(grandTotal)}</span>
-                    </div>
                 </div>
             }
-            className="sm:max-w-3xl"
+            className="sm:max-w-4xl"
         >
             <div className="mt-3 animate-in fade-in-50 duration-200">
                 <FormProvider {...methods}>
@@ -600,7 +621,7 @@ export function PaymentDialog({
                                     <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-lg pointer-events-none" />
                                     <span className="text-[10px] font-black uppercase tracking-widest text-emerald-100 flex items-center justify-center gap-1.5">
                                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-200 animate-pulse" />
-                                        TOTAL HARUS DIBAYAR
+                                        TOTAL TRANSAKSI
                                     </span>
                                     <h2 className="text-3xl sm:text-4xl font-black text-white mt-1.5 leading-none tabular-nums tracking-tight font-mono drop-shadow-md">
                                         {formatRupiah(grandTotal)}
@@ -672,10 +693,10 @@ export function PaymentDialog({
                                 onClick={handlePaySubmit}
                                 disabled={isProcessing || !isSubmitEnabled}
                                 className={`w-full h-12 font-extrabold text-xs text-white rounded-xl flex items-center justify-center gap-2.5 cursor-pointer transition-all duration-200 active:scale-[0.98] border-none ${isProcessing || !isSubmitEnabled
-                                        ? "bg-slate-800 text-slate-500 cursor-not-allowed shadow-none border border-slate-700"
-                                        : payMode === "debt"
-                                            ? "bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 shadow-lg shadow-rose-500/30 hover:shadow-xl hover:shadow-rose-500/40"
-                                            : "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40"
+                                    ? "bg-slate-800 text-slate-500 cursor-not-allowed shadow-none border border-slate-700"
+                                    : payMode === "debt"
+                                        ? "bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 shadow-lg shadow-rose-500/30 hover:shadow-xl hover:shadow-rose-500/40"
+                                        : "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40"
                                     }`}
                             >
                                 {isProcessing ? (

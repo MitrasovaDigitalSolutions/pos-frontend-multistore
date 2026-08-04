@@ -81,6 +81,9 @@ export function ProductCatalog() {
             merek: "",
             barcode: "",
             harga: 0,
+            harga_grosir: null,
+            min_qty_grosir: null,
+            harga_grosir_total: null,
             stok: 0,
             harga_beli: 0,
             margin: 0,
@@ -93,11 +96,20 @@ export function ProductCatalog() {
 
     const handleEdit = (product: CatalogProduct) => {
         setEditingProduct(product);
+        const storeProduct = product.product_stores?.[0];
+        const rawHGrosir = product.harga_grosir ?? storeProduct?.harga_grosir ?? null;
+        const rawMinQty = product.min_qty_grosir ?? storeProduct?.min_qty_grosir ?? null;
+        const hGrosir = rawHGrosir !== null && rawHGrosir !== undefined ? Number(rawHGrosir) : null;
+        const minQty = rawMinQty !== null && rawMinQty !== undefined ? Number(rawMinQty) : null;
+        const hGrosirTotal = (hGrosir && minQty) ? Math.round(hGrosir * minQty) : null;
         dialogMethods.reset({
             nama: product.nama,
             merek: product.merek || "",
             barcode: product.barcode || "",
             harga: product.harga,
+            harga_grosir: hGrosir,
+            min_qty_grosir: minQty,
+            harga_grosir_total: hGrosirTotal,
             stok: product.stok ?? 0,
             harga_beli: product.harga_beli ?? 0,
             margin: product.margin ?? 0,
@@ -105,6 +117,27 @@ export function ProductCatalog() {
             brand_uid: product.brand_uid ?? null,
             image: null,
             is_jasa: !!product.is_jasa,
+        });
+        setIsEditDialogOpen(true);
+    };
+
+    const handleCreateNewProduct = () => {
+        setEditingProduct(null);
+        dialogMethods.reset({
+            nama: "",
+            merek: "",
+            barcode: "",
+            harga: 0,
+            harga_grosir: null,
+            min_qty_grosir: null,
+            harga_grosir_total: null,
+            stok: 0,
+            harga_beli: 0,
+            margin: 0,
+            category_uid: null,
+            brand_uid: null,
+            image: null,
+            is_jasa: false,
         });
         setIsEditDialogOpen(true);
     };
@@ -196,6 +229,7 @@ export function ProductCatalog() {
                     onPerPageChange={setPerPage}
                     onAssign={handleAssign}
                     onEdit={handleEdit}
+                    onAddClick={handleCreateNewProduct}
                     isLoading={isLoading}
                     isFetching={isFetching}
                     sortBy={sortBy}

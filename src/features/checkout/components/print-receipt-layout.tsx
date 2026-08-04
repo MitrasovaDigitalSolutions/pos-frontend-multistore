@@ -93,19 +93,48 @@ export function PrintReceiptLayout({ receipt, cashierName }: PrintReceiptLayoutP
 
             {/* Items List */}
             <div className="space-y-1">
-                {items.map((item) => (
-                    <div key={item.uid} className="space-y-0.5">
-                        <div className="flex justify-between">
-                            <span>{item.nama_produk}</span>
+                {items.map((item) => {
+                    const qty = Number(item.kuantitas);
+                    const normalPrice = item.harga_satuan;
+                    const hGrosir = item.harga_grosir;
+                    const minQty = item.min_qty_grosir;
+
+                    const isWholesaleActive =
+                        hGrosir !== null &&
+                        hGrosir !== undefined &&
+                        hGrosir > 0 &&
+                        minQty !== null &&
+                        minQty !== undefined &&
+                        minQty > 0 &&
+                        qty >= minQty;
+
+                    const wholesalePackages = isWholesaleActive ? Math.floor(qty / minQty!) : 0;
+                    const wholesaleQty = wholesalePackages * (minQty || 0);
+                    const normalQty = qty - wholesaleQty;
+                    const totalSavings = isWholesaleActive
+                        ? Math.max(0, (qty * normalPrice) - ((wholesaleQty * hGrosir!) + (normalQty * normalPrice)))
+                        : 0;
+
+                    return (
+                        <div key={item.uid} className="space-y-0.5">
+                            <div className="flex justify-between">
+                                <span>{item.nama_produk}</span>
+                            </div>
+                            <div className="flex justify-between pl-2">
+                                <span>{qty} x {formatRupiah(normalPrice)}</span>
+                                <span className="tabular-nums font-semibold">
+                                    {formatRupiah(qty * normalPrice)}
+                                </span>
+                            </div>
+                            {isWholesaleActive && totalSavings > 0 && (
+                                <div className="flex justify-between pl-2 font-bold">
+                                    <span>*Potongan Grosir ({wholesaleQty} Pcs):</span>
+                                    <span className="tabular-nums">-{formatRupiah(totalSavings)}</span>
+                                </div>
+                            )}
                         </div>
-                        <div className="flex justify-between pl-2">
-                            <span>{Number(item.kuantitas)} x {formatRupiah(item.harga_satuan)}</span>
-                            <span className="tabular-nums font-semibold">
-                                {formatRupiah(item.harga_satuan * item.kuantitas)}
-                            </span>
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             <div className="border-t border-dashed border-black my-1.5" />

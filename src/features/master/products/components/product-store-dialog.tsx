@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { FormProvider, useForm, type Resolver } from "react-hook-form";
+import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import {
     Dialog,
@@ -50,6 +50,9 @@ const formSchema = z.object({
     stok: z.coerce.number().min(0, "Stok tidak boleh negatif").default(0),
     harga_beli: z.coerce.number().min(0).nullable().optional(),
     harga_jual: z.coerce.number().min(0).nullable().optional(),
+    harga_grosir: z.coerce.number().min(0).nullable().optional(),
+    min_qty_grosir: z.coerce.number().min(0).nullable().optional(),
+    harga_grosir_total: z.coerce.number().min(0).nullable().optional(),
     margin: z.coerce.number().min(0).nullable().optional(),
     is_active: z.boolean().default(true),
 });
@@ -82,12 +85,47 @@ export function ProductStoreDialog({ open, onOpenChange, product }: ProductStore
             stok: 0,
             harga_beli: null,
             harga_jual: null,
+            harga_grosir: null,
+            min_qty_grosir: null,
+            harga_grosir_total: null,
             margin: null,
             is_active: true,
         },
     });
 
-    const { handleSubmit, reset, setError } = formMethods;
+    const { handleSubmit, reset, setError, setValue, control } = formMethods;
+
+    const watchHargaGrosir = useWatch({ control, name: "harga_grosir" });
+    const watchMinQtyGrosir = useWatch({ control, name: "min_qty_grosir" });
+    const watchHargaGrosirTotal = useWatch({ control, name: "harga_grosir_total" });
+
+    useEffect(() => {
+        const activeId = document.activeElement?.id;
+        const minQty = Number(watchMinQtyGrosir) || 0;
+
+        if (activeId === "harga_grosir" || activeId === "min_qty_grosir") {
+            const unitPrice = Number(watchHargaGrosir) || 0;
+            if (minQty > 0 && unitPrice > 0) {
+                setValue("harga_grosir_total", Math.round(unitPrice * minQty));
+            } else if (!watchHargaGrosir) {
+                setValue("harga_grosir_total", null);
+            }
+        }
+    }, [watchHargaGrosir, watchMinQtyGrosir, setValue]);
+
+    useEffect(() => {
+        const activeId = document.activeElement?.id;
+        const minQty = Number(watchMinQtyGrosir) || 0;
+
+        if (activeId === "harga_grosir_total") {
+            const totalPrice = Number(watchHargaGrosirTotal) || 0;
+            if (minQty > 0 && totalPrice > 0) {
+                setValue("harga_grosir", Math.round(totalPrice / minQty));
+            } else if (!watchHargaGrosirTotal) {
+                setValue("harga_grosir", null);
+            }
+        }
+    }, [watchHargaGrosirTotal, watchMinQtyGrosir, setValue]);
 
     useEffect(() => {
         if (!isFormOpen) {
@@ -98,6 +136,9 @@ export function ProductStoreDialog({ open, onOpenChange, product }: ProductStore
                 stok: 0,
                 harga_beli: null,
                 harga_jual: null,
+                harga_grosir: null,
+                min_qty_grosir: null,
+                harga_grosir_total: null,
                 margin: null,
                 is_active: true,
             });
@@ -107,11 +148,17 @@ export function ProductStoreDialog({ open, onOpenChange, product }: ProductStore
     const handleOpenForm = (store?: ProductStore) => {
         if (store) {
             setEditingStore(store);
+            const hGrosir = store.harga_grosir ?? null;
+            const minQty = store.min_qty_grosir ?? null;
+            const hGrosirTotal = (hGrosir && minQty) ? Math.round(hGrosir * minQty) : null;
             reset({
                 store_uid: store.store_uid,
                 stok: store.stok,
                 harga_beli: store.harga_beli,
                 harga_jual: store.harga_jual,
+                harga_grosir: hGrosir,
+                min_qty_grosir: minQty,
+                harga_grosir_total: hGrosirTotal,
                 margin: store.margin,
                 is_active: store.status === "active",
             });
@@ -122,6 +169,9 @@ export function ProductStoreDialog({ open, onOpenChange, product }: ProductStore
                 stok: 0,
                 harga_beli: null,
                 harga_jual: null,
+                harga_grosir: null,
+                min_qty_grosir: null,
+                harga_grosir_total: null,
                 margin: null,
                 is_active: true,
             });
@@ -138,6 +188,8 @@ export function ProductStoreDialog({ open, onOpenChange, product }: ProductStore
             stok: data.stok,
             harga_beli: data.harga_beli ?? undefined,
             harga_jual: data.harga_jual ?? undefined,
+            harga_grosir: data.harga_grosir ?? undefined,
+            min_qty_grosir: data.min_qty_grosir ?? undefined,
             margin: data.margin ?? undefined,
             status: (data.is_active ? "active" : "inactive") as "active" | "inactive",
         };
@@ -251,7 +303,7 @@ export function ProductStoreDialog({ open, onOpenChange, product }: ProductStore
             </Dialog>
 
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
                         <DialogTitle>{editingStore ? "Edit Penugasan Toko" : "Tambah Penugasan Toko"}</DialogTitle>
                     </DialogHeader>
@@ -289,6 +341,28 @@ export function ProductStoreDialog({ open, onOpenChange, product }: ProductStore
                                 label="Harga Jual"
                                 type="number"
                             />
+
+                            {/* Fitur Grosir Toko */}
+                            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                                <span className="text-xs font-bold text-slate-800 block">Harga Grosir Toko (Opsional)</span>
+                                <FormInput<ProductStoreFormValues>
+                                    name="min_qty_grosir"
+                                    label="Syarat Min. Qty Grosir"
+                                    type="number"
+                                />
+                                <div className="grid grid-cols-2 gap-3">
+                                    <FormInput<ProductStoreFormValues>
+                                        name="harga_grosir"
+                                        label="Harga Unit Grosir"
+                                        type="number"
+                                    />
+                                    <FormInput<ProductStoreFormValues>
+                                        name="harga_grosir_total"
+                                        label="Total Akumulasi Grosir"
+                                        type="number"
+                                    />
+                                </div>
+                            </div>
 
                             <FormSwitch
                                 name="is_active"

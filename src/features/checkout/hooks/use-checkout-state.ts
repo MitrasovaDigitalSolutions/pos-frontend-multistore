@@ -17,6 +17,8 @@ import { buildReceipt } from "@/utils/ReceiptFormatter";
 import QZService from "@/services/qz.service";
 import { formatDate } from "@/lib/date-utils";
 
+import { calculateItemSubtotal } from "@/features/checkout/utils/cart-utils";
+
 export function useCheckoutState() {
     const router = useAppRouter();
     const { data: session, update } = useSession();
@@ -134,7 +136,7 @@ export function useCheckoutState() {
     const barcodeInputRef = useRef<HTMLInputElement>(null);
 
     // ─── Calculations ─────────────────────────────────────────────────────────
-    const subtotal = cart.reduce((acc, i) => acc + i.price * i.qty, 0);
+    const subtotal = useMemo(() => cart.reduce((acc, i) => acc + calculateItemSubtotal(i), 0), [cart]);
     const getTaxRate = useSettingsStore((state) => state.getTaxRate);
     const taxRate = getTaxRate() / 100;
     const discountAmount = useMemo(() => {
@@ -216,10 +218,18 @@ export function useCheckoutState() {
 
         try {
             setIsProcessing(true);
+            const storeProduct = product.product_stores?.[0];
+            const rawHGrosir = product.harga_grosir ?? storeProduct?.harga_grosir ?? null;
+            const rawMinQty = product.min_qty_grosir ?? storeProduct?.min_qty_grosir ?? null;
+            const hGrosir = rawHGrosir !== null && rawHGrosir !== undefined ? Number(rawHGrosir) : null;
+            const minQty = rawMinQty !== null && rawMinQty !== undefined ? Number(rawMinQty) : null;
+
             addItem({
                 product_uid: product.uid,
                 name: product.nama,
                 price: product.harga,
+                harga_grosir: hGrosir,
+                min_qty_grosir: minQty,
                 qty: 1,
                 stock: product.stok,
                 barcode: product.barcode || null,
@@ -334,7 +344,7 @@ export function useCheckoutState() {
                     uid: currentHoldId,
                     nama_transaksi: namaTransaksi || defaultName,
                     items_count: activeCart.reduce((acc, item) => acc + item.qty, 0),
-                    subtotal: activeCart.reduce((acc, i) => acc + i.price * i.qty, 0),
+                    subtotal: activeCart.reduce((acc, i) => acc + calculateItemSubtotal(i), 0),
                     created_at: new Date().toISOString(),
                     items: activeCart,
                     member: useCheckoutStore.getState().selectedMember,
@@ -458,7 +468,16 @@ export function useCheckoutState() {
     };
 
     const handlePaymentSuccess = (receiptData: Receipt) => {
-        setReceipt(receiptData);
+        const enrichedItems = (receiptData.items || []).map((item) => {
+            const cartMatch = cart.find((c) => c.product_uid === item.uid || c.name === item.nama_produk);
+            return {
+                ...item,
+                harga_grosir: item.harga_grosir ?? cartMatch?.harga_grosir ?? null,
+                min_qty_grosir: item.min_qty_grosir ?? cartMatch?.min_qty_grosir ?? null,
+            };
+        });
+        const enrichedReceipt = { ...receiptData, items: enrichedItems };
+        setReceipt(enrichedReceipt);
         setIsReceiptOpen(true);
         refetchProducts();
         clearCart();
