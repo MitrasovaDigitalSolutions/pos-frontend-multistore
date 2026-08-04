@@ -17,7 +17,7 @@ import { getImageUrl } from "@/lib/utils";
 import { IconInfoCircle, IconPackage } from "@tabler/icons-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { useFormContext, useWatch, type FieldErrors } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { useCreateProduct, useUpdateProduct } from "../api/products-api";
 import { type ProductInput } from "../schemas/product-schema";
@@ -47,10 +47,39 @@ export function ProductFormDialog({
         handleSubmit,
         control,
         setValue,
+        reset,
         formState: { errors },
     } = useFormContext<ProductInput>();
 
     const isPending = createProduct.isPending || updateProduct.isPending;
+
+    useEffect(() => {
+        if (open && editingProduct) {
+            const storeProduct = editingProduct.product_stores?.[0];
+            const rawHGrosir = editingProduct.harga_grosir ?? storeProduct?.harga_grosir ?? null;
+            const rawMinQty = editingProduct.min_qty_grosir ?? storeProduct?.min_qty_grosir ?? null;
+            const hGrosir = rawHGrosir !== null && rawHGrosir !== undefined ? Number(rawHGrosir) : null;
+            const minQty = rawMinQty !== null && rawMinQty !== undefined ? Number(rawMinQty) : null;
+            const hGrosirTotal = (hGrosir && minQty) ? Math.round(hGrosir * minQty) : null;
+
+            reset({
+                nama: editingProduct.nama,
+                merek: editingProduct.merek || "",
+                barcode: editingProduct.barcode || "",
+                harga: editingProduct.harga ?? storeProduct?.harga_jual ?? 0,
+                harga_grosir: hGrosir,
+                min_qty_grosir: minQty,
+                harga_grosir_total: hGrosirTotal,
+                stok: editingProduct.stok ?? storeProduct?.stok ?? 0,
+                harga_beli: editingProduct.harga_beli ?? storeProduct?.harga_beli ?? 0,
+                margin: editingProduct.margin ?? storeProduct?.margin ?? 0,
+                category_uid: editingProduct.category_uid ?? null,
+                brand_uid: editingProduct.brand_uid ?? null,
+                image: null,
+                is_jasa: !!editingProduct.is_jasa,
+            });
+        }
+    }, [open, editingProduct, reset]);
 
     const categorySelectProps = useCategorySelectConfig({
         targetUid: editingProduct?.category_uid,
@@ -67,6 +96,9 @@ export function ProductFormDialog({
     const harga = useWatch({ control, name: "harga" });
     const margin = useWatch({ control, name: "margin" });
     const isJasa = useWatch({ control, name: "is_jasa" });
+    const hargaGrosir = useWatch({ control, name: "harga_grosir" });
+    const minQtyGrosir = useWatch({ control, name: "min_qty_grosir" });
+    const hargaGrosirTotal = useWatch({ control, name: "harga_grosir_total" });
 
     useEffect(() => {
         if (isJasa) {
@@ -100,6 +132,34 @@ export function ProductFormDialog({
         }
     }, [margin, hargaBeli, setValue]);
 
+    // Bi-directional calculation for wholesale price per unit <-> wholesale total
+    useEffect(() => {
+        const activeId = document.activeElement?.id;
+        const minQty = Number(minQtyGrosir) || 0;
+
+        if (activeId === "harga_grosir" || activeId === "min_qty_grosir") {
+            const unitPrice = Number(hargaGrosir) || 0;
+            if (minQty > 0 && unitPrice > 0) {
+                setValue("harga_grosir_total", Math.round(unitPrice * minQty));
+            } else if (!hargaGrosir) {
+                setValue("harga_grosir_total", null);
+            }
+        }
+    }, [hargaGrosir, minQtyGrosir, setValue]);
+
+    useEffect(() => {
+        const activeId = document.activeElement?.id;
+        const minQty = Number(minQtyGrosir) || 0;
+
+        if (activeId === "harga_grosir_total") {
+            const totalPrice = Number(hargaGrosirTotal) || 0;
+            if (minQty > 0 && totalPrice > 0) {
+                setValue("harga_grosir", Math.round(totalPrice / minQty));
+            } else if (!hargaGrosirTotal) {
+                setValue("harga_grosir", null);
+            }
+        }
+    }, [hargaGrosirTotal, minQtyGrosir, setValue]);
 
     const onSubmit = (data: ProductInput) => {
         const formData = new FormData();
@@ -137,6 +197,14 @@ export function ProductFormDialog({
         }
 
         formData.append("harga_jual", String(data.harga));
+
+        if (data.harga_grosir !== null && data.harga_grosir !== undefined) {
+            formData.append("harga_grosir", String(data.harga_grosir));
+        }
+
+        if (data.min_qty_grosir !== null && data.min_qty_grosir !== undefined) {
+            formData.append("min_qty_grosir", String(data.min_qty_grosir));
+        }
 
         if (data.stok !== undefined && data.stok !== null) {
             formData.append("stok", String(data.stok));
@@ -193,9 +261,8 @@ export function ProductFormDialog({
         }
     };
 
-    const onError = (formErrors: FieldErrors<ProductInput>) => {
-        console.error("Product Form Validation Errors:", formErrors);
-        toast.error("Gagal menyimpan produk. Silakan periksa kembali input Anda.");
+    const onError = () => {
+        toast.error("Gagal menyimpan produk. Harap lengkapi semua input yang wajib diisi.");
     };
 
     const initialImageUrl = getImageUrl(editingProduct?.image_path);
@@ -210,7 +277,7 @@ export function ProductFormDialog({
                     <span>
                         {editingProduct
                             ? "Edit Detail Produk"
-                            : "Ajukan Penambahan Produk Baru"}
+                            : "Tambah Produk Baru"}
                     </span>
                 </>
             }
@@ -329,6 +396,39 @@ export function ProductFormDialog({
                             placeholder="Contoh: 20"
                             disabled={isPending}
                         />
+                    </div>
+
+                    {/* Fitur Grosir */}
+                    <div className="p-3.5 bg-emerald-50/50 border border-emerald-200/60 rounded-2xl space-y-3">
+                        <div className="flex items-center justify-between">
+                            <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                Harga Grosir (Opsional)
+                            </label>
+                            <span className="text-[10px] text-slate-400 font-medium">
+                                Otomatis sinkron harga unit &amp; total akumulasi
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                            <FormNumberInput<ProductInput>
+                                name="min_qty_grosir"
+                                label="Min. Qty Grosir (Pcs)"
+                                placeholder="Contoh: 12"
+                                disabled={isPending}
+                            />
+                            <FormNominalInput<ProductInput>
+                                name="harga_grosir"
+                                label="Harga Unit Grosir (Rp)"
+                                placeholder="Contoh: 4.800"
+                                disabled={isPending}
+                            />
+                            <FormNominalInput<ProductInput>
+                                name="harga_grosir_total"
+                                label="Total Akumulasi Grosir (Rp)"
+                                placeholder="Contoh: 57.600"
+                                disabled={isPending}
+                            />
+                        </div>
                     </div>
 
                     {/* Submit Button */}

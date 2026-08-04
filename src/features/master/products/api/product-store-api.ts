@@ -21,7 +21,7 @@ export function useAssignProductStore() {
     return useMutation<
         ProductStore,
         Error,
-        { productUid: string; store_uid: string; stok?: number; harga_beli?: number; harga_jual?: number; margin?: number; status?: "active" | "inactive" }
+        { productUid: string; store_uid: string; stok?: number; harga_beli?: number; harga_jual?: number; harga_grosir?: number | null; min_qty_grosir?: number | null; margin?: number; status?: "active" | "inactive" }
     >({
         mutationFn: ({ productUid, ...data }) =>
             apiPost<ProductStore, Omit<typeof data, "productUid">>(
@@ -40,7 +40,7 @@ export function useUpdateProductStore() {
     return useMutation<
         ProductStore,
         Error,
-        { productUid: string; storeUid: string; stok?: number; harga_beli?: number; harga_jual?: number; margin?: number; status?: "active" | "inactive" }
+        { productUid: string; storeUid: string; stok?: number; harga_beli?: number; harga_jual?: number; harga_grosir?: number | null; min_qty_grosir?: number | null; margin?: number; status?: "active" | "inactive" }
     >({
         mutationFn: ({ productUid, storeUid, ...data }) =>
             apiPatch<ProductStore, Omit<typeof data, "productUid" | "storeUid">>(

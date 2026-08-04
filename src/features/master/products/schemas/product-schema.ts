@@ -13,6 +13,18 @@ export const productSchema = z.object({
         .optional()
         .transform((val) => val || null),
     harga: z.coerce.number().min(0, "Harga jual tidak boleh kurang dari 0"),
+    harga_grosir: z.preprocess((val) => {
+        if (val === "" || val === null || val === undefined) return null;
+        return Number(val);
+    }, z.number().min(0, "Harga grosir tidak boleh kurang dari 0").nullable().optional()),
+    min_qty_grosir: z.preprocess((val) => {
+        if (val === "" || val === null || val === undefined) return null;
+        return Number(val);
+    }, z.number().min(0, "Minimal qty grosir tidak boleh kurang dari 0").nullable().optional()),
+    harga_grosir_total: z.preprocess((val) => {
+        if (val === "" || val === null || val === undefined) return null;
+        return Number(val);
+    }, z.number().min(0).nullable().optional()),
     stok: z.coerce.number(),
     harga_beli: z.preprocess((val) => {
         if (val === "" || val === null || val === undefined) return null;

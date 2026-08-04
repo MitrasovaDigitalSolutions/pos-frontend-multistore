@@ -3,6 +3,8 @@ export interface ReceiptItem {
     nama_produk: string;
     harga_satuan: number;
     subtotal: number;
+    harga_grosir?: number | null;
+    min_qty_grosir?: number | null;
 }
 
 export interface ReceiptSale {
@@ -172,13 +174,44 @@ export function buildReceipt(data: ReceiptData) {
     // ================= ITEMS =================
 
     (sale.items || []).forEach((item) => {
+        const qty = Number(item.kuantitas);
+        const normalPrice = item.harga_satuan;
+        const hGrosir = item.harga_grosir;
+        const minQty = item.min_qty_grosir;
+
+        const isWholesaleActive =
+            hGrosir !== null &&
+            hGrosir !== undefined &&
+            hGrosir > 0 &&
+            minQty !== null &&
+            minQty !== undefined &&
+            minQty > 0 &&
+            qty >= minQty;
+
+        const wholesalePackages = isWholesaleActive ? Math.floor(qty / minQty!) : 0;
+        const wholesaleQty = wholesalePackages * (minQty || 0);
+        const normalQty = qty - wholesaleQty;
+        const totalSavings = isWholesaleActive
+            ? Math.max(0, (qty * normalPrice) - ((wholesaleQty * hGrosir!) + (normalQty * normalPrice)))
+            : 0;
+
+        const lineGross = qty * normalPrice;
+
         txt +=
             pad(String(item.kuantitas), 5) +
             pad("PCS", 5) +
             pad(item.nama_produk, 35) +
             padLeft(money(item.harga_satuan), 15) +
-            padLeft(money(item.subtotal), 20) +
+            padLeft(money(lineGross), 20) +
             "\n";
+
+        if (isWholesaleActive && totalSavings > 0) {
+            txt +=
+                pad("", 10) +
+                pad(`*Potongan Grosir (${wholesaleQty} Pcs)`, 35) +
+                padLeft(`-${money(totalSavings)}`, 35) +
+                "\n";
+        }
     });
 
     txt += line() + "\n";

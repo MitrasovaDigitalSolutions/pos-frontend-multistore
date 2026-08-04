@@ -197,8 +197,24 @@ export function ProductTable({
                         headerClassName: "text-right",
                         cellClassName: "text-right font-bold text-slate-800",
                     },
-                    size: 120,
-                    cell: ({ row }) => formatRupiah(row.original.harga),
+                    size: 140,
+                    cell: ({ row }) => {
+                        const p = row.original;
+                        const storeProduct = p.product_stores?.[0];
+                        const hargaGrosir = p.harga_grosir ?? storeProduct?.harga_grosir;
+                        const minQtyGrosir = p.min_qty_grosir ?? storeProduct?.min_qty_grosir;
+                        const hasGrosir = hargaGrosir && minQtyGrosir;
+                        return (
+                            <div className="flex flex-col items-end">
+                                <span className="font-bold text-slate-800">{formatRupiah(p.harga)}</span>
+                                {hasGrosir ? (
+                                    <span className="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-1.5 py-0.2 rounded mt-0.5 whitespace-nowrap">
+                                        Grosir: {formatRupiah(Number(hargaGrosir))} (≥{minQtyGrosir} Pcs)
+                                    </span>
+                                ) : null}
+                            </div>
+                        );
+                    },
                 },
                 {
                     accessorKey: "margin",

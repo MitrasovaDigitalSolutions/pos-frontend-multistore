@@ -227,8 +227,7 @@ export function useReturnFinalizer({
     };
 
     const handleSaveClick = () => {
-        headerForm.handleSubmit(handleSaveFlow, (errors) => {
-            console.error("Return form validation errors:", errors);
+        headerForm.handleSubmit(handleSaveFlow, () => {
             toast.error("Harap isi semua kolom wajib dengan benar.");
         })();
     };
