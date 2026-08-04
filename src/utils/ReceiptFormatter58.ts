@@ -330,7 +330,6 @@ hasCardDp
     <div>Terima Kasih Atas Kunjungan Anda</div>
     <div>Barang yang sudah dibeli</div>
     <div>tidak dapat ditukar/dikembalikan</div>
-    <div style="height:24px;">&nbsp;</div>
 </div>
 
 </body>
