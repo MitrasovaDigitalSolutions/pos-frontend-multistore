@@ -56,7 +56,6 @@ export function buildCashDepositText(
 
 body{
     width:54mm;
-    font-family:monospace;
     font-family:tahoma;
     font-size:11px;
     line-height:1.35;
