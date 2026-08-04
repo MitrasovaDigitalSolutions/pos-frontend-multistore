@@ -4,6 +4,8 @@ export interface StockTransfer {
   store_uid_destination: string;
   nomor_transfer: string;
   status: "draft" | "in_transit" | "received" | "cancelled";
+  perlu_review?: boolean;
+  direview_at?: string | null;
   user_uid_source: string | null;
   user_uid_destination: string | null;
   catatan: string | null;
@@ -25,6 +27,8 @@ export interface StockTransferItem {
   kuantitas: number;
   kuantitas_diterima?: number | null;
   keterangan?: string | null;
+  status?: "received" | "rejected" | null;
+  jenis_selisih?: "salah_input" | "rusak" | "hilang" | null;
   stok_sebelum_source: number | null;
   stok_sesudah_source: number | null;
   stok_sebelum_dest: number | null;

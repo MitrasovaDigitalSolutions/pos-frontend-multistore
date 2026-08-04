@@ -46,6 +46,8 @@ export const ENDPOINTS = {
             FINALIZE: (uid: string) => `/v1/inventory/stock-transfers/${uid}/finalize`,
             RECEIVE: (uid: string) => `/v1/inventory/stock-transfers/${uid}/receive`,
             CANCEL: (uid: string) => `/v1/inventory/stock-transfers/${uid}/cancel`,
+            REVIEWED: (uid: string) => `/v1/inventory/stock-transfers/${uid}/reviewed`,
+            PRINT_SURAT_JALAN: (uid: string) => `/v1/inventory/stock-transfers/${uid}/print-surat-jalan`,
         },
         MOVEMENTS: "/v1/inventory/movements",
         ADJUSTMENT: "/v1/inventory/adjustment",
