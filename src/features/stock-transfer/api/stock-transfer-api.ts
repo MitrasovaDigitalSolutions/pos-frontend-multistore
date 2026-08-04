@@ -69,6 +69,21 @@ export function useReceiveStockTransfer() {
   });
 }
 
+export function useValidateStockTransferReturn() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ uid, itemUid, kuantitas_return }: { uid: string; itemUid: string; kuantitas_return?: number }) =>
+      apiPost<ApiResponse<StockTransfer>, { kuantitas_return?: number }>(
+        ENDPOINTS.INVENTORY.STOCK_TRANSFERS.RETURN_ITEM(uid, itemUid), 
+        { kuantitas_return }
+      ),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers() });
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(variables.uid) });
+    },
+  });
+}
+
 export function useCancelStockTransfer() {
   const qc = useQueryClient();
   return useMutation({

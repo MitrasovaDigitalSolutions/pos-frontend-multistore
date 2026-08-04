@@ -12,6 +12,7 @@ import {
   useCancelStockTransfer,
   useFinalizeStockTransfer,
   useReceiveStockTransfer,
+  useValidateStockTransferReturn,
   useStockTransferDetail,
   type ReceiveStockTransferPayload,
 } from "../api/stock-transfer-api";
@@ -40,6 +41,7 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
   const { data: transfer, isLoading, error } = useStockTransferDetail(uid);
   const finalize = useFinalizeStockTransfer();
   const receive = useReceiveStockTransfer();
+  const validateReturn = useValidateStockTransferReturn();
   const cancel = useCancelStockTransfer();
 
   // React Hook Form for receiving items
@@ -59,6 +61,7 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [processingItemUid, setProcessingItemUid] = useState<string | null>(null);
+  const [validatingItemUid, setValidatingItemUid] = useState<string | null>(null);
 
   // Sync default values when transfer data is fetched
   useEffect(() => {
@@ -105,6 +108,7 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
 
   const canFinalize = transfer.status === TRANSFER_STATUS.DRAFT && isSource;
   const canReceive = (transfer.status === TRANSFER_STATUS.IN_TRANSIT || transfer.status === TRANSFER_STATUS.PARTIALLY_RECEIVED) && isDest;
+  const canValidateReturn = transfer.status === TRANSFER_STATUS.RETURN_PENDING && isSource;
   const canCancel =
     (transfer.status === TRANSFER_STATUS.DRAFT || transfer.status === TRANSFER_STATUS.IN_TRANSIT) &&
     isSource;
@@ -171,6 +175,18 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
     }
   };
 
+  const handleValidateReturnItem = async (item: StockTransferItem, kuantitasReturn: number) => {
+    setValidatingItemUid(item.uid);
+    try {
+      await validateReturn.mutateAsync({ uid, itemUid: item.uid, kuantitas_return: kuantitasReturn });
+      toast.success(`Return item ${item.product?.nama || "berhasil"} divalidasi.`);
+    } catch (err: any) {
+      toast.error(`Gagal memvalidasi return: ${err.message}`);
+    } finally {
+      setValidatingItemUid(null);
+    }
+  };
+
   const handleCancelSubmit = () => {
     cancel.mutate(
       { uid, alasan: cancelReason.trim() || undefined },
@@ -217,6 +233,9 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
               onResetAllQty={handleResetAllQty}
               onReceiveItem={handleReceiveItem}
               processingItemUid={processingItemUid}
+              canValidateReturn={canValidateReturn}
+              onValidateReturnItem={handleValidateReturnItem}
+              validatingItemUid={validatingItemUid}
             />
           </div>
 

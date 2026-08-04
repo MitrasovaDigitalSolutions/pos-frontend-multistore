@@ -38,8 +38,8 @@ const STATUS_OPTIONS = [
   { value: "draft", label: "Draft" },
   { value: "in_transit", label: "Dalam Pengiriman" },
   { value: "partially_received", label: "Diterima Sebagian" },
+  { value: "return_pending", label: "Menunggu Return" },
   { value: "received", label: "Diterima" },
-  { value: "rejected", label: "Semua Ditolak" },
   { value: "cancelled", label: "Dibatalkan" },
 ];
 

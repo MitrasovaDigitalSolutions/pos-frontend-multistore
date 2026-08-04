@@ -14,9 +14,11 @@ export function TransferDetailStepper({ status }: TransferDetailStepperProps) {
   const stepIndex =
     status === TRANSFER_STATUS.DRAFT
       ? 1
-      : (status === TRANSFER_STATUS.IN_TRANSIT || status === TRANSFER_STATUS.PARTIALLY_RECEIVED)
+      : status === TRANSFER_STATUS.IN_TRANSIT
       ? 2
-      : status === TRANSFER_STATUS.RECEIVED
+      : (status === TRANSFER_STATUS.PARTIALLY_RECEIVED || 
+         status === TRANSFER_STATUS.RETURN_PENDING || 
+         status === TRANSFER_STATUS.RECEIVED)
       ? 3
       : 0;
 
@@ -32,13 +34,13 @@ export function TransferDetailStepper({ status }: TransferDetailStepperProps) {
     );
   }
 
-  if (status === TRANSFER_STATUS.REJECTED) {
+  if (status === TRANSFER_STATUS.RETURN_PENDING) {
     return (
-      <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800 flex items-center gap-3">
-        <IconCircleX size={20} className="text-rose-600 shrink-0" />
+      <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-amber-800 flex items-center gap-3">
+        <IconCircleX size={20} className="text-amber-600 shrink-0" />
         <div>
-          <h4 className="text-xs font-bold text-rose-900">Semua Item Ditolak</h4>
-          <p className="text-[11px] text-rose-700">Seluruh item pada pengiriman ini ditolak oleh toko tujuan.</p>
+          <h4 className="text-xs font-bold text-amber-900">Menunggu Validasi Return</h4>
+          <p className="text-[11px] text-amber-700">Toko asal harus memvalidasi jumlah barang yang dikembalikan karena terdapat selisih pada penerimaan.</p>
         </div>
       </div>
     );
@@ -93,13 +95,19 @@ export function TransferDetailStepper({ status }: TransferDetailStepperProps) {
         <div
           className={`flex items-center gap-3 p-2.5 rounded-xl border ${
             stepIndex >= 3
-              ? "bg-emerald-50/50 border-emerald-200 text-emerald-800"
+              ? status === TRANSFER_STATUS.RECEIVED 
+                ? "bg-emerald-50/50 border-emerald-200 text-emerald-800"
+                : "bg-blue-50/50 border-blue-200 text-blue-800"
               : "bg-slate-50 border-slate-100 text-slate-400"
           }`}
         >
           <div
             className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${
-              stepIndex >= 3 ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-600"
+              stepIndex >= 3 
+                ? status === TRANSFER_STATUS.RECEIVED 
+                  ? "bg-emerald-600 text-white" 
+                  : "bg-blue-600 text-white"
+                : "bg-slate-200 text-slate-600"
             }`}
           >
             3
