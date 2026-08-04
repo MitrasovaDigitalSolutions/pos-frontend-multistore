@@ -3,63 +3,16 @@ export interface ReceiptData {
     setting: any;
 }
 
-// ============================================================
-// CONSTANTS
-// ============================================================
-
-const WIDTH = 42;
-const VALUE_COL = 16;
-const LABEL_COL = WIDTH - VALUE_COL; // 16
-
-
-// ============================================================
-// PRIMITIVES
-// ============================================================
-
-const separator = (char = "-") => char.repeat(WIDTH);
-
 const money = (value: number | string) =>
-    new Intl.NumberFormat("id-ID").format(Number(value));
-
-/** Potong / pad kanan sampai `length` karakter */
-const pad = (value: string, length: number) =>
-    value.length > length
-        ? value.substring(0, length)
-        : value.padEnd(length, " ");
-
-/** Potong / pad kiri sampai `length` karakter */
-const padLeft = (value: string, length: number) =>
-    value.length > length
-        ? value.substring(0, length)
-        : value.padStart(length, " ");
-
-const center = (value: string) => {
-    const space = Math.max(0, WIDTH - value.length);
-    const left = Math.floor(space / 2);
-    return " ".repeat(left) + value;
-};
-
-const wrapText = (text: string, width: number): string => {
-    const words = text.split(" ");
-    const lines: string[] = [];
-    let current = "";
-
-    for (const word of words) {
-        const next = current ? `${current} ${word}` : word;
-        if (next.length <= width) {
-            current = next;
-        } else {
-            if (current) lines.push(current);
-            current = word;
-        }
-    }
-
-    if (current) lines.push(current);
-    return lines.join("\n");
-};
+    new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        minimumFractionDigits: 0,
+    }).format(Number(value || 0));
 
 const formatDate = (value?: string | Date | null): string => {
     if (!value) return "-";
+
     return new Intl.DateTimeFormat("id-ID", {
         timeZone: "Asia/Jakarta",
         day: "2-digit",
@@ -71,129 +24,314 @@ const formatDate = (value?: string | Date | null): string => {
     }).format(new Date(value));
 };
 
-// ============================================================
-// ROW BUILDERS — semua pakai VALUE_COL agar angka sejajar
-// ============================================================
-
-/**
- * Baris item:
- *   Baris 1 → "Nx NamaProduk"
- *   Baris 2 → "  [harga satuan ........] [subtotal .............]"
- *              <- LABEL_COL (18) ->       <- VALUE_COL (24) ->
- */
-const itemLine = (qty: number, name: string, price: number, total: number): string => {
-    const qtyStr = `${qty}x`;
-    const nameStr = name.substring(0, WIDTH - qtyStr.length - 1);
-    const priceStr = padLeft(money(price), LABEL_COL - 2); // -2 untuk indent
-    const totalStr = padLeft(money(total), VALUE_COL);
-    return `${qtyStr} ${nameStr}\n  ${priceStr}${totalStr}\n`;
-};
-
-/**
- * Baris total / ringkasan:
- *   "[label ...........] [nilai ................]"
- *   <- LABEL_COL (18) -> <- VALUE_COL (24) ->
- *
- * Label yang lebih panjang dari LABEL_COL akan dipotong.
- */
-const fmtTotal = (label: string, value: number): string => {
-    const labelStr = pad(label, LABEL_COL);
-    const valStr = padLeft(money(value), VALUE_COL);
-    return `${labelStr}${valStr}\n`;
-};
-
-// ============================================================
-// MAIN BUILDER
-// ============================================================
-
 export function buildReceipt58(data: ReceiptData): string {
-    const { sale, setting: app } = data
+    const { sale, setting: app } = data;
 
-    const isDebt = sale.metode_pembayaran === "debt"
+    const isDebt = sale.metode_pembayaran === "debt";
+    const isOffline = String(sale.uid).startsWith("OFFLINE-");
+    const hasCardDp = isDebt && (sale.card_amount ?? 0) > 0;
 
-    const bayar = isDebt
-        ? (sale.cash_amount ?? sale.cash_received ?? 0)
-        : sale.nominal_bayar
+    const items = (sale.items || []).map((item: any) => {
+        const qty = Number(item.kuantitas);
+        const normalPrice = item.harga_satuan;
+        const hGrosir = item.harga_grosir;
+        const minQty = item.min_qty_grosir;
 
-    const kembali = isDebt
-        ? (sale.debt_amount ?? 0)
-        : sale.kembalian
+        const isWholesaleActive =
+            hGrosir !== null &&
+            hGrosir !== undefined &&
+            hGrosir > 0 &&
+            minQty !== null &&
+            minQty !== undefined &&
+            minQty > 0 &&
+            qty >= minQty;
 
-    const lines: string[] = []
+        console.log(isWholesaleActive)
 
-    // ── HEADER ──────────────────────────────────────────────
-    lines.push("")
-    lines.push(center(app.app_name ?? "Mitrasova POS"))
+        const wholesaleQty = isWholesaleActive ? Math.floor(qty / minQty!) * minQty : 0;
+        const normalQty = qty - wholesaleQty;
+        const totalSavings = isWholesaleActive
+            ? Math.max(0, qty * normalPrice - (wholesaleQty * hGrosir + normalQty * normalPrice))
+            : 0;
 
-    if (app.app_address) {
-        lines.push(center(app.app_address))
+        return { ...item, qty, isWholesaleActive, wholesaleQty, totalSavings };
+    });
+
+    return `
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8"/>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+body{
+    width:58mm;
+    margin:0;
+    padding:2px;
+    font-family: tahoma;
+    font-size:9px;
+    line-height:1.35;
+    color:#000;
+    background:#fff;
+}
+
+.header{
+    text-align:center;
+    margin-bottom:4px;
+}
+
+.title{
+    font-weight:bold;
+    font-size:11px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+}
+
+hr{
+    border:none;
+    border-top:1px dashed #000;
+    margin:4px 0;
+}
+
+.row{
+    display:flex;
+    justify-content:space-between;
+    margin:1px 0;
+}
+
+.banner{
+    text-align:center;
+    font-weight:bold;
+    border:1px solid #000;
+    padding:3px;
+    margin:4px 0;
+    text-transform:uppercase;
+}
+
+.item{
+    margin-bottom:4px;
+}
+
+.item-detail{
+    display:flex;
+    justify-content:space-between;
+    padding-left:6px;
+}
+
+.total-row{
+    display:flex;
+    justify-content:space-between;
+    margin:1px 0;
+}
+
+.grand-total{
+    display:flex;
+    justify-content:space-between;
+    font-weight:bold;
+    font-size:10px;
+    padding-top:2px;
+    border-top:1px dotted #000;
+}
+
+.card-note{
+    display:flex;
+    justify-content:space-between;
+    font-size:8px;
+    padding-left:6px;
+    color:#555;
+}
+
+.footer{
+    margin-top:6px;
+    text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    <div class="title">${app.app_name ?? "Mitrasova POS"}</div>
+
+    ${
+        app.app_address
+            ? `<div>${app.app_address}</div>`
+            : ""
     }
 
-    if (app.app_phone) {
-        lines.push(center(`Telp: ${app.app_phone}`))
+    ${
+        app.app_phone
+            ? `<div style="font-weight:bold">TELP: ${app.app_phone}</div>`
+            : ""
     }
+</div>
 
-    lines.push(separator())
+<hr/>
 
-    lines.push(`Tgl  : ${formatDate(sale.created_at)}`)
-    lines.push(`Kasir: ${sale.user.name}`)
-    lines.push(`No   : ${sale.nomor_transaksi}`)
+${
+    isOffline
+        ? `
+<div class="banner">
+    *** OFFLINE DRAFT ***<br/>
+    BELUM DISINKRONISASI
+</div>`
+        : ""
+}
 
-    if (sale.member?.nama) {
-        lines.push(`Member: ${sale.member.nama}`)
+<div class="row">
+    <span>Kasir: ${sale.user?.name ?? "-"}</span>
+    <span>POS-01</span>
+</div>
+
+<div class="row">
+    <span>TRX #${sale.uid}</span>
+    <span>${formatDate(sale.created_at)}</span>
+</div>
+
+${
+    sale.member?.nama
+        ? `
+<div class="row" style="font-weight:bold">
+    <span>Member:</span>
+    <span>${sale.member.nama} (${sale.member.kode ?? ""})</span>
+</div>`
+        : ""
+}
+
+<hr/>
+
+${items.map((item: any) => `
+<div class="item">
+    <div>${item.nama_produk}</div>
+
+    <div class="item-detail">
+        <span>${item.qty} x ${money(item.harga_satuan)}</span>
+        <span>${money(item.qty * item.harga_satuan)}</span>
+    </div>
+
+    ${
+        item.diskon_item && item.diskon_item > 0
+            ? `
+    <div class="item-detail" style="font-weight:bold">
+        <span>*Potongan Grosir (${item.product.min_qty_grosir} Pcs) :</span>
+        <span>-${money(item.diskon_item)}</span>
+    </div>`
+            : ""
     }
+</div>
+`).join("")}
 
-    lines.push(separator())
+<hr/>
 
-    // ── ITEMS ────────────────────────────────────────────────
-    sale.items.forEach((item: any) => {
-        lines.push(
-            itemLine(
-                Number(item.kuantitas),
-                item.nama_produk,
-                Number(item.harga_satuan),
-                Number(item.subtotal)
-            ).trimEnd()
-        )
-    })
+<div class="total-row">
+    <span>Subtotal:</span>
+    <span>${money(sale.subtotal ?? 0)}</span>
+</div>
 
-    lines.push(separator())
+${
+    (sale.diskon ?? 0) > 0
+        ? `
+<div class="total-row">
+    <span>Diskon:</span>
+    <span>- ${money(sale.diskon)}</span>
+</div>`
+        : ""
+}
 
-    // ── TOTALS ───────────────────────────────────────────────
-    lines.push(fmtTotal("Jumlah:", Number(sale.subtotal)).trimEnd())
-    lines.push(fmtTotal("Diskon:", Number(sale.diskon ?? 0)).trimEnd())
-    lines.push(fmtTotal("Pajak (PPN 11%):", Number(sale.pajak ?? 0)).trimEnd())
+${
+    (sale.diskon_grosir ?? 0) > 0
+        ? `
+<div class="total-row">
+    <span>Diskon Grosir:</span>
+    <span>- ${money(sale.diskon_grosir)}</span>
+</div>`
+        : ""
+}
 
-    if (isDebt) {
-        const cashAmount = sale.cash_amount ?? sale.cash_received ?? 0
-        const cardAmount = sale.card_amount ?? 0
+${
+    (sale.pajak ?? 0) > 0
+        ? `
+<div class="total-row">
+    <span>Pajak:</span>
+    <span>${money(sale.pajak)}</span>
+</div>`
+        : ""
+}
 
-        lines.push(fmtTotal("DP Tunai:", Number(cashAmount)).trimEnd())
+<div class="grand-total">
+    <span>TOTAL:</span>
+    <span>${money(sale.total ?? 0)}</span>
+</div>
 
-        if (cardAmount > 0) {
-            lines.push(fmtTotal("DP Transfer:", Number(cardAmount)).trimEnd())
+<hr/>
 
-            if (sale.nomor_kartu_akhir) {
-                lines.push(
-                    pad(
-                        `${sale.jenis_kartu ?? "Debit"} ****${sale.nomor_kartu_akhir}`,
-                        WIDTH
-                    )
-                )
-            }
-        }
+${
+isDebt
+? `
+<div class="total-row" style="font-weight:bold">
+    <span>DP Tunai:</span>
+    <span>${money(sale.cash_amount ?? sale.cash_received ?? 0)}</span>
+</div>
 
-        lines.push(fmtTotal("Kurang:", Number(sale.debt_amount ?? 0)).trimEnd())
-    } else {
-        lines.push(fmtTotal("Tunai:", Number(bayar)).trimEnd())
-        lines.push(fmtTotal("Kembali:", Number(kembali)).trimEnd())
-    }
+${
+hasCardDp
+? `
+<div class="total-row" style="font-weight:bold">
+    <span>DP Transfer:</span>
+    <span>${money(sale.card_amount)}</span>
+</div>
 
-    lines.push(separator())
+<div class="card-note">
+    <span>Kartu:</span>
+    <span style="text-transform:uppercase">${sale.jenis_kartu ?? "Debit"}</span>
+</div>
 
-    // ── FOOTER ───────────────────────────────────────────────
-    lines.push(center("Terima kasih"))
-    lines.push(center("Silahkan datang kembali"))
+<div class="card-note">
+    <span>No Kartu:</span>
+    <span>**** ${sale.nomor_kartu_akhir ?? "0000"}</span>
+</div>
+`
+: ""
+}
 
-    return "\n" + lines.join("\n")
+<div class="total-row" style="font-weight:bold">
+    <span>Hutang Baru:</span>
+    <span>${money(sale.debt_amount ?? 0)}</span>
+</div>
+`
+: sale.metode_pembayaran === "cash"
+? `
+<div class="total-row" style="font-weight:bold">
+    <span>Tunai:</span>
+    <span>${money(sale.nominal_bayar ?? 0)}</span>
+</div>
+
+<div class="total-row" style="font-weight:bold">
+    <span>Kembali:</span>
+    <span>${money(sale.kembalian ?? 0)}</span>
+</div>
+`
+: `
+<div class="total-row" style="font-weight:bold; text-transform:capitalize">
+    <span>Kartu ${sale.jenis_kartu ?? ""}:</span>
+    <span>**** ${sale.nomor_kartu_akhir ?? ""}</span>
+</div>
+`
+}
+
+<hr/>
+
+<div class="footer">
+    <div>Terima Kasih Atas Kunjungan Anda</div>
+    <div>Barang yang sudah dibeli</div>
+    <div>tidak dapat ditukar/dikembalikan</div>
+</div>
+
+</body>
+</html>
+`;
 }

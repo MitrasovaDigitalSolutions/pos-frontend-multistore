@@ -272,6 +272,8 @@ export function PaymentDialog({
                         nama_produk: item.name,
                         kuantitas: item.qty,
                         harga_satuan: item.price,
+                        harga_grosir: item.harga_grosir ?? null,
+                        min_qty_grosir: item.min_qty_grosir ?? null,
                     })),
                 };
 

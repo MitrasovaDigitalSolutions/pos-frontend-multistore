@@ -20,7 +20,6 @@ import axios from 'axios'
 import { useSettingsStore } from "@/stores/settings-store";
 import PrinterService from "@/services/printer.service";
 import { buildCashDepositText } from '@/utils/ReceiptCashierSession'
-import printerService from "@/services/printer.service";
 
 interface CloseShiftFormProps {
     sessionId: string;
