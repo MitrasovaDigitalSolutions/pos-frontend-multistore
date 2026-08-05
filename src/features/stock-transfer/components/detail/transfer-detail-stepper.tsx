@@ -14,11 +14,10 @@ export function TransferDetailStepper({ status }: TransferDetailStepperProps) {
   const stepIndex =
     status === TRANSFER_STATUS.DRAFT
       ? 1
-      : status === TRANSFER_STATUS.IN_TRANSIT
+      : status === TRANSFER_STATUS.SENT
       ? 2
-      : (status === TRANSFER_STATUS.PARTIALLY_RECEIVED || 
-         status === TRANSFER_STATUS.RETURN_PENDING || 
-         status === TRANSFER_STATUS.RECEIVED)
+      : (status === TRANSFER_STATUS.RETUR || 
+         status === TRANSFER_STATUS.FINISHED)
       ? 3
       : 0;
 
@@ -34,7 +33,7 @@ export function TransferDetailStepper({ status }: TransferDetailStepperProps) {
     );
   }
 
-  if (status === TRANSFER_STATUS.RETURN_PENDING) {
+  if (status === TRANSFER_STATUS.RETUR) {
     return (
       <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-amber-800 flex items-center gap-3">
         <IconCircleX size={20} className="text-amber-600 shrink-0" />
@@ -95,7 +94,7 @@ export function TransferDetailStepper({ status }: TransferDetailStepperProps) {
         <div
           className={`flex items-center gap-3 p-2.5 rounded-xl border ${
             stepIndex >= 3
-              ? status === TRANSFER_STATUS.RECEIVED 
+              ? status === TRANSFER_STATUS.FINISHED 
                 ? "bg-emerald-50/50 border-emerald-200 text-emerald-800"
                 : "bg-blue-50/50 border-blue-200 text-blue-800"
               : "bg-slate-50 border-slate-100 text-slate-400"
@@ -104,7 +103,7 @@ export function TransferDetailStepper({ status }: TransferDetailStepperProps) {
           <div
             className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${
               stepIndex >= 3 
-                ? status === TRANSFER_STATUS.RECEIVED 
+                ? status === TRANSFER_STATUS.FINISHED 
                   ? "bg-emerald-600 text-white" 
                   : "bg-blue-600 text-white"
                 : "bg-slate-200 text-slate-600"

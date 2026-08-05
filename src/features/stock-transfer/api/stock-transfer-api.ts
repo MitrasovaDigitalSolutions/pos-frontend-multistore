@@ -8,6 +8,7 @@ import type { StockTransfer } from "../types";
 export interface StockTransferQueryParams extends PaginationParams {
   direction?: "outgoing" | "incoming";
   status?: string;
+  status_penerimaan?: string;
 }
 
 export type StockTransferListMode = "outgoing" | "incoming" | "returns";

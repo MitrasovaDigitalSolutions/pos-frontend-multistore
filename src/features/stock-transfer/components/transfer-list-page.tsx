@@ -21,6 +21,7 @@ import { hasPermission, hasRole } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useActiveStoreStore } from "@/stores/active-store-store";
+import { useStores } from "@/features/stores/api/stores-api";
 import { useStockTransfersByMode, StockTransferListMode } from "../api/stock-transfer-api";
 import { TRANSFER_STATUS_LABELS } from "../constants";
 import type { StockTransfer } from "../types";
@@ -36,11 +37,18 @@ import { FormProvider, useForm } from "react-hook-form";
 const STATUS_OPTIONS = [
   { value: "all", label: "Semua Status" },
   { value: "draft", label: "Draft" },
-  { value: "in_transit", label: "Dalam Pengiriman" },
-  { value: "partially_received", label: "Diterima Sebagian" },
-  { value: "return_pending", label: "Menunggu Return" },
-  { value: "received", label: "Diterima" },
+  { value: "sent", label: "Dikirim" },
+  { value: "retur", label: "Menunggu Return" },
+  { value: "finished", label: "Selesai" },
   { value: "cancelled", label: "Dibatalkan" },
+];
+
+const STATUS_PENERIMAAN_OPTIONS = [
+  { value: "all", label: "Semua" },
+  { value: "pending", label: "Menunggu Diterima" },
+  { value: "partially_received", label: "Diterima Sebagian" },
+  { value: "received", label: "Diterima Penuh" },
+  { value: "rejected", label: "Ditolak" },
 ];
 
 export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
@@ -50,12 +58,21 @@ export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
 
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusPenerimaanFilter, setStatusPenerimaanFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string | undefined>("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("desc");
+
+  const [sourceFilter, setSourceFilter] = useState<string>("");
+  const [destFilter, setDestFilter] = useState<string>("");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
 
   const filterMethods = useForm({
     defaultValues: {
       status: "all",
+      status_penerimaan: "all",
+      sourceFilter: "",
+      destFilter: "",
     },
   });
 
@@ -64,13 +81,23 @@ export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
       page,
       per_page: 15,
       status: mode !== "returns" && statusFilter !== "all" ? statusFilter : undefined,
+      status_penerimaan: statusPenerimaanFilter !== "all" ? statusPenerimaanFilter : undefined,
+      source: sourceFilter || undefined,
+      destination: destFilter || undefined,
+      created_from: dateFrom || undefined,
+      created_to: dateTo || undefined,
       sort_by: sortBy,
       sort_order: sortOrder,
     }),
-    [page, statusFilter, sortBy, sortOrder, mode]
+    [page, statusFilter, statusPenerimaanFilter, sourceFilter, destFilter, dateFrom, dateTo, sortBy, sortOrder, mode]
   );
 
   const { data, isLoading, isFetching } = useStockTransfersByMode(mode, queryParams);
+  const { data: storesRes } = useStores({ per_page: 1000 });
+  const storeOptions = useMemo(() => {
+    const opts = storesRes?.data?.map((s) => ({ value: s.uid, label: s.nama })) || [];
+    return [{ value: "", label: "Semua Cabang" }, ...opts];
+  }, [storesRes]);
 
   const roles = session?.user?.roles || [];
   const permissions = session?.user?.permissions || [];
@@ -85,27 +112,27 @@ export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
   
   const getStats = () => {
     if (mode === "outgoing") {
-      const inTransitCount = transfers.filter((t) => t.status === "in_transit").length;
+      const sentCount = transfers.filter((t) => t.status === "sent").length;
       const draftCount = transfers.filter((t) => t.status === "draft").length;
-      const returnPendingCount = transfers.filter((t) => t.status === "return_pending").length;
+      const returCount = transfers.filter((t) => t.status === "retur").length;
       return [
         { label: "Total Transfer Keluar", value: totalCount, icon: IconArrowsLeftRight, color: "slate" },
         { label: "Draft", value: draftCount, icon: IconBuildingStore, color: "amber" },
-        { label: "Dalam Pengiriman", value: inTransitCount, icon: IconClock, color: "blue" },
-        { label: "Menunggu Return", value: returnPendingCount, icon: IconCheck, color: "emerald" }, // or whatever icon/color
+        { label: "Dikirim", value: sentCount, icon: IconClock, color: "blue" },
+        { label: "Menunggu Return", value: returCount, icon: IconCheck, color: "emerald" },
       ];
     } else if (mode === "incoming") {
-      const inTransitCount = transfers.filter((t) => t.status === "in_transit").length;
-      const partiallyReceivedCount = transfers.filter((t) => t.status === "partially_received").length;
-      const receivedCount = transfers.filter((t) => t.status === "received").length;
+      const sentCount = transfers.filter((t) => t.status === "sent").length;
+      const partiallyReceivedCount = transfers.filter((t) => t.status_penerimaan === "partially_received").length;
+      const finishedCount = transfers.filter((t) => t.status === "finished").length;
       return [
         { label: "Total Transfer Masuk", value: totalCount, icon: IconArrowsLeftRight, color: "slate" },
-        { label: "Dalam Pengiriman", value: inTransitCount, icon: IconClock, color: "blue" },
+        { label: "Dikirim", value: sentCount, icon: IconClock, color: "blue" },
         { label: "Diterima Sebagian", value: partiallyReceivedCount, icon: IconBuildingStore, color: "amber" },
-        { label: "Selesai / Diterima", value: receivedCount, icon: IconCheck, color: "emerald" },
+        { label: "Selesai", value: finishedCount, icon: IconCheck, color: "emerald" },
       ];
     } else { // returns
-      const rejectedCount = transfers.filter((t) => (t.items || []).some(i => i.status === 'rejected' || (i.kuantitas_diterima !== undefined && i.kuantitas_diterima !== null && i.kuantitas_diterima < i.kuantitas))).length;
+      const rejectedCount = transfers.filter((t) => t.status_penerimaan === "rejected" || t.status_penerimaan === "partially_received").length;
       return [
         { label: "Menunggu Validasi", value: totalCount, icon: IconArrowsLeftRight, color: "slate" },
         { label: "Ditolak / Selisih", value: rejectedCount, icon: IconClock, color: "amber" },
@@ -224,7 +251,16 @@ export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
         meta: { headerClassName: "text-center", cellClassName: "text-center" },
         cell: ({ row }) => {
           const st = row.original.status;
-          return <StatusBadge status={st} label={TRANSFER_STATUS_LABELS[st] || st} />;
+          return (
+            <div className="flex flex-col items-center gap-1">
+              <StatusBadge status={st} label={TRANSFER_STATUS_LABELS[st] || st} />
+              {row.original.status_penerimaan && (
+                <span className="text-[10px] text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
+                  {row.original.status_penerimaan.replace('_', ' ')}
+                </span>
+              )}
+            </div>
+          );
         },
       },
       {
@@ -322,25 +358,102 @@ export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
         {/* Main Table Card with Custom Filters */}
         <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4">
           {/* Filter Controls Bar */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-50 pb-4">
+          <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-end justify-between gap-4 border-b border-slate-50 pb-4">
             
-            {/* Status Dropdown */}
-            {mode !== "returns" && (
-              <div className="w-full sm:w-48 ml-auto">
-                <FormProvider {...filterMethods}>
+            <FormProvider {...filterMethods}>
+              <div className="flex flex-wrap gap-3 items-end w-full">
+                
+                {/* Date From */}
+                <div className="flex flex-col gap-1 min-w-[130px]">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Dari Tanggal</span>
+                  <input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => {
+                      setDateFrom(e.target.value);
+                      setPage(1);
+                    }}
+                    className="h-8 text-xs rounded-lg border border-slate-200 bg-white px-2"
+                  />
+                </div>
+
+                {/* Date To */}
+                <div className="flex flex-col gap-1 min-w-[130px]">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Sampai Tanggal</span>
+                  <input
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => {
+                      setDateTo(e.target.value);
+                      setPage(1);
+                    }}
+                    className="h-8 text-xs rounded-lg border border-slate-200 bg-white px-2"
+                  />
+                </div>
+
+                {/* Source Store */}
+                <div className="flex flex-col gap-1 min-w-[160px] max-w-[200px]">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Asal (Source)</span>
                   <FormSelect
-                    name="status"
-                    options={STATUS_OPTIONS}
-                    placeholder="Semua Status"
+                    name="sourceFilter"
+                    options={storeOptions}
+                    placeholder="Semua Cabang"
                     size="sm"
                     onChange={(val) => {
-                      setStatusFilter(val);
+                      setSourceFilter(val);
                       setPage(1);
                     }}
                   />
-                </FormProvider>
+                </div>
+
+                {/* Destination Store */}
+                <div className="flex flex-col gap-1 min-w-[160px] max-w-[200px]">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Tujuan (Destination)</span>
+                  <FormSelect
+                    name="destFilter"
+                    options={storeOptions}
+                    placeholder="Semua Cabang"
+                    size="sm"
+                    onChange={(val) => {
+                      setDestFilter(val);
+                      setPage(1);
+                    }}
+                  />
+                </div>
+
+                {/* Status Dropdown */}
+                {mode !== "returns" && (
+                  <div className="flex flex-col gap-1 min-w-[160px] ml-auto">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Status</span>
+                    <FormSelect
+                      name="status"
+                      options={STATUS_OPTIONS}
+                      placeholder="Semua Status"
+                      size="sm"
+                      onChange={(val) => {
+                        setStatusFilter(val);
+                        setPage(1);
+                      }}
+                    />
+                  </div>
+                )}
+                
+                {/* Status Penerimaan Dropdown */}
+                <div className="flex flex-col gap-1 min-w-[160px]">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Status Penerimaan</span>
+                  <FormSelect
+                    name="status_penerimaan"
+                    options={STATUS_PENERIMAAN_OPTIONS}
+                    placeholder="Semua"
+                    size="sm"
+                    onChange={(val) => {
+                      setStatusPenerimaanFilter(val);
+                      setPage(1);
+                    }}
+                  />
+                </div>
               </div>
-            )}
+            </FormProvider>
           </div>
 
           <DataTable

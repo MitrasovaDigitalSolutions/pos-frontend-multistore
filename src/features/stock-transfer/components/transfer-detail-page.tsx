@@ -107,10 +107,10 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
   const isDest = activeStoreUid === transfer.store_uid_destination;
 
   const canFinalize = transfer.status === TRANSFER_STATUS.DRAFT && isSource;
-  const canReceive = (transfer.status === TRANSFER_STATUS.IN_TRANSIT || transfer.status === TRANSFER_STATUS.PARTIALLY_RECEIVED) && isDest;
-  const canValidateReturn = transfer.status === TRANSFER_STATUS.RETURN_PENDING && isSource;
+  const canReceive = (transfer.status === TRANSFER_STATUS.SENT) && isDest;
+  const canValidateReturn = transfer.status === TRANSFER_STATUS.RETUR && isSource;
   const canCancel =
-    (transfer.status === TRANSFER_STATUS.DRAFT || transfer.status === TRANSFER_STATUS.IN_TRANSIT) &&
+    (transfer.status === TRANSFER_STATUS.DRAFT || transfer.status === TRANSFER_STATUS.SENT) &&
     isSource;
 
   // Detect discrepancies dynamically using reactive formItems from useWatch
