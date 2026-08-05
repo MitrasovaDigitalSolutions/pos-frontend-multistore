@@ -10,6 +10,21 @@ export interface StockTransferQueryParams extends PaginationParams {
   status?: string;
 }
 
+export type StockTransferListMode = "outgoing" | "incoming" | "returns";
+
+export function useStockTransfersByMode(mode: StockTransferListMode, params?: StockTransferQueryParams) {
+  const endpoint =
+    mode === "outgoing"
+      ? ENDPOINTS.INVENTORY.STOCK_TRANSFERS.OUTGOING
+      : mode === "incoming"
+        ? ENDPOINTS.INVENTORY.STOCK_TRANSFERS.INCOMING
+        : ENDPOINTS.INVENTORY.STOCK_TRANSFERS.RETURNS;
+  return useQuery({
+    queryKey: [...queryKeys.inventory.stockTransfers(), mode, params],
+    queryFn: () => apiGetList<StockTransfer>(endpoint, params),
+  });
+}
+
 export function useStockTransfers(params?: StockTransferQueryParams) {
   return useQuery({
     queryKey: [...queryKeys.inventory.stockTransfers(), params],

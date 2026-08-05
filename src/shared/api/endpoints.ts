@@ -41,13 +41,15 @@ export const ENDPOINTS = {
     INVENTORY: {
         STOCK_TRANSFERS: {
             LIST: "/v1/inventory/stock-transfers",
+            OUTGOING: "/v1/inventory/stock-transfers/outgoing",
+            INCOMING: "/v1/inventory/stock-transfers/incoming",
+            RETURNS: "/v1/inventory/stock-transfers/returns",
             DETAIL: (uid: string) => `/v1/inventory/stock-transfers/${uid}`,
             CREATE: "/v1/inventory/stock-transfers",
             FINALIZE: (uid: string) => `/v1/inventory/stock-transfers/${uid}/finalize`,
             RECEIVE_ITEM: (uid: string, itemUid: string) => `/v1/inventory/stock-transfers/${uid}/items/${itemUid}/receive`,
             RETURN_ITEM: (uid: string, itemUid: string) => `/v1/inventory/stock-transfers/${uid}/items/${itemUid}/return`,
             CANCEL: (uid: string) => `/v1/inventory/stock-transfers/${uid}/cancel`,
-            REVIEWED: (uid: string) => `/v1/inventory/stock-transfers/${uid}/reviewed`,
             PRINT_SURAT_JALAN: (uid: string) => `/v1/inventory/stock-transfers/${uid}/print-surat-jalan`,
         },
         MOVEMENTS: "/v1/inventory/movements",

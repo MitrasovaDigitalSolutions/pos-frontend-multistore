@@ -145,7 +145,16 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
     const formItem = currentValues.items?.find((i) => i.product_uid === item.product_uid);
     if (!formItem) return;
 
+    const qtyDiterima = Number(formItem.kuantitas_diterima);
+    const qtyKirim = Number(item.kuantitas);
+    const isParsial = qtyDiterima < qtyKirim;
+
     if (status === "rejected" && !formItem.jenis_selisih) {
+      toast.error("Pilih alasan selisih terlebih dahulu.");
+      return;
+    }
+
+    if (status === "received" && isParsial && !formItem.jenis_selisih) {
       toast.error("Pilih alasan selisih terlebih dahulu.");
       return;
     }
@@ -157,8 +166,8 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
       keterangan: formItem.keterangan?.trim() || undefined,
     };
     
-    if (status === "rejected") {
-      payload.jenis_selisih = formItem.jenis_selisih as "salah_input" | "rusak" | "hilang" | undefined;
+    if ((status === "rejected" || isParsial) && formItem.jenis_selisih) {
+      payload.jenis_selisih = formItem.jenis_selisih as "salah_input" | "rusak" | "hilang";
     }
 
     try {
