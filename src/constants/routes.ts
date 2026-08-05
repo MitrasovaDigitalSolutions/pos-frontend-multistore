@@ -45,6 +45,7 @@ export const ROUTES = {
     ADMIN_ACCOUNTING_JOURNALS: "/admin/accounting/journals",
     ADMIN_ACCOUNTING_GENERAL_LEDGER: "/admin/accounting/general-ledger",
     ADMIN_ACCOUNTING_UNBALANCED: "/admin/accounting/unbalanced",
+    ADMIN_ACCOUNTING_CATEGORY_MAPPING: "/admin/accounting/category-mapping",
 
     // Protected - POS
     CHECKOUT: "/checkout",

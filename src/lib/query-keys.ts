@@ -96,6 +96,13 @@ export const queryKeys = {
         all: ["categories"] as const,
     },
 
+    // Parent Categories (Accounting Category Mapping)
+    parentCategories: {
+        all: ["parent-categories"] as const,
+        list: (params?: unknown) => [...queryKeys.parentCategories.all, "list", params] as const,
+        detail: (uid: string) => [...queryKeys.parentCategories.all, "detail", uid] as const,
+    },
+
     // Brands
     brands: {
         all: ["brands"] as const,

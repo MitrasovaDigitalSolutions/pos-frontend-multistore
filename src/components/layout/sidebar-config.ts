@@ -352,6 +352,12 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasPermission(roles, permissions, "view_reports"),
                     },
                     {
+                        path: ROUTES.ADMIN_ACCOUNTING_CATEGORY_MAPPING,
+                        label: "Mapping Kategori",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                    },
+                    {
                         path: ROUTES.ADMIN_ACCOUNTING_JOURNALS,
                         label: "Jurnal Manual",
                         permission: (roles, permissions) =>

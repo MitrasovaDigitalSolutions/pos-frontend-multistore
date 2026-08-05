@@ -174,6 +174,16 @@ export const ENDPOINTS = {
         BALANCE_ENTRY: "/v1/reports/general-ledger/balance-entry",
     },
 
+    // Parent Categories (Accounting Category Mapping)
+    PARENT_CATEGORIES: {
+        LIST: "/v1/parent-categories",
+        DETAIL: (uid: string) => `/v1/parent-categories/${uid}`,
+        CREATE: "/v1/parent-categories",
+        UPDATE: (uid: string) => `/v1/parent-categories/${uid}`,
+        DELETE: (uid: string) => `/v1/parent-categories/${uid}`,
+        ASSIGN: (uid: string) => `/v1/parent-categories/${uid}/assign`,
+    },
+
     // Transactions (Checkout)
     TRANSACTIONS: {
         CREATE: "/v1/transactions",
