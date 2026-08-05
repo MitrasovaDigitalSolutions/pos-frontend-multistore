@@ -15,7 +15,8 @@ import {
     IconNotebook,
     IconBuildingBank,
     IconBuildingStore,
-    IconBuildingWarehouse
+    IconBuildingWarehouse,
+    IconArrowsLeftRight
 } from "@tabler/icons-react";
 
 export interface SidebarMenuItem {
@@ -148,6 +149,41 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
             },
             {
                 type: "submenu",
+                label: "Transfer Stok",
+                icon: IconArrowsLeftRight,
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") ||
+                    hasPermission(roles, permissions, "view_stock_transfers") ||
+                    hasPermission(roles, permissions, "manage_stock_transfers"),
+                items: [
+                    {
+                        path: ROUTES.ADMIN_STOCK_TRANSFERS_INCOMING,
+                        label: "Transfer Masuk",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_stock_transfers") ||
+                            hasPermission(roles, permissions, "manage_stock_transfers"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_STOCK_TRANSFERS,
+                        label: "Transfer Keluar",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_stock_transfers") ||
+                            hasPermission(roles, permissions, "manage_stock_transfers"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_STOCK_TRANSFERS_RETURNS,
+                        label: "Retur",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_stock_transfers") ||
+                            hasPermission(roles, permissions, "manage_stock_transfers"),
+                    },
+                ],
+            },
+            {
+                type: "submenu",
                 label: "Inventori",
                 icon: IconBox,
                 permission: (roles, permissions) =>
@@ -162,30 +198,6 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasRole(roles, "admin") ||
                             hasPermission(roles, permissions, "view_inventory") ||
                             hasPermission(roles, permissions, "manage_inventory"),
-                    },
-                    {
-                        path: ROUTES.ADMIN_STOCK_TRANSFERS,
-                        label: "Transfer Keluar",
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") ||
-                            hasPermission(roles, permissions, "view_stock_transfers") ||
-                            hasPermission(roles, permissions, "manage_stock_transfers"),
-                    },
-                    {
-                        path: ROUTES.ADMIN_STOCK_TRANSFERS_INCOMING,
-                        label: "Transfer Masuk",
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") ||
-                            hasPermission(roles, permissions, "view_stock_transfers") ||
-                            hasPermission(roles, permissions, "manage_stock_transfers"),
-                    },
-                    {
-                        path: ROUTES.ADMIN_STOCK_TRANSFERS_RETURNS,
-                        label: "Return Transfer",
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") ||
-                            hasPermission(roles, permissions, "view_stock_transfers") ||
-                            hasPermission(roles, permissions, "manage_stock_transfers"),
                     },
                     {
                         path: ROUTES.ADMIN_STOCK_LEDGER,

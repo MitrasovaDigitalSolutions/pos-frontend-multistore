@@ -22,6 +22,7 @@ import { NAVIGATION_CONFIG } from "./sidebar-config";
 import { SidebarLink } from "./sidebar-link";
 import { SidebarSubmenu } from "./sidebar-submenu";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ROUTES } from "@/constants/routes";
 
 export function AdminSidebar() {
     const pathname = usePathname();
@@ -89,15 +90,21 @@ export function AdminSidebar() {
         if (path === "/admin/expenses" && (pathname === "/admin/expenses/categories" || pathname.startsWith("/admin/expenses/categories/"))) {
             return false;
         }
+        // Prevent "/admin/inventory/stock-transfer" (Transfer Keluar) from matching when on Transfer Masuk or Retur routes
+        if (path === ROUTES.ADMIN_STOCK_TRANSFERS) {
+            if (
+                pathname === ROUTES.ADMIN_STOCK_TRANSFERS_INCOMING ||
+                pathname.startsWith(ROUTES.ADMIN_STOCK_TRANSFERS_INCOMING + "/") ||
+                pathname === ROUTES.ADMIN_STOCK_TRANSFERS_RETURNS ||
+                pathname.startsWith(ROUTES.ADMIN_STOCK_TRANSFERS_RETURNS + "/")
+            ) {
+                return false;
+            }
+        }
         // For all other routes, use prefix matching so nested routes
         // (e.g. /admin/purchase/order/4/items) highlight the parent menu item
         return pathname === path || pathname.startsWith(path + "/");
     };
-
-    // Helper to get active routes from config mapping
-    const ROUTES = {
-        ADMIN_STOCK: "/admin/inventory/stock-opname",
-    } as const;
 
     return (
         <TooltipProvider delayDuration={0}>

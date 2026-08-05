@@ -139,6 +139,8 @@ export function StatusBadge({
 
     case "completed":
     case "selesai":
+    case "finish":
+    case "finished":
     case "received":
     case "diterima":
     case "finalized":
@@ -217,9 +219,10 @@ export function StatusBadge({
     // 🟡 WARNING & PENDING & IN PROCESS & PARTIAL STATES
     case "pending":
     case "menunggu":
-      resolvedVariant = "warning";
-      if (!label) resolvedLabel = "Menunggu";
-      dotColor = "bg-amber-500";
+    case "menunggu_diterima":
+      resolvedVariant = "secondary";
+      if (!label) resolvedLabel = "Pending";
+      dotColor = "bg-slate-400";
       if (pulse === undefined) shouldPulse = true;
       break;
 
@@ -234,8 +237,9 @@ export function StatusBadge({
       break;
 
     case "draft":
+    case "retur":
       resolvedVariant = "warning";
-      if (!label) resolvedLabel = "Draft";
+      if (!label) resolvedLabel = normalized === "retur" ? "Retur" : "Draft";
       dotColor = "bg-amber-500";
       break;
 
