@@ -8,6 +8,7 @@ import {
   IconClock,
   IconTruckDelivery
 } from "@tabler/icons-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { StockTransfer } from "../../types";
 import type { StockTransferListMode } from "../../api/stock-transfer-api";
 
@@ -15,6 +16,7 @@ interface TransferListStatCardsProps {
   mode: StockTransferListMode;
   transfers: StockTransfer[];
   totalCount: number;
+  isLoading?: boolean;
 }
 
 const STAT_COLOR_MAP: Record<string, { bg: string; border: string; iconBg: string; iconBorder: string; iconText: string; labelText: string; valText: string }> = {
@@ -56,7 +58,23 @@ const STAT_COLOR_MAP: Record<string, { bg: string; border: string; iconBg: strin
   },
 };
 
-export function TransferListStatCards({ mode, transfers, totalCount }: TransferListStatCardsProps) {
+export function TransferListStatCards({ mode, transfers, totalCount, isLoading }: TransferListStatCardsProps) {
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, idx) => (
+          <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-2xs flex items-center gap-3">
+            <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
+            <div className="space-y-1.5 flex-1">
+              <Skeleton className="h-2.5 w-24 rounded-md" />
+              <Skeleton className="h-5 w-12 rounded-md" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   const getStats = () => {
     if (mode === "outgoing") {
       const sentCount = transfers.filter((t) => t.status === "sent").length;

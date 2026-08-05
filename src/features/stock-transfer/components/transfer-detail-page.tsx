@@ -72,9 +72,79 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-4 max-w-6xl mx-auto">
-        <Skeleton className="h-10 w-64 rounded-xl" />
-        <Skeleton className="h-64 w-full rounded-2xl" />
+      <div className="space-y-6 max-w-6xl mx-auto animate-pulse">
+        {/* Header Bar Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-9 w-9 rounded-xl" />
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-6 w-48 rounded-lg" />
+                <Skeleton className="h-5 w-20 rounded-md" />
+              </div>
+              <Skeleton className="h-3 w-64 rounded-md" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-9 w-32 rounded-xl" />
+            <Skeleton className="h-9 w-36 rounded-xl" />
+          </div>
+        </div>
+
+        {/* Stepper Bar Skeleton */}
+        <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-2xs">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                <Skeleton className="w-7 h-7 rounded-lg shrink-0" />
+                <div className="space-y-1.5 flex-1">
+                  <Skeleton className="h-2.5 w-16 rounded-md" />
+                  <Skeleton className="h-2 w-10 rounded-md" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Main Grid Content Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left Column: Product Table Skeleton */}
+          <div className="lg:col-span-8 bg-white border border-slate-100 rounded-2xl shadow-2xs p-6 space-y-4">
+            <div className="flex justify-between items-center pb-3 border-b border-slate-50">
+              <Skeleton className="h-5 w-44 rounded-lg" />
+              <Skeleton className="h-6 w-24 rounded-full" />
+            </div>
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex items-center justify-between py-2 border-b border-slate-50">
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-3.5 w-40 rounded-md" />
+                    <Skeleton className="h-2.5 w-24 rounded-md" />
+                  </div>
+                  <Skeleton className="h-7 w-16 rounded-lg" />
+                  <Skeleton className="h-8 w-24 rounded-xl" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Column: Metadata Cards Skeleton */}
+          <div className="lg:col-span-4 space-y-4">
+            <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-2xs space-y-4">
+              <Skeleton className="h-4 w-32 rounded-md" />
+              <div className="space-y-3 pt-2">
+                <div className="p-3 bg-slate-50 rounded-xl space-y-2">
+                  <Skeleton className="h-2.5 w-20 rounded-md" />
+                  <Skeleton className="h-4 w-36 rounded-md" />
+                </div>
+                <div className="p-3 bg-slate-50 rounded-xl space-y-2">
+                  <Skeleton className="h-2.5 w-20 rounded-md" />
+                  <Skeleton className="h-4 w-36 rounded-md" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

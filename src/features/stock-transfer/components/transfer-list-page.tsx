@@ -135,7 +135,7 @@ export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
       <div className="space-y-6">
         <TransferListHeader mode={mode} canManage={canManage} />
 
-        <TransferListStatCards mode={mode} transfers={transfers} totalCount={totalCount} />
+        <TransferListStatCards mode={mode} transfers={transfers} totalCount={totalCount} isLoading={isLoading} />
 
         <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4">
           <TransferListFilters

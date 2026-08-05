@@ -1,11 +1,11 @@
 "use client";
 
-import { IconLoader2 } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import type { CommandOption } from "@/components/ui/command-select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ROUTES } from "@/constants/routes";
 import type { Product } from "@/features/master/products/types";
 import { useStores } from "@/features/stores/api/stores-api";
@@ -84,9 +84,45 @@ export function TransferCreatePage({ editUid }: TransferCreatePageProps) {
 
   if (!mounted || status === "loading" || (editUid && detailLoading)) {
     return (
-      <div className="p-12 flex flex-col items-center justify-center min-h-[380px] space-y-3 bg-white rounded-2xl border border-slate-100 shadow-sm max-w-2xl mx-auto my-6">
-        <IconLoader2 size={32} className="animate-spin text-emerald-600" />
-        <p className="text-xs text-slate-400 font-medium">Memuat lokasi toko...</p>
+      <div className="space-y-6 max-w-5xl mx-auto animate-pulse">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between p-5 bg-white rounded-2xl border border-slate-100 shadow-2xs">
+          <div className="flex items-center gap-3.5">
+            <Skeleton className="h-9 w-9 rounded-xl" />
+            <div className="space-y-1.5">
+              <Skeleton className="h-5 w-48 rounded-lg" />
+              <Skeleton className="h-3 w-64 rounded-md" />
+            </div>
+          </div>
+        </div>
+
+        {/* Form Body Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="lg:col-span-8 space-y-6">
+            {/* Route Card Skeleton */}
+            <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-2xs space-y-4">
+              <Skeleton className="h-4 w-36 rounded-md" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Skeleton className="h-16 w-full rounded-xl" />
+                <Skeleton className="h-16 w-full rounded-xl" />
+              </div>
+            </div>
+
+            {/* Items Section Skeleton */}
+            <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-2xs space-y-4">
+              <Skeleton className="h-4 w-40 rounded-md" />
+              <Skeleton className="h-10 w-full rounded-xl" />
+              <Skeleton className="h-32 w-full rounded-xl" />
+            </div>
+          </div>
+
+          {/* Summary Card Skeleton */}
+          <div className="lg:col-span-4 bg-white border border-slate-100 rounded-2xl p-6 shadow-2xs space-y-4">
+            <Skeleton className="h-5 w-32 rounded-md" />
+            <Skeleton className="h-20 w-full rounded-xl" />
+            <Skeleton className="h-10 w-full rounded-xl" />
+          </div>
+        </div>
       </div>
     );
   }
