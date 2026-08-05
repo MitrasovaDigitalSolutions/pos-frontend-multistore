@@ -8,6 +8,7 @@ import {
   IconCircleX,
   IconTruckDelivery,
   IconPrinter,
+  IconEdit,
 } from "@tabler/icons-react";
 import { ROUTES } from "@/constants/routes";
 import { useAppRouter } from "@/hooks/use-app-router";
@@ -23,17 +24,17 @@ interface TransferDetailHeaderProps {
   onFinalize: () => void;
   onCancelClick: () => void;
   onPrint?: () => void;
+  onEdit?: () => void;
 }
 
 export function TransferDetailHeader({
   transfer,
   canFinalize,
-  canReceive,
   canCancel,
-  hasDiscrepancies = false,
   onFinalize,
   onCancelClick,
   onPrint,
+  onEdit,
 }: TransferDetailHeaderProps) {
   const router = useAppRouter();
 
@@ -72,6 +73,16 @@ export function TransferDetailHeader({
             className="border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer bg-white"
           >
             <IconPrinter size={16} /> Cetak Surat Jalan
+          </Button>
+        )}
+        {onEdit && transfer.status === "draft" && (
+          <Button
+            type="button"
+            onClick={onEdit}
+            variant="outline"
+            className="border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer bg-white"
+          >
+            <IconEdit size={16} /> Edit Draft
           </Button>
         )}
         {canFinalize && (

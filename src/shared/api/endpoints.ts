@@ -46,6 +46,7 @@ export const ENDPOINTS = {
             RETURNS: "/v1/inventory/stock-transfers/returns",
             DETAIL: (uid: string) => `/v1/inventory/stock-transfers/${uid}`,
             CREATE: "/v1/inventory/stock-transfers",
+            UPDATE: (uid: string) => `/v1/inventory/stock-transfers/${uid}`,
             FINALIZE: (uid: string) => `/v1/inventory/stock-transfers/${uid}/finalize`,
             RECEIVE_ITEM: (uid: string, itemUid: string) => `/v1/inventory/stock-transfers/${uid}/items/${itemUid}/receive`,
             RETURN_ITEM: (uid: string, itemUid: string) => `/v1/inventory/stock-transfers/${uid}/items/${itemUid}/return`,
