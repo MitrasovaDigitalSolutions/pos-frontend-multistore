@@ -68,6 +68,10 @@ export function buildReceipt58(data: ReceiptData): string {
     box-sizing:border-box;
 }
 
+@page {
+    size : 48mm auto;
+}
+
 body{
     width:48mm;
     margin:0;

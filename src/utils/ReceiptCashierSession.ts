@@ -51,7 +51,6 @@ export function buildCashDepositText(
 
 @page{
     size:48mm auto;
-    margin:0mm;
 }
 
 body{
@@ -74,6 +73,8 @@ body{
     display:flex;
     justify-content:space-between;
     gap:8px;
+    margin-left:5px;
+    margin-right:5px;
 }
 
 .section{
@@ -103,6 +104,7 @@ hr{
 .store{
     text-align:center;
     margin-bottom:8px;
+    margin-top:10px;
 }
 
 .footer{
