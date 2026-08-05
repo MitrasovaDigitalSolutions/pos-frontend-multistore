@@ -9,6 +9,7 @@ import { useActiveStoreStore } from "@/stores/active-store-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { FormSelect } from "@/components/forms/form-select";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/query-keys";
 
 export function StoreSwitcher() {
     const { data: session } = useSession();
@@ -44,7 +45,16 @@ export function StoreSwitcher() {
                 const toastId = toast.loading(`Sedang berpindah ke ${newStore.nama}...`);
                 setActiveStore(uid);
                 Promise.all([
-                    queryClient.invalidateQueries(),
+                    queryClient.invalidateQueries({
+                        predicate: (query) =>
+                            !(
+                                [
+                                    queryKeys.stores.all[0],
+                                    queryKeys.categories.all[0],
+                                    queryKeys.brands.all[0],
+                                ] as string[]
+                            ).includes(query.queryKey[0] as string),
+                    }),
                     useSettingsStore.getState().fetchSettings(),
                 ]).then(() => {
                     toast.success(`Berhasil berpindah ke ${newStore.nama}`, {

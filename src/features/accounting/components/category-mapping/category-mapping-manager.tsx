@@ -68,18 +68,8 @@ export function CategoryMappingManager() {
             });
         }
 
-        if (parentCategories) {
-            parentCategories.forEach((p) => {
-                if (p.categories) {
-                    p.categories.forEach((cat) => {
-                        map[cat.uid] = p.uid;
-                    });
-                }
-            });
-        }
-
         return { ...map, ...overrides };
-    }, [categories, parentCategories, overrides]);
+    }, [categories, overrides]);
 
     // DnD Sensors with distance threshold to allow clicking buttons without starting drag
     const sensors = useSensors(
