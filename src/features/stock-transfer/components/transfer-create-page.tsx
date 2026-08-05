@@ -9,20 +9,25 @@ import { ROUTES } from "@/constants/routes";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useActiveStoreStore } from "@/stores/active-store-store";
 import { useStores } from "@/features/stores/api/stores-api";
-import { useCreateStockTransfer } from "../api/stock-transfer-api";
+import { useCreateStockTransfer, useStockTransferDetail, useUpdateStockTransfer } from "../api/stock-transfer-api";
 import type { CommandOption } from "@/components/ui/command-select";
 import type { Product } from "@/features/master/products/types";
+import type { ApiResponse } from "@/types/api";
+import type { StockTransfer } from "../types";
 
 import { TransferCreateHeader } from "./create/transfer-create-header";
 import { TransferRouteCard } from "./create/transfer-route-card";
 import { TransferItemsSection, type TransferItem } from "./create/transfer-items-section";
 import { TransferSummaryCard } from "./create/transfer-summary-card";
 
-export function TransferCreatePage() {
+export function TransferCreatePage({ editUid }: { editUid?: string } = {}) {
   const router = useAppRouter();
   const { data: session, status } = useSession();
   const activeStoreUid = useActiveStoreStore((state) => state.activeStoreUid);
   const activeStore = session?.user?.stores?.find((s) => s.uid === activeStoreUid);
+
+  const { data: draft, isLoading: isLoadingDraft } = useStockTransferDetail(editUid ?? "");
+  const updateMutation = useUpdateStockTransfer();
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -43,7 +48,24 @@ export function TransferCreatePage() {
   const [items, setItems] = useState<TransferItem[]>([]);
   const createMutation = useCreateStockTransfer();
 
-  if (!mounted || status === "loading") {
+  // Prefill form saat mengedit draft
+  const [prefilled, setPrefilled] = useState(false);
+  useEffect(() => {
+    if (!editUid || !draft || prefilled) return;
+    setDestinationUid(draft.store_uid_destination);
+    setCatatan(draft.catatan ?? "");
+    setItems(
+      draft.items.map((i) => ({
+        product_uid: i.product_uid,
+        nama: i.product?.nama ?? "",
+        barcode: i.product?.barcode ?? null,
+        kuantitas: i.kuantitas,
+      }))
+    );
+    setPrefilled(true);
+  }, [editUid, draft, prefilled]);
+
+  if (!mounted || status === "loading" || (!!editUid && isLoadingDraft)) {
     return (
       <div className="p-12 flex flex-col items-center justify-center min-h-[380px] space-y-3 bg-white rounded-2xl border border-slate-100 shadow-sm max-w-2xl mx-auto my-6">
         <IconLoader2 size={32} className="animate-spin text-emerald-600" />
@@ -89,25 +111,28 @@ export function TransferCreatePage() {
     if (items.length === 0) return toast.error("Minimal tambahkan 1 barang ke dalam daftar transfer");
     if (items.some((i) => i.kuantitas <= 0)) return toast.error("Kuantitas pengiriman harus lebih dari 0");
 
-    createMutation.mutate(
-      {
-        store_uid_destination: destinationUid,
-        catatan: catatan || undefined,
-        items: items.map((i) => ({ product_uid: i.product_uid, kuantitas: i.kuantitas })),
-      },
-      {
-        onSuccess: (res) => {
-          toast.success("Draft transfer stok berhasil disimpan!");
-          router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/${res.data.uid}`);
-        },
-        onError: (err) => toast.error(err.message || "Gagal membuat transfer stok"),
-      }
-    );
+    const payload = {
+      store_uid_destination: destinationUid,
+      catatan: catatan || undefined,
+      items: items.map((i) => ({ product_uid: i.product_uid, kuantitas: i.kuantitas })),
+    };
+    const onSuccess = (res: ApiResponse<StockTransfer>) => {
+      toast.success(editUid ? "Draft transfer stok berhasil diperbarui!" : "Draft transfer stok berhasil disimpan!");
+      router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/${res.data.uid}`);
+    };
+    const onError = (err: Error) =>
+      toast.error(err.message || (editUid ? "Gagal memperbarui transfer stok" : "Gagal membuat transfer stok"));
+
+    if (editUid) {
+      updateMutation.mutate({ uid: editUid, payload }, { onSuccess, onError });
+    } else {
+      createMutation.mutate(payload, { onSuccess, onError });
+    }
   };
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      <TransferCreateHeader />
+      <TransferCreateHeader isEdit={!!editUid} />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <div className="lg:col-span-8 space-y-6">
@@ -136,7 +161,7 @@ export function TransferCreatePage() {
             totalJenis={totalJenis}
             totalQty={totalQty}
             onSubmit={handleSubmit}
-            isPending={createMutation.isPending}
+            isPending={editUid ? updateMutation.isPending : createMutation.isPending}
             canSubmit={items.length > 0 && !!destinationUid}
           />
         </div>
