@@ -1,6 +1,7 @@
 export interface ExpenseCategory {
     uid: string;
     nama: string;
+    chart_of_account_uid?: string | null;
     keterangan?: string | null;
     is_recurring?: boolean;
     hari_jatuh_tempo?: number | null;
