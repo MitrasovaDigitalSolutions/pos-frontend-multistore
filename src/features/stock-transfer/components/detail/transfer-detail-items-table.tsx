@@ -109,7 +109,7 @@ function ReceivingItemRowControls({
           )}
         </div>
       </div>
-      {status === "rejected" && (
+      {(status === "rejected" || isDifferent) && (
          <FormSelect<ReceiveFormValues>
            name={`items.${index}.jenis_selisih`}
            options={[

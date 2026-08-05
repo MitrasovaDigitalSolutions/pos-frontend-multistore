@@ -19,6 +19,7 @@ export function ExpenseCategories() {
         resolver: zodResolver(expenseCategorySchema) as Resolver<ExpenseCategoryInput>,
         defaultValues: {
             nama: "",
+            chart_of_account_uid: "",
             keterangan: "",
             is_recurring: false,
             hari_jatuh_tempo: null,
@@ -29,6 +30,7 @@ export function ExpenseCategories() {
         setEditingCategory(category);
         dialogMethods.reset({
             nama: category.nama,
+            chart_of_account_uid: category.chart_of_account_uid || "",
             keterangan: category.keterangan || "",
             is_recurring: !!category.is_recurring,
             hari_jatuh_tempo: category.hari_jatuh_tempo ? Number(category.hari_jatuh_tempo) : null,
@@ -40,6 +42,7 @@ export function ExpenseCategories() {
         setEditingCategory(null);
         dialogMethods.reset({
             nama: "",
+            chart_of_account_uid: "",
             keterangan: "",
             is_recurring: false,
             hari_jatuh_tempo: null,

@@ -64,7 +64,7 @@ export function TransferDetailHeader({
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-2">
-        {onPrint && (transfer.status === "draft" || transfer.status === "in_transit") && (
+        {onPrint && (transfer.status === "draft" || transfer.status === "sent") && (
           <Button
             type="button"
             onClick={onPrint}

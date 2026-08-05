@@ -3,7 +3,8 @@ export interface StockTransfer {
   store_uid_source: string;
   store_uid_destination: string;
   nomor_transfer: string;
-  status: "draft" | "in_transit" | "partially_received" | "return_pending" | "received" | "cancelled";
+  status: "draft" | "sent" | "retur" | "finished" | "cancelled";
+  status_penerimaan?: "pending" | "partially_received" | "received" | "rejected" | null;
   user_uid_source: string | null;
   user_uid_destination: string | null;
   catatan: string | null;

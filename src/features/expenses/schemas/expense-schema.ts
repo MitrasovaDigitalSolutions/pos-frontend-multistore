@@ -5,6 +5,11 @@ export const expenseCategorySchema = z.object({
         .string()
         .min(1, "Nama kategori wajib diisi")
         .max(255, "Nama kategori maksimal 255 karakter"),
+    chart_of_account_uid: z
+        .string()
+        .optional()
+        .or(z.literal(""))
+        .transform((val) => val || null),
     keterangan: z
         .string()
         .optional()
