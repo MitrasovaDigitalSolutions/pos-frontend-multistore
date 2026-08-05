@@ -1,118 +1,118 @@
 "use client";
 
+import { useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { IconAlertTriangle } from "@tabler/icons-react";
-import { FormNumberInput } from "@/components/forms/form-number-input";
-import { FormSelect } from "@/components/forms/form-select";
+import { IconCheck, IconX } from "@tabler/icons-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { StockTransferItem } from "../../types";
 import type { ReceiveFormValues } from "./types";
+import { ReceivingConfirmDialog } from "./receiving-confirm-dialog";
 
 interface ReceivingItemRowControlsProps {
   index: number;
   item: StockTransferItem;
-  onReceiveItem?: (item: StockTransferItem, status: "received" | "rejected") => void;
+  onReceiveItemSubmit?: (
+    item: StockTransferItem,
+    payload: {
+      status: "received" | "rejected";
+      kuantitas_diterima: number;
+      jenis_selisih?: "salah_input" | "rusak" | "hilang";
+      keterangan?: string;
+    }
+  ) => Promise<void>;
   isProcessing: boolean;
 }
 
 export function ReceivingItemRowControls({
   index,
   item,
-  onReceiveItem,
+  onReceiveItemSubmit,
   isProcessing,
 }: ReceivingItemRowControlsProps) {
-  const { watch, setValue } = useFormContext<ReceiveFormValues>();
+  const { watch } = useFormContext<ReceiveFormValues>();
   const currentQty = watch(`items.${index}.kuantitas_diterima`);
-  const status = watch(`items.${index}.status`) || "received";
-  const isDifferent =
-    currentQty !== undefined &&
-    currentQty !== null &&
-    Number(currentQty) !== Number(item.kuantitas);
+  const currentKeterangan = watch(`items.${index}.keterangan`);
+
+  const qtyDiterima = currentQty !== undefined && currentQty !== null ? Number(currentQty) : item.kuantitas;
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<"received" | "rejected">("received");
+
+  const handleOpenTerima = () => {
+    setDialogMode("received");
+    setDialogOpen(true);
+  };
+
+  const handleOpenTolak = () => {
+    setDialogMode("rejected");
+    setDialogOpen(true);
+  };
+
+  const handleConfirmSubmit = async (payload: {
+    status: "received" | "rejected";
+    kuantitas_diterima: number;
+    jenis_selisih?: "salah_input" | "rusak" | "hilang";
+    keterangan?: string;
+  }) => {
+    if (onReceiveItemSubmit) {
+      await onReceiveItemSubmit(item, payload);
+    }
+  };
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-2">
-        <div className="flex items-center justify-center gap-1.5">
-          <FormNumberInput<ReceiveFormValues>
-            name={`items.${index}.kuantitas_diterima`}
-            min={0}
-            disabled={isProcessing}
-            className={`h-8 w-24 text-xs text-center font-extrabold ${
-              isDifferent
-                ? "border-amber-400 bg-amber-50 text-amber-900 focus-visible:ring-amber-500"
-                : "bg-white border-slate-200"
-            }`}
-          />
-          {isDifferent && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="text-amber-500 shrink-0 cursor-pointer">
-                    <IconAlertTriangle size={15} />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Jumlah diterima berbeda dari jumlah dikirim</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </div>
-        <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
-          <button
-            type="button"
-            onClick={() => {
-              setValue(`items.${index}.status`, "received");
-              setValue(`items.${index}.jenis_selisih`, null);
-              if (onReceiveItem) onReceiveItem(item, "received");
-            }}
-            disabled={isProcessing}
-            className={`text-[10px] font-bold px-2 py-1 rounded-md transition-colors ${
-              status === "received"
-                ? "bg-white text-emerald-700 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
-            } ${isProcessing ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-          >
-            {isProcessing && status === "received" ? "Memproses..." : "Terima"}
-          </button>
-          {status !== "rejected" ? (
-            <button
-              type="button"
-              onClick={() => setValue(`items.${index}.status`, "rejected")}
-              disabled={isProcessing}
-              className={`text-[10px] font-bold px-2 py-1 rounded-md transition-colors text-slate-500 hover:text-slate-700 ${
-                isProcessing ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-              }`}
-            >
-              Tolak
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                if (onReceiveItem) onReceiveItem(item, "rejected");
-              }}
-              disabled={isProcessing || !watch(`items.${index}.jenis_selisih`)}
-              className={`text-[10px] font-bold px-2 py-1 rounded-md transition-colors bg-white text-rose-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer`}
-            >
-              {isProcessing ? "Memproses..." : "Konfirmasi Tolak"}
-            </button>
-          )}
-        </div>
+    <>
+      <div className="flex items-center justify-center gap-1.5">
+        {/* Button Terima */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={handleOpenTerima}
+                disabled={isProcessing}
+                className="h-8 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+              >
+                <IconCheck size={14} />
+                <span>Terima</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              <p>Konfirmasi penerimaan produk ini</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
+        {/* Button Tolak */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={handleOpenTolak}
+                disabled={isProcessing}
+                className="h-8 px-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold flex items-center gap-1 transition-all cursor-pointer disabled:opacity-50"
+              >
+                <IconX size={14} />
+                <span>Tolak</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              <p>Tolak produk ini</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
-      {(status === "rejected" || isDifferent) && (
-        <FormSelect<ReceiveFormValues>
-          name={`items.${index}.jenis_selisih`}
-          options={[
-            { label: "Pilih Alasan", value: "" },
-            { label: "Salah Input", value: "salah_input" },
-            { label: "Rusak", value: "rusak" },
-            { label: "Hilang", value: "hilang" },
-          ]}
-          disabled={isProcessing}
-          className="h-7 text-[10px] border-rose-300 bg-rose-50 text-rose-900"
-        />
-      )}
-    </div>
+
+      <ReceivingConfirmDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        item={item}
+        mode={dialogMode}
+        qtyDiterima={qtyDiterima}
+        keterangan={currentKeterangan}
+        onConfirm={handleConfirmSubmit}
+        isLoading={isProcessing}
+      />
+    </>
   );
 }

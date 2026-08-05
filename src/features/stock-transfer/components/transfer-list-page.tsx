@@ -172,7 +172,7 @@ export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
                     type="button"
                     variant="ghost"
                     size="icon-xs"
-                    onClick={() => router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/${item.uid}`)}
+                    onClick={() => router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/${item.uid}?from=${mode}`)}
                     className="text-slate-600 hover:text-emerald-600 hover:bg-emerald-50"
                   >
                     <IconInfoCircle size={16} />

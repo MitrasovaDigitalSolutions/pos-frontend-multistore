@@ -15,6 +15,7 @@ import {
 import { NAVIGATION_CONFIG } from "./sidebar-config";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { formatToReadableDate } from "@/lib/date-utils";
+import { ROUTES } from "@/constants/routes";
 import { StoreSwitcher } from "./store-switcher";
 
 export function AdminHeader() {
@@ -30,6 +31,19 @@ export function AdminHeader() {
   const currentTab = searchParams.get("tab") || "inventory";
 
   const getTitle = () => {
+    const fromParam = searchParams.get("from");
+
+    if (pathname.startsWith(ROUTES.ADMIN_STOCK_TRANSFERS)) {
+      if (pathname === ROUTES.ADMIN_STOCK_TRANSFERS_INCOMING || fromParam === "incoming") {
+        return "Transfer Masuk";
+      }
+      if (pathname === ROUTES.ADMIN_STOCK_TRANSFERS_RETURNS || fromParam === "returns") {
+        return "Retur Transfer";
+      }
+      if (pathname === ROUTES.ADMIN_STOCK_TRANSFERS || fromParam === "outgoing") {
+        return "Transfer Keluar";
+      }
+    }
     // Search NAVIGATION_CONFIG for matching route
     // First pass: try exact match
     for (const section of NAVIGATION_CONFIG) {

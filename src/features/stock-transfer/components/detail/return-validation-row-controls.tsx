@@ -1,29 +1,34 @@
 "use client";
 
 import { useState } from "react";
+import { IconCheck } from "@tabler/icons-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { StockTransferItem } from "../../types";
 
 interface ReturnValidationRowControlsProps {
   item: StockTransferItem;
+  returnQty: number;
   onValidateReturnItem?: (item: StockTransferItem, kuantitasReturn: number) => void;
   isProcessing: boolean;
 }
 
 export function ReturnValidationRowControls({
   item,
+  returnQty,
   onValidateReturnItem,
   isProcessing,
 }: ReturnValidationRowControlsProps) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   const diff = Number(item.kuantitas) - Number(item.kuantitas_diterima || 0);
-  const [returnQty, setReturnQty] = useState<number | string>(diff);
 
   if (item.return_validated_at) {
     return (
-      <div className="flex flex-col gap-1 items-start">
-        <span className="inline-block px-2 py-0.5 rounded-md text-xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+      <div className="flex flex-col items-center gap-0.5">
+        <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
           Sudah Divalidasi
         </span>
-        <span className="text-xs text-slate-600 font-bold">
+        <span className="text-[10px] text-slate-500 font-bold">
           Return: {item.kuantitas_return ?? 0} pcs
         </span>
       </div>
@@ -32,34 +37,42 @@ export function ReturnValidationRowControls({
 
   if (diff <= 0) {
     return (
-      <span className="inline-block px-2 py-0.5 rounded-md text-xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+      <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
         Diterima Penuh
       </span>
     );
   }
 
+  const handleConfirm = () => {
+    if (onValidateReturnItem) {
+      onValidateReturnItem(item, returnQty);
+    }
+    setConfirmOpen(false);
+  };
+
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-2">
-        <input
-          type="number"
-          min={0}
-          value={returnQty}
-          onChange={(e) => setReturnQty(e.target.value)}
-          disabled={isProcessing}
-          className="h-8 w-24 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-center font-extrabold outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
-        />
-        <button
-          type="button"
-          onClick={() => {
-            if (onValidateReturnItem) onValidateReturnItem(item, Number(returnQty));
-          }}
-          disabled={isProcessing}
-          className="h-8 rounded-md bg-emerald-600 px-3 text-xs font-bold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isProcessing ? "Memproses..." : "Validasi Return"}
-        </button>
-      </div>
-    </div>
+    <>
+      <button
+        type="button"
+        onClick={() => setConfirmOpen(true)}
+        disabled={isProcessing}
+        className="h-8 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+      >
+        <IconCheck size={14} />
+        <span>{isProcessing ? "..." : "Validasi Return"}</span>
+      </button>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Konfirmasi Validasi Return"
+        description={`Apakah Anda yakin ingin memvalidasi pengembalian produk "${item.product?.nama || "item"}" sebanyak ${returnQty} pcs ke dalam stok toko?`}
+        confirmText="Ya, Validasi Return"
+        cancelText="Batal"
+        variant="success"
+        onConfirm={handleConfirm}
+        isLoading={isProcessing}
+      />
+    </>
   );
 }

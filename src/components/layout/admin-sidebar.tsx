@@ -90,13 +90,33 @@ export function AdminSidebar() {
         if (path === "/admin/expenses" && (pathname === "/admin/expenses/categories" || pathname.startsWith("/admin/expenses/categories/"))) {
             return false;
         }
+        const fromParam = searchParams.get("from");
+
+        if (path === ROUTES.ADMIN_STOCK_TRANSFERS_INCOMING) {
+            return (
+                pathname === path ||
+                pathname.startsWith(path + "/") ||
+                (pathname.startsWith(ROUTES.ADMIN_STOCK_TRANSFERS) && fromParam === "incoming")
+            );
+        }
+
+        if (path === ROUTES.ADMIN_STOCK_TRANSFERS_RETURNS) {
+            return (
+                pathname === path ||
+                pathname.startsWith(path + "/") ||
+                (pathname.startsWith(ROUTES.ADMIN_STOCK_TRANSFERS) && fromParam === "returns")
+            );
+        }
+
         // Prevent "/admin/inventory/stock-transfer" (Transfer Keluar) from matching when on Transfer Masuk or Retur routes
         if (path === ROUTES.ADMIN_STOCK_TRANSFERS) {
             if (
                 pathname === ROUTES.ADMIN_STOCK_TRANSFERS_INCOMING ||
                 pathname.startsWith(ROUTES.ADMIN_STOCK_TRANSFERS_INCOMING + "/") ||
                 pathname === ROUTES.ADMIN_STOCK_TRANSFERS_RETURNS ||
-                pathname.startsWith(ROUTES.ADMIN_STOCK_TRANSFERS_RETURNS + "/")
+                pathname.startsWith(ROUTES.ADMIN_STOCK_TRANSFERS_RETURNS + "/") ||
+                fromParam === "incoming" ||
+                fromParam === "returns"
             ) {
                 return false;
             }

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useForm, FormProvider, useWatch } from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import { IconAlertCircle, IconCircleX } from "@tabler/icons-react";
 import { ROUTES } from "@/constants/routes";
 import { useAppRouter } from "@/hooks/use-app-router";
@@ -14,7 +14,6 @@ import {
   useReceiveStockTransfer,
   useValidateStockTransferReturn,
   useStockTransferDetail,
-  type ReceiveStockTransferPayload,
 } from "../api/stock-transfer-api";
 import { TRANSFER_STATUS } from "../constants";
 
@@ -44,26 +43,12 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
   const validateReturn = useValidateStockTransferReturn();
   const cancel = useCancelStockTransfer();
 
-  // React Hook Form for receiving items
   const formMethods = useForm<ReceiveFormValues>({
     defaultValues: {
       items: [],
     },
   });
 
-  // Explicitly subscribe to items array field changes using useWatch
-  const formItems = useWatch({
-    control: formMethods.control,
-    name: "items",
-  }) || [];
-
-  const [confirmFinalizeOpen, setConfirmFinalizeOpen] = useState(false);
-  const [cancelModalOpen, setCancelModalOpen] = useState(false);
-  const [cancelReason, setCancelReason] = useState("");
-  const [processingItemUid, setProcessingItemUid] = useState<string | null>(null);
-  const [validatingItemUid, setValidatingItemUid] = useState<string | null>(null);
-
-  // Sync default values when transfer data is fetched
   useEffect(() => {
     if (transfer?.items) {
       formMethods.reset({
@@ -72,16 +57,23 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
           status: item.status || "received",
           jenis_selisih: item.jenis_selisih || null,
           kuantitas_diterima: item.kuantitas_diterima ?? item.kuantitas,
+          kuantitas_return: item.kuantitas_return ?? (item.kuantitas - (item.kuantitas_diterima || 0)),
           keterangan: item.keterangan || "",
         })),
       });
     }
   }, [transfer, formMethods]);
 
+  const [confirmFinalizeOpen, setConfirmFinalizeOpen] = useState(false);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [processingItemUid, setProcessingItemUid] = useState<string | null>(null);
+  const [validatingItemUid, setValidatingItemUid] = useState<string | null>(null);
+
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-64 rounded-xl" />
+      <div className="space-y-4 max-w-6xl mx-auto">
+        <Skeleton className="h-10 w-64 rounded-xl" />
         <Skeleton className="h-64 w-full rounded-2xl" />
       </div>
     );
@@ -89,13 +81,13 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
 
   if (error || !transfer) {
     return (
-      <div className="p-12 text-center bg-white border border-slate-100 rounded-2xl shadow-sm space-y-3">
+      <div className="p-12 text-center bg-white border border-slate-100 rounded-2xl shadow-2xs space-y-3 max-w-md mx-auto my-8">
         <IconAlertCircle size={36} className="mx-auto text-rose-400" />
         <h4 className="text-sm font-bold text-slate-800">Detail Transfer Tidak Ditemukan</h4>
         <Button
           onClick={() => router.push(ROUTES.ADMIN_STOCK_TRANSFERS)}
           variant="outline"
-          className="h-8 text-xs cursor-pointer"
+          className="h-8 text-xs cursor-pointer rounded-xl"
         >
           Kembali ke Daftar Transfer
         </Button>
@@ -107,78 +99,36 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
   const isDest = activeStoreUid === transfer.store_uid_destination;
 
   const canFinalize = transfer.status === TRANSFER_STATUS.DRAFT && isSource;
-  const canReceive = (transfer.status === TRANSFER_STATUS.SENT) && isDest;
+  const canReceive = transfer.status === TRANSFER_STATUS.SENT && isDest;
   const canValidateReturn = transfer.status === TRANSFER_STATUS.RETUR && isSource;
   const canCancel =
     (transfer.status === TRANSFER_STATUS.DRAFT || transfer.status === TRANSFER_STATUS.SENT) &&
     isSource;
 
-  // Detect discrepancies dynamically using reactive formItems from useWatch
-  const hasDiscrepancies = transfer.items.some((item) => {
-    const fItem = formItems.find((f) => f.product_uid === item.product_uid);
-    if (!fItem || fItem.kuantitas_diterima === undefined || fItem.kuantitas_diterima === null) {
-      return false;
+  const hasDiscrepancies = transfer.items.some(
+    (item) => item.kuantitas_diterima != null && item.kuantitas_diterima !== item.kuantitas
+  );
+
+  const handleReceiveItemSubmit = async (
+    item: StockTransferItem,
+    payload: {
+      status: "received" | "rejected";
+      kuantitas_diterima: number;
+      jenis_selisih?: "salah_input" | "rusak" | "hilang";
+      keterangan?: string;
     }
-    return Number(fItem.kuantitas_diterima) !== Number(item.kuantitas);
-  });
-
-  const handleResetAllQty = () => {
-    if (!transfer?.items) return;
-    transfer.items.forEach((item, index) => {
-      formMethods.setValue(`items.${index}.kuantitas_diterima`, item.kuantitas);
-    });
-    toast.info("Jumlah diterima direset sesuai jumlah pengiriman");
-  };
-
-  const handleFinalizeConfirm = () => {
-    finalize.mutate(uid, {
-      onSuccess: () => {
-        toast.success("Transfer stok berhasil difinalisasi & dikirim!");
-        setConfirmFinalizeOpen(false);
-      },
-      onError: (err) => toast.error(err.message || "Gagal mengirim transfer"),
-    });
-  };
-
-  const handleReceiveItem = async (item: StockTransferItem, status: "received" | "rejected") => {
-    const currentValues = formMethods.getValues();
-    const formItem = currentValues.items?.find((i) => i.product_uid === item.product_uid);
-    if (!formItem) return;
-
-    const qtyDiterima = Number(formItem.kuantitas_diterima);
-    const qtyKirim = Number(item.kuantitas);
-    const isParsial = qtyDiterima < qtyKirim;
-
-    if (status === "rejected" && !formItem.jenis_selisih) {
-      toast.error("Pilih alasan selisih terlebih dahulu.");
-      return;
-    }
-
-    if (status === "received" && isParsial && !formItem.jenis_selisih) {
-      toast.error("Pilih alasan selisih terlebih dahulu.");
-      return;
-    }
-
+  ) => {
     setProcessingItemUid(item.uid);
-    const payload: ReceiveStockTransferPayload = {
-      status,
-      kuantitas_diterima: formItem.kuantitas_diterima,
-      keterangan: formItem.keterangan?.trim() || undefined,
-    };
-    
-    if ((status === "rejected" || isParsial) && formItem.jenis_selisih) {
-      payload.jenis_selisih = formItem.jenis_selisih as "salah_input" | "rusak" | "hilang";
-    }
-
     try {
       await receive.mutateAsync({
         uid,
         itemUid: item.uid,
-        payload
+        payload,
       });
-      toast.success(`Item ${item.product?.nama || "berhasil"} diproses.`);
-    } catch (err: any) {
-      toast.error(`Gagal memproses item: ${err.message}`);
+      toast.success(`Item "${item.product?.nama || "produk"}" berhasil diproses.`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Gagal memproses item";
+      toast.error(`Gagal memproses item: ${message}`);
     } finally {
       setProcessingItemUid(null);
     }
@@ -189,11 +139,22 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
     try {
       await validateReturn.mutateAsync({ uid, itemUid: item.uid, kuantitas_return: kuantitasReturn });
       toast.success(`Return item ${item.product?.nama || "berhasil"} divalidasi.`);
-    } catch (err: any) {
-      toast.error(`Gagal memvalidasi return: ${err.message}`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Gagal memvalidasi return";
+      toast.error(`Gagal memvalidasi return: ${message}`);
     } finally {
       setValidatingItemUid(null);
     }
+  };
+
+  const handleFinalizeConfirm = () => {
+    finalize.mutate(uid, {
+      onSuccess: () => {
+        toast.success("Transfer stok berhasil difinalisasi & dikirim!");
+        setConfirmFinalizeOpen(false);
+      },
+      onError: (err) => toast.error(err.message || "Gagal mengirim transfer"),
+    });
   };
 
   const handleCancelSubmit = () => {
@@ -216,7 +177,7 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
 
   return (
     <FormProvider {...formMethods}>
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-6xl mx-auto">
         {/* Header Bar */}
         <TransferDetailHeader
           transfer={transfer}
@@ -240,8 +201,7 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
             <TransferDetailItemsTable
               items={transfer.items || []}
               canReceive={canReceive}
-              onResetAllQty={handleResetAllQty}
-              onReceiveItem={handleReceiveItem}
+              onReceiveItemSubmit={handleReceiveItemSubmit}
               processingItemUid={processingItemUid}
               canValidateReturn={canValidateReturn}
               onValidateReturnItem={handleValidateReturnItem}
