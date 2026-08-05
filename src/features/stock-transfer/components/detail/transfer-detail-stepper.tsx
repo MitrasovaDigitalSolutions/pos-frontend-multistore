@@ -33,6 +33,18 @@ export function TransferDetailStepper({ status }: TransferDetailStepperProps) {
     );
   }
 
+  if (status === TRANSFER_STATUS.REJECTED) {
+    return (
+      <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800 flex items-center gap-3">
+        <IconCircleX size={20} className="text-rose-600 shrink-0" />
+        <div>
+          <h4 className="text-xs font-bold text-rose-900">Transfer Stok Ditolak</h4>
+          <p className="text-[11px] text-rose-700">Pengiriman transfer stok ini telah ditolak oleh toko tujuan.</p>
+        </div>
+      </div>
+    );
+  }
+
   if (status === TRANSFER_STATUS.RETUR) {
     return (
       <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-amber-800 flex items-center gap-3">

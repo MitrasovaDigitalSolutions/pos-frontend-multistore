@@ -46,6 +46,7 @@ export const ENDPOINTS = {
             RETURNS: "/v1/inventory/stock-transfers/returns",
             DETAIL: (uid: string) => `/v1/inventory/stock-transfers/${uid}`,
             CREATE: "/v1/inventory/stock-transfers",
+            UPDATE: (uid: string) => `/v1/inventory/stock-transfers/${uid}`,
             FINALIZE: (uid: string) => `/v1/inventory/stock-transfers/${uid}/finalize`,
             RECEIVE_ITEM: (uid: string, itemUid: string) => `/v1/inventory/stock-transfers/${uid}/items/${itemUid}/receive`,
             RETURN_ITEM: (uid: string, itemUid: string) => `/v1/inventory/stock-transfers/${uid}/items/${itemUid}/return`,
@@ -171,6 +172,16 @@ export const ENDPOINTS = {
         BACKFILL: "/v1/ledger/backfill",
         BACKFILL_STATUS: "/v1/ledger/backfill/status",
         BALANCE_ENTRY: "/v1/reports/general-ledger/balance-entry",
+    },
+
+    // Parent Categories (Accounting Category Mapping)
+    PARENT_CATEGORIES: {
+        LIST: "/v1/parent-categories",
+        DETAIL: (uid: string) => `/v1/parent-categories/${uid}`,
+        CREATE: "/v1/parent-categories",
+        UPDATE: (uid: string) => `/v1/parent-categories/${uid}`,
+        DELETE: (uid: string) => `/v1/parent-categories/${uid}`,
+        ASSIGN: (uid: string) => `/v1/parent-categories/${uid}/assign`,
     },
 
     // Transactions (Checkout)
