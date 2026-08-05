@@ -69,7 +69,7 @@ export function buildReceipt58(data: ReceiptData): string {
 }
 
 body{
-    width:58mm;
+    width:48mm;
     margin:0;
     padding:2px;
     font-family: tahoma;

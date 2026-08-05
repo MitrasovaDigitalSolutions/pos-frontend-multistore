@@ -50,12 +50,12 @@ export function buildCashDepositText(
 }
 
 @page{
-    size:58mm auto;
-    margin:2mm;
+    size:48mm auto;
+    margin:0mm;
 }
 
 body{
-    width:54mm;
+    width:48mm;
     font-family:tahoma;
     font-size:11px;
     line-height:1.35;
