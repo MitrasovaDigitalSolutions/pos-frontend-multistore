@@ -103,6 +103,16 @@ hr{
     margin:1px 0;
 }
 
+.trx {
+    font-size: 9px;
+    white-space: nowrap;
+}
+
+.date {
+    font-size: 9px;
+    white-space: nowrap;
+}
+
 .banner{
     text-align:center;
     font-weight:bold;
@@ -189,8 +199,8 @@ ${
 </div>
 
 <div class="row">
-    <span>TRX #${sale.nomor_transaksi}</span>
-    <span>${formatDate(sale.created_at)}</span>
+    <span class="trx">${sale.nomor_transaksi}</span>
+    <span class="date">${formatDate(sale.created_at)}</span>
 </div>
 
 ${
