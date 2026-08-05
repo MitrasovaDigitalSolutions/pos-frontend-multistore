@@ -358,13 +358,23 @@ export function TransferDetailItemsTable({
         },
         {
           accessorKey: "keterangan",
-          header: "Catatan",
+          header: "Alasan & Catatan",
           size: 200,
-          cell: ({ row }) => (
-            <span className="text-xs text-slate-600 italic">
-              {row.original.keterangan || "—"}
-            </span>
-          ),
+          cell: ({ row }) => {
+            const jenisSelisih = row.original.jenis_selisih;
+            return (
+              <div className="flex flex-col items-start gap-1">
+                {jenisSelisih && (
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold border ${JENIS_SELISIH_CLASSES[jenisSelisih]}`}>
+                    {JENIS_SELISIH_LABELS[jenisSelisih]}
+                  </span>
+                )}
+                <span className="text-xs text-slate-600 italic">
+                  {row.original.keterangan || "—"}
+                </span>
+              </div>
+            );
+          },
         },
       ];
     }
@@ -429,14 +439,21 @@ export function TransferDetailItemsTable({
           
           const isMatch = qRec === qSent;
           return (
-            <span
-              className={`inline-block px-2 py-0.5 rounded-md text-xs font-extrabold ${isMatch
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                : "bg-amber-50 text-amber-700 border border-amber-200"
-                }`}
-            >
-              {qRec} pcs
-            </span>
+            <div className="flex flex-col items-center gap-1">
+              <span
+                className={`inline-block px-2 py-0.5 rounded-md text-xs font-extrabold ${isMatch
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  : "bg-amber-50 text-amber-700 border border-amber-200"
+                  }`}
+              >
+                {qRec} pcs
+              </span>
+              {!isMatch && jenisSelisih && (
+                <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold border ${JENIS_SELISIH_CLASSES[jenisSelisih]}`}>
+                  {JENIS_SELISIH_LABELS[jenisSelisih]}
+                </span>
+              )}
+            </div>
           );
         },
       },

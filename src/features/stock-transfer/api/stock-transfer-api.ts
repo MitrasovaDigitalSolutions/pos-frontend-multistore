@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiGetData, apiGetList, apiPost } from "@/shared/api/api-client";
+import { apiGetData, apiGetList, apiPost, apiPatch } from "@/shared/api/api-client";
 import { ENDPOINTS } from "@/shared/api/endpoints";
 import { queryKeys } from "@/lib/query-keys";
 import type { ApiResponse, PaginationParams } from "@/types/api";
@@ -48,6 +48,18 @@ export function useCreateStockTransfer() {
       apiPost<ApiResponse<StockTransfer>, typeof payload>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.CREATE, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers() });
+    },
+  });
+}
+
+export function useUpdateStockTransfer() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ uid, payload }: { uid: string; payload: { store_uid_destination: string; catatan?: string; items: { product_uid: string; kuantitas: number }[] } }) =>
+      apiPatch<ApiResponse<StockTransfer>, typeof payload>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.UPDATE(uid), payload),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers() });
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(variables.uid) });
     },
   });
 }

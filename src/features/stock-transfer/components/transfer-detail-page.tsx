@@ -227,6 +227,7 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
           onFinalize={() => setConfirmFinalizeOpen(true)}
           onCancelClick={() => setCancelModalOpen(true)}
           onPrint={handlePrint}
+          onEdit={transfer.status === TRANSFER_STATUS.DRAFT && isSource ? () => router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/${uid}/edit`) : undefined}
         />
 
         {/* Visual Stepper Bar */}
