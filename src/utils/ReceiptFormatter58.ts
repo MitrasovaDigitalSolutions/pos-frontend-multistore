@@ -189,7 +189,7 @@ ${
 </div>
 
 <div class="row">
-    <span>TRX #${sale.uid}</span>
+    <span>TRX #${sale.nomor_transaksi}</span>
     <span>${formatDate(sale.created_at)}</span>
 </div>
 
