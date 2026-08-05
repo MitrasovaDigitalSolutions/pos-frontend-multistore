@@ -58,6 +58,8 @@ const STAT_COLOR_MAP: Record<string, { bg: string; border: string; iconBg: strin
   },
 };
 
+import { TRANSFER_STATUS, TRANSFER_SHIPMENT_STATUS } from "../../constants";
+
 export function TransferListStatCards({ mode, transfers, totalCount, isLoading }: TransferListStatCardsProps) {
   if (isLoading) {
     return (
@@ -77,9 +79,9 @@ export function TransferListStatCards({ mode, transfers, totalCount, isLoading }
 
   const getStats = () => {
     if (mode === "outgoing") {
-      const sentCount = transfers.filter((t) => t.status === "sent").length;
-      const draftCount = transfers.filter((t) => t.status === "draft").length;
-      const returCount = transfers.filter((t) => t.status === "retur").length;
+      const sentCount = transfers.filter((t) => t.status === TRANSFER_STATUS.SENT).length;
+      const draftCount = transfers.filter((t) => t.status === TRANSFER_STATUS.DRAFT).length;
+      const returCount = transfers.filter((t) => t.status === TRANSFER_STATUS.RETUR).length;
       return [
         { label: "Total Transfer Keluar", value: totalCount, icon: IconArrowsLeftRight, color: "slate" },
         { label: "Draft Pengiriman", value: draftCount, icon: IconClock, color: "amber" },
@@ -87,9 +89,9 @@ export function TransferListStatCards({ mode, transfers, totalCount, isLoading }
         { label: "Menunggu Retur", value: returCount, icon: IconArrowDownLeft, color: "emerald" },
       ];
     } else if (mode === "incoming") {
-      const sentCount = transfers.filter((t) => t.status === "sent").length;
-      const partiallyReceivedCount = transfers.filter((t) => t.status_penerimaan === "partially_received").length;
-      const finishedCount = transfers.filter((t) => t.status === "finished").length;
+      const sentCount = transfers.filter((t) => t.status === TRANSFER_STATUS.SENT).length;
+      const partiallyReceivedCount = transfers.filter((t) => t.status_penerimaan === TRANSFER_SHIPMENT_STATUS.PARTIALLY_RECEIVED).length;
+      const finishedCount = transfers.filter((t) => t.status === TRANSFER_STATUS.FINISHED || t.status === TRANSFER_STATUS.FINISH).length;
       return [
         { label: "Total Transfer Masuk", value: totalCount, icon: IconArrowsLeftRight, color: "slate" },
         { label: "Dikirim", value: sentCount, icon: IconClock, color: "blue" },
@@ -97,7 +99,7 @@ export function TransferListStatCards({ mode, transfers, totalCount, isLoading }
         { label: "Selesai", value: finishedCount, icon: IconCheck, color: "emerald" },
       ];
     } else { // returns
-      const rejectedCount = transfers.filter((t) => t.status_penerimaan === "rejected" || t.status_penerimaan === "partially_received").length;
+      const rejectedCount = transfers.filter((t) => t.status_penerimaan === TRANSFER_SHIPMENT_STATUS.REJECTED || t.status_penerimaan === TRANSFER_SHIPMENT_STATUS.PARTIALLY_RECEIVED).length;
       return [
         { label: "Menunggu Validasi", value: totalCount, icon: IconArrowsLeftRight, color: "slate" },
         { label: "Ditolak / Selisih", value: rejectedCount, icon: IconClock, color: "amber" },

@@ -17,7 +17,8 @@ export function TransferDetailStepper({ status }: TransferDetailStepperProps) {
       : status === TRANSFER_STATUS.SENT
       ? 2
       : (status === TRANSFER_STATUS.RETUR || 
-         status === TRANSFER_STATUS.FINISHED)
+         status === TRANSFER_STATUS.FINISHED ||
+         status === TRANSFER_STATUS.FINISH)
       ? 3
       : 0;
 
@@ -106,7 +107,7 @@ export function TransferDetailStepper({ status }: TransferDetailStepperProps) {
         <div
           className={`flex items-center gap-3 p-2.5 rounded-xl border ${
             stepIndex >= 3
-              ? status === TRANSFER_STATUS.FINISHED 
+              ? (status === TRANSFER_STATUS.FINISHED || status === TRANSFER_STATUS.FINISH)
                 ? "bg-emerald-50/50 border-emerald-200 text-emerald-800"
                 : "bg-blue-50/50 border-blue-200 text-blue-800"
               : "bg-slate-50 border-slate-100 text-slate-400"
@@ -115,7 +116,7 @@ export function TransferDetailStepper({ status }: TransferDetailStepperProps) {
           <div
             className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${
               stepIndex >= 3 
-                ? status === TRANSFER_STATUS.FINISHED 
+                ? (status === TRANSFER_STATUS.FINISHED || status === TRANSFER_STATUS.FINISH)
                   ? "bg-emerald-600 text-white" 
                   : "bg-blue-600 text-white"
                 : "bg-slate-200 text-slate-600"

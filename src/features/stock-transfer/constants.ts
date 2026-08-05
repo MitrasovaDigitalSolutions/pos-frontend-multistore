@@ -61,14 +61,20 @@ export const TRANSFER_SHIPMENT_STATUS_CLASSES: Record<string, string> = {
 export const TRANSFER_RECEIVE_STATUS_CLASSES = TRANSFER_SHIPMENT_STATUS_CLASSES;
 
 // ─── Alasan Selisih ──────────────────────────────────────────────────────────
+export const JENIS_SELISIH = {
+  SALAH_INPUT: "salah_input",
+  RUSAK: "rusak",
+  HILANG: "hilang",
+} as const;
+
 export const JENIS_SELISIH_LABELS: Record<string, string> = {
-  salah_input: "Salah Input",
-  rusak: "Rusak",
-  hilang: "Hilang",
+  [JENIS_SELISIH.SALAH_INPUT]: "Salah Input",
+  [JENIS_SELISIH.RUSAK]: "Rusak",
+  [JENIS_SELISIH.HILANG]: "Hilang",
 };
 
 export const JENIS_SELISIH_CLASSES: Record<string, string> = {
-  salah_input: "bg-amber-50 text-amber-700 border-amber-200",
-  rusak: "bg-rose-50 text-rose-700 border-rose-200",
-  hilang: "bg-slate-50 text-slate-700 border-slate-200",
+  [JENIS_SELISIH.SALAH_INPUT]: "bg-amber-50 text-amber-700 border-amber-200",
+  [JENIS_SELISIH.RUSAK]: "bg-rose-50 text-rose-700 border-rose-200",
+  [JENIS_SELISIH.HILANG]: "bg-slate-50 text-slate-700 border-slate-200",
 };

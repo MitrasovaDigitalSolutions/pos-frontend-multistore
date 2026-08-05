@@ -15,7 +15,7 @@ import {
   useValidateStockTransferReturn,
   useStockTransferDetail,
 } from "../api/stock-transfer-api";
-import { TRANSFER_STATUS } from "../constants";
+import { JENIS_SELISIH, TRANSFER_SHIPMENT_STATUS, TRANSFER_STATUS } from "../constants";
 
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
@@ -179,12 +179,14 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
     (item) => item.kuantitas_diterima != null && item.kuantitas_diterima !== item.kuantitas
   );
 
+
+
   const handleReceiveItemSubmit = async (
     item: StockTransferItem,
     payload: {
-      status: "received" | "rejected";
+      status: typeof TRANSFER_SHIPMENT_STATUS.RECEIVED | typeof TRANSFER_SHIPMENT_STATUS.REJECTED;
       kuantitas_diterima: number;
-      jenis_selisih?: "salah_input" | "rusak" | "hilang";
+      jenis_selisih?: typeof JENIS_SELISIH.SALAH_INPUT | typeof JENIS_SELISIH.RUSAK | typeof JENIS_SELISIH.HILANG;
       keterangan?: string;
     }
   ) => {

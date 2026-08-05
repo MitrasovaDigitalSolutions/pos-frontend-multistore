@@ -13,7 +13,7 @@ import {
 } from "@tabler/icons-react";
 import { ROUTES } from "@/constants/routes";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { TRANSFER_STATUS_CLASSES, TRANSFER_STATUS_LABELS } from "../../constants";
+import { TRANSFER_STATUS, TRANSFER_STATUS_CLASSES, TRANSFER_STATUS_LABELS } from "../../constants";
 import type { StockTransfer } from "../../types";
 
 interface TransferDetailHeaderProps {
@@ -78,7 +78,7 @@ export function TransferDetailHeader({
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-2">
-        {onPrint && transfer.status !== "draft" && (
+        {onPrint && transfer.status !== TRANSFER_STATUS.DRAFT && transfer.status !== TRANSFER_STATUS.CANCELLED && (
           <Button
             type="button"
             onClick={onPrint}
@@ -88,7 +88,7 @@ export function TransferDetailHeader({
             <IconPrinter size={16} /> Cetak Surat Jalan
           </Button>
         )}
-        {onEdit && transfer.status === "draft" && (
+        {onEdit && transfer.status === TRANSFER_STATUS.DRAFT && (
           <Button
             type="button"
             onClick={onEdit}

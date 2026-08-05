@@ -6,26 +6,27 @@ import { IconAlertTriangle, IconCircleCheck, IconLoader2, IconX } from "@tabler/
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FormSelect } from "@/components/forms/form-select";
+import { JENIS_SELISIH, TRANSFER_SHIPMENT_STATUS } from "../../constants";
 import type { StockTransferItem } from "../../types";
 
 export interface ReceivingConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   item: StockTransferItem | null;
-  mode: "received" | "rejected";
+  mode: typeof TRANSFER_SHIPMENT_STATUS.RECEIVED | typeof TRANSFER_SHIPMENT_STATUS.REJECTED;
   qtyDiterima: number;
   keterangan?: string;
   onConfirm: (payload: {
-    status: "received" | "rejected";
+    status: typeof TRANSFER_SHIPMENT_STATUS.RECEIVED | typeof TRANSFER_SHIPMENT_STATUS.REJECTED;
     kuantitas_diterima: number;
-    jenis_selisih?: "salah_input" | "rusak" | "hilang";
+    jenis_selisih?: typeof JENIS_SELISIH.SALAH_INPUT | typeof JENIS_SELISIH.RUSAK | typeof JENIS_SELISIH.HILANG;
     keterangan?: string;
   }) => Promise<void>;
   isLoading?: boolean;
 }
 
 type ConfirmFormValues = {
-  jenis_selisih: "salah_input" | "rusak" | "hilang";
+  jenis_selisih: typeof JENIS_SELISIH.SALAH_INPUT | typeof JENIS_SELISIH.RUSAK | typeof JENIS_SELISIH.HILANG;
 };
 
 export function ReceivingConfirmDialog({
@@ -40,21 +41,21 @@ export function ReceivingConfirmDialog({
 }: ReceivingConfirmDialogProps) {
   const formMethods = useForm<ConfirmFormValues>({
     defaultValues: {
-      jenis_selisih: "salah_input",
+      jenis_selisih: JENIS_SELISIH.SALAH_INPUT,
     },
   });
 
   useEffect(() => {
     if (open) {
-      formMethods.reset({ jenis_selisih: "salah_input" });
+      formMethods.reset({ jenis_selisih: JENIS_SELISIH.SALAH_INPUT });
     }
   }, [open, formMethods]);
 
   if (!item) return null;
 
   const qtyDikirim = item.kuantitas;
-  const isRejected = mode === "rejected";
-  const hasDiscrepancy = qtyDiterima < qtyDikirim && mode === "received";
+  const isRejected = mode === TRANSFER_SHIPMENT_STATUS.REJECTED;
+  const hasDiscrepancy = qtyDiterima < qtyDikirim && mode === TRANSFER_SHIPMENT_STATUS.RECEIVED;
   const needsReason = isRejected || hasDiscrepancy;
 
   const handleConfirmSubmit = async () => {
@@ -131,9 +132,9 @@ export function ReceivingConfirmDialog({
                   name="jenis_selisih"
                   label="Pilih Alasan Selisih / Penolakan"
                   options={[
-                    { label: "Barang Rusak Saat Pengiriman", value: "rusak" },
-                    { label: "Barang Hilang / Kurang", value: "hilang" },
-                    { label: "Salah Input Kuantitas", value: "salah_input" },
+                    { label: "Barang Rusak Saat Pengiriman", value: JENIS_SELISIH.RUSAK },
+                    { label: "Barang Hilang / Kurang", value: JENIS_SELISIH.HILANG },
+                    { label: "Salah Input Kuantitas", value: JENIS_SELISIH.SALAH_INPUT },
                   ]}
                   placeholder="-- Pilih Alasan --"
                   size="sm"

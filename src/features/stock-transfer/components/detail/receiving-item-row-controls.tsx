@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { JENIS_SELISIH, TRANSFER_SHIPMENT_STATUS } from "../../constants";
 import type { StockTransferItem } from "../../types";
 import type { ReceiveFormValues } from "./types";
 import { ReceivingConfirmDialog } from "./receiving-confirm-dialog";
@@ -14,9 +15,9 @@ interface ReceivingItemRowControlsProps {
   onReceiveItemSubmit?: (
     item: StockTransferItem,
     payload: {
-      status: "received" | "rejected";
+      status: typeof TRANSFER_SHIPMENT_STATUS.RECEIVED | typeof TRANSFER_SHIPMENT_STATUS.REJECTED;
       kuantitas_diterima: number;
-      jenis_selisih?: "salah_input" | "rusak" | "hilang";
+      jenis_selisih?: typeof JENIS_SELISIH.SALAH_INPUT | typeof JENIS_SELISIH.RUSAK | typeof JENIS_SELISIH.HILANG;
       keterangan?: string;
     }
   ) => Promise<void>;
@@ -36,22 +37,22 @@ export function ReceivingItemRowControls({
   const qtyDiterima = currentQty !== undefined && currentQty !== null ? Number(currentQty) : item.kuantitas;
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogMode, setDialogMode] = useState<"received" | "rejected">("received");
+  const [dialogMode, setDialogMode] = useState<typeof TRANSFER_SHIPMENT_STATUS.RECEIVED | typeof TRANSFER_SHIPMENT_STATUS.REJECTED>(TRANSFER_SHIPMENT_STATUS.RECEIVED);
 
   const handleOpenTerima = () => {
-    setDialogMode("received");
+    setDialogMode(TRANSFER_SHIPMENT_STATUS.RECEIVED);
     setDialogOpen(true);
   };
 
   const handleOpenTolak = () => {
-    setDialogMode("rejected");
+    setDialogMode(TRANSFER_SHIPMENT_STATUS.REJECTED);
     setDialogOpen(true);
   };
 
   const handleConfirmSubmit = async (payload: {
-    status: "received" | "rejected";
+    status: typeof TRANSFER_SHIPMENT_STATUS.RECEIVED | typeof TRANSFER_SHIPMENT_STATUS.REJECTED;
     kuantitas_diterima: number;
-    jenis_selisih?: "salah_input" | "rusak" | "hilang";
+    jenis_selisih?: typeof JENIS_SELISIH.SALAH_INPUT | typeof JENIS_SELISIH.RUSAK | typeof JENIS_SELISIH.HILANG;
     keterangan?: string;
   }) => {
     if (onReceiveItemSubmit) {

@@ -22,22 +22,24 @@ import { TransferListStatCards } from "./list/transfer-list-stat-cards";
 import { TransferListFilters, type TransferFilterValues } from "./list/transfer-list-filters";
 import { useTransferColumns } from "./list/use-transfer-columns";
 
+import { TRANSFER_STATUS, TRANSFER_SHIPMENT_STATUS } from "../constants";
+
 const STATUS_OPTIONS = [
   { value: "all", label: "Semua Status Transfer" },
-  { value: "draft", label: "Draft" },
-  { value: "sent", label: "Dikirim" },
-  { value: "retur", label: "Retur" },
-  { value: "finish", label: "Selesai" },
-  { value: "rejected", label: "Ditolak" },
-  { value: "cancelled", label: "Dibatalkan" },
+  { value: TRANSFER_STATUS.DRAFT, label: "Draft" },
+  { value: TRANSFER_STATUS.SENT, label: "Dikirim" },
+  { value: TRANSFER_STATUS.RETUR, label: "Retur" },
+  { value: TRANSFER_STATUS.FINISH, label: "Selesai" },
+  { value: TRANSFER_STATUS.REJECTED, label: "Ditolak" },
+  { value: TRANSFER_STATUS.CANCELLED, label: "Dibatalkan" },
 ];
 
 const STATUS_PENERIMAAN_OPTIONS = [
   { value: "all", label: "Semua Status Pengiriman" },
-  { value: "pending", label: "Pending" },
-  { value: "partially_received", label: "Diterima Sebagian" },
-  { value: "received", label: "Diterima Penuh" },
-  { value: "rejected", label: "Ditolak" },
+  { value: TRANSFER_SHIPMENT_STATUS.PENDING, label: "Pending" },
+  { value: TRANSFER_SHIPMENT_STATUS.PARTIALLY_RECEIVED, label: "Diterima Sebagian" },
+  { value: TRANSFER_SHIPMENT_STATUS.RECEIVED, label: "Diterima Penuh" },
+  { value: TRANSFER_SHIPMENT_STATUS.REJECTED, label: "Ditolak" },
 ];
 
 export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
