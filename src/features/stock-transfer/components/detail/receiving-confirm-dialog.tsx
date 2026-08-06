@@ -6,6 +6,7 @@ import { IconAlertTriangle, IconCircleCheck, IconLoader2, IconX } from "@tabler/
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FormSelect } from "@/components/forms/form-select";
+import { FormInput } from "@/components/forms/form-input";
 import { JENIS_SELISIH, TRANSFER_SHIPMENT_STATUS } from "../../constants";
 import type { StockTransferItem } from "../../types";
 
@@ -27,6 +28,7 @@ export interface ReceivingConfirmDialogProps {
 
 type ConfirmFormValues = {
   jenis_selisih: typeof JENIS_SELISIH.SALAH_INPUT | typeof JENIS_SELISIH.RUSAK | typeof JENIS_SELISIH.HILANG;
+  keterangan: string;
 };
 
 export function ReceivingConfirmDialog({
@@ -35,21 +37,25 @@ export function ReceivingConfirmDialog({
   item,
   mode,
   qtyDiterima,
-  keterangan,
+  keterangan: initialKeterangan,
   onConfirm,
   isLoading = false,
 }: ReceivingConfirmDialogProps) {
   const formMethods = useForm<ConfirmFormValues>({
     defaultValues: {
       jenis_selisih: JENIS_SELISIH.SALAH_INPUT,
+      keterangan: "",
     },
   });
 
   useEffect(() => {
     if (open) {
-      formMethods.reset({ jenis_selisih: JENIS_SELISIH.SALAH_INPUT });
+      formMethods.reset({
+        jenis_selisih: JENIS_SELISIH.SALAH_INPUT,
+        keterangan: initialKeterangan || item?.keterangan || "",
+      });
     }
-  }, [open, formMethods]);
+  }, [open, initialKeterangan, item, formMethods]);
 
   if (!item) return null;
 
@@ -64,7 +70,7 @@ export function ReceivingConfirmDialog({
       status: mode,
       kuantitas_diterima: isRejected ? 0 : qtyDiterima,
       jenis_selisih: needsReason ? values.jenis_selisih : undefined,
-      keterangan: keterangan?.trim() || undefined,
+      keterangan: values.keterangan?.trim() || undefined,
     });
     onOpenChange(false);
   };
@@ -79,13 +85,12 @@ export function ReceivingConfirmDialog({
           <div className="flex flex-col items-center text-center space-y-3">
             {/* Icon Badge */}
             <div
-              className={`w-12 h-12 rounded-full border flex items-center justify-center ${
-                isRejected
-                  ? "bg-rose-50 text-rose-600 border-rose-100"
-                  : hasDiscrepancy
-                    ? "bg-amber-50 text-amber-600 border-amber-100"
-                    : "bg-emerald-50 text-emerald-600 border-emerald-100"
-              }`}
+              className={`w-12 h-12 rounded-full border flex items-center justify-center ${isRejected
+                ? "bg-rose-50 text-rose-600 border-rose-100"
+                : hasDiscrepancy
+                  ? "bg-amber-50 text-amber-600 border-amber-100"
+                  : "bg-emerald-50 text-emerald-600 border-emerald-100"
+                }`}
             >
               {isRejected ? (
                 <IconX size={24} />
@@ -111,7 +116,7 @@ export function ReceivingConfirmDialog({
                 </p>
                 {isRejected ? (
                   <p className="text-rose-600 font-semibold">
-                    Apakah Anda yakin ingin MENOLAK produk ini?
+                    Menolak produk ini akan membatalkan keseluruhan produk yang dikirim.
                   </p>
                 ) : hasDiscrepancy ? (
                   <p className="text-amber-700">
@@ -141,6 +146,15 @@ export function ReceivingConfirmDialog({
                 />
               </div>
             )}
+
+            {/* FormInput Catatan / Keterangan (Opsional) */}
+            <div className="w-full text-left pt-1">
+              <FormInput<ConfirmFormValues>
+                name="keterangan"
+                label="Catatan / Keterangan (Opsional)"
+                placeholder="Misal: Dus penyok, barang kurang, dll..."
+              />
+            </div>
           </div>
 
           {/* Action Buttons */}
@@ -156,13 +170,12 @@ export function ReceivingConfirmDialog({
             </Button>
             <Button
               type="button"
-              className={`flex-1 h-10 text-xs font-bold rounded-xl text-white flex items-center justify-center gap-1.5 cursor-pointer ${
-                isRejected
-                  ? "bg-rose-600 hover:bg-rose-700"
-                  : hasDiscrepancy
-                    ? "bg-amber-600 hover:bg-amber-700"
-                    : "bg-emerald-600 hover:bg-emerald-700"
-              }`}
+              className={`flex-1 h-10 text-xs font-bold rounded-xl text-white flex items-center justify-center gap-1.5 cursor-pointer ${isRejected
+                ? "bg-rose-600 hover:bg-rose-700"
+                : hasDiscrepancy
+                  ? "bg-amber-600 hover:bg-amber-700"
+                  : "bg-emerald-600 hover:bg-emerald-700"
+                }`}
               onClick={handleConfirmSubmit}
               disabled={isLoading}
             >

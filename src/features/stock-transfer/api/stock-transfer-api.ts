@@ -23,6 +23,7 @@ export function useStockTransfersByMode(mode: StockTransferListMode, params?: St
   return useQuery({
     queryKey: [...queryKeys.inventory.stockTransfers(), mode, params],
     queryFn: () => apiGetList<StockTransfer>(endpoint, params),
+    refetchOnMount: "always",
   });
 }
 
@@ -30,6 +31,7 @@ export function useStockTransfers(params?: StockTransferQueryParams) {
   return useQuery({
     queryKey: [...queryKeys.inventory.stockTransfers(), params],
     queryFn: () => apiGetList<StockTransfer>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.LIST, params),
+    refetchOnMount: "always",
   });
 }
 
@@ -38,6 +40,7 @@ export function useStockTransferDetail(uid: string) {
     queryKey: queryKeys.inventory.stockTransferDetail(uid),
     queryFn: () => apiGetData<StockTransfer>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.DETAIL(uid)),
     enabled: !!uid,
+    refetchOnMount: "always",
   });
 }
 
@@ -47,7 +50,7 @@ export function useCreateStockTransfer() {
     mutationFn: (payload: { store_uid_destination: string; catatan?: string | null; items: { product_uid: string; kuantitas: number }[] }) =>
       apiPost<ApiResponse<StockTransfer>, typeof payload>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.CREATE, payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers() });
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers(), refetchType: "all" });
     },
   });
 }
@@ -58,8 +61,8 @@ export function useUpdateStockTransfer() {
     mutationFn: ({ uid, payload }: { uid: string; payload: { store_uid_destination: string; catatan?: string; items: { product_uid: string; kuantitas: number }[] } }) =>
       apiPatch<ApiResponse<StockTransfer>, typeof payload>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.UPDATE(uid), payload),
     onSuccess: (_, variables) => {
-      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers() });
-      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(variables.uid) });
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers(), refetchType: "all" });
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(variables.uid), refetchType: "all" });
     },
   });
 }
@@ -69,8 +72,8 @@ export function useFinalizeStockTransfer() {
   return useMutation({
     mutationFn: (uid: string) => apiPost<ApiResponse<StockTransfer>, void>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.FINALIZE(uid)),
     onSuccess: (_, uid) => {
-      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers() });
-      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(uid) });
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers(), refetchType: "all" });
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(uid), refetchType: "all" });
     },
   });
 }
@@ -91,8 +94,8 @@ export function useReceiveStockTransfer() {
         payload
       ),
     onSuccess: (_, variables) => {
-      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers() });
-      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(variables.uid) });
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers(), refetchType: "all" });
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(variables.uid), refetchType: "all" });
     },
   });
 }
@@ -106,8 +109,8 @@ export function useValidateStockTransferReturn() {
         { kuantitas_return }
       ),
     onSuccess: (_, variables) => {
-      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers() });
-      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(variables.uid) });
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers(), refetchType: "all" });
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(variables.uid), refetchType: "all" });
     },
   });
 }
@@ -118,8 +121,8 @@ export function useCancelStockTransfer() {
     mutationFn: ({ uid, alasan }: { uid: string; alasan?: string }) =>
       apiPost<ApiResponse<StockTransfer>, { alasan?: string }>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.CANCEL(uid), { alasan }),
     onSuccess: (_, variables) => {
-      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers() });
-      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(variables.uid) });
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers(), refetchType: "all" });
+      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(variables.uid), refetchType: "all" });
     },
   });
 }

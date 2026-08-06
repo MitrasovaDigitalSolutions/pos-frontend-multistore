@@ -72,10 +72,18 @@ export function useTransferDetailItemsColumns({
             if (row.original.status !== null && row.original.status !== undefined) {
               const qRec = row.original.kuantitas_diterima;
               const isRejected = row.original.status === "rejected";
+              const js = row.original.jenis_selisih;
               return (
-                <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-extrabold ${isRejected ? "bg-rose-50 text-rose-700 border border-rose-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"}`}>
-                  {qRec} pcs
-                </span>
+                <div className="flex flex-col items-center gap-1">
+                  <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-extrabold ${isRejected ? "bg-rose-50 text-rose-700 border border-rose-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"}`}>
+                    {isRejected ? "Ditolak" : `${qRec} pcs`}
+                  </span>
+                  {js && (
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${JENIS_SELISIH_CLASSES[js] || "bg-amber-50 text-amber-700 border-amber-200"}`}>
+                      {JENIS_SELISIH_LABELS[js] || js.replace("_", " ")}
+                    </span>
+                  )}
+                </div>
               );
             }
 
@@ -136,31 +144,6 @@ export function useTransferDetailItemsColumns({
           ),
         },
         {
-          accessorKey: "kuantitas",
-          header: "Dikirim",
-          size: 90,
-          meta: { headerClassName: "text-center", cellClassName: "text-center font-bold text-slate-900" },
-          cell: ({ row }) => (
-            <span className="inline-block bg-slate-100 text-slate-800 px-2.5 py-1 rounded-lg text-xs font-black">
-              {row.original.kuantitas} pcs
-            </span>
-          ),
-        },
-        {
-          accessorKey: "kuantitas_diterima",
-          header: "Diterima",
-          size: 90,
-          meta: { headerClassName: "text-center", cellClassName: "text-center font-bold text-slate-900" },
-          cell: ({ row }) => {
-            const val = row.original.kuantitas_diterima;
-            return (
-              <span className="inline-block bg-slate-100 text-slate-800 px-2.5 py-1 rounded-lg text-xs font-black">
-                {val != null ? val : "—"} pcs
-              </span>
-            );
-          },
-        },
-        {
           id: "input_kuantitas_return",
           header: "Kuantitas Return",
           size: 130,
@@ -186,6 +169,49 @@ export function useTransferDetailItemsColumns({
                 disabled={validatingItemUid === row.original.uid}
                 className="h-8 w-20 text-xs text-center font-black mx-auto border-slate-200 bg-white"
               />
+            );
+          },
+        },
+        {
+          accessorKey: "kuantitas",
+          header: "Dikirim",
+          size: 90,
+          meta: { headerClassName: "text-center", cellClassName: "text-center font-bold text-slate-900" },
+          cell: ({ row }) => (
+            <span className="inline-block bg-slate-100 text-slate-800 px-2.5 py-1 rounded-lg text-xs font-black">
+              {row.original.kuantitas} pcs
+            </span>
+          ),
+        },
+        {
+          accessorKey: "kuantitas_diterima",
+          header: "Diterima",
+          size: 90,
+          meta: { headerClassName: "text-center", cellClassName: "text-center font-bold text-slate-900" },
+          cell: ({ row }) => {
+            const val = row.original.kuantitas_diterima;
+            return (
+              <span className="inline-block bg-slate-100 text-slate-800 px-2.5 py-1 rounded-lg text-xs font-black">
+                {val != null ? val : "—"} pcs
+              </span>
+            );
+          },
+        },
+        {
+          id: "jenis_selisih",
+          header: "Alasan Selisih",
+          size: 130,
+          meta: { headerClassName: "text-center", cellClassName: "text-center" },
+          cell: ({ row }) => {
+            const js = row.original.jenis_selisih;
+            if (!js) return <span className="text-slate-400 text-xs">—</span>;
+            return (
+              <span
+                className={`inline-block text-[10px] px-2.5 py-0.5 rounded-full font-extrabold border ${JENIS_SELISIH_CLASSES[js] || "bg-amber-50 text-amber-700 border-amber-200"
+                  }`}
+              >
+                {JENIS_SELISIH_LABELS[js] || js.replace("_", " ")}
+              </span>
             );
           },
         },
@@ -243,33 +269,42 @@ export function useTransferDetailItemsColumns({
           if (qRec == null) return <span className="text-slate-400 text-xs">—</span>;
           const status = row.original.status;
           const isRejected = status === "rejected";
-          const jenisSelisih = row.original.jenis_selisih;
 
           if (isRejected) {
             return (
-              <div className="flex flex-col items-center gap-1">
-                <span className="inline-block px-2 py-0.5 rounded-md text-xs font-extrabold bg-rose-50 text-rose-700 border border-rose-200">
-                  Ditolak
-                </span>
-                {jenisSelisih && (
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold border ${JENIS_SELISIH_CLASSES[jenisSelisih]}`}>
-                    {JENIS_SELISIH_LABELS[jenisSelisih]}
-                  </span>
-                )}
-              </div>
+              <span className="inline-block px-2 py-0.5 rounded-md text-xs font-extrabold bg-rose-50 text-rose-700 border border-rose-200">
+                Ditolak
+              </span>
             );
           }
 
           const isMatch = qRec === qSent;
           return (
             <span
-              className={`inline-block px-2 py-0.5 rounded-md text-xs font-extrabold ${
-                isMatch
+              className={`inline-block px-2 py-0.5 rounded-md text-xs font-extrabold ${isMatch
                   ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                   : "bg-amber-50 text-amber-700 border border-amber-200"
-              }`}
+                }`}
             >
               {qRec} pcs
+            </span>
+          );
+        },
+      },
+      {
+        id: "jenis_selisih",
+        header: "Alasan Selisih",
+        size: 130,
+        meta: { headerClassName: "text-center", cellClassName: "text-center" },
+        cell: ({ row }) => {
+          const js = row.original.jenis_selisih;
+          if (!js) return <span className="text-slate-400 text-xs">—</span>;
+          return (
+            <span
+              className={`inline-block text-[10px] px-2.5 py-0.5 rounded-full font-extrabold border ${JENIS_SELISIH_CLASSES[js] || "bg-amber-50 text-amber-700 border-amber-200"
+                }`}
+            >
+              {JENIS_SELISIH_LABELS[js] || js.replace("_", " ")}
             </span>
           );
         },
@@ -317,5 +352,6 @@ export function useTransferDetailItemsColumns({
         },
       },
     ];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canReceive, canValidateReturn, processingItemUid, onValidateReturnItem, validatingItemUid]);
 }
