@@ -78,9 +78,9 @@ export function TransferListFilters({
       )}
       <FormSelect<TransferFilterValues>
         name="status_penerimaan"
-        label="Status Pengiriman"
+        label="Status Penerimaan"
         options={statusPenerimaanOptions}
-        placeholder="Semua Status Pengiriman"
+        placeholder="Semua Status Penerimaan"
         size="sm"
       />
     </FilterForm>

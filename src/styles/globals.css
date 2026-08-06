@@ -216,6 +216,33 @@
     animation: wave-move-backward 3.5s linear infinite;
 }
 
+@keyframes fastLiquidFlow {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.animate-liquid-fast-row,
+.animate-liquid-fast-row > td {
+    background: linear-gradient(
+        90deg,
+        #fef3c7 0%,
+        #fde68a 25%,
+        #fcd34d 50%,
+        #fde68a 75%,
+        #fef3c7 100%
+    ) !important;
+    background-size: 250% 100% !important;
+    animation: fastLiquidFlow 1.6s ease-in-out infinite !important;
+}
+
+
 
 
 

@@ -6,7 +6,7 @@ import { formatDate, formatToReadableDate } from "@/lib/date-utils";
 import { IconArrowDownLeft, IconArrowRight, IconArrowUpRight } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
-import { TRANSFER_STATUS_LABELS, TRANSFER_SHIPMENT_STATUS_LABELS } from "../../constants";
+import { TRANSFER_STATUS, TRANSFER_STATUS_LABELS, TRANSFER_SHIPMENT_STATUS, TRANSFER_SHIPMENT_STATUS_LABELS } from "../../constants";
 import type { StockTransfer } from "../../types";
 
 export function useTransferColumns(activeStoreUid?: string | null) {
@@ -116,33 +116,59 @@ export function useTransferColumns(activeStoreUid?: string | null) {
       {
         accessorKey: "status",
         header: "Status Transfer",
-        size: 130,
+        size: 140,
         meta: { headerClassName: "text-center", cellClassName: "text-center" },
         cell: ({ row }) => {
-          const st = row.original.status;
+          const st = (row.original.status || "").toLowerCase().trim();
+          const isFinishedOrRejected = [
+            TRANSFER_STATUS.FINISH,
+            TRANSFER_STATUS.FINISHED,
+            TRANSFER_STATUS.REJECTED,
+            TRANSFER_STATUS.CANCELLED,
+            "selesai",
+            "completed",
+            "ditolak",
+            "canceled",
+            "batal",
+          ].includes(st);
+
           return (
             <StatusBadge
-              status={st}
-              label={TRANSFER_STATUS_LABELS[st] || st}
-              className="text-xs px-2.5 py-0.5 font-bold"
+              status={row.original.status}
+              label={TRANSFER_STATUS_LABELS[row.original.status] || row.original.status}
+              pulse={!isFinishedOrRejected}
             />
           );
         },
       },
       {
         id: "status_pengiriman",
-        header: "Status Pengiriman",
-        size: 150,
+        header: "Status Penerimaan",
+        size: 160,
         meta: { headerClassName: "text-center", cellClassName: "text-center" },
         cell: ({ row }) => {
           const statusPengiriman = row.original.status_pengiriman || row.original.status_penerimaan;
           if (!statusPengiriman) return <span className="text-slate-400 text-xs">—</span>;
 
+          const shipSt = statusPengiriman.toLowerCase().trim();
+          const isShipmentFinishedOrRejected = [
+            TRANSFER_SHIPMENT_STATUS.RECEIVED,
+            TRANSFER_SHIPMENT_STATUS.REJECTED,
+            "finished",
+            "selesai",
+            "completed",
+            "diterima",
+            "ditolak",
+            "cancelled",
+            "canceled",
+            "batal",
+          ].includes(shipSt);
+
           return (
             <StatusBadge
               status={statusPengiriman}
               label={TRANSFER_SHIPMENT_STATUS_LABELS[statusPengiriman] || statusPengiriman.replace("_", " ")}
-              className="text-xs px-2.5 py-0.5 font-bold"
+              pulse={!isShipmentFinishedOrRejected}
             />
           );
         },

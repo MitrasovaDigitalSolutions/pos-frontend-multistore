@@ -1,28 +1,28 @@
 "use client";
 
+import { IconInfoCircle } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { IconInfoCircle } from "@tabler/icons-react";
 
 import { hasPermission, hasRole } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
+import { useStores } from "@/features/stores/api/stores-api";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useActiveStoreStore } from "@/stores/active-store-store";
-import { useStores } from "@/features/stores/api/stores-api";
-import { useStockTransfersByMode, StockTransferListMode } from "../api/stock-transfer-api";
+import { StockTransferListMode, useStockTransfersByMode } from "../api/stock-transfer-api";
 
-import { AppButton } from "@/components/shared/app-button";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { DataTable } from "@/components/ui/data-table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { cn } from "@/lib/utils";
+import { TransferListFilters, type TransferFilterValues } from "./list/transfer-list-filters";
 import { TransferListHeader } from "./list/transfer-list-header";
 import { TransferListStatCards } from "./list/transfer-list-stat-cards";
-import { TransferListFilters, type TransferFilterValues } from "./list/transfer-list-filters";
 import { useTransferColumns } from "./list/use-transfer-columns";
 
-import { TRANSFER_STATUS, TRANSFER_SHIPMENT_STATUS } from "../constants";
+import { TRANSFER_SHIPMENT_STATUS, TRANSFER_STATUS } from "../constants";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "Semua Status Transfer" },
@@ -35,7 +35,7 @@ const STATUS_OPTIONS = [
 ];
 
 const STATUS_PENERIMAAN_OPTIONS = [
-  { value: "all", label: "Semua Status Pengiriman" },
+  { value: "all", label: "Semua Status Penerimaan" },
   { value: TRANSFER_SHIPMENT_STATUS.PENDING, label: "Pending" },
   { value: TRANSFER_SHIPMENT_STATUS.PARTIALLY_RECEIVED, label: "Diterima Sebagian" },
   { value: TRANSFER_SHIPMENT_STATUS.RECEIVED, label: "Diterima Penuh" },
@@ -167,22 +167,72 @@ export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
               setSortOrder(order);
               setPage(1);
             }}
-            extraActions={(item) => (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <AppButton
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    onClick={() => router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/${item.uid}?from=${mode}`)}
-                    className="text-slate-600 hover:text-emerald-600 hover:bg-emerald-50"
-                  >
-                    <IconInfoCircle size={16} />
-                  </AppButton>
-                </TooltipTrigger>
-                <TooltipContent>Lihat Detail Transfer</TooltipContent>
-              </Tooltip>
-            )}
+            getRowMotionProps={(item) => {
+              const st = (item.status || "").toLowerCase().trim();
+              const isFinishedOrRejected = [
+                TRANSFER_STATUS.FINISH,
+                TRANSFER_STATUS.FINISHED,
+                TRANSFER_STATUS.REJECTED,
+                TRANSFER_STATUS.CANCELLED,
+                "selesai",
+                "batal",
+                "dibatalkan",
+                "rejected",
+                "ditolak",
+              ].includes(st);
+
+              if (!isFinishedOrRejected) {
+                return {
+                  animate: {
+                    backgroundColor: [
+                      "#fffbeb", // Amber-50
+                      "#fef3c7", // Amber-100
+                      "#fffbeb", // Amber-50
+                    ],
+                  },
+                  transition: {
+                    duration: 1.8,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  },
+                };
+              }
+              return undefined;
+            }}
+            extraActions={(item) => {
+              const st = (item.status || "").toLowerCase().trim();
+              const isFinishedOrRejected = [
+                TRANSFER_STATUS.FINISH,
+                TRANSFER_STATUS.FINISHED,
+                TRANSFER_STATUS.REJECTED,
+                TRANSFER_STATUS.CANCELLED,
+                "selesai",
+                "batal",
+                "dibatalkan",
+                "rejected",
+                "ditolak",
+              ].includes(st);
+
+              return (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={() => router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/${item.uid}?from=${mode}`)}
+                      className={cn(
+                        "p-1.5 rounded-xl transition-all shadow-2xs active:scale-95 cursor-pointer flex items-center justify-center border",
+                        !isFinishedOrRejected
+                          ? "text-amber-600 bg-white hover:bg-amber-500 hover:text-white border-amber-300 hover:border-amber-500 hover:shadow-amber-500/20"
+                          : "text-slate-600 bg-white hover:bg-slate-700 hover:text-white border-slate-200/80 hover:border-slate-700 hover:shadow-slate-500/10"
+                      )}
+                    >
+                      <IconInfoCircle size={18} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Lihat Detail Transfer</TooltipContent>
+                </Tooltip>
+              );
+            }}
           />
         </section>
       </div>

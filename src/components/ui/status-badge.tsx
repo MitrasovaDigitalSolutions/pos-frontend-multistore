@@ -94,6 +94,7 @@ interface StatusBadgeProps {
     | "danger"
     | "warning"
     | "info"
+    | "sky"
     | "secondary"
     | "purple"
     | "cyan"
@@ -118,6 +119,7 @@ export function StatusBadge({
     | "danger"
     | "warning"
     | "info"
+    | "sky"
     | "secondary"
     | "purple"
     | "cyan"
@@ -217,12 +219,13 @@ export function StatusBadge({
       break;
 
     // 🟡 WARNING & PENDING & IN PROCESS & PARTIAL STATES
+    // 🟡 WARNING & PENDING & IN PROCESS & PARTIAL STATES
     case "pending":
     case "menunggu":
     case "menunggu_diterima":
-      resolvedVariant = "secondary";
+      resolvedVariant = "warning";
       if (!label) resolvedLabel = "Pending";
-      dotColor = "bg-slate-400";
+      dotColor = "bg-amber-500";
       if (pulse === undefined) shouldPulse = true;
       break;
 
@@ -250,7 +253,7 @@ export function StatusBadge({
     case "partially-received":
     case "partial-received":
     case "diterima_sebagian":
-      resolvedVariant = "warning";
+      resolvedVariant = "purple";
       if (!label) {
         if (
           normalized.includes("received") ||
@@ -261,7 +264,7 @@ export function StatusBadge({
           resolvedLabel = "Sebagian";
         }
       }
-      dotColor = "bg-amber-500";
+      dotColor = "bg-indigo-500";
       break;
 
     // 🔵 INFO & IN-TRANSIT & ORDERED STATES
@@ -272,12 +275,13 @@ export function StatusBadge({
       dotColor = "bg-blue-500";
       break;
 
+    case "sent":
     case "in_transit":
     case "dikirim":
     case "transit":
-      resolvedVariant = "info";
-      if (!label) resolvedLabel = "Dalam Pengiriman";
-      dotColor = "bg-blue-500";
+      resolvedVariant = "sky";
+      if (!label) resolvedLabel = normalized === "sent" ? "Dikirim" : "Dalam Pengiriman";
+      dotColor = "bg-sky-500";
       if (pulse === undefined) shouldPulse = true;
       break;
 

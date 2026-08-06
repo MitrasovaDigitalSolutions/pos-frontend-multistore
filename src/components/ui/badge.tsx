@@ -23,6 +23,8 @@ const badgeVariants = cva(
           "border-amber-500/20 bg-amber-50 text-amber-700 hover:bg-amber-100/80 dark:border-amber-500/30 dark:bg-amber-950/40 dark:text-amber-400",
         info:
           "border-blue-500/20 bg-blue-50 text-blue-700 hover:bg-blue-100/80 dark:border-blue-500/30 dark:bg-blue-950/40 dark:text-blue-400",
+        sky:
+          "border-sky-500/20 bg-sky-50 text-sky-700 hover:bg-sky-100/80 dark:border-sky-500/30 dark:bg-sky-950/40 dark:text-sky-400",
         purple:
           "border-indigo-500/20 bg-indigo-50 text-indigo-700 hover:bg-indigo-100/80 dark:border-indigo-500/30 dark:bg-indigo-950/40 dark:text-indigo-400",
         cyan:

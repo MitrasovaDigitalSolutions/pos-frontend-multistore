@@ -37,7 +37,8 @@ import {
     useReactTable,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, InfoIcon, LayoutGrid, LayoutList, Search } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Eye, InfoIcon, LayoutGrid, LayoutList, Search } from "lucide-react";
 import * as React from "react";
 import { useDeviceResponsive } from "@/hooks/use-device";
 import { DataGrid } from "@/components/ui/data-grid";
@@ -110,6 +111,8 @@ interface DataTableProps<TData, TValue> {
     hideCheck?: boolean | ((row: TData) => boolean);
     disableCheck?: boolean | ((row: TData) => boolean);
     extraActions?: (row: TData) => React.ReactNode;
+    getRowClassName?: (row: TData) => string;
+    getRowMotionProps?: (row: TData) => React.ComponentProps<typeof motion.tr> | undefined;
 }
 
 export function DataTable<TData, TValue>({
@@ -158,6 +161,8 @@ export function DataTable<TData, TValue>({
     hideCheck,
     disableCheck,
     extraActions,
+    getRowClassName,
+    getRowMotionProps,
 }: DataTableProps<TData, TValue>) {
     const { isMobile } = useDeviceResponsive();
     const [viewMode, setViewMode] = React.useState<"table" | "card">(
@@ -309,7 +314,7 @@ export function DataTable<TData, TValue>({
             size: 120,
             meta: {
                 headerClassName: "text-center w-28 sticky right-0 top-0 bg-slate-50 z-30 shadow-[-1px_0_0_0_rgba(241,245,249,1)] border-l border-slate-100",
-                cellClassName: "text-center sticky right-0 bg-white group-hover:bg-slate-100 z-10 shadow-[-1px_0_0_0_rgba(241,245,249,1)] border-l border-slate-100 transition-colors",
+                cellClassName: "text-center sticky right-0 bg-white dark:bg-slate-900 [.animate-liquid-fast-row_&]:bg-inherit group-hover:bg-slate-50 [.animate-liquid-fast-row_&]:group-hover:bg-black/[0.03] z-10 shadow-[-1px_0_0_0_rgba(241,245,249,1)] border-l border-slate-100 transition-colors",
             },
             cell: ({ row }) => {
                 const item = row.original;
@@ -332,11 +337,11 @@ export function DataTable<TData, TValue>({
                                         onClick={() => onView(item)}
                                         disabled={isViewDisabled}
                                         className={cn(
-                                            "p-1 text-slate-600 hover:bg-slate-50 rounded-xl transition-colors border-none bg-transparent cursor-pointer",
-                                            isViewDisabled && "opacity-40 cursor-not-allowed hover:bg-transparent"
+                                            "p-1.5 text-emerald-600 bg-white hover:bg-emerald-600 hover:text-white border border-emerald-200/80 hover:border-emerald-600 rounded-xl transition-all shadow-2xs hover:shadow-emerald-500/20 active:scale-95 cursor-pointer flex items-center justify-center",
+                                            isViewDisabled && "opacity-40 cursor-not-allowed hover:bg-white hover:text-emerald-600"
                                         )}
                                     >
-                                        <InfoIcon size={16} />
+                                        <InfoIcon className="w-4.5 h-4.5 stroke-[2.2]" />
                                     </button>
                                 </TooltipTrigger>
                                 <TooltipContent>Lihat Detail</TooltipContent>
@@ -349,8 +354,8 @@ export function DataTable<TData, TValue>({
                                         onClick={() => onEdit(item)}
                                         disabled={isEditDisabled}
                                         className={cn(
-                                            "p-1 text-amber-600 hover:bg-amber-50 rounded transition-colors border-none bg-transparent cursor-pointer",
-                                            isEditDisabled && "opacity-40 cursor-not-allowed hover:bg-transparent"
+                                            "p-1.5 text-amber-600 bg-white hover:bg-amber-500 hover:text-white border border-amber-200/80 hover:border-amber-500 rounded-xl transition-all shadow-2xs hover:shadow-amber-500/20 active:scale-95 cursor-pointer flex items-center justify-center",
+                                            isEditDisabled && "opacity-40 cursor-not-allowed hover:bg-white hover:text-amber-600"
                                         )}
                                     >
                                         <IconEdit size={16} />
@@ -366,8 +371,8 @@ export function DataTable<TData, TValue>({
                                         onClick={() => onCheck(item)}
                                         disabled={isCheckDisabled}
                                         className={cn(
-                                            "p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors border-none bg-transparent cursor-pointer",
-                                            isCheckDisabled && "opacity-40 cursor-not-allowed hover:bg-transparent"
+                                            "p-1.5 text-emerald-600 bg-white hover:bg-emerald-600 hover:text-white border border-emerald-200/80 hover:border-emerald-600 rounded-xl transition-all shadow-2xs hover:shadow-emerald-500/20 active:scale-95 cursor-pointer flex items-center justify-center",
+                                            isCheckDisabled && "opacity-40 cursor-not-allowed hover:bg-white hover:text-emerald-600"
                                         )}
                                     >
                                         <IconCheck size={16} />
@@ -383,8 +388,8 @@ export function DataTable<TData, TValue>({
                                         onClick={() => onDelete(item)}
                                         disabled={isDeleteDisabled}
                                         className={cn(
-                                            "p-1 text-rose-500 hover:bg-rose-50 rounded transition-colors border-none bg-transparent cursor-pointer",
-                                            isDeleteDisabled && "opacity-40 cursor-not-allowed hover:bg-transparent"
+                                            "p-1.5 text-rose-600 bg-white hover:bg-rose-600 hover:text-white border border-rose-200/80 hover:border-rose-600 rounded-xl transition-all shadow-2xs hover:shadow-rose-500/20 active:scale-95 cursor-pointer flex items-center justify-center",
+                                            isDeleteDisabled && "opacity-40 cursor-not-allowed hover:bg-white hover:text-rose-600"
                                         )}
                                     >
                                         <IconTrash size={16} />
@@ -707,15 +712,18 @@ export function DataTable<TData, TValue>({
                                     )}
                                     {virtualItems.map((virtualRow) => {
                                         const row = rows[virtualRow.index];
+                                        const motionProps = getRowMotionProps?.(row.original);
                                         return (
-                                            <TableRow
+                                            <motion.tr
                                                 key={row.id}
                                                 data-index={virtualRow.index}
                                                 ref={rowVirtualizer.measureElement}
                                                 className={cn(
                                                     "hover:bg-slate-100/70 border-b border-slate-100 transition-colors group",
                                                     isFetching && "opacity-75",
+                                                    getRowClassName?.(row.original)
                                                 )}
+                                                {...motionProps}
                                             >
                                                 {row
                                                     .getVisibleCells()
@@ -740,7 +748,7 @@ export function DataTable<TData, TValue>({
                                                             )}
                                                         </TableCell>
                                                     ))}
-                                            </TableRow>
+                                            </motion.tr>
                                         );
                                     })}
                                     {paddingBottom > 0 && (
@@ -756,35 +764,40 @@ export function DataTable<TData, TValue>({
                                 </>
                             ) : (
                                 // Standard non-virtualized rows
-                                rows.map((row) => (
-                                    <TableRow
-                                        key={row.id}
-                                        className={cn(
-                                            "hover:bg-slate-100/70 border-b border-slate-100 transition-colors group",
-                                            isFetching && "opacity-75",
-                                        )}
-                                    >
-                                        {row.getVisibleCells().map((cell) => (
-                                            <TableCell
-                                                key={cell.id}
-                                                className={cn(
-                                                    "py-3.5 px-4 text-xs font-medium text-slate-700",
-                                                    cell.column.columnDef.meta
-                                                        ?.cellClassName,
-                                                )}
-                                                style={{
-                                                    width: cell.column.columnDef.size,
-                                                    minWidth: cell.column.columnDef.size,
-                                                }}
-                                            >
-                                                {flexRender(
-                                                    cell.column.columnDef.cell,
-                                                    cell.getContext(),
-                                                )}
-                                            </TableCell>
-                                        ))}
-                                    </TableRow>
-                                ))
+                                rows.map((row) => {
+                                    const motionProps = getRowMotionProps?.(row.original);
+                                    return (
+                                        <motion.tr
+                                            key={row.id}
+                                            className={cn(
+                                                "hover:bg-slate-100/70 border-b border-slate-100 transition-colors group",
+                                                isFetching && "opacity-75",
+                                                getRowClassName?.(row.original)
+                                            )}
+                                            {...motionProps}
+                                        >
+                                            {row.getVisibleCells().map((cell) => (
+                                                <TableCell
+                                                    key={cell.id}
+                                                    className={cn(
+                                                        "py-3.5 px-4 text-xs font-medium text-slate-700",
+                                                        cell.column.columnDef.meta
+                                                            ?.cellClassName,
+                                                    )}
+                                                    style={{
+                                                        width: cell.column.columnDef.size,
+                                                        minWidth: cell.column.columnDef.size,
+                                                    }}
+                                                >
+                                                    {flexRender(
+                                                        cell.column.columnDef.cell,
+                                                        cell.getContext(),
+                                                    )}
+                                                </TableCell>
+                                            ))}
+                                        </motion.tr>
+                                    );
+                                })
                             )}
                         </TableBody>
                     </Table>
@@ -801,7 +814,7 @@ export function DataTable<TData, TValue>({
                     if (startItem === 1 && endItem === computedMeta.total) {
                         return (
                             <>
-                                Total <strong className="text-slate-900 dark:text-slate-100 font-extrabold">{computedMeta.total}</strong> {entityName}
+                                Total <span className="text-slate-900 dark:text-slate-100 font-extrabold">{computedMeta.total}</span> {entityName}
                             </>
                         );
                     }
@@ -843,11 +856,10 @@ export function DataTable<TData, TValue>({
                             key={page}
                             type="button"
                             onClick={() => handlePageChange(page)}
-                            className={`w-7 h-7 rounded-lg border text-[11px] font-extrabold flex items-center justify-center transition-all shadow-2xs cursor-pointer ${
-                                page === current
-                                    ? "border-emerald-600 bg-emerald-600 text-white shadow-emerald-500/20"
-                                    : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 hover:bg-slate-50"
-                            }`}
+                            className={`w-7 h-7 rounded-lg border text-[11px] font-extrabold flex items-center justify-center transition-all shadow-2xs cursor-pointer ${page === current
+                                ? "border-emerald-600 bg-emerald-600 text-white shadow-emerald-500/20"
+                                : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 hover:bg-slate-50"
+                                }`}
                         >
                             {page}
                         </button>

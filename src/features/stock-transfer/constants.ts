@@ -29,7 +29,7 @@ export const TRANSFER_STATUS_CLASSES: Record<string, string> = {
   cancelled: "bg-rose-50 text-rose-700 border-rose-200",
 };
 
-// ─── Status Pengiriman / Penerimaan ──────────────────────────────────────────
+// ─── Status Penerimaan / Penerimaan ──────────────────────────────────────────
 export const TRANSFER_SHIPMENT_STATUS = {
   PENDING: "pending",
   PARTIALLY_RECEIVED: "partially_received",
