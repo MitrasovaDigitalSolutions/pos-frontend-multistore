@@ -81,24 +81,47 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
       }
     >
   >({});
+  const [validatedReturnMap, setValidatedReturnMap] = useState<
+    Record<string, { kuantitas_return: number; return_validated_at: string }>
+  >({});
 
   // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const items = useMemo(() => {
     if (!transfer?.items) return [];
-    return transfer.items.map((it) => {
+    const list = transfer.items.map((it) => {
       const submitted = submittedItemMap[it.uid];
+      const validatedReturn = validatedReturnMap[it.uid];
+
+      let updated = { ...it };
+
       if (submitted) {
-        return {
-          ...it,
+        updated = {
+          ...updated,
           status: submitted.status,
           kuantitas_diterima: submitted.kuantitas_diterima,
-          jenis_selisih: submitted.jenis_selisih || it.jenis_selisih,
-          keterangan: submitted.keterangan || it.keterangan,
+          jenis_selisih: submitted.jenis_selisih || updated.jenis_selisih,
+          keterangan: submitted.keterangan || updated.keterangan,
         };
       }
-      return it;
+
+      if (validatedReturn) {
+        updated = {
+          ...updated,
+          kuantitas_return: validatedReturn.kuantitas_return,
+          return_validated_at: validatedReturn.return_validated_at,
+        };
+      }
+
+      return updated;
     });
-  }, [transfer?.items, submittedItemMap]);
+
+    return [...list].sort((a, b) => {
+      if (a.created_at && b.created_at) {
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      }
+      return (a.uid || "").localeCompare(b.uid || "");
+    });
+  }, [transfer?.items, submittedItemMap, validatedReturnMap]);
 
   const handleReceiveItemSubmit = async (
     item: StockTransferItem,
@@ -137,10 +160,21 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
 
   const handleValidateReturnItem = async (item: StockTransferItem, kuantitasReturn: number) => {
     setValidatingItemUid(item.uid);
+    const nowIso = new Date().toISOString();
+    setValidatedReturnMap((prev) => ({
+      ...prev,
+      [item.uid]: { kuantitas_return: kuantitasReturn, return_validated_at: nowIso },
+    }));
+
     try {
       await validateReturn.mutateAsync({ uid, itemUid: item.uid, kuantitas_return: kuantitasReturn });
       toast.success(`Return item ${item.product?.nama || "berhasil"} divalidasi.`);
     } catch (err: unknown) {
+      setValidatedReturnMap((prev) => {
+        const next = { ...prev };
+        delete next[item.uid];
+        return next;
+      });
       const message = err instanceof Error ? err.message : "Gagal memvalidasi return";
       toast.error(`Gagal memvalidasi return: ${message}`);
     } finally {

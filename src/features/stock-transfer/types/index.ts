@@ -36,5 +36,7 @@ export interface StockTransferItem {
   stok_sebelum_dest: number | null;
   stok_sesudah_dest: number | null;
   harga_beli_avg: number;
+  created_at?: string | null;
+  updated_at?: string | null;
   product?: { uid: string; nama: string; barcode: string; satuan?: string };
 }

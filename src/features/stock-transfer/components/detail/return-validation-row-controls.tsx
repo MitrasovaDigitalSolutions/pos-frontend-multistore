@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { IconCheck } from "@tabler/icons-react";
+import { IconCheck, IconLoader2 } from "@tabler/icons-react";
+import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { StockTransferItem } from "../../types";
 
@@ -25,9 +26,9 @@ export function ReturnValidationRowControls({
   if (item.return_validated_at) {
     return (
       <div className="flex flex-col items-center gap-0.5">
-        <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+        <Badge variant="success" className="px-2.5 py-0.5 text-xs font-bold">
           Sudah Divalidasi
-        </span>
+        </Badge>
         <span className="text-[10px] text-slate-500 font-bold">
           Return: {item.kuantitas_return ?? 0} pcs
         </span>
@@ -37,9 +38,9 @@ export function ReturnValidationRowControls({
 
   if (diff <= 0) {
     return (
-      <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+      <Badge variant="success" className="px-2.5 py-0.5 text-xs font-bold">
         Diterima Penuh
-      </span>
+      </Badge>
     );
   }
 
@@ -50,6 +51,17 @@ export function ReturnValidationRowControls({
     setConfirmOpen(false);
   };
 
+  if (isProcessing) {
+    return (
+      <div className="flex items-center justify-center">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold animate-pulse border border-slate-200 shadow-2xs">
+          <IconLoader2 className="animate-spin w-3.5 h-3.5 text-emerald-600" />
+          <span>Memproses...</span>
+        </span>
+      </div>
+    );
+  }
+
   return (
     <>
       <button
@@ -59,7 +71,7 @@ export function ReturnValidationRowControls({
         className="h-8 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
       >
         <IconCheck size={14} />
-        <span>{isProcessing ? "..." : "Validasi Return"}</span>
+        <span>Validasi Return</span>
       </button>
 
       <ConfirmDialog
