@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { IconCheck, IconLoader2 } from "@tabler/icons-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { StockTransferItem } from "../../types";
+import { IconCheck } from "@tabler/icons-react";
 
 interface ReturnValidationRowControlsProps {
   item: StockTransferItem;
@@ -53,11 +54,8 @@ export function ReturnValidationRowControls({
 
   if (isProcessing) {
     return (
-      <div className="flex items-center justify-center">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold animate-pulse border border-slate-200 shadow-2xs">
-          <IconLoader2 className="animate-spin w-3.5 h-3.5 text-emerald-600" />
-          <span>Memproses...</span>
-        </span>
+      <div className="flex items-center justify-center py-1">
+        <Skeleton className="h-7 w-28 rounded-xl" />
       </div>
     );
   }

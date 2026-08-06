@@ -1,34 +1,34 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
-import { useForm, FormProvider } from "react-hook-form";
-import { IconAlertCircle, IconCircleX } from "@tabler/icons-react";
 import { ROUTES } from "@/constants/routes";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { useActiveStoreStore } from "@/stores/active-store-store";
 import { ENDPOINTS } from "@/shared/api/endpoints";
+import { useActiveStoreStore } from "@/stores/active-store-store";
+import { IconAlertCircle, IconCircleX } from "@tabler/icons-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import {
   useCancelStockTransfer,
   useFinalizeStockTransfer,
   useReceiveStockTransfer,
-  useValidateStockTransferReturn,
   useStockTransferDetail,
+  useValidateStockTransferReturn,
 } from "../api/stock-transfer-api";
 import { JENIS_SELISIH, TRANSFER_SHIPMENT_STATUS, TRANSFER_STATUS } from "../constants";
 
+import { AppButton } from "@/components/shared/app-button";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
-import { AppButton } from "@/components/shared/app-button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { TransferDetailHeader } from "./detail/transfer-detail-header";
-import { TransferDetailStepper } from "./detail/transfer-detail-stepper";
-import { TransferDetailItemsTable } from "./detail/transfer-detail-items-table";
-import { TransferDetailInfoCards } from "./detail/transfer-detail-info-cards";
-import type { ReceiveFormValues } from "./detail/types";
 import type { StockTransferItem } from "../types";
+import { TransferDetailHeader } from "./detail/transfer-detail-header";
+import { TransferDetailInfoCards } from "./detail/transfer-detail-info-cards";
+import { TransferDetailItemsTable } from "./detail/transfer-detail-items-table";
+import { TransferDetailStepper } from "./detail/transfer-detail-stepper";
+import type { ReceiveFormValues } from "./detail/types";
 
 interface TransferDetailPageProps {
   uid: string;
@@ -70,58 +70,28 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
   const [cancelReason, setCancelReason] = useState("");
   const [processingItemUid, setProcessingItemUid] = useState<string | null>(null);
   const [validatingItemUid, setValidatingItemUid] = useState<string | null>(null);
-  const [submittedItemMap, setSubmittedItemMap] = useState<
-    Record<
-      string,
-      {
-        status: typeof TRANSFER_SHIPMENT_STATUS.RECEIVED | typeof TRANSFER_SHIPMENT_STATUS.REJECTED;
-        kuantitas_diterima: number;
-        jenis_selisih?: typeof JENIS_SELISIH.SALAH_INPUT | typeof JENIS_SELISIH.RUSAK | typeof JENIS_SELISIH.HILANG;
-        keterangan?: string;
-      }
-    >
-  >({});
-  const [validatedReturnMap, setValidatedReturnMap] = useState<
-    Record<string, { kuantitas_return: number; return_validated_at: string }>
-  >({});
+
+  // Fixed Array Index Order Ref to prevent row shifting when refetching
+  const initialOrderRef = useRef<string[]>([]);
+  useEffect(() => {
+    if (transfer?.items && initialOrderRef.current.length === 0) {
+      initialOrderRef.current = transfer.items.map((it) => it.uid);
+    }
+  }, [transfer?.items]);
 
   // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const items = useMemo(() => {
     if (!transfer?.items) return [];
-    const list = transfer.items.map((it) => {
-      const submitted = submittedItemMap[it.uid];
-      const validatedReturn = validatedReturnMap[it.uid];
+    const list = [...transfer.items];
+    // eslint-disable-next-line react-hooks/refs
+    const orderMap = new Map(initialOrderRef.current.map((itemUid, idx) => [itemUid, idx]));
 
-      let updated = { ...it };
-
-      if (submitted) {
-        updated = {
-          ...updated,
-          status: submitted.status,
-          kuantitas_diterima: submitted.kuantitas_diterima,
-          jenis_selisih: submitted.jenis_selisih || updated.jenis_selisih,
-          keterangan: submitted.keterangan || updated.keterangan,
-        };
-      }
-
-      if (validatedReturn) {
-        updated = {
-          ...updated,
-          kuantitas_return: validatedReturn.kuantitas_return,
-          return_validated_at: validatedReturn.return_validated_at,
-        };
-      }
-
-      return updated;
+    return list.sort((a, b) => {
+      const idxA = orderMap.get(a.uid) ?? 999;
+      const idxB = orderMap.get(b.uid) ?? 999;
+      return idxA - idxB;
     });
-
-    return [...list].sort((a, b) => {
-      if (a.created_at && b.created_at) {
-        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-      }
-      return (a.uid || "").localeCompare(b.uid || "");
-    });
-  }, [transfer?.items, submittedItemMap, validatedReturnMap]);
+  }, [transfer?.items]);
 
   const handleReceiveItemSubmit = async (
     item: StockTransferItem,
@@ -133,11 +103,6 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
     }
   ) => {
     setProcessingItemUid(item.uid);
-    setSubmittedItemMap((prev) => ({
-      ...prev,
-      [item.uid]: payload,
-    }));
-
     try {
       await receive.mutateAsync({
         uid,
@@ -146,11 +111,6 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
       });
       toast.success(`Item "${item.product?.nama || "produk"}" berhasil diproses.`);
     } catch (err: unknown) {
-      setSubmittedItemMap((prev) => {
-        const next = { ...prev };
-        delete next[item.uid];
-        return next;
-      });
       const message = err instanceof Error ? err.message : "Gagal memproses item";
       toast.error(`Gagal memproses item: ${message}`);
     } finally {
@@ -160,21 +120,10 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
 
   const handleValidateReturnItem = async (item: StockTransferItem, kuantitasReturn: number) => {
     setValidatingItemUid(item.uid);
-    const nowIso = new Date().toISOString();
-    setValidatedReturnMap((prev) => ({
-      ...prev,
-      [item.uid]: { kuantitas_return: kuantitasReturn, return_validated_at: nowIso },
-    }));
-
     try {
       await validateReturn.mutateAsync({ uid, itemUid: item.uid, kuantitas_return: kuantitasReturn });
       toast.success(`Return item ${item.product?.nama || "berhasil"} divalidasi.`);
     } catch (err: unknown) {
-      setValidatedReturnMap((prev) => {
-        const next = { ...prev };
-        delete next[item.uid];
-        return next;
-      });
       const message = err instanceof Error ? err.message : "Gagal memvalidasi return";
       toast.error(`Gagal memvalidasi return: ${message}`);
     } finally {

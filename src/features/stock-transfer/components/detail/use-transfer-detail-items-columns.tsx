@@ -44,7 +44,7 @@ export function useTransferDetailItemsColumns({
         {
           accessorKey: "product.nama",
           header: "Produk",
-          size: 190,
+          size: 200,
           cell: ({ row }) => (
             <div className="flex flex-col gap-0.5">
               <span className="font-bold text-slate-800 text-xs">
@@ -61,18 +61,18 @@ export function useTransferDetailItemsColumns({
         {
           accessorKey: "kuantitas",
           header: "Dikirim",
-          size: 90,
+          size: 85,
           meta: { headerClassName: "text-center", cellClassName: "text-center font-bold text-slate-900" },
           cell: ({ row }) => (
-            <Badge variant="secondary" className="px-2.5 py-0.5 text-xs font-bold">
+            <Badge variant="secondary" className="px-2.5 py-0.5 text-xs font-bold bg-slate-100 text-slate-700">
               {row.original.kuantitas} pcs
             </Badge>
           ),
         },
         {
           id: "input_kuantitas_diterima",
-          header: "Kuantitas Diterima",
-          size: 130,
+          header: "Qty Diterima",
+          size: 110,
           meta: { headerClassName: "text-center", cellClassName: "text-center" },
           cell: ({ row }) => {
             if (row.original.status !== null && row.original.status !== undefined) {
@@ -114,7 +114,7 @@ export function useTransferDetailItemsColumns({
         {
           id: "input_keterangan",
           header: "Catatan Item",
-          size: 260,
+          size: 200,
           cell: ({ row }) => {
             if (row.original.status !== null && row.original.status !== undefined) {
               return (
@@ -126,7 +126,7 @@ export function useTransferDetailItemsColumns({
             return (
               <FormInput<ReceiveFormValues>
                 name={`items.${row.index}.keterangan`}
-                placeholder="Misal: Catatan barang..."
+                placeholder="Catatan..."
                 maxLength={500}
                 className="h-8 text-xs bg-white"
                 disabled={processingItemUid === row.original.uid}
@@ -142,7 +142,7 @@ export function useTransferDetailItemsColumns({
         {
           accessorKey: "product.nama",
           header: "Produk",
-          size: 190,
+          size: 200,
           cell: ({ row }) => (
             <div className="flex flex-col gap-0.5">
               <span className="font-bold text-slate-800 text-xs">
@@ -159,7 +159,7 @@ export function useTransferDetailItemsColumns({
         {
           id: "input_kuantitas_return",
           header: "Kuantitas Return",
-          size: 130,
+          size: 120,
           meta: { headerClassName: "text-center", cellClassName: "text-center" },
           cell: ({ row }) => {
             const diff = Number(row.original.kuantitas) - Number(row.original.kuantitas_diterima || 0);
@@ -188,10 +188,10 @@ export function useTransferDetailItemsColumns({
         {
           accessorKey: "kuantitas",
           header: "Dikirim",
-          size: 90,
+          size: 85,
           meta: { headerClassName: "text-center", cellClassName: "text-center font-bold text-slate-900" },
           cell: ({ row }) => (
-            <Badge variant="secondary" className="px-2.5 py-0.5 text-xs font-bold">
+            <Badge variant="secondary" className="px-2.5 py-0.5 text-xs font-bold bg-slate-100 text-slate-700">
               {row.original.kuantitas} pcs
             </Badge>
           ),
@@ -204,7 +204,7 @@ export function useTransferDetailItemsColumns({
           cell: ({ row }) => {
             const val = row.original.kuantitas_diterima;
             return (
-              <Badge variant="secondary" className="px-2.5 py-0.5 text-xs font-bold">
+              <Badge variant="secondary" className="px-2.5 py-0.5 text-xs font-bold bg-slate-100 text-slate-700">
                 {val != null ? val : "—"} pcs
               </Badge>
             );
@@ -228,7 +228,7 @@ export function useTransferDetailItemsColumns({
         {
           accessorKey: "keterangan",
           header: "Catatan Item",
-          size: 200,
+          size: 180,
           cell: ({ row }) => (
             <span className="text-xs text-slate-600 italic">
               {row.original.keterangan || "—"}
@@ -243,7 +243,7 @@ export function useTransferDetailItemsColumns({
       {
         accessorKey: "product.nama",
         header: "Produk",
-        size: 220,
+        size: 200,
         cell: ({ row }) => (
           <div className="flex flex-col gap-0.5">
             <span className="font-bold text-slate-800 text-xs">
@@ -260,10 +260,10 @@ export function useTransferDetailItemsColumns({
       {
         accessorKey: "kuantitas",
         header: "Dikirim",
-        size: 90,
+        size: 85,
         meta: { headerClassName: "text-center", cellClassName: "text-center font-bold text-slate-900" },
         cell: ({ row }) => (
-          <Badge variant="secondary" className="px-2.5 py-0.5 text-xs font-bold">
+          <Badge variant="secondary" className="px-2.5 py-0.5 text-xs font-bold bg-slate-100 text-slate-700">
             {row.original.kuantitas} pcs
           </Badge>
         ),
@@ -314,7 +314,7 @@ export function useTransferDetailItemsColumns({
       {
         accessorKey: "keterangan",
         header: "Catatan Item",
-        size: 150,
+        size: 180,
         cell: ({ row }) => (
           <span className="text-xs text-slate-600 italic">
             {row.original.keterangan || "—"}

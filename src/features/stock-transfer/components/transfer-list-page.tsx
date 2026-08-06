@@ -197,7 +197,10 @@ export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
                   },
                 };
               }
-              return undefined;
+              return {
+                animate: { backgroundColor: "#ffffff" },
+                transition: { duration: 0.2 },
+              };
             }}
             extraActions={(item) => {
               const st = (item.status || "").toLowerCase().trim();

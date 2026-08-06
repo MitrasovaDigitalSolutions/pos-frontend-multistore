@@ -93,41 +93,7 @@ export function useReceiveStockTransfer() {
         ENDPOINTS.INVENTORY.STOCK_TRANSFERS.RECEIVE_ITEM(uid, itemUid),
         payload
       ),
-    onMutate: async ({ uid, itemUid, payload }) => {
-      await qc.cancelQueries({ queryKey: queryKeys.inventory.stockTransferDetail(uid) });
-      const previousDetail = qc.getQueryData<ApiResponse<StockTransfer>>(queryKeys.inventory.stockTransferDetail(uid));
-
-      if (previousDetail?.data) {
-        const updatedItems = previousDetail.data.items.map((it) => {
-          if (it.uid === itemUid) {
-            return {
-              ...it,
-              status: payload?.status || ("received" as const),
-              kuantitas_diterima: payload?.status === "rejected" ? 0 : (payload?.kuantitas_diterima ?? it.kuantitas),
-              jenis_selisih: payload?.jenis_selisih || it.jenis_selisih,
-              keterangan: payload?.keterangan || it.keterangan,
-            };
-          }
-          return it;
-        });
-
-        qc.setQueryData(queryKeys.inventory.stockTransferDetail(uid), {
-          ...previousDetail,
-          data: {
-            ...previousDetail.data,
-            items: updatedItems,
-          },
-        });
-      }
-
-      return { previousDetail };
-    },
-    onError: (err, variables, context) => {
-      if (context?.previousDetail) {
-        qc.setQueryData(queryKeys.inventory.stockTransferDetail(variables.uid), context.previousDetail);
-      }
-    },
-    onSettled: (_, __, variables) => {
+    onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers(), refetchType: "all" });
       qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(variables.uid), refetchType: "all" });
     },
@@ -142,39 +108,7 @@ export function useValidateStockTransferReturn() {
         ENDPOINTS.INVENTORY.STOCK_TRANSFERS.RETURN_ITEM(uid, itemUid), 
         { kuantitas_return }
       ),
-    onMutate: async ({ uid, itemUid, kuantitas_return }) => {
-      await qc.cancelQueries({ queryKey: queryKeys.inventory.stockTransferDetail(uid) });
-      const previousDetail = qc.getQueryData<ApiResponse<StockTransfer>>(queryKeys.inventory.stockTransferDetail(uid));
-
-      if (previousDetail?.data) {
-        const updatedItems = previousDetail.data.items.map((it) => {
-          if (it.uid === itemUid) {
-            return {
-              ...it,
-              kuantitas_return: kuantitas_return ?? (it.kuantitas - (it.kuantitas_diterima || 0)),
-              return_validated_at: new Date().toISOString(),
-            };
-          }
-          return it;
-        });
-
-        qc.setQueryData(queryKeys.inventory.stockTransferDetail(uid), {
-          ...previousDetail,
-          data: {
-            ...previousDetail.data,
-            items: updatedItems,
-          },
-        });
-      }
-
-      return { previousDetail };
-    },
-    onError: (err, variables, context) => {
-      if (context?.previousDetail) {
-        qc.setQueryData(queryKeys.inventory.stockTransferDetail(variables.uid), context.previousDetail);
-      }
-    },
-    onSettled: (_, __, variables) => {
+    onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers(), refetchType: "all" });
       qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(variables.uid), refetchType: "all" });
     },

@@ -430,6 +430,15 @@ export function DataTable<TData, TValue>({
         state: {
             sorting,
         },
+        getRowId: (row: TData, index: number) => {
+            if (row && typeof row === "object" && "uid" in row && row.uid) {
+                return String(row.uid);
+            }
+            if (row && typeof row === "object" && "id" in row && row.id) {
+                return String(row.id);
+            }
+            return String(index);
+        },
         onSortingChange: handleSortingChange,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
