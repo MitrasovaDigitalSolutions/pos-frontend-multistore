@@ -4,9 +4,10 @@ import { useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { FormNumberInput } from "@/components/forms/form-number-input";
 import { FormInput } from "@/components/forms/form-input";
+import { Badge } from "@/components/ui/badge";
 import type { StockTransferItem } from "../../types";
 import type { ReceiveFormValues } from "./types";
-import { JENIS_SELISIH_CLASSES, JENIS_SELISIH_LABELS } from "../../constants";
+import { JENIS_SELISIH, JENIS_SELISIH_LABELS } from "../../constants";
 
 interface UseTransferDetailItemsColumnsProps {
   canReceive: boolean;
@@ -25,11 +26,16 @@ interface UseTransferDetailItemsColumnsProps {
   validatingItemUid?: string | null;
 }
 
+function getJenisSelisihBadgeVariant(js: string) {
+  if (js === JENIS_SELISIH.RUSAK) return "danger";
+  if (js === JENIS_SELISIH.SALAH_INPUT) return "warning";
+  return "secondary";
+}
+
 export function useTransferDetailItemsColumns({
   canReceive,
   canValidateReturn,
   processingItemUid,
-  onValidateReturnItem,
   validatingItemUid,
 }: UseTransferDetailItemsColumnsProps) {
   return useMemo<ColumnDef<StockTransferItem>[]>(() => {
@@ -58,9 +64,9 @@ export function useTransferDetailItemsColumns({
           size: 90,
           meta: { headerClassName: "text-center", cellClassName: "text-center font-bold text-slate-900" },
           cell: ({ row }) => (
-            <span className="inline-block bg-slate-100 text-slate-800 px-2.5 py-1 rounded-lg text-xs font-black">
+            <Badge variant="secondary" className="px-2.5 py-0.5 text-xs font-bold">
               {row.original.kuantitas} pcs
-            </span>
+            </Badge>
           ),
         },
         {
@@ -72,18 +78,10 @@ export function useTransferDetailItemsColumns({
             if (row.original.status !== null && row.original.status !== undefined) {
               const qRec = row.original.kuantitas_diterima;
               const isRejected = row.original.status === "rejected";
-              const js = row.original.jenis_selisih;
               return (
-                <div className="flex flex-col items-center gap-1">
-                  <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-extrabold ${isRejected ? "bg-rose-50 text-rose-700 border border-rose-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"}`}>
-                    {isRejected ? "Ditolak" : `${qRec} pcs`}
-                  </span>
-                  {js && (
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${JENIS_SELISIH_CLASSES[js] || "bg-amber-50 text-amber-700 border-amber-200"}`}>
-                      {JENIS_SELISIH_LABELS[js] || js.replace("_", " ")}
-                    </span>
-                  )}
-                </div>
+                <Badge variant={isRejected ? "danger" : "success"} className="px-2.5 py-0.5 text-xs font-bold">
+                  {isRejected ? "Ditolak" : `${qRec} pcs`}
+                </Badge>
               );
             }
 
@@ -93,8 +91,23 @@ export function useTransferDetailItemsColumns({
                 min={0}
                 max={row.original.kuantitas}
                 disabled={processingItemUid === row.original.uid}
-                className="h-8 w-20 text-xs text-center font-black mx-auto border-slate-200 bg-white"
+                className="h-8 w-20 text-xs text-center font-bold mx-auto border-slate-200 bg-white"
               />
+            );
+          },
+        },
+        {
+          id: "jenis_selisih",
+          header: "Alasan Selisih",
+          size: 130,
+          meta: { headerClassName: "text-center", cellClassName: "text-center" },
+          cell: ({ row }) => {
+            const js = row.original.jenis_selisih;
+            if (!js) return <span className="text-slate-400 text-xs">—</span>;
+            return (
+              <Badge variant={getJenisSelisihBadgeVariant(js)} className="px-2.5 py-0.5 text-xs font-bold">
+                {JENIS_SELISIH_LABELS[js] || js.replace("_", " ")}
+              </Badge>
             );
           },
         },
@@ -152,9 +165,9 @@ export function useTransferDetailItemsColumns({
             const diff = Number(row.original.kuantitas) - Number(row.original.kuantitas_diterima || 0);
             if (row.original.return_validated_at) {
               return (
-                <span className="inline-block px-2.5 py-1 rounded-lg text-xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <Badge variant="success" className="px-2.5 py-0.5 text-xs font-bold">
                   {row.original.kuantitas_return ?? 0} pcs
-                </span>
+                </Badge>
               );
             }
             if (diff <= 0) {
@@ -167,7 +180,7 @@ export function useTransferDetailItemsColumns({
                 min={0}
                 max={diff}
                 disabled={validatingItemUid === row.original.uid}
-                className="h-8 w-20 text-xs text-center font-black mx-auto border-slate-200 bg-white"
+                className="h-8 w-20 text-xs text-center font-bold mx-auto border-slate-200 bg-white"
               />
             );
           },
@@ -178,9 +191,9 @@ export function useTransferDetailItemsColumns({
           size: 90,
           meta: { headerClassName: "text-center", cellClassName: "text-center font-bold text-slate-900" },
           cell: ({ row }) => (
-            <span className="inline-block bg-slate-100 text-slate-800 px-2.5 py-1 rounded-lg text-xs font-black">
+            <Badge variant="secondary" className="px-2.5 py-0.5 text-xs font-bold">
               {row.original.kuantitas} pcs
-            </span>
+            </Badge>
           ),
         },
         {
@@ -191,9 +204,9 @@ export function useTransferDetailItemsColumns({
           cell: ({ row }) => {
             const val = row.original.kuantitas_diterima;
             return (
-              <span className="inline-block bg-slate-100 text-slate-800 px-2.5 py-1 rounded-lg text-xs font-black">
+              <Badge variant="secondary" className="px-2.5 py-0.5 text-xs font-bold">
                 {val != null ? val : "—"} pcs
-              </span>
+              </Badge>
             );
           },
         },
@@ -206,12 +219,9 @@ export function useTransferDetailItemsColumns({
             const js = row.original.jenis_selisih;
             if (!js) return <span className="text-slate-400 text-xs">—</span>;
             return (
-              <span
-                className={`inline-block text-[10px] px-2.5 py-0.5 rounded-full font-extrabold border ${JENIS_SELISIH_CLASSES[js] || "bg-amber-50 text-amber-700 border-amber-200"
-                  }`}
-              >
+              <Badge variant={getJenisSelisihBadgeVariant(js)} className="px-2.5 py-0.5 text-xs font-bold">
                 {JENIS_SELISIH_LABELS[js] || js.replace("_", " ")}
-              </span>
+              </Badge>
             );
           },
         },
@@ -253,9 +263,9 @@ export function useTransferDetailItemsColumns({
         size: 90,
         meta: { headerClassName: "text-center", cellClassName: "text-center font-bold text-slate-900" },
         cell: ({ row }) => (
-          <span className="inline-block bg-slate-100 text-slate-800 px-2 py-0.5 rounded-md text-xs font-extrabold">
+          <Badge variant="secondary" className="px-2.5 py-0.5 text-xs font-bold">
             {row.original.kuantitas} pcs
-          </span>
+          </Badge>
         ),
       },
       {
@@ -272,22 +282,17 @@ export function useTransferDetailItemsColumns({
 
           if (isRejected) {
             return (
-              <span className="inline-block px-2 py-0.5 rounded-md text-xs font-extrabold bg-rose-50 text-rose-700 border border-rose-200">
+              <Badge variant="danger" className="px-2.5 py-0.5 text-xs font-bold">
                 Ditolak
-              </span>
+              </Badge>
             );
           }
 
           const isMatch = qRec === qSent;
           return (
-            <span
-              className={`inline-block px-2 py-0.5 rounded-md text-xs font-extrabold ${isMatch
-                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                  : "bg-amber-50 text-amber-700 border border-amber-200"
-                }`}
-            >
+            <Badge variant={isMatch ? "success" : "warning"} className="px-2.5 py-0.5 text-xs font-bold">
               {qRec} pcs
-            </span>
+            </Badge>
           );
         },
       },
@@ -300,12 +305,9 @@ export function useTransferDetailItemsColumns({
           const js = row.original.jenis_selisih;
           if (!js) return <span className="text-slate-400 text-xs">—</span>;
           return (
-            <span
-              className={`inline-block text-[10px] px-2.5 py-0.5 rounded-full font-extrabold border ${JENIS_SELISIH_CLASSES[js] || "bg-amber-50 text-amber-700 border-amber-200"
-                }`}
-            >
+            <Badge variant={getJenisSelisihBadgeVariant(js)} className="px-2.5 py-0.5 text-xs font-bold">
               {JENIS_SELISIH_LABELS[js] || js.replace("_", " ")}
-            </span>
+            </Badge>
           );
         },
       },
@@ -352,6 +354,5 @@ export function useTransferDetailItemsColumns({
         },
       },
     ];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canReceive, canValidateReturn, processingItemUid, onValidateReturnItem, validatingItemUid]);
+  }, [canReceive, canValidateReturn, processingItemUid, validatingItemUid]);
 }

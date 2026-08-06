@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { IconCheck, IconX } from "@tabler/icons-react";
+import { IconCheck, IconX, IconLoader2 } from "@tabler/icons-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { JENIS_SELISIH, TRANSFER_SHIPMENT_STATUS } from "../../constants";
 import type { StockTransferItem } from "../../types";
@@ -59,6 +59,17 @@ export function ReceivingItemRowControls({
       await onReceiveItemSubmit(item, payload);
     }
   };
+
+  if (isProcessing) {
+    return (
+      <div className="flex items-center justify-center">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold animate-pulse border border-slate-200 shadow-2xs">
+          <IconLoader2 className="animate-spin w-3.5 h-3.5 text-emerald-600" />
+          <span>Memproses...</span>
+        </span>
+      </div>
+    );
+  }
 
   return (
     <>

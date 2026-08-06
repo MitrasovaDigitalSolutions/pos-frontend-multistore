@@ -78,7 +78,7 @@ export function TransferDetailHeader({
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-2">
-        {onPrint && transfer.status !== TRANSFER_STATUS.DRAFT && transfer.status !== TRANSFER_STATUS.CANCELLED && (
+        {onPrint && (transfer.status === TRANSFER_STATUS.SENT || transfer.status === "sent" || transfer.status === "dikirim") && (
           <Button
             type="button"
             onClick={onPrint}

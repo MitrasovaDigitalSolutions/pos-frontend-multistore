@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useForm, FormProvider } from "react-hook-form";
 import { IconAlertCircle, IconCircleX } from "@tabler/icons-react";
@@ -19,6 +19,7 @@ import { JENIS_SELISIH, TRANSFER_SHIPMENT_STATUS, TRANSFER_STATUS } from "../con
 
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
+import { AppButton } from "@/components/shared/app-button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -37,7 +38,7 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
   const router = useAppRouter();
   const activeStoreUid = useActiveStoreStore((state) => state.activeStoreUid);
 
-  const { data: transfer, isLoading, error } = useStockTransferDetail(uid);
+  const { data: transfer, isLoading, isFetching, error } = useStockTransferDetail(uid);
   const finalize = useFinalizeStockTransfer();
   const receive = useReceiveStockTransfer();
   const validateReturn = useValidateStockTransferReturn();
@@ -69,6 +70,111 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
   const [cancelReason, setCancelReason] = useState("");
   const [processingItemUid, setProcessingItemUid] = useState<string | null>(null);
   const [validatingItemUid, setValidatingItemUid] = useState<string | null>(null);
+  const [submittedItemMap, setSubmittedItemMap] = useState<
+    Record<
+      string,
+      {
+        status: typeof TRANSFER_SHIPMENT_STATUS.RECEIVED | typeof TRANSFER_SHIPMENT_STATUS.REJECTED;
+        kuantitas_diterima: number;
+        jenis_selisih?: typeof JENIS_SELISIH.SALAH_INPUT | typeof JENIS_SELISIH.RUSAK | typeof JENIS_SELISIH.HILANG;
+        keterangan?: string;
+      }
+    >
+  >({});
+
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
+  const items = useMemo(() => {
+    if (!transfer?.items) return [];
+    return transfer.items.map((it) => {
+      const submitted = submittedItemMap[it.uid];
+      if (submitted) {
+        return {
+          ...it,
+          status: submitted.status,
+          kuantitas_diterima: submitted.kuantitas_diterima,
+          jenis_selisih: submitted.jenis_selisih || it.jenis_selisih,
+          keterangan: submitted.keterangan || it.keterangan,
+        };
+      }
+      return it;
+    });
+  }, [transfer?.items, submittedItemMap]);
+
+  const handleReceiveItemSubmit = async (
+    item: StockTransferItem,
+    payload: {
+      status: typeof TRANSFER_SHIPMENT_STATUS.RECEIVED | typeof TRANSFER_SHIPMENT_STATUS.REJECTED;
+      kuantitas_diterima: number;
+      jenis_selisih?: typeof JENIS_SELISIH.SALAH_INPUT | typeof JENIS_SELISIH.RUSAK | typeof JENIS_SELISIH.HILANG;
+      keterangan?: string;
+    }
+  ) => {
+    setProcessingItemUid(item.uid);
+    setSubmittedItemMap((prev) => ({
+      ...prev,
+      [item.uid]: payload,
+    }));
+
+    try {
+      await receive.mutateAsync({
+        uid,
+        itemUid: item.uid,
+        payload,
+      });
+      toast.success(`Item "${item.product?.nama || "produk"}" berhasil diproses.`);
+    } catch (err: unknown) {
+      setSubmittedItemMap((prev) => {
+        const next = { ...prev };
+        delete next[item.uid];
+        return next;
+      });
+      const message = err instanceof Error ? err.message : "Gagal memproses item";
+      toast.error(`Gagal memproses item: ${message}`);
+    } finally {
+      setProcessingItemUid(null);
+    }
+  };
+
+  const handleValidateReturnItem = async (item: StockTransferItem, kuantitasReturn: number) => {
+    setValidatingItemUid(item.uid);
+    try {
+      await validateReturn.mutateAsync({ uid, itemUid: item.uid, kuantitas_return: kuantitasReturn });
+      toast.success(`Return item ${item.product?.nama || "berhasil"} divalidasi.`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Gagal memvalidasi return";
+      toast.error(`Gagal memvalidasi return: ${message}`);
+    } finally {
+      setValidatingItemUid(null);
+    }
+  };
+
+  const handleFinalizeConfirm = () => {
+    finalize.mutate(uid, {
+      onSuccess: () => {
+        toast.success("Transfer stok berhasil difinalisasi & dikirim!");
+        setConfirmFinalizeOpen(false);
+      },
+      onError: (err) => toast.error(err.message || "Gagal mengirim transfer"),
+    });
+  };
+
+  const handleCancelSubmit = () => {
+    cancel.mutate(
+      { uid, alasan: cancelReason.trim() || undefined },
+      {
+        onSuccess: () => {
+          toast.success("Transfer stok telah dibatalkan.");
+          setCancelModalOpen(false);
+          setCancelReason("");
+        },
+        onError: (err) => toast.error(err.message || "Gagal membatalkan transfer"),
+      }
+    );
+  };
+
+  const handlePrint = () => {
+    window.open(`/api/proxy${ENDPOINTS.INVENTORY.STOCK_TRANSFERS.PRINT_SURAT_JALAN(uid)}`, "_blank");
+  };
 
   if (isLoading) {
     return (
@@ -179,74 +285,6 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
     (item) => item.kuantitas_diterima != null && item.kuantitas_diterima !== item.kuantitas
   );
 
-
-
-  const handleReceiveItemSubmit = async (
-    item: StockTransferItem,
-    payload: {
-      status: typeof TRANSFER_SHIPMENT_STATUS.RECEIVED | typeof TRANSFER_SHIPMENT_STATUS.REJECTED;
-      kuantitas_diterima: number;
-      jenis_selisih?: typeof JENIS_SELISIH.SALAH_INPUT | typeof JENIS_SELISIH.RUSAK | typeof JENIS_SELISIH.HILANG;
-      keterangan?: string;
-    }
-  ) => {
-    setProcessingItemUid(item.uid);
-    try {
-      await receive.mutateAsync({
-        uid,
-        itemUid: item.uid,
-        payload,
-      });
-      toast.success(`Item "${item.product?.nama || "produk"}" berhasil diproses.`);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Gagal memproses item";
-      toast.error(`Gagal memproses item: ${message}`);
-    } finally {
-      setProcessingItemUid(null);
-    }
-  };
-
-  const handleValidateReturnItem = async (item: StockTransferItem, kuantitasReturn: number) => {
-    setValidatingItemUid(item.uid);
-    try {
-      await validateReturn.mutateAsync({ uid, itemUid: item.uid, kuantitas_return: kuantitasReturn });
-      toast.success(`Return item ${item.product?.nama || "berhasil"} divalidasi.`);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Gagal memvalidasi return";
-      toast.error(`Gagal memvalidasi return: ${message}`);
-    } finally {
-      setValidatingItemUid(null);
-    }
-  };
-
-  const handleFinalizeConfirm = () => {
-    finalize.mutate(uid, {
-      onSuccess: () => {
-        toast.success("Transfer stok berhasil difinalisasi & dikirim!");
-        setConfirmFinalizeOpen(false);
-      },
-      onError: (err) => toast.error(err.message || "Gagal mengirim transfer"),
-    });
-  };
-
-  const handleCancelSubmit = () => {
-    cancel.mutate(
-      { uid, alasan: cancelReason.trim() || undefined },
-      {
-        onSuccess: () => {
-          toast.success("Transfer stok telah dibatalkan.");
-          setCancelModalOpen(false);
-          setCancelReason("");
-        },
-        onError: (err) => toast.error(err.message || "Gagal membatalkan transfer"),
-      }
-    );
-  };
-
-  const handlePrint = () => {
-    window.open(`/api/proxy${ENDPOINTS.INVENTORY.STOCK_TRANSFERS.PRINT_SURAT_JALAN(uid)}`, "_blank");
-  };
-
   return (
     <FormProvider {...formMethods}>
       <div className="space-y-6 max-w-6xl mx-auto">
@@ -271,13 +309,14 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
           {/* Left Column: Interactive Product Table */}
           <div className="lg:col-span-8">
             <TransferDetailItemsTable
-              items={transfer.items || []}
+              items={items}
               canReceive={canReceive}
               onReceiveItemSubmit={handleReceiveItemSubmit}
               processingItemUid={processingItemUid}
               canValidateReturn={canValidateReturn}
               onValidateReturnItem={handleValidateReturnItem}
               validatingItemUid={validatingItemUid}
+              isFetching={isFetching}
             />
           </div>
 
@@ -310,39 +349,39 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
               <span>Batalkan Transfer Stok</span>
             </div>
           }
-          className="sm:max-w-md"
+          className="max-w-md"
         >
-          <div className="space-y-4 py-2">
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Apakah Anda yakin ingin membatalkan transaksi transfer stok ini? Pembatalan tidak dapat diurungkan.
+          <div className="space-y-4 pt-2">
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Apakah Anda yakin ingin membatalkan transfer stok ini? Aksi ini tidak dapat dibatalkan.
             </p>
-
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700">Alasan Pembatalan (Opsional)</label>
               <textarea
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
-                placeholder="Contoh: Salah kirim cabang / stok tidak mencukupi..."
+                placeholder="Misal: Salah pilih barang / batal dikirim..."
                 rows={3}
-                className="w-full resize-none rounded-xl border border-slate-200 p-3 text-xs outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
+                className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 bg-white"
               />
             </div>
-
             <div className="flex justify-end gap-2 pt-2">
               <Button
+                type="button"
                 variant="outline"
                 onClick={() => setCancelModalOpen(false)}
-                className="h-9 text-xs rounded-xl"
+                className="h-8 text-xs rounded-xl"
               >
                 Batal
               </Button>
-              <Button
+              <AppButton
+                type="button"
                 onClick={handleCancelSubmit}
-                disabled={cancel.isPending}
-                className="h-9 text-xs rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold cursor-pointer"
+                isLoading={cancel.isPending}
+                className="h-8 text-xs rounded-xl bg-rose-600 hover:bg-rose-700 text-white"
               >
                 Ya, Batalkan Transfer
-              </Button>
+              </AppButton>
             </div>
           </div>
         </BaseDialog>

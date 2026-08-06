@@ -116,7 +116,7 @@ export function ReceivingConfirmDialog({
                 </p>
                 {isRejected ? (
                   <p className="text-rose-600 font-semibold">
-                    Menolak produk ini akan membatalkan keseluruhan produk yang dikirim.
+                    Menolak produk ini akan membatalkan keseluruhan produk yang diterima.
                   </p>
                 ) : hasDiscrepancy ? (
                   <p className="text-amber-700">

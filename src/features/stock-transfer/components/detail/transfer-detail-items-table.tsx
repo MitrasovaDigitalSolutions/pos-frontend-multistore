@@ -1,7 +1,8 @@
 "use client";
 
 import { useFormContext } from "react-hook-form";
-import { IconPackage } from "@tabler/icons-react";
+import { IconPackage, IconLoader2 } from "@tabler/icons-react";
+import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import type { StockTransferItem } from "../../types";
 import type { ReceiveFormValues } from "./types";
@@ -26,6 +27,7 @@ interface TransferDetailItemsTableProps {
   canValidateReturn?: boolean;
   onValidateReturnItem?: (item: StockTransferItem, kuantitasReturn: number) => void;
   validatingItemUid?: string | null;
+  isFetching?: boolean;
 }
 
 export function TransferDetailItemsTable({
@@ -36,6 +38,7 @@ export function TransferDetailItemsTable({
   canValidateReturn,
   onValidateReturnItem,
   validatingItemUid,
+  isFetching = false,
 }: TransferDetailItemsTableProps) {
   const { watch } = useFormContext<ReceiveFormValues>();
 
@@ -71,6 +74,13 @@ export function TransferDetailItemsTable({
             </span>
           )}
         </h3>
+
+        {processingItemUid && (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold animate-pulse border border-emerald-200">
+            <IconLoader2 className="animate-spin w-3.5 h-3.5 text-emerald-600" />
+            <span>Memproses Item...</span>
+          </span>
+        )}
       </div>
 
       <DataTable
@@ -85,26 +95,10 @@ export function TransferDetailItemsTable({
 
                 if (item.status !== null && item.status !== undefined) {
                   const isRejected = item.status === "rejected";
-                  const jenisSelisih = item.jenis_selisih;
                   return (
-                    <div className="flex flex-col items-center gap-0.5">
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded-md text-[11px] font-extrabold ${
-                          isRejected
-                            ? "bg-rose-50 text-rose-700 border border-rose-200"
-                            : "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                        }`}
-                      >
-                        {isRejected ? "Ditolak" : "Diterima"}
-                      </span>
-                      {jenisSelisih && (
-                        <span
-                          className={`text-[9px] px-1.5 py-0.2 rounded-md font-bold border ${JENIS_SELISIH_CLASSES[jenisSelisih]}`}
-                        >
-                          {JENIS_SELISIH_LABELS[jenisSelisih]}
-                        </span>
-                      )}
-                    </div>
+                    <Badge variant={isRejected ? "danger" : "success"} className="px-2.5 py-0.5 text-xs font-bold">
+                      {isRejected ? "Ditolak" : "Diterima"}
+                    </Badge>
                   );
                 }
 
