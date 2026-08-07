@@ -187,6 +187,7 @@ export function useReceivingFinalizer({
                 items: items.map((i) => ({
                     product_uid: i.product_uid,
                     harga_beli: i.harga_estimasi,
+                    kuantitas: i.kuantitas,
                 })),
             });
 

@@ -9,6 +9,7 @@ import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import type { ComparePricesResult } from "../../../api/purchase-api";
+import { useSettingsStore } from "@/stores/settings-store";
 
 export interface PriceAlertFormInput {
     items: {
@@ -36,6 +37,9 @@ export function PriceAlertDialog({
     onCompleteWithoutPrices,
     onCompleteWithPrices,
 }: PriceAlertDialogProps) {
+    const adjustmentMethod = useSettingsStore((s) => s.settings["hpp_adjustment_method"] ?? "latest");
+    const buyPriceBasis = (alert: ComparePricesResult) => adjustmentMethod === "average" ? alert.harga_beli_avg : alert.harga_beli_baru;
+
     const alertFormMethods = useForm<PriceAlertFormInput>({
         defaultValues: {
             items: [],
@@ -49,7 +53,7 @@ export function PriceAlertDialog({
         if (open && priceAlerts.length > 0) {
             const initialItems = priceAlerts.map((alert) => {
                 const marginLama = alert.margin_lama;
-                const buyPriceNew = alert.harga_beli_baru;
+                const buyPriceNew = buyPriceBasis(alert);
                 const calculatedHargaJualSaran = Math.round(buyPriceNew * (1 + (marginLama || 0) / 100));
 
                 return {
@@ -62,7 +66,8 @@ export function PriceAlertDialog({
             prevItemsRef.current = JSON.parse(JSON.stringify(initialItems));
             alertFormMethods.reset({ items: initialItems });
         }
-    }, [open, priceAlerts, alertFormMethods]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, priceAlerts, alertFormMethods, adjustmentMethod]);
 
     useEffect(() => {
         if (!formItems || formItems.length === 0) return;
@@ -76,7 +81,7 @@ export function PriceAlertDialog({
             const alert = priceAlerts.find((a) => a.product_uid === item.product_uid);
             if (!alert) return;
 
-            const buyPrice = alert.harga_beli_baru;
+            const buyPrice = buyPriceBasis(alert);
 
             if (activeId === `items.${idx}.margin_baru`) {
                 if (item.margin_baru !== prev.margin_baru) {
@@ -97,11 +102,12 @@ export function PriceAlertDialog({
         });
 
         prevItemsRef.current = JSON.parse(JSON.stringify(formItems));
-    }, [formItems, priceAlerts, alertFormMethods]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formItems, priceAlerts, alertFormMethods, adjustmentMethod]);
 
     const handleUseSaran = (idx: number, alert: ComparePricesResult) => {
         const marginLama = alert.margin_lama;
-        const buyPriceNew = alert.harga_beli_baru;
+        const buyPriceNew = buyPriceBasis(alert);
         const calculatedHargaJualSaran = Math.round(buyPriceNew * (1 + (marginLama || 0) / 100));
 
         alertFormMethods.setValue(`items.${idx}.margin_baru`, marginLama);
@@ -149,7 +155,7 @@ export function PriceAlertDialog({
                                     const hargaJualLama = alert.harga_jual_lama;
                                     const marginLama = alert.margin_lama;
                                     const selisihHargaBeli = alert.harga_beli_baru - hargaBeliLama;
-                                    const buyPriceNew = alert.harga_beli_baru;
+                                    const buyPriceNew = buyPriceBasis(alert);
                                     const calculatedHargaJualSaran = Math.round(buyPriceNew * (1 + (marginLama || 0) / 100));
 
                                     return (
