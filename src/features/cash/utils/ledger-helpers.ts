@@ -11,14 +11,13 @@ import {
 } from "@tabler/icons-react";
 import type { CashLedger } from "../api/cash-api";
 
-export type MovementDirection = "debit" | "credit" | "transfer";
+export type MovementDirection = "debit" | "credit";
 
-/** Determine whether a ledger item is Debit (Inflow), Credit (Outflow), or Transfer */
+/** Determine whether a ledger item is Debit (Inflow / positive) or Credit (Outflow / negative) */
 export function getMovementDirection(movement: CashLedger): MovementDirection {
     const tipe = (movement.tipe || "").toLowerCase();
     if (tipe === "debit" || tipe === "inflow") return "debit";
     if (tipe === "credit" || tipe === "outflow") return "credit";
-    if (tipe === "transfer") return "transfer";
     return movement.amount >= 0 ? "debit" : "credit";
 }
 

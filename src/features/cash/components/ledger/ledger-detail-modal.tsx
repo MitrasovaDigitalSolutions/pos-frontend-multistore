@@ -7,7 +7,6 @@ import { BaseDialog } from "@/components/ui/base-dialog";
 import { formatDate, formatToTime } from "@/lib/date-utils";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { CashLedger } from "../../api/cash-api";
-import { getMovementDirection } from "../../utils/ledger-helpers";
 
 interface LedgerDetailModalProps {
     open: boolean;
@@ -18,9 +17,8 @@ interface LedgerDetailModalProps {
 export function LedgerDetailModal({ open, onOpenChange, movement }: LedgerDetailModalProps) {
     if (!movement) return null;
 
-    const dir = getMovementDirection(movement);
-    const isDebit = dir === "debit";
-    const isCredit = dir === "credit";
+    const isPositive = movement.amount >= 0;
+    const isTransfer = (movement.tipe || "").toLowerCase() === "transfer";
     const displayAmt = Math.abs(movement.amount);
     const accountObj = movement.cashAccount || movement.cash_account;
 
@@ -39,27 +37,25 @@ export function LedgerDetailModal({ open, onOpenChange, movement }: LedgerDetail
             <div className="space-y-4 pt-1 pb-2">
                 {/* Amount Banner */}
                 <div className={`p-4 rounded-xl border flex flex-col items-center justify-center text-center gap-1 ${
-                    isDebit
+                    isPositive
                         ? "bg-emerald-50/70 border-emerald-200/80 text-emerald-950"
-                        : isCredit
-                            ? "bg-rose-50/70 border-rose-200/80 text-rose-950"
-                            : "bg-sky-50/70 border-sky-200/80 text-sky-950"
+                        : "bg-rose-50/70 border-rose-200/80 text-rose-950"
                 }`}>
                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500">
                         Nominal Transaksi
                     </span>
                     <div className="text-2xl font-black tabular-nums tracking-tight">
-                        {isDebit ? "+" : isCredit ? "-" : ""}{formatRupiah(displayAmt)}
+                        {isPositive ? "+" : "-"}{formatRupiah(displayAmt)}
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                         <span className={`text-[9px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border ${
-                            isDebit
+                            isPositive
                                 ? "bg-emerald-600 text-white border-emerald-600"
-                                : isCredit
-                                    ? "bg-rose-600 text-white border-rose-600"
-                                    : "bg-sky-600 text-white border-sky-600"
+                                : "bg-rose-600 text-white border-rose-600"
                         }`}>
-                            {isDebit ? "Debit" : isCredit ? "Kredit" : "Transfer"}
+                            {isTransfer
+                                ? (isPositive ? "Transfer (Masuk)" : "Transfer (Keluar)")
+                                : (isPositive ? "Debit" : "Kredit")}
                         </span>
                         {accountObj?.nama && (
                             <span className="text-[10px] font-bold text-slate-700 bg-white border border-slate-200 px-2 py-0.5 rounded-full shadow-2xs">

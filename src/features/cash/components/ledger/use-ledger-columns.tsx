@@ -10,7 +10,7 @@ import {
 import { formatDate, formatToTime } from "@/lib/date-utils";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { CashLedger } from "../../api/cash-api";
-import { getMovementDirection, getCategoryMeta } from "../../utils/ledger-helpers";
+import { getCategoryMeta } from "../../utils/ledger-helpers";
 import { LedgerReferenceCell } from "./ledger-reference-cell";
 
 export function useLedgerColumns(): ColumnDef<CashLedger>[] {
@@ -129,8 +129,7 @@ export function useLedgerColumns(): ColumnDef<CashLedger>[] {
             },
             cell: ({ row }) => {
                 const movement = row.original;
-                const dir = getMovementDirection(movement);
-                const isPositive = dir === "debit";
+                const isPositive = movement.amount >= 0;
                 const displayValue = Math.abs(movement.amount);
 
                 return (
