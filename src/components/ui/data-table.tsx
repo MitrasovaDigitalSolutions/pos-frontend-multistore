@@ -28,6 +28,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { IconCheck, IconEdit, IconTrash } from "@tabler/icons-react";
+import { DataTableActionButton } from "./data-table-actions";
 import {
     ColumnDef,
     flexRender,
@@ -331,72 +332,44 @@ export function DataTable<TData, TValue>({
                 return (
                     <div className="flex justify-center gap-1.5 items-center">
                         {onView && !isViewHidden && (
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button
-                                        onClick={() => onView(item)}
-                                        disabled={isViewDisabled}
-                                        className={cn(
-                                            "p-1.5 text-emerald-600 bg-white hover:bg-emerald-600 hover:text-white border border-emerald-200/80 hover:border-emerald-600 rounded-xl transition-all shadow-2xs hover:shadow-emerald-500/20 active:scale-95 cursor-pointer flex items-center justify-center",
-                                            isViewDisabled && "opacity-40 cursor-not-allowed hover:bg-white hover:text-emerald-600"
-                                        )}
-                                    >
-                                        <InfoIcon className="w-4.5 h-4.5 stroke-[2.2]" />
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent>Lihat Detail</TooltipContent>
-                            </Tooltip>
+                            <DataTableActionButton
+                                variant="emerald"
+                                onClick={() => onView(item)}
+                                disabled={isViewDisabled}
+                                tooltip="Lihat Detail"
+                            >
+                                <InfoIcon size={16} />
+                            </DataTableActionButton>
                         )}
                         {onEdit && !isEditHidden && (
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button
-                                        onClick={() => onEdit(item)}
-                                        disabled={isEditDisabled}
-                                        className={cn(
-                                            "p-1.5 text-amber-600 bg-white hover:bg-amber-500 hover:text-white border border-amber-200/80 hover:border-amber-500 rounded-xl transition-all shadow-2xs hover:shadow-amber-500/20 active:scale-95 cursor-pointer flex items-center justify-center",
-                                            isEditDisabled && "opacity-40 cursor-not-allowed hover:bg-white hover:text-amber-600"
-                                        )}
-                                    >
-                                        <IconEdit size={16} />
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent>Ubah</TooltipContent>
-                            </Tooltip>
+                            <DataTableActionButton
+                                variant="amber"
+                                onClick={() => onEdit(item)}
+                                disabled={isEditDisabled}
+                                tooltip="Ubah"
+                            >
+                                <IconEdit size={16} />
+                            </DataTableActionButton>
                         )}
                         {onCheck && !isCheckHidden && (
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button
-                                        onClick={() => onCheck(item)}
-                                        disabled={isCheckDisabled}
-                                        className={cn(
-                                            "p-1.5 text-emerald-600 bg-white hover:bg-emerald-600 hover:text-white border border-emerald-200/80 hover:border-emerald-600 rounded-xl transition-all shadow-2xs hover:shadow-emerald-500/20 active:scale-95 cursor-pointer flex items-center justify-center",
-                                            isCheckDisabled && "opacity-40 cursor-not-allowed hover:bg-white hover:text-emerald-600"
-                                        )}
-                                    >
-                                        <IconCheck size={16} />
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent>Finalisasi</TooltipContent>
-                            </Tooltip>
+                            <DataTableActionButton
+                                variant="emerald"
+                                onClick={() => onCheck(item)}
+                                disabled={isCheckDisabled}
+                                tooltip="Finalisasi"
+                            >
+                                <IconCheck size={16} />
+                            </DataTableActionButton>
                         )}
                         {onDelete && !isDeleteHidden && (
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button
-                                        onClick={() => onDelete(item)}
-                                        disabled={isDeleteDisabled}
-                                        className={cn(
-                                            "p-1.5 text-rose-600 bg-white hover:bg-rose-600 hover:text-white border border-rose-200/80 hover:border-rose-600 rounded-xl transition-all shadow-2xs hover:shadow-rose-500/20 active:scale-95 cursor-pointer flex items-center justify-center",
-                                            isDeleteDisabled && "opacity-40 cursor-not-allowed hover:bg-white hover:text-rose-600"
-                                        )}
-                                    >
-                                        <IconTrash size={16} />
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent>Hapus</TooltipContent>
-                            </Tooltip>
+                            <DataTableActionButton
+                                variant="rose"
+                                onClick={() => onDelete(item)}
+                                disabled={isDeleteDisabled}
+                                tooltip="Hapus"
+                            >
+                                <IconTrash size={16} />
+                            </DataTableActionButton>
                         )}
                         {extraActions?.(item)}
                     </div>

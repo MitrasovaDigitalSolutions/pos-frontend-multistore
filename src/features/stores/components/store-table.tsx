@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
-import { IconUsers, IconBuildingStore, IconPlus } from "@tabler/icons-react";
-import { Badge } from "@/components/ui/badge";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { DataTable } from "@/components/ui/data-table";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AppButton } from "@/components/shared/app-button";
+import { Badge } from "@/components/ui/badge";
+import { DataTable } from "@/components/ui/data-table";
+import { DataTableActionButton } from "@/components/ui/data-table-actions";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { IconBuildingStore, IconPlus, IconUsers } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
+import { useMemo } from "react";
 import type { Store } from "../types";
 
 interface StoreTableProps {
@@ -164,20 +164,13 @@ export function StoreTable({
                 onSortChange={onSortChange}
                 onEdit={onEdit}
                 extraActions={(store) => (
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <AppButton
-                                type="button"
-                                variant="ghost"
-                                size="icon-xs"
-                                onClick={() => onManageUsers(store)}
-                                className="text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
-                            >
-                                <IconUsers size={16} />
-                            </AppButton>
-                        </TooltipTrigger>
-                        <TooltipContent>Kelola User</TooltipContent>
-                    </Tooltip>
+                    <DataTableActionButton
+                        variant="emerald"
+                        onClick={() => onManageUsers(store)}
+                        tooltip="Kelola User"
+                    >
+                        <IconUsers size={16} />
+                    </DataTableActionButton>
                 )}
             />
         </section>

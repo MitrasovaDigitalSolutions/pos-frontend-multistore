@@ -1,7 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { DataTableTextActionButton } from "@/components/ui/data-table-actions";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
@@ -72,45 +72,24 @@ export function ReceivingItemRowControls({
   return (
     <>
       <div className="flex items-center justify-center gap-1.5">
-        {/* Button Terima */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={handleOpenTerima}
-                disabled={isProcessing}
-                className="h-8 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs hover:shadow-emerald-600/20 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
-              >
-                <IconCheck size={14} className="stroke-[2.5]" />
-                <span>Terima</span>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="top">
-              <p>Konfirmasi penerimaan produk ini</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
-        {/* Button Tolak */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={handleOpenTolak}
-                disabled={isProcessing}
-                className="h-8 px-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 text-xs font-bold flex items-center gap-1 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
-              >
-                <IconX size={14} className="stroke-[2.5]" />
-                <span>Tolak</span>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="top">
-              <p>Tolak produk ini</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <DataTableTextActionButton
+          variant="emerald"
+          onClick={handleOpenTerima}
+          disabled={isProcessing}
+          icon={<IconCheck size={14} className="stroke-[2.5]" />}
+          tooltip="Konfirmasi penerimaan produk ini"
+        >
+          Terima
+        </DataTableTextActionButton>
+        <DataTableTextActionButton
+          variant="rose"
+          onClick={handleOpenTolak}
+          disabled={isProcessing}
+          icon={<IconX size={14} className="stroke-[2.5]" />}
+          tooltip="Tolak produk ini"
+        >
+          Tolak
+        </DataTableTextActionButton>
       </div>
 
       <ReceivingConfirmDialog

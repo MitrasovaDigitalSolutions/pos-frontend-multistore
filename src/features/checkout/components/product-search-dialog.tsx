@@ -8,6 +8,7 @@ import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
 import { DataTable } from "@/components/ui/data-table";
+import { DataTableTextActionButton } from "@/components/ui/data-table-actions";
 import type { Product } from "@/features/master/products/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import {
@@ -324,23 +325,18 @@ export function ProductSearchDialog({
                     const p = row.original;
                     const hasStock = p.is_jasa || p.stok > 0;
                     return (
-                        <button
-                            type="button"
+                        <DataTableTextActionButton
+                            variant={hasStock ? "emerald" : "slate"}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 handleSelectProduct(p);
                             }}
                             disabled={!hasStock}
-                            className={cn(
-                                "flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer border-none shadow-sm mx-auto",
-                                hasStock
-                                    ? "bg-emerald-600 hover:bg-emerald-700 text-white active:scale-95"
-                                    : "bg-slate-100 text-slate-400 cursor-not-allowed shadow-none"
-                            )}
+                            icon={<IconPlus className="w-3.5 h-3.5" />}
+                            className="mx-auto"
                         >
-                            <IconPlus className="w-3.5 h-3.5" />
-                            <span>Pilih</span>
-                        </button>
+                            Pilih
+                        </DataTableTextActionButton>
                     );
                 },
                 size: 90,

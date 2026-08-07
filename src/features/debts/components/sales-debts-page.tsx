@@ -3,6 +3,7 @@
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { DataTable } from "@/components/ui/data-table";
+import { DataTableTextActionButton } from "@/components/ui/data-table-actions";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { useReceivingDebtsSummary } from "@/features/purchase/api/purchase-api";
 import type { SupplierDebtSummary } from "@/features/purchase/types";
@@ -134,17 +135,19 @@ export function SalesDebtsPage() {
                 cellClassName: "text-center",
             },
             cell: ({ row }) => (
-                <button
+                <DataTableTextActionButton
+                    variant="indigo"
                     onClick={() =>
                         router.push(
                             `/admin/debts/sales/${row.original.supplier_uid}?nama=${encodeURIComponent(row.original.nama_supplier)}`
                         )
                     }
-                    className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 hover:text-indigo-800 border border-indigo-100 rounded-lg text-[10px] font-extrabold flex items-center gap-1 cursor-pointer transition-all active:scale-[0.98] mx-auto"
-                    title="Lihat Detail Hutang"
+                    icon={<IconChevronRight size={14} />}
+                    tooltip="Lihat Detail Hutang"
+                    className="mx-auto"
                 >
-                    <IconChevronRight size={12} /> Detail
-                </button>
+                    Detail
+                </DataTableTextActionButton>
             ),
         },
     ];

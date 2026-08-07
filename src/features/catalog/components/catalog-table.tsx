@@ -1,13 +1,13 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
+import { DataTableActionButton } from "@/components/ui/data-table-actions";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { getImageUrl } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { IconBuildingStore, IconPackage, IconPlus, IconUser } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
@@ -296,17 +296,13 @@ export function CatalogTable({
                 onDelete={isAdmin ? handleRemoveProduct : undefined}
                 extraActions={(item) =>
                     isAdmin ? (
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <button
-                                    onClick={() => onAssign(item)}
-                                    className="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors border-none bg-transparent cursor-pointer"
-                                >
-                                    <IconBuildingStore size={16} />
-                                </button>
-                            </TooltipTrigger>
-                            <TooltipContent>Kelola Distribusi Toko</TooltipContent>
-                        </Tooltip>
+                        <DataTableActionButton
+                            variant="emerald"
+                            onClick={() => onAssign(item)}
+                            tooltip="Kelola Distribusi Toko"
+                        >
+                            <IconBuildingStore size={16} />
+                        </DataTableActionButton>
                     ) : null
                 }
             />
