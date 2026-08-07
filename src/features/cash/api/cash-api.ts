@@ -4,97 +4,168 @@ import { queryKeys } from "@/lib/query-keys";
 import { ENDPOINTS } from "@/shared/api/endpoints";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
 
+export interface CashLedgerUser {
+    uid: string;
+    nama?: string | null;
+    name?: string | null;
+    email?: string | null;
+    role?: string | null;
+}
+
+export interface CashLedgerCategory {
+    uid: string;
+    nama: string;
+    keterangan?: string | null;
+    is_recurring?: boolean;
+    hari_jatuh_tempo?: number | null;
+    created_at?: string;
+    updated_at?: string;
+    chart_of_account_uid?: string | null;
+}
+
+export interface CashLedgerExpense {
+    uid: string;
+    nomor_pengeluaran?: string | null;
+    nama?: string | null;
+    amount?: number;
+    catatan?: string | null;
+    tanggal?: string | null;
+    created_at?: string;
+    updated_at?: string;
+    expense_category_uid?: string | null;
+    cash_account_uid?: string | null;
+    user_uid?: string | null;
+    status?: string | null;
+    catatan_void?: string | null;
+    void_by_uid?: string | null;
+    voided_at?: string | null;
+    category?: CashLedgerCategory | null;
+}
+
+export interface CashLedgerSale {
+    uid: string;
+    nomor_transaksi: string;
+    total?: number;
+    catatan?: string | null;
+    created_at?: string;
+}
+
+export interface CashLedgerSupplierPayment {
+    uid: string;
+    nomor_pembayaran: string;
+    catatan?: string | null;
+    amount?: number;
+    supplier?: {
+        nama?: string;
+    } | null;
+}
+
+export interface CashLedgerPurchaseReturnSettlement {
+    uid: string;
+    nomor_transaksi?: string;
+    purchase_return?: {
+        uid: string;
+        nomor_transaksi: string;
+    } | null;
+    purchaseReturn?: {
+        uid: string;
+        nomor_transaksi: string;
+    } | null;
+}
+
+export interface CashLedgerDrawerMovement {
+    uid: string;
+    note?: string | null;
+    tipe?: string | null;
+    amount?: number;
+}
+
+export interface CashLedgerDrawerSession {
+    uid: string;
+    opened_at?: string;
+    closed_at?: string | null;
+    starting_cash?: number;
+    ending_cash?: number | null;
+}
+
+export interface CashLedgerStockReceiving {
+    uid: string;
+    nomor_penerimaan?: string;
+    nomor_po?: string;
+    catatan?: string | null;
+    supplier?: {
+        nama?: string;
+    } | null;
+}
+
+export interface CashLedgerMemberPayment {
+    uid: string;
+    nomor_pembayaran?: string;
+    catatan?: string | null;
+    member?: {
+        nama?: string;
+        kode?: string;
+    } | null;
+}
+
+export interface CashLedgerChartOfAccount {
+    uid: string;
+    kode_akun?: string;
+    nama_akun?: string;
+    tipe_akun?: string;
+}
+
 export interface CashLedger {
     uid: string;
     cash_account_uid: string;
     amount: number;
-    tipe: "inflow" | "outflow" | "transfer";
+    tipe: "debit" | "credit" | "inflow" | "outflow" | "transfer" | string;
     kategori: string;
+    created_at: string;
+    updated_at?: string;
+
+    // Direct UIDs
     sale_uid?: string | null;
     supplier_payment_uid?: string | null;
     purchase_return_settlement_uid?: string | null;
     expense_uid?: string | null;
     cash_drawer_movement_uid?: string | null;
+    stock_receiving_uid?: string | null;
     cash_drawer_session_uid?: string | null;
-    created_at: string;
-    updated_at?: string;
+    chart_of_account_uid?: string | null;
+    member_payment_uid?: string | null;
+    user_uid?: string | null;
 
-    // Relations (Laravel camelCase / snake_case relations)
+    // Relations (camelCase & snake_case)
     cashAccount?: CashAccount | null;
     cash_account?: CashAccount | null;
 
-    sale?: {
-        uid: string;
-        nomor_transaksi: string;
-        total?: number;
-    } | null;
+    user?: CashLedgerUser | null;
 
-    supplierPayment?: {
-        uid: string;
-        nomor_pembayaran: string;
-        catatan?: string | null;
-    } | null;
-    supplier_payment?: {
-        uid: string;
-        nomor_pembayaran: string;
-        catatan?: string | null;
-    } | null;
+    sale?: CashLedgerSale | null;
 
-    purchaseReturnSettlement?: {
-        uid: string;
-        nomor_transaksi: string;
-        purchase_return?: {
-            uid: string;
-            nomor_transaksi: string;
-        } | null;
-        purchaseReturn?: {
-            uid: string;
-            nomor_transaksi: string;
-        } | null;
-    } | null;
-    purchase_return_settlement?: {
-        uid: string;
-        nomor_transaksi: string;
-        purchase_return?: {
-            uid: string;
-            nomor_transaksi: string;
-        } | null;
-        purchaseReturn?: {
-            uid: string;
-            nomor_transaksi: string;
-        } | null;
-    } | null;
+    supplierPayment?: CashLedgerSupplierPayment | null;
+    supplier_payment?: CashLedgerSupplierPayment | null;
 
-    expense?: {
-        uid: string;
-        nomor_pengeluaran?: string;
-        nama?: string | null;
-        catatan?: string | null;
-        category?: {
-            uid: string;
-            nama: string;
-        } | null;
-    } | null;
+    purchaseReturnSettlement?: CashLedgerPurchaseReturnSettlement | null;
+    purchase_return_settlement?: CashLedgerPurchaseReturnSettlement | null;
 
-    cashDrawerMovement?: {
-        uid: string;
-        note?: string | null;
-    } | null;
-    cash_drawer_movement?: {
-        uid: string;
-        note?: string | null;
-    } | null;
+    expense?: CashLedgerExpense | null;
 
-    cashDrawerSession?: {
-        uid: string;
-        opened_at?: string;
-        closed_at?: string | null;
-    } | null;
-    cash_drawer_session?: {
-        uid: string;
-        opened_at?: string;
-        closed_at?: string | null;
-    } | null;
+    cashDrawerMovement?: CashLedgerDrawerMovement | null;
+    cash_drawer_movement?: CashLedgerDrawerMovement | null;
+
+    cashDrawerSession?: CashLedgerDrawerSession | null;
+    cash_drawer_session?: CashLedgerDrawerSession | null;
+
+    stockReceiving?: CashLedgerStockReceiving | null;
+    stock_receiving?: CashLedgerStockReceiving | null;
+
+    memberPayment?: CashLedgerMemberPayment | null;
+    member_payment?: CashLedgerMemberPayment | null;
+
+    chartOfAccount?: CashLedgerChartOfAccount | null;
+    chart_of_account?: CashLedgerChartOfAccount | null;
 }
 
 export interface CashFlowFilters extends PaginationParams {
@@ -203,4 +274,3 @@ export function useAccountCashFlow(uid: string, filters?: CashFlowFilters) {
         enabled: !!uid,
     });
 }
-
