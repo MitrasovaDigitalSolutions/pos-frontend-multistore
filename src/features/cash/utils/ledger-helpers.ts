@@ -13,11 +13,8 @@ import type { CashLedger } from "../api/cash-api";
 
 export type MovementDirection = "debit" | "credit";
 
-/** Determine whether a ledger item is Debit (Inflow / positive) or Credit (Outflow / negative) */
+/** Determine whether a ledger item is Debit (Inflow / positive) or Credit (Outflow / negative) strictly based on amount sign */
 export function getMovementDirection(movement: CashLedger): MovementDirection {
-    const tipe = (movement.tipe || "").toLowerCase();
-    if (tipe === "debit" || tipe === "inflow") return "debit";
-    if (tipe === "credit" || tipe === "outflow") return "credit";
     return movement.amount >= 0 ? "debit" : "credit";
 }
 
