@@ -94,6 +94,7 @@ interface StatusBadgeProps {
     | "danger"
     | "warning"
     | "info"
+    | "sky"
     | "secondary"
     | "purple"
     | "cyan"
@@ -118,6 +119,7 @@ export function StatusBadge({
     | "danger"
     | "warning"
     | "info"
+    | "sky"
     | "secondary"
     | "purple"
     | "cyan"
@@ -139,6 +141,8 @@ export function StatusBadge({
 
     case "completed":
     case "selesai":
+    case "finish":
+    case "finished":
     case "received":
     case "diterima":
     case "finalized":
@@ -215,10 +219,12 @@ export function StatusBadge({
       break;
 
     // 🟡 WARNING & PENDING & IN PROCESS & PARTIAL STATES
+    // 🟡 WARNING & PENDING & IN PROCESS & PARTIAL STATES
     case "pending":
     case "menunggu":
+    case "menunggu_diterima":
       resolvedVariant = "warning";
-      if (!label) resolvedLabel = "Menunggu";
+      if (!label) resolvedLabel = "Pending";
       dotColor = "bg-amber-500";
       if (pulse === undefined) shouldPulse = true;
       break;
@@ -234,8 +240,9 @@ export function StatusBadge({
       break;
 
     case "draft":
+    case "retur":
       resolvedVariant = "warning";
-      if (!label) resolvedLabel = "Draft";
+      if (!label) resolvedLabel = normalized === "retur" ? "Retur" : "Draft";
       dotColor = "bg-amber-500";
       break;
 
@@ -246,7 +253,7 @@ export function StatusBadge({
     case "partially-received":
     case "partial-received":
     case "diterima_sebagian":
-      resolvedVariant = "warning";
+      resolvedVariant = "purple";
       if (!label) {
         if (
           normalized.includes("received") ||
@@ -257,7 +264,7 @@ export function StatusBadge({
           resolvedLabel = "Sebagian";
         }
       }
-      dotColor = "bg-amber-500";
+      dotColor = "bg-indigo-500";
       break;
 
     // 🔵 INFO & IN-TRANSIT & ORDERED STATES
@@ -268,12 +275,13 @@ export function StatusBadge({
       dotColor = "bg-blue-500";
       break;
 
+    case "sent":
     case "in_transit":
     case "dikirim":
     case "transit":
-      resolvedVariant = "info";
-      if (!label) resolvedLabel = "Dalam Pengiriman";
-      dotColor = "bg-blue-500";
+      resolvedVariant = "sky";
+      if (!label) resolvedLabel = normalized === "sent" ? "Dikirim" : "Dalam Pengiriman";
+      dotColor = "bg-sky-500";
       if (pulse === undefined) shouldPulse = true;
       break;
 

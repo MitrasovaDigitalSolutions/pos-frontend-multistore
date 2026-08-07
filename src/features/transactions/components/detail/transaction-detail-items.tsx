@@ -26,7 +26,7 @@ export function TransactionDetailItems({ items }: TransactionDetailItemsProps) {
                             <span className="font-bold text-slate-800 text-xs tracking-tight leading-tight">
                                 {row.original.nama_produk}
                             </span>
-                            {row.original.product?.is_jasa && (
+                            {(row.original.is_jasa || row.original.product?.is_jasa) && (
                                 <span className="text-[8px] border-none bg-blue-50 text-blue-700 px-1.5 py-0.2 rounded font-extrabold tracking-wide uppercase shrink-0">
                                     Jasa
                                 </span>
@@ -78,13 +78,52 @@ export function TransactionDetailItems({ items }: TransactionDetailItemsProps) {
             ),
         },
         {
+            accessorKey: "diskon_item",
+            header: "Diskon Grosir",
+            meta: {
+                headerClassName: "text-right",
+                cellClassName: "text-right font-bold tabular-nums text-xs",
+            },
+            cell: ({ row }) => {
+                const diskon = row.original.diskon_item ?? 0;
+                return diskon > 0 ? (
+                    <span className="text-emerald-600 font-bold">-{formatRupiah(diskon)}</span>
+                ) : (
+                    <span className="text-slate-300">-</span>
+                );
+            },
+        },
+        {
             accessorKey: "subtotal",
             header: "Subtotal",
             meta: {
                 headerClassName: "text-right",
                 cellClassName: "text-right font-black text-slate-900 tabular-nums text-xs",
             },
-            cell: ({ row }) => formatRupiah(row.original.subtotal),
+            cell: ({ row }) => {
+                const diskon = row.original.diskon_item ?? 0;
+                const grossSubtotal = row.original.kuantitas * row.original.harga_satuan;
+                const netSubtotal = diskon > 0 ? (grossSubtotal - diskon) : row.original.subtotal;
+
+                if (diskon > 0) {
+                    return (
+                        <div className="flex flex-col items-end leading-tight">
+                            <span className="line-through text-rose-500 font-bold decoration-rose-500 text-[10px]">
+                                {formatRupiah(grossSubtotal)}
+                            </span>
+                            <span className="font-extrabold text-emerald-700 text-xs">
+                                {formatRupiah(netSubtotal)}
+                            </span>
+                        </div>
+                    );
+                }
+
+                return (
+                    <span className="font-black text-slate-900">
+                        {formatRupiah(row.original.subtotal)}
+                    </span>
+                );
+            },
         },
         {
             id: "keuntungan",
@@ -95,9 +134,9 @@ export function TransactionDetailItems({ items }: TransactionDetailItemsProps) {
             },
             cell: ({ row }) => {
                 const hargaBeli = row.original.harga_beli ?? 0;
-                const hargaJual = row.original.harga_satuan;
+                const subtotal = row.original.subtotal;
                 const qty = row.original.kuantitas;
-                const profit = (hargaJual - hargaBeli) * qty;
+                const profit = subtotal - (hargaBeli * qty);
 
                 return (
                     <span className={profit >= 0 ? "text-emerald-600" : "text-rose-600"}>
@@ -138,9 +177,9 @@ export function TransactionDetailItems({ items }: TransactionDetailItemsProps) {
                 renderCardItem={(row) => {
                     const item = row.original;
                     const hargaBeli = item.harga_beli ?? 0;
-                    const hargaJual = item.harga_satuan;
+                    const subtotal = item.subtotal;
                     const qty = item.kuantitas;
-                    const profit = (hargaJual - hargaBeli) * qty;
+                    const profit = subtotal - (hargaBeli * qty);
 
                     return (
                         <div
@@ -158,7 +197,7 @@ export function TransactionDetailItems({ items }: TransactionDetailItemsProps) {
                                             <span className="font-bold text-slate-900 dark:text-slate-100 text-xs leading-tight">
                                                 {item.nama_produk}
                                             </span>
-                                            {item.product?.is_jasa && (
+                                            {(item.is_jasa || item.product?.is_jasa) && (
                                                 <span className="text-[8px] bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-1.5 py-0.2 rounded font-extrabold tracking-wide uppercase shrink-0">
                                                     Jasa
                                                 </span>
@@ -188,17 +227,37 @@ export function TransactionDetailItems({ items }: TransactionDetailItemsProps) {
 
                                 <div className="text-right">
                                     <span className="text-[10px] text-slate-400 block font-medium">Subtotal</span>
-                                    <span className="font-extrabold text-slate-900 dark:text-slate-100 tabular-nums">
-                                        {formatRupiah(item.subtotal)}
-                                    </span>
+                                    {item.diskon_item && item.diskon_item > 0 ? (
+                                        <div className="flex flex-col items-end leading-tight">
+                                            <span className="line-through text-rose-500 font-bold decoration-rose-500 text-[9.5px]">
+                                                {formatRupiah(item.kuantitas * item.harga_satuan)}
+                                            </span>
+                                            <span className="font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
+                                                {formatRupiah((item.kuantitas * item.harga_satuan) - item.diskon_item)}
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <span className="font-extrabold text-slate-900 dark:text-slate-100 tabular-nums">
+                                            {formatRupiah(item.subtotal)}
+                                        </span>
+                                    )}
                                 </div>
 
-                                <div>
-                                    <span className="text-[10px] text-slate-400 block font-medium">Harga Beli</span>
-                                    <span className="font-semibold text-slate-500 tabular-nums">
-                                        {formatRupiah(hargaBeli)}
-                                    </span>
-                                </div>
+                                {item.diskon_item && item.diskon_item > 0 ? (
+                                    <div>
+                                        <span className="text-[10px] text-emerald-600 block font-medium">Diskon Grosir</span>
+                                        <span className="font-bold text-emerald-600 tabular-nums">
+                                            -{formatRupiah(item.diskon_item)}
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <span className="text-[10px] text-slate-400 block font-medium">Harga Beli</span>
+                                        <span className="font-semibold text-slate-500 tabular-nums">
+                                            {formatRupiah(hargaBeli)}
+                                        </span>
+                                    </div>
+                                )}
 
                                 <div className="text-right">
                                     <span className="text-[10px] text-slate-400 block font-medium">Keuntungan</span>

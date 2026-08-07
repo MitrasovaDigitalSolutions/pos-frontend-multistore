@@ -12,6 +12,8 @@ import { DataTable } from "@/components/ui/data-table";
 import { useDeleteExpenseCategory } from "../api/expenses-api";
 import { toast } from "sonner";
 
+import { useFlatChartOfAccounts } from "@/features/accounting/api/coa-api";
+
 interface CategoryListProps {
     categories: ExpenseCategory[];
     onEdit: (category: ExpenseCategory) => void;
@@ -35,8 +37,17 @@ export function CategoryList({
         hasPermission(userRoles, userPermissions, "manage_expenses");
 
     const deleteCategory = useDeleteExpenseCategory();
+    const { data: flatAccounts } = useFlatChartOfAccounts();
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [categoryToDelete, setCategoryToDelete] = useState<ExpenseCategory | null>(null);
+
+    const coaMap = useMemo(() => {
+        const map = new Map<string, { kode: string; nama: string }>();
+        (flatAccounts || []).forEach((c) => {
+            map.set(c.uid, { kode: c.kode, nama: c.nama });
+        });
+        return map;
+    }, [flatAccounts]);
 
     const handleDelete = (c: ExpenseCategory) => {
         setCategoryToDelete(c);
@@ -107,6 +118,23 @@ export function CategoryList({
                 size: 150,
             },
             {
+                accessorKey: "chart_of_account_uid",
+                header: "Chart of Account (COA)",
+                cell: ({ row }) => {
+                    const uid = row.original.chart_of_account_uid;
+                    if (!uid) return <span className="text-slate-400 text-xs">-</span>;
+                    const coa = coaMap.get(uid);
+                    if (!coa) return <span className="text-slate-500 text-xs font-mono">{uid.substring(0, 8)}...</span>;
+                    return (
+                        <span className="font-semibold text-slate-700 text-xs">
+                            <span className="font-mono text-slate-500 mr-1">[{coa.kode}]</span>
+                            {coa.nama}
+                        </span>
+                    );
+                },
+                size: 220,
+            },
+            {
                 accessorKey: "keterangan",
                 header: "Keterangan",
                 cell: ({ row }) => (
@@ -117,7 +145,7 @@ export function CategoryList({
                 size: 300,
             },
         ],
-        [],
+        [coaMap],
     );
 
     return (

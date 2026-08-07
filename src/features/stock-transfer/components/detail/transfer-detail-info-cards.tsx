@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatDate } from "@/lib/date-utils";
+import { formatToReadableDateTime } from "@/lib/date-utils";
 import {
   IconBuildingStore,
   IconCalendar,
@@ -62,7 +62,7 @@ export function TransferDetailInfoCards({ transfer }: TransferDetailInfoCardsPro
             <span>Tanggal Kirim:</span>
             <span className="font-semibold text-slate-800">
               {transfer.tanggal_kirim
-                ? formatDate(transfer.tanggal_kirim, "dd MMM yyyy, HH:mm")
+                ? formatToReadableDateTime(transfer.tanggal_kirim)
                 : "—"}
             </span>
           </div>
@@ -70,7 +70,7 @@ export function TransferDetailInfoCards({ transfer }: TransferDetailInfoCardsPro
             <span>Tanggal Terima:</span>
             <span className="font-semibold text-slate-800">
               {transfer.tanggal_terima
-                ? formatDate(transfer.tanggal_terima, "dd MMM yyyy, HH:mm")
+                ? formatToReadableDateTime(transfer.tanggal_terima)
                 : "—"}
             </span>
           </div>

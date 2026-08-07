@@ -13,6 +13,8 @@ export const ROUTES = {
     ADMIN_STOCK: "/admin/inventory/stock-opname",
     ADMIN_STOCK_LEDGER: "/admin/inventory/stock-ledger",
     ADMIN_STOCK_TRANSFERS: "/admin/inventory/stock-transfer",
+    ADMIN_STOCK_TRANSFERS_INCOMING: "/admin/inventory/stock-transfer/terima",
+    ADMIN_STOCK_TRANSFERS_RETURNS: "/admin/inventory/stock-transfer/return",
     ADMIN_SUPPLIERS: "/admin/suppliers",
     ADMIN_CATEGORIES: "/admin/categories",
     ADMIN_BRANDS: "/admin/brands",
@@ -43,6 +45,7 @@ export const ROUTES = {
     ADMIN_ACCOUNTING_JOURNALS: "/admin/accounting/journals",
     ADMIN_ACCOUNTING_GENERAL_LEDGER: "/admin/accounting/general-ledger",
     ADMIN_ACCOUNTING_UNBALANCED: "/admin/accounting/unbalanced",
+    ADMIN_ACCOUNTING_CATEGORY_MAPPING: "/admin/accounting/category-mapping",
 
     // Protected - POS
     CHECKOUT: "/checkout",

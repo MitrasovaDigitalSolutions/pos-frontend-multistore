@@ -1,335 +1,192 @@
 "use client";
 
-import React, { useMemo } from "react";
-import { IconPackage, IconRefresh, IconInfoCircle, IconAlertTriangle } from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components/ui/data-table";
-import { FormNumberInput } from "@/components/forms/form-number-input";
-import { FormInput } from "@/components/forms/form-input";
-import { FormSelect } from "@/components/forms/form-select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ColumnDef } from "@tanstack/react-table";
 import { useFormContext } from "react-hook-form";
+import { IconPackage, IconLoader2, IconCheck } from "@tabler/icons-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
+import { DataTable } from "@/components/ui/data-table";
+import { cn } from "@/lib/utils";
 import type { StockTransferItem } from "../../types";
 import type { ReceiveFormValues } from "./types";
-import { JENIS_SELISIH_LABELS, JENIS_SELISIH_CLASSES } from "../../constants";
+import { useTransferDetailItemsColumns } from "./use-transfer-detail-items-columns";
+import { ReceivingItemRowControls } from "./receiving-item-row-controls";
+import { ReturnValidationRowControls } from "./return-validation-row-controls";
 
 interface TransferDetailItemsTableProps {
   items: StockTransferItem[];
   canReceive: boolean;
-  onResetAllQty: () => void;
-}
-
-// Inner helper component to watch individual row values for discrepancy warning icon
-function ReceivingItemRowControls({
-  index,
-  item,
-}: {
-  index: number;
-  item: StockTransferItem;
-}) {
-  const { watch, setValue } = useFormContext<ReceiveFormValues>();
-  const currentQty = watch(`items.${index}.kuantitas_diterima`);
-  const status = watch(`items.${index}.status`) || "received";
-  const isDifferent =
-    currentQty !== undefined &&
-    currentQty !== null &&
-    Number(currentQty) !== Number(item.kuantitas);
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-2">
-        <div className="flex items-center justify-center gap-1.5">
-          <FormNumberInput<ReceiveFormValues>
-            name={`items.${index}.kuantitas_diterima`}
-            min={0}
-            className={`h-8 w-24 text-xs text-center font-extrabold ${isDifferent
-              ? "border-amber-400 bg-amber-50 text-amber-900 focus-visible:ring-amber-500"
-              : "bg-white border-slate-200"
-              }`}
-          />
-          {isDifferent && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="text-amber-500 shrink-0 cursor-pointer">
-                    <IconAlertTriangle size={15} />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Jumlah diterima berbeda dari jumlah dikirim</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </div>
-        <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
-          <button
-            type="button"
-            onClick={() => { setValue(`items.${index}.status`, "received"); setValue(`items.${index}.jenis_selisih`, null); }}
-            className={`text-[10px] font-bold px-2 py-1 rounded-md transition-colors ${status === "received" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-          >
-            Terima
-          </button>
-          <button
-            type="button"
-            onClick={() => setValue(`items.${index}.status`, "rejected")}
-            className={`text-[10px] font-bold px-2 py-1 rounded-md transition-colors ${status === "rejected" ? "bg-white text-rose-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-          >
-            Tolak
-          </button>
-        </div>
-      </div>
-      {status === "rejected" && (
-         <FormSelect<ReceiveFormValues>
-           name={`items.${index}.jenis_selisih`}
-           options={[
-             { label: "Pilih Alasan", value: "" },
-             { label: "Salah Input", value: "salah_input" },
-             { label: "Rusak", value: "rusak" },
-             { label: "Hilang", value: "hilang" }
-           ]}
-           className="h-7 text-[10px] border-rose-300 bg-rose-50 text-rose-900"
-         />
-      )}
-    </div>
-  );
+  onReceiveItemSubmit?: (
+    item: StockTransferItem,
+    payload: {
+      status: "received" | "rejected";
+      kuantitas_diterima: number;
+      jenis_selisih?: "salah_input" | "rusak" | "hilang";
+      keterangan?: string;
+    }
+  ) => Promise<void>;
+  processingItemUid?: string | null;
+  canValidateReturn?: boolean;
+  onValidateReturnItem?: (item: StockTransferItem, kuantitasReturn: number) => void;
+  validatingItemUid?: string | null;
+  isFetching?: boolean;
 }
 
 export function TransferDetailItemsTable({
   items,
   canReceive,
-  onResetAllQty,
+  onReceiveItemSubmit,
+  processingItemUid,
+  canValidateReturn,
+  onValidateReturnItem,
+  validatingItemUid,
+  isFetching = false,
 }: TransferDetailItemsTableProps) {
-  const columns = useMemo<ColumnDef<StockTransferItem>[]>(() => {
-    if (canReceive) {
-      return [
-        {
-          accessorKey: "product.nama",
-          header: "Produk",
-          size: 200,
-          cell: ({ row }) => (
-            <div className="flex flex-col gap-0.5">
-              <span className="font-bold text-slate-800 text-xs">
-                {row.original.product?.nama || "—"}
-              </span>
-              {row.original.product?.barcode && (
-                <span className="font-mono text-[10px] text-slate-400">
-                  {row.original.product.barcode}
-                </span>
-              )}
-            </div>
-          ),
-        },
-        {
-          accessorKey: "kuantitas",
-          header: "Jumlah Dikirim",
-          size: 110,
-          meta: { headerClassName: "text-center", cellClassName: "text-center font-bold text-slate-900" },
-          cell: ({ row }) => (
-            <span className="inline-block bg-slate-100 text-slate-800 px-2.5 py-1 rounded-lg text-xs font-black">
-              {row.original.kuantitas} pcs
-            </span>
-          ),
-        },
-        {
-          id: "input_kuantitas_diterima",
-          header: "Penerimaan & Status",
-          size: 260,
-          meta: { headerClassName: "text-left", cellClassName: "text-left" },
-          cell: ({ row }) => (
-            <ReceivingItemRowControls index={row.index} item={row.original} />
-          ),
-        },
-        {
-          id: "input_keterangan",
-          header: "Catatan Penerimaan / Alasan Selisih",
-          size: 220,
-          cell: ({ row }) => (
-            <FormInput<ReceiveFormValues>
-              name={`items.${row.index}.keterangan`}
-              placeholder="Misal: 1 pcs rusak di jalan..."
-              maxLength={500}
-              className="h-8 text-xs bg-white"
-            />
-          ),
-        },
-      ];
-    }
-
-    // Read-only mode columns
-    return [
-      {
-        accessorKey: "product.nama",
-        header: "Produk",
-        size: 220,
-        cell: ({ row }) => (
-          <div className="flex flex-col gap-0.5">
-            <span className="font-bold text-slate-800 text-xs">
-              {row.original.product?.nama || "—"}
-            </span>
-            {row.original.product?.barcode && (
-              <span className="font-mono text-[10px] text-slate-400">
-                {row.original.product.barcode}
-              </span>
-            )}
-          </div>
-        ),
-      },
-      {
-        accessorKey: "kuantitas",
-        header: "Dikirim",
-        size: 90,
-        meta: { headerClassName: "text-center", cellClassName: "text-center font-bold text-slate-900" },
-        cell: ({ row }) => (
-          <span className="inline-block bg-slate-100 text-slate-800 px-2 py-0.5 rounded-md text-xs font-extrabold">
-            {row.original.kuantitas} pcs
-          </span>
-        ),
-      },
-      {
-        id: "kuantitas_diterima",
-        header: "Diterima",
-        size: 90,
-        meta: { headerClassName: "text-center", cellClassName: "text-center font-bold" },
-        cell: ({ row }) => {
-          const qRec = row.original.kuantitas_diterima;
-          const qSent = row.original.kuantitas;
-          if (qRec == null) return <span className="text-slate-400 text-xs">—</span>;
-          const status = row.original.status;
-          const isRejected = status === "rejected";
-          const jenisSelisih = row.original.jenis_selisih;
-          
-          if (isRejected) {
-            return (
-              <div className="flex flex-col items-center gap-1">
-                <span className="inline-block px-2 py-0.5 rounded-md text-xs font-extrabold bg-rose-50 text-rose-700 border border-rose-200">
-                  Ditolak
-                </span>
-                {jenisSelisih && (
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold border ${JENIS_SELISIH_CLASSES[jenisSelisih]}`}>
-                    {JENIS_SELISIH_LABELS[jenisSelisih]}
-                  </span>
-                )}
-              </div>
-            );
-          }
-          
-          const isMatch = qRec === qSent;
-          return (
-            <span
-              className={`inline-block px-2 py-0.5 rounded-md text-xs font-extrabold ${isMatch
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                : "bg-amber-50 text-amber-700 border border-amber-200"
-                }`}
-            >
-              {qRec} pcs
-            </span>
-          );
-        },
-      },
-      {
-        accessorKey: "keterangan",
-        header: "Catatan Item",
-        size: 150,
-        cell: ({ row }) => (
-          <span className="text-xs text-slate-600 italic">
-            {row.original.keterangan || "—"}
-          </span>
-        ),
-      },
-      {
-        id: "stok_source",
-        header: "Dampak Stok (Asal)",
-        size: 130,
-        meta: { headerClassName: "text-center", cellClassName: "text-center text-xs" },
-        cell: ({ row }) => {
-          const s1 = row.original.stok_sebelum_source;
-          const s2 = row.original.stok_sesudah_source;
-          if (s1 == null && s2 == null) return <span className="text-slate-400">—</span>;
-          return (
-            <span className="font-medium text-slate-700">
-              {s1 ?? "—"} ➔ <span className="font-bold text-rose-600">{s2 ?? "—"}</span>
-            </span>
-          );
-        },
-      },
-      {
-        id: "stok_dest",
-        header: "Dampak Stok (Tujuan)",
-        size: 130,
-        meta: { headerClassName: "text-center", cellClassName: "text-center text-xs" },
-        cell: ({ row }) => {
-          const s1 = row.original.stok_sebelum_dest;
-          const s2 = row.original.stok_sesudah_dest;
-          if (s1 == null && s2 == null) return <span className="text-slate-400">—</span>;
-          return (
-            <span className="font-medium text-slate-700">
-              {s1 ?? "—"} ➔ <span className="font-bold text-emerald-600">{s2 ?? "—"}</span>
-            </span>
-          );
-        },
-      },
-    ];
-  }, [canReceive]);
-
   const { watch } = useFormContext<ReceiveFormValues>();
-  const formItems = watch("items");
-  
-  const summary = useMemo(() => {
-    let accepted = 0;
-    let rejected = 0;
-    (formItems || []).forEach(item => {
-      if (item.status === "rejected") rejected++;
-      else accepted++;
-    });
-    return { accepted, rejected };
-  }, [formItems]);
+
+  const totalItemsCount = items.length;
+  const pendingItemsCount = items.filter(
+    (item) => item.status === null || item.status === undefined
+  ).length;
+  const verifiedItemsCount = totalItemsCount - pendingItemsCount;
+  const progressPercent = totalItemsCount > 0 ? Math.round((verifiedItemsCount / totalItemsCount) * 100) : 0;
+  const isAllVerified = canReceive && pendingItemsCount === 0 && totalItemsCount > 0;
+
+  const columns = useTransferDetailItemsColumns({
+    canReceive,
+    canValidateReturn,
+    onReceiveItemSubmit,
+    processingItemUid,
+    onValidateReturnItem,
+    validatingItemUid,
+  });
+
+  const modeKey = canReceive
+    ? "mode-receiving"
+    : canValidateReturn
+    ? "mode-return"
+    : "mode-readonly";
 
   return (
-    <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4">
+    <div className="bg-white border border-slate-100 rounded-2xl shadow-2xs p-6 space-y-4">
       {/* Table Header / Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-50 pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
         <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
-          <IconPackage size={18} className="text-emerald-600" />
-          <span>Daftar Produk Dikirim</span>
-          {canReceive && (
-            <span className="text-xs font-normal text-slate-500 ml-2">
-              ({summary.accepted} diterima / {summary.rejected} ditolak)
+          <div className="p-1 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-100">
+            <IconPackage size={18} />
+          </div>
+          <span>Daftar Produk Transfer</span>
+          {canReceive && pendingItemsCount > 0 ? (
+            <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200/80 ml-1">
+              {pendingItemsCount} item belum diproses
+            </span>
+          ) : isAllVerified ? (
+            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/80 ml-1 flex items-center gap-1">
+              <IconCheck size={13} className="text-emerald-600 stroke-[3]" />
+              100% Diverifikasi
+            </span>
+          ) : (
+            <span className="text-xs font-medium text-slate-400 ml-1">
+              ({totalItemsCount} Produk)
             </span>
           )}
         </h3>
 
-        {canReceive ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={onResetAllQty}
-            className="h-7 text-xs font-bold text-emerald-700 hover:bg-emerald-50 px-2 rounded-lg gap-1.5 cursor-pointer self-start sm:self-auto"
-          >
-            <IconRefresh size={13} />
-            Reset Semua ke Jumlah Dikirim
-          </Button>
-        ) : (
-          <span className="text-xs text-slate-400 font-semibold">
-            {items.length} Produk
+        {processingItemUid && (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold animate-pulse border border-emerald-200">
+            <IconLoader2 className="animate-spin w-3.5 h-3.5 text-emerald-600" />
+            <span>Memproses Item...</span>
           </span>
         )}
       </div>
 
+      {/* Realtime Animated Verification Progress Bar */}
       {canReceive && (
-        <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl text-xs text-blue-800 flex items-start gap-2">
-          <IconInfoCircle size={16} className="text-blue-600 shrink-0 mt-0.5" />
-          <div>
-            <strong>Penerimaan Stok Aktif:</strong> Anda dapat mengisi angka pada kolom{" "}
-            <strong>Jumlah Diterima</strong> dan catatan item langsung di tabel di bawah sebelum menekan tombol{" "}
-            <strong>Terima & Konfirmasi Stok</strong>.
+        <div className="p-3 bg-gradient-to-r from-slate-50 via-emerald-50/20 to-slate-50 border border-slate-100 rounded-xl space-y-2">
+          <div className="flex justify-between items-center text-xs font-bold text-slate-700">
+            <span className="flex items-center gap-1.5">
+              <span className={cn("w-2 h-2 rounded-full", isAllVerified ? "bg-emerald-500 animate-ping" : "bg-amber-500 animate-pulse")} />
+              <span>Progres Verifikasi Penerimaan</span>
+            </span>
+            <span className="text-slate-600 font-mono text-[11px]">
+              {verifiedItemsCount} dari {totalItemsCount} Produk ({progressPercent}%)
+            </span>
+          </div>
+          <div className="h-2 w-full bg-slate-200/80 rounded-full overflow-hidden p-0.5">
+            <motion.div
+              className={cn(
+                "h-full rounded-full transition-all duration-300",
+                isAllVerified ? "bg-emerald-500 shadow-emerald-500/50 shadow-sm" : "bg-gradient-to-r from-amber-500 to-emerald-500"
+              )}
+              initial={{ width: 0 }}
+              animate={{ width: `${progressPercent}%` }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            />
           </div>
         </div>
       )}
 
-      <DataTable columns={columns} data={items} virtualize={false} />
+      {/* Smooth Table Transition View Container */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={modeKey}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.22, ease: "easeInOut" }}
+        >
+          <DataTable
+            columns={columns}
+            data={items}
+            isFetching={isFetching}
+            virtualize={false}
+            extraActions={
+              canReceive
+                ? (item) => {
+                    const index = items.findIndex((i) => i.uid === item.uid);
+                    const actualIndex = index >= 0 ? index : 0;
+
+                    if (item.status !== null && item.status !== undefined) {
+                      const isRejected = item.status === "rejected";
+                      return (
+                        <Badge variant={isRejected ? "danger" : "success"} className="px-2.5 py-0.5 text-xs font-bold shadow-2xs">
+                          {isRejected ? "Ditolak" : "Diterima"}
+                        </Badge>
+                      );
+                    }
+
+                    return (
+                      <ReceivingItemRowControls
+                        index={actualIndex}
+                        item={item}
+                        onReceiveItemSubmit={onReceiveItemSubmit}
+                        isProcessing={processingItemUid === item.uid}
+                      />
+                    );
+                  }
+                : canValidateReturn
+                ? (item) => {
+                    const index = items.findIndex((i) => i.uid === item.uid);
+                    const actualIndex = index >= 0 ? index : 0;
+                    const formReturnQty = watch(`items.${actualIndex}.kuantitas_return`);
+                    const returnQty =
+                      formReturnQty !== undefined && formReturnQty !== null
+                        ? Number(formReturnQty)
+                        : Number(item.kuantitas) - Number(item.kuantitas_diterima || 0);
+
+                    return (
+                      <ReturnValidationRowControls
+                        item={item}
+                        returnQty={returnQty}
+                        onValidateReturnItem={onValidateReturnItem}
+                        isProcessing={validatingItemUid === item.uid}
+                      />
+                    );
+                  }
+                : undefined
+            }
+          />
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }
