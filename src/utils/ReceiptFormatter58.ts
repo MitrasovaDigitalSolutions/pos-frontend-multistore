@@ -112,6 +112,17 @@ hr{
     white-space: nowrap;
 }
 
+.product-name {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+    max-height: calc(1.3em * 2);
+    word-break: break-word;
+}
+
 .date {
     font-size: 9px;
     white-space: nowrap;
@@ -221,10 +232,12 @@ ${
 
 ${items.map((item: any) => `
 <div class="item">
-    <div>${item.qty} x ${item.nama_produk}</div>
+    <div class="product-name">
+        ${item.nama_produk}
+    </div>
 
     <div class="item-detail">
-        <span style="padding-left:50px">${money(item.harga_satuan)}</span>
+        <span style="padding-left:20px"><b>${item.qty} x </b> ${money(item.harga_satuan)}</span>
         <span>${money(item.qty * item.harga_satuan)}</span>
     </div>
 
