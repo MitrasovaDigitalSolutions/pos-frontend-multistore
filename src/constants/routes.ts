@@ -22,6 +22,7 @@ export const ROUTES = {
     ADMIN_EXPENSES: "/admin/expenses",
     ADMIN_EXPENSE_CATEGORIES: "/admin/expenses/categories",
     ADMIN_REPORTS: "/admin/reports",
+    ADMIN_REPORTS_CENTRAL: "/admin/reports/central",
     ADMIN_REPORTS_SALES: "/admin/reports/sales",
     ADMIN_REPORTS_LABARUGI: "/admin/reports/laba-rugi",
     ADMIN_REPORTS_PEMBELIAN: "/admin/reports/pembelian",

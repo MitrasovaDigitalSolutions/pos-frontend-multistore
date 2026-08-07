@@ -130,7 +130,8 @@ export function PriceAlertDialog({
                     <span>Peringatan Perubahan Harga Beli</span>
                 </span>
             }
-            className="sm:max-w-4xl font-sans"
+            scrollable={false}
+            className="sm:max-w-4xl flex flex-col max-h-[90vh] font-sans"
         >
             <FormProvider {...alertFormMethods}>
                 <div className="space-y-4 my-4">
@@ -144,6 +145,9 @@ export function PriceAlertDialog({
                                 <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                     <th className="p-3">Nama Produk</th>
                                     <th className="p-3 text-right">Harga Beli</th>
+                                    {adjustmentMethod === "average" && (
+                                        <th className="p-3 text-right text-indigo-600 dark:text-indigo-400">Harga Beli Average</th>
+                                    )}
                                     <th className="p-3 text-center w-36">Update Harga Jual?</th>
                                     <th className="p-3 text-left w-64">Margin & Harga Jual Baru</th>
                                 </tr>
@@ -156,7 +160,9 @@ export function PriceAlertDialog({
                                     const marginLama = alert.margin_lama;
                                     const selisihHargaBeli = alert.harga_beli_baru - hargaBeliLama;
                                     const buyPriceNew = buyPriceBasis(alert);
-                                    const calculatedHargaJualSaran = Math.round(buyPriceNew * (1 + (marginLama || 0) / 100));
+                                    const calculatedHargaJualSaran = adjustmentMethod === "average" && alert.harga_jual_saran_avg
+                                        ? alert.harga_jual_saran_avg
+                                        : Math.round(buyPriceNew * (1 + (marginLama || 0) / 100));
 
                                     return (
                                         <tr key={alert.product_uid} className="hover:bg-slate-50/50">
@@ -173,10 +179,18 @@ export function PriceAlertDialog({
                                                 <div className="font-mono font-bold text-amber-700">
                                                     {formatRupiah(alert.harga_beli_baru)}
                                                 </div>
-                                                <div className="text-[10px] text-rose-600 font-bold font-mono">
+                                                <div className={`text-[10px] font-bold font-mono ${selisihHargaBeli > 0 ? "text-rose-600" : selisihHargaBeli < 0 ? "text-emerald-600" : "text-slate-400"}`}>
                                                     {selisihHargaBeli > 0 ? `+${formatRupiah(selisihHargaBeli)}` : formatRupiah(selisihHargaBeli)}
                                                 </div>
                                             </td>
+                                            {adjustmentMethod === "average" && (
+                                                <td className="p-3 text-right whitespace-nowrap">
+                                                    <div className="font-mono font-bold text-indigo-700">
+                                                        {formatRupiah(alert.harga_beli_avg)}
+                                                    </div>
+                                                    <div className="text-[10px] text-indigo-500/80 font-medium">Rata-rata</div>
+                                                </td>
+                                            )}
                                             <td className="p-3 text-center">
                                                 <input
                                                     type="checkbox"

@@ -3,13 +3,18 @@ import axios from "axios";
 const BASE_URL = "http://localhost:62000";
 const CONNECT_RETRIES = 2;
 
+export interface PrinterDevice {
+    name: string;
+    description?: string;
+    isDefault?: boolean;
+}
+
 class PrinterService {
     private connected = false;
 
     async connect() {
         if (this.connected) return;
 
-        let lastError: unknown;
         for (let attempt = 1; attempt <= CONNECT_RETRIES; attempt += 1) {
             try {
                 const { data } = await axios.get(`${BASE_URL}/health`, { timeout: 3000 });
@@ -19,7 +24,6 @@ class PrinterService {
                 }
                 throw new Error("Server tidak merespon dengan status ok");
             } catch (error) {
-                lastError = error;
                 console.warn(`Percobaan koneksi ke local printer service ${attempt} gagal:`, error);
             }
         }
@@ -33,7 +37,7 @@ class PrinterService {
         this.connected = false;
     }
 
-    async findAllPrinters() {
+    async findAllPrinters(): Promise<PrinterDevice[]> {
         await this.connect();
 
         const { data } = await axios.get(`${BASE_URL}/printers`, {

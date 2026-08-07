@@ -8,21 +8,21 @@ import { getImageUrl, cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
-import { storeSettingsSchema, type StoreSettingsInput } from "../schemas/settings-schema";
-import QZService from "@/services/qz.service";
-import PrinterService from "@/services/printer.service";
+import PrinterService, { type PrinterDevice } from "@/services/printer.service";
 
 // UI Components
 import { Card } from "@/components/ui/card";
 import { IconAdjustments, IconPrinter } from "@tabler/icons-react";
-import { Store, Wallet, Settings2, ChevronRight } from "lucide-react";
+import { Store, Wallet, Settings2, ChevronRight, Boxes } from "lucide-react";
 
 // Subcomponents
 import { TabProfile } from "./tab-profile";
 import { TabFinance } from "./tab-finance";
+import { TabInventory } from "./tab-inventory";
 import { TabCash } from "./tab-cash";
 import { TabPrinter } from "./tab-printer";
 import { FloatingSaveBar } from "./floating-save-bar";
+import { StoreSettingsInput, storeSettingsSchema } from "../schemas/settings-schema";
 
 export function StoreProfile() {
     const { settings, fetchSettings, isLoading: isSettingsLoading } = useSettingsStore();
@@ -50,6 +50,7 @@ export function StoreProfile() {
             cash_account_main_uid: "",
             cash_account_bank_uid: "",
             printer_id: "",
+            hpp_adjustment_method: "latest",
         },
     });
 
@@ -70,6 +71,13 @@ export function StoreProfile() {
             description: "Tarif PPN & poin member",
             icon: IconAdjustments,
             fields: ["tax_rate_ppn", "point_rate", "point_system_enabled"] as const,
+        },
+        {
+            id: "inventory",
+            label: "Inventori & HPP",
+            description: "Kalkulasi HPP & persediaan",
+            icon: Boxes,
+            fields: ["hpp_adjustment_method"] as const,
         },
         {
             id: "cash",
@@ -114,6 +122,7 @@ export function StoreProfile() {
                 cash_account_main_uid: settings.cash_account_main_uid || "",
                 cash_account_bank_uid: settings.cash_account_bank_uid || "",
                 printer_id: settings.printer_id || "",
+                hpp_adjustment_method: (settings.hpp_adjustment_method as "latest" | "average") || "latest",
             });
         }
     }, [settings, methods]);
@@ -124,12 +133,12 @@ export function StoreProfile() {
         setQzError(null);
         try {
             const list = await PrinterService.findAllPrinters();
-            const options = list.map((p : any) => ({ value: p.name, label: p.name }));
+            const options = list.map((p: PrinterDevice) => ({ value: p.name, label: p.name }));
 
             // Ensure currently saved printer_id is in the options list
             const currentPrinter = methods.getValues("printer_id") || settings.printer_id;
-            if (currentPrinter && !list.some((p : any) => p.name === currentPrinter)) {
-                options.push({ value: currentPrinter, label: currentPrinter });
+            if (currentPrinter && !list.some((p: PrinterDevice) => p.name === currentPrinter)) {
+                options.push({ value: currentPrinter, label: `${currentPrinter} (Tidak Ditemukan)` });
             }
 
             setPrinterOptions(options);
@@ -397,6 +406,11 @@ export function StoreProfile() {
                         {/* Tab 2: Keuangan & Pajak */}
                         <div className={activeTab === "finance" ? "block animate-fade-in" : "hidden"}>
                             <TabFinance isSaving={isSaving} />
+                        </div>
+
+                        {/* Tab 3: Inventori & HPP */}
+                        <div className={activeTab === "inventory" ? "block animate-fade-in" : "hidden"}>
+                            <TabInventory isSaving={isSaving} />
                         </div>
 
                         {/* Tab 3: Pemetaan Kas Default */}

@@ -139,6 +139,13 @@ export const ENDPOINTS = {
         SUMMARY: "/v1/reports/summary",
         DAILY: (date: string) => `/v1/reports/sales/daily?date=${date}`,
         JASA_VS_PRODUCT: "/v1/reports/sales/jasa-vs-product",
+        CENTRAL: {
+            OVERVIEW: "/v1/reports/central/overview",
+            STORES: "/v1/reports/central/stores",
+            PRINT_STORES: "/v1/reports/central/print/stores",
+            SALES_TREND: "/v1/reports/central/sales-trend",
+            INVENTORY: "/v1/reports/central/inventory",
+        },
     },
 
     // Chart of Accounts (COA)

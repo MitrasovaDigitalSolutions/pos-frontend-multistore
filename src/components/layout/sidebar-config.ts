@@ -449,6 +449,13 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
         items: [
             {
                 type: "link",
+                path: ROUTES.ADMIN_REPORTS_CENTRAL,
+                label: "Laporan Konsolidasi (HQ)",
+                icon: IconChartBar,
+                permission: (roles) => hasRole(roles, "admin"),
+            },
+            {
+                type: "link",
                 path: ROUTES.ADMIN_STORES,
                 label: "Kelola Toko",
                 icon: IconBuildingStore,

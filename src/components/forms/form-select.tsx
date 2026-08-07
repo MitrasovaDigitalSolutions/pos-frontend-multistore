@@ -51,6 +51,7 @@ export interface FormSelectProps<T extends FieldValues, TData = unknown> {
     className?: string;
     wrapperClassName?: string;
     disabled?: boolean;
+    multiple?: boolean;
     size?: "sm" | "md" | "lg";
     maxLabelLength?: number;
     leftIcon?: React.ReactNode;
@@ -65,7 +66,25 @@ const defaultAsyncHook = (): AsyncQueryResult => ({
     fetchNextPage: () => {},
 });
 
-export function FormSelect<T extends FieldValues, TData = unknown>({
+import { FormMultiSelect } from "./form-multi-select";
+
+export function FormSelect<T extends FieldValues, TData = unknown>(props: FormSelectProps<T, TData>) {
+    if (props.multiple) {
+        return (
+            <FormMultiSelect<T>
+                name={props.name}
+                label={props.label}
+                options={props.options || []}
+                placeholder={props.placeholder}
+                className={props.className}
+                disabled={props.disabled}
+            />
+        );
+    }
+    return <FormSingleSelect<T, TData> {...props} />;
+}
+
+function FormSingleSelect<T extends FieldValues, TData = unknown>({
     name,
     label,
     options,

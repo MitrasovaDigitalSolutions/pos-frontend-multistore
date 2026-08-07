@@ -56,6 +56,11 @@ export const storeSettingsSchema = z.object({
         .or(z.literal(""))
         .nullable()
         .transform((val) => val || ""),
+    hpp_adjustment_method: z
+        .enum(["latest", "average"])
+        .optional()
+        .nullable()
+        .transform((val) => val || "latest"),
 });
 
 export type StoreSettingsInput = z.infer<typeof storeSettingsSchema>;

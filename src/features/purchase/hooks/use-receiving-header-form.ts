@@ -44,6 +44,9 @@ export function useReceivingHeaderForm({
             nilai_faktur: 0,
             tanggal_terima: todayStr(),
             status_pembayaran: PAYMENT_STATUS.PENDING,
+            metode_transaksi: "cash",
+            cash_account_uid: null,
+            nominal_bayar: 0,
             catatan: "",
         },
     });
@@ -130,6 +133,9 @@ export function useReceivingHeaderForm({
                 nilai_faktur: 0,
                 tanggal_terima: todayStr(),
                 status_pembayaran: PAYMENT_STATUS.PENDING,
+                metode_transaksi: "credit",
+                cash_account_uid: null,
+                nominal_bayar: 0,
                 catatan: "",
             });
             hasInitializedRef.current = false;
@@ -147,6 +153,9 @@ export function useReceivingHeaderForm({
                 nilai_faktur: watchedHeaderValues.nilai_faktur || null,
                 tanggal_terima: watchedHeaderValues.tanggal_terima || null,
                 status_pembayaran: watchedHeaderValues.status_pembayaran || undefined,
+                metode_transaksi: watchedHeaderValues.metode_transaksi || undefined,
+                cash_account_uid: watchedHeaderValues.cash_account_uid || null,
+                nominal_bayar: watchedHeaderValues.nominal_bayar || null,
                 catatan: watchedHeaderValues.catatan || null,
             });
         }
@@ -163,6 +172,9 @@ export function useReceivingHeaderForm({
                 nilai_faktur: headerData.nilai_faktur || 0,
                 tanggal_terima: headerData.tanggal_terima || todayStr(),
                 status_pembayaran: (headerData.status_pembayaran as ReceivingHeaderInput["status_pembayaran"]) || PAYMENT_STATUS.PENDING,
+                metode_transaksi: (headerData.metode_transaksi as ReceivingHeaderInput["metode_transaksi"]) || "credit",
+                cash_account_uid: headerData.cash_account_uid || null,
+                nominal_bayar: headerData.nominal_bayar || 0,
                 catatan: headerData.catatan || "",
             });
         }
@@ -186,6 +198,9 @@ export function useReceivingHeaderForm({
                 nilai_faktur: currentReceiving.nilai_faktur || 0,
                 tanggal_terima: currentReceiving.tanggal_terima ? formatToISO(currentReceiving.tanggal_terima) : todayStr(),
                 status_pembayaran: currentReceiving.status_pembayaran || PAYMENT_STATUS.PENDING,
+                metode_transaksi: (currentReceiving.metode_transaksi as ReceivingHeaderInput["metode_transaksi"]) || "credit",
+                cash_account_uid: currentReceiving.cash_account_uid || null,
+                nominal_bayar: currentReceiving.nominal_bayar || 0,
                 catatan: currentReceiving.catatan || "",
             });
         }

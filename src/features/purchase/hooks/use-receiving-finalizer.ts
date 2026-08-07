@@ -191,7 +191,10 @@ export function useReceivingFinalizer({
                 })),
             });
 
-            const alerts = (res.data || []).filter((r: ComparePricesResult) => r.perlu_alert);
+            // Trigger alert whenever price changes (whether up or down)
+            const alerts = (res.data || []).filter(
+                (r: ComparePricesResult) => r.harga_beli_baru !== r.harga_beli_lama
+            );
             if (alerts.length > 0) {
                 setPriceAlerts(alerts);
                 setIsAlertOpen(true);
@@ -250,6 +253,9 @@ export function useReceivingFinalizer({
         nomor_faktur: string | null;
         nilai_faktur: number;
         catatan: string | null;
+        metode_transaksi?: "cash" | "credit";
+        cash_account_uid?: string | null;
+        nominal_bayar?: number | null;
     }) => {
         setIsFinalizing(true);
 
@@ -273,6 +279,9 @@ export function useReceivingFinalizer({
                     nilai_faktur: Number(formData.nilai_faktur),
                     tanggal_terima: formatUTC(headerData.tanggal_terima || todayStr()),
                     status_pembayaran: currentReceiving?.status_pembayaran || PAYMENT_STATUS.PENDING,
+                    metode_transaksi: formData.metode_transaksi || headerData.metode_transaksi || "credit",
+                    cash_account_uid: formData.cash_account_uid || headerData.cash_account_uid || null,
+                    nominal_bayar: formData.nominal_bayar ?? headerData.nominal_bayar ?? null,
                     catatan: formData.catatan || headerData.catatan || null,
                     status: "completed",
                     items: itemsPayload,
@@ -300,6 +309,9 @@ export function useReceivingFinalizer({
                 nilai_faktur: Number(formData.nilai_faktur),
                 tanggal_terima: formatUTC(currentReceiving?.tanggal_terima || currentReceiving?.created_at || todayStr()),
                 status_pembayaran: currentReceiving?.status_pembayaran || PAYMENT_STATUS.PENDING,
+                metode_transaksi: formData.metode_transaksi || currentReceiving?.metode_transaksi || "credit",
+                cash_account_uid: formData.cash_account_uid || currentReceiving?.cash_account_uid || null,
+                nominal_bayar: formData.nominal_bayar ?? currentReceiving?.nominal_bayar ?? null,
                 catatan: formData.catatan,
                 status: currentReceiving?.status || "draft",
                 items: itemsPayload,
