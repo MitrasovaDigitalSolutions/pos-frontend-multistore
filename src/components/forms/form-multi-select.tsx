@@ -28,7 +28,7 @@ export function FormMultiSelect<T extends FieldValues>({
     name,
     label,
     options,
-    placeholder = "Pilih opsi...",
+    // placeholder = "Pilih opsi...",
     className,
     wrapperClassName,
     disabled = false,
