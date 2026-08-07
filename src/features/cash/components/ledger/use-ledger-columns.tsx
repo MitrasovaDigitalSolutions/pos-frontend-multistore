@@ -3,9 +3,6 @@
 import React, { useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import {
-    IconArrowDownLeft,
-    IconArrowUpRight,
-    IconArrowsExchange,
     IconCalendar,
     IconUser,
 } from "@tabler/icons-react";
@@ -107,50 +104,12 @@ export function useLedgerColumns(): ColumnDef<CashLedger>[] {
             },
         },
         {
-            id: "tipe",
-            header: "Tipe Mutasi",
-            size: 110,
-            meta: {
-                headerClassName: "text-center w-[110px] min-w-[110px]",
-                cellClassName: "text-center w-[110px] min-w-[110px]",
-            },
-            cell: ({ row }) => {
-                const movement = row.original;
-                const dir = getMovementDirection(movement);
-
-                if (dir === "debit") {
-                    return (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs">
-                            <IconArrowDownLeft size={13} className="stroke-[2.5]" />
-                            Debit
-                        </span>
-                    );
-                }
-
-                if (dir === "credit") {
-                    return (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200/80 shadow-2xs">
-                            <IconArrowUpRight size={13} className="stroke-[2.5]" />
-                            Kredit
-                        </span>
-                    );
-                }
-
-                return (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-sky-50 text-sky-700 border border-sky-200/80 shadow-2xs">
-                        <IconArrowsExchange size={13} className="stroke-[2.5]" />
-                        Transfer
-                    </span>
-                );
-            },
-        },
-        {
             id: "reference",
             header: "Deskripsi & Referensi",
-            size: 280,
+            size: 300,
             meta: {
-                headerClassName: "min-w-[240px]",
-                cellClassName: "min-w-[240px]",
+                headerClassName: "min-w-[260px]",
+                cellClassName: "min-w-[260px]",
             },
             cell: ({ row }) => {
                 return (
@@ -163,10 +122,10 @@ export function useLedgerColumns(): ColumnDef<CashLedger>[] {
         {
             id: "amount",
             header: "Nominal",
-            size: 150,
+            size: 160,
             meta: {
-                headerClassName: "text-right w-[150px] min-w-[150px]",
-                cellClassName: "text-right w-[150px] min-w-[150px]",
+                headerClassName: "text-right w-[160px] min-w-[160px]",
+                cellClassName: "text-right w-[160px] min-w-[160px]",
             },
             cell: ({ row }) => {
                 const movement = row.original;

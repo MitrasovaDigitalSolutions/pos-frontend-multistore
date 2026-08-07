@@ -118,7 +118,7 @@ export function CashLedgerTable({
                 data={rawList}
                 isLoading={ledgerLoading}
                 isFetching={ledgerFetching}
-                tableClassName="table-fixed min-w-[1000px]"
+                tableClassName="table-fixed min-w-[900px]"
                 emptyMessage="Tidak ada data mutasi arus kas yang ditemukan."
                 paginationMode="server"
                 page={ledgerFilters.page}
