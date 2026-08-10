@@ -6,8 +6,11 @@ import { FormInput } from "@/components/forms/form-input";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTableTextActionButton } from "@/components/ui/data-table-actions";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { useReceivingDebts } from "@/features/purchase/api/purchase-api";
+import { BulkPayDebtDialog } from "@/features/purchase/components/payment/bulk-pay-debt-dialog";
 import type { Receiving } from "@/features/purchase/types";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
@@ -16,9 +19,10 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
+import { useActiveStoreStore } from "@/stores/active-store-store";
 
 interface SupplierDebtsFilterValues {
     search: string;
@@ -34,6 +38,7 @@ interface SupplierDebtsDetailPageProps {
 export function SupplierDebtsDetailPage({ supplierUid, supplierName }: SupplierDebtsDetailPageProps) {
     const { data: session } = useSession();
     const router = useAppRouter();
+    const { activeStoreUid } = useActiveStoreStore();
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
 
@@ -52,6 +57,17 @@ export function SupplierDebtsDetailPage({ supplierUid, supplierName }: SupplierD
         tanggal_sampai?: string;
     }>({});
 
+    // Bulk selection and dialog states
+    const [selectedUids, setSelectedUids] = useState<string[]>([]);
+    const [isBulkPayOpen, setIsBulkPayOpen] = useState(false);
+
+    // Reset selections and modal when active store or supplier changes
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSelectedUids([]);
+        setIsBulkPayOpen(false);
+    }, [activeStoreUid, supplierUid]);
+
     const filterMethods = useForm<SupplierDebtsFilterValues>({
         defaultValues: {
             search: "",
@@ -67,6 +83,7 @@ export function SupplierDebtsDetailPage({ supplierUid, supplierName }: SupplierD
             tanggal_sampai: data.tanggal_sampai || undefined,
         });
         setPage(1);
+        setSelectedUids([]);
     };
 
     const handleFilterReset = () => {
@@ -77,6 +94,7 @@ export function SupplierDebtsDetailPage({ supplierUid, supplierName }: SupplierD
         });
         setAppliedFilters({});
         setPage(1);
+        setSelectedUids([]);
     };
 
     const { data: debtsData, isLoading, isFetching } = useReceivingDebts({
@@ -89,6 +107,28 @@ export function SupplierDebtsDetailPage({ supplierUid, supplierName }: SupplierD
     });
 
     const receivings = debtsData?.data || [];
+
+    // Filter payable (unpaid / partial / pending) receivings
+    const payableReceivings = receivings.filter((r) => r.status_pembayaran !== "paid");
+    const isAllSelected =
+        payableReceivings.length > 0 &&
+        payableReceivings.every((r) => selectedUids.includes(r.uid));
+
+    const handleSelectAllToggle = () => {
+        if (isAllSelected) {
+            setSelectedUids([]);
+        } else {
+            setSelectedUids(payableReceivings.map((r) => r.uid));
+        }
+    };
+
+    const handleRowSelectToggle = (uid: string) => {
+        setSelectedUids((prev) =>
+            prev.includes(uid) ? prev.filter((id) => id !== uid) : [...prev, uid]
+        );
+    };
+
+    const selectedReceivings = receivings.filter((r) => selectedUids.includes(r.uid));
 
     // Compute summary from loaded page data
     const totalFaktur = receivings.reduce((sum, r) => sum + (r.nilai_faktur || 0), 0);
@@ -110,6 +150,37 @@ export function SupplierDebtsDetailPage({ supplierUid, supplierName }: SupplierD
     }
 
     const columns: ColumnDef<Receiving>[] = [
+        {
+            id: "select",
+            size: 36,
+            header: () => (
+                <div className="flex justify-center items-center">
+                    <Checkbox
+                        checked={isAllSelected}
+                        onCheckedChange={handleSelectAllToggle}
+                        disabled={payableReceivings.length === 0}
+                        title="Pilih Semua yang Belum Lunas"
+                    />
+                </div>
+            ),
+            cell: ({ row }) => {
+                const isPaid = row.original.status_pembayaran === "paid";
+                const isChecked = selectedUids.includes(row.original.uid);
+                return (
+                    <div className="flex justify-center items-center">
+                        <Checkbox
+                            checked={isChecked}
+                            disabled={isPaid}
+                            onCheckedChange={() => handleRowSelectToggle(row.original.uid)}
+                        />
+                    </div>
+                );
+            },
+            meta: {
+                headerClassName: "w-8 text-center px-1",
+                cellClassName: "w-8 text-center px-1",
+            },
+        },
         {
             accessorKey: "tanggal_terima",
             header: "Tanggal Terima",
@@ -202,7 +273,7 @@ export function SupplierDebtsDetailPage({ supplierUid, supplierName }: SupplierD
                         )
                     }
                     icon={<IconCash size={14} />}
-                    tooltip="Bayar Hutang"
+                    tooltip="Bayar Hutang Single"
                     className="mx-auto"
                 >
                     Bayar
@@ -217,7 +288,7 @@ export function SupplierDebtsDetailPage({ supplierUid, supplierName }: SupplierD
             <div className="flex items-center gap-3">
                 <button
                     onClick={() => router.push("/admin/debts/sales")}
-                    className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-all shrink-0"
+                    className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-all shrink-0 cursor-pointer"
                     title="Kembali ke Daftar Hutang"
                 >
                     <IconArrowLeft size={15} />
@@ -283,13 +354,11 @@ export function SupplierDebtsDetailPage({ supplierUid, supplierName }: SupplierD
 
             {/* List Table & Filter Section */}
             <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4">
-                <div className="flex justify-between items-center border-b border-slate-50 pb-3">
-                    <div>
-                        <h4 className="text-xs font-bold text-slate-800">Daftar Hutang Penerimaan</h4>
-                        <p className="text-[10px] text-slate-400">
-                            Klik &quot;Bayar&quot; untuk mencatat pembayaran hutang.
-                        </p>
-                    </div>
+                <div className="border-b border-slate-50 pb-3">
+                    <h4 className="text-xs font-bold text-slate-800">Daftar Hutang Penerimaan</h4>
+                    <p className="text-[10px] text-slate-400">
+                        Pilih faktur menggunakan checkbox pada tabel, lalu klik tombol &quot;Pelunasan Sekaligus&quot; untuk melunasi beberapa faktur secara bersamaan.
+                    </p>
                 </div>
 
                 <FilterForm
@@ -326,6 +395,7 @@ export function SupplierDebtsDetailPage({ supplierUid, supplierName }: SupplierD
                     onPerPageChange={(newPerPage) => {
                         setPerPage(newPerPage);
                         setPage(1);
+                        setSelectedUids([]);
                     }}
                     meta={debtsData?.meta}
                     entityName="hutang penerimaan"
@@ -338,8 +408,49 @@ export function SupplierDebtsDetailPage({ supplierUid, supplierName }: SupplierD
                     }}
                     virtualize={true}
                     estimateRowHeight={48}
+                    extraToolbarActions={
+                        <div className="flex items-center gap-2">
+                            <Button
+                                onClick={() => {
+                                    if (selectedUids.length === 0 && payableReceivings.length > 0) {
+                                        setSelectedUids(payableReceivings.map((r) => r.uid));
+                                    }
+                                    setIsBulkPayOpen(true);
+                                }}
+                                disabled={payableReceivings.length === 0}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 px-3.5 rounded-xl flex items-center gap-2 shadow-xs cursor-pointer disabled:opacity-50"
+                            >
+                                <IconCash size={15} />
+                                <span>
+                                    {selectedUids.length > 0
+                                        ? `Pelunasan Sekaligus (${selectedUids.length} Terpilih)`
+                                        : "Pelunasan Sekaligus"}
+                                </span>
+                            </Button>
+
+                            {selectedUids.length > 0 && (
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setSelectedUids([])}
+                                    className="text-xs h-9 border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer rounded-xl bg-white"
+                                >
+                                    Reset Pilihan
+                                </Button>
+                            )}
+                        </div>
+                    }
                 />
             </section>
+
+            {/* Bulk Pay Debt Dialog */}
+            <BulkPayDebtDialog
+                open={isBulkPayOpen}
+                onOpenChange={setIsBulkPayOpen}
+                supplierName={supplierName}
+                selectedReceivings={selectedReceivings}
+                onSuccess={() => setSelectedUids([])}
+            />
         </div>
     );
 }

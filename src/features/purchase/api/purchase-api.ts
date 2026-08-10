@@ -7,7 +7,7 @@ import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/a
 import type { Receiving, PurchaseOrder, ReceivingPayment, CashAccount, PurchaseReturn, PaymentSummary, SupplierDebtSummary } from "../types";
 import type { ReceivingInput, ReceivingHeaderInput } from "../schemas/receiving-schema";
 import type { PurchaseOrderHeaderInput, PurchaseOrderBulkItemsInput } from "../schemas/order-schema";
-import type { PaymentInput } from "../schemas/payment-schema";
+import type { PaymentInput, BulkPaymentInput } from "../schemas/payment-schema";
 import type { PurchaseReturnInput, PurchaseReturnHeaderInput, PurchaseReturnBulkItemsInput } from "../schemas/return-schema";
 import type { Product } from "@/features/master/products/types";
 
@@ -576,6 +576,29 @@ export function useCreatePayment() {
         },
     });
 }
+
+export function useBulkCreatePayment() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<ReceivingPayment[]>, Error, BulkPaymentInput>({
+        mutationFn: (data) =>
+            apiPost<ApiResponse<ReceivingPayment[]>, BulkPaymentInput>(
+                ENDPOINTS.PURCHASE.PAYMENT.BULK,
+                data,
+            ),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.payments(),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.purchase.receivings(),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.cashAccounts.all,
+            });
+        },
+    });
+}
+
 
 export function useUpdatePayment() {
     const queryClient = useQueryClient();

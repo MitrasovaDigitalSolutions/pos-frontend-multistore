@@ -20,3 +20,20 @@ export const paymentSchema = z.object({
 
 export type PaymentInput = z.infer<typeof paymentSchema>;
 
+export const bulkPaymentSchema = z.object({
+    receiving_uids: z
+        .array(z.string().min(1))
+        .min(1, "Minimal 1 transaksi penerimaan harus dipilih"),
+    tanggal_bayar: z.string().min(1, "Tanggal pembayaran wajib diisi"),
+    cash_account_uid: z.string().min(1, "Rekening/akun kas wajib dipilih"),
+    metode_pembayaran: z.string().min(1, "Metode pembayaran wajib diisi").max(50),
+    catatan: z
+        .string()
+        .nullable()
+        .optional()
+        .transform((val) => val || null),
+});
+
+export type BulkPaymentInput = z.infer<typeof bulkPaymentSchema>;
+
+

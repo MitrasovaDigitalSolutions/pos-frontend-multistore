@@ -128,7 +128,8 @@ export function PaymentCreatePage() {
 
     const cashAccountOptions = cashAccounts.map((acc) => ({
         value: acc.uid,
-        label: `${acc.nama} (${formatRupiah(acc.saldo)})`,
+        label: acc.nama,
+        description: `Saldo: ${formatRupiah(acc.saldo || 0)} • (${acc.tipe === "register" ? "Kas Kasir" : acc.tipe === "bank" ? "Bank" : "Kas Utama"})`,
     }));
 
     const paymentMethodOptions = [

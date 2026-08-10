@@ -55,6 +55,8 @@ export interface FormSelectProps<T extends FieldValues, TData = unknown> {
     maxLabelLength?: number;
     leftIcon?: React.ReactNode;
     rightElement?: React.ReactNode;
+    onCreateOption?: (searchQuery: string) => void;
+    createOptionLabel?: string;
 }
 
 const defaultAsyncHook = (): AsyncQueryResult => ({
@@ -88,6 +90,8 @@ export function FormSelect<T extends FieldValues, TData = unknown>({
     maxLabelLength,
     leftIcon,
     rightElement,
+    onCreateOption,
+    createOptionLabel,
 }: FormSelectProps<T, TData>) {
     const {
         control,
@@ -237,6 +241,8 @@ export function FormSelect<T extends FieldValues, TData = unknown>({
                             maxLabelLength={maxLabelLength}
                             leftIcon={leftIcon}
                             rightElement={rightElement}
+                            onCreateOption={onCreateOption}
+                            createOptionLabel={createOptionLabel}
                         />
                     );
                 }}

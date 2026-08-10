@@ -53,12 +53,33 @@ export class NetworkError extends Error {
 
 export function getErrorMessage(error: unknown): string {
     if (error instanceof ApiError) {
+        if (error.errors && typeof error.errors === "object") {
+            const fieldKeys = Object.keys(error.errors);
+            if (fieldKeys.length > 0) {
+                const firstKey = fieldKeys[0];
+                const messages = error.errors[firstKey];
+                if (Array.isArray(messages) && messages.length > 0 && messages[0]) {
+                    return messages[0];
+                }
+            }
+        }
         return error.message;
     }
     if (error instanceof NetworkError) {
         return error.message;
     }
     if (error instanceof Error) {
+        const anyErr = error as unknown as { errors?: Record<string, string[]> };
+        if (anyErr.errors && typeof anyErr.errors === "object") {
+            const fieldKeys = Object.keys(anyErr.errors);
+            if (fieldKeys.length > 0) {
+                const firstKey = fieldKeys[0];
+                const messages = anyErr.errors[firstKey];
+                if (Array.isArray(messages) && messages.length > 0 && messages[0]) {
+                    return messages[0];
+                }
+            }
+        }
         return error.message;
     }
     return "Terjadi kesalahan yang tidak diketahui.";

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Input } from "@/components/ui/input";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { getErrorMessage } from "@/shared/errors/api-error";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconAlertTriangle, IconCircleCheck } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
@@ -200,7 +201,7 @@ export function ReturnFinalizeDialog({
                     }
                 },
                 onError: (err) => {
-                    toast.error(err.message || "Gagal memfinalisasi Retur Pembelian.");
+                    toast.error(getErrorMessage(err) || "Gagal memfinalisasi Retur Pembelian.");
                     setIsConfirmOpen(false);
                 },
             },

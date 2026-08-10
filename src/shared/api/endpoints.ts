@@ -113,6 +113,7 @@ export const ENDPOINTS = {
         PAYMENT: {
             LIST: "/v1/purchase/payment",
             CREATE: "/v1/purchase/payment",
+            BULK: "/v1/purchase/payment/bulk",
             DETAIL: (uid: string) => `/v1/purchase/payment/${uid}`,
             UPDATE: (uid: string) => `/v1/purchase/payment/${uid}`,
             DELETE: (uid: string) => `/v1/purchase/payment/${uid}`,

@@ -598,6 +598,7 @@ export function DataTable<TData, TValue>({
                                                 style={{
                                                     width: header.column.columnDef.size,
                                                     minWidth: header.column.columnDef.size,
+                                                    maxWidth: header.column.columnDef.size,
                                                 }}
                                             >
                                                 {header.isPlaceholder ? null : (
@@ -721,6 +722,7 @@ export function DataTable<TData, TValue>({
                                                             style={{
                                                                 width: cell.column.columnDef.size,
                                                                 minWidth: cell.column.columnDef.size,
+                                                                maxWidth: cell.column.columnDef.size,
                                                             }}
                                                         >
                                                             {flexRender(
@@ -769,6 +771,7 @@ export function DataTable<TData, TValue>({
                                                     style={{
                                                         width: cell.column.columnDef.size,
                                                         minWidth: cell.column.columnDef.size,
+                                                        maxWidth: cell.column.columnDef.size,
                                                     }}
                                                 >
                                                     {flexRender(
