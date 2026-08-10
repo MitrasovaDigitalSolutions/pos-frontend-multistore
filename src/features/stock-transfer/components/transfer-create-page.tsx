@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import type { CommandOption } from "@/components/ui/command-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ROUTES } from "@/constants/routes";
+import { STORE_LABEL_HQ } from "@/constants/store";
 import type { Product } from "@/features/master/products/types";
 import { useStores } from "@/features/stores/api/stores-api";
 import { useAppRouter } from "@/hooks/use-app-router";
@@ -44,7 +45,7 @@ export function TransferCreatePage({ editUid }: TransferCreatePageProps) {
   const destStores = stores.filter((s) => s.uid !== activeStoreUid);
   const storeOptions: CommandOption[] = destStores.map((s) => ({
     value: s.uid,
-    label: `${s.nama}${s.is_central ? " (Toko Pusat)" : ""}`,
+    label: `${s.nama}${s.is_central ? ` (${STORE_LABEL_HQ})` : ""}`,
   }));
 
   const [destinationUid, setDestinationUid] = useState<string>("");

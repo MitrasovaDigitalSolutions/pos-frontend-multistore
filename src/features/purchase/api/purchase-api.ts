@@ -214,6 +214,7 @@ export interface ComparePricesInput {
     items: {
         product_uid: string;
         harga_beli: number;
+        kuantitas: number;
     }[];
 }
 
@@ -222,9 +223,11 @@ export interface ComparePricesResult {
     nama: string;
     harga_beli_lama: number;
     harga_beli_baru: number;
+    harga_beli_avg: number;
     harga_jual_lama: number;
     margin_lama: number;
     harga_jual_saran: number;
+    harga_jual_saran_avg: number;
     selisih_harga_beli: number;
     perlu_alert: boolean;
 }

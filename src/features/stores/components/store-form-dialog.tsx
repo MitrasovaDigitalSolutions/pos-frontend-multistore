@@ -15,6 +15,7 @@ import { useCreateStore, useUpdateStore } from "../api/stores-api";
 import type { Store } from "../types";
 import { ApiError } from "@/shared/errors/api-error";
 import { IconPlus, IconEdit } from "@tabler/icons-react";
+import { STORE_LABEL_HQ } from "@/constants/store";
 
 interface StoreFormDialogProps {
     open: boolean;
@@ -166,11 +167,11 @@ export function StoreFormDialog({ open, onOpenChange, editingStore }: StoreFormD
                             disabled={isPending}
                         />
 
-                        {/* Toko Pusat Switch */}
+                        {/* Toko HQ Switch */}
                         <FormSwitch<StoreInput>
                             name="is_central"
-                            label="Toko Pusat"
-                            description="Jadikan toko ini sebagai cabang pusat operasional."
+                            label={STORE_LABEL_HQ}
+                            description="Jadikan toko ini sebagai cabang HQ operasional."
                             disabled={isPending}
                         />
 
@@ -193,10 +194,10 @@ export function StoreFormDialog({ open, onOpenChange, editingStore }: StoreFormD
                         setValue("is_central", false);
                     }
                 }}
-                title="Konfirmasi Toko Pusat"
+                title="Konfirmasi Toko HQ"
                 description={
                     <div className="space-y-2 text-slate-600 dark:text-slate-400">
-                        <p>Toko yang dibuat akan menjadi toko pusat dan toko pusat yang sebelumnya akan berpindah ke toko yang baru dibuat ini.</p>
+                        <p>Toko yang dibuat akan menjadi toko HQ dan toko HQ yang sebelumnya akan berpindah ke toko yang baru dibuat ini.</p>
                         <p className="font-semibold text-amber-600 dark:text-amber-500">Apakah Anda yakin ingin melanjutkan?</p>
                     </div>
                 }

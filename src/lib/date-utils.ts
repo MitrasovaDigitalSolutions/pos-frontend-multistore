@@ -66,6 +66,20 @@ export function todayStr(): string {
 }
 
 /**
+ * Mengembalikan string tanggal awal bulan ini dengan format yyyy-MM-dd.
+ */
+export function startOfMonthStr(): string {
+  return format(startOfMonth(new Date()), "yyyy-MM-dd");
+}
+
+/**
+ * Mengembalikan string tanggal N hari yang lalu dengan format yyyy-MM-dd.
+ */
+export function subDaysStr(days: number): string {
+  return format(subDays(new Date(), days), "yyyy-MM-dd");
+}
+
+/**
  * Memformat tanggal ke format UTC ISO String standar (YYYY-MM-DDTHH:mm:ss.SSSZ).
  */
 export function formatUTC(dateInput?: Date | string | number | null): string {

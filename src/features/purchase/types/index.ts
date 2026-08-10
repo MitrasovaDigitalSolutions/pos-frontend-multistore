@@ -21,6 +21,9 @@ export interface Receiving {
     nilai_faktur: number | null;
     status: "draft" | "completed";
     status_pembayaran: "pending" | "unpaid" | "partial" | "paid";
+    metode_transaksi?: "cash" | "credit" | null;
+    cash_account_uid?: string | null;
+    nominal_bayar?: number | null;
     purchase_order_uid?: string | null;
     total_dibayar?: number;
     sisa_hutang?: number;

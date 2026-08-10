@@ -2,6 +2,7 @@
 
 import { IconArrowRight, IconBuildingStore, IconNotes } from "@tabler/icons-react";
 import { CommandSelect, type CommandOption } from "@/components/ui/command-select";
+import { STORE_LABEL_HQ, STORE_LABEL_BRANCH } from "@/constants/store";
 
 interface TransferRouteCardProps {
   activeStoreName?: string;
@@ -42,7 +43,7 @@ export function TransferRouteCard({
               Toko Asal (Pengirim)
             </span>
             <span className="inline-block text-[9px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.2 rounded-md">
-              {isCentralStore ? "Toko Pusat" : "Toko Cabang"}
+              {isCentralStore ? STORE_LABEL_HQ : STORE_LABEL_BRANCH}
             </span>
           </div>
           <p className="font-extrabold text-slate-900 text-sm truncate">

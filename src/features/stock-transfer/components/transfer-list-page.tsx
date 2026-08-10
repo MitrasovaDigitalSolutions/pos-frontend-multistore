@@ -14,9 +14,9 @@ import { StockTransferListMode, useStockTransfersByMode } from "../api/stock-tra
 
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { DataTable } from "@/components/ui/data-table";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { DataTableActionButton } from "@/components/ui/data-table-actions";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
-import { cn } from "@/lib/utils";
 import { TransferListFilters, type TransferFilterValues } from "./list/transfer-list-filters";
 import { TransferListHeader } from "./list/transfer-list-header";
 import { TransferListStatCards } from "./list/transfer-list-stat-cards";
@@ -217,23 +217,13 @@ export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
               ].includes(st);
 
               return (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      onClick={() => router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/${item.uid}?from=${mode}`)}
-                      className={cn(
-                        "p-1.5 rounded-xl transition-all shadow-2xs active:scale-95 cursor-pointer flex items-center justify-center border",
-                        !isFinishedOrRejected
-                          ? "text-amber-600 bg-white hover:bg-amber-500 hover:text-white border-amber-300 hover:border-amber-500 hover:shadow-amber-500/20"
-                          : "text-slate-600 bg-white hover:bg-slate-700 hover:text-white border-slate-200/80 hover:border-slate-700 hover:shadow-slate-500/10"
-                      )}
-                    >
-                      <IconInfoCircle size={18} />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>Lihat Detail Transfer</TooltipContent>
-                </Tooltip>
+                <DataTableActionButton
+                  variant={!isFinishedOrRejected ? "amber" : "slate"}
+                  onClick={() => router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/${item.uid}?from=${mode}`)}
+                  tooltip="Lihat Detail Transfer"
+                >
+                  <IconInfoCircle size={16} />
+                </DataTableActionButton>
               );
             }}
           />

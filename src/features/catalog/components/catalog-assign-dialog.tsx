@@ -18,6 +18,7 @@ import {
 import { useStores } from "@/features/stores/api/stores-api";
 import { useProductStores } from "@/features/master/products/api/product-store-api";
 import { useBulkAssignProductStores } from "../api/catalog-api";
+import { STORE_BADGE_HQ } from "@/constants/store";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { CatalogProduct } from "../types";
 
@@ -297,7 +298,7 @@ export function CatalogAssignDialog({
                                                     </span>
                                                     {store.is_central && (
                                                         <Badge className="text-[9px] px-1.5 py-0 bg-emerald-100 text-emerald-800 border-emerald-200 font-bold shrink-0">
-                                                            Pusat
+                                                            {STORE_BADGE_HQ}
                                                         </Badge>
                                                     )}
                                                 </div>

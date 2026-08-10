@@ -79,7 +79,7 @@ export function LoginForm() {
                 const soleStore = stores[0];
                 if (activeStoreUid !== soleStore.uid) {
                     setActiveStore(soleStore.uid);
-                    toast.info(`Masuk sebagai Karyawan di Toko ${soleStore.nama}`);
+                    toast.info(`Masuk sebagai Karyawan di ${soleStore.nama}`);
                 } else {
                     // eslint-disable-next-line react-hooks/set-state-in-effect
                     setIsRedirecting(true);
@@ -92,7 +92,7 @@ export function LoginForm() {
             const hasValidActiveStore = activeStoreUid && stores.some((s) => s.uid === activeStoreUid);
             if (hasValidActiveStore && !justLoggedIn) {
                 const currentStore = stores.find((s) => s.uid === activeStoreUid)!;
-                toast.info(`Masuk sebagai Karyawan di Toko ${currentStore.nama}`);
+                toast.info(`Masuk sebagai Karyawan di ${currentStore.nama}`);
                 setIsRedirecting(true);
                 router.push(targetPath);
             } else {
@@ -146,7 +146,7 @@ export function LoginForm() {
         setIsStoreDialogOpen(false);
         setJustLoggedIn(false);
 
-        toast.info(`Masuk sebagai Karyawan di Toko ${selectedStore.nama}`);
+        toast.info(`Masuk sebagai Karyawan di ${selectedStore.nama}`);
 
         const userRoles = session?.user?.roles ?? [];
         const targetPath = (
@@ -154,7 +154,7 @@ export function LoginForm() {
             userRoles.includes("manajer_toko") ||
             userRoles.includes("supervisor")
         ) ? "/admin" : "/checkout";
-        
+
         setIsRedirecting(true);
         router.push(targetPath);
     };

@@ -21,6 +21,10 @@ export function LedgerDetailModal({ open, onOpenChange, movement }: LedgerDetail
     const isTransfer = (movement.tipe || "").toLowerCase() === "transfer";
     const displayAmt = Math.abs(movement.amount);
     const accountObj = movement.cashAccount || movement.cash_account;
+    const drawerMovement = movement.cashDrawerMovement || movement.cash_drawer_movement;
+    const drawerSession = movement.cashDrawerSession || movement.cash_drawer_session;
+    const sessionUid = movement.cash_drawer_session_uid || drawerSession?.uid || drawerMovement?.cash_drawer_session_uid;
+    const note = movement.expense?.catatan || movement.supplier_payment?.catatan || drawerMovement?.note || drawerSession?.opening_note || drawerSession?.closing_note;
 
     return (
         <BaseDialog
@@ -129,6 +133,28 @@ export function LedgerDetailModal({ open, onOpenChange, movement }: LedgerDetail
                         </div>
                     )}
 
+                    {sessionUid && (
+                        <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1 col-span-2">
+                            <div className="flex items-center justify-between">
+                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+                                    UID Drawer Session
+                                </span>
+                                {drawerSession?.status && (
+                                    <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded uppercase ${
+                                        drawerSession.status === "open"
+                                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                            : "bg-purple-50 text-purple-700 border border-purple-200"
+                                    }`}>
+                                        Status: {drawerSession.status}
+                                    </span>
+                                )}
+                            </div>
+                            <span className="font-mono font-bold text-slate-800 text-[11px] break-all block">
+                                {sessionUid}
+                            </span>
+                        </div>
+                    )}
+
                     {movement.user && (
                         <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1 col-span-2">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
@@ -143,13 +169,13 @@ export function LedgerDetailModal({ open, onOpenChange, movement }: LedgerDetail
                 </div>
 
                 {/* Catatan / Notes */}
-                {(movement.expense?.catatan || movement.supplier_payment?.catatan) && (
+                {note && (
                     <div className="p-3 bg-amber-50/60 border border-amber-200/60 rounded-xl text-xs space-y-1">
                         <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider block">
                             Catatan Transaksi
                         </span>
                         <p className="text-amber-900 italic">
-                            {movement.expense?.catatan || movement.supplier_payment?.catatan}
+                            {note}
                         </p>
                     </div>
                 )}

@@ -34,6 +34,14 @@ export const receivingSchema = z.object({
         .optional()
         .transform((val) => (val === undefined || val === null ? null : Number(val))),
     status_pembayaran: z.enum(["pending", "unpaid", "partial", "paid"]).default("pending"),
+    metode_transaksi: z.enum(["cash", "credit"]).default("cash"),
+    cash_account_uid: z.string().nullable().optional().transform((val) => val || null),
+    nominal_bayar: z.coerce
+        .number()
+        .min(0, "Nominal bayar minimal 0")
+        .nullable()
+        .optional()
+        .transform((val) => (val === undefined || val === null ? null : Number(val))),
     status: z.enum(["draft", "completed"]).default("completed"),
     catatan: z
         .string()
@@ -58,6 +66,14 @@ export const receivingHeaderSchema = z.object({
     nilai_faktur: z.coerce.number().min(0, "Nilai faktur minimal 0").default(0),
     tanggal_terima: z.string().min(1, "Tanggal terima wajib diisi"),
     status_pembayaran: z.enum(["pending", "unpaid", "partial", "paid"]).default("pending"),
+    metode_transaksi: z.enum(["cash", "credit"]).default("cash"),
+    cash_account_uid: z.string().nullable().optional().transform((val) => val || null),
+    nominal_bayar: z.coerce
+        .number()
+        .min(0, "Nominal bayar minimal 0")
+        .nullable()
+        .optional()
+        .transform((val) => (val === undefined || val === null ? null : Number(val))),
     catatan: z.string().nullable().optional().transform((val) => val || null),
 }).refine((data) => data.purchase_order_uid || data.supplier_uid, {
     message: "Supplier wajib dipilih jika tidak menggunakan PO",

@@ -9,6 +9,7 @@ import QZService from "@/services/qz.service";
 import { useActiveStoreStore } from "@/stores/active-store-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { IconBuildingStore, IconPrinter, IconSettings } from "@tabler/icons-react";
+import { STORE_BADGE_HQ, STORE_LABEL_HQ, STORE_LABEL_BRANCH } from "@/constants/store";
 import { useQueryClient } from "@tanstack/react-query";
 import { Info, Loader2, RefreshCw, Save } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -295,7 +296,7 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
                                         options={stores.map((s) => ({
                                             value: s.uid,
                                             label: s.nama,
-                                            description: s.is_central ? "Toko Pusat" : "Toko Cabang",
+                                            description: s.is_central ? STORE_LABEL_HQ : STORE_LABEL_BRANCH,
                                         }))}
                                         placeholder="Pilih Toko"
                                         leftIcon={
@@ -308,7 +309,7 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
                                         rightElement={
                                             selectedStore?.is_central ? (
                                                 <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80 leading-none">
-                                                    Pusat
+                                                    {STORE_BADGE_HQ}
                                                 </span>
                                             ) : (
                                                 <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-slate-100 text-slate-600 border border-slate-200/80 leading-none">

@@ -1,15 +1,27 @@
 "use client";
 
+import { FilterForm } from "@/components/forms/filter-form";
+import { FormDatePicker } from "@/components/forms/form-date-picker";
+import { FormInput } from "@/components/forms/form-input";
+import { FormSelect } from "@/components/forms/form-select";
+import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
+import { DataTableActionButton } from "@/components/ui/data-table-actions";
 import { StatusBadge } from "@/components/ui/status-badge";
+import {
+    PO_STATUS,
+    PO_STATUS_LABELS,
+    type POStatus,
+} from "@/constants/purchase";
 import { hasPermission, hasRole } from "@/constants/roles";
-import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
-import { IconPlus, IconCircleX, IconChevronRight } from "@tabler/icons-react";
-import { useSession } from "next-auth/react";
 import { useAppRouter } from "@/hooks/use-app-router";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { formatDate } from "@/lib/date-utils";
+import { IconChevronRight, IconCircleX, IconPlus } from "@tabler/icons-react";
+import { useSession } from "next-auth/react";
 import { useDeferredValue, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -20,19 +32,7 @@ import {
     usePurchaseOrders,
 } from "../../api/purchase-api";
 import type { PurchaseOrder } from "../../types";
-import {
-    PO_STATUS,
-    PO_STATUS_LABELS,
-    type POStatus,
-} from "@/constants/purchase";
-import { formatDate } from "@/lib/date-utils";
-import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { poColumns } from "./po-columns";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { FilterForm } from "@/components/forms/filter-form";
-import { FormInput } from "@/components/forms/form-input";
-import { FormSelect } from "@/components/forms/form-select";
-import { FormDatePicker } from "@/components/forms/form-date-picker";
 
 interface POFilterValues {
     search: string;
@@ -363,17 +363,13 @@ export function POListPage() {
                         if (!canCancel) return null;
 
                         return (
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button
-                                        onClick={() => handleCancel(order)}
-                                        className="p-1 text-rose-500 hover:bg-rose-50 rounded transition-colors border-none bg-transparent cursor-pointer"
-                                    >
-                                        <IconCircleX size={16} />
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent>Batalkan PO</TooltipContent>
-                            </Tooltip>
+                            <DataTableActionButton
+                                variant="rose"
+                                onClick={() => handleCancel(order)}
+                                tooltip="Batalkan PO"
+                            >
+                                <IconCircleX size={16} />
+                            </DataTableActionButton>
                         );
                     }}
                     renderCardItem={(row) => {

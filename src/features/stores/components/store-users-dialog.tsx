@@ -18,6 +18,7 @@ import { AppButton } from "@/components/shared/app-button";
 import { Scrollable } from "@/components/ui/scrollable";
 import { useStoreUsers, useAssignStoreUsers, useDetachStoreUser } from "../api/stores-api";
 import { useGlobalUsers } from "@/features/users/api/users-api";
+import { STORE_LABEL_HQ } from "@/constants/store";
 import type { Store } from "../types";
 import type { User } from "@/types/auth";
 import { DndContext, useDraggable, useDroppable, DragOverlay, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
@@ -333,7 +334,7 @@ export function StoreUsersDialog({ open, onOpenChange, store }: StoreUsersDialog
                                         {store.nama}
                                     </span>
                                     <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                                        {store.is_central ? "Cabang Pusat" : "Cabang Ritel"}
+                                        {store.is_central ? STORE_LABEL_HQ : "Cabang Ritel"}
                                     </span>
                                 </div>
                             </div>

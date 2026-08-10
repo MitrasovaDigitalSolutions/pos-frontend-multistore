@@ -15,6 +15,7 @@ import {
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { formatDate, formatToTime } from "@/lib/date-utils";
+import { DataTableActionButton } from "@/components/ui/data-table-actions";
 
 const STATUS_CONFIG = {
     pending: {
@@ -254,15 +255,14 @@ export function OfflineTransactionsTable({
                                         </td>
 
                                         {/* Actions */}
-                                        <td className="px-3 py-2.5 text-center" onClick={(e) => e.stopPropagation()}>
-                                            <button
-                                                type="button"
+                                        <td className="px-3 py-2.5 text-center flex justify-center" onClick={(e) => e.stopPropagation()}>
+                                            <DataTableActionButton
+                                                variant="rose"
                                                 onClick={() => onDeleteClick(record)}
-                                                className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer border-none bg-transparent"
-                                                title="Hapus"
+                                                tooltip="Hapus"
                                             >
                                                 <IconTrash size={14} />
-                                            </button>
+                                            </DataTableActionButton>
                                         </td>
                                     </tr>
                                 );

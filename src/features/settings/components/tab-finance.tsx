@@ -3,14 +3,14 @@
 import { type StoreSettingsInput } from "../schemas/settings-schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { IconAdjustments } from "@tabler/icons-react";
-import { Coins, Percent, Info } from "lucide-react";
 import { FormNumberInput } from "@/components/forms/form-number-input";
 import { Scrollable } from "@/components/ui/scrollable";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { useFormContext, Controller } from "react-hook-form";
 import { Switch } from "@/components/ui/switch";
-
+import { Coins, Percent, Info } from "lucide-react";
 import { AppButton } from "@/components/shared/app-button";
+import { useSettingsStore } from "@/stores/settings-store";
 
 interface TabFinanceProps {
     isSaving: boolean;
@@ -40,8 +40,6 @@ function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }
         </div>
     );
 }
-
-import { useSettingsStore } from "@/stores/settings-store";
 
 export function TabFinance({ isSaving }: TabFinanceProps) {
     const { control, watch } = useFormContext<StoreSettingsInput>();

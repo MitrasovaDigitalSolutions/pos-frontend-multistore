@@ -4,6 +4,7 @@ import { FilterForm } from "@/components/forms/filter-form";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { FormInput } from "@/components/forms/form-input";
 import { DataTable } from "@/components/ui/data-table";
+import { DataTableTextActionButton } from "@/components/ui/data-table-actions";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { useReceivingDebts } from "@/features/purchase/api/purchase-api";
@@ -193,17 +194,19 @@ export function SupplierDebtsDetailPage({ supplierUid, supplierName }: SupplierD
                 cellClassName: "text-center sticky right-0 bg-white group-hover:bg-slate-100 z-10 shadow-[-1px_0_0_0_rgba(241,245,249,1)] border-l border-slate-100 transition-colors",
             },
             cell: ({ row }) => (
-                <button
+                <DataTableTextActionButton
+                    variant="emerald"
                     onClick={() =>
                         router.push(
                             `/admin/purchase/payment/new?receiving_uid=${row.original.uid}&from=${encodeURIComponent(`/admin/debts/sales/${supplierUid}?nama=${encodeURIComponent(supplierName)}`)}`
                         )
                     }
-                    className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 hover:text-emerald-800 border border-emerald-100 rounded-lg text-[10px] font-extrabold flex items-center gap-1 cursor-pointer transition-all active:scale-[0.98] mx-auto"
-                    title="Bayar Hutang"
+                    icon={<IconCash size={14} />}
+                    tooltip="Bayar Hutang"
+                    className="mx-auto"
                 >
-                    <IconCash size={12} /> Bayar
-                </button>
+                    Bayar
+                </DataTableTextActionButton>
             ),
         },
     ];

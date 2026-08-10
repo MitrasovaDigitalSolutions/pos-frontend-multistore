@@ -21,6 +21,7 @@ import {
 } from "@tabler/icons-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DataTable } from "@/components/ui/data-table";
+import { DataTableTextActionButton } from "@/components/ui/data-table-actions";
 
 export interface PastTransactionDisplayItem {
     uid: string;
@@ -417,16 +418,14 @@ export function PastTransactionsDialog({
                         onPageChange={(p: number) => setPage(p)}
                         meta={transactionsData?.meta}
                         extraActions={(row: PastTransactionDisplayItem) => (
-                            <Button
-                                type="button"
-                                size="sm"
+                            <DataTableTextActionButton
+                                variant="emerald"
                                 onClick={() => onReprint(row.uid)}
-                                className="h-7 px-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[11px] rounded-lg shadow-2xs cursor-pointer border-none flex items-center gap-1 active:scale-95 transition-all"
-                                title="Cetak Struk"
+                                icon={<IconPrinter size={13} />}
+                                tooltip="Cetak Struk"
                             >
-                                <IconPrinter size={13} />
-                                <span>Cetak</span>
-                            </Button>
+                                Cetak
+                            </DataTableTextActionButton>
                         )}
                     />
                 </div>

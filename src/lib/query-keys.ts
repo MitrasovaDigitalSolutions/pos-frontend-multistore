@@ -84,6 +84,14 @@ export const queryKeys = {
             ] as const,
         salesByCategory: (from: string, to: string, categoryIds?: string[]) =>
             [...queryKeys.reports.all, "salesByCategory", from, to, categoryIds] as const,
+        centralOverview: (from: string, to: string, storeUids?: string[]) =>
+            [...queryKeys.reports.all, "centralOverview", from, to, storeUids] as const,
+        centralStores: (from: string, to: string, storeUids?: string[]) =>
+            [...queryKeys.reports.all, "centralStores", from, to, storeUids] as const,
+        centralSalesTrend: (from: string, to: string, interval: string, byStore: boolean, storeUids?: string[]) =>
+            [...queryKeys.reports.all, "centralSalesTrend", from, to, interval, byStore, storeUids] as const,
+        centralInventory: (storeUids?: string[]) =>
+            [...queryKeys.reports.all, "centralInventory", storeUids] as const,
     },
 
     // Suppliers

@@ -2,12 +2,14 @@ import * as React from "react"
 import { Check, ChevronsUpDown, Search, Loader2 } from "lucide-react"
 import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 import { cn } from "@/lib/utils"
+import { STORE_BADGE_HQ, STORE_LABEL_HQ } from "@/constants/store"
 
 export interface CommandOption {
   value: string
   label: string
   disabled?: boolean
   description?: string
+  badge?: string
 }
 
 export interface CommandSelectProps {
@@ -398,9 +400,9 @@ export function CommandSelect({
                                 <span className="text-[10px] text-slate-400 font-normal truncate block">{opt.description}</span>
                               )}
                             </div>
-                            {opt.description === "Toko Pusat" && (
+                            {(opt.description === STORE_LABEL_HQ || opt.description === "Toko Pusat") && (
                               <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80 leading-none">
-                                Pusat
+                                {STORE_BADGE_HQ}
                               </span>
                             )}
                             {opt.description === "Toko Cabang" && (

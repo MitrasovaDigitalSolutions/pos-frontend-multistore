@@ -10,6 +10,7 @@ import { useSettingsStore } from "@/stores/settings-store";
 import { FormSelect } from "@/components/forms/form-select";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/query-keys";
+import { STORE_BADGE_HQ, STORE_LABEL_HQ, STORE_LABEL_BRANCH } from "@/constants/store";
 
 export function StoreSwitcher() {
     const { data: session } = useSession();
@@ -73,7 +74,7 @@ export function StoreSwitcher() {
                     options={stores.map((s) => ({
                         value: s.uid,
                         label: s.nama,
-                        description: s.is_central ? "Toko Pusat" : "Toko Cabang",
+                        description: s.is_central ? STORE_LABEL_HQ : STORE_LABEL_BRANCH,
                     }))}
                     onChange={handleSelectStore}
                     size="sm"
@@ -89,7 +90,7 @@ export function StoreSwitcher() {
                     rightElement={
                         activeStore?.is_central ? (
                             <span className="hidden xs:inline-flex shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80 leading-none">
-                                Pusat
+                                {STORE_BADGE_HQ}
                             </span>
                         ) : (
                             <span className="hidden xs:inline-flex shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-slate-100 text-slate-600 border border-slate-200/80 leading-none">

@@ -19,6 +19,7 @@ import type { Product } from "@/features/master/products/types";
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { DataTable } from "@/components/ui/data-table";
+import { DataTableTextActionButton } from "@/components/ui/data-table-actions";
 import { ColumnDef } from "@tanstack/react-table";
 
 interface AdjustmentDialogProps {
@@ -167,16 +168,15 @@ export function AdjustmentDialog({
                                 setPage(1);
                             }}
                             extraActions={(p) => (
-                                <Button
-                                    type="button"
+                                <DataTableTextActionButton
+                                    variant="amber"
                                     onClick={() => {
                                         setSelectedProduct(p);
                                         setIsFormOpen(true);
                                     }}
-                                    className="h-8 px-3 bg-amber-600 hover:bg-amber-700 text-white font-bold text-[10px] rounded-xl cursor-pointer shadow-sm border-none"
                                 >
                                     Sesuaikan
-                                </Button>
+                                </DataTableTextActionButton>
                             )}
                             virtualize={false}
                         />

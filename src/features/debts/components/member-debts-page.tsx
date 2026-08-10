@@ -4,6 +4,7 @@ import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
 import { DataTable } from "@/components/ui/data-table";
+import { DataTableTextActionButton } from "@/components/ui/data-table-actions";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { useMemberDebts } from "@/features/master/members/api/members-api";
@@ -144,26 +145,28 @@ export function MemberDebtsPage() {
             },
             cell: ({ row }) => (
                 <div className="flex items-center justify-center gap-1.5">
-                    <button
+                    <DataTableTextActionButton
+                        variant="emerald"
                         onClick={() => {
                             setPayingMember(row.original);
                             setIsPayOpen(true);
                         }}
-                        className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 hover:text-emerald-800 border border-emerald-100 rounded-lg text-[10px] font-extrabold flex items-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
-                        title="Bayar Hutang"
+                        icon={<IconCash size={14} />}
+                        tooltip="Bayar Hutang"
                     >
-                        <IconCash size={12} /> Bayar
-                    </button>
-                    <button
+                        Bayar
+                    </DataTableTextActionButton>
+                    <DataTableTextActionButton
+                        variant="slate"
                         onClick={() => {
                             setHistoryMember(row.original);
                             setIsHistoryOpen(true);
                         }}
-                        className="px-2 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-800 border border-slate-200 rounded-lg text-[10px] font-extrabold flex items-center gap-1 cursor-pointer transition-all active:scale-[0.98]"
-                        title="Riwayat Mutasi"
+                        icon={<IconClock size={14} />}
+                        tooltip="Riwayat Mutasi"
                     >
-                        <IconClock size={12} /> Riwayat
-                    </button>
+                        Riwayat
+                    </DataTableTextActionButton>
                 </div>
             ),
         },

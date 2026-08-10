@@ -7,9 +7,9 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { IconPlus, IconAward } from "@tabler/icons-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Member } from "../types";
 import { DataTable } from "@/components/ui/data-table";
+import { DataTableActionButton } from "@/components/ui/data-table-actions";
 import { useDeleteMember } from "../api/members-api";
 import { toast } from "sonner";
 import { useSettingsStore } from "@/stores/settings-store";
@@ -217,17 +217,13 @@ export function MemberList({
                 onEdit={hasManageMembers ? onEdit : undefined}
                 onDelete={hasManageMembers ? handleDelete : undefined}
                 extraActions={hasManageMembers && pointSystemEnabled ? (member) => (
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <button
-                                onClick={() => onAdjustPoints(member)}
-                                className="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors border-none bg-transparent cursor-pointer"
-                            >
-                                <IconAward size={16} />
-                            </button>
-                        </TooltipTrigger>
-                        <TooltipContent>Sesuaikan Poin</TooltipContent>
-                    </Tooltip>
+                    <DataTableActionButton
+                        variant="emerald"
+                        onClick={() => onAdjustPoints(member)}
+                        tooltip="Sesuaikan Poin"
+                    >
+                        <IconAward size={16} />
+                    </DataTableActionButton>
                 ) : undefined}
             />
 

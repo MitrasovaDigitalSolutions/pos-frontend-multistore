@@ -1,19 +1,20 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
+import { DataTableActionButton } from "@/components/ui/data-table-actions";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { getImageUrl } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { IconBuildingStore, IconPackage, IconPlus, IconUser } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useDeleteCatalogProduct } from "../api/catalog-api";
 import type { CatalogProduct } from "../types";
+import { STORE_BADGE_HQ } from "@/constants/store";
 
 interface CatalogTableProps {
     products: CatalogProduct[];
@@ -230,7 +231,7 @@ export function CatalogTable({
                 size: 160,
                 cell: ({ row }) => {
                     const p = row.original;
-                    const tokoNama = p.created_by_toko?.nama || "Pusat";
+                    const tokoNama = p.created_by_toko?.nama || STORE_BADGE_HQ;
                     const userName = p.created_by_user?.name || "Sistem";
 
                     return (
@@ -296,17 +297,13 @@ export function CatalogTable({
                 onDelete={isAdmin ? handleRemoveProduct : undefined}
                 extraActions={(item) =>
                     isAdmin ? (
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <button
-                                    onClick={() => onAssign(item)}
-                                    className="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors border-none bg-transparent cursor-pointer"
-                                >
-                                    <IconBuildingStore size={16} />
-                                </button>
-                            </TooltipTrigger>
-                            <TooltipContent>Kelola Distribusi Toko</TooltipContent>
-                        </Tooltip>
+                        <DataTableActionButton
+                            variant="emerald"
+                            onClick={() => onAssign(item)}
+                            tooltip="Kelola Distribusi Toko"
+                        >
+                            <IconBuildingStore size={16} />
+                        </DataTableActionButton>
                     ) : null
                 }
             />
