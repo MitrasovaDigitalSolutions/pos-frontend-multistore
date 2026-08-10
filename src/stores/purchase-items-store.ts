@@ -15,6 +15,9 @@ export interface SavedHeaderData {
     nilai_faktur?: number | null;
     tanggal_terima?: string | null;
     status_pembayaran?: "pending" | "unpaid" | "partial" | "paid";
+    metode_transaksi?: "cash" | "credit";
+    cash_account_uid?: string | null;
+    nominal_bayar?: number | null;
     catatan?: string | null;
 }
 
