@@ -13,8 +13,11 @@ export function LedgerReferenceCell({ movement }: LedgerReferenceCellProps) {
     const purchaseReturnSettlement = movement.purchaseReturnSettlement || movement.purchase_return_settlement;
     const expense = movement.expense;
     const drawerMovement = movement.cashDrawerMovement || movement.cash_drawer_movement;
+    const drawerSession = movement.cashDrawerSession || movement.cash_drawer_session;
+    const sessionUid = movement.cash_drawer_session_uid || drawerSession?.uid || drawerMovement?.cash_drawer_session_uid;
     const stockReceiving = movement.stockReceiving || movement.stock_receiving;
     const memberPayment = movement.memberPayment || movement.member_payment;
+    const kat = (movement.kategori || "").toLowerCase();
 
     if (expense) {
         return (
@@ -103,12 +106,41 @@ export function LedgerReferenceCell({ movement }: LedgerReferenceCellProps) {
         );
     }
 
-    if (drawerMovement) {
+    if (drawerMovement || drawerSession || kat.includes("drawer") || kat.includes("laci")) {
+        let title = "Mutasi Laci Kas";
+        let badgeColor = "bg-indigo-50 text-indigo-700 border-indigo-200/60";
+
+        if (kat === "cash_drawer_open" || kat.includes("open")) {
+            title = "Buka Laci Kas (Opening Shift)";
+            badgeColor = "bg-indigo-50 text-indigo-700 border-indigo-200/60";
+        } else if (kat === "cash_drawer_close" || kat.includes("close")) {
+            title = "Tutup Laci Kas (Closing Shift)";
+            badgeColor = "bg-purple-50 text-purple-700 border-purple-200/60";
+        } else if (kat === "cash_in") {
+            title = "Setoran Laci Kas (Cash In)";
+            badgeColor = "bg-emerald-50 text-emerald-700 border-emerald-200/60";
+        } else if (kat === "cash_out") {
+            title = "Penarikan Laci Kas (Cash Out)";
+            badgeColor = "bg-rose-50 text-rose-700 border-rose-200/60";
+        }
+
+        const note = drawerMovement?.note || drawerSession?.opening_note || drawerSession?.closing_note;
+
         return (
             <div className="flex flex-col gap-0.5">
-                <span className="font-bold text-slate-900 text-xs">Mutasi Laci Kas</span>
-                {drawerMovement.note && (
-                    <span className="text-[10px] text-slate-500 italic max-w-xs truncate">{drawerMovement.note}</span>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-bold text-slate-900 text-xs">{title}</span>
+                    {sessionUid && (
+                        <span
+                            className={`text-[10px] font-mono px-1.5 py-0.2 rounded border font-semibold ${badgeColor}`}
+                            title={`Session UID: ${sessionUid}`}
+                        >
+                            Session: #{sessionUid.slice(0, 8)}...
+                        </span>
+                    )}
+                </div>
+                {note && (
+                    <span className="text-[10px] text-slate-500 italic max-w-xs truncate">&quot;{note}&quot;</span>
                 )}
             </div>
         );

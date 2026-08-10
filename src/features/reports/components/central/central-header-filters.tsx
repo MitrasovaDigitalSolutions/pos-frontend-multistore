@@ -5,6 +5,7 @@ import { UseFormReturn } from "react-hook-form";
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { FormSelect } from "@/components/forms/form-select";
+import { FormMultiSelect } from "@/components/forms/form-multi-select";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useStores } from "@/features/stores/api/stores-api";
@@ -132,12 +133,11 @@ export function CentralHeaderFilters({
                         options={intervalOptions}
                     />
 
-                    <FormSelect<CentralFilterValues>
+                    <FormMultiSelect<CentralFilterValues>
                         name="storeUids"
                         label="Cabang Toko"
                         options={storeOptions}
                         placeholder="Semua Cabang Toko"
-                        multiple
                     />
                 </FilterForm>
             </Card>

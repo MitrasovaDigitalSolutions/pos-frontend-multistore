@@ -78,14 +78,26 @@ export interface CashLedgerDrawerMovement {
     note?: string | null;
     tipe?: string | null;
     amount?: number;
+    cash_drawer_session_uid?: string | null;
 }
 
 export interface CashLedgerDrawerSession {
     uid: string;
+    status?: string;
+    opening_balance?: number;
+    expected_cash?: number;
+    actual_closing_balance?: number | null;
+    cash_sales_total?: number;
+    cash_refunds_total?: number;
+    cash_in_total?: number;
+    cash_out_total?: number;
+    difference?: number | null;
+    opening_note?: string | null;
+    closing_note?: string | null;
     opened_at?: string;
     closed_at?: string | null;
-    starting_cash?: number;
-    ending_cash?: number | null;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export interface CashLedgerStockReceiving {

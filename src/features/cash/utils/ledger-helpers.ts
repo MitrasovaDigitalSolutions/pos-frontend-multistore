@@ -40,7 +40,7 @@ export function getCategoryMeta(movement: CashLedger): CategoryMeta {
     if (expense || kat.includes("expense") || kat.includes("pengeluaran")) {
         return {
             label: "Pengeluaran",
-            subLabel: expense?.category?.nama ? `Kat: ${expense.category.nama}` : undefined,
+            subLabel: undefined,
             icon: IconReceipt,
             colorClass: "bg-rose-50 text-rose-700 border-rose-200/80",
             iconClass: "text-rose-600 bg-rose-100",
@@ -58,7 +58,7 @@ export function getCategoryMeta(movement: CashLedger): CategoryMeta {
     if (supplierPayment || kat.includes("supplier")) {
         return {
             label: "Bayar Supplier",
-            subLabel: supplierPayment?.supplier?.nama ? `Supplier: ${supplierPayment.supplier.nama}` : undefined,
+            subLabel: undefined,
             icon: IconTruckDelivery,
             colorClass: "bg-amber-50 text-amber-700 border-amber-200/80",
             iconClass: "text-amber-600 bg-amber-100",
@@ -71,6 +71,24 @@ export function getCategoryMeta(movement: CashLedger): CategoryMeta {
             icon: IconRefresh,
             colorClass: "bg-teal-50 text-teal-700 border-teal-200/80",
             iconClass: "text-teal-600 bg-teal-100",
+        };
+    }
+    if (kat.includes("cash_drawer_open") || kat.includes("drawer_open")) {
+        return {
+            label: "Buka Laci Kas",
+            subLabel: undefined,
+            icon: IconInbox,
+            colorClass: "bg-indigo-50 text-indigo-700 border-indigo-200/80",
+            iconClass: "text-indigo-600 bg-indigo-100",
+        };
+    }
+    if (kat.includes("cash_drawer_close") || kat.includes("drawer_close")) {
+        return {
+            label: "Tutup Laci Kas",
+            subLabel: undefined,
+            icon: IconInbox,
+            colorClass: "bg-purple-50 text-purple-700 border-purple-200/80",
+            iconClass: "text-purple-600 bg-purple-100",
         };
     }
     if (drawer || kat.includes("drawer") || kat.includes("laci")) {
@@ -94,7 +112,7 @@ export function getCategoryMeta(movement: CashLedger): CategoryMeta {
     if (member || kat.includes("member")) {
         return {
             label: "Bayar Member",
-            subLabel: member?.member?.nama ? `Member: ${member.member.nama}` : undefined,
+            subLabel: undefined,
             icon: IconUserCheck,
             colorClass: "bg-purple-50 text-purple-700 border-purple-200/80",
             iconClass: "text-purple-600 bg-purple-100",
