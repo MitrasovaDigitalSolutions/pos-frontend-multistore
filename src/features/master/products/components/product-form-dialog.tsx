@@ -75,7 +75,7 @@ export function ProductFormDialog({
                 margin: editingProduct.margin ?? storeProduct?.margin ?? 0,
                 category_uid: editingProduct.category_uid ?? null,
                 brand_uid: editingProduct.brand_uid ?? null,
-                image: null,
+                image: undefined,
                 is_jasa: !!editingProduct.is_jasa,
             });
         }
@@ -265,7 +265,7 @@ export function ProductFormDialog({
         toast.error("Gagal menyimpan produk. Harap lengkapi semua input yang wajib diisi.");
     };
 
-    const initialImageUrl = getImageUrl(editingProduct?.image_path);
+    const initialImageUrl = getImageUrl(editingProduct?.image_url || editingProduct?.image_path);
 
     return (
         <BaseDialog

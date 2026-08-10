@@ -38,14 +38,11 @@ export function FormImageUpload<T extends FieldValues>({
         if (typeof window !== "undefined" && (fieldValue as unknown) instanceof File) {
             return URL.createObjectURL(fieldValue as unknown as File);
         }
-        if (typeof fieldValue === "string" && fieldValue.trim() !== "") {
-            return getImageUrl(fieldValue);
+        if (typeof fieldValue === "string") {
+            return fieldValue.trim() !== "" ? getImageUrl(fieldValue) : null;
         }
-        if (fieldValue === null) {
-            return null;
-        }
-        if (initialUrl) {
-            return getImageUrl(initialUrl);
+        if (fieldValue === null || fieldValue === undefined) {
+            return initialUrl ? getImageUrl(initialUrl) : null;
         }
         return null;
     }, [fieldValue, initialUrl]);
@@ -59,9 +56,9 @@ export function FormImageUpload<T extends FieldValues>({
         };
     }, [previewUrl]);
 
-    const handleFileChange = (file: File | null, onChange: (val: File | null) => void) => {
+    const handleFileChange = (file: File | null, onChange: (val: File | null | string) => void) => {
         if (!file) {
-            onChange(null);
+            onChange("");
             return;
         }
 
@@ -89,7 +86,7 @@ export function FormImageUpload<T extends FieldValues>({
         setIsDragOver(false);
     };
 
-    const handleDrop = (e: React.DragEvent, onChange: (val: File | null) => void) => {
+    const handleDrop = (e: React.DragEvent, onChange: (val: File | null | string) => void) => {
         e.preventDefault();
         setIsDragOver(false);
 
@@ -101,11 +98,11 @@ export function FormImageUpload<T extends FieldValues>({
         }
     };
 
-    const handleRemove = (e: React.MouseEvent, onChange: (val: File | null) => void) => {
+    const handleRemove = (e: React.MouseEvent, onChange: (val: File | null | string) => void) => {
         e.stopPropagation();
         e.preventDefault();
 
-        onChange(null);
+        onChange("");
 
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
