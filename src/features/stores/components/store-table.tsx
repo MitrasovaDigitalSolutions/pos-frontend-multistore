@@ -9,6 +9,7 @@ import { IconBuildingStore, IconPlus, IconUsers } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 import type { Store } from "../types";
+import { STORE_BADGE_HQ } from "@/constants/store";
 
 interface StoreTableProps {
     stores: Store[];
@@ -69,7 +70,7 @@ export function StoreTable({
                                 </span>
                                 {row.original.is_central && (
                                     <Badge variant="default" className="bg-emerald-600 hover:bg-emerald-600 text-[9px] font-extrabold px-1.5 py-0 h-4 leading-none shrink-0 uppercase tracking-wider">
-                                        Pusat
+                                        {STORE_BADGE_HQ}
                                     </Badge>
                                 )}
                             </div>

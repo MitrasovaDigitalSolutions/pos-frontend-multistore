@@ -26,7 +26,7 @@ export function CentralInventoryCards({ data, isLoading }: CentralInventoryCards
     return (
         <div className="space-y-4">
             {/* Totals Summary Banner */}
-            <Card className="bg-slate-50/60 border border-slate-100 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <Card className="bg-white border border-slate-100 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3.5">
                     <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                         <IconBox size={22} />

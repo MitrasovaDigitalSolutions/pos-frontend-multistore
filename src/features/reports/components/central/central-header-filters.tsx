@@ -15,6 +15,7 @@ import {
 } from "@tabler/icons-react";
 import { PrintConfirmDialog, BasePrintFilterValues } from "../print-confirm-dialog";
 import { getCentralPrintStoresUrl } from "../../api/central-reports-api";
+import { STORE_BADGE_HQ } from "@/constants/store";
 
 export interface CentralFilterValues {
     from: string;
@@ -72,7 +73,7 @@ export function CentralHeaderFilters({
     const storeOptions = storesList.map((store) => ({
         value: store.uid,
         label: store.nama,
-        badge: store.is_central ? "HQ" : undefined,
+        badge: store.is_central ? STORE_BADGE_HQ : undefined,
     }));
 
     return (

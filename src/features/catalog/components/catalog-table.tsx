@@ -14,6 +14,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useDeleteCatalogProduct } from "../api/catalog-api";
 import type { CatalogProduct } from "../types";
+import { STORE_BADGE_HQ } from "@/constants/store";
 
 interface CatalogTableProps {
     products: CatalogProduct[];
@@ -230,7 +231,7 @@ export function CatalogTable({
                 size: 160,
                 cell: ({ row }) => {
                     const p = row.original;
-                    const tokoNama = p.created_by_toko?.nama || "Pusat";
+                    const tokoNama = p.created_by_toko?.nama || STORE_BADGE_HQ;
                     const userName = p.created_by_user?.name || "Sistem";
 
                     return (

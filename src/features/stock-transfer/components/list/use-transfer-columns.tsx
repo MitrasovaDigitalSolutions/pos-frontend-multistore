@@ -8,6 +8,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { TRANSFER_STATUS, TRANSFER_STATUS_LABELS, TRANSFER_SHIPMENT_STATUS, TRANSFER_SHIPMENT_STATUS_LABELS } from "../../constants";
 import type { StockTransfer } from "../../types";
+import { STORE_BADGE_HQ } from "@/constants/store";
 
 export function useTransferColumns(activeStoreUid?: string | null) {
   return useMemo<ColumnDef<StockTransfer>[]>(
@@ -74,7 +75,7 @@ export function useTransferColumns(activeStoreUid?: string | null) {
                   {src?.nama || "—"}
                   {src?.is_central && (
                     <span className="text-[9px] bg-emerald-50 text-emerald-700 px-1 py-0 rounded border border-emerald-200">
-                      Pusat
+                      {STORE_BADGE_HQ}
                     </span>
                   )}
                 </span>
@@ -85,7 +86,7 @@ export function useTransferColumns(activeStoreUid?: string | null) {
                   {dst?.nama || "—"}
                   {dst?.is_central && (
                     <span className="text-[9px] bg-emerald-50 text-emerald-700 px-1 py-0 rounded border border-emerald-200">
-                      Pusat
+                      {STORE_BADGE_HQ}
                     </span>
                   )}
                 </span>

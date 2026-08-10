@@ -6,6 +6,7 @@ import { Check, ChevronsUpDown, Search, Loader2, X } from "lucide-react";
 import { Popover as PopoverPrimitive } from "@base-ui/react/popover";
 import { cn } from "@/lib/utils";
 import type { CommandOption } from "@/components/ui/command-select";
+import { STORE_BADGE_HQ, STORE_LABEL_HQ } from "@/constants/store";
 
 export interface MultiSelectOption {
     value: string;
@@ -271,8 +272,6 @@ export function FormMultiSelect<T extends FieldValues>({
                                                                     maxLabelLength && opt.label.length > maxLabelLength
                                                                         ? opt.label.substring(0, maxLabelLength) + "..."
                                                                         : opt.label;
-                                                                const multiOpt = opt as MultiSelectOption;
-
                                                                 return (
                                                                     <div
                                                                         key={`${opt.value}-${idx}`}
@@ -285,9 +284,9 @@ export function FormMultiSelect<T extends FieldValues>({
                                                                         {isSelected && <Check className="mr-2 h-3.5 w-3.5 text-emerald-600 shrink-0" />}
                                                                         <div className={cn("min-w-0 flex-1 text-left flex items-center justify-between gap-2", !isSelected && "pl-[22px]")}>
                                                                             <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                                                                                {multiOpt.badge && (
+                                                                                {opt.badge && (
                                                                                     <span className="text-[9px] bg-emerald-600 text-white font-mono px-1 rounded font-extrabold shrink-0">
-                                                                                        {multiOpt.badge}
+                                                                                        {opt.badge}
                                                                                     </span>
                                                                                 )}
                                                                                 <div className="flex flex-col gap-0.5 min-w-0 flex-1">
@@ -297,9 +296,9 @@ export function FormMultiSelect<T extends FieldValues>({
                                                                                     )}
                                                                                 </div>
                                                                             </div>
-                                                                            {opt.description === "Toko Pusat" && (
+                                                                            {(opt.description === STORE_LABEL_HQ || opt.description === "Toko Pusat" || opt.badge === STORE_BADGE_HQ) && (
                                                                                 <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80 leading-none">
-                                                                                    Pusat
+                                                                                    {STORE_BADGE_HQ}
                                                                                 </span>
                                                                             )}
                                                                             {opt.description === "Toko Cabang" && (

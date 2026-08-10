@@ -2,6 +2,7 @@
 
 import { IconCheck, IconDeviceFloppy, IconInfoCircle, IconX } from "@tabler/icons-react";
 import { AppButton } from "@/components/shared/app-button";
+import { STORE_LABEL_HQ } from "@/constants/store";
 
 interface TransferSummaryCardProps {
   activeStoreName?: string;
@@ -35,7 +36,7 @@ export function TransferSummaryCard({
       <div className="space-y-2.5 text-xs">
         <div className="flex justify-between items-center text-slate-600">
           <span>Toko Pengirim:</span>
-          <span className="font-bold text-slate-900">{activeStoreName || "Toko Pusat"}</span>
+          <span className="font-bold text-slate-900">{activeStoreName || STORE_LABEL_HQ}</span>
         </div>
         <div className="flex justify-between items-center text-slate-600">
           <span>Toko Penerima:</span>
