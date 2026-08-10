@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { IconCash, IconLoader2, IconReceipt } from "@tabler/icons-react";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { todayStr } from "@/lib/date-utils";
+import { getErrorMessage } from "@/shared/errors/api-error";
 import { useCashAccounts, useBulkCreatePayment } from "@/features/purchase/api/purchase-api";
 import { bulkPaymentSchema, type BulkPaymentInput } from "@/features/purchase/schemas/payment-schema";
 import type { Receiving } from "@/features/purchase/types";
@@ -72,7 +73,8 @@ export function BulkPayDebtDialog({
 
     const cashAccountOptions = cashAccounts.map((account) => ({
         value: String(account.uid),
-        label: `${account.nama} (${formatRupiah(account.saldo || 0)})`,
+        label: account.nama,
+        description: `Saldo: ${formatRupiah(account.saldo || 0)} • (${account.tipe === "register" ? "Kas Kasir" : account.tipe === "bank" ? "Bank" : "Kas Utama"})`,
     }));
 
     const paymentMethodOptions = [
@@ -95,7 +97,7 @@ export function BulkPayDebtDialog({
                 if (onSuccess) onSuccess();
             },
             onError: (err) => {
-                toast.error(err.message || "Gagal melakukan pelunasan hutang sekaligus.");
+                toast.error(getErrorMessage(err) || "Gagal melakukan pelunasan hutang sekaligus.");
             },
         });
     });

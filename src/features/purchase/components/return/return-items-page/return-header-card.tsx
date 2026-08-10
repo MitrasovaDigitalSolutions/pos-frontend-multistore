@@ -10,6 +10,7 @@ import type { useSupplierSelectConfig } from "@/features/master/suppliers/hooks/
 import type { Supplier } from "@/features/master/suppliers/types";
 import type { useReceivingSelectConfig } from "@/features/purchase/hooks/use-receiving-select";
 import type { Receiving } from "@/features/purchase/types";
+import { useSupplierCreateModal } from "@/features/master/suppliers/hooks/use-supplier-create-modal";
 
 interface ReturnHeaderCardProps {
     form: UseFormReturn<PurchaseReturnHeaderInput>;
@@ -26,6 +27,12 @@ export function ReturnHeaderCard({
     receivingId,
     disabled = false,
 }: ReturnHeaderCardProps) {
+    const { openSupplierModal, SupplierModal } = useSupplierCreateModal({
+        onSupplierCreated: (supplier) => {
+            form.setValue("supplier_uid", supplier.uid);
+        },
+    });
+
     const { register, formState: { errors } } = form;
 
     return (
@@ -65,6 +72,7 @@ export function ReturnHeaderCard({
                             {...supplierSelectProps}
                             placeholder="-- Pilih Supplier --"
                             disabled={disabled || !!receivingId}
+                            onCreateOption={openSupplierModal}
                         />
                     </div>
 
@@ -98,6 +106,9 @@ export function ReturnHeaderCard({
                     )}
                 </div>
             </div>
+
+            {/* Inline Supplier Creation Dialog */}
+            {SupplierModal}
         </FormProvider>
     );
 }

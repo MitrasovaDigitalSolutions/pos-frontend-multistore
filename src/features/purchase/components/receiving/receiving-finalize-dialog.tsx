@@ -8,7 +8,7 @@ import {
     IconCopy,
     IconInfoCircle,
 } from "@tabler/icons-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { z } from "zod";
 
@@ -36,6 +36,14 @@ const receivingFinalizeSchema = z.object({
         .optional()
         .transform((val) => (val === undefined || val === null ? 0 : Number(val))),
     catatan: z.string().nullable().optional().transform((val) => val || null),
+}).superRefine((data, ctx) => {
+    if ((data.metode_transaksi === "cash" || (data.nominal_bayar && data.nominal_bayar > 0)) && !data.cash_account_uid) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Akun kas wajib dipilih untuk pembayaran ini",
+            path: ["cash_account_uid"],
+        });
+    }
 });
 
 type ReceivingFinalizeInput = z.infer<typeof receivingFinalizeSchema>;
@@ -58,11 +66,13 @@ export function ReceivingFinalizeDialog({
     onConfirm,
 }: ReceivingFinalizeDialogProps) {
     const { data: cashAccountsData } = useCashAccounts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     const cashAccounts = cashAccountsData || [];
 
     const cashAccountOptions = cashAccounts.map((acc) => ({
         value: acc.uid,
-        label: `${acc.nama} (${acc.tipe === "register" ? "Kas Kasir" : acc.tipe === "bank" ? "Bank" : "Kas Utama"})`,
+        label: acc.nama,
+        description: `Saldo: ${formatRupiah(acc.saldo || 0)} • (${acc.tipe === "register" ? "Kas Kasir" : acc.tipe === "bank" ? "Bank" : "Kas Utama"})`,
     }));
 
     const methods = useForm<ReceivingFinalizeInput>({
@@ -95,8 +105,10 @@ export function ReceivingFinalizeDialog({
         0
     );
 
+    const prevOpenRef = useRef(false);
+
     useEffect(() => {
-        if (open && receiving) {
+        if (open && !prevOpenRef.current && receiving) {
             const defaultNilaiFaktur = (receiving.nilai_faktur != null && receiving.nilai_faktur !== 0)
                 ? receiving.nilai_faktur
                 : totalItemsValue;
@@ -106,13 +118,13 @@ export function ReceivingFinalizeDialog({
                 nomor_faktur: receiving.nomor_faktur || "",
                 nilai_faktur: defaultNilaiFaktur,
                 metode_transaksi: defaultMetode,
-                cash_account_uid: receiving.cash_account_uid || (cashAccounts[0]?.uid || null),
+                cash_account_uid: receiving.cash_account_uid || null,
                 nominal_bayar: receiving.nominal_bayar != null ? receiving.nominal_bayar : (defaultMetode === "cash" ? defaultNilaiFaktur : 0),
                 catatan: receiving.catatan || "",
             });
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open, receiving, totalItemsValue, reset]);
+        prevOpenRef.current = open;
+    }, [open, receiving, totalItemsValue, reset, cashAccounts]);
 
     const nilaiFakturNum = Number(watchedNilaiFaktur);
     const selisih = nilaiFakturNum - totalItemsValue;

@@ -8,6 +8,7 @@ import { IconClipboardPlus } from "@tabler/icons-react";
 import type { PurchaseOrderHeaderInput } from "@/features/purchase/schemas/order-schema";
 import type { useSupplierSelectConfig } from "@/features/master/suppliers/hooks/use-supplier-select";
 import type { Supplier } from "@/features/master/suppliers/types";
+import { useSupplierCreateModal } from "@/features/master/suppliers/hooks/use-supplier-create-modal";
 
 interface POHeaderCardProps {
     form: UseFormReturn<PurchaseOrderHeaderInput>;
@@ -24,6 +25,12 @@ export function POHeaderCard({
     supplierSelectProps,
     disabled = false,
 }: POHeaderCardProps) {
+    const { openSupplierModal, SupplierModal } = useSupplierCreateModal({
+        onSupplierCreated: (supplier) => {
+            form.setValue("supplier_uid", supplier.uid);
+        },
+    });
+
     const { register, formState: { errors } } = form;
 
     return (
@@ -51,6 +58,7 @@ export function POHeaderCard({
                                 {...supplierSelectProps}
                                 placeholder="-- Pilih Supplier --"
                                 disabled={disabled}
+                                onCreateOption={openSupplierModal}
                             />
                         ) : (
                             <FormSelect<PurchaseOrderHeaderInput>
@@ -58,6 +66,7 @@ export function POHeaderCard({
                                 options={supplierOptions}
                                 placeholder={suppliersLoading ? "Memuat supplier..." : "-- Pilih Supplier --"}
                                 disabled={disabled || suppliersLoading}
+                                onCreateOption={openSupplierModal}
                             />
                         )}
                     </div>
@@ -92,6 +101,9 @@ export function POHeaderCard({
                     )}
                 </div>
             </div>
+
+            {/* Inline Supplier Creation Dialog */}
+            {SupplierModal}
         </FormProvider>
     );
 }

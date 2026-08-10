@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Check, ChevronsUpDown, Search, Loader2 } from "lucide-react"
+import { Check, ChevronsUpDown, Search, Loader2, Plus } from "lucide-react"
 import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 import { cn } from "@/lib/utils"
 import { STORE_BADGE_HQ, STORE_LABEL_HQ } from "@/constants/store"
@@ -230,7 +230,6 @@ export const CommandItem = React.forwardRef<
 })
 CommandItem.displayName = "CommandItem"
 
-// ─── High-Level CommandSelect ────────────────────────────────────────────────
 export interface CommandSelectProps {
   options: CommandOption[]
   value: string
@@ -251,6 +250,8 @@ export interface CommandSelectProps {
   maxLabelLength?: number
   leftIcon?: React.ReactNode
   rightElement?: React.ReactNode
+  onCreateOption?: (searchQuery: string) => void
+  createOptionLabel?: string
 }
 
 export function CommandSelect({
@@ -273,6 +274,8 @@ export function CommandSelect({
   disabled = false,
   size = "sm",
   maxLabelLength,
+  onCreateOption,
+  createOptionLabel,
 }: CommandSelectProps) {
   const [open, setOpen] = React.useState(false)
   const [search, setSearch] = React.useState("")
@@ -415,6 +418,25 @@ export function CommandSelect({
                       )
                     })}
                 </CommandList>
+                {onCreateOption && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onCreateOption(search.trim())
+                      setOpen(false)
+                    }}
+                    className="flex w-full items-center gap-2 border-t border-slate-100 bg-emerald-50/60 px-3 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-100/80 transition-colors cursor-pointer text-left shrink-0"
+                  >
+                    <Plus className="h-3.5 w-3.5 stroke-[2.5] shrink-0 text-emerald-600" />
+                    <span className="truncate">
+                      {createOptionLabel
+                        ? createOptionLabel
+                        : search.trim()
+                        ? `Tambah "${search.trim()}" Baru`
+                        : "Tambah Baru"}
+                    </span>
+                  </button>
+                )}
               </Command>
             </PopoverPrimitive.Popup>
           </PopoverPrimitive.Positioner>

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { PAYMENT_STATUS } from "@/constants/purchase";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { formatUTC, todayStr } from "@/lib/date-utils";
+import { getErrorMessage } from "@/shared/errors/api-error";
 import { clearPurchaseItemsStore } from "@/stores/purchase-items-store";
 
 import {
@@ -129,8 +130,7 @@ export function useReceivingFinalizer({
                     onSaveSuccess(newUid, res.data);
                 }
             } catch (err: unknown) {
-                const errorObj = err as { message?: string };
-                toast.error(errorObj.message || "Gagal menyimpan header penerimaan.");
+                toast.error(getErrorMessage(err) || "Gagal menyimpan header penerimaan.");
             }
         } else {
             const itemsPayload = items.map((item) => ({
@@ -156,8 +156,7 @@ export function useReceivingFinalizer({
                 toast.success("Penerimaan barang berhasil diperbarui!");
                 onSaveSuccess(currentId, res.data);
             } catch (err: unknown) {
-                const errorObj = err as { message?: string };
-                toast.error(errorObj.message || "Gagal memperbarui penerimaan.");
+                toast.error(getErrorMessage(err) || "Gagal memperbarui penerimaan.");
             }
         }
     };
@@ -202,8 +201,7 @@ export function useReceivingFinalizer({
                 setIsFinalizeOpen(true);
             }
         } catch (err: unknown) {
-            const errorObj = err as { message?: string };
-            toast.error(errorObj.message || "Gagal membandingkan harga.");
+            toast.error(getErrorMessage(err) || "Gagal membandingkan harga.");
         }
     };
 
@@ -244,8 +242,7 @@ export function useReceivingFinalizer({
             setIsAlertOpen(false);
             setIsFinalizeOpen(true);
         } catch (err: unknown) {
-            const errorObj = err as { message?: string };
-            toast.error(errorObj.message || "Gagal menyimpan update harga.");
+            toast.error(getErrorMessage(err) || "Gagal menyimpan update harga.");
         }
     };
 
@@ -292,6 +289,7 @@ export function useReceivingFinalizer({
                 toast.success("Penerimaan barang bulk telah diselesaikan & stok/harga telah diperbarui!");
                 clearAll();
                 clearPurchaseItemsStore("new", "receiving");
+                setIsFinalizeOpen(false);
                 router.push("/admin/purchase/receiving");
                 return;
             }
@@ -323,13 +321,12 @@ export function useReceivingFinalizer({
             toast.success("Penerimaan barang telah diselesaikan & stok/harga telah diperbarui!");
             clearAll();
             clearPurchaseItemsStore(currentId, "receiving");
+            setIsFinalizeOpen(false);
             router.push("/admin/purchase/receiving");
         } catch (err: unknown) {
-            const errorObj = err as { message?: string };
-            toast.error(errorObj.message || "Gagal menyelesaikan penerimaan barang.");
+            toast.error(getErrorMessage(err) || "Gagal menyelesaikan penerimaan barang.");
         } finally {
             setIsFinalizing(false);
-            setIsFinalizeOpen(false);
         }
     };
 

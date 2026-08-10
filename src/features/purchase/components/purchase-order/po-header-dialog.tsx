@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 
 import { useSupplierSelectConfig } from "@/features/master/suppliers/hooks/use-supplier-select";
 import type { Supplier } from "@/features/master/suppliers/types";
+import { useSupplierCreateModal } from "@/features/master/suppliers/hooks/use-supplier-create-modal";
 import { useUpdatePurchaseOrder } from "@/features/purchase/api/purchase-api";
 import { purchaseOrderHeaderSchema, type PurchaseOrderHeaderInput } from "@/features/purchase/schemas/order-schema";
 import type { PurchaseOrder } from "@/features/purchase/types";
@@ -45,8 +46,15 @@ export function POHeaderDialog({ open, onOpenChange, order }: POHeaderDialogProp
         register,
         handleSubmit,
         reset,
+        setValue,
         formState: { errors },
     } = methods;
+
+    const { openSupplierModal, SupplierModal } = useSupplierCreateModal({
+        onSupplierCreated: (supplier) => {
+            setValue("supplier_uid", supplier.uid);
+        },
+    });
 
     // Reset default values when order details are loaded or dialog opens
     useEffect(() => {
@@ -107,6 +115,7 @@ export function POHeaderDialog({ open, onOpenChange, order }: POHeaderDialogProp
                             {...supplierSelectConfig}
                             placeholder="-- Pilih Supplier --"
                             disabled={updateHeader.isPending}
+                            onCreateOption={openSupplierModal}
                         />
                         {errors.supplier_uid && (
                             <p className="text-[10px] text-rose-500 font-medium">
@@ -162,6 +171,7 @@ export function POHeaderDialog({ open, onOpenChange, order }: POHeaderDialogProp
                     </div>
                 </form>
             </FormProvider>
+            {SupplierModal}
         </BaseDialog>
     );
 }

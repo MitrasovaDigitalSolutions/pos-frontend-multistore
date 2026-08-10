@@ -12,6 +12,7 @@ import type { useSupplierSelectConfig } from "@/features/master/suppliers/hooks/
 import type { usePOSelectConfig } from "../../../hooks/use-po-select";
 import type { Supplier } from "@/features/master/suppliers/types";
 import type { PurchaseOrder } from "../../../types";
+import { useSupplierCreateModal } from "@/features/master/suppliers/hooks/use-supplier-create-modal";
 
 interface ReceivingHeaderCardProps {
     form: UseFormReturn<ReceivingHeaderInput>;
@@ -35,6 +36,12 @@ export function ReceivingHeaderCard({
     isPending,
 }: ReceivingHeaderCardProps) {
     const [isExpanded, setIsExpanded] = useState(false);
+
+    const { openSupplierModal, SupplierModal } = useSupplierCreateModal({
+        onSupplierCreated: (supplier) => {
+            form.setValue("supplier_uid", supplier.uid);
+        },
+    });
 
     const {
         register,
@@ -76,6 +83,7 @@ export function ReceivingHeaderCard({
                                 {...supplierSelectProps}
                                 placeholder="-- Pilih Supplier --"
                                 disabled={isPending || !!purchaseOrderId}
+                                onCreateOption={openSupplierModal}
                             />
                         ) : (
                             <FormSelect<ReceivingHeaderInput>
@@ -83,6 +91,7 @@ export function ReceivingHeaderCard({
                                 options={supplierOptions}
                                 placeholder={suppliersLoading ? "Memuat supplier..." : "-- Pilih Supplier --"}
                                 disabled={isPending || suppliersLoading || !!purchaseOrderId}
+                                onCreateOption={openSupplierModal}
                             />
                         )}
                     </div>
@@ -187,6 +196,9 @@ export function ReceivingHeaderCard({
                     )}
                 </div>
             </form>
+
+            {/* Inline Supplier Creation Dialog */}
+            {SupplierModal}
         </FormProvider>
     );
 }

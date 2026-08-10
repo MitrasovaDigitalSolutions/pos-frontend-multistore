@@ -14,6 +14,7 @@ import { useUpdatePurchaseReturn, useReceivingDetail } from "../../api/purchase-
 import { useReceivingSelectConfig } from "../../hooks/use-receiving-select";
 import { useSupplierSelectConfig } from "@/features/master/suppliers/hooks/use-supplier-select";
 import type { Supplier } from "@/features/master/suppliers/types";
+import { useSupplierCreateModal } from "@/features/master/suppliers/hooks/use-supplier-create-modal";
 import { purchaseReturnHeaderSchema, type PurchaseReturnHeaderInput } from "../../schemas/return-schema";
 import type { PurchaseReturn, Receiving } from "../../types";
 import { formatToISO } from "@/lib/date-utils";
@@ -41,8 +42,15 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
         register,
         handleSubmit,
         reset,
+        setValue,
         formState: { errors },
     } = methods;
+
+    const { openSupplierModal, SupplierModal } = useSupplierCreateModal({
+        onSupplierCreated: (supplier) => {
+            setValue("supplier_uid", supplier.uid);
+        },
+    });
 
     const receivingId = useWatch({ name: "receiving_uid", control: methods.control });
     const currentSupplierId = useWatch({ name: "supplier_uid", control: methods.control });
@@ -58,10 +66,10 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
         if (selectedReceiving && selectedReceiving.supplier_uid) {
             const targetSupplierId = String(selectedReceiving.supplier_uid);
             if (currentSupplierId !== targetSupplierId) {
-                methods.setValue("supplier_uid", targetSupplierId);
+                setValue("supplier_uid", targetSupplierId);
             }
         }
-    }, [selectedReceiving, currentSupplierId, methods]);
+    }, [selectedReceiving, currentSupplierId, setValue]);
 
     // Reset default values when returnObj is loaded or dialog opens
     useEffect(() => {
@@ -147,6 +155,7 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
                             {...supplierSelectConfig}
                             placeholder="-- Pilih Supplier --"
                             disabled={updateReturn.isPending || !!receivingId}
+                            onCreateOption={openSupplierModal}
                         />
                         {errors.supplier_uid && (
                             <p className="text-[10px] text-rose-500 font-medium">
@@ -203,6 +212,7 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
                     </div>
                 </form>
             </FormProvider>
+            {SupplierModal}
         </BaseDialog>
     );
 }

@@ -14,6 +14,7 @@ import type { Receiving, PurchaseOrder } from "../../types";
 import { useSupplierSelectConfig } from "@/features/master/suppliers/hooks/use-supplier-select";
 import { usePOSelectConfig } from "@/features/purchase/hooks/use-po-select";
 import type { Supplier } from "@/features/master/suppliers/types";
+import { useSupplierCreateModal } from "@/features/master/suppliers/hooks/use-supplier-create-modal";
 import { formatToISO } from "@/lib/date-utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
@@ -60,6 +61,12 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
         setValue,
         formState: { errors },
     } = methods;
+
+    const { openSupplierModal, SupplierModal } = useSupplierCreateModal({
+        onSupplierCreated: (supplier) => {
+            setValue("supplier_uid", supplier.uid);
+        },
+    });
 
     const purchaseOrderId = useWatch({ name: "purchase_order_uid", control: methods.control });
     const { data: poData } = usePurchaseOrderDetail(purchaseOrderId || null);
@@ -172,6 +179,7 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
                                     {...supplierSelectConfig}
                                     placeholder="-- Pilih Supplier --"
                                     disabled={updateReceiving.isPending || !!purchaseOrderId}
+                                    onCreateOption={openSupplierModal}
                                 />
                                 {errors.supplier_uid && (
                                     <p className="text-[10px] text-rose-500 font-medium">
@@ -281,6 +289,7 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
                     </div>
                 </form>
             </FormProvider>
+            {SupplierModal}
         </BaseDialog>
     );
 }
