@@ -134,34 +134,34 @@ export function CentralStoresComparisonTable({
 
             {/* Total Consolidation Summary Banner */}
             {totals && stores.length > 0 && (
-                <div className="bg-slate-900 text-white rounded-xl p-3.5 border border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
-                    <div className="font-extrabold uppercase tracking-wider text-[11px] text-slate-300">
+                <div className="bg-slate-50/60 border border-slate-100 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
+                    <div className="font-extrabold uppercase tracking-wider text-xs text-slate-800">
                         Total Konsolidasi ({stores.length} Cabang)
                     </div>
                     <div className="flex flex-wrap items-center gap-6 font-mono">
                         <div>
-                            <span className="text-[9px] text-slate-400 uppercase block font-sans">Total Transaksi</span>
-                            <span className="font-bold">{totals.sales_count.toLocaleString("id-ID")} trx</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase block font-sans">Total Transaksi</span>
+                            <span className="font-bold text-slate-800 text-sm">{totals.sales_count.toLocaleString("id-ID")} trx</span>
                         </div>
                         <div>
-                            <span className="text-[9px] text-slate-400 uppercase block font-sans">Omset Bersih</span>
-                            <span className="font-bold text-emerald-400">{formatRupiah(totals.net_sales)}</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase block font-sans">Omset Bersih</span>
+                            <span className="font-bold text-emerald-600 text-sm">{formatRupiah(totals.net_sales)}</span>
                         </div>
                         <div>
-                            <span className="text-[9px] text-slate-400 uppercase block font-sans">Laba Kotor</span>
-                            <span className="font-bold text-blue-400">{formatRupiah(totals.gross_profit)}</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase block font-sans">Laba Kotor</span>
+                            <span className="font-bold text-blue-600 text-sm">{formatRupiah(totals.gross_profit)}</span>
                         </div>
                         <div>
-                            <span className="text-[9px] text-slate-400 uppercase block font-sans">Pengeluaran</span>
-                            <span className="font-bold text-amber-400">{formatRupiah(totals.total_expenses)}</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase block font-sans">Pengeluaran</span>
+                            <span className="font-bold text-amber-600 text-sm">{formatRupiah(totals.total_expenses)}</span>
                         </div>
                         <div>
-                            <span className="text-[9px] text-slate-400 uppercase block font-sans">Laba Bersih</span>
-                            <span className="font-extrabold text-emerald-300 text-sm">{formatRupiah(totals.net_profit)}</span>
+                            <span className="text-[10px] text-emerald-700 font-bold uppercase block font-sans">Laba Bersih</span>
+                            <span className="font-extrabold text-emerald-700 text-base">{formatRupiah(totals.net_profit)}</span>
                         </div>
                         <div>
-                            <span className="text-[9px] text-slate-400 uppercase block font-sans">Valuasi Stok</span>
-                            <span className="font-bold text-indigo-300">{formatRupiah(totals.stock_value)}</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase block font-sans">Valuasi Stok</span>
+                            <span className="font-bold text-slate-700 text-sm">{formatRupiah(totals.stock_value)}</span>
                         </div>
                     </div>
                 </div>

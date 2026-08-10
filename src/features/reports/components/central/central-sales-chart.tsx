@@ -35,20 +35,20 @@ const STORE_COLORS = [
 const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number; color: string }>; label?: string }) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-slate-900 border border-slate-700 rounded-xl p-3 shadow-xl text-white text-xs space-y-1 z-50">
-                <div className="font-bold text-slate-300 border-b border-slate-700 pb-1 text-[11px]">
+            <div className="bg-white border border-slate-200/90 rounded-xl p-3 shadow-xl text-slate-800 text-xs space-y-1.5 z-50">
+                <div className="font-bold text-slate-700 border-b border-slate-100 pb-1 text-[11px]">
                     Periode: {label}
                 </div>
                 {payload.map((p) => (
                     <div key={p.name} className="flex items-center justify-between gap-4 text-[11px]">
                         <div className="flex items-center gap-1.5">
                             <span
-                                className="inline-block w-2 h-2 rounded-full shrink-0"
+                                className="inline-block w-2.5 h-2.5 rounded-full shrink-0 shadow-2xs"
                                 style={{ background: p.color }}
                             />
-                            <span className="text-slate-300">{p.name}:</span>
+                            <span className="text-slate-600 font-medium">{p.name}:</span>
                         </div>
-                        <span className="font-mono font-bold text-white">{formatRupiah(p.value)}</span>
+                        <span className="font-mono font-bold text-slate-900">{formatRupiah(p.value)}</span>
                     </div>
                 ))}
             </div>
@@ -107,8 +107,8 @@ export function CentralSalesChart({
                 <button
                     type="button"
                     onClick={() => onByStoreToggle(!byStore)}
-                    className={`h-8 px-3 text-xs font-bold rounded-xl border flex items-center gap-1.5 transition-colors cursor-pointer ${byStore
-                            ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                    className={`h-8 px-3 text-xs font-bold rounded-xl border flex items-center gap-1.5 transition-all cursor-pointer ${byStore
+                            ? "bg-emerald-600 text-white border-emerald-600 shadow-xs hover:bg-emerald-700"
                             : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
                         }`}
                     title="Beralih antara tren total vs tren per-cabang"

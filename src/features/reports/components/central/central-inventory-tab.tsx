@@ -31,9 +31,9 @@ const CustomInventoryTooltip = ({
 }) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 shadow-xl text-white text-xs space-y-0.5 z-50">
-                <div className="font-bold text-slate-300">{label}</div>
-                <div className="text-indigo-300 font-mono font-bold">
+            <div className="bg-white border border-slate-200/90 rounded-xl px-3.5 py-2.5 shadow-xl text-slate-800 text-xs space-y-1 z-50">
+                <div className="font-bold text-slate-700">{label}</div>
+                <div className="text-emerald-700 font-mono font-bold">
                     Valuasi Stok: {formatRupiah(payload[0]?.value || 0)}
                 </div>
             </div>
@@ -55,9 +55,9 @@ export function CentralInventoryTab({ data, isLoading }: CentralInventoryTabProp
             <CentralInventoryCards data={data} isLoading={isLoading} />
 
             {/* 2. Visual Inventory Comparison Chart */}
-            <Card className="bg-white border-slate-100 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4">
+            <Card className="bg-white border-slate-200/80 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4">
                 <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100/80">
                         <IconBox size={18} />
                     </div>
                     <div>
@@ -93,7 +93,7 @@ export function CentralInventoryTab({ data, isLoading }: CentralInventoryTabProp
                                     }
                                 />
                                 <Tooltip content={<CustomInventoryTooltip />} />
-                                <Bar dataKey="Valuasi Stok" fill="#6366f1" radius={[8, 8, 0, 0]} />
+                                <Bar dataKey="Valuasi Stok" fill="#10b981" radius={[8, 8, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>

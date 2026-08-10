@@ -18,14 +18,14 @@ export function CentralStoreDistribution({
 }: CentralStoreDistributionProps) {
     if (isLoading) {
         return (
-            <Card className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm h-72 animate-pulse" />
+            <Card className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs h-72 animate-pulse" />
         );
     }
 
     const sortedStores = [...stores].sort((a, b) => b.net_sales - a.net_sales);
 
     return (
-        <Card className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
+        <Card className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div>
                     <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
@@ -46,26 +46,23 @@ export function CentralStoreDistribution({
                         return (
                             <div
                                 key={store.store_uid}
-                                className="p-3 rounded-xl bg-slate-50/60 border border-slate-100 space-y-2"
+                                className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-100 space-y-2.5 hover:bg-slate-100/60 transition-colors"
                             >
                                 <div className="flex items-center justify-between text-xs">
                                     <div className="flex items-center gap-2 font-bold text-slate-800 truncate">
-                                        {/* {store.is_central && (
-                                            <span className="text-[9px] bg-slate-900 text-white font-mono px-1.5 py-0.5 rounded font-bold shrink-0">
-                                                HQ
-                                            </span>
-                                        )} */}
                                         <span className="truncate">{store.store_name}</span>
                                     </div>
-                                    <span className="font-mono font-bold text-slate-900 shrink-0 text-xs">
-                                        {formatRupiah(store.net_sales)} ({percentage}%)
-                                    </span>
+                                    <div className="flex items-center gap-2 font-mono font-bold text-slate-900 shrink-0 text-xs">
+                                        <span>{formatRupiah(store.net_sales)}</span>
+                                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-lg">
+                                            {percentage}%
+                                        </span>
+                                    </div>
                                 </div>
 
-                                <div className="w-full h-1.5 bg-slate-200/80 rounded-full overflow-hidden">
+                                <div className="w-full h-2 bg-slate-200/80 rounded-full overflow-hidden">
                                     <div
-                                        className={`h-full rounded-full transition-all duration-500 ${store.is_central ? "bg-slate-900" : "bg-emerald-600"
-                                            }`}
+                                        className="h-full rounded-full bg-emerald-600 transition-all duration-500"
                                         style={{ width: `${Math.min(100, Math.max(0, percentage))}%` }}
                                     />
                                 </div>

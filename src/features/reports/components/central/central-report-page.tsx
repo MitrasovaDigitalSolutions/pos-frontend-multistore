@@ -104,17 +104,17 @@ export function CentralReportPage() {
                 appliedFilters={appliedFilters}
             />
 
-            {/* High-contrast & Clean Tabs Navigation System */}
+            {/* Clean & Interactive Tabs Navigation */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-4">
-                <div className="bg-white p-2 rounded-2xl border border-slate-200 shadow-xs inline-flex flex-wrap sm:flex-nowrap gap-2">
-                    <TabsList className="bg-transparent p-0 gap-2 flex-wrap sm:flex-nowrap h-auto border-0">
+                <div className="bg-slate-100/80 p-1.5 rounded-2xl inline-flex flex-wrap sm:flex-nowrap gap-1">
+                    <TabsList className="bg-transparent p-0 gap-1 flex-wrap sm:flex-nowrap h-auto border-0">
                         <TabsTrigger
                             value="overview"
                             className={cn(
-                                "px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2.5 cursor-pointer border shadow-none",
+                                "px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer border-0 shadow-none",
                                 activeTab === "overview"
-                                    ? "bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20"
-                                    : "bg-slate-100/90 text-slate-600 border-slate-200/80 hover:bg-slate-200/80 hover:text-slate-900"
+                                    ? "bg-white text-emerald-700 shadow-sm scale-[1.02]"
+                                    : "text-slate-500 hover:text-slate-900 hover:bg-slate-200/50"
                             )}
                         >
                             <IconChartLine size={18} className="shrink-0" />
@@ -124,10 +124,10 @@ export function CentralReportPage() {
                         <TabsTrigger
                             value="stores"
                             className={cn(
-                                "px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2.5 cursor-pointer border shadow-none",
+                                "px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer border-0 shadow-none",
                                 activeTab === "stores"
-                                    ? "bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20"
-                                    : "bg-slate-100/90 text-slate-600 border-slate-200/80 hover:bg-slate-200/80 hover:text-slate-900"
+                                    ? "bg-white text-emerald-700 shadow-sm scale-[1.02]"
+                                    : "text-slate-500 hover:text-slate-900 hover:bg-slate-200/50"
                             )}
                         >
                             <IconBuildingStore size={18} className="shrink-0" />
@@ -137,10 +137,10 @@ export function CentralReportPage() {
                         <TabsTrigger
                             value="inventory"
                             className={cn(
-                                "px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2.5 cursor-pointer border shadow-none",
+                                "px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer border-0 shadow-none",
                                 activeTab === "inventory"
-                                    ? "bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20"
-                                    : "bg-slate-100/90 text-slate-600 border-slate-200/80 hover:bg-slate-200/80 hover:text-slate-900"
+                                    ? "bg-white text-emerald-700 shadow-sm scale-[1.02]"
+                                    : "text-slate-500 hover:text-slate-900 hover:bg-slate-200/50"
                             )}
                         >
                             <IconBox size={18} className="shrink-0" />

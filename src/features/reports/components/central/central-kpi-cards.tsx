@@ -97,7 +97,7 @@ export function CentralKpiCards({ overview, isLoading }: CentralKpiCardsProps) {
                         <h4 className="text-xs font-bold text-slate-700 mt-1">
                             Laba Bersih (Net Profit)
                         </h4>
-                        <div className={`text-xl font-extrabold tracking-tight mt-1 font-mono ${net_profit >= 0 ? "text-slate-900" : "text-rose-600"}`}>
+                        <div className={`text-xl font-extrabold tracking-tight mt-1 font-mono ${net_profit >= 0 ? "text-emerald-700" : "text-rose-600"}`}>
                             {formatRupiah(net_profit)}
                         </div>
                     </div>
