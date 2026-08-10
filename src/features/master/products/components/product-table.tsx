@@ -153,7 +153,7 @@ export function ProductTable({
                             )}
                         </div>
                     ),
-                    size: 240
+                    size: 320
                 },
                 {
                     accessorKey: "category",
@@ -164,7 +164,7 @@ export function ProductTable({
                             {row.original.category?.nama || "-"}
                         </span>
                     ),
-                    size: 120
+                    size: 170
                 },
                 {
                     accessorKey: "merek",
@@ -175,7 +175,7 @@ export function ProductTable({
                             {row.original.brand?.nama || row.original.merek || "-"}
                         </span>
                     ),
-                    size: 120
+                    size: 170
                 },
                 {
                     accessorKey: "harga_beli",

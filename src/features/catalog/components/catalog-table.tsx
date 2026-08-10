@@ -100,7 +100,7 @@ export function CatalogTable({
             {
                 accessorKey: "nama",
                 header: "Nama Produk",
-                size: 240,
+                size: 320,
                 cell: ({ row }) => {
                     const p = row.original;
                     const imgUrl = getImageUrl(p.image_url || p.image_path);
@@ -140,7 +140,7 @@ export function CatalogTable({
                 accessorKey: "category.nama",
                 header: "Kategori",
                 enableSorting: false,
-                size: 130,
+                size: 170,
                 cell: ({ row }) => (
                     <span className="text-xs text-slate-600 font-medium">
                         {row.original.category?.nama || "—"}
@@ -151,7 +151,7 @@ export function CatalogTable({
                 accessorKey: "merek",
                 header: "Merek / Brand",
                 enableSorting: false,
-                size: 120,
+                size: 170,
                 cell: ({ row }) => (
                     <span className="text-xs text-slate-500">
                         {row.original.brand?.nama || row.original.merek || "—"}
