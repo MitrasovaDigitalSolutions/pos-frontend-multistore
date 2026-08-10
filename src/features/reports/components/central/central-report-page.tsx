@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { startOfMonthStr, todayStr } from "@/lib/date-utils";
+import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
     useCentralOverview,
@@ -103,31 +104,46 @@ export function CentralReportPage() {
                 appliedFilters={appliedFilters}
             />
 
-            {/* Proportional & Clean Tabs Navigation System */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
-                <div className="border-b border-slate-200/80 pb-3">
-                    <TabsList className="bg-slate-100/80 border border-slate-200/70 p-1 rounded-xl inline-flex gap-1 h-auto">
+            {/* High-contrast & Clean Tabs Navigation System */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-4">
+                <div className="bg-white p-2 rounded-2xl border border-slate-200 shadow-xs inline-flex flex-wrap sm:flex-nowrap gap-2">
+                    <TabsList className="bg-transparent p-0 gap-2 flex-wrap sm:flex-nowrap h-auto border-0">
                         <TabsTrigger
                             value="overview"
-                            className="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xs text-slate-500 hover:text-slate-900"
+                            className={cn(
+                                "px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2.5 cursor-pointer border shadow-none",
+                                activeTab === "overview"
+                                    ? "bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20"
+                                    : "bg-slate-100/90 text-slate-600 border-slate-200/80 hover:bg-slate-200/80 hover:text-slate-900"
+                            )}
                         >
-                            <IconChartLine size={16} />
+                            <IconChartLine size={18} className="shrink-0" />
                             <span>Ringkasan Konsolidasi</span>
                         </TabsTrigger>
 
                         <TabsTrigger
                             value="stores"
-                            className="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xs text-slate-500 hover:text-slate-900"
+                            className={cn(
+                                "px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2.5 cursor-pointer border shadow-none",
+                                activeTab === "stores"
+                                    ? "bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20"
+                                    : "bg-slate-100/90 text-slate-600 border-slate-200/80 hover:bg-slate-200/80 hover:text-slate-900"
+                            )}
                         >
-                            <IconBuildingStore size={16} />
+                            <IconBuildingStore size={18} className="shrink-0" />
                             <span>Perbandingan Cabang</span>
                         </TabsTrigger>
 
                         <TabsTrigger
                             value="inventory"
-                            className="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xs text-slate-500 hover:text-slate-900"
+                            className={cn(
+                                "px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2.5 cursor-pointer border shadow-none",
+                                activeTab === "inventory"
+                                    ? "bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20"
+                                    : "bg-slate-100/90 text-slate-600 border-slate-200/80 hover:bg-slate-200/80 hover:text-slate-900"
+                            )}
                         >
-                            <IconBox size={16} />
+                            <IconBox size={18} className="shrink-0" />
                             <span>Valuasi Stok Cabang</span>
                         </TabsTrigger>
                     </TabsList>

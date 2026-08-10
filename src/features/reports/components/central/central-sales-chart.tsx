@@ -95,7 +95,7 @@ export function CentralSalesChart({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                 <div>
                     <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                        {byStore ? "Grafik Perbandingan Penjualan Per Cabang" : "Grafik Tren Omset & Keuntungan HQ"}
+                        {byStore ? "Grafik Perbandingan Penjualan Per Cabang" : "Grafik Tren Omset & Keuntungan"}
                     </h4>
                     <p className="text-[11px] text-slate-400">
                         {byStore
@@ -107,11 +107,10 @@ export function CentralSalesChart({
                 <button
                     type="button"
                     onClick={() => onByStoreToggle(!byStore)}
-                    className={`h-8 px-3 text-xs font-bold rounded-xl border flex items-center gap-1.5 transition-colors cursor-pointer ${
-                        byStore
+                    className={`h-8 px-3 text-xs font-bold rounded-xl border flex items-center gap-1.5 transition-colors cursor-pointer ${byStore
                             ? "bg-slate-900 text-white border-slate-900 shadow-sm"
                             : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
-                    }`}
+                        }`}
                     title="Beralih antara tren total vs tren per-cabang"
                 >
                     <IconSwitchHorizontal size={14} />
@@ -147,8 +146,8 @@ export function CentralSalesChart({
                                         val >= 1_000_000
                                             ? `${(val / 1_000_000).toFixed(0)}Jt`
                                             : val >= 1_000
-                                            ? `${(val / 1_000).toFixed(0)}Rb`
-                                            : val
+                                                ? `${(val / 1_000).toFixed(0)}Rb`
+                                                : val
                                     }
                                 />
                                 <Tooltip content={<CustomTooltip />} />
@@ -194,8 +193,8 @@ export function CentralSalesChart({
                                         val >= 1_000_000
                                             ? `${(val / 1_000_000).toFixed(0)}Jt`
                                             : val >= 1_000
-                                            ? `${(val / 1_000).toFixed(0)}Rb`
-                                            : val
+                                                ? `${(val / 1_000).toFixed(0)}Rb`
+                                                : val
                                     }
                                 />
                                 <Tooltip content={<CustomTooltip />} />

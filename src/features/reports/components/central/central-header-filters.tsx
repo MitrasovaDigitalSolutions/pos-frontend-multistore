@@ -52,11 +52,13 @@ export function CentralHeaderFilters({
     const { data: storesResponse } = useStores({ per_page: 100 });
     const storesList = storesResponse?.data || [];
 
-    const handlePrintConfirm = () => {
+    const handlePrintConfirm = (data: CentralPrintFilterValues) => {
         const url = getCentralPrintStoresUrl(
-            appliedFilters.from,
-            appliedFilters.to,
-            appliedFilters.storeUids
+            data.from,
+            data.to,
+            data.storeUids,
+            data.paperSize,
+            data.orientation
         );
         window.open(url, "_blank");
     };
@@ -79,7 +81,7 @@ export function CentralHeaderFilters({
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100/60 mb-4">
                     <div>
                         <h3 className="text-sm font-bold text-slate-900">
-                            Laporan Konsolidasi HQ (Multi-Store)
+                            Laporan Konsolidasi
                         </h3>
                         <p className="text-[11px] text-slate-400 mt-0.5">
                             Agregasi data penjualan, laba rugi, dan stok lintas seluruh cabang toko.

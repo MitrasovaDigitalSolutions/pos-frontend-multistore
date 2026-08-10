@@ -67,13 +67,21 @@ export function useCentralInventory(storeUids?: string[]) {
     });
 }
 
-export function getCentralPrintStoresUrl(from: string, to: string, storeUids?: string[]): string {
-    const baseUrl = ENDPOINTS.REPORTS.CENTRAL.PRINT_STORES;
+export function getCentralPrintStoresUrl(
+    from: string,
+    to: string,
+    storeUids?: string[],
+    paperSize?: string,
+    orientation?: string
+): string {
+    const baseUrl = `/api/proxy${ENDPOINTS.REPORTS.CENTRAL.PRINT_STORES}`;
     const params = new URLSearchParams();
     if (from) params.set("from", from);
     if (to) params.set("to", to);
     if (storeUids && storeUids.length > 0) {
         params.set("stores", storeUids.join(","));
     }
+    if (paperSize) params.set("paper_size", paperSize);
+    if (orientation) params.set("orientation", orientation);
     return `${baseUrl}?${params.toString()}`;
 }

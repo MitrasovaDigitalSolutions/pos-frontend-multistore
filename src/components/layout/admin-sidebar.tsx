@@ -90,6 +90,10 @@ export function AdminSidebar() {
         if (path === "/admin/expenses" && (pathname === "/admin/expenses/categories" || pathname.startsWith("/admin/expenses/categories/"))) {
             return false;
         }
+        // Prevent "/admin/reports/sales" from matching when on "/admin/reports/sales/by-category"
+        if (path === ROUTES.ADMIN_REPORTS_SALES && (pathname === ROUTES.ADMIN_REPORTS_SALES_BY_CATEGORY || pathname.startsWith(ROUTES.ADMIN_REPORTS_SALES_BY_CATEGORY + "/"))) {
+            return false;
+        }
         const fromParam = searchParams.get("from");
 
         if (path === ROUTES.ADMIN_STOCK_TRANSFERS_INCOMING) {

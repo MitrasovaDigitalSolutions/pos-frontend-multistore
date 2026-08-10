@@ -50,11 +50,11 @@ export function CentralStoreDistribution({
                             >
                                 <div className="flex items-center justify-between text-xs">
                                     <div className="flex items-center gap-2 font-bold text-slate-800 truncate">
-                                        {store.is_central && (
+                                        {/* {store.is_central && (
                                             <span className="text-[9px] bg-slate-900 text-white font-mono px-1.5 py-0.5 rounded font-bold shrink-0">
                                                 HQ
                                             </span>
-                                        )}
+                                        )} */}
                                         <span className="truncate">{store.store_name}</span>
                                     </div>
                                     <span className="font-mono font-bold text-slate-900 shrink-0 text-xs">
@@ -64,9 +64,8 @@ export function CentralStoreDistribution({
 
                                 <div className="w-full h-1.5 bg-slate-200/80 rounded-full overflow-hidden">
                                     <div
-                                        className={`h-full rounded-full transition-all duration-500 ${
-                                            store.is_central ? "bg-slate-900" : "bg-emerald-600"
-                                        }`}
+                                        className={`h-full rounded-full transition-all duration-500 ${store.is_central ? "bg-slate-900" : "bg-emerald-600"
+                                            }`}
                                         style={{ width: `${Math.min(100, Math.max(0, percentage))}%` }}
                                     />
                                 </div>

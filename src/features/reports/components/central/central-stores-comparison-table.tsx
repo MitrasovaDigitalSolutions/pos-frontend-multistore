@@ -30,11 +30,11 @@ export function CentralStoresComparisonTable({
                     return (
                         <div>
                             <div className="flex items-center gap-1.5">
-                                {store.is_central && (
+                                {/* {store.is_central && (
                                     <span className="text-[9px] bg-slate-900 text-white font-mono px-1.5 py-0.5 rounded font-extrabold">
                                         HQ
                                     </span>
-                                )}
+                                )} */}
                                 <span className="font-bold text-slate-900">{store.store_name}</span>
                             </div>
                             <span className="text-[10px] text-slate-400 block mt-0.5">
@@ -128,8 +128,8 @@ export function CentralStoresComparisonTable({
                 columns={columns}
                 data={stores}
                 isLoading={isLoading}
-                searchKey="store_name"
-                searchPlaceholder="Cari nama cabang..."
+            // searchKey="store_name"
+            // searchPlaceholder="Cari nama cabang..."
             />
 
             {/* Total Consolidation Summary Banner */}

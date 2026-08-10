@@ -69,11 +69,11 @@ export function CentralInventoryCards({ data, isLoading }: CentralInventoryCards
                                 <IconBuildingStore size={16} className="text-slate-600" />
                                 <span>{store.store_name}</span>
                             </div>
-                            {store.is_central && (
+                            {/* {store.is_central && (
                                 <span className="text-[9px] bg-slate-900 text-white font-mono px-2 py-0.5 rounded font-bold">
                                     HQ
                                 </span>
-                            )}
+                            )} */}
                         </div>
 
                         <div className="space-y-0.5">

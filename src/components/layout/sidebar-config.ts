@@ -295,6 +295,12 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                     },
                     {
+                        path: ROUTES.ADMIN_REPORTS_SALES_BY_CATEGORY,
+                        label: "Penjualan Per Kategori",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                    },
+                    {
                         path: ROUTES.ADMIN_REPORTS_PEMBELIAN,
                         label: "Laporan Pembelian",
                         permission: (roles, permissions) =>
@@ -450,7 +456,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
             {
                 type: "link",
                 path: ROUTES.ADMIN_REPORTS_CENTRAL,
-                label: "Laporan Konsolidasi (HQ)",
+                label: "Laporan Konsolidasi",
                 icon: IconChartBar,
                 permission: (roles) => hasRole(roles, "admin"),
             },
