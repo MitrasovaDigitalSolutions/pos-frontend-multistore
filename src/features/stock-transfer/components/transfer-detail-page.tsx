@@ -85,15 +85,33 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
 
   useEffect(() => {
     if (items && items.length > 0) {
+      const currentValues = formMethods.getValues("items") || [];
+      const currentMap = new Map(currentValues.map((v) => [v.product_uid, v]));
+
       formMethods.reset({
-        items: items.map((item) => ({
-          product_uid: item.product_uid,
-          status: item.status || null,
-          jenis_selisih: item.jenis_selisih || null,
-          kuantitas_diterima: item.kuantitas_diterima ?? item.kuantitas,
-          kuantitas_return: item.kuantitas_return ?? (item.kuantitas - (item.kuantitas_diterima || 0)),
-          keterangan: item.keterangan || "",
-        })),
+        items: items.map((item) => {
+          const draft = currentMap.get(item.product_uid);
+          const isPending = item.status === null || item.status === undefined;
+
+          const qtyDiterima =
+            isPending && draft && draft.kuantitas_diterima !== undefined
+              ? draft.kuantitas_diterima
+              : (item.kuantitas_diterima ?? item.kuantitas);
+
+          const keterangan =
+            isPending && draft && draft.keterangan !== undefined
+              ? draft.keterangan
+              : (item.keterangan || "");
+
+          return {
+            product_uid: item.product_uid,
+            status: item.status || null,
+            jenis_selisih: item.jenis_selisih || null,
+            kuantitas_diterima: qtyDiterima,
+            kuantitas_return: item.kuantitas_return ?? (item.kuantitas - (item.kuantitas_diterima || 0)),
+            keterangan: keterangan,
+          };
+        }),
       });
     }
   }, [items, formMethods]);
