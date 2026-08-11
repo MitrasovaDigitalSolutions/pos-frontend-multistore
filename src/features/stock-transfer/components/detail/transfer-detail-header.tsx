@@ -44,8 +44,8 @@ export function TransferDetailHeader({
   const handleBack = () => {
     if (fromMode === "incoming") {
       router.push(ROUTES.ADMIN_STOCK_TRANSFERS_INCOMING);
-    } else if (fromMode === "returns") {
-      router.push(ROUTES.ADMIN_STOCK_TRANSFERS_RETURNS);
+    } else if (fromMode === "validations") {
+      router.push(ROUTES.ADMIN_STOCK_TRANSFERS_VALIDATIONS);
     } else {
       router.push(ROUTES.ADMIN_STOCK_TRANSFERS);
     }

@@ -37,8 +37,8 @@ export function AdminHeader() {
       if (pathname === ROUTES.ADMIN_STOCK_TRANSFERS_INCOMING || fromParam === "incoming") {
         return "Transfer Masuk";
       }
-      if (pathname === ROUTES.ADMIN_STOCK_TRANSFERS_RETURNS || fromParam === "returns") {
-        return "Retur Transfer";
+      if (pathname === ROUTES.ADMIN_STOCK_TRANSFERS_VALIDATIONS || fromParam === "validations") {
+        return "Validasi Transfer";
       }
       if (pathname === ROUTES.ADMIN_STOCK_TRANSFERS || fromParam === "outgoing") {
         return "Transfer Keluar";

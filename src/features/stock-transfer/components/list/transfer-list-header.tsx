@@ -27,8 +27,8 @@ export function TransferListHeader({ mode, canManage }: TransferListHeaderProps)
       };
     } else {
       return {
-        title: "Retur Transfer",
-        description: "Validasi pengembalian stok yang ditolak/berselisih oleh toko asal."
+        title: "Validasi Transfer",
+        description: "Validasi pengembalian (retur) dan koreksi stok transfer oleh toko asal."
       };
     }
   };

@@ -88,7 +88,7 @@ export function ReceiveItemModal({
           </div>
           <div>
             <h3 className="font-bold text-sm text-slate-900">
-              {selectedStatus === "received" ? "Penerimaan Barang" : "Penolakan / Retur Barang"}
+              {selectedStatus === "received" ? "Penerimaan Barang" : "Penolakan Barang"}
             </h3>
             <p className="text-[11px] font-normal text-slate-400">Proses penerimaan item secara mendetail</p>
           </div>
@@ -142,7 +142,7 @@ export function ReceiveItemModal({
                 }`}
             >
               <IconX size={16} className="text-rose-600" />
-              <span>Tolak / Retur</span>
+              <span>Tolak</span>
             </button>
           </div>
         </div>
@@ -167,7 +167,7 @@ export function ReceiveItemModal({
         {requireSelisihReason && (
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-slate-700">
-              Alasan Selisih / Retur <span className="text-rose-500">*</span>
+              Alasan Selisih / Penolakan <span className="text-rose-500">*</span>
             </label>
             <Select value={jenisSelisih} onValueChange={(val) => setJenisSelisih(val || "")}>
               <SelectTrigger className="w-full h-9 rounded-xl border-slate-200 bg-white text-xs text-slate-800">
