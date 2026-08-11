@@ -6,31 +6,48 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 <!-- END:nextjs-agent-rules -->
 
-# POS Frontend agent guidance
+# POS Frontend Agent Guidance & Enterprise Architecture Guidelines
 
-## Project shape
+## Core Principles & Engineering Standards
 
-- This repository is a Next.js 16 App Router project for a POS system.
-- Application code lives primarily under src/app, src/components, src/features, src/lib, src/providers, and src/stores.
-- Use the @/\* path alias for imports and keep new code aligned with the existing feature-based structure.
+### 1. Package Manager & Runtime Standard
+- **ALWAYS use `bun`** as the default package manager and runtime runner for all commands.
+  - Development: `bun dev`
+  - Build: `bun run build`
+  - Linting: `bun run lint`
+  - Seeding: `bun run seed`
+  - Type Checking: `bun x tsc --noEmit`
+  - Executing CLI tools: `bun x <tool>`
+  - Package Management: `bun add <package>` / `bun add -d <package>`
 
-## Conventions to follow
+### 2. SOLID & DRY Principles
+- **Single Responsibility Principle (SRP)**: Each file, hook, or component MUST have a single, clearly defined function.
+- **Open/Closed Principle (OCP)**: Build flexible, extensible components using props composition and reusable wrappers.
+- **Liskov Substitution & Interface Segregation (LSP & ISP)**: Define small, specific, and type-safe interfaces/props. Avoid bloated multi-purpose props.
+- **Dependency Inversion Principle (DIP)**: Decouple UI logic from data fetching using custom React Query hooks and Zustand stores.
+- **Don't Repeat Yourself (DRY)**: Re-use shared UI primitives (`src/components/ui`, `src/components/shared`), design system tokens, and utility functions instead of duplicating code.
 
-- Prefer server components by default; add "use client" only when interactivity, hooks, or browser APIs are required.
-- Keep route-specific UI under the appropriate route group in src/app/(auth) or src/app/(protected).
-- Reuse shared primitives from src/components/ui and src/components/shared instead of creating one-off UI patterns.
-- Use React Query for server-backed data and Zustand stores for local client state such as cart and checkout flows.
-- Follow strict TypeScript and existing lint rules; avoid introducing explicit any unless there is a clear, temporary reason.
+### 3. Anti-God Component Policy & Feature Decomposition
+- **STRICTLY NO GOD COMPONENTS**: Do NOT write monolithic, multi-hundred-line components.
+- Break down complex views into focused, modular sub-components.
+- Extract complex component logic (form handlers, calculations, state orchestration) into dedicated custom hooks (`hooks/use-*.ts`).
+- Keep UI components clean, readable, and presentation-focused.
 
-## Common commands
+### 4. Folder Structure & Feature Organization
+Follow a strict feature-based architecture under `src/features/<feature_name>/`:
+- `api/`: API client calls, React Query queries, and mutations (`<feature>-api.ts`).
+- `components/`: Single-responsibility UI sub-components.
+- `hooks/`: Feature-specific state and logic hooks (`use-<feature>.ts`).
+- `schemas/`: Zod validation schemas (`<feature>-schema.ts`).
+- `types/`: Dedicated TypeScript type definition files (`<feature>.d.ts` or `types/index.ts`).
+- `constants/`: Feature-specific constants and configuration settings (`<feature>-constants.ts` or `constants/index.ts`).
 
-- npm run dev
-- npm run build
-- npm run lint
-- npm run seed
+### 5. Type Safety & Constants Standard
+- Maintain strict TypeScript type safety. **`any` is strictly prohibited**.
+- Always define explicit types in dedicated `.d.ts` or `types/index.ts` files.
+- Move magic numbers, status strings, and configuration values to dedicated `constants/` files.
 
-## When making changes
-
-- Check [README.md](README.md) and the docs under [docs](docs) for product-specific behavior before assuming patterns.
-- Favor small, focused changes that fit the existing architecture and reuse current hooks, utilities, and components.
-- If a change affects auth, route access, or shared UI, inspect the related provider or layout files first.
+### 6. Enterprise Long-Term Quality & Bug Prevention
+- Write code designed for enterprise-scale maintainability, performance, and long-term durability.
+- Include proper error boundaries, loading states, toasts, and fallback states for all async interactions.
+- Always run `bun x tsc --noEmit` and `bun run lint` to verify code correctness before completion.
