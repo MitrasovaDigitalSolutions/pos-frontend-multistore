@@ -141,6 +141,10 @@ export function StoreProductEditDialog({
             return;
         }
 
+        const isGrosir = Boolean(
+            data.harga_grosir && data.min_qty_grosir && data.harga_grosir > 0 && data.min_qty_grosir > 0
+        );
+
         updateProductStore.mutate(
             {
                 productUid: product.uid,
@@ -149,6 +153,7 @@ export function StoreProductEditDialog({
                 harga_beli: data.harga_beli ?? undefined,
                 harga_grosir: data.harga_grosir ?? undefined,
                 min_qty_grosir: data.min_qty_grosir ?? undefined,
+                is_grosir: isGrosir,
                 margin: data.margin ?? undefined,
             },
             {
