@@ -18,11 +18,30 @@ import { AuditFilters } from "./components/audit-filters";
 import { AuditTimeline } from "./components/audit-timeline";
 import { AuditInspector } from "./components/audit-inspector";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface AuditFilterValues {
     search: string;
     modules: string[];
 }
+
+const ACTION_LABELS: Record<string, string> = {
+    validate_stock_transfer_return: "Validasi Retur Mutasi",
+    finalize_stock_transfer: "Finalisasi Mutasi",
+    create_stock_transfer: "Buat Draft Mutasi",
+    receive_stock_transfer: "Penerimaan Mutasi",
+    approve_stock_transfer: "Setujui Mutasi",
+    reject_stock_transfer: "Tolak Mutasi",
+    create_sale: "Transaksi Penjualan",
+    void_sale: "Pembatalan Penjualan",
+    stock_opname: "Stock Opname",
+    stock_adjustment: "Penyesuaian Stok",
+    create_receiving: "Penerimaan Barang",
+    create_purchase_order: "Buat Purchase Order",
+    cash_drawer_open: "Buka Cash Drawer",
+    login: "Login Pengguna",
+    logout: "Logout Pengguna",
+};
 
 export function AuditLogs() {
     const { data: session } = useSession();
@@ -75,16 +94,16 @@ export function AuditLogs() {
         if (act.includes("login") || act.includes("logout")) {
             return "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-900/40 dark:text-slate-300 dark:border-slate-800";
         }
-        if (act.includes("delete") || act.includes("remove") || act.includes("cancel")) {
+        if (act.includes("delete") || act.includes("remove") || act.includes("cancel") || act.includes("reject")) {
             return "bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/30";
         }
-        if (act.includes("create") || act.includes("store") || act.includes("checkout") || act.includes("sale")) {
+        if (act.includes("create") || act.includes("store") || act.includes("checkout") || act.includes("sale") || act.includes("receive")) {
             return "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30";
         }
-        if (act.includes("update") || act.includes("edit") || act.includes("movement") || act.includes("drawer")) {
+        if (act.includes("update") || act.includes("edit") || act.includes("movement") || act.includes("drawer") || act.includes("transfer")) {
             return "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30";
         }
-        if (act.includes("finalize") || act.includes("complete")) {
+        if (act.includes("finalize") || act.includes("complete") || act.includes("validate") || act.includes("approve")) {
             return "bg-teal-50 text-teal-700 border-teal-100 dark:bg-teal-950/20 dark:text-teal-400 dark:border-teal-900/30";
         }
         return "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900/40 dark:text-slate-300 dark:border-slate-800";
@@ -94,18 +113,29 @@ export function AuditLogs() {
         () => [
             {
                 accessorKey: "created_at",
-                header: "Tanggal",
-                cell: ({ row }) => (
-                    <div className="flex flex-col">
-                        <span className="text-slate-800 font-semibold text-xs">
-                            {formatToReadableDateTime(row.original.created_at)}
-                        </span>
-                        <span className="text-[10px] text-slate-400 font-medium">
-                            {formatRelative(row.original.created_at)}
-                        </span>
-                    </div>
-                ),
-                size: 160,
+                header: "Tanggal / Waktu",
+                cell: ({ row }) => {
+                    const formatted = formatToReadableDateTime(row.original.created_at);
+                    const rel = formatRelative(row.original.created_at);
+                    return (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="flex flex-col min-w-0 cursor-default">
+                                    <span className="text-slate-800 font-bold text-xs truncate">
+                                        {formatted}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 font-medium truncate">
+                                        {rel}
+                                    </span>
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs">
+                                {formatted} ({rel})
+                            </TooltipContent>
+                        </Tooltip>
+                    );
+                },
+                size: 150,
             },
             {
                 accessorKey: "user",
@@ -113,22 +143,31 @@ export function AuditLogs() {
                 enableSorting: false,
                 cell: ({ row }) => {
                     const user = row.original.user;
+                    const name = user ? user.name : "Sistem";
+                    const username = user ? `@${user.username}` : "";
                     return (
-                        <div className="flex items-center gap-2">
-                            <div className="h-7 w-7 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 font-bold text-xs uppercase shadow-xs">
-                                {user ? user.name.substring(0, 2) : "S"}
-                            </div>
-                            <div className="flex flex-col">
-                                <span className="font-bold text-slate-800 text-xs">
-                                    {user ? user.name : "Sistem"}
-                                </span>
-                                {user && (
-                                    <span className="text-[10px] text-slate-400 font-mono">
-                                        @{user.username}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="flex items-center gap-2 min-w-0 cursor-default">
+                                    <div className="h-7 w-7 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 font-bold text-xs uppercase shrink-0 shadow-xs">
+                                        {user ? user.name.substring(0, 2) : "S"}
+                                    </div>
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="font-bold text-slate-800 text-xs truncate">
+                                            {name}
+                                        </span>
+                                        {user && (
+                                            <span className="text-[10px] text-slate-400 font-mono truncate">
+                                                {username}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs font-semibold">
+                                {name} {user ? `(${username})` : ""}
+                            </TooltipContent>
+                        </Tooltip>
                     );
                 },
                 size: 160,
@@ -138,17 +177,25 @@ export function AuditLogs() {
                 header: "Aksi",
                 cell: ({ row }) => {
                     const action = row.original.action;
+                    const label = ACTION_LABELS[action] || action.replace(/_/g, " ");
                     return (
-                        <span
-                            className={`px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase tracking-wide ${getActionBadgeClass(
-                                action,
-                            )}`}
-                        >
-                            {action.replace(/_/g, " ")}
-                        </span>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <span
+                                    className={`px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase tracking-wide truncate max-w-full inline-block cursor-default ${getActionBadgeClass(
+                                        action,
+                                    )}`}
+                                >
+                                    {label}
+                                </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs font-bold">
+                                {label} ({action})
+                            </TooltipContent>
+                        </Tooltip>
                     );
                 },
-                size: 120,
+                size: 160,
             },
             {
                 accessorKey: "module",
@@ -157,39 +204,68 @@ export function AuditLogs() {
                     const modules = row.original.module ?? [];
                     if (!modules.length) return <span className="text-slate-400 text-xs">-</span>;
                     return (
-                        <div className="flex flex-wrap gap-1">
-                            {modules.map((m) => (
-                                <span
-                                    key={m}
-                                    className="px-2 py-0.5 rounded-md border bg-slate-50 text-slate-700 border-slate-200 text-[10px] font-bold uppercase tracking-wide"
-                                >
-                                    {moduleLabel(m)}
-                                </span>
-                            ))}
+                        <div className="flex flex-wrap gap-1 min-w-0 max-w-full">
+                            {modules.map((m) => {
+                                const lbl = moduleLabel(m);
+                                return (
+                                    <Tooltip key={m}>
+                                        <TooltipTrigger asChild>
+                                            <span
+                                                className="px-2 py-0.5 rounded-md border bg-slate-50 text-slate-700 border-slate-200 text-[10px] font-bold uppercase tracking-wide truncate max-w-full cursor-default"
+                                            >
+                                                {lbl}
+                                            </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top" className="text-xs">
+                                            Modul: {lbl}
+                                        </TooltipContent>
+                                    </Tooltip>
+                                );
+                            })}
                         </div>
                     );
                 },
-                size: 150,
+                size: 140,
             },
             {
                 accessorKey: "description",
-                header: "Deskripsi",
-                cell: ({ row }) => (
-                    <span className="text-slate-700 font-medium text-xs break-words block max-w-sm line-clamp-2" title={row.original.description}>
-                        {row.original.description}
-                    </span>
-                ),
-                size: 320,
+                header: "Deskripsi Aktivitas",
+                cell: ({ row }) => {
+                    const desc = row.original.description || "-";
+                    return (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <span className="text-slate-700 font-medium text-xs truncate block w-full cursor-default">
+                                    {desc}
+                                </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-md text-xs leading-relaxed">
+                                {desc}
+                            </TooltipContent>
+                        </Tooltip>
+                    );
+                },
+                size: 300,
             },
             {
                 accessorKey: "ip_address",
                 header: "IP Address",
-                cell: ({ row }) => (
-                    <span className="text-slate-400 font-mono text-[10px]">
-                        {row.original.ip_address || "-"}
-                    </span>
-                ),
-                size: 120,
+                cell: ({ row }) => {
+                    const ip = row.original.ip_address || "-";
+                    return (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <span className="text-slate-400 font-mono text-[10px] truncate block w-full cursor-default">
+                                    {ip}
+                                </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs font-mono">
+                                IP: {ip}
+                            </TooltipContent>
+                        </Tooltip>
+                    );
+                },
+                size: 110,
             },
         ],
         [],
