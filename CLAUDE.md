@@ -1,1 +1,45 @@
-@AGENTS.md
+# POS Frontend Agent Guidance & Enterprise Architecture Guidelines
+
+## Core Principles & Engineering Standards
+
+### 1. Package Manager & Runtime Standard
+- **ALWAYS use `bun`** as the default package manager and runtime runner for all commands.
+  - Development: `bun dev`
+  - Build: `bun run build`
+  - Linting: `bun run lint`
+  - Seeding: `bun run seed`
+  - Type Checking: `bun x tsc --noEmit`
+  - Executing CLI tools: `bun x <tool>`
+  - Package Management: `bun add <package>` / `bun add -d <package>`
+
+### 2. SOLID & DRY Principles
+- **Single Responsibility Principle (SRP)**: Each file, hook, or component MUST have a single, clearly defined function.
+- **Open/Closed Principle (OCP)**: Build flexible, extensible components using props composition and reusable wrappers.
+- **Liskov Substitution & Interface Segregation (LSP & ISP)**: Define small, specific, and type-safe interfaces/props. Avoid bloated multi-purpose props.
+- **Dependency Inversion Principle (DIP)**: Decouple UI logic from data fetching using custom React Query hooks and Zustand stores.
+- **Don't Repeat Yourself (DRY)**: Re-use shared UI primitives (`src/components/ui`, `src/components/shared`), design system tokens, and utility functions instead of duplicating code.
+
+### 3. Anti-God Component Policy & Feature Decomposition
+- **STRICTLY NO GOD COMPONENTS**: Do NOT write monolithic, multi-hundred-line components.
+- Break down complex views into focused, modular sub-components.
+- Extract complex component logic (form handlers, calculations, state orchestration) into dedicated custom hooks (`hooks/use-*.ts`).
+- Keep UI components clean, readable, and presentation-focused.
+
+### 4. Folder Structure & Feature Organization
+Follow a strict feature-based architecture under `src/features/<feature_name>/`:
+- `api/`: API client calls, React Query queries, and mutations (`<feature>-api.ts`).
+- `components/`: Single-responsibility UI sub-components.
+- `hooks/`: Feature-specific state and logic hooks (`use-<feature>.ts`).
+- `schemas/`: Zod validation schemas (`<feature>-schema.ts`).
+- `types/`: Dedicated TypeScript type definition files (`<feature>.d.ts` or `types/index.ts`).
+- `constants/`: Feature-specific constants and configuration settings (`<feature>-constants.ts` or `constants/index.ts`).
+
+### 5. Type Safety & Constants Standard
+- Maintain strict TypeScript type safety. **`any` is strictly prohibited**.
+- Always define explicit types in dedicated `.d.ts` or `types/index.ts` files.
+- Move magic numbers, status strings, and configuration values to dedicated `constants/` files.
+
+### 6. Enterprise Long-Term Quality & Bug Prevention
+- Write code designed for enterprise-scale maintainability, performance, and long-term durability.
+- Include proper error boundaries, loading states, toasts, and fallback states for all async interactions.
+- Always run `bun x tsc --noEmit` and `bun run lint` to verify code correctness before completion.

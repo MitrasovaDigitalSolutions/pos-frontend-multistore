@@ -6,9 +6,10 @@ import { IconPackage } from "@tabler/icons-react";
 import { FormSelect } from "@/components/forms/form-select";
 import { Scrollable } from "@/components/ui/scrollable";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
-import { useFormContext } from "react-hook-form";
-import { Calculator, Info, PackageCheck } from "lucide-react";
+import { Controller, useFormContext } from "react-hook-form";
+import { Calculator, Info, PackageCheck, Building2 } from "lucide-react";
 import { AppButton } from "@/components/shared/app-button";
+import { Switch } from "@/components/ui/switch";
 import { useSettingsStore } from "@/stores/settings-store";
 
 interface TabInventoryProps {
@@ -41,10 +42,11 @@ function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }
 }
 
 export function TabInventory({ isSaving }: TabInventoryProps) {
-    const { watch } = useFormContext<StoreSettingsInput>();
+    const { control, watch } = useFormContext<StoreSettingsInput>();
     const { getSettingMeta } = useSettingsStore();
     const currentHppMethod = watch("hpp_adjustment_method");
     const hppMeta = getSettingMeta("hpp_adjustment_method");
+    const branchCreateMeta = getSettingMeta("branch_can_create_product");
 
     return (
         <TooltipProvider delayDuration={150}>
@@ -56,8 +58,8 @@ export function TabInventory({ isSaving }: TabInventoryProps) {
                             <IconPackage size={15} />
                         </div>
                         <div>
-                            <h3 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">Inventori & HPP</h3>
-                            <p className="text-xs text-slate-400 dark:text-slate-400 mt-0.5">Pengaturan kalkulasi HPP dan persediaan barang toko</p>
+                            <h3 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">Inventori & Hak Akses Produk</h3>
+                            <p className="text-xs text-slate-400 dark:text-slate-400 mt-0.5">Pengaturan kalkulasi HPP dan wewenang pembuatan barang di cabang</p>
                         </div>
                     </div>
                 </div>
@@ -68,6 +70,7 @@ export function TabInventory({ isSaving }: TabInventoryProps) {
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                             {/* Inputs Column */}
                             <div className="lg:col-span-7 space-y-5">
+                                {/* HPP Method Card */}
                                 <div className="flex flex-col border border-slate-100 dark:border-slate-800 rounded-2xl p-4 bg-slate-50/40 dark:bg-slate-900/40 space-y-2">
                                     <LabelWithTooltip
                                         label={hppMeta?.label || "Metode Penyesuaian HPP"}
@@ -90,6 +93,30 @@ export function TabInventory({ isSaving }: TabInventoryProps) {
                                         </p>
                                     </div>
                                 </div>
+
+                                {/* Branch Can Create Product Toggle */}
+                                <div className="flex items-center justify-between border border-slate-100 dark:border-slate-800 rounded-2xl p-4 bg-slate-50/40 dark:bg-slate-900/40">
+                                    <div className="space-y-0.5 max-w-md pr-2">
+                                        <LabelWithTooltip
+                                            label={branchCreateMeta?.label || "Pembuatan Barang di Toko Cabang"}
+                                            tooltip={branchCreateMeta?.description || "Apakah toko cabang diizinkan membuat master produk baru (true/false). Toko pusat selalu diizinkan."}
+                                        />
+                                        <p className="text-xs text-slate-400 dark:text-slate-400 leading-snug">
+                                            Izinkan pengguna di toko cabang menambah katalog barang baru secara mandiri.
+                                        </p>
+                                    </div>
+                                    <Controller
+                                        control={control}
+                                        name="branch_can_create_product"
+                                        render={({ field }) => (
+                                            <Switch
+                                                checked={field.value === "true"}
+                                                onCheckedChange={(checked) => field.onChange(checked ? "true" : "false")}
+                                                disabled={isSaving}
+                                            />
+                                        )}
+                                    />
+                                </div>
                             </div>
 
                             {/* Help Panel Column */}
@@ -100,10 +127,20 @@ export function TabInventory({ isSaving }: TabInventoryProps) {
                                         Metode Penyesuaian HPP
                                     </div>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                                        <strong>Latest (Harga Beli Terakhir)</strong>:  Menggunakan harga faktur pemasok terbaru sebagai patokan kalkulasi persentase margin saat barang diterima.
+                                        <strong>Latest (Harga Beli Terakhir)</strong>: Menggunakan harga faktur pemasok terbaru sebagai patokan kalkulasi persentase margin saat barang diterima.
                                     </p>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                                        <strong>Average (Rata-Rata)</strong>: Menggabungkan nilai total stok lama dan barang masuk baru untuk mendapatkan HPP rata-rataper unit, sehingga fluktuasi harga beli tidak merusak stabilitas margin.
+                                        <strong>Average (Rata-Rata)</strong>: Menggabungkan nilai total stok lama dan barang masuk baru untuk mendapatkan HPP rata-rata per unit, sehingga fluktuasi harga beli tidak merusak stabilitas margin.
+                                    </p>
+                                </div>
+
+                                <div className="border border-slate-100 dark:border-slate-800 rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-3">
+                                    <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold text-xs uppercase tracking-wider">
+                                        <Building2 size={13} />
+                                        Wewenang Toko Cabang
+                                    </div>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                        Jika opsi <strong>Pembuatan Barang di Toko Cabang</strong> diaktifkan (<code>true</code>), setiap toko cabang dapat mendaftarkan produk baru secara terpisah. Jika dinonaktifkan (<code>false</code>), pusat memegang penuh kontrol katalog produk master.
                                     </p>
                                 </div>
                             </div>

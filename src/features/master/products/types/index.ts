@@ -10,6 +10,7 @@ export interface ProductStore {
     harga_jual: number | null;
     harga_grosir?: number | null;
     min_qty_grosir?: number | null;
+    is_grosir?: boolean | null;
     margin: number | null;
     status: "active" | "inactive";
 }
@@ -23,6 +24,7 @@ export interface Product {
     harga_jual?: number | null;
     harga_grosir?: number | null;
     min_qty_grosir?: number | null;
+    is_grosir?: boolean | null;
     stok: number;
     status: "active" | "inactive" | "archived";
     harga_beli?: number | null;

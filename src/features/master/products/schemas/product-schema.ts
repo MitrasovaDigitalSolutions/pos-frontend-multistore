@@ -44,6 +44,7 @@ export const productSchema = z.object({
     }, z.string().nullable().optional()),
     image: z.any().nullable().optional(),
     is_jasa: z.boolean().optional().default(false),
+    is_grosir: z.boolean().optional().default(false),
 });
 
 export type ProductInput = z.infer<typeof productSchema>;

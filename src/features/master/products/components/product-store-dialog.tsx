@@ -182,6 +182,10 @@ export function ProductStoreDialog({ open, onOpenChange, product }: ProductStore
     const onSubmit = (data: ProductStoreFormValues) => {
         if (!product) return;
 
+        const isGrosir = Boolean(
+            data.harga_grosir && data.min_qty_grosir && data.harga_grosir > 0 && data.min_qty_grosir > 0
+        );
+
         const payload = {
             productUid: product.uid,
             store_uid: data.store_uid,
@@ -190,6 +194,7 @@ export function ProductStoreDialog({ open, onOpenChange, product }: ProductStore
             harga_jual: data.harga_jual ?? undefined,
             harga_grosir: data.harga_grosir ?? undefined,
             min_qty_grosir: data.min_qty_grosir ?? undefined,
+            is_grosir: isGrosir,
             margin: data.margin ?? undefined,
             status: (data.is_active ? "active" : "inactive") as "active" | "inactive",
         };

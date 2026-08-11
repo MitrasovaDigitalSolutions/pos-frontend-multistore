@@ -2,6 +2,8 @@ import type { MetadataRoute } from "next/dist/lib/metadata/types/metadata-interf
 import { getSettingOnServer } from "@/features/settings/api/settings-server";
 import { getImageUrl } from "@/lib/utils";
 
+export const revalidate = 60;
+
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
     const appName = await getSettingOnServer("app_name", "Mitrasova POS");
     const appDescription = await getSettingOnServer(

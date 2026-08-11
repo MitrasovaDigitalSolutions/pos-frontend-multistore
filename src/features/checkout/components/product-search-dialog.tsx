@@ -16,6 +16,7 @@ import {
     IconPlus
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import { Show } from "@/components/ui/show";
 import type { ColumnDef } from "@tanstack/react-table";
 
 interface ProductSearchDialogProps {
@@ -300,15 +301,16 @@ export function ProductSearchDialog({
                     const storeProduct = p.product_stores?.[0];
                     const hargaGrosir = p.harga_grosir ?? storeProduct?.harga_grosir;
                     const minQtyGrosir = p.min_qty_grosir ?? storeProduct?.min_qty_grosir;
-                    const hasGrosir = hargaGrosir && minQtyGrosir;
+                    const isGrosirFlag = p.is_grosir ?? storeProduct?.is_grosir;
+                    const hasGrosir = Boolean(isGrosirFlag === true && hargaGrosir && minQtyGrosir);
                     return (
                         <div className="flex flex-col items-end">
                             <span className="font-bold text-slate-800">{formatRupiah(p.harga)}</span>
-                            {hasGrosir ? (
-                                <span className="text-[9px] text-emerald-600 font-semibold bg-emerald-50 px-1 py-0.2 rounded mt-0.5 whitespace-nowrap">
-                                    Grosir: {formatRupiah(Number(hargaGrosir))} (≥{minQtyGrosir} Pcs)
+                            <Show.When isTrue={hasGrosir}>
+                                <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-50/90 border border-emerald-200/80 px-1.5 py-0.5 rounded-md mt-0.5 whitespace-nowrap leading-none font-mono">
+                                    Grosir: {formatRupiah(Number(hargaGrosir))}
                                 </span>
-                            ) : null}
+                            </Show.When>
                         </div>
                     );
                 },

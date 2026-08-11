@@ -13,8 +13,6 @@ import { toast } from "sonner";
 import { db } from "@/lib/db";
 import { useNetworkStatus } from "@/hooks/use-network-status";
 import axios from "axios";
-import { buildReceipt } from "@/utils/ReceiptFormatter";
-import QZService from "@/services/qz.service";
 import PrinterService from "@/services/printer.service";
 import { formatDate } from "@/lib/date-utils";
 
@@ -225,6 +223,7 @@ export function useCheckoutState() {
             const rawMinQty = product.min_qty_grosir ?? storeProduct?.min_qty_grosir ?? null;
             const hGrosir = rawHGrosir !== null && rawHGrosir !== undefined ? Number(rawHGrosir) : null;
             const minQty = rawMinQty !== null && rawMinQty !== undefined ? Number(rawMinQty) : null;
+            const isGrosir = (product.is_grosir ?? storeProduct?.is_grosir) === true;
 
             addItem({
                 product_uid: product.uid,
@@ -232,6 +231,7 @@ export function useCheckoutState() {
                 price: product.harga,
                 harga_grosir: hGrosir,
                 min_qty_grosir: minQty,
+                is_grosir: isGrosir,
                 qty: 1,
                 stock: product.stok,
                 barcode: product.barcode || null,
@@ -390,7 +390,7 @@ export function useCheckoutState() {
             await PrinterService.print(printerName,receiptText)
         } catch (err) {
             console.error("Gagal mencetak struk:", err);
-            toast.error("Gagal mencetak struk. Pastikan QZ Tray aktif.");
+            toast.error("Gagal mencetak struk. Pastikan Print Service aktif.");
         } finally {
             setTimeout(() => {
                 toast.dismiss(toastId);
@@ -457,7 +457,7 @@ export function useCheckoutState() {
 
         } catch (err) {
             console.error("Gagal mencetak struk offline:", err);
-            toast.error("Gagal mencetak struk offline. Pastikan QZ Tray aktif.");
+            toast.error("Gagal mencetak struk offline. Pastikan Print Service aktif.");
         } finally {
             setTimeout(() => {
                 toast.dismiss(toastId);

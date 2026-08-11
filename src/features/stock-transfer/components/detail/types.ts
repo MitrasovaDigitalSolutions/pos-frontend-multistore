@@ -3,7 +3,7 @@ export interface ReceiveItemFormValue {
   kuantitas_diterima: number;
   kuantitas_return?: number;
   keterangan?: string;
-  status?: "received" | "rejected";
+  status?: "received" | "rejected" | null;
   jenis_selisih?: "salah_input" | "rusak" | "hilang" | null;
 }
 

@@ -2,6 +2,8 @@
 
 import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { FormNumberInput } from "@/components/forms/form-number-input";
+import { FormSwitch } from "@/components/forms/form-switch";
+import { Show } from "@/components/ui/show";
 import { Badge } from "@/components/ui/badge";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
@@ -27,6 +29,7 @@ interface StoreProductEditFormValues {
     harga_grosir: number | null;
     min_qty_grosir: number | null;
     harga_grosir_total: number | null;
+    is_grosir?: boolean;
     margin: number | null;
     stok: number;
 }
@@ -46,6 +49,7 @@ export function StoreProductEditDialog({
             harga_grosir: null,
             min_qty_grosir: null,
             harga_grosir_total: null,
+            is_grosir: false,
             margin: null,
             stok: 0,
         },
@@ -61,12 +65,15 @@ export function StoreProductEditDialog({
             const hGrosir = rawHGrosir !== null && rawHGrosir !== undefined ? Number(rawHGrosir) : null;
             const minQty = rawMinQty !== null && rawMinQty !== undefined ? Number(rawMinQty) : null;
             const hGrosirTotal = (hGrosir && minQty) ? Math.round(hGrosir * minQty) : null;
+            const isGrosirFlag = product.is_grosir ?? activeStore?.is_grosir ?? (hGrosir !== null && minQty !== null);
+
             reset({
                 harga_jual: product.harga ?? activeStore?.harga_jual ?? null,
                 harga_beli: product.harga_beli ?? activeStore?.harga_beli ?? null,
                 harga_grosir: hGrosir,
                 min_qty_grosir: minQty,
                 harga_grosir_total: hGrosirTotal,
+                is_grosir: Boolean(isGrosirFlag),
                 margin: product.margin ?? activeStore?.margin ?? null,
                 stok: product.stok ?? activeStore?.stok ?? 0,
             });
@@ -77,6 +84,7 @@ export function StoreProductEditDialog({
     const watchHargaBeli = useWatch({ control, name: "harga_beli" });
     const watchHargaJual = useWatch({ control, name: "harga_jual" });
     const watchMargin = useWatch({ control, name: "margin" });
+    const watchIsGrosir = useWatch({ control, name: "is_grosir" });
     const watchHargaGrosir = useWatch({ control, name: "harga_grosir" });
     const watchMinQtyGrosir = useWatch({ control, name: "min_qty_grosir" });
     const watchHargaGrosirTotal = useWatch({ control, name: "harga_grosir_total" });
@@ -88,9 +96,7 @@ export function StoreProductEditDialog({
             const hJual = Number(watchHargaJual) || 0;
             if (hBeli > 0) {
                 const calculatedMargin = ((hJual - hBeli) / hBeli) * 100;
-                setValue("margin", parseFloat(calculatedMargin.toFixed(2)));
-            } else {
-                setValue("margin", 0);
+                setValue("margin", Math.round(calculatedMargin * 100) / 100);
             }
         }
     }, [watchHargaBeli, watchHargaJual, setValue]);
@@ -99,22 +105,23 @@ export function StoreProductEditDialog({
         const activeId = document.activeElement?.id;
         if (activeId === "margin") {
             const hBeli = Number(watchHargaBeli) || 0;
-            const mrg = Number(watchMargin) || 0;
-            const calculatedHarga = hBeli * (1 + mrg / 100);
-            setValue("harga_jual", Math.round(calculatedHarga));
+            const mVal = Number(watchMargin) || 0;
+            if (hBeli > 0) {
+                const calculatedJual = hBeli + (hBeli * (mVal / 100));
+                setValue("harga_jual", Math.round(calculatedJual));
+            }
         }
     }, [watchMargin, watchHargaBeli, setValue]);
 
-    // Bi-directional calculation for wholesale price per unit <-> wholesale total
+    // Auto calculate unit wholesale price & total wholesale price
     useEffect(() => {
         const activeId = document.activeElement?.id;
-        const minQty = Number(watchMinQtyGrosir) || 0;
-
         if (activeId === "harga_grosir" || activeId === "min_qty_grosir") {
             const unitPrice = Number(watchHargaGrosir) || 0;
-            if (minQty > 0 && unitPrice > 0) {
+            const minQty = Number(watchMinQtyGrosir) || 0;
+            if (unitPrice > 0 && minQty > 0) {
                 setValue("harga_grosir_total", Math.round(unitPrice * minQty));
-            } else if (!watchHargaGrosir) {
+            } else {
                 setValue("harga_grosir_total", null);
             }
         }
@@ -122,13 +129,12 @@ export function StoreProductEditDialog({
 
     useEffect(() => {
         const activeId = document.activeElement?.id;
-        const minQty = Number(watchMinQtyGrosir) || 0;
-
         if (activeId === "harga_grosir_total") {
             const totalPrice = Number(watchHargaGrosirTotal) || 0;
-            if (minQty > 0 && totalPrice > 0) {
+            const minQty = Number(watchMinQtyGrosir) || 0;
+            if (totalPrice > 0 && minQty > 0) {
                 setValue("harga_grosir", Math.round(totalPrice / minQty));
-            } else if (!watchHargaGrosirTotal) {
+            } else {
                 setValue("harga_grosir", null);
             }
         }
@@ -141,14 +147,17 @@ export function StoreProductEditDialog({
             return;
         }
 
+        const isGrosir = Boolean(data.is_grosir);
+
         updateProductStore.mutate(
             {
                 productUid: product.uid,
                 storeUid: activeStoreUid,
                 harga_jual: data.harga_jual ?? undefined,
                 harga_beli: data.harga_beli ?? undefined,
-                harga_grosir: data.harga_grosir ?? undefined,
-                min_qty_grosir: data.min_qty_grosir ?? undefined,
+                harga_grosir: isGrosir ? (data.harga_grosir ?? undefined) : undefined,
+                min_qty_grosir: isGrosir ? (data.min_qty_grosir ?? undefined) : undefined,
+                is_grosir: isGrosir,
                 margin: data.margin ?? undefined,
             },
             {
@@ -163,7 +172,7 @@ export function StoreProductEditDialog({
         );
     };
 
-    const imageUrl = getImageUrl(product?.image_path);
+    const imageUrl = getImageUrl(product?.image_url || product?.image_path);
     const profitPerUnit = (Number(watchHargaJual) || 0) - (Number(watchHargaBeli) || 0);
 
     return (
@@ -181,138 +190,152 @@ export function StoreProductEditDialog({
                     </div>
                 </div>
             }
-            className="sm:max-w-lg"
+            className="sm:max-w-4xl"
         >
             <FormProvider {...methods}>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                    {/* Read-only Product Detail Summary Card */}
-                    {product && (
-                        <div className="bg-slate-50/80 border border-slate-200/80 rounded-2xl p-4 space-y-3">
-                            <div className="flex items-start gap-3.5">
-                                {imageUrl ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img
-                                        src={imageUrl}
-                                        alt={product.nama}
-                                        className="w-14 h-14 object-cover rounded-2xl border border-slate-200 shrink-0 shadow-xs"
-                                    />
-                                ) : (
-                                    <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 shrink-0 shadow-xs">
-                                        <IconPackage size={26} />
-                                    </div>
-                                )}
-                                <div className="flex-1 min-w-0 space-y-1">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <span className="font-bold text-sm text-slate-900 leading-tight truncate">
-                                            {product.nama}
-                                        </span>
-                                        {product.is_jasa ? (
-                                            <Badge className="text-[9px] px-2 py-0.5 bg-blue-50 text-blue-700 border-blue-100 font-bold">
-                                                Jasa
-                                            </Badge>
-                                        ) : product.stok > 10 ? (
-                                            <Badge className="text-[9px] px-2 py-0.5 bg-emerald-50 text-emerald-700 border-emerald-200 font-bold">
-                                                Stok: {product.stok} Pcs
-                                            </Badge>
-                                        ) : product.stok > 0 ? (
-                                            <Badge className="text-[9px] px-2 py-0.5 bg-amber-50 text-amber-700 border-amber-200 font-bold">
-                                                Stok Menipis: {product.stok} Pcs
-                                            </Badge>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                    {/* 2-Column Grid Layout */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Column 1: Product Summary & Profit Preview */}
+                        <div className="space-y-3 flex flex-col justify-between">
+                            {product && (
+                                <div className="bg-slate-50/80 border border-slate-200/80 rounded-xl p-3 space-y-2.5">
+                                    <div className="flex items-start gap-3">
+                                        {imageUrl ? (
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img
+                                                src={imageUrl}
+                                                alt={product.nama}
+                                                className="w-12 h-12 object-cover rounded-xl border border-slate-200 shrink-0 shadow-xs"
+                                            />
                                         ) : (
-                                            <Badge className="text-[9px] px-2 py-0.5 bg-rose-50 text-rose-700 border-rose-200 font-bold">
-                                                Stok Habis: 0 Pcs
-                                            </Badge>
+                                            <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 shrink-0 shadow-xs">
+                                                <IconPackage size={22} />
+                                            </div>
                                         )}
+                                        <div className="flex-1 min-w-0 space-y-1">
+                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                <span className="font-bold text-xs text-slate-900 leading-tight truncate">
+                                                    {product.nama}
+                                                </span>
+                                                {product.is_jasa ? (
+                                                    <Badge className="text-[9px] px-1.5 py-0 bg-blue-50 text-blue-700 border-blue-100 font-bold">
+                                                        Jasa
+                                                    </Badge>
+                                                ) : product.stok > 10 ? (
+                                                    <Badge className="text-[9px] px-1.5 py-0 bg-emerald-50 text-emerald-700 border-emerald-200 font-bold">
+                                                        Stok: {product.stok} Pcs
+                                                    </Badge>
+                                                ) : product.stok > 0 ? (
+                                                    <Badge className="text-[9px] px-1.5 py-0 bg-amber-50 text-amber-700 border-amber-200 font-bold">
+                                                        Stok: {product.stok} Pcs
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge className="text-[9px] px-1.5 py-0 bg-rose-50 text-rose-700 border-rose-200 font-bold">
+                                                        Stok: 0 Pcs
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-2 flex-wrap text-[11px] text-slate-500">
+                                                {product.barcode && (
+                                                    <span className="font-mono bg-white border border-slate-200 px-1.5 py-0.5 rounded text-[10px] font-semibold text-slate-700">
+                                                        {product.barcode}
+                                                    </span>
+                                                )}
+                                                {product.category && (
+                                                    <span>Kat: <strong className="text-slate-700">{product.category.nama}</strong></span>
+                                                )}
+                                                {product.brand && (
+                                                    <span>Brand: <strong className="text-slate-700">{product.brand.nama}</strong></span>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-3 flex-wrap text-xs text-slate-500">
-                                        {product.barcode && (
-                                            <span className="font-mono bg-white border border-slate-200 px-2 py-0.5 rounded-md text-[11px] font-semibold text-slate-700">
-                                                {product.barcode}
-                                            </span>
-                                        )}
-                                        {product.category && (
-                                            <span>Kategori: <strong className="text-slate-700">{product.category.nama}</strong></span>
-                                        )}
-                                        {product.brand && (
-                                            <span>Brand: <strong className="text-slate-700">{product.brand.nama}</strong></span>
-                                        )}
+
+                                    {/* Info Banner on Stock Management */}
+                                    <div className="p-2 bg-white border border-slate-200/70 rounded-lg text-[10px] text-slate-500 flex items-start gap-1.5">
+                                        <IconInfoCircle size={14} className="text-slate-400 shrink-0 mt-0.5" />
+                                        <span>Stok fisik diubah via <strong>Penerimaan / Opname Stok</strong>.</span>
                                     </div>
                                 </div>
-                            </div>
+                            )}
 
-                            {/* Info Banner on Stock Management */}
-                            <div className="p-2.5 bg-white border border-slate-200/70 rounded-xl text-[11px] text-slate-500 flex items-center gap-2">
-                                <IconInfoCircle size={16} className="text-slate-400 shrink-0" />
-                                <span>Stok produk fisik tidak dapat diubah di sini. Gunakan fitur <strong>Penerimaan / Opname Stok</strong>.</span>
+                            {/* Interactive Profit Live Preview */}
+                            <div className="p-3 bg-emerald-50/70 border border-emerald-200/70 rounded-xl space-y-1 text-xs">
+                                <div className="flex items-center gap-1.5 text-emerald-800 font-semibold text-[11px]">
+                                    <IconTrendingUp size={14} className="text-emerald-600 shrink-0" />
+                                    <span>Estimasi Keuntungan Bersih:</span>
+                                </div>
+                                <div className="flex items-baseline justify-between pt-0.5">
+                                    <span className="font-extrabold text-emerald-900 text-base">
+                                        {formatRupiah(profitPerUnit > 0 ? profitPerUnit : 0)}
+                                    </span>
+                                    <span className="text-[10px] text-emerald-700 font-bold bg-emerald-100/80 px-1.5 py-0.5 rounded-md">
+                                        / unit ({watchMargin || 0}%)
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                    )}
 
-                    {/* Financial Inputs */}
-                    <div className="space-y-3">
-                        <div className="grid grid-cols-3 gap-3">
-                            <FormNominalInput<StoreProductEditFormValues>
-                                name="harga_beli"
-                                label="Harga Beli (Rp)"
-                                placeholder="Contoh: 8.000"
-                                disabled={updateProductStore.isPending}
-                            />
-                            <FormNominalInput<StoreProductEditFormValues>
-                                name="harga_jual"
-                                label="Harga Jual (Rp)"
-                                placeholder="Contoh: 10.000"
-                                disabled={updateProductStore.isPending}
-                            />
-                            <FormNumberInput<StoreProductEditFormValues>
-                                name="margin"
-                                label="Margin (%)"
-                                placeholder="Contoh: 20"
-                                disabled={updateProductStore.isPending}
-                            />
-                        </div>
-
-                        {/* Fitur Grosir */}
-                        <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-2.5">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-slate-800">Harga Grosir Toko (Opsional)</span>
-                                <span className="text-[10px] text-slate-400 font-medium">Auto-sync unit &amp; akumulasi</span>
-                            </div>
-                            <div className="grid grid-cols-3 gap-2.5">
+                        {/* Column 2: Financial & Wholesale Inputs */}
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-3 gap-2">
+                                <FormNominalInput<StoreProductEditFormValues>
+                                    name="harga_beli"
+                                    label="Harga Beli"
+                                    placeholder="8.000"
+                                    disabled={updateProductStore.isPending}
+                                />
+                                <FormNominalInput<StoreProductEditFormValues>
+                                    name="harga_jual"
+                                    label="Harga Jual"
+                                    placeholder="10.000"
+                                    disabled={updateProductStore.isPending}
+                                />
                                 <FormNumberInput<StoreProductEditFormValues>
-                                    name="min_qty_grosir"
-                                    label="Min Qty Grosir"
-                                    placeholder="Contoh: 12"
-                                    disabled={updateProductStore.isPending}
-                                />
-                                <FormNominalInput<StoreProductEditFormValues>
-                                    name="harga_grosir"
-                                    label="Harga Unit Grosir"
-                                    placeholder="Contoh: 4.800"
-                                    disabled={updateProductStore.isPending}
-                                />
-                                <FormNominalInput<StoreProductEditFormValues>
-                                    name="harga_grosir_total"
-                                    label="Total Akumulasi"
-                                    placeholder="Contoh: 57.600"
+                                    name="margin"
+                                    label="Margin (%)"
+                                    placeholder="20"
                                     disabled={updateProductStore.isPending}
                                 />
                             </div>
-                        </div>
 
-                        {/* Interactive Profit Live Preview */}
-                        <div className="p-3 bg-emerald-50/70 border border-emerald-200/70 rounded-2xl flex items-center justify-between text-xs">
-                            <div className="flex items-center gap-2 text-emerald-800 font-semibold">
-                                <IconTrendingUp size={16} className="text-emerald-600 shrink-0" />
-                                <span>Estimasi Keuntungan Bersih:</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="font-extrabold text-emerald-900 text-sm">
-                                    {formatRupiah(profitPerUnit > 0 ? profitPerUnit : 0)}
-                                </span>
-                                <span className="text-[11px] text-emerald-700 font-bold bg-emerald-100/80 px-1.5 py-0.5 rounded-md">
-                                    / unit ({watchMargin || 0}%)
-                                </span>
-                            </div>
+                            {/* Fitur Grosir */}
+                            <FormSwitch<StoreProductEditFormValues>
+                                name="is_grosir"
+                                label="Harga Grosir Toko"
+                                description="Aktifkan penentuan harga grosir khusus untuk toko ini."
+                                disabled={updateProductStore.isPending}
+                            />
+
+                            <Show.When isTrue={Boolean(watchIsGrosir)}>
+                                <div className="p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl space-y-2 animate-in fade-in-50 duration-200">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[11px] font-bold text-slate-800">Konfigurasi Grosir</span>
+                                        <span className="text-[9px] text-slate-400 font-medium">Auto-sync unit &amp; total</span>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <FormNumberInput<StoreProductEditFormValues>
+                                            name="min_qty_grosir"
+                                            label="Min Qty"
+                                            placeholder="12"
+                                            disabled={updateProductStore.isPending}
+                                        />
+                                        <FormNominalInput<StoreProductEditFormValues>
+                                            name="harga_grosir"
+                                            label="Harga Unit"
+                                            placeholder="4.800"
+                                            disabled={updateProductStore.isPending}
+                                        />
+                                        <FormNominalInput<StoreProductEditFormValues>
+                                            name="harga_grosir_total"
+                                            label="Total Akumulasi"
+                                            placeholder="57.600"
+                                            disabled={updateProductStore.isPending}
+                                        />
+                                    </div>
+                                </div>
+                            </Show.When>
                         </div>
                     </div>
 

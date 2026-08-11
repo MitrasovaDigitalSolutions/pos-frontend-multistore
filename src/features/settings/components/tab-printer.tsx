@@ -3,7 +3,7 @@
 import { type StoreSettingsInput } from "../schemas/settings-schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { IconPrinter } from "@tabler/icons-react";
-import { Loader2, RefreshCw, CheckCircle2, AlertCircle, Info } from "lucide-react";
+import { Loader2, RefreshCw, CheckCircle2, AlertCircle, Info, Download, ExternalLink } from "lucide-react";
 import { FormSelect } from "@/components/forms/form-select";
 import { Scrollable } from "@/components/ui/scrollable";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
@@ -152,23 +152,49 @@ export function TabPrinter({
 
                             {/* Right Side: Step-by-step Instructions */}
                             <div className="md:col-span-5 space-y-4">
-                                <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50 space-y-3">
-                                    <div className="flex items-center gap-2 text-slate-700 dark:text-slate-400 font-bold text-xs uppercase tracking-wider">
-                                        <Info size={13} />
+                                <div className="border border-slate-100 dark:border-slate-800 rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50 space-y-3.5">
+                                    <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-bold text-xs uppercase tracking-wider">
+                                        <Info size={13} className="text-slate-500" />
                                         Petunjuk Koneksi Printer
                                     </div>
-                                    <ol className="text-xs text-slate-500 space-y-2 list-decimal list-inside pl-1 leading-relaxed">
+
+                                    {/* Download Banner Card */}
+                                    <a
+                                        href="https://drive.google.com/drive/folders/1ily8yGout-jtxjvjI3iiCwZoutqR0kKM?usp=drive_link"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-between gap-3 p-3 rounded-xl bg-emerald-50/80 hover:bg-emerald-100/70 border border-emerald-200/80 text-emerald-800 transition-all shadow-sm group text-xs font-bold no-underline"
+                                    >
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform">
+                                                <Download size={14} />
+                                            </div>
+                                            <div className="flex flex-col min-w-0">
+                                                <span className="truncate text-slate-800 font-extrabold text-[11px]">Unduh Driver & Print Service</span>
+                                                <span className="text-[10px] text-emerald-700 font-medium">Buka folder Google Drive</span>
+                                            </div>
+                                        </div>
+                                        <ExternalLink size={14} className="shrink-0 text-emerald-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                                    </a>
+
+                                    <ol className="text-xs text-slate-600 dark:text-slate-400 space-y-2 list-decimal list-inside pl-0.5 leading-relaxed font-normal">
                                         <li>
-                                            Pastikan printer  struk Anda sudah dinyalakan dan terhubung ke komputer via USB/Network.
+                                            Unduh <strong>Driver Printer</strong> dan aplikasi <strong>Print Service</strong> melalui tombol di atas.
                                         </li>
                                         <li>
-                                            Instal dan jalankan aplikasi pendukung <strong>QZ Tray</strong> di komputer kasir.
+                                            Install <strong>Driver Printer</strong> di komputer kasir terlebih dahulu.
                                         </li>
                                         <li>
-                                            Klik tombol <strong>Pindai Ulang</strong> untuk memicu pendeteksian nama printer.
+                                            Setelah driver ter-install, jalankan aplikasi <strong>Print Service</strong>.
                                         </li>
                                         <li>
-                                            Pilih nama printer Anda dari menu dropdown dan klik <strong>Simpan Pengaturan</strong> di bawah.
+                                            Pastikan printer thermal menyala dan terhubung ke komputer via USB/Network.
+                                        </li>
+                                        <li>
+                                            Klik tombol <strong>Pindai Ulang</strong> di samping kiri untuk memicu pendeteksian printer.
+                                        </li>
+                                        <li>
+                                            Pilih nama printer Anda dari dropdown dan klik <strong>Simpan Pengaturan</strong>.
                                         </li>
                                     </ol>
                                 </div>

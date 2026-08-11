@@ -9,6 +9,9 @@ import { Input } from "@/components/ui/input";
 import { useStores } from "@/features/stores/api/stores-api";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { useActiveStoreStore } from "@/stores/active-store-store";
+import { useSession } from "next-auth/react";
+import { useSettingsStore } from "@/stores/settings-store";
+import { Show } from "@/components/ui/show";
 import {
     IconAlertCircle,
     IconArrowLeft,
@@ -48,8 +51,17 @@ export function CatalogMatchDialog({
     onSelectNewProduct,
 }: CatalogMatchDialogProps) {
     const activeStoreUid = useActiveStoreStore((s) => s.activeStoreUid);
+    const { data: session } = useSession();
     const { data: storesRes } = useStores({ per_page: 1000 });
     const stores = useMemo(() => storesRes?.data ?? [], [storesRes?.data]);
+
+    const branchCanCreateSetting = useSettingsStore((s) => s.getSetting("branch_can_create_product", "true"));
+    const canBranchCreateProduct = branchCanCreateSetting === "true";
+
+    const userStores = session?.user?.stores || [];
+    const activeStore = userStores.find((s) => s.uid === activeStoreUid) || userStores[0];
+    const isCentralStore = activeStore?.is_central ?? false;
+    const canCreateProduct = isCentralStore || canBranchCreateProduct;
 
     const assignMutation = useAssignProductStore();
 
@@ -334,20 +346,22 @@ export function CatalogMatchDialog({
                     </div>
 
                     {/* Direct option to create new product manually */}
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                        <span className="text-[11px] font-semibold text-slate-400">
-                            Tidak ada saran yang sesuai?
-                        </span>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleProceedToCreateManual}
-                            className="h-9 px-3.5 text-xs font-bold text-slate-700 border-slate-200 rounded-xl gap-1.5 hover:bg-slate-100 cursor-pointer"
-                        >
-                            <IconPlus size={15} />
-                            Tambah Produk Baru
-                        </Button>
-                    </div>
+                    <Show.When isTrue={canCreateProduct}>
+                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                            <span className="text-[11px] font-semibold text-slate-400">
+                                Tidak ada saran yang sesuai?
+                            </span>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleProceedToCreateManual}
+                                className="h-9 px-3.5 text-xs font-bold text-slate-700 border-slate-200 rounded-xl gap-1.5 hover:bg-slate-100 cursor-pointer"
+                            >
+                                <IconPlus size={15} />
+                                Tambah Produk Baru
+                            </Button>
+                        </div>
+                    </Show.When>
                 </div>
             ) : (
                 <FormProvider {...assignMethods}>

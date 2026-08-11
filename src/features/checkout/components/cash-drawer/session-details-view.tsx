@@ -28,6 +28,8 @@ import {
 } from "@tabler/icons-react";
 import { Scrollable } from "@/components/ui/scrollable";
 import { formatDate, formatToTime } from "@/lib/date-utils";
+import { useSettingsStore } from "@/stores/settings-store";
+import { Show } from "@/components/ui/show";
 
 interface SessionDetailsViewProps {
     activeSession: CashDrawerSession | undefined;
@@ -48,6 +50,8 @@ export function SessionDetailsView({
     onClose,
     isOnline = true,
 }: SessionDetailsViewProps) {
+    const cashInOutSetting = useSettingsStore((s) => s.getSetting("cash_in_out_enabled", "true"));
+    const isCashInOutEnabled = cashInOutSetting === "true";
     const [activeTab, setActiveTab] = React.useState<'cash' | 'noncash'>('cash');
 
     const nonCashTransactions = React.useMemo(() => {
@@ -243,24 +247,26 @@ export function SessionDetailsView({
 
                     {/* Actions Grid */}
                     <div className="grid grid-cols-2 gap-2 sm:gap-3 pt-0.5 sm:pt-1">
-                        <Button
-                            variant="outline"
-                            onClick={() => onAction("cash_in")}
-                            disabled={!isOnline}
-                            className="h-9 sm:h-10 border-dashed border-emerald-500 hover:bg-emerald-50/50 text-emerald-600 font-extrabold text-[10px] sm:text-[11px] rounded-xl flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer bg-white px-1.5 sm:px-3"
-                        >
-                            <IconArrowDownLeft size={14} className="shrink-0" />
-                            <span className="truncate">Cash In <span className="hidden xs:inline">(Uang Masuk)</span></span>
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={() => onAction("cash_out")}
-                            disabled={!isOnline}
-                            className="h-9 sm:h-10 border-dashed border-rose-500 hover:bg-rose-50/50 text-rose-600 font-extrabold text-[10px] sm:text-[11px] rounded-xl flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer bg-white px-1.5 sm:px-3"
-                        >
-                            <IconArrowUpRight size={14} className="shrink-0" />
-                            <span className="truncate">Cash Out <span className="hidden xs:inline">(Uang Keluar)</span></span>
-                        </Button>
+                        <Show.When isTrue={isCashInOutEnabled}>
+                            <Button
+                                variant="outline"
+                                onClick={() => onAction("cash_in")}
+                                disabled={!isOnline}
+                                className="h-9 sm:h-10 border-dashed border-emerald-500 hover:bg-emerald-50/50 text-emerald-600 font-extrabold text-[10px] sm:text-[11px] rounded-xl flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer bg-white px-1.5 sm:px-3"
+                            >
+                                <IconArrowDownLeft size={14} className="shrink-0" />
+                                <span className="truncate">Cash In <span className="hidden xs:inline">(Uang Masuk)</span></span>
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => onAction("cash_out")}
+                                disabled={!isOnline}
+                                className="h-9 sm:h-10 border-dashed border-rose-500 hover:bg-rose-50/50 text-rose-600 font-extrabold text-[10px] sm:text-[11px] rounded-xl flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer bg-white px-1.5 sm:px-3"
+                            >
+                                <IconArrowUpRight size={14} className="shrink-0" />
+                                <span className="truncate">Cash Out <span className="hidden xs:inline">(Uang Keluar)</span></span>
+                            </Button>
+                        </Show.When>
 
                         <Button
                             onClick={() => onAction("close_shift")}

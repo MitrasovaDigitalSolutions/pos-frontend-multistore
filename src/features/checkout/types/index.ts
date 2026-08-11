@@ -7,6 +7,7 @@ export interface CartItem {
     price: number;
     harga_grosir?: number | null;
     min_qty_grosir?: number | null;
+    is_grosir?: boolean | null;
     qty: number;
     stock: number;
     barcode: string | null;

@@ -14,6 +14,7 @@ import PrinterService, { type PrinterDevice } from "@/services/printer.service";
 import { Card } from "@/components/ui/card";
 import { IconAdjustments, IconPrinter } from "@tabler/icons-react";
 import { Store, Wallet, Settings2, ChevronRight, Boxes } from "lucide-react";
+import { Show } from "@/components/ui/show";
 
 // Subcomponents
 import { TabProfile } from "./tab-profile";
@@ -51,6 +52,8 @@ export function StoreProfile() {
             cash_account_bank_uid: "",
             printer_id: "",
             hpp_adjustment_method: "latest",
+            cash_in_out_enabled: "true",
+            branch_can_create_product: "true",
         },
     });
 
@@ -74,17 +77,17 @@ export function StoreProfile() {
         },
         {
             id: "inventory",
-            label: "Inventori & HPP",
-            description: "Kalkulasi HPP & persediaan",
+            label: "Inventori & Produk",
+            description: "Kalkulasi HPP & izin produk cabang",
             icon: Boxes,
-            fields: ["hpp_adjustment_method"] as const,
+            fields: ["hpp_adjustment_method", "branch_can_create_product"] as const,
         },
         {
             id: "cash",
-            label: "Pemetaan Kas",
-            description: "Akun kas operasional",
+            label: "Kas & Operasional Kasir",
+            description: "Pemetaan kas & fitur laci kasir",
             icon: Wallet,
-            fields: ["cash_account_register_uid", "cash_account_main_uid", "cash_account_bank_uid"] as const,
+            fields: ["cash_account_register_uid", "cash_account_main_uid", "cash_account_bank_uid", "cash_in_out_enabled"] as const,
         },
         {
             id: "printer",
@@ -123,6 +126,12 @@ export function StoreProfile() {
                 cash_account_bank_uid: settings.cash_account_bank_uid || "",
                 printer_id: settings.printer_id || "",
                 hpp_adjustment_method: (settings.hpp_adjustment_method as "latest" | "average") || "latest",
+                cash_in_out_enabled: settings.cash_in_out_enabled === undefined || settings.cash_in_out_enabled === null
+                    ? "true"
+                    : settings.cash_in_out_enabled,
+                branch_can_create_product: settings.branch_can_create_product === undefined || settings.branch_can_create_product === null
+                    ? "true"
+                    : settings.branch_can_create_product,
             });
         }
     }, [settings, methods]);
@@ -399,35 +408,45 @@ export function StoreProfile() {
                     {/* Content - Right Column */}
                     <div className="lg:col-span-8 xl:col-span-8.5 space-y-6">
                         {/* Tab 1: Profil Toko */}
-                        <div className={activeTab === "profile" ? "block animate-fade-in" : "hidden"}>
-                            <TabProfile isSaving={isSaving} initialLogoUrl={getImageUrl(settings.app_logo_url)} />
-                        </div>
+                        <Show.When isTrue={activeTab === "profile"}>
+                            <div className="animate-fade-in">
+                                <TabProfile isSaving={isSaving} initialLogoUrl={getImageUrl(settings.app_logo_url)} />
+                            </div>
+                        </Show.When>
 
                         {/* Tab 2: Keuangan & Pajak */}
-                        <div className={activeTab === "finance" ? "block animate-fade-in" : "hidden"}>
-                            <TabFinance isSaving={isSaving} />
-                        </div>
+                        <Show.When isTrue={activeTab === "finance"}>
+                            <div className="animate-fade-in">
+                                <TabFinance isSaving={isSaving} />
+                            </div>
+                        </Show.When>
 
                         {/* Tab 3: Inventori & HPP */}
-                        <div className={activeTab === "inventory" ? "block animate-fade-in" : "hidden"}>
-                            <TabInventory isSaving={isSaving} />
-                        </div>
+                        <Show.When isTrue={activeTab === "inventory"}>
+                            <div className="animate-fade-in">
+                                <TabInventory isSaving={isSaving} />
+                            </div>
+                        </Show.When>
 
-                        {/* Tab 3: Pemetaan Kas Default */}
-                        <div className={activeTab === "cash" ? "block animate-fade-in" : "hidden"}>
-                            <TabCash isSaving={isSaving} cashAccountOptions={cashAccountOptions} />
-                        </div>
+                        {/* Tab 4: Pemetaan Kas Default */}
+                        <Show.When isTrue={activeTab === "cash"}>
+                            <div className="animate-fade-in">
+                                <TabCash isSaving={isSaving} cashAccountOptions={cashAccountOptions} />
+                            </div>
+                        </Show.When>
 
-                        {/* Tab 4: Perangkat Printer */}
-                        <div className={activeTab === "printer" ? "block animate-fade-in" : "hidden"}>
-                            <TabPrinter
-                                isSaving={isSaving}
-                                printerOptions={printerOptions}
-                                isLoadingPrinters={isLoadingPrinters}
-                                loadPrinters={loadPrinters}
-                                qzError={qzError}
-                            />
-                        </div>
+                        {/* Tab 5: Perangkat Printer */}
+                        <Show.When isTrue={activeTab === "printer"}>
+                            <div className="animate-fade-in">
+                                <TabPrinter
+                                    isSaving={isSaving}
+                                    printerOptions={printerOptions}
+                                    isLoadingPrinters={isLoadingPrinters}
+                                    loadPrinters={loadPrinters}
+                                    qzError={qzError}
+                                />
+                            </div>
+                        </Show.When>
 
                         {/* Sticky Floating Action Bar */}
                         <FloatingSaveBar isSaving={isSaving} />
