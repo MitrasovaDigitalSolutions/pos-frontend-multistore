@@ -223,6 +223,7 @@ export function useCheckoutState() {
             const rawMinQty = product.min_qty_grosir ?? storeProduct?.min_qty_grosir ?? null;
             const hGrosir = rawHGrosir !== null && rawHGrosir !== undefined ? Number(rawHGrosir) : null;
             const minQty = rawMinQty !== null && rawMinQty !== undefined ? Number(rawMinQty) : null;
+            const isGrosir = product.is_grosir ?? storeProduct?.is_grosir ?? (hGrosir !== null && minQty !== null);
 
             addItem({
                 product_uid: product.uid,
@@ -230,6 +231,7 @@ export function useCheckoutState() {
                 price: product.harga,
                 harga_grosir: hGrosir,
                 min_qty_grosir: minQty,
+                is_grosir: isGrosir,
                 qty: 1,
                 stock: product.stok,
                 barcode: product.barcode || null,

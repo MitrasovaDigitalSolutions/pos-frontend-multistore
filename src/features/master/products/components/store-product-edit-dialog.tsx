@@ -2,6 +2,8 @@
 
 import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { FormNumberInput } from "@/components/forms/form-number-input";
+import { FormSwitch } from "@/components/forms/form-switch";
+import { Show } from "@/components/ui/show";
 import { Badge } from "@/components/ui/badge";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
@@ -27,6 +29,7 @@ interface StoreProductEditFormValues {
     harga_grosir: number | null;
     min_qty_grosir: number | null;
     harga_grosir_total: number | null;
+    is_grosir?: boolean;
     margin: number | null;
     stok: number;
 }
@@ -46,6 +49,7 @@ export function StoreProductEditDialog({
             harga_grosir: null,
             min_qty_grosir: null,
             harga_grosir_total: null,
+            is_grosir: false,
             margin: null,
             stok: 0,
         },
@@ -61,12 +65,15 @@ export function StoreProductEditDialog({
             const hGrosir = rawHGrosir !== null && rawHGrosir !== undefined ? Number(rawHGrosir) : null;
             const minQty = rawMinQty !== null && rawMinQty !== undefined ? Number(rawMinQty) : null;
             const hGrosirTotal = (hGrosir && minQty) ? Math.round(hGrosir * minQty) : null;
+            const isGrosirFlag = product.is_grosir ?? activeStore?.is_grosir ?? (hGrosir !== null && minQty !== null);
+
             reset({
                 harga_jual: product.harga ?? activeStore?.harga_jual ?? null,
                 harga_beli: product.harga_beli ?? activeStore?.harga_beli ?? null,
                 harga_grosir: hGrosir,
                 min_qty_grosir: minQty,
                 harga_grosir_total: hGrosirTotal,
+                is_grosir: Boolean(isGrosirFlag),
                 margin: product.margin ?? activeStore?.margin ?? null,
                 stok: product.stok ?? activeStore?.stok ?? 0,
             });
@@ -77,6 +84,7 @@ export function StoreProductEditDialog({
     const watchHargaBeli = useWatch({ control, name: "harga_beli" });
     const watchHargaJual = useWatch({ control, name: "harga_jual" });
     const watchMargin = useWatch({ control, name: "margin" });
+    const watchIsGrosir = useWatch({ control, name: "is_grosir" });
     const watchHargaGrosir = useWatch({ control, name: "harga_grosir" });
     const watchMinQtyGrosir = useWatch({ control, name: "min_qty_grosir" });
     const watchHargaGrosirTotal = useWatch({ control, name: "harga_grosir_total" });
@@ -88,9 +96,7 @@ export function StoreProductEditDialog({
             const hJual = Number(watchHargaJual) || 0;
             if (hBeli > 0) {
                 const calculatedMargin = ((hJual - hBeli) / hBeli) * 100;
-                setValue("margin", parseFloat(calculatedMargin.toFixed(2)));
-            } else {
-                setValue("margin", 0);
+                setValue("margin", Math.round(calculatedMargin * 100) / 100);
             }
         }
     }, [watchHargaBeli, watchHargaJual, setValue]);
@@ -99,22 +105,23 @@ export function StoreProductEditDialog({
         const activeId = document.activeElement?.id;
         if (activeId === "margin") {
             const hBeli = Number(watchHargaBeli) || 0;
-            const mrg = Number(watchMargin) || 0;
-            const calculatedHarga = hBeli * (1 + mrg / 100);
-            setValue("harga_jual", Math.round(calculatedHarga));
+            const mVal = Number(watchMargin) || 0;
+            if (hBeli > 0) {
+                const calculatedJual = hBeli + (hBeli * (mVal / 100));
+                setValue("harga_jual", Math.round(calculatedJual));
+            }
         }
     }, [watchMargin, watchHargaBeli, setValue]);
 
-    // Bi-directional calculation for wholesale price per unit <-> wholesale total
+    // Auto calculate unit wholesale price & total wholesale price
     useEffect(() => {
         const activeId = document.activeElement?.id;
-        const minQty = Number(watchMinQtyGrosir) || 0;
-
         if (activeId === "harga_grosir" || activeId === "min_qty_grosir") {
             const unitPrice = Number(watchHargaGrosir) || 0;
-            if (minQty > 0 && unitPrice > 0) {
+            const minQty = Number(watchMinQtyGrosir) || 0;
+            if (unitPrice > 0 && minQty > 0) {
                 setValue("harga_grosir_total", Math.round(unitPrice * minQty));
-            } else if (!watchHargaGrosir) {
+            } else {
                 setValue("harga_grosir_total", null);
             }
         }
@@ -122,13 +129,12 @@ export function StoreProductEditDialog({
 
     useEffect(() => {
         const activeId = document.activeElement?.id;
-        const minQty = Number(watchMinQtyGrosir) || 0;
-
         if (activeId === "harga_grosir_total") {
             const totalPrice = Number(watchHargaGrosirTotal) || 0;
-            if (minQty > 0 && totalPrice > 0) {
+            const minQty = Number(watchMinQtyGrosir) || 0;
+            if (totalPrice > 0 && minQty > 0) {
                 setValue("harga_grosir", Math.round(totalPrice / minQty));
-            } else if (!watchHargaGrosirTotal) {
+            } else {
                 setValue("harga_grosir", null);
             }
         }
@@ -141,9 +147,7 @@ export function StoreProductEditDialog({
             return;
         }
 
-        const isGrosir = Boolean(
-            data.harga_grosir && data.min_qty_grosir && data.harga_grosir > 0 && data.min_qty_grosir > 0
-        );
+        const isGrosir = Boolean(data.is_grosir);
 
         updateProductStore.mutate(
             {
@@ -151,8 +155,8 @@ export function StoreProductEditDialog({
                 storeUid: activeStoreUid,
                 harga_jual: data.harga_jual ?? undefined,
                 harga_beli: data.harga_beli ?? undefined,
-                harga_grosir: data.harga_grosir ?? undefined,
-                min_qty_grosir: data.min_qty_grosir ?? undefined,
+                harga_grosir: isGrosir ? (data.harga_grosir ?? undefined) : undefined,
+                min_qty_grosir: isGrosir ? (data.min_qty_grosir ?? undefined) : undefined,
                 is_grosir: isGrosir,
                 margin: data.margin ?? undefined,
             },
@@ -297,32 +301,41 @@ export function StoreProductEditDialog({
                             </div>
 
                             {/* Fitur Grosir */}
-                            <div className="p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[11px] font-bold text-slate-800">Harga Grosir Toko (Opsional)</span>
-                                    <span className="text-[9px] text-slate-400 font-medium">Auto-sync unit &amp; total</span>
+                            <FormSwitch<StoreProductEditFormValues>
+                                name="is_grosir"
+                                label="Harga Grosir Toko"
+                                description="Aktifkan penentuan harga grosir khusus untuk toko ini."
+                                disabled={updateProductStore.isPending}
+                            />
+
+                            <Show.When isTrue={Boolean(watchIsGrosir)}>
+                                <div className="p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl space-y-2 animate-in fade-in-50 duration-200">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[11px] font-bold text-slate-800">Konfigurasi Grosir</span>
+                                        <span className="text-[9px] text-slate-400 font-medium">Auto-sync unit &amp; total</span>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <FormNumberInput<StoreProductEditFormValues>
+                                            name="min_qty_grosir"
+                                            label="Min Qty"
+                                            placeholder="12"
+                                            disabled={updateProductStore.isPending}
+                                        />
+                                        <FormNominalInput<StoreProductEditFormValues>
+                                            name="harga_grosir"
+                                            label="Harga Unit"
+                                            placeholder="4.800"
+                                            disabled={updateProductStore.isPending}
+                                        />
+                                        <FormNominalInput<StoreProductEditFormValues>
+                                            name="harga_grosir_total"
+                                            label="Total Akumulasi"
+                                            placeholder="57.600"
+                                            disabled={updateProductStore.isPending}
+                                        />
+                                    </div>
                                 </div>
-                                <div className="grid grid-cols-3 gap-2">
-                                    <FormNumberInput<StoreProductEditFormValues>
-                                        name="min_qty_grosir"
-                                        label="Min Qty"
-                                        placeholder="12"
-                                        disabled={updateProductStore.isPending}
-                                    />
-                                    <FormNominalInput<StoreProductEditFormValues>
-                                        name="harga_grosir"
-                                        label="Harga Unit"
-                                        placeholder="4.800"
-                                        disabled={updateProductStore.isPending}
-                                    />
-                                    <FormNominalInput<StoreProductEditFormValues>
-                                        name="harga_grosir_total"
-                                        label="Total Akumulasi"
-                                        placeholder="57.600"
-                                        disabled={updateProductStore.isPending}
-                                    />
-                                </div>
-                            </div>
+                            </Show.When>
                         </div>
                     </div>
 

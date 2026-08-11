@@ -19,6 +19,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
+import { Show } from "@/components/ui/show";
 import { useCreateProduct, useUpdateProduct } from "../api/products-api";
 import { type ProductInput } from "../schemas/product-schema";
 import type { Product } from "../types";
@@ -97,6 +98,7 @@ export function ProductFormDialog({
     const harga = useWatch({ control, name: "harga" });
     const margin = useWatch({ control, name: "margin" });
     const isJasa = useWatch({ control, name: "is_jasa" });
+    const isGrosir = useWatch({ control, name: "is_grosir" });
     const hargaGrosir = useWatch({ control, name: "harga_grosir" });
     const minQtyGrosir = useWatch({ control, name: "min_qty_grosir" });
     const hargaGrosirTotal = useWatch({ control, name: "harga_grosir_total" });
@@ -405,37 +407,46 @@ export function ProductFormDialog({
                     </div>
 
                     {/* Fitur Grosir */}
-                    <div className="p-3.5 bg-emerald-50/50 border border-emerald-200/60 rounded-2xl space-y-3">
-                        <div className="flex items-center justify-between">
-                            <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                                Harga Grosir (Opsional)
-                            </label>
-                            <span className="text-[10px] text-slate-400 font-medium">
-                                Otomatis sinkron harga unit &amp; total akumulasi
-                            </span>
+                    <FormSwitch<ProductInput>
+                        name="is_grosir"
+                        label="Harga Grosir / Kuantitas Bertingkat"
+                        description="Aktifkan jika produk ini memiliki penentuan harga grosir khusus untuk pembelian jumlah banyak."
+                        disabled={isPending}
+                    />
+
+                    <Show.When isTrue={Boolean(isGrosir)}>
+                        <div className="p-3.5 bg-emerald-50/50 border border-emerald-200/60 rounded-2xl space-y-3 animate-in fade-in-50 duration-200">
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                    Konfigurasi Harga Grosir
+                                </label>
+                                <span className="text-[10px] text-slate-400 font-medium">
+                                    Otomatis sinkron harga unit &amp; total akumulasi
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-3">
+                                <FormNumberInput<ProductInput>
+                                    name="min_qty_grosir"
+                                    label="Min. Qty Grosir (Pcs)"
+                                    placeholder="Contoh: 12"
+                                    disabled={isPending}
+                                />
+                                <FormNominalInput<ProductInput>
+                                    name="harga_grosir"
+                                    label="Harga Unit Grosir (Rp)"
+                                    placeholder="Contoh: 4.800"
+                                    disabled={isPending}
+                                />
+                                <FormNominalInput<ProductInput>
+                                    name="harga_grosir_total"
+                                    label="Total Akumulasi Grosir (Rp)"
+                                    placeholder="Contoh: 57.600"
+                                    disabled={isPending}
+                                />
+                            </div>
                         </div>
-                        <div className="grid grid-cols-3 gap-3">
-                            <FormNumberInput<ProductInput>
-                                name="min_qty_grosir"
-                                label="Min. Qty Grosir (Pcs)"
-                                placeholder="Contoh: 12"
-                                disabled={isPending}
-                            />
-                            <FormNominalInput<ProductInput>
-                                name="harga_grosir"
-                                label="Harga Unit Grosir (Rp)"
-                                placeholder="Contoh: 4.800"
-                                disabled={isPending}
-                            />
-                            <FormNominalInput<ProductInput>
-                                name="harga_grosir_total"
-                                label="Total Akumulasi Grosir (Rp)"
-                                placeholder="Contoh: 57.600"
-                                disabled={isPending}
-                            />
-                        </div>
-                    </div>
+                    </Show.When>
 
                     {/* Submit Button */}
                     <div className="pt-2">
