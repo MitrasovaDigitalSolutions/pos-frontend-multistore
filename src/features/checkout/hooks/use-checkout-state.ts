@@ -13,8 +13,6 @@ import { toast } from "sonner";
 import { db } from "@/lib/db";
 import { useNetworkStatus } from "@/hooks/use-network-status";
 import axios from "axios";
-import { buildReceipt } from "@/utils/ReceiptFormatter";
-import QZService from "@/services/qz.service";
 import PrinterService from "@/services/printer.service";
 import { formatDate } from "@/lib/date-utils";
 
@@ -390,7 +388,7 @@ export function useCheckoutState() {
             await PrinterService.print(printerName,receiptText)
         } catch (err) {
             console.error("Gagal mencetak struk:", err);
-            toast.error("Gagal mencetak struk. Pastikan QZ Tray aktif.");
+            toast.error("Gagal mencetak struk. Pastikan Print Service aktif.");
         } finally {
             setTimeout(() => {
                 toast.dismiss(toastId);
@@ -457,7 +455,7 @@ export function useCheckoutState() {
 
         } catch (err) {
             console.error("Gagal mencetak struk offline:", err);
-            toast.error("Gagal mencetak struk offline. Pastikan QZ Tray aktif.");
+            toast.error("Gagal mencetak struk offline. Pastikan Print Service aktif.");
         } finally {
             setTimeout(() => {
                 toast.dismiss(toastId);

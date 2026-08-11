@@ -5,13 +5,13 @@ import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
 import { settingsApi } from "@/features/settings/api/settings-api";
 import { cn } from "@/lib/utils";
-import QZService from "@/services/qz.service";
+import PrinterService, { type PrinterDevice } from "@/services/printer.service";
 import { useActiveStoreStore } from "@/stores/active-store-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { IconBuildingStore, IconPrinter, IconSettings } from "@tabler/icons-react";
 import { STORE_BADGE_HQ, STORE_LABEL_HQ, STORE_LABEL_BRANCH } from "@/constants/store";
 import { useQueryClient } from "@tanstack/react-query";
-import { Info, Loader2, RefreshCw, Save } from "lucide-react";
+import { Info, Loader2, RefreshCw, Save, ExternalLink } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
@@ -61,24 +61,24 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
         }
     }, [open, settings, activeStoreUid, reset]);
 
-    // Fetch printers from QZ Tray
+    // Fetch printers from Print Service
     const loadPrinters = async () => {
         setIsLoadingPrinters(true);
         setQzError(null);
         try {
-            const list = await QZService.findAllPrinters();
-            const options = list.map((p) => ({ value: p, label: p }));
+            const list = await PrinterService.findAllPrinters();
+            const options = list.map((p: PrinterDevice) => ({ value: p.name, label: p.name }));
 
             // Ensure currently saved printer_id is in the options list
             const currentPrinter = methods.getValues("printer_id") || settings.printer_id;
-            if (currentPrinter && !list.includes(currentPrinter)) {
+            if (currentPrinter && !list.some((p: PrinterDevice) => p.name === currentPrinter)) {
                 options.push({ value: currentPrinter, label: currentPrinter });
             }
 
             setPrinterOptions(options);
         } catch (err) {
-            console.error("Gagal mendeteksi printer dari QZ Tray:", err);
-            setQzError("Gagal menghubungkan ke QZ Tray. Pastikan aplikasi QZ Tray telah berjalan.");
+            console.error("Gagal mendeteksi printer dari Print Service:", err);
+            setQzError("Gagal menghubungkan ke Print Service. Pastikan aplikasi Print Service telah berjalan.");
 
             const currentPrinter = methods.getValues("printer_id") || settings.printer_id;
             if (currentPrinter) {
@@ -234,7 +234,7 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
                                 <div className="flex items-center justify-between bg-slate-50/50 border border-slate-100 rounded-xl p-3">
                                     <div className="flex flex-col">
                                         <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Status Integrasi</span>
-                                        <span className="text-[11px] font-bold text-slate-700 mt-0.5">Layanan QZ Tray</span>
+                                        <span className="text-[11px] font-bold text-slate-700 mt-0.5">Print Service</span>
                                     </div>
                                     <div>
                                         {renderStatusBadge()}
@@ -264,16 +264,27 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
                                         options={printerOptions}
                                         placeholder={isLoadingPrinters ? "Memuat printer..." : "Pilih Printer"}
                                         disabled={isSaving || isLoadingPrinters}
-                                        emptyMessage={qzError ? "Gagal terhubung ke QZ Tray" : "Tidak ada printer"}
+                                        emptyMessage={qzError ? "Gagal terhubung ke Print Service" : "Tidak ada printer"}
                                     />
                                 </div>
 
                                 {/* Quick guidance */}
-                                <div className="text-[10px] text-slate-400 leading-relaxed flex gap-1.5 items-start bg-slate-50/30 p-2.5 border border-slate-100 rounded-xl">
-                                    <Info size={12} className="text-slate-400 shrink-0 mt-0.5" />
-                                    <span>
-                                        Pastikan QZ Tray sudah berjalan di komputer terminal kasir ini sebelum menekan tombol <strong>Pindai Ulang</strong>.
-                                    </span>
+                                <div className="text-[10px] text-slate-500 leading-relaxed flex flex-col gap-2 bg-slate-50/50 p-3 border border-slate-100 rounded-xl">
+                                    <div className="flex gap-1.5 items-start">
+                                        <Info size={12} className="text-slate-400 shrink-0 mt-0.5" />
+                                        <span>
+                                            Pastikan driver & aplikasi <strong>Print Service</strong> telah dipasang dan berjalan di komputer ini.
+                                        </span>
+                                    </div>
+                                    <a
+                                        href="https://drive.google.com/drive/folders/1ily8yGout-jtxjvjI3iiCwZoutqR0kKM?usp=drive_link"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-emerald-600 hover:text-emerald-700 font-extrabold flex items-center gap-1 text-[10px] no-underline transition-colors pl-4"
+                                    >
+                                        <span>Unduh Driver & Print Service</span>
+                                        <ExternalLink size={10} />
+                                    </a>
                                 </div>
                             </div>
                         )}

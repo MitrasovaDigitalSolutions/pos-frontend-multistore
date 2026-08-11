@@ -9,10 +9,8 @@ import { useTransactionDetail, useVoidTransaction } from "../api/transactions-ap
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { toast } from "sonner";
-import QZService from "@/services/qz.service";
 import PrinterService from "@/services/printer.service";
 import axios from "axios";
-import { buildReceipt } from "@/utils/ReceiptFormatter";
 import { buildReceipt58 } from "@/utils/ReceiptFormatter58";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useQueryClient } from "@tanstack/react-query";
