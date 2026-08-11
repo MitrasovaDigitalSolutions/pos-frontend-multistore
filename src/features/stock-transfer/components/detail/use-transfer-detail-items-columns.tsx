@@ -12,7 +12,7 @@ import { JENIS_SELISIH, JENIS_SELISIH_LABELS } from "../../constants";
 interface UseTransferDetailItemsColumnsProps {
   items: StockTransferItem[];
   canReceive: boolean;
-  canValidateReturn?: boolean;
+  canValidateTransfer?: boolean;
   onReceiveItemSubmit?: (
     item: StockTransferItem,
     payload: {
@@ -23,7 +23,10 @@ interface UseTransferDetailItemsColumnsProps {
     }
   ) => Promise<void>;
   processingItemUid?: string | null;
-  onValidateReturnItem?: (item: StockTransferItem, kuantitasReturn: number) => void;
+  onValidateItem?: (
+    item: StockTransferItem,
+    payload: { jenis: "retur" | "koreksi"; kuantitas_return?: number; setujui?: boolean }
+  ) => void;
   validatingItemUid?: string | null;
 }
 
@@ -36,7 +39,7 @@ function getJenisSelisihBadgeVariant(js: string) {
 export function useTransferDetailItemsColumns({
   items,
   canReceive,
-  canValidateReturn,
+  canValidateTransfer,
   processingItemUid,
   validatingItemUid,
 }: UseTransferDetailItemsColumnsProps) {
@@ -145,7 +148,7 @@ export function useTransferDetailItemsColumns({
       ];
     }
 
-    if (canValidateReturn) {
+    if (canValidateTransfer) {
       return [
         {
           accessorKey: "product.nama",
@@ -166,18 +169,35 @@ export function useTransferDetailItemsColumns({
         },
         {
           id: "input_kuantitas_return",
-          header: "Kuantitas Return",
-          size: 120,
+          header: "Retur / Kelebihan",
+          size: 130,
           meta: { headerClassName: "text-center", cellClassName: "text-center" },
           cell: ({ row }) => {
-            const diff = Number(row.original.kuantitas) - Number(row.original.kuantitas_diterima || 0);
-            if (row.original.return_validated_at) {
+            const qtySent = Number(row.original.kuantitas);
+            const qtyReceived = Number(row.original.kuantitas_diterima || 0);
+            
+            if (row.original.validated_at) {
+              const qty = row.original.jenis_validasi === "koreksi" 
+                ? row.original.kuantitas_koreksi 
+                : row.original.kuantitas_return;
+              const type = row.original.jenis_validasi === "koreksi" ? "Koreksi" : "Retur";
               return (
                 <Badge variant="success" className="px-2.5 py-0.5 text-xs font-bold">
-                  {row.original.kuantitas_return ?? 0} pcs
+                  {type}: {qty ?? 0} pcs
                 </Badge>
               );
             }
+            
+            if (qtyReceived > qtySent) {
+              const kelebihan = qtyReceived - qtySent;
+              return (
+                <Badge variant="warning" className="px-2.5 py-0.5 text-xs font-bold bg-amber-50 text-amber-700 border-amber-200">
+                  Kelebihan: +{kelebihan} pcs
+                </Badge>
+              );
+            }
+
+            const diff = qtySent - qtyReceived;
             if (diff <= 0) {
               return <span className="text-slate-400 text-xs">—</span>;
             }
@@ -301,9 +321,16 @@ export function useTransferDetailItemsColumns({
 
           const isMatch = qRec === qSent;
           return (
-            <Badge variant={isMatch ? "success" : "warning"} className="px-2.5 py-0.5 text-xs font-bold">
-              {qRec} pcs
-            </Badge>
+            <div className="flex flex-col items-center gap-1">
+              <Badge variant={isMatch ? "success" : "warning"} className="px-2.5 py-0.5 text-xs font-bold">
+                {qRec} pcs
+              </Badge>
+              {row.original.jenis_validasi === "koreksi" && row.original.kuantitas_koreksi ? (
+                <span className="text-[10px] font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                  Koreksi {row.original.kuantitas_koreksi} pcs
+                </span>
+              ) : null}
+            </div>
           );
         },
       },
@@ -365,5 +392,5 @@ export function useTransferDetailItemsColumns({
         },
       },
     ];
-  }, [items, canReceive, canValidateReturn, processingItemUid, validatingItemUid]);
+  }, [items, canReceive, canValidateTransfer, processingItemUid, validatingItemUid]);
 }

@@ -3,7 +3,7 @@ export interface StockTransfer {
   store_uid_source: string;
   store_uid_destination: string;
   nomor_transfer: string;
-  status: "draft" | "sent" | "retur" | "finish" | "finished" | "rejected" | "cancelled";
+  status: "draft" | "sent" | "menunggu_validasi" | "finish" | "finished" | "rejected" | "cancelled";
   status_penerimaan?: "pending" | "partially_received" | "received" | "rejected" | null;
   status_pengiriman?: "pending" | "partially_received" | "received" | "rejected" | null;
   user_uid_source: string | null;
@@ -27,7 +27,9 @@ export interface StockTransferItem {
   kuantitas: number;
   kuantitas_diterima?: number | null;
   kuantitas_return?: number | null;
-  return_validated_at?: string | null;
+  validated_at?: string | null;
+  jenis_validasi?: "retur" | "koreksi" | null;
+  kuantitas_koreksi?: number | null;
   keterangan?: string | null;
   status?: "received" | "rejected" | null;
   jenis_selisih?: "salah_input" | "rusak" | "hilang" | null;

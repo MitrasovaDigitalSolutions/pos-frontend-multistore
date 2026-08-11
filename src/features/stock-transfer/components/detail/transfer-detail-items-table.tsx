@@ -9,7 +9,7 @@ import type { StockTransferItem } from "../../types";
 import type { ReceiveFormValues } from "./types";
 import { useTransferDetailItemsColumns } from "./use-transfer-detail-items-columns";
 import { ReceivingItemRowControls } from "./receiving-item-row-controls";
-import { ReturnValidationRowControls } from "./return-validation-row-controls";
+import { ValidationRowControls } from "./validation-row-controls";
 
 interface TransferDetailItemsTableProps {
   items: StockTransferItem[];
@@ -24,8 +24,11 @@ interface TransferDetailItemsTableProps {
     }
   ) => Promise<void>;
   processingItemUid?: string | null;
-  canValidateReturn?: boolean;
-  onValidateReturnItem?: (item: StockTransferItem, kuantitasReturn: number) => void;
+  canValidateTransfer?: boolean;
+  onValidateItem?: (
+    item: StockTransferItem,
+    payload: { jenis: "retur" | "koreksi"; kuantitas_return?: number; setujui?: boolean }
+  ) => void;
   validatingItemUid?: string | null;
   isFetching?: boolean;
 }
@@ -35,8 +38,8 @@ export function TransferDetailItemsTable({
   canReceive,
   onReceiveItemSubmit,
   processingItemUid,
-  canValidateReturn,
-  onValidateReturnItem,
+  canValidateTransfer,
+  onValidateItem,
   validatingItemUid,
   isFetching = false,
 }: TransferDetailItemsTableProps) {
@@ -51,17 +54,17 @@ export function TransferDetailItemsTable({
   const columns = useTransferDetailItemsColumns({
     items,
     canReceive,
-    canValidateReturn,
+    canValidateTransfer,
     onReceiveItemSubmit,
     processingItemUid,
-    onValidateReturnItem,
+    onValidateItem,
     validatingItemUid,
   });
 
   const modeKey = canReceive
     ? "mode-receiving"
-    : canValidateReturn
-    ? "mode-return"
+    : canValidateTransfer
+    ? "mode-validasi"
     : "mode-readonly";
 
   return (
@@ -136,21 +139,37 @@ export function TransferDetailItemsTable({
                       />
                     );
                   }
-                : canValidateReturn
+                : canValidateTransfer
                 ? (item) => {
                     const index = items.findIndex((i) => i.uid === item.uid);
                     const actualIndex = index >= 0 ? index : 0;
                     const formReturnQty = watch(`items.${actualIndex}.kuantitas_return`);
+                    
+                    const kelebihan = Number(item.kuantitas_diterima || 0) - Number(item.kuantitas);
+                    
+                    if (kelebihan > 0) {
+                      return (
+                        <ValidationRowControls
+                          item={item}
+                          mode="koreksi"
+                          returnQty={0}
+                          onValidateItem={onValidateItem}
+                          isProcessing={validatingItemUid === item.uid}
+                        />
+                      );
+                    }
+                    
                     const returnQty =
                       formReturnQty !== undefined && formReturnQty !== null
                         ? Number(formReturnQty)
                         : Number(item.kuantitas) - Number(item.kuantitas_diterima || 0);
 
                     return (
-                      <ReturnValidationRowControls
+                      <ValidationRowControls
                         item={item}
+                        mode="retur"
                         returnQty={returnQty}
-                        onValidateReturnItem={onValidateReturnItem}
+                        onValidateItem={onValidateItem}
                         isProcessing={validatingItemUid === item.uid}
                       />
                     );

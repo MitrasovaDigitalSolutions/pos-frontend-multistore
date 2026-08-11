@@ -104,23 +104,23 @@ export function AdminSidebar() {
             );
         }
 
-        if (path === ROUTES.ADMIN_STOCK_TRANSFERS_RETURNS) {
+        if (path === ROUTES.ADMIN_STOCK_TRANSFERS_VALIDATIONS) {
             return (
                 pathname === path ||
                 pathname.startsWith(path + "/") ||
-                (pathname.startsWith(ROUTES.ADMIN_STOCK_TRANSFERS) && fromParam === "returns")
+                (pathname.startsWith(ROUTES.ADMIN_STOCK_TRANSFERS) && fromParam === "validations")
             );
         }
 
-        // Prevent "/admin/inventory/stock-transfer" (Transfer Keluar) from matching when on Transfer Masuk or Retur routes
+        // Prevent "/admin/inventory/stock-transfer" (Transfer Keluar) from matching when on Transfer Masuk or Validasi routes
         if (path === ROUTES.ADMIN_STOCK_TRANSFERS) {
             if (
                 pathname === ROUTES.ADMIN_STOCK_TRANSFERS_INCOMING ||
                 pathname.startsWith(ROUTES.ADMIN_STOCK_TRANSFERS_INCOMING + "/") ||
-                pathname === ROUTES.ADMIN_STOCK_TRANSFERS_RETURNS ||
-                pathname.startsWith(ROUTES.ADMIN_STOCK_TRANSFERS_RETURNS + "/") ||
+                pathname === ROUTES.ADMIN_STOCK_TRANSFERS_VALIDATIONS ||
+                pathname.startsWith(ROUTES.ADMIN_STOCK_TRANSFERS_VALIDATIONS + "/") ||
                 fromParam === "incoming" ||
-                fromParam === "returns"
+                fromParam === "validations"
             ) {
                 return false;
             }
