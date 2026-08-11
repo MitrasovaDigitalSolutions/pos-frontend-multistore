@@ -8,6 +8,7 @@ import { useSettingsStore } from "@/stores/settings-store";
 import { IconCash, IconHome, IconLogout, IconScan, IconWifi, IconBuildingStore } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 import { useActiveStoreStore } from "@/stores/active-store-store";
+import { Show } from "@/components/ui/show";
 
 interface CheckoutTopBarProps {
     transactionId: string | null;
@@ -52,27 +53,28 @@ export function CheckoutTopBar({
     return (
         <div className="bg-slate-900 text-white h-10 px-3 sm:px-5 flex items-center justify-between border-b border-slate-800">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                {appLogo ? (
-                    // eslint-disable-next-line @next/next/no-img-element
+                <Show.When isTrue={Boolean(appLogo)}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={appLogo} alt={appName} className="h-6 w-auto shrink-0 rounded" />
-                ) : (
+                </Show.When>
+                <Show.When isTrue={!appLogo}>
                     <IconScan size={20} className="text-emerald-400 shrink-0" />
-                )}
+                </Show.When>
                 <span className="font-bold text-[12px] tracking-wide truncate max-w-28 sm:max-w-none shrink-0">
                     <span className="hidden sm:inline">{appName} — Cashier Terminal</span>
                     <span className="inline sm:hidden">{appName.substring(0, 8)} POS</span>
                 </span>
-                {activeStore && (
+                <Show.When isTrue={Boolean(activeStore)}>
                     <span className="inline-flex items-center gap-1 bg-slate-800 text-emerald-400 border border-slate-700 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shrink-0">
                         <IconBuildingStore size={12} className="text-emerald-500" />
-                        <span>{activeStore.nama}</span>
+                        <span>{activeStore?.nama}</span>
                     </span>
-                )}
-                {transactionId && (
+                </Show.When>
+                <Show.When isTrue={Boolean(transactionId)}>
                     <span className="bg-emerald-700 text-emerald-100 text-[9px] font-bold px-2 py-0.5 rounded-full tracking-wider shrink-0">
                         TRX #{transactionId}
                     </span>
-                )}
+                </Show.When>
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
@@ -87,7 +89,7 @@ export function CheckoutTopBar({
                 </Button>
                 <div className="w-px h-4 bg-slate-800" />
 
-                {hasAccessAdmin && (
+                <Show.When isTrue={hasAccessAdmin}>
                     <>
                         <Button
                             variant="ghost"
@@ -99,7 +101,7 @@ export function CheckoutTopBar({
                         </Button>
                         <div className="w-px h-4 bg-slate-800" />
                     </>
-                )}
+                </Show.When>
 
                 <Button
                     variant="ghost"
@@ -113,13 +115,13 @@ export function CheckoutTopBar({
 
             <div className="hidden lg:flex items-center gap-3 text-xs font-semibold text-slate-400">
                 {/* Offline Readiness Badge */}
-                {offlineReadiness && (
+                <Show.When isTrue={Boolean(offlineReadiness)}>
                     <OfflineReadinessBadge
-                        state={offlineReadiness}
+                        state={offlineReadiness!}
                         onRefreshRequest={onCatalogSyncRequest}
                         isSyncing={isCatalogSyncing}
                     />
-                )}
+                </Show.When>
 
                 <div className="w-px h-4 bg-slate-800" />
 

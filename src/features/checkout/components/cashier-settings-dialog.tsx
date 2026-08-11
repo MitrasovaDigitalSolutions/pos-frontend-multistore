@@ -16,6 +16,7 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
+import { Show } from "@/components/ui/show";
 
 interface CashierSettingsDialogProps {
     open: boolean;
@@ -228,7 +229,7 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
 
                     {/* Content viewport */}
                     <div className="p-5 space-y-4">
-                        {activeTab === "printer" && (
+                        <Show.When isTrue={activeTab === "printer"}>
                             <div className="space-y-4">
                                 {/* Services Status Row */}
                                 <div className="flex items-center justify-between bg-slate-50/50 border border-slate-100 rounded-xl p-3">
@@ -251,11 +252,12 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
                                             disabled={isLoadingPrinters || isSaving}
                                             className="text-[10px] text-emerald-600 hover:text-emerald-700 font-extrabold flex items-center gap-1 disabled:opacity-50 transition-colors bg-transparent border-none cursor-pointer p-0"
                                         >
-                                            {isLoadingPrinters ? (
+                                            <Show.When isTrue={isLoadingPrinters}>
                                                 <Loader2 className="animate-spin" size={10} />
-                                            ) : (
+                                            </Show.When>
+                                            <Show.When isTrue={!isLoadingPrinters}>
                                                 <RefreshCw size={10} />
-                                            )}
+                                            </Show.When>
                                             Pindai Ulang
                                         </button>
                                     </div>
@@ -287,20 +289,20 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
                                     </a>
                                 </div>
                             </div>
-                        )}
+                        </Show.When>
 
-                        {activeTab === "store" && (
+                        <Show.When isTrue={activeTab === "store"}>
                             <div className="space-y-4">
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
                                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                             Pilih Outlet / Toko Aktif
                                         </span>
-                                        {stores.length > 0 && (
+                                        <Show.When isTrue={stores.length > 0}>
                                             <span className="text-[10px] font-bold text-slate-400">
                                                 {stores.length} Toko Terdaftar
                                             </span>
-                                        )}
+                                        </Show.When>
                                     </div>
                                     <FormSelect<CashierSettingsInput>
                                         name="activeStore"
@@ -331,7 +333,7 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
                                     />
                                 </div>
                             </div>
-                        )}
+                        </Show.When>
                     </div>
 
                     {/* Footer Actions */}
@@ -344,25 +346,22 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
                         >
                             Batal
                         </Button>
-                        {activeTab !== "general" && (
+                        <Show.When isTrue={activeTab !== "general"}>
                             <Button
                                 type="submit"
                                 disabled={!isDirty || isSaving}
                                 className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] uppercase tracking-wider rounded-xl shadow-sm px-5 py-2 h-auto cursor-pointer border-none flex items-center gap-1.5 active:scale-[0.98] transition-all"
                             >
-                                {isSaving ? (
-                                    <>
-                                        <Loader2 className="animate-spin" size={10} />
-                                        Menyimpan...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Save size={10} />
-                                        Simpan
-                                    </>
-                                )}
+                                <Show.When isTrue={isSaving}>
+                                    <Loader2 className="animate-spin" size={10} />
+                                    Menyimpan...
+                                </Show.When>
+                                <Show.When isTrue={!isSaving}>
+                                    <Save size={10} />
+                                    Simpan
+                                </Show.When>
                             </Button>
-                        )}
+                        </Show.When>
                     </div>
                 </form>
             </FormProvider>

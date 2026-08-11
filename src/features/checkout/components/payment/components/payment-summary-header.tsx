@@ -1,6 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { Show } from "@/components/ui/show";
 import {
     IconPrinter,
     IconLoader2,
@@ -122,28 +123,30 @@ export function PaymentSummaryHeader({
                 </div>
 
                 {/* Mini Breakdown */}
-                {(discount > 0 || tax > 0) && (
+                <Show.When isTrue={discount > 0 || tax > 0}>
                     <div className="space-y-2 text-[11px] text-slate-300 font-bold px-1 pb-3 border-b border-slate-800">
-                        {discount > 0 && (
+                        <Show.When isTrue={discount > 0}>
                             <div className="flex justify-between items-center">
                                 <span className="text-slate-400">Diskon</span>
                                 <span className="text-rose-400 font-extrabold font-mono">-{formatRupiah(discount)}</span>
                             </div>
-                        )}
-                        {tax > 0 && (
+                        </Show.When>
+                        <Show.When isTrue={tax > 0}>
                             <div className="flex justify-between items-center">
                                 <span className="text-slate-400">Pajak (PPN)</span>
                                 <span className="text-emerald-400 font-extrabold font-mono">{formatRupiah(tax)}</span>
                             </div>
-                        )}
+                        </Show.When>
                     </div>
-                )}
+                </Show.When>
 
                 {/* Cash Mode Summary */}
-                {payMode === "cash" && renderCashSummary()}
+                <Show.When isTrue={payMode === "cash"}>
+                    {renderCashSummary()}
+                </Show.When>
 
                 {/* Card Mode Summary */}
-                {payMode === "card" && (
+                <Show.When isTrue={payMode === "card"}>
                     <div className="text-center pt-1 space-y-2">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
                             Metode Pembayaran
@@ -151,22 +154,22 @@ export function PaymentSummaryHeader({
                         <h3 className="text-xs font-black text-indigo-400 uppercase tracking-wider">
                             EDC / {cardType.toUpperCase()}
                         </h3>
-                        {cardLast4 && (
+                        <Show.When isTrue={Boolean(cardLast4)}>
                             <p className="inline-block bg-indigo-950/80 text-indigo-300 px-2.5 py-0.5 rounded-md text-[9px] font-mono font-bold border border-indigo-800/60">
                                 Kartu: **** {cardLast4}
                             </p>
-                        )}
+                        </Show.When>
                     </div>
-                )}
+                </Show.When>
 
                 {/* Debt Mode Summary */}
-                {payMode === "debt" && selectedMember && (
+                <Show.When isTrue={Boolean(payMode === "debt" && selectedMember)}>
                     <div className="space-y-3">
                         <div className="text-center">
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
                                 Member
                             </span>
-                            <p className="text-xs font-extrabold text-slate-200 mt-1">{selectedMember.nama}</p>
+                            <p className="text-xs font-extrabold text-slate-200 mt-1">{selectedMember?.nama}</p>
                         </div>
                         <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-rose-950/60 border border-rose-800/80 animate-in fade-in-0 duration-200">
                             <div className="w-6 h-6 rounded-full bg-rose-500 flex items-center justify-center flex-shrink-0">
@@ -178,7 +181,7 @@ export function PaymentSummaryHeader({
                             </div>
                         </div>
                     </div>
-                )}
+                </Show.When>
             </div>
 
             {/* Submit Button */}
@@ -192,11 +195,12 @@ export function PaymentSummaryHeader({
                         : "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40"
                     }`}
             >
-                {isProcessing ? (
+                <Show.When isTrue={isProcessing}>
                     <IconLoader2 size={16} className="animate-spin" />
-                ) : (
+                </Show.When>
+                <Show.When isTrue={!isProcessing}>
                     <IconPrinter size={16} />
-                )}
+                </Show.When>
                 <span>
                     {payMode === "debt" ? "SIMPAN & CETAK" : "SELESAI & CETAK"}
                 </span>

@@ -5,6 +5,8 @@ import { BaseDialog } from "@/components/ui/base-dialog";
 import { IconReceipt } from "@tabler/icons-react";
 import { FormProvider } from "react-hook-form";
 
+import { Show } from "@/components/ui/show";
+
 // Types & Hooks
 import type { PaymentDialogProps } from "./types/payment-dialog.types";
 import { usePaymentProcess } from "./hooks/use-payment-process";
@@ -77,26 +79,26 @@ export function PaymentDialog(props: PaymentDialogProps) {
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
                         {/* Left: Input Form Area */}
                         <div className="md:col-span-7 space-y-4">
-                            {payMode === "cash" && (
+                            <Show.When isTrue={payMode === "cash"}>
                                 <CashPaymentForm
                                     grandTotal={grandTotal}
                                     isProcessing={isProcessing}
                                 />
-                            )}
+                            </Show.When>
 
-                            {payMode === "card" && (
+                            <Show.When isTrue={payMode === "card"}>
                                 <CardPaymentForm
                                     isProcessing={isProcessing}
                                 />
-                            )}
+                            </Show.When>
 
-                            {payMode === "debt" && (
+                            <Show.When isTrue={payMode === "debt"}>
                                 <DebtPaymentForm
                                     selectedMember={selectedMember}
                                     grandTotal={grandTotal}
                                     isProcessing={isProcessing}
                                 />
-                            )}
+                            </Show.When>
                         </div>
 
                         {/* Right: Summary Header & Action Panel */}
