@@ -144,15 +144,21 @@ export function TransferDetailItemsTable({
                     const index = items.findIndex((i) => i.uid === item.uid);
                     const actualIndex = index >= 0 ? index : 0;
                     const formReturnQty = watch(`items.${actualIndex}.kuantitas_return`);
-                    
+                    const formKoreksiQty = watch(`items.${actualIndex}.kuantitas_koreksi`);
+
                     const kelebihan = Number(item.kuantitas_diterima || 0) - Number(item.kuantitas);
                     
                     if (kelebihan > 0) {
+                      const koreksiQty =
+                        formKoreksiQty !== undefined && formKoreksiQty !== null
+                          ? Number(formKoreksiQty)
+                          : kelebihan;
+
                       return (
                         <ValidationRowControls
                           item={item}
                           mode="koreksi"
-                          returnQty={0}
+                          returnQty={koreksiQty}
                           onValidateItem={onValidateItem}
                           isProcessing={validatingItemUid === item.uid}
                         />

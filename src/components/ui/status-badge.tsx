@@ -223,8 +223,13 @@ export function StatusBadge({
     case "pending":
     case "menunggu":
     case "menunggu_diterima":
+    case "menunggu_validasi":
+    case "menunggu validasi":
       resolvedVariant = "warning";
-      if (!label) resolvedLabel = "Pending";
+      if (!label) {
+        if (normalized.includes("validasi")) resolvedLabel = "Menunggu Validasi";
+        else resolvedLabel = "Pending";
+      }
       dotColor = "bg-amber-500";
       if (pulse === undefined) shouldPulse = true;
       break;

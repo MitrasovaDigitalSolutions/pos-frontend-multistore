@@ -75,12 +75,12 @@ export function ValidationRowControls({
           open={approveKoreksiOpen}
           onOpenChange={setApproveKoreksiOpen}
           title="Konfirmasi Koreksi Stok"
-          description={`Setujui koreksi ${kelebihan} pcs untuk "${item.product?.nama}"? Stok toko asal berkurang ${kelebihan} pcs dan stok tujuan bertambah ${kelebihan} pcs.`}
+          description={`Setujui koreksi ${returnQty} pcs untuk "${item.product?.nama}"? Stok toko asal berkurang ${returnQty} pcs dan stok tujuan bertambah ${returnQty} pcs.`}
           confirmText="Ya, Setujui Koreksi"
           variant="success"
           isLoading={isProcessing}
           onConfirm={() => {
-            onValidateItem?.(item, { jenis: "koreksi", setujui: true });
+            onValidateItem?.(item, { jenis: "koreksi", setujui: true, kuantitas_return: returnQty });
             setApproveKoreksiOpen(false);
           }}
         />
@@ -89,7 +89,7 @@ export function ValidationRowControls({
           open={rejectKoreksiOpen}
           onOpenChange={setRejectKoreksiOpen}
           title="Tolak Koreksi"
-          description={`Tolak koreksi ${kelebihan} pcs? Jumlah yang diterima akan dicatat sesuai jumlah yang dikirim (${item.kuantitas} pcs).`}
+          description={`Tolak koreksi kelebihan ${kelebihan} pcs? Jumlah yang diterima akan dicatat sesuai jumlah yang dikirim (${item.kuantitas} pcs).`}
           confirmText="Ya, Tolak"
           variant="danger"
           isLoading={isProcessing}

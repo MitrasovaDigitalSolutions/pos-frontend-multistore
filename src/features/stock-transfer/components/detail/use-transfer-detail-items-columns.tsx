@@ -190,10 +190,17 @@ export function useTransferDetailItemsColumns({
             
             if (qtyReceived > qtySent) {
               const kelebihan = qtyReceived - qtySent;
+              const idx = items.findIndex((it) => it.uid === row.original.uid);
+              const targetIdx = idx >= 0 ? idx : row.index;
+
               return (
-                <Badge variant="warning" className="px-2.5 py-0.5 text-xs font-bold bg-amber-50 text-amber-700 border-amber-200">
-                  Kelebihan: +{kelebihan} pcs
-                </Badge>
+                <FormNumberInput<ReceiveFormValues>
+                  name={`items.${targetIdx}.kuantitas_koreksi`}
+                  min={0}
+                  max={kelebihan}
+                  disabled={validatingItemUid === row.original.uid}
+                  className="h-8 w-20 text-xs text-center font-bold mx-auto border-slate-200 bg-white"
+                />
               );
             }
 

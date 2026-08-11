@@ -85,8 +85,12 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
 
   useEffect(() => {
     if (items && items.length > 0) {
-      const currentValues = formMethods.getValues("items") || [];
-      const currentMap = new Map(currentValues.map((v) => [v.product_uid, v]));
+      const rawValues = formMethods.getValues("items");
+      const currentValues = Array.isArray(rawValues) ? rawValues : [];
+      const validEntries = currentValues
+        .filter((v): v is NonNullable<typeof v> => Boolean(v && typeof v === "object" && v.product_uid))
+        .map((v) => [v.product_uid, v] as const);
+      const currentMap = new Map(validEntries);
 
       formMethods.reset({
         items: items.map((item) => {
@@ -103,13 +107,28 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
               ? draft.keterangan
               : (item.keterangan || "");
 
+          const qtySent = Number(item.kuantitas || 0);
+          const qtyReceived = Number(qtyDiterima);
+          const kelebihan = Math.max(0, qtyReceived - qtySent);
+          const kekurangan = Math.max(0, qtySent - qtyReceived);
+
+          const qtyKoreksi =
+            isPending && draft && draft.kuantitas_koreksi !== undefined
+              ? draft.kuantitas_koreksi
+              : (item.kuantitas_koreksi ?? (kelebihan > 0 ? kelebihan : null));
+
+          const qtyReturn =
+            isPending && draft && draft.kuantitas_return !== undefined
+              ? draft.kuantitas_return
+              : (item.kuantitas_return ?? (kekurangan > 0 ? kekurangan : 0));
+
           return {
             product_uid: item.product_uid,
             status: item.status || null,
             jenis_selisih: item.jenis_selisih || null,
             kuantitas_diterima: qtyDiterima,
-            kuantitas_return: item.kuantitas_return ?? (item.kuantitas - (item.kuantitas_diterima || 0)),
-            kuantitas_koreksi: item.kuantitas_koreksi ?? null,
+            kuantitas_return: qtyReturn,
+            kuantitas_koreksi: qtyKoreksi,
             jenis_validasi: item.jenis_validasi || null,
             keterangan: keterangan,
           };
