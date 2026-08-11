@@ -50,21 +50,6 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
     },
   });
 
-  useEffect(() => {
-    if (transfer?.items) {
-      formMethods.reset({
-        items: transfer.items.map((item) => ({
-          product_uid: item.product_uid,
-          status: item.status || "received",
-          jenis_selisih: item.jenis_selisih || null,
-          kuantitas_diterima: item.kuantitas_diterima ?? item.kuantitas,
-          kuantitas_return: item.kuantitas_return ?? (item.kuantitas - (item.kuantitas_diterima || 0)),
-          keterangan: item.keterangan || "",
-        })),
-      });
-    }
-  }, [transfer, formMethods]);
-
   const [confirmFinalizeOpen, setConfirmFinalizeOpen] = useState(false);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
@@ -73,6 +58,11 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
 
   // Fixed Array Index Order Ref to prevent row shifting when refetching
   const initialOrderRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    initialOrderRef.current = [];
+  }, [uid]);
+
   useEffect(() => {
     if (transfer?.items && initialOrderRef.current.length === 0) {
       initialOrderRef.current = transfer.items.map((it) => it.uid);
@@ -92,6 +82,21 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
       return idxA - idxB;
     });
   }, [transfer?.items]);
+
+  useEffect(() => {
+    if (items && items.length > 0) {
+      formMethods.reset({
+        items: items.map((item) => ({
+          product_uid: item.product_uid,
+          status: item.status || null,
+          jenis_selisih: item.jenis_selisih || null,
+          kuantitas_diterima: item.kuantitas_diterima ?? item.kuantitas,
+          kuantitas_return: item.kuantitas_return ?? (item.kuantitas - (item.kuantitas_diterima || 0)),
+          keterangan: item.keterangan || "",
+        })),
+      });
+    }
+  }, [items, formMethods]);
 
   const handleReceiveItemSubmit = async (
     item: StockTransferItem,

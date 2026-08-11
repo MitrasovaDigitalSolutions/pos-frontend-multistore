@@ -52,6 +52,7 @@ export function TransferDetailItemsTable({
   const isAllVerified = canReceive && pendingItemsCount === 0 && totalItemsCount > 0;
 
   const columns = useTransferDetailItemsColumns({
+    items,
     canReceive,
     canValidateReturn,
     onReceiveItemSubmit,

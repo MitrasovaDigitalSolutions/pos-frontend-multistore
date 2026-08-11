@@ -10,6 +10,7 @@ import type { ReceiveFormValues } from "./types";
 import { JENIS_SELISIH, JENIS_SELISIH_LABELS } from "../../constants";
 
 interface UseTransferDetailItemsColumnsProps {
+  items: StockTransferItem[];
   canReceive: boolean;
   canValidateReturn?: boolean;
   onReceiveItemSubmit?: (
@@ -33,6 +34,7 @@ function getJenisSelisihBadgeVariant(js: string) {
 }
 
 export function useTransferDetailItemsColumns({
+  items,
   canReceive,
   canValidateReturn,
   processingItemUid,
@@ -85,9 +87,12 @@ export function useTransferDetailItemsColumns({
               );
             }
 
+            const idx = items.findIndex((it) => it.uid === row.original.uid);
+            const targetIdx = idx >= 0 ? idx : row.index;
+
             return (
               <FormNumberInput<ReceiveFormValues>
-                name={`items.${row.index}.kuantitas_diterima`}
+                name={`items.${targetIdx}.kuantitas_diterima`}
                 min={0}
                 max={row.original.kuantitas}
                 disabled={processingItemUid === row.original.uid}
@@ -123,9 +128,13 @@ export function useTransferDetailItemsColumns({
                 </span>
               );
             }
+
+            const idx = items.findIndex((it) => it.uid === row.original.uid);
+            const targetIdx = idx >= 0 ? idx : row.index;
+
             return (
               <FormInput<ReceiveFormValues>
-                name={`items.${row.index}.keterangan`}
+                name={`items.${targetIdx}.keterangan`}
                 placeholder="Catatan..."
                 maxLength={500}
                 className="h-8 text-xs bg-white"
@@ -174,9 +183,12 @@ export function useTransferDetailItemsColumns({
               return <span className="text-slate-400 text-xs">—</span>;
             }
 
+            const idx = items.findIndex((it) => it.uid === row.original.uid);
+            const targetIdx = idx >= 0 ? idx : row.index;
+
             return (
               <FormNumberInput<ReceiveFormValues>
-                name={`items.${row.index}.kuantitas_return`}
+                name={`items.${targetIdx}.kuantitas_return`}
                 min={0}
                 max={diff}
                 disabled={validatingItemUid === row.original.uid}
@@ -354,5 +366,5 @@ export function useTransferDetailItemsColumns({
         },
       },
     ];
-  }, [canReceive, canValidateReturn, processingItemUid, validatingItemUid]);
+  }, [items, canReceive, canValidateReturn, processingItemUid, validatingItemUid]);
 }
