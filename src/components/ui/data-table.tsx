@@ -401,6 +401,8 @@ export function DataTable<TData, TValue>({
         hideCheck,
         disableCheck,
         extraActions,
+        actionColumnWidth,
+        actionColumnSize,
     ]);
 
     const table = useReactTable({
