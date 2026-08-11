@@ -51,6 +51,8 @@ export function StoreProfile() {
             cash_account_bank_uid: "",
             printer_id: "",
             hpp_adjustment_method: "latest",
+            cash_in_out_enabled: "true",
+            branch_can_create_product: "true",
         },
     });
 
@@ -74,17 +76,17 @@ export function StoreProfile() {
         },
         {
             id: "inventory",
-            label: "Inventori & HPP",
-            description: "Kalkulasi HPP & persediaan",
+            label: "Inventori & Produk",
+            description: "Kalkulasi HPP & izin produk cabang",
             icon: Boxes,
-            fields: ["hpp_adjustment_method"] as const,
+            fields: ["hpp_adjustment_method", "branch_can_create_product"] as const,
         },
         {
             id: "cash",
-            label: "Pemetaan Kas",
-            description: "Akun kas operasional",
+            label: "Kas & Operasional Kasir",
+            description: "Pemetaan kas & fitur laci kasir",
             icon: Wallet,
-            fields: ["cash_account_register_uid", "cash_account_main_uid", "cash_account_bank_uid"] as const,
+            fields: ["cash_account_register_uid", "cash_account_main_uid", "cash_account_bank_uid", "cash_in_out_enabled"] as const,
         },
         {
             id: "printer",
@@ -123,6 +125,12 @@ export function StoreProfile() {
                 cash_account_bank_uid: settings.cash_account_bank_uid || "",
                 printer_id: settings.printer_id || "",
                 hpp_adjustment_method: (settings.hpp_adjustment_method as "latest" | "average") || "latest",
+                cash_in_out_enabled: settings.cash_in_out_enabled === undefined || settings.cash_in_out_enabled === null
+                    ? "true"
+                    : settings.cash_in_out_enabled,
+                branch_can_create_product: settings.branch_can_create_product === undefined || settings.branch_can_create_product === null
+                    ? "true"
+                    : settings.branch_can_create_product,
             });
         }
     }, [settings, methods]);

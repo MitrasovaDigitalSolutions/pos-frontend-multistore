@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import { useToggleProductStatus } from "../api/products-api";
 import { useDetachProductStore } from "../api/product-store-api";
 import { useActiveStoreStore } from "@/stores/active-store-store";
+import { useSettingsStore } from "@/stores/settings-store";
+import { Show } from "@/components/ui/show";
 import type { Product } from "../types";
 
 interface ProductTableProps {
@@ -74,6 +76,14 @@ export function ProductTable({
     // };
 
     const activeStoreUid = useActiveStoreStore((s) => s.activeStoreUid);
+    const userStores = session?.user?.stores || [];
+    const activeStore = userStores.find((s) => s.uid === activeStoreUid) || userStores[0];
+    const isCentralStore = activeStore?.is_central ?? false;
+
+    const branchCanCreateSetting = useSettingsStore((s) => s.getSetting("branch_can_create_product", "true"));
+    const canBranchCreateProduct = branchCanCreateSetting === "true";
+    const canCreateProduct = isCentralStore || canBranchCreateProduct;
+
     const detachStoreProduct = useDetachProductStore();
     const toggleStatus = useToggleProductStatus();
 
@@ -317,14 +327,14 @@ export function ProductTable({
                         Manajemen inventori produk aktif dan SKU.
                     </p>
                 </div>
-                {hasManageProducts && (
+                <Show.When isTrue={Boolean(hasManageProducts && canCreateProduct)}>
                     <Button
                         onClick={onAddClick}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
                     >
                         <IconPlus size={16} /> Tambah Produk
                     </Button>
-                )}
+                </Show.When>
             </div>
 
             {filterElement}

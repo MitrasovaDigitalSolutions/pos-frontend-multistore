@@ -61,6 +61,16 @@ export const storeSettingsSchema = z.object({
         .optional()
         .nullable()
         .transform((val) => val || "latest"),
+    cash_in_out_enabled: z
+        .string()
+        .optional()
+        .nullable()
+        .transform((val) => val || "true"),
+    branch_can_create_product: z
+        .string()
+        .optional()
+        .nullable()
+        .transform((val) => val || "true"),
 });
 
 export type StoreSettingsInput = z.infer<typeof storeSettingsSchema>;
