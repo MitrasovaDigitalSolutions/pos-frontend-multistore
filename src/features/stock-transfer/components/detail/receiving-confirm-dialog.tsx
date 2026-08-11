@@ -61,7 +61,9 @@ export function ReceivingConfirmDialog({
 
   const qtyDikirim = item.kuantitas;
   const isRejected = mode === TRANSFER_SHIPMENT_STATUS.REJECTED;
-  const hasDiscrepancy = qtyDiterima < qtyDikirim && mode === TRANSFER_SHIPMENT_STATUS.RECEIVED;
+  const isSurplus = qtyDiterima > qtyDikirim && mode === TRANSFER_SHIPMENT_STATUS.RECEIVED;
+  const isDeficit = qtyDiterima < qtyDikirim && mode === TRANSFER_SHIPMENT_STATUS.RECEIVED;
+  const hasDiscrepancy = (isSurplus || isDeficit) && mode === TRANSFER_SHIPMENT_STATUS.RECEIVED;
   const needsReason = isRejected || hasDiscrepancy;
 
   const handleConfirmSubmit = async () => {
@@ -87,9 +89,11 @@ export function ReceivingConfirmDialog({
             <div
               className={`w-12 h-12 rounded-full border flex items-center justify-center ${isRejected
                 ? "bg-rose-50 text-rose-600 border-rose-100"
-                : hasDiscrepancy
-                  ? "bg-amber-50 text-amber-600 border-amber-100"
-                  : "bg-emerald-50 text-emerald-600 border-emerald-100"
+                : isSurplus
+                  ? "bg-blue-50 text-blue-600 border-blue-100"
+                  : isDeficit
+                    ? "bg-amber-50 text-amber-600 border-amber-100"
+                    : "bg-emerald-50 text-emerald-600 border-emerald-100"
                 }`}
             >
               {isRejected ? (
@@ -106,9 +110,11 @@ export function ReceivingConfirmDialog({
               <DialogTitle className="text-sm font-bold text-slate-900 text-center">
                 {isRejected
                   ? "Konfirmasi Penolakan Item"
-                  : hasDiscrepancy
-                    ? "Konfirmasi Penerimaan Selisih"
-                    : "Konfirmasi Penerimaan Item"}
+                  : isSurplus
+                    ? "Konfirmasi Kelebihan Item (Surplus)"
+                    : isDeficit
+                      ? "Konfirmasi Penerimaan Selisih (Kekurangan)"
+                      : "Konfirmasi Penerimaan Item"}
               </DialogTitle>
               <div className="text-xs text-slate-500 max-w-xs leading-relaxed text-center space-y-1">
                 <p>
@@ -118,9 +124,13 @@ export function ReceivingConfirmDialog({
                   <p className="text-rose-600 font-semibold">
                     Menolak produk ini akan membatalkan keseluruhan produk yang diterima.
                   </p>
-                ) : hasDiscrepancy ? (
+                ) : isSurplus ? (
+                  <p className="text-blue-700">
+                    Diterima: <strong className="font-bold">{qtyDiterima} pcs</strong> (Dikirim: {qtyDikirim} pcs). Terdapat kelebihan <strong>+{qtyDiterima - qtyDikirim} pcs</strong>.
+                  </p>
+                ) : isDeficit ? (
                   <p className="text-amber-700">
-                    Diterima: <strong className="font-bold">{qtyDiterima} pcs</strong> (Dikirim: {qtyDikirim} pcs). Terdapat selisih <strong>{qtyDikirim - qtyDiterima} pcs</strong>.
+                    Diterima: <strong className="font-bold">{qtyDiterima} pcs</strong> (Dikirim: {qtyDikirim} pcs). Terdapat kekurangan <strong>-{qtyDikirim - qtyDiterima} pcs</strong>.
                   </p>
                 ) : (
                   <p>
@@ -137,9 +147,9 @@ export function ReceivingConfirmDialog({
                   name="jenis_selisih"
                   label="Pilih Alasan Selisih / Penolakan"
                   options={[
+                    { label: "Salah Input Kuantitas / Kelebihan Kirim", value: JENIS_SELISIH.SALAH_INPUT },
                     { label: "Barang Rusak Saat Pengiriman", value: JENIS_SELISIH.RUSAK },
                     { label: "Barang Hilang / Kurang", value: JENIS_SELISIH.HILANG },
-                    { label: "Salah Input Kuantitas", value: JENIS_SELISIH.SALAH_INPUT },
                   ]}
                   placeholder="-- Pilih Alasan --"
                   size="sm"

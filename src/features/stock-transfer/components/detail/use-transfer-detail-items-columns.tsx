@@ -94,7 +94,6 @@ export function useTransferDetailItemsColumns({
               <FormNumberInput<ReceiveFormValues>
                 name={`items.${targetIdx}.kuantitas_diterima`}
                 min={0}
-                max={row.original.kuantitas}
                 disabled={processingItemUid === row.original.uid}
                 className="h-8 w-20 text-xs text-center font-bold mx-auto border-slate-200 bg-white"
               />
