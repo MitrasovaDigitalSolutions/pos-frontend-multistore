@@ -50,10 +50,10 @@ function ItemWholesaleBadge({ item }: { item: CartItem }) {
     if (hasWholesaleOffer && item.qty < minQty) {
         const remaining = minQty - item.qty;
         return (
-            <div className="mt-0.5">
-                <span className="inline-flex items-center gap-1 text-[9px] font-medium text-amber-700 dark:text-amber-300 bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/50 px-1.5 py-0.5 rounded-md leading-none">
-                    <IconBulb size={10} className="text-amber-500 shrink-0" />
-                    <span>+<strong>{remaining}</strong> grosir ({formatRupiah(wholesalePrice)})</span>
+            <div className="mt-0.5 flex items-center gap-1 text-[9px] font-mono font-bold">
+                <span className="inline-flex items-center gap-1 bg-amber-50/90 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-900/60 px-1.5 py-0.5 rounded-md leading-none">
+                    <IconBulb size={10} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                    <span>Tambah <strong>{remaining} pcs</strong> lagi ➔ Grosir: {formatRupiah(wholesalePrice)}/pcs</span>
                 </span>
             </div>
         );

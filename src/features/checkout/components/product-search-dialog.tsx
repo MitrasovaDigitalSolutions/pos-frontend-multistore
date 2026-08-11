@@ -308,8 +308,7 @@ export function ProductSearchDialog({
                             <span className="font-bold text-slate-800">{formatRupiah(p.harga)}</span>
                             <Show.When isTrue={hasGrosir}>
                                 <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-50/90 border border-emerald-200/80 px-1.5 py-0.5 rounded-md mt-0.5 whitespace-nowrap leading-none font-mono">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                                    Grosir {formatRupiah(Number(hargaGrosir))} <span className="text-emerald-600/80 font-normal">(≥{minQtyGrosir})</span>
+                                    Grosir: {formatRupiah(Number(hargaGrosir))}
                                 </span>
                             </Show.When>
                         </div>
