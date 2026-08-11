@@ -301,8 +301,8 @@ export function ProductSearchDialog({
                     const storeProduct = p.product_stores?.[0];
                     const hargaGrosir = p.harga_grosir ?? storeProduct?.harga_grosir;
                     const minQtyGrosir = p.min_qty_grosir ?? storeProduct?.min_qty_grosir;
-                    const isGrosirFlag = p.is_grosir ?? storeProduct?.is_grosir ?? true;
-                    const hasGrosir = Boolean(isGrosirFlag && hargaGrosir && minQtyGrosir);
+                    const isGrosirFlag = p.is_grosir ?? storeProduct?.is_grosir;
+                    const hasGrosir = Boolean(isGrosirFlag === true && hargaGrosir && minQtyGrosir);
                     return (
                         <div className="flex flex-col items-end">
                             <span className="font-bold text-slate-800">{formatRupiah(p.harga)}</span>

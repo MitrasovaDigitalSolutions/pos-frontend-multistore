@@ -18,7 +18,7 @@ export function getItemWholesaleBreakdown(item: CartItem): ItemWholesaleBreakdow
     const normalPrice = item.price;
     const minQty = item.min_qty_grosir;
     const wholesalePrice = item.harga_grosir;
-    const isGrosirFlag = item.is_grosir ?? (wholesalePrice !== null && wholesalePrice !== undefined && wholesalePrice > 0);
+    const isGrosirFlag = item.is_grosir === true;
 
     if (
         isGrosirFlag &&
