@@ -112,6 +112,8 @@ interface DataTableProps<TData, TValue> {
     hideCheck?: boolean | ((row: TData) => boolean);
     disableCheck?: boolean | ((row: TData) => boolean);
     extraActions?: (row: TData) => React.ReactNode;
+    actionColumnWidth?: string;
+    actionColumnSize?: number;
     getRowClassName?: (row: TData) => string;
     getRowMotionProps?: (row: TData) => React.ComponentProps<typeof motion.tr> | undefined;
 }
@@ -162,6 +164,8 @@ export function DataTable<TData, TValue>({
     hideCheck,
     disableCheck,
     extraActions,
+    actionColumnWidth,
+    actionColumnSize,
     getRowClassName,
     getRowMotionProps,
 }: DataTableProps<TData, TValue>) {
@@ -308,13 +312,15 @@ export function DataTable<TData, TValue>({
         const hasActions = !!(onEdit || onDelete || onView || onCheck || extraActions);
         if (!hasActions) return baseCols;
 
+        const actionColWidthClass = actionColumnWidth || "w-28";
+
         const actionColumn: ColumnDef<TData, unknown> = {
             id: "actions",
             header: "Aksi",
             enableSorting: false,
-            size: 120,
+            size: actionColumnSize || (actionColumnWidth ? 180 : 120),
             meta: {
-                headerClassName: "text-center w-28 sticky right-0 top-0 bg-slate-50 z-30 shadow-[-1px_0_0_0_rgba(241,245,249,1)] border-l border-slate-100",
+                headerClassName: `text-center ${actionColWidthClass} sticky right-0 top-0 bg-slate-50 z-30 shadow-[-1px_0_0_0_rgba(241,245,249,1)] border-l border-slate-100`,
                 cellClassName: "text-center sticky right-0 bg-white dark:bg-slate-900 [.animate-liquid-fast-row_&]:bg-inherit group-hover:bg-slate-50 [.animate-liquid-fast-row_&]:group-hover:bg-black/[0.03] z-10 shadow-[-1px_0_0_0_rgba(241,245,249,1)] border-l border-slate-100 transition-colors",
             },
             cell: ({ row }) => {

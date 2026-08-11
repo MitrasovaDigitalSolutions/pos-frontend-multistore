@@ -140,6 +140,7 @@ export function TransferDetailItemsTable({
             data={items}
             isFetching={isFetching}
             virtualize={false}
+            actionColumnWidth="w-48"
             extraActions={
               canReceive
                 ? (item) => {

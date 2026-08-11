@@ -155,6 +155,7 @@ export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
             data={transfers}
             isLoading={isLoading}
             isFetching={isFetching}
+            actionColumnWidth="w-36"
             emptyMessage="Belum ada transaksi transfer stok ditemukan."
             page={page}
             onPageChange={setPage}
