@@ -5,58 +5,21 @@ import { useEffect, useState } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { toast } from "sonner";
-import { settingsApi } from "@/features/settings/api/settings-api";
-import { getImageUrl } from "@/lib/utils";
 import { useActiveStoreStore } from "@/stores/active-store-store";
 import { LoginCard } from "./login-card";
 import { LoginStoreDialog } from "./login-store-dialog";
 import type { LoginInput } from "../schemas/login-schema";
+import { AUTH_APP_NAME, AUTH_APP_VERSION } from "../constants/auth-constants";
 
 export function LoginForm() {
     const router = useAppRouter();
     const { data: session, status } = useSession();
     const [isLoading, setIsLoading] = useState(false);
-    const [appName, setAppName] = useState("Mitrasova POS");
-    const [appLogo, setAppLogo] = useState("");
-    const [isBrandingLoading, setIsBrandingLoading] = useState(true);
 
     const { activeStoreUid, setActiveStore } = useActiveStoreStore();
     const [justLoggedIn, setJustLoggedIn] = useState(false);
     const [isStoreDialogOpen, setIsStoreDialogOpen] = useState(false);
     const [isRedirecting, setIsRedirecting] = useState(false);
-
-    // Load branding settings on mount
-    useEffect(() => {
-        let isMounted = true;
-        const fetchBranding = async () => {
-            setIsBrandingLoading(true);
-            try {
-                const [nameRes, logoRes] = await Promise.allSettled([
-                    settingsApi.getByKey("app_name"),
-                    settingsApi.getByKey("app_logo_url")
-                ]);
-
-                if (isMounted) {
-                    if (nameRes.status === "fulfilled" && nameRes.value?.value && nameRes.value.value.trim() !== "") {
-                        setAppName(nameRes.value.value);
-                    }
-                    if (logoRes.status === "fulfilled" && logoRes.value?.value && logoRes.value.value.trim() !== "") {
-                        setAppLogo(getImageUrl(logoRes.value.value));
-                    }
-                }
-            } catch (err) {
-                console.error("Failed to fetch branding settings", err);
-            } finally {
-                if (isMounted) {
-                    setIsBrandingLoading(false);
-                }
-            }
-        };
-        fetchBranding();
-        return () => {
-            isMounted = false;
-        };
-    }, []);
 
     // Redirect user if they are already logged in
     useEffect(() => {
@@ -171,9 +134,6 @@ export function LoginForm() {
                 <LoginCard
                     onSubmit={onSubmit}
                     isLoading={isLoading}
-                    appName={appName}
-                    appLogo={appLogo}
-                    isBrandingLoading={isBrandingLoading}
                 />
 
                 {/* Helper Help Text */}
@@ -191,13 +151,9 @@ export function LoginForm() {
             />
 
             {/* Global Footer Section */}
-            <div className="w-full text-center text-[11px] text-slate-400 border-t border-slate-200/50 pt-3 z-10 flex justify-between items-center max-w-5xl mx-auto">
-                {isBrandingLoading ? (
-                    <div className="h-3.5 bg-slate-100 rounded animate-pulse w-32" />
-                ) : (
-                    <span>© {new Date().getFullYear()} {appName}</span>
-                )}
-                <span>v1.0.0</span>
+            <div className="w-full text-center text-[11px] text-slate-400 border-t border-slate-200/50 pt-3 z-10 flex justify-between items-center max-w-5xl mx-auto font-mono">
+                <span>© {new Date().getFullYear()} {AUTH_APP_NAME}</span>
+                <span>{AUTH_APP_VERSION}</span>
             </div>
         </div>
     );

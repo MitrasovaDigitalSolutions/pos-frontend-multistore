@@ -28,7 +28,7 @@ const STATUS_OPTIONS = [
   { value: "all", label: "Semua Status Transfer" },
   { value: TRANSFER_STATUS.DRAFT, label: "Draft" },
   { value: TRANSFER_STATUS.SENT, label: "Dikirim" },
-  { value: TRANSFER_STATUS.RETUR, label: "Retur" },
+  { value: TRANSFER_STATUS.MENUNGGU_VALIDASI, label: "Menunggu Validasi" },
   { value: TRANSFER_STATUS.FINISH, label: "Selesai" },
   { value: TRANSFER_STATUS.REJECTED, label: "Ditolak" },
   { value: TRANSFER_STATUS.CANCELLED, label: "Dibatalkan" },
@@ -92,7 +92,7 @@ export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
     () => ({
       page,
       per_page: 15,
-      status: mode !== "returns" && activeFilters.status !== "all" ? activeFilters.status : undefined,
+      status: mode !== "validations" && activeFilters.status !== "all" ? activeFilters.status : undefined,
       status_penerimaan: activeFilters.status_penerimaan !== "all" ? activeFilters.status_penerimaan : undefined,
       source: activeFilters.source || undefined,
       destination: activeFilters.destination || undefined,

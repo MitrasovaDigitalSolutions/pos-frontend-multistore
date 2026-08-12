@@ -67,7 +67,7 @@ export function TransferListFilters({
         placeholder="Semua Cabang"
         size="sm"
       />
-      {mode !== "returns" && (
+      {mode !== "validations" && (
         <FormSelect<TransferFilterValues>
           name="status"
           label="Status Transfer"

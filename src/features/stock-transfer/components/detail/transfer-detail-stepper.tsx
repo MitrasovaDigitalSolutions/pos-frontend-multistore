@@ -16,7 +16,7 @@ export function TransferDetailStepper({ status }: TransferDetailStepperProps) {
       ? 1
       : status === TRANSFER_STATUS.SENT
       ? 2
-      : (status === TRANSFER_STATUS.RETUR || 
+      : (status === TRANSFER_STATUS.MENUNGGU_VALIDASI || 
          status === TRANSFER_STATUS.FINISHED ||
          status === TRANSFER_STATUS.FINISH)
       ? 3
@@ -46,13 +46,13 @@ export function TransferDetailStepper({ status }: TransferDetailStepperProps) {
     );
   }
 
-  if (status === TRANSFER_STATUS.RETUR) {
+  if (status === TRANSFER_STATUS.MENUNGGU_VALIDASI) {
     return (
       <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-amber-800 flex items-center gap-3">
         <IconCircleX size={20} className="text-amber-600 shrink-0" />
         <div>
-          <h4 className="text-xs font-bold text-amber-900">Menunggu Validasi Return</h4>
-          <p className="text-[11px] text-amber-700">Toko asal harus memvalidasi jumlah barang yang dikembalikan karena terdapat selisih pada penerimaan.</p>
+          <h4 className="text-xs font-bold text-amber-900">Menunggu Validasi Transfer</h4>
+          <p className="text-[11px] text-amber-700">Toko asal harus memvalidasi selisih penerimaan: retur (barang dikembalikan) atau koreksi (kelebihan terima).</p>
         </div>
       </div>
     );

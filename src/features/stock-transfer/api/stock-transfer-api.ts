@@ -11,7 +11,7 @@ export interface StockTransferQueryParams extends PaginationParams {
   status_penerimaan?: string;
 }
 
-export type StockTransferListMode = "outgoing" | "incoming" | "returns";
+export type StockTransferListMode = "outgoing" | "incoming" | "validations";
 
 export function useStockTransfersByMode(mode: StockTransferListMode, params?: StockTransferQueryParams) {
   const endpoint =
@@ -19,7 +19,7 @@ export function useStockTransfersByMode(mode: StockTransferListMode, params?: St
       ? ENDPOINTS.INVENTORY.STOCK_TRANSFERS.OUTGOING
       : mode === "incoming"
         ? ENDPOINTS.INVENTORY.STOCK_TRANSFERS.INCOMING
-        : ENDPOINTS.INVENTORY.STOCK_TRANSFERS.RETURNS;
+        : ENDPOINTS.INVENTORY.STOCK_TRANSFERS.VALIDATIONS;
   return useQuery({
     queryKey: [...queryKeys.inventory.stockTransfers(), mode, params],
     queryFn: () => apiGetList<StockTransfer>(endpoint, params),
@@ -100,13 +100,19 @@ export function useReceiveStockTransfer() {
   });
 }
 
-export function useValidateStockTransferReturn() {
+export interface ValidateTransferItemPayload {
+  jenis?: "retur" | "koreksi";
+  kuantitas_return?: number;
+  setujui?: boolean;
+  keterangan?: string;
+}
+export function useValidateStockTransferItem() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ uid, itemUid, kuantitas_return }: { uid: string; itemUid: string; kuantitas_return?: number }) =>
-      apiPost<ApiResponse<StockTransfer>, { kuantitas_return?: number }>(
-        ENDPOINTS.INVENTORY.STOCK_TRANSFERS.RETURN_ITEM(uid, itemUid), 
-        { kuantitas_return }
+    mutationFn: ({ uid, itemUid, payload }: { uid: string; itemUid: string; payload?: ValidateTransferItemPayload }) =>
+      apiPost<ApiResponse<StockTransfer>, ValidateTransferItemPayload | undefined>(
+        ENDPOINTS.INVENTORY.STOCK_TRANSFERS.VALIDATE_ITEM(uid, itemUid),
+        payload
       ),
     onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers(), refetchType: "all" });

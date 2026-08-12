@@ -80,6 +80,8 @@ export function StockLedger() {
         { value: "receive", label: "Penerimaan" },
         { value: "sale", label: "Penjualan" },
         { value: "sale_void", label: "Pembatalan Penjualan" },
+        { value: "transfer_in", label: "Transfer Masuk (Transfer IN)" },
+        { value: "transfer_out", label: "Transfer Keluar (Transfer OUT)" },
         { value: "retur", label: "Retur" },
         { value: "void", label: "Pembatalan" },
         { value: "adjustment", label: "Penyesuaian" },

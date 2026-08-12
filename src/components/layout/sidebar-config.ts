@@ -173,8 +173,8 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasPermission(roles, permissions, "manage_stock_transfers"),
                     },
                     {
-                        path: ROUTES.ADMIN_STOCK_TRANSFERS_RETURNS,
-                        label: "Retur",
+                        path: ROUTES.ADMIN_STOCK_TRANSFERS_VALIDATIONS,
+                        label: "Validasi",
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") ||
                             hasPermission(roles, permissions, "view_stock_transfers") ||

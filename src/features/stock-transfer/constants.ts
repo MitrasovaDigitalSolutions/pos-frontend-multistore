@@ -2,7 +2,7 @@
 export const TRANSFER_STATUS = {
   DRAFT: "draft",
   SENT: "sent",
-  RETUR: "retur",
+  MENUNGGU_VALIDASI: "menunggu_validasi",
   FINISH: "finish",
   FINISHED: "finished",
   REJECTED: "rejected",
@@ -12,7 +12,7 @@ export const TRANSFER_STATUS = {
 export const TRANSFER_STATUS_LABELS: Record<string, string> = {
   draft: "Draft",
   sent: "Dikirim",
-  retur: "Retur",
+  menunggu_validasi: "Menunggu Validasi",
   finish: "Selesai",
   finished: "Selesai",
   rejected: "Ditolak",
@@ -22,11 +22,21 @@ export const TRANSFER_STATUS_LABELS: Record<string, string> = {
 export const TRANSFER_STATUS_CLASSES: Record<string, string> = {
   draft: "bg-slate-50 text-slate-700 border-slate-200",
   sent: "bg-blue-50 text-blue-700 border-blue-200",
-  retur: "bg-amber-50 text-amber-700 border-amber-200",
+  menunggu_validasi: "bg-amber-50 text-amber-700 border-amber-200",
   finish: "bg-emerald-50 text-emerald-700 border-emerald-200",
   finished: "bg-emerald-50 text-emerald-700 border-emerald-200",
   rejected: "bg-rose-50 text-rose-700 border-rose-200",
   cancelled: "bg-rose-50 text-rose-700 border-rose-200",
+};
+
+// ─── Jenis Validasi ─────────────────────────────────────────────────────────
+export const JENIS_VALIDASI = {
+  RETUR: "retur",
+  KOREKSI: "koreksi",
+} as const;
+export const JENIS_VALIDASI_LABELS: Record<string, string> = {
+  retur: "Retur",
+  koreksi: "Koreksi",
 };
 
 // ─── Status Penerimaan / Penerimaan ──────────────────────────────────────────

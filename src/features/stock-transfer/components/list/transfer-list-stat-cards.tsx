@@ -81,12 +81,12 @@ export function TransferListStatCards({ mode, transfers, totalCount, isLoading }
     if (mode === "outgoing") {
       const sentCount = transfers.filter((t) => t.status === TRANSFER_STATUS.SENT).length;
       const draftCount = transfers.filter((t) => t.status === TRANSFER_STATUS.DRAFT).length;
-      const returCount = transfers.filter((t) => t.status === TRANSFER_STATUS.RETUR).length;
+      const menungguValidasiCount = transfers.filter((t) => t.status === TRANSFER_STATUS.MENUNGGU_VALIDASI).length;
       return [
         { label: "Total Transfer Keluar", value: totalCount, icon: IconArrowsLeftRight, color: "slate" },
         { label: "Draft Pengiriman", value: draftCount, icon: IconClock, color: "amber" },
         { label: "Dalam Pengiriman", value: sentCount, icon: IconTruckDelivery, color: "blue" },
-        { label: "Menunggu Retur", value: returCount, icon: IconArrowDownLeft, color: "emerald" },
+        { label: "Menunggu Validasi", value: menungguValidasiCount, icon: IconArrowDownLeft, color: "emerald" },
       ];
     } else if (mode === "incoming") {
       const sentCount = transfers.filter((t) => t.status === TRANSFER_STATUS.SENT).length;
@@ -98,7 +98,7 @@ export function TransferListStatCards({ mode, transfers, totalCount, isLoading }
         { label: "Diterima Sebagian", value: partiallyReceivedCount, icon: IconBuildingStore, color: "amber" },
         { label: "Selesai", value: finishedCount, icon: IconCheck, color: "emerald" },
       ];
-    } else { // returns
+    } else { // validations
       const rejectedCount = transfers.filter((t) => t.status_penerimaan === TRANSFER_SHIPMENT_STATUS.REJECTED || t.status_penerimaan === TRANSFER_SHIPMENT_STATUS.PARTIALLY_RECEIVED).length;
       return [
         { label: "Menunggu Validasi", value: totalCount, icon: IconArrowsLeftRight, color: "slate" },

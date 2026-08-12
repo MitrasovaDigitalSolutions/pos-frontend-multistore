@@ -4,7 +4,7 @@ import type { Supplier } from "@/features/master/suppliers/types";
 export interface StockMovement {
     uid: string;
     product_uid: string;
-    tipe: "receive" | "void" | "sale" | "retur" | "penyesuaian" | "opname" | "adjustment" | "masuk" | "keluar" | "mutasi" | "sale_void";
+    tipe: "receive" | "void" | "sale" | "retur" | "penyesuaian" | "opname" | "adjustment" | "masuk" | "keluar" | "mutasi" | "sale_void" | "transfer_in" | "transfer_out" | string;
     kuantitas: number;
     stok_sebelum: number;
     stok_sesudah: number;

@@ -14,22 +14,17 @@ import {
     IconUser,
 } from "@tabler/icons-react";
 import { loginSchema, type LoginInput } from "../schemas/login-schema";
+import { AUTH_APP_NAME, AUTH_APP_SUBTITLE } from "../constants/auth-constants";
 import { MitrasovaLogo } from "./mitrasova-logo";
 
 interface LoginCardProps {
     onSubmit: (data: LoginInput) => Promise<void>;
     isLoading: boolean;
-    appName: string;
-    appLogo: string;
-    isBrandingLoading: boolean;
 }
 
 export function LoginCard({
     onSubmit,
     isLoading,
-    appName,
-    appLogo,
-    isBrandingLoading,
 }: LoginCardProps) {
     const [showPassword, setShowPassword] = useState(false);
 
@@ -53,28 +48,12 @@ export function LoginCard({
                     <div className="relative group">
                         <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl blur opacity-30 group-hover:opacity-60 transition duration-300" />
                         <div className="w-12 h-12 bg-white border border-emerald-100 shadow-md rounded-2xl flex items-center justify-center relative overflow-hidden p-2">
-                            {isBrandingLoading ? (
-                                <div className="w-full h-full bg-slate-100 rounded-lg animate-pulse" />
-                            ) : appLogo ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={appLogo} alt="Logo" className="w-full h-full object-contain" />
-                            ) : (
-                                <MitrasovaLogo className="w-full h-full" />
-                            )}
+                            <MitrasovaLogo className="w-full h-full" />
                         </div>
                     </div>
                     <div className="space-y-1.5 w-full flex flex-col items-center">
-                        {isBrandingLoading ? (
-                            <>
-                                <div className="h-5 bg-slate-100 rounded-md animate-pulse w-36" />
-                                <div className="h-3 bg-slate-50 rounded-md animate-pulse w-48" />
-                            </>
-                        ) : (
-                            <>
-                                <h2 className="text-xl font-black text-slate-900 tracking-tight">{appName}</h2>
-                                <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Aplikasi Kasir & Kelola Toko</p>
-                            </>
-                        )}
+                        <h2 className="text-xl font-black text-slate-900 tracking-tight">{AUTH_APP_NAME}</h2>
+                        <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">{AUTH_APP_SUBTITLE}</p>
                     </div>
                 </div>
                 

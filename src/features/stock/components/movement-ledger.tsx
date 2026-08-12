@@ -18,6 +18,8 @@ const TIPE_CLASSES: Record<string, string> = {
     masuk: "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/30",
     keluar: "bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-900/30",
     mutasi: "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/30",
+    transfer_in: "bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/30 dark:text-teal-400 dark:border-teal-900/30",
+    transfer_out: "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-900/30",
 };
 
 const TIPE_LABELS: Record<string, string> = {
@@ -32,6 +34,8 @@ const TIPE_LABELS: Record<string, string> = {
     masuk: "Masuk",
     keluar: "Keluar",
     mutasi: "Mutasi",
+    transfer_in: "Transfer Masuk",
+    transfer_out: "Transfer Keluar",
 };
 
 interface MovementLedgerProps {

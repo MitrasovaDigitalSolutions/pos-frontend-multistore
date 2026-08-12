@@ -2,6 +2,7 @@ export const ACTIVITY_MODULES = [
   { slug: 'penjualan', label: 'Penjualan' },
   { slug: 'pembelian', label: 'Pembelian' },
   { slug: 'inventori', label: 'Inventori' },
+  { slug: 'transfer', label: 'Transfer Stok' },
   { slug: 'pengeluaran', label: 'Pengeluaran' },
   { slug: 'kas', label: 'Kas & Bank' },
   { slug: 'hutang', label: 'Hutang' },

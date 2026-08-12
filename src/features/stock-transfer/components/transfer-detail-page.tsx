@@ -13,7 +13,7 @@ import {
   useFinalizeStockTransfer,
   useReceiveStockTransfer,
   useStockTransferDetail,
-  useValidateStockTransferReturn,
+  useValidateStockTransferItem,
 } from "../api/stock-transfer-api";
 import { JENIS_SELISIH, TRANSFER_SHIPMENT_STATUS, TRANSFER_STATUS } from "../constants";
 
@@ -41,7 +41,7 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
   const { data: transfer, isLoading, isFetching, error } = useStockTransferDetail(uid);
   const finalize = useFinalizeStockTransfer();
   const receive = useReceiveStockTransfer();
-  const validateReturn = useValidateStockTransferReturn();
+  const validate = useValidateStockTransferItem();
   const cancel = useCancelStockTransfer();
 
   const formMethods = useForm<ReceiveFormValues>({
@@ -85,15 +85,54 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
 
   useEffect(() => {
     if (items && items.length > 0) {
+      const rawValues = formMethods.getValues("items");
+      const currentValues = Array.isArray(rawValues) ? rawValues : [];
+      const validEntries = currentValues
+        .filter((v): v is NonNullable<typeof v> => Boolean(v && typeof v === "object" && v.product_uid))
+        .map((v) => [v.product_uid, v] as const);
+      const currentMap = new Map(validEntries);
+
       formMethods.reset({
-        items: items.map((item) => ({
-          product_uid: item.product_uid,
-          status: item.status || null,
-          jenis_selisih: item.jenis_selisih || null,
-          kuantitas_diterima: item.kuantitas_diterima ?? item.kuantitas,
-          kuantitas_return: item.kuantitas_return ?? (item.kuantitas - (item.kuantitas_diterima || 0)),
-          keterangan: item.keterangan || "",
-        })),
+        items: items.map((item) => {
+          const draft = currentMap.get(item.product_uid);
+          const isPending = item.status === null || item.status === undefined;
+
+          const qtyDiterima =
+            isPending && draft && draft.kuantitas_diterima !== undefined
+              ? draft.kuantitas_diterima
+              : (item.kuantitas_diterima ?? item.kuantitas);
+
+          const keterangan =
+            isPending && draft && draft.keterangan !== undefined
+              ? draft.keterangan
+              : (item.keterangan || "");
+
+          const qtySent = Number(item.kuantitas || 0);
+          const qtyReceived = Number(qtyDiterima);
+          const kelebihan = Math.max(0, qtyReceived - qtySent);
+          const kekurangan = Math.max(0, qtySent - qtyReceived);
+
+          const qtyKoreksi =
+            isPending && draft && draft.kuantitas_koreksi !== undefined
+              ? draft.kuantitas_koreksi
+              : (item.kuantitas_koreksi ?? (kelebihan > 0 ? kelebihan : null));
+
+          const qtyReturn =
+            isPending && draft && draft.kuantitas_return !== undefined
+              ? draft.kuantitas_return
+              : (item.kuantitas_return ?? (kekurangan > 0 ? kekurangan : 0));
+
+          return {
+            product_uid: item.product_uid,
+            status: item.status || null,
+            jenis_selisih: item.jenis_selisih || null,
+            kuantitas_diterima: qtyDiterima,
+            kuantitas_return: qtyReturn,
+            kuantitas_koreksi: qtyKoreksi,
+            jenis_validasi: item.jenis_validasi || null,
+            keterangan: keterangan,
+          };
+        }),
       });
     }
   }, [items, formMethods]);
@@ -123,14 +162,17 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
     }
   };
 
-  const handleValidateReturnItem = async (item: StockTransferItem, kuantitasReturn: number) => {
+  const handleValidateItem = async (
+    item: StockTransferItem,
+    payload: { jenis: "retur" | "koreksi"; kuantitas_return?: number; setujui?: boolean }
+  ) => {
     setValidatingItemUid(item.uid);
     try {
-      await validateReturn.mutateAsync({ uid, itemUid: item.uid, kuantitas_return: kuantitasReturn });
-      toast.success(`Return item ${item.product?.nama || "berhasil"} divalidasi.`);
+      await validate.mutateAsync({ uid, itemUid: item.uid, payload });
+      toast.success(`Validasi item ${item.product?.nama || "berhasil"}.`);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Gagal memvalidasi return";
-      toast.error(`Gagal memvalidasi return: ${message}`);
+      const message = err instanceof Error ? err.message : "Gagal memvalidasi item";
+      toast.error(`Gagal memvalidasi item: ${message}`);
     } finally {
       setValidatingItemUid(null);
     }
@@ -264,7 +306,7 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
 
   const canFinalize = transfer.status === TRANSFER_STATUS.DRAFT && isSource;
   const canReceive = transfer.status === TRANSFER_STATUS.SENT && isDest;
-  const canValidateReturn = transfer.status === TRANSFER_STATUS.RETUR && isSource;
+  const canValidateTransfer = transfer.status === TRANSFER_STATUS.MENUNGGU_VALIDASI && isSource;
   const canCancel =
     (transfer.status === TRANSFER_STATUS.DRAFT || transfer.status === TRANSFER_STATUS.SENT) &&
     isSource;
@@ -301,8 +343,8 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
               canReceive={canReceive}
               onReceiveItemSubmit={handleReceiveItemSubmit}
               processingItemUid={processingItemUid}
-              canValidateReturn={canValidateReturn}
-              onValidateReturnItem={handleValidateReturnItem}
+              canValidateTransfer={canValidateTransfer}
+              onValidateItem={handleValidateItem}
               validatingItemUid={validatingItemUid}
               isFetching={isFetching}
             />
