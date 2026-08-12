@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
 import { FormSwitch } from "@/components/forms/form-switch";
+import { Show } from "@/components/ui/show";
 import { IconBuildingStore, IconPlus, IconEdit, IconTrash } from "@tabler/icons-react";
 import {
     Table,
@@ -53,6 +54,7 @@ const formSchema = z.object({
     harga_grosir: z.coerce.number().min(0).nullable().optional(),
     min_qty_grosir: z.coerce.number().min(0).nullable().optional(),
     harga_grosir_total: z.coerce.number().min(0).nullable().optional(),
+    is_grosir: z.boolean().default(false),
     margin: z.coerce.number().min(0).nullable().optional(),
     is_active: z.boolean().default(true),
 });
@@ -88,6 +90,7 @@ export function ProductStoreDialog({ open, onOpenChange, product }: ProductStore
             harga_grosir: null,
             min_qty_grosir: null,
             harga_grosir_total: null,
+            is_grosir: false,
             margin: null,
             is_active: true,
         },
@@ -98,6 +101,7 @@ export function ProductStoreDialog({ open, onOpenChange, product }: ProductStore
     const watchHargaGrosir = useWatch({ control, name: "harga_grosir" });
     const watchMinQtyGrosir = useWatch({ control, name: "min_qty_grosir" });
     const watchHargaGrosirTotal = useWatch({ control, name: "harga_grosir_total" });
+    const watchIsGrosir = useWatch({ control, name: "is_grosir" });
 
     useEffect(() => {
         const activeId = document.activeElement?.id;
@@ -139,6 +143,7 @@ export function ProductStoreDialog({ open, onOpenChange, product }: ProductStore
                 harga_grosir: null,
                 min_qty_grosir: null,
                 harga_grosir_total: null,
+                is_grosir: false,
                 margin: null,
                 is_active: true,
             });
@@ -159,6 +164,7 @@ export function ProductStoreDialog({ open, onOpenChange, product }: ProductStore
                 harga_grosir: hGrosir,
                 min_qty_grosir: minQty,
                 harga_grosir_total: hGrosirTotal,
+                is_grosir: Boolean(store.is_grosir ?? false),
                 margin: store.margin,
                 is_active: store.status === "active",
             });
@@ -172,6 +178,7 @@ export function ProductStoreDialog({ open, onOpenChange, product }: ProductStore
                 harga_grosir: null,
                 min_qty_grosir: null,
                 harga_grosir_total: null,
+                is_grosir: false,
                 margin: null,
                 is_active: true,
             });
@@ -182,9 +189,7 @@ export function ProductStoreDialog({ open, onOpenChange, product }: ProductStore
     const onSubmit = (data: ProductStoreFormValues) => {
         if (!product) return;
 
-        const isGrosir = Boolean(
-            data.harga_grosir && data.min_qty_grosir && data.harga_grosir > 0 && data.min_qty_grosir > 0
-        );
+        const isGrosir = Boolean(data.is_grosir);
 
         const payload = {
             productUid: product.uid,
@@ -192,8 +197,8 @@ export function ProductStoreDialog({ open, onOpenChange, product }: ProductStore
             stok: data.stok,
             harga_beli: data.harga_beli ?? undefined,
             harga_jual: data.harga_jual ?? undefined,
-            harga_grosir: data.harga_grosir ?? undefined,
-            min_qty_grosir: data.min_qty_grosir ?? undefined,
+            harga_grosir: isGrosir ? (data.harga_grosir ?? undefined) : undefined,
+            min_qty_grosir: isGrosir ? (data.min_qty_grosir ?? undefined) : undefined,
             is_grosir: isGrosir,
             margin: data.margin ?? undefined,
             status: (data.is_active ? "active" : "inactive") as "active" | "inactive",
@@ -348,26 +353,34 @@ export function ProductStoreDialog({ open, onOpenChange, product }: ProductStore
                             />
 
                             {/* Fitur Grosir Toko */}
-                            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
-                                <span className="text-xs font-bold text-slate-800 block">Harga Grosir Toko (Opsional)</span>
-                                <FormInput<ProductStoreFormValues>
-                                    name="min_qty_grosir"
-                                    label="Syarat Min. Qty Grosir"
-                                    type="number"
-                                />
-                                <div className="grid grid-cols-2 gap-3">
+                            <FormSwitch<ProductStoreFormValues>
+                                name="is_grosir"
+                                label="Harga Grosir Toko"
+                                description="Aktifkan harga grosir untuk toko ini"
+                            />
+
+                            <Show.When isTrue={Boolean(watchIsGrosir)}>
+                                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                                    <span className="text-xs font-bold text-slate-800 block">Harga Grosir Toko (Opsional)</span>
                                     <FormInput<ProductStoreFormValues>
-                                        name="harga_grosir"
-                                        label="Harga Unit Grosir"
+                                        name="min_qty_grosir"
+                                        label="Syarat Min. Qty Grosir"
                                         type="number"
                                     />
-                                    <FormInput<ProductStoreFormValues>
-                                        name="harga_grosir_total"
-                                        label="Total Akumulasi Grosir"
-                                        type="number"
-                                    />
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <FormInput<ProductStoreFormValues>
+                                            name="harga_grosir"
+                                            label="Harga Unit Grosir"
+                                            type="number"
+                                        />
+                                        <FormInput<ProductStoreFormValues>
+                                            name="harga_grosir_total"
+                                            label="Total Akumulasi Grosir"
+                                            type="number"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
+                            </Show.When>
 
                             <FormSwitch
                                 name="is_active"

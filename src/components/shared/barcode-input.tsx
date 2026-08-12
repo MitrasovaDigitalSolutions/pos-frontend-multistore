@@ -17,6 +17,7 @@ interface BarcodeInputProps {
     onSearchSubmit?: (query: string) => void;
     onProductNotFound?: (query: string) => void;
     onInputChange?: (value: string) => void;
+    refocusOnFound?: boolean;
 }
 
 export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
@@ -31,6 +32,7 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
         onSearchSubmit,
         onProductNotFound,
         onInputChange,
+        refocusOnFound = true,
     }: BarcodeInputProps, ref) {
         const localRef = useRef<HTMLInputElement>(null);
         const inputRef = (ref || localRef) as React.MutableRefObject<HTMLInputElement | null>;
@@ -149,7 +151,9 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
             setShowDropdown(false);
             setFocusedIndex(-1);
             onProductFound(product);
-            refocusInput();
+            if (refocusOnFound) {
+                refocusInput();
+            }
         };
 
         const handleSubmit = async (e: React.FormEvent) => {
@@ -213,7 +217,9 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                 onError?.("Terjadi kesalahan saat mencari produk.");
             } finally {
                 setIsSearching(false);
-                refocusInput();
+                if (refocusOnFound) {
+                    refocusInput();
+                }
             }
         };
 

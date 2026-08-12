@@ -43,3 +43,7 @@ Follow a strict feature-based architecture under `src/features/<feature_name>/`:
 - Write code designed for enterprise-scale maintainability, performance, and long-term durability.
 - Include proper error boundaries, loading states, toasts, and fallback states for all async interactions.
 - Always run `bun x tsc --noEmit` and `bun run lint` to verify code correctness before completion.
+
+### 7. Clean Code & React Compiler Standards
+- **Zero Unused Variables/Imports**: Clean up all unused variables, parameters, and imports (`@typescript-eslint/no-unused-vars`). Do NOT declare variables or imports that are never read.
+- **No Synchronous `setState` Inside `useEffect`**: Strictly avoid calling `setState` or `dispatch` synchronously inside `useEffect` bodies (`react-hooks/set-state-in-effect`). Derive state during render, use key-based resets, or handle state updates in event handlers/callbacks.

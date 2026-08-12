@@ -65,7 +65,7 @@ export function StoreProductEditDialog({
             const hGrosir = rawHGrosir !== null && rawHGrosir !== undefined ? Number(rawHGrosir) : null;
             const minQty = rawMinQty !== null && rawMinQty !== undefined ? Number(rawMinQty) : null;
             const hGrosirTotal = (hGrosir && minQty) ? Math.round(hGrosir * minQty) : null;
-            const isGrosirFlag = product.is_grosir ?? activeStore?.is_grosir ?? (hGrosir !== null && minQty !== null);
+            const isGrosirFlag = product.is_grosir ?? activeStore?.is_grosir ?? false;
 
             reset({
                 harga_jual: product.harga ?? activeStore?.harga_jual ?? null,

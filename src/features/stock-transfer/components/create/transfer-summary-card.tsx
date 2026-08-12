@@ -27,7 +27,7 @@ export function TransferSummaryCard({
   const isItemsValid = totalJenis > 0;
 
   return (
-    <div className="bg-white border border-slate-100 rounded-2xl shadow-2xs p-5 space-y-4 sticky top-6">
+    <div className="bg-white border border-slate-100 rounded-2xl shadow-2xs p-5 space-y-4 sticky top-20">
       <h3 className="font-bold text-sm text-slate-900 border-b border-slate-50 pb-2.5">
         Ringkasan Transfer
       </h3>

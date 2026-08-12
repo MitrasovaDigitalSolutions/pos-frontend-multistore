@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { IconMinus, IconPackage, IconPlus, IconScan, IconTrash } from "@tabler/icons-react";
 import { BarcodeInput } from "@/components/shared/barcode-input";
 import { NumberInput } from "@/components/ui/number-input";
@@ -26,7 +27,30 @@ export function TransferItemsSection({
   onUpdateQty,
   onRemoveItem,
 }: TransferItemsSectionProps) {
+  const barcodeInputRef = useRef<HTMLInputElement>(null);
+  const qtyInputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
+  const [lastScannedUid, setLastScannedUid] = useState<string | null>(null);
+
   const totalQty = items.reduce((acc, curr) => acc + curr.kuantitas, 0);
+
+  const handleProductFoundWrapper = (product: Product) => {
+    setLastScannedUid(product.uid);
+    onProductFound(product);
+  };
+
+  useEffect(() => {
+    if (lastScannedUid) {
+      const timer = setTimeout(() => {
+        const inputEl = qtyInputRefs.current.get(lastScannedUid);
+        if (inputEl) {
+          inputEl.focus();
+          inputEl.select();
+        }
+        setLastScannedUid(null);
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [items, lastScannedUid]);
 
   return (
     <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs space-y-4">
@@ -54,7 +78,9 @@ export function TransferItemsSection({
           <span>Cari / Scan Produk</span>
         </label>
         <BarcodeInput
-          onProductFound={onProductFound}
+          ref={barcodeInputRef}
+          refocusOnFound={false}
+          onProductFound={handleProductFoundWrapper}
           placeholder="Scan barcode SKU atau ketik nama produk..."
         />
       </div>
@@ -102,8 +128,22 @@ export function TransferItemsSection({
                         <IconMinus size={13} />
                       </button>
                       <NumberInput
+                        ref={(el) => {
+                          if (el) {
+                            qtyInputRefs.current.set(item.product_uid, el);
+                          } else {
+                            qtyInputRefs.current.delete(item.product_uid);
+                          }
+                        }}
                         value={item.kuantitas}
                         onChange={(val) => onUpdateQty(item.product_uid, val || 1)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            barcodeInputRef.current?.focus();
+                            barcodeInputRef.current?.select();
+                          }
+                        }}
                         min={1}
                         allowNegative={false}
                         className="h-7 w-14 text-center text-xs font-bold border-slate-200 rounded-lg px-1"

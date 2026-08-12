@@ -78,7 +78,7 @@ export function ProductFormDialog({
                 brand_uid: editingProduct.brand_uid ?? null,
                 image: undefined,
                 is_jasa: !!editingProduct.is_jasa,
-                is_grosir: editingProduct.is_grosir ?? storeProduct?.is_grosir ?? (hGrosir !== null && minQty !== null),
+                is_grosir: Boolean(editingProduct.is_grosir ?? storeProduct?.is_grosir ?? false),
             });
         }
     }, [open, editingProduct, reset]);
@@ -209,9 +209,7 @@ export function ProductFormDialog({
             formData.append("min_qty_grosir", String(data.min_qty_grosir));
         }
 
-        const isGrosir = Boolean(
-            data.is_grosir || (data.harga_grosir && data.min_qty_grosir && data.harga_grosir > 0 && data.min_qty_grosir > 0)
-        );
+        const isGrosir = Boolean(data.is_grosir);
         formData.append("is_grosir", isGrosir ? "1" : "0");
 
         if (data.stok !== undefined && data.stok !== null) {

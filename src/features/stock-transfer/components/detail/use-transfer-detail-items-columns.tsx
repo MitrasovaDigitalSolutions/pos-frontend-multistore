@@ -23,6 +23,10 @@ interface UseTransferDetailItemsColumnsProps {
     }
   ) => Promise<void>;
   processingItemUid?: string | null;
+  onOpenTerimaItem?: (item: StockTransferItem) => void;
+  registerInputRef?: (uid: string, el: HTMLInputElement | null) => void;
+  onOpenValidateItem?: (item: StockTransferItem) => void;
+  registerValidationInputRef?: (uid: string, el: HTMLInputElement | null) => void;
   onValidateItem?: (
     item: StockTransferItem,
     payload: { jenis: "retur" | "koreksi"; kuantitas_return?: number; setujui?: boolean }
@@ -40,6 +44,10 @@ export function useTransferDetailItemsColumns({
   items,
   canReceive,
   canValidateTransfer,
+  onOpenTerimaItem,
+  registerInputRef,
+  onOpenValidateItem,
+  registerValidationInputRef,
   processingItemUid,
   validatingItemUid,
 }: UseTransferDetailItemsColumnsProps) {
@@ -95,9 +103,16 @@ export function useTransferDetailItemsColumns({
 
             return (
               <FormNumberInput<ReceiveFormValues>
+                inputRef={(el) => registerInputRef?.(row.original.uid, el)}
                 name={`items.${targetIdx}.kuantitas_diterima`}
                 min={0}
                 disabled={processingItemUid === row.original.uid}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    onOpenTerimaItem?.(row.original);
+                  }
+                }}
                 className="h-8 w-20 text-xs text-center font-bold mx-auto border-slate-200 bg-white"
               />
             );
@@ -175,10 +190,10 @@ export function useTransferDetailItemsColumns({
           cell: ({ row }) => {
             const qtySent = Number(row.original.kuantitas);
             const qtyReceived = Number(row.original.kuantitas_diterima || 0);
-            
+
             if (row.original.validated_at) {
-              const qty = row.original.jenis_validasi === "koreksi" 
-                ? row.original.kuantitas_koreksi 
+              const qty = row.original.jenis_validasi === "koreksi"
+                ? row.original.kuantitas_koreksi
                 : row.original.kuantitas_return;
               const type = row.original.jenis_validasi === "koreksi" ? "Koreksi" : "Retur";
               return (
@@ -187,7 +202,7 @@ export function useTransferDetailItemsColumns({
                 </Badge>
               );
             }
-            
+
             if (qtyReceived > qtySent) {
               const kelebihan = qtyReceived - qtySent;
               const idx = items.findIndex((it) => it.uid === row.original.uid);
@@ -195,10 +210,18 @@ export function useTransferDetailItemsColumns({
 
               return (
                 <FormNumberInput<ReceiveFormValues>
+                  inputRef={(el) => registerValidationInputRef?.(row.original.uid, el)}
                   name={`items.${targetIdx}.kuantitas_koreksi`}
                   min={0}
                   max={kelebihan}
                   disabled={validatingItemUid === row.original.uid}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onOpenValidateItem?.(row.original);
+                    }
+                  }}
                   className="h-8 w-20 text-xs text-center font-bold mx-auto border-slate-200 bg-white"
                 />
               );
@@ -214,10 +237,18 @@ export function useTransferDetailItemsColumns({
 
             return (
               <FormNumberInput<ReceiveFormValues>
+                inputRef={(el) => registerValidationInputRef?.(row.original.uid, el)}
                 name={`items.${targetIdx}.kuantitas_return`}
                 min={0}
                 max={diff}
                 disabled={validatingItemUid === row.original.uid}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onOpenValidateItem?.(row.original);
+                  }
+                }}
                 className="h-8 w-20 text-xs text-center font-bold mx-auto border-slate-200 bg-white"
               />
             );
@@ -399,5 +430,15 @@ export function useTransferDetailItemsColumns({
         },
       },
     ];
-  }, [items, canReceive, canValidateTransfer, processingItemUid, validatingItemUid]);
+  }, [
+    items,
+    canReceive,
+    canValidateTransfer,
+    onOpenTerimaItem,
+    registerInputRef,
+    onOpenValidateItem,
+    registerValidationInputRef,
+    processingItemUid,
+    validatingItemUid,
+  ]);
 }

@@ -22,6 +22,7 @@ export interface CatalogProduct {
     harga_jual?: number | null;
     harga_grosir?: number | null;
     min_qty_grosir?: number | null;
+    is_grosir?: boolean | null;
     harga_beli?: number | null;
     harga_beli_avg?: number | null;
     margin?: number | null;
@@ -50,6 +51,7 @@ export interface BulkAssignmentItem {
     harga_jual?: number | null;
     harga_grosir?: number | null;
     min_qty_grosir?: number | null;
+    is_grosir?: boolean;
     margin?: number | null;
     status?: "active" | "inactive";
 }

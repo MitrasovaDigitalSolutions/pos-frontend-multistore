@@ -20,6 +20,15 @@ interface FormNumberInputProps<T extends FieldValues> extends Omit<
     label?: React.ReactNode;
     helperText?: React.ReactNode;
     onValueChange?: (val: number | null) => void;
+    inputRef?: React.Ref<HTMLInputElement>;
+}
+
+function setRef<T>(ref: React.Ref<T> | undefined, value: T | null) {
+    if (typeof ref === "function") {
+        ref(value);
+    } else if (ref && typeof ref === "object" && "current" in ref) {
+        (ref as React.MutableRefObject<T | null>).current = value;
+    }
 }
 
 export function FormNumberInput<T extends FieldValues>({
@@ -30,6 +39,7 @@ export function FormNumberInput<T extends FieldValues>({
     disabled,
     onValueChange,
     onBlur,
+    inputRef,
     ...props
 }: FormNumberInputProps<T>) {
     const {
@@ -56,6 +66,14 @@ export function FormNumberInput<T extends FieldValues>({
 
     const error = getNestedValue(errors, name);
 
+    const handleRef = React.useCallback(
+        (node: HTMLInputElement | null, fieldRef: (instance: HTMLInputElement | null) => void) => {
+            fieldRef(node);
+            setRef(inputRef, node);
+        },
+        [inputRef]
+    );
+
     return (
         <Controller
             control={control}
@@ -73,7 +91,7 @@ export function FormNumberInput<T extends FieldValues>({
                         )}
                         <NumberInput
                             id={name}
-                            ref={ref}
+                            ref={(node) => handleRef(node, ref)}
                             value={value}
                             onChange={(val) => {
                                 onChange(val);

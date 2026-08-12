@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import {
     useFormContext,
     type FieldPath,
@@ -14,6 +15,15 @@ interface FormInputProps<T extends FieldValues> extends Omit<
 > {
     name: FieldPath<T>;
     label?: string;
+    inputRef?: React.Ref<HTMLInputElement>;
+}
+
+function setRef<T>(ref: React.Ref<T> | undefined, value: T | null) {
+    if (typeof ref === "function") {
+        ref(value);
+    } else if (ref && typeof ref === "object" && "current" in ref) {
+        (ref as React.MutableRefObject<T | null>).current = value;
+    }
 }
 
 export function FormInput<T extends FieldValues>({
@@ -21,6 +31,7 @@ export function FormInput<T extends FieldValues>({
     label,
     className,
     required,
+    inputRef,
     ...props
 }: FormInputProps<T>) {
     const {
@@ -29,6 +40,15 @@ export function FormInput<T extends FieldValues>({
     } = useFormContext<T>();
 
     const error = errors[name];
+    const { ref: registerRef, ...registerProps } = register(name);
+
+    const handleRef = useCallback(
+        (node: HTMLInputElement | null) => {
+            registerRef(node);
+            setRef(inputRef, node);
+        },
+        [registerRef, inputRef]
+    );
 
     return (
         <div className="space-y-1.5">
@@ -43,7 +63,8 @@ export function FormInput<T extends FieldValues>({
             )}
             <Input
                 id={name}
-                {...register(name)}
+                ref={handleRef}
+                {...registerProps}
                 className={cn(
                     "h-10 text-xs bg-white border-slate-200 focus-visible:ring-emerald-600 rounded-xl",
                     error && "border-rose-400 focus-visible:ring-rose-500",
