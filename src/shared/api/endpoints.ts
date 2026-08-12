@@ -144,6 +144,7 @@ export const ENDPOINTS = {
             OVERVIEW: "/v1/reports/central/overview",
             STORES: "/v1/reports/central/stores",
             PRINT_STORES: "/v1/reports/central/print/stores",
+            PRINT_PRODUCTS: "/v1/reports/central/print/products",
             SALES_TREND: "/v1/reports/central/sales-trend",
             INVENTORY: "/v1/reports/central/inventory",
         },

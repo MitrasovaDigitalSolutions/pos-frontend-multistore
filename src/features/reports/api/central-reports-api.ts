@@ -85,3 +85,22 @@ export function getCentralPrintStoresUrl(
     if (orientation) params.set("orientation", orientation);
     return `${baseUrl}?${params.toString()}`;
 }
+
+export function getCentralPrintProductsUrl(
+    storeUids?: string[],
+    paperSize?: string,
+    orientation?: string,
+    from?: string,
+    to?: string
+): string {
+    const baseUrl = `/api/proxy${ENDPOINTS.REPORTS.CENTRAL.PRINT_PRODUCTS}`;
+    const params = new URLSearchParams();
+    if (from) params.set("from", from);
+    if (to) params.set("to", to);
+    if (storeUids && storeUids.length > 0) {
+        params.set("stores", storeUids.join(","));
+    }
+    if (paperSize) params.set("paper_size", paperSize);
+    if (orientation) params.set("orientation", orientation);
+    return `${baseUrl}?${params.toString()}`;
+}
