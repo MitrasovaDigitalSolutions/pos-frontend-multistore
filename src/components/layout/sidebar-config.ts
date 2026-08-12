@@ -149,6 +149,33 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
             },
             {
                 type: "submenu",
+                label: "Konsinyasi",
+                icon: IconBuildingWarehouse,
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") ||
+                    hasPermission(roles, permissions, "view_purchase") ||
+                    hasPermission(roles, permissions, "manage_purchase"),
+                items: [
+                    {
+                        path: ROUTES.ADMIN_CONSIGNMENT,
+                        label: "Penerimaan Konsinyasi",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_purchase") ||
+                            hasPermission(roles, permissions, "manage_purchase"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_CONSIGNMENT_PAYMENT,
+                        label: "Pelunasan & Retur",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_purchase") ||
+                            hasPermission(roles, permissions, "manage_purchase"),
+                    },
+                ],
+            },
+            {
+                type: "submenu",
                 label: "Transfer Stok",
                 icon: IconArrowsLeftRight,
                 permission: (roles, permissions) =>
