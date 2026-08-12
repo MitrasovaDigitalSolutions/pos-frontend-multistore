@@ -60,14 +60,15 @@ export function ReceiveItemModal({
 
   const qtyDikirim = item.kuantitas;
   const isParsial = qtyDiterima < qtyDikirim && selectedStatus === "received";
+  const isExcess = qtyDiterima > qtyDikirim && selectedStatus === "received";
   const isRejected = selectedStatus === "rejected";
-  const requireSelisihReason = isRejected || isParsial;
+  const requireSelisihReason = isRejected || isParsial || isExcess;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload = {
       status: selectedStatus,
-      kuantitas_diterima: Math.min(Math.max(0, qtyDiterima), qtyDikirim),
+      kuantitas_diterima: Math.max(0, qtyDiterima),
       jenis_selisih: requireSelisihReason && jenisSelisih
         ? (jenisSelisih as "salah_input" | "rusak" | "hilang")
         : undefined,
@@ -122,11 +123,11 @@ export function ReceiveItemModal({
                 setQtyDiterima(qtyDikirim);
               }}
               className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${selectedStatus === "received"
-                  ? "bg-emerald-50 border-emerald-300 text-emerald-800 shadow-2xs"
+                  ? "bg-emerald-600 border-emerald-600 text-white shadow-2xs"
                   : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                 }`}
             >
-              <IconCheck size={16} className="text-emerald-600" />
+              <IconCheck size={16} className={selectedStatus === "received" ? "text-white" : "text-emerald-600"} />
               <span>Terima Barang</span>
             </button>
             <button
@@ -137,11 +138,11 @@ export function ReceiveItemModal({
                 if (!jenisSelisih) setJenisSelisih("rusak");
               }}
               className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${selectedStatus === "rejected"
-                  ? "bg-rose-50 border-rose-300 text-rose-800 shadow-2xs"
+                  ? "bg-rose-600 border-rose-600 text-white shadow-2xs"
                   : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                 }`}
             >
-              <IconX size={16} className="text-rose-600" />
+              <IconX size={16} className={selectedStatus === "rejected" ? "text-white" : "text-rose-600"} />
               <span>Tolak</span>
             </button>
           </div>
@@ -155,9 +156,8 @@ export function ReceiveItemModal({
           </div>
           <NumberInput
             value={qtyDiterima}
-            onChange={(val) => setQtyDiterima(Math.min(qtyDikirim, Math.max(0, val || 0)))}
+            onChange={(val) => setQtyDiterima(Math.max(0, val || 0))}
             min={0}
-            max={qtyDikirim}
             allowNegative={false}
             className="h-10 text-sm font-black text-center border-slate-200 rounded-xl"
           />

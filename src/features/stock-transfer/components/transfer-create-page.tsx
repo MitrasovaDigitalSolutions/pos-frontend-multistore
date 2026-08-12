@@ -200,7 +200,7 @@ export function TransferCreatePage({ editUid }: TransferCreatePageProps) {
     <div className="space-y-6 max-w-5xl mx-auto">
       <TransferCreateHeader />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-8 space-y-6">
           <TransferRouteCard
             activeStoreName={activeStore?.nama}
