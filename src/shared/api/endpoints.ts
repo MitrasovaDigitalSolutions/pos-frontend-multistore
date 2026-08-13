@@ -212,4 +212,31 @@ export const ENDPOINTS = {
             CARD: (trxId: number) => `/v1/transactions/${trxId}/pay/card`,
         },
     },
+
+    // Supplier Sales (katalog) + Request Transfer (permintaan stok antar cabang)
+    SUPPLIER_SALES: {
+        LIST: "/v1/supplier-sales",
+        ALL: "/v1/supplier-sales/all",
+        DETAIL: (uid: string) => `/v1/supplier-sales/${uid}`,
+        CREATE: "/v1/supplier-sales",
+        UPDATE: (uid: string) => `/v1/supplier-sales/${uid}`,
+        DELETE: (uid: string) => `/v1/supplier-sales/${uid}`,
+        ADD_ITEM: (uid: string) => `/v1/supplier-sales/${uid}/items`,
+        UPDATE_ITEM: (uid: string, productUid: string) =>
+            `/v1/supplier-sales/${uid}/items/${productUid}`,
+        REMOVE_ITEM: (uid: string, productUid: string) =>
+            `/v1/supplier-sales/${uid}/items/${productUid}`,
+    },
+    REQUEST_TRANSFER: {
+        LIST: "/v1/request-transfer",
+        CREATE: "/v1/request-transfer",
+        SUMMARY: (supplierUid: string, supplierSalesUid?: string | null) =>
+            `/v1/request-transfer/summary/${supplierUid}/${supplierSalesUid ?? "null"}`,
+        REJECT: (supplierUid: string, supplierSalesUid?: string | null) =>
+            `/v1/request-transfer/summary/${supplierUid}/${supplierSalesUid ?? "null"}/reject`,
+        ORDER: (supplierUid: string, supplierSalesUid?: string | null) =>
+            `/v1/request-transfer/summary/${supplierUid}/${supplierSalesUid ?? "null"}/order`,
+        SEND: (supplierUid: string, supplierSalesUid?: string | null) =>
+            `/v1/request-transfer/summary/${supplierUid}/${supplierSalesUid ?? "null"}/send`,
+    },
 } as const;

@@ -17,6 +17,7 @@ import {
     IconSettings,
     IconShield,
     IconShoppingCart,
+    IconTruckDelivery,
     IconUserCheck,
     IconUsers
 } from "@tabler/icons-react";
@@ -184,6 +185,14 @@ const PERMISSION_METADATA: Record<string, { label: string; desc: string }> = {
         label: "Lihat Transfer Stok",
         desc: "Melihat riwayat dan status pemindahan stok barang antar cabang toko/gudang.",
     },
+    manage_request_transfers: {
+        label: "Kelola Request Transfer",
+        desc: "Membuat permintaan stok ke supplier, serta memproses summary (reject/order/kirim) dan mengelola katalog sales supplier.",
+    },
+    view_request_transfers: {
+        label: "Lihat Request Transfer",
+        desc: "Melihat summary permintaan stok antar cabang dan katalog sales supplier tanpa hak memproses.",
+    },
 };
 
 const ROLE_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
@@ -243,6 +252,14 @@ const PERMISSION_CATEGORIES: StaticPermissionCategory[] = [
         icon: IconBox,
         colorClass: "text-amber-600 bg-amber-50 border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/20",
         permissions: ["manage_inventory", "view_inventory", "manage_stock_transfers", "view_stock_transfers"],
+    },
+    {
+        id: "request_transfer",
+        label: "Request Transfer & Katalog Supplier",
+        desc: "Permintaan stok antar cabang ke supplier, pemrosesan summary (reject/order/kirim), serta katalog sales supplier.",
+        icon: IconTruckDelivery,
+        colorClass: "text-sky-600 bg-sky-50 border-sky-100 dark:bg-sky-950/20 dark:text-sky-400 dark:border-sky-900/20",
+        permissions: ["manage_request_transfers", "view_request_transfers"],
     },
     {
         id: "cash_drawer",
