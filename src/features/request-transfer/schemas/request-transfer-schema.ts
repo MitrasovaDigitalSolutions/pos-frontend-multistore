@@ -1,8 +1,17 @@
 import { z } from "zod";
 
 export const requestTransferSchema = z.object({
-    supplier_uid: z.string().min(1, "Supplier wajib dipilih"),
+    supplier_uid: z
+        .string()
+        .optional()
+        .nullable()
+        .transform((val) => (val && val !== "null" ? val : null)),
     supplier_sales_uid: z
+        .string()
+        .optional()
+        .nullable()
+        .transform((val) => (val && val !== "null" ? val : null)),
+    request_to: z
         .string()
         .optional()
         .nullable()
@@ -21,6 +30,7 @@ export const requestTransferSchema = z.object({
         )
         .min(1, "Minimal 1 item dengan kuantitas lebih dari 0"),
 });
+
 
 export type RequestTransferInput = z.infer<typeof requestTransferSchema>;
 

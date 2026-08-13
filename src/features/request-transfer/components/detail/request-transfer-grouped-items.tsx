@@ -24,7 +24,7 @@ export function RequestTransferGroupedItems({ items }: RequestTransferGroupedIte
                             <tr>
                                 <th className="px-3.5 py-2.5">Produk</th>
                                 <th className="px-3.5 py-2.5 text-right w-24">Qty Request</th>
-                                <th className="px-3.5 py-2.5 text-right w-24">Stok Pusat</th>
+                                <th className="px-3.5 py-2.5 text-right w-24">Stok Sumber</th>
                                 <th className="px-3 py-2.5 text-center w-24">Status</th>
                             </tr>
                         </thead>
@@ -40,8 +40,9 @@ export function RequestTransferGroupedItems({ items }: RequestTransferGroupedIte
                                         {Number(item.kuantitas).toLocaleString("id-ID")}
                                     </td>
                                     <td className="px-3.5 py-2.5 text-right text-slate-600">
-                                        {Number(item.stok_pusat).toLocaleString("id-ID")}
+                                        {Number(item.stok_source ?? 0).toLocaleString("id-ID")}
                                     </td>
+
                                     <td className="px-3 py-2.5 text-center">
                                         <span
                                             className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${

@@ -119,6 +119,21 @@ export function AdminSidebar() {
             );
         }
 
+        if (path === ROUTES.ADMIN_REQUEST_TRANSFERS_INCOMING) {
+            return pathname === path || pathname.startsWith(path + "/");
+        }
+
+        // Prevent "/admin/request-transfer" (Request Transfer) from matching when on Kelola Request Masuk routes
+        if (path === ROUTES.ADMIN_REQUEST_TRANSFERS) {
+            if (
+                pathname === ROUTES.ADMIN_REQUEST_TRANSFERS_INCOMING ||
+                pathname.startsWith(ROUTES.ADMIN_REQUEST_TRANSFERS_INCOMING + "/")
+            ) {
+                return false;
+            }
+        }
+
+
         // Prevent "/admin/inventory/stock-transfer" (Transfer Keluar) from matching when on Transfer Masuk or Validasi routes
         if (path === ROUTES.ADMIN_STOCK_TRANSFERS) {
             if (
@@ -132,6 +147,7 @@ export function AdminSidebar() {
                 return false;
             }
         }
+
         // For all other routes, use prefix matching so nested routes
         // (e.g. /admin/purchase/order/4/items) highlight the parent menu item
         return pathname === path || pathname.startsWith(path + "/");

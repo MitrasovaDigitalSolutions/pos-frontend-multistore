@@ -4,30 +4,39 @@ import { IconBuildingStore, IconNotes } from "@tabler/icons-react";
 import { CommandSelect } from "@/components/ui/command-select";
 import type { Supplier } from "@/features/master/suppliers/types";
 import type { SupplierSale } from "@/features/supplier-sales/types";
+import type { Store } from "@/features/stores/types";
 
 interface RequestTransferFormInfoProps {
+  requestTo: string;
   supplierUid: string;
   supplierSalesUid: string | null;
   catatan: string;
+  stores: Store[];
   suppliers: Supplier[];
   supplierSales: SupplierSale[];
+  isLoadingStores?: boolean;
   isLoadingSuppliers: boolean;
   isLoadingSales: boolean;
   disabled: boolean;
+  onRequestToChange: (uid: string) => void;
   onSupplierChange: (uid: string) => void;
   onCatalogChange: (uid: string) => void;
   onCatatanChange: (value: string) => void;
 }
 
 export function RequestTransferFormInfo({
+  requestTo,
   supplierUid,
   supplierSalesUid,
   catatan,
+  stores,
   suppliers,
   supplierSales,
+  isLoadingStores = false,
   isLoadingSuppliers,
   isLoadingSales,
   disabled,
+  onRequestToChange,
   onSupplierChange,
   onCatalogChange,
   onCatatanChange,
@@ -44,23 +53,48 @@ export function RequestTransferFormInfo({
           <div className="p-1 rounded-md bg-emerald-50 text-emerald-600">
             <IconBuildingStore size={15} />
           </div>
-          <span>Supplier & Detail Request</span>
+          <span>Toko Sumber & Detail Request</span>
         </h3>
         <span className="text-[11px] text-slate-400 font-medium">Langkah 1 dari 2</span>
       </div>
 
       {/* Selectors Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Target Store (request_to) Selector */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+              Toko Sumber (Tujuan) <span className="text-rose-500">*</span>
+            </label>
+          </div>
+
+          <CommandSelect
+            value={requestTo}
+            onChange={onRequestToChange}
+            options={(stores || []).map((s) => ({
+              value: s.uid,
+              label: s.is_central ? `${s.nama} (Pusat)` : s.nama,
+            }))}
+            placeholder="Pilih toko sumber..."
+            searchPlaceholder="Cari toko..."
+            isLoading={isLoadingStores}
+            disabled={disabled}
+          />
+        </div>
+
         {/* Supplier Selector */}
         <div className="space-y-1">
-          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-            Supplier <span className="text-rose-500">*</span>
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+              Supplier
+            </label>
+            <span className="text-[10px] text-slate-400 font-normal">(opsional)</span>
+          </div>
           <CommandSelect
             value={supplierUid}
             onChange={onSupplierChange}
             options={(suppliers || []).map((s) => ({ value: s.uid, label: s.nama }))}
-            placeholder="Pilih supplier..."
+            placeholder="Pilih supplier (opsional)..."
             searchPlaceholder="Cari nama supplier..."
             isLoading={isLoadingSuppliers}
             disabled={disabled}
@@ -79,11 +113,11 @@ export function RequestTransferFormInfo({
             value={supplierSalesUid ?? ""}
             onChange={onCatalogChange}
             options={filteredSales.map((s) => ({ value: s.uid, label: s.nama }))}
-            placeholder="Pilih katalog (auto-isi barang)..."
+            placeholder="Pilih katalog (auto-isi)..."
             searchPlaceholder="Cari katalog sales..."
             isLoading={isLoadingSales}
             disabled={disabled || !supplierUid}
-            emptyMessage={!supplierUid ? "Pilih supplier terlebih dahulu" : "Tidak ada katalog sales untuk supplier ini"}
+            emptyMessage={!supplierUid ? "Pilih supplier terlebih dahulu" : "Tidak ada katalog sales"}
           />
         </div>
       </div>
@@ -111,3 +145,6 @@ export function RequestTransferFormInfo({
     </div>
   );
 }
+
+
+

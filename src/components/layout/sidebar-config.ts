@@ -1,23 +1,22 @@
 import { hasPermission, hasRole } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
 import {
+    IconArrowsLeftRight,
     IconBox,
-    IconDatabase,
-    IconDeviceLaptop,
-    IconHome,
-    IconSettings,
-    IconShieldLock,
-    IconShoppingCart,
-    IconWallet,
-    IconReceipt,
-    IconUsers,
-    IconChartBar,
-    IconNotebook,
     IconBuildingBank,
     IconBuildingStore,
     IconBuildingWarehouse,
-    IconArrowsLeftRight,
-    IconTruckDelivery
+    IconChartBar,
+    IconDatabase,
+    IconDeviceLaptop,
+    IconHome,
+    IconNotebook,
+    IconReceipt,
+    IconSettings,
+    IconShieldLock,
+    IconShoppingCart,
+    IconUsers,
+    IconWallet
 } from "@tabler/icons-react";
 
 export interface SidebarMenuItem {
@@ -187,6 +186,14 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     {
                         path: ROUTES.ADMIN_REQUEST_TRANSFERS,
                         label: "Request Transfer",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_request_transfers") ||
+                            hasPermission(roles, permissions, "manage_request_transfers"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_REQUEST_TRANSFERS_INCOMING,
+                        label: "Kelola Request Masuk",
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") ||
                             hasPermission(roles, permissions, "view_request_transfers") ||

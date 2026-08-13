@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/data-table";
+import { formatToReadableDate } from "@/lib/date-utils";
 import { ROUTES } from "@/constants/routes";
 import type { RequestTransferSummary } from "../../types";
 
@@ -21,6 +22,7 @@ interface RequestTransferSummaryTableProps {
     onPerPageChange: (perPage: number) => void;
     isLoading?: boolean;
     isFetching?: boolean;
+    mode?: "outgoing" | "incoming";
 }
 
 export function RequestTransferSummaryTable({
@@ -32,26 +34,39 @@ export function RequestTransferSummaryTable({
     onPerPageChange,
     isLoading = false,
     isFetching = false,
+    mode = "outgoing",
 }: RequestTransferSummaryTableProps) {
-    const router = useRouter();
+    const router = useAppRouter();
+
 
     const openSummary = (s: RequestTransferSummary) => {
-        const params = new URLSearchParams({ supplier_uid: s.supplier_uid });
-        if (s.supplier_sales_uid) {
-            params.set("supplier_sales_uid", s.supplier_sales_uid);
-        }
-        router.push(`${ROUTES.ADMIN_REQUEST_TRANSFERS_DETAIL}?${params.toString()}`);
+        const detailRoute =
+            mode === "incoming"
+                ? ROUTES.ADMIN_REQUEST_TRANSFERS_INCOMING_DETAIL
+                : ROUTES.ADMIN_REQUEST_TRANSFERS_DETAIL;
+        router.push(`${detailRoute}?summary_uid=${s.summary_uid}`);
     };
+
 
     const columns = useMemo<ColumnDef<RequestTransferSummary>[]>(
         () => [
             {
+                accessorKey: "request_to_nama",
+                header: "Toko Sumber",
+                cell: ({ row }) => (
+                    <span className="font-bold text-slate-900 text-xs">
+                        {row.original.request_to_nama || "Pusat"}
+                    </span>
+                ),
+                size: 160,
+            },
+            {
                 accessorKey: "supplier_nama",
-                header: "Supplier",
+                header: "Supplier & Katalog",
                 cell: ({ row }) => (
                     <div className="flex flex-col gap-0.5">
-                        <span className="font-bold text-slate-900 text-xs">
-                            {row.original.supplier_nama}
+                        <span className="font-semibold text-slate-800 text-xs">
+                            {row.original.supplier_nama || "Tanpa Supplier"}
                         </span>
                         <span className="text-[10px] text-slate-400">
                             {row.original.supplier_sales_nama
@@ -60,7 +75,7 @@ export function RequestTransferSummaryTable({
                         </span>
                     </div>
                 ),
-                size: 280,
+                size: 220,
             },
             {
                 accessorKey: "request_count",
@@ -85,14 +100,18 @@ export function RequestTransferSummaryTable({
                 header: "Request Terakhir",
                 cell: ({ row }) => (
                     <span className="text-xs text-slate-600">
-                        {row.original.tanggal_request_terakhir || "-"}
+                        {row.original.tanggal_request_terakhir
+                            ? formatToReadableDate(row.original.tanggal_request_terakhir)
+                            : "-"}
                     </span>
                 ),
-                size: 130,
+                size: 150,
             },
         ],
         [],
     );
+
+
 
     return (
         <DataTable

@@ -6,21 +6,28 @@ import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/a
 import type { RequestTransfer, RequestTransferDetail, RequestTransferSummary } from "../types";
 import type { RequestTransferInput } from "../schemas/request-transfer-schema";
 
-export function useRequestTransferSummaries(params?: PaginationParams & { supplier_uid?: string }) {
+export function useIncomingRequestTransfers(params?: PaginationParams & { supplier_uid?: string }) {
     return useQuery<PaginatedResponse<RequestTransferSummary>>({
-        queryKey: [...queryKeys.requestTransfers.all, params],
-        queryFn: () => apiGetList<RequestTransferSummary>(ENDPOINTS.REQUEST_TRANSFER.LIST, params),
+        queryKey: queryKeys.requestTransfers.incoming(params),
+        queryFn: () => apiGetList<RequestTransferSummary>(ENDPOINTS.REQUEST_TRANSFER.INCOMING, params),
     });
 }
 
-export function useRequestTransferDetail(supplierUid: string, supplierSalesUid?: string | null) {
+export function useOutgoingRequestTransfers(params?: PaginationParams & { supplier_uid?: string }) {
+    return useQuery<PaginatedResponse<RequestTransferSummary>>({
+        queryKey: queryKeys.requestTransfers.outgoing(params),
+        queryFn: () => apiGetList<RequestTransferSummary>(ENDPOINTS.REQUEST_TRANSFER.OUTGOING, params),
+    });
+}
+
+export function useRequestTransferDetail(summaryUid: string) {
     return useQuery<RequestTransferDetail>({
-        queryKey: queryKeys.requestTransfers.summary(supplierUid, supplierSalesUid),
+        queryKey: queryKeys.requestTransfers.summary(summaryUid),
         queryFn: () =>
             apiGetData<RequestTransferDetail>(
-                ENDPOINTS.REQUEST_TRANSFER.SUMMARY(supplierUid, supplierSalesUid),
+                ENDPOINTS.REQUEST_TRANSFER.SUMMARY(summaryUid),
             ),
-        enabled: !!supplierUid,
+        enabled: !!summaryUid,
     });
 }
 
@@ -40,15 +47,15 @@ export function useCreateRequestTransfer() {
 
 export function useRejectRequestTransfer() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<void>, Error, { supplierUid: string; supplierSalesUid?: string | null }>({
-        mutationFn: ({ supplierUid, supplierSalesUid }) =>
+    return useMutation<ApiResponse<void>, Error, { summaryUid: string }>({
+        mutationFn: ({ summaryUid }) =>
             apiPost<ApiResponse<void>, void>(
-                ENDPOINTS.REQUEST_TRANSFER.REJECT(supplierUid, supplierSalesUid),
+                ENDPOINTS.REQUEST_TRANSFER.REJECT(summaryUid),
             ),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: queryKeys.requestTransfers.all });
             queryClient.invalidateQueries({
-                queryKey: queryKeys.requestTransfers.summary(variables.supplierUid, variables.supplierSalesUid),
+                queryKey: queryKeys.requestTransfers.summary(variables.summaryUid),
             });
         },
     });
@@ -56,15 +63,16 @@ export function useRejectRequestTransfer() {
 
 export function useOrderRequestTransfer() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<unknown>, Error, { supplierUid: string; supplierSalesUid?: string | null }>({
-        mutationFn: ({ supplierUid, supplierSalesUid }) =>
-            apiPost<ApiResponse<unknown>, void>(
-                ENDPOINTS.REQUEST_TRANSFER.ORDER(supplierUid, supplierSalesUid),
+    return useMutation<ApiResponse<unknown>, Error, { summaryUid: string; supplier_uid?: string }>({
+        mutationFn: ({ summaryUid, supplier_uid }) =>
+            apiPost<ApiResponse<unknown>, { supplier_uid?: string }>(
+                ENDPOINTS.REQUEST_TRANSFER.ORDER(summaryUid),
+                supplier_uid ? { supplier_uid } : {},
             ),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: queryKeys.requestTransfers.all });
             queryClient.invalidateQueries({
-                queryKey: queryKeys.requestTransfers.summary(variables.supplierUid, variables.supplierSalesUid),
+                queryKey: queryKeys.requestTransfers.summary(variables.summaryUid),
             });
         },
     });
@@ -72,16 +80,17 @@ export function useOrderRequestTransfer() {
 
 export function useSendRequestTransfer() {
     const queryClient = useQueryClient();
-    return useMutation<ApiResponse<unknown>, Error, { supplierUid: string; supplierSalesUid?: string | null }>({
-        mutationFn: ({ supplierUid, supplierSalesUid }) =>
+    return useMutation<ApiResponse<unknown>, Error, { summaryUid: string }>({
+        mutationFn: ({ summaryUid }) =>
             apiPost<ApiResponse<unknown>, void>(
-                ENDPOINTS.REQUEST_TRANSFER.SEND(supplierUid, supplierSalesUid),
+                ENDPOINTS.REQUEST_TRANSFER.SEND(summaryUid),
             ),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: queryKeys.requestTransfers.all });
             queryClient.invalidateQueries({
-                queryKey: queryKeys.requestTransfers.summary(variables.supplierUid, variables.supplierSalesUid),
+                queryKey: queryKeys.requestTransfers.summary(variables.summaryUid),
             });
         },
     });
 }
+

@@ -228,15 +228,12 @@ export const ENDPOINTS = {
             `/v1/supplier-sales/${uid}/items/${productUid}`,
     },
     REQUEST_TRANSFER: {
-        LIST: "/v1/request-transfer",
         CREATE: "/v1/request-transfer",
-        SUMMARY: (supplierUid: string, supplierSalesUid?: string | null) =>
-            `/v1/request-transfer/summary/${supplierUid}/${supplierSalesUid ?? "null"}`,
-        REJECT: (supplierUid: string, supplierSalesUid?: string | null) =>
-            `/v1/request-transfer/summary/${supplierUid}/${supplierSalesUid ?? "null"}/reject`,
-        ORDER: (supplierUid: string, supplierSalesUid?: string | null) =>
-            `/v1/request-transfer/summary/${supplierUid}/${supplierSalesUid ?? "null"}/order`,
-        SEND: (supplierUid: string, supplierSalesUid?: string | null) =>
-            `/v1/request-transfer/summary/${supplierUid}/${supplierSalesUid ?? "null"}/send`,
+        INCOMING: "/v1/request-transfer/incoming",
+        OUTGOING: "/v1/request-transfer/outgoing",
+        SUMMARY: (summaryUid: string) => `/v1/request-transfer/summary/${summaryUid}`,
+        REJECT: (summaryUid: string) => `/v1/request-transfer/summary/${summaryUid}/reject`,
+        ORDER: (summaryUid: string) => `/v1/request-transfer/summary/${summaryUid}/order`,
+        SEND: (summaryUid: string) => `/v1/request-transfer/summary/${summaryUid}/send`,
     },
 } as const;
