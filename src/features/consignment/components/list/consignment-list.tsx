@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { useForm } from "react-hook-form";
 import { IconPlus, IconReceipt2, IconBan, IconCash } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ const CONSIGNMENT_STATUS_OPTIONS = [
 ];
 
 export function ConsignmentList() {
-  const router = useRouter();
+  const router = useAppRouter();
 
   const filterMethods = useForm<ConsignmentFilterValues>({
     defaultValues: {

@@ -10,7 +10,8 @@ import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { formatToReadableDate } from "@/lib/date-utils";
 import { IconArrowLeft, IconCash, IconCheck } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useConsignmentPayments } from "../../api/consignment-api";
@@ -22,7 +23,7 @@ interface PaymentFilterValues {
 }
 
 export function ConsignmentPaymentPage() {
-  const router = useRouter();
+  const router = useAppRouter();
   const searchParams = useSearchParams();
   const targetUid = searchParams.get("uid");
 

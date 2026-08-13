@@ -10,7 +10,7 @@ import {
   IconCash,
   IconFileDescription,
 } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -21,6 +21,7 @@ import {
 } from "../../api/consignment-api";
 import { CONSIGNMENT_STATUS_BADGE } from "../../constants";
 import { ConsignmentCreatePage } from "../create/consignment-create-page";
+import { ConsignmentDetailSkeleton } from "./consignment-detail-skeleton";
 import { ConsignmentItemsTab } from "./consignment-items-tab";
 import { ConsignmentPaymentsTab } from "./consignment-payments-tab";
 import { ConsignmentSummaryCard } from "./consignment-summary-card";
@@ -29,23 +30,8 @@ interface ConsignmentDetailPageProps {
   uid: string;
 }
 
-function ConsignmentDetailSkeleton() {
-  return (
-    <div className="space-y-6 animate-pulse p-6">
-      <div className="flex justify-between items-center border-b pb-4">
-        <div className="h-9 w-48 bg-slate-100 rounded-xl" />
-        <div className="h-9 w-32 bg-slate-100 rounded-xl" />
-      </div>
-      <div className="grid grid-cols-12 gap-6">
-        <div className="col-span-4 h-64 bg-slate-100 rounded-2xl" />
-        <div className="col-span-8 h-96 bg-slate-100 rounded-2xl" />
-      </div>
-    </div>
-  );
-}
-
 export function ConsignmentDetailPage({ uid }: ConsignmentDetailPageProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const [activeTab, setActiveTab] = useState<"items" | "payments">("items");
   const [isCompleteOpen, setIsCompleteOpen] = useState(false);
   const [isVoidOpen, setIsVoidOpen] = useState(false);
