@@ -14,12 +14,16 @@ interface ConsignmentItemsTableProps {
   productsMap: Map<string, Product>;
   onRemoveItem: (index: number) => void;
   disabled?: boolean;
+  barcodeInputRef?: React.RefObject<HTMLInputElement | null>;
+  lastAddedUid?: string | null;
 }
 
 export function ConsignmentItemsTable({
   productsMap,
   onRemoveItem,
   disabled = false,
+  barcodeInputRef,
+  lastAddedUid,
 }: ConsignmentItemsTableProps) {
   const { control, watch } = useFormContext<ConsignmentReceivingFormValues>();
   const { fields } = useFieldArray({
@@ -33,6 +37,9 @@ export function ConsignmentItemsTable({
   const prevLengthRef = useRef(fields.length);
   const tableEndRef = useRef<HTMLDivElement>(null);
 
+  const qtyInputRefs = useRef<Map<number, HTMLInputElement>>(new Map());
+  const hargaBeliInputRefs = useRef<Map<number, HTMLInputElement>>(new Map());
+
   useEffect(() => {
     if (fields.length > prevLengthRef.current) {
       const newIndex = fields.length - 1;
@@ -43,6 +50,21 @@ export function ConsignmentItemsTable({
     }
     prevLengthRef.current = fields.length;
   }, [fields.length]);
+
+  useEffect(() => {
+    if (lastAddedUid && watchItems.length > 0) {
+      const targetIndex = watchItems.findIndex((it) => it.product_uid === lastAddedUid);
+      const indexToFocus = targetIndex >= 0 ? targetIndex : watchItems.length - 1;
+      const timer = setTimeout(() => {
+        const qtyEl = qtyInputRefs.current.get(indexToFocus);
+        if (qtyEl) {
+          qtyEl.focus();
+          qtyEl.select();
+        }
+      }, 80);
+      return () => clearTimeout(timer);
+    }
+  }, [lastAddedUid, watchItems.length]);
 
   const totalItems = watchItems.reduce((acc, item) => acc + Number(item?.kuantitas || 0), 0);
   const totalValue = watchItems.reduce(
@@ -126,6 +148,20 @@ export function ConsignmentItemsTable({
                         min={0.01}
                         allowDecimal={true}
                         disabled={disabled}
+                        inputRef={(el) => {
+                          if (el) qtyInputRefs.current.set(index, el);
+                          else qtyInputRefs.current.delete(index);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const hargaBeliEl = hargaBeliInputRefs.current.get(index);
+                            if (hargaBeliEl) {
+                              hargaBeliEl.focus();
+                              hargaBeliEl.select();
+                            }
+                          }
+                        }}
                         className="w-full h-8 text-center text-xs font-bold text-slate-800 rounded-lg border-slate-200 focus-visible:ring-emerald-400/20 focus-visible:border-emerald-400"
                       />
                     </td>
@@ -134,6 +170,19 @@ export function ConsignmentItemsTable({
                       <FormNominalInput<ConsignmentReceivingFormValues>
                         name={`items.${index}.harga_beli`}
                         disabled={disabled}
+                        inputRef={(el) => {
+                          if (el) hargaBeliInputRefs.current.set(index, el);
+                          else hargaBeliInputRefs.current.delete(index);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            if (barcodeInputRef?.current) {
+                              barcodeInputRef.current.focus();
+                              barcodeInputRef.current.select();
+                            }
+                          }
+                        }}
                         className="w-full h-8 text-right text-xs font-bold text-slate-800 font-mono rounded-lg border-slate-200 focus-visible:ring-emerald-400/20 focus-visible:border-emerald-400"
                       />
                     </td>

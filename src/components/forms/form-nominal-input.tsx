@@ -19,6 +19,15 @@ interface FormNominalInputProps<T extends FieldValues> extends Omit<
     name: FieldPath<T>;
     label?: string;
     onValueChange?: (val: number | null) => void;
+    inputRef?: React.Ref<HTMLInputElement>;
+}
+
+function setRef<T>(ref: React.Ref<T> | undefined, value: T | null) {
+    if (typeof ref === "function") {
+        ref(value);
+    } else if (ref && typeof ref === "object" && "current" in ref) {
+        (ref as React.MutableRefObject<T | null>).current = value;
+    }
 }
 
 export function FormNominalInput<T extends FieldValues>({
@@ -27,6 +36,7 @@ export function FormNominalInput<T extends FieldValues>({
     className,
     disabled,
     onValueChange,
+    inputRef: externalInputRef,
     ...props
 }: FormNominalInputProps<T>) {
     const {
@@ -136,6 +146,7 @@ export function FormNominalInput<T extends FieldValues>({
                             ref={(node) => {
                                 ref(node);
                                 inputRef.current = node;
+                                setRef(externalInputRef, node);
                             }}
                             type="text"
                             value={displayValue}

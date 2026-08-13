@@ -17,7 +17,7 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import {
@@ -47,6 +47,9 @@ interface ConsignmentCreatePageProps {
 export function ConsignmentCreatePage({ initialData }: ConsignmentCreatePageProps) {
   const router = useRouter();
   const isEditMode = Boolean(initialData);
+
+  const barcodeInputRef = useRef<HTMLInputElement>(null);
+  const [lastAddedUid, setLastAddedUid] = useState<string | null>(null);
 
   const [productsMap, setProductsMap] = useState<Map<string, Product>>(new Map());
   const [notFoundQuery, setNotFoundQuery] = useState("");
@@ -110,6 +113,7 @@ export function ConsignmentCreatePage({ initialData }: ConsignmentCreatePageProp
     comparePricesMutation.isPending;
 
   const handleProductFound = (product: Product) => {
+    setLastAddedUid(product.uid);
     const currentItems = form.getValues("items") || [];
     const existingIdx = currentItems.findIndex((it) => it.product_uid === product.uid);
 
@@ -323,6 +327,8 @@ export function ConsignmentCreatePage({ initialData }: ConsignmentCreatePageProp
               </div>
 
               <BarcodeInput
+                ref={barcodeInputRef}
+                refocusOnFound={false}
                 onProductFound={(product) => {
                   setNotFoundQuery("");
                   handleProductFound(product);
@@ -376,6 +382,8 @@ export function ConsignmentCreatePage({ initialData }: ConsignmentCreatePageProp
                 productsMap={productsMap}
                 onRemoveItem={handleRemoveItem}
                 disabled={isSubmitting}
+                barcodeInputRef={barcodeInputRef}
+                lastAddedUid={lastAddedUid}
               />
             </div>
           </div>
