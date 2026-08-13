@@ -47,13 +47,13 @@ export function SidebarSubmenu({
     );
 
     const [isMasterOpen, setIsMasterOpen] = useState(() => {
-        return filteredItems.some((i) => pathname === i.path || pathname.startsWith(i.path + "/"));
+        return filteredItems.some((i) => isActive(i.path));
     });
     const [prevPathname, setPrevPathname] = useState(pathname);
 
     if (pathname !== prevPathname) {
         setPrevPathname(pathname);
-        if (filteredItems.some((i) => pathname === i.path || pathname.startsWith(i.path + "/"))) {
+        if (filteredItems.some((i) => isActive(i.path))) {
             setIsMasterOpen(true);
         }
     }

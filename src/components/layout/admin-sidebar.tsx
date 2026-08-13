@@ -94,6 +94,13 @@ export function AdminSidebar() {
         if (path === ROUTES.ADMIN_REPORTS_SALES && (pathname === ROUTES.ADMIN_REPORTS_SALES_BY_CATEGORY || pathname.startsWith(ROUTES.ADMIN_REPORTS_SALES_BY_CATEGORY + "/"))) {
             return false;
         }
+        // Prevent "/admin/consignment" from matching when on "/admin/consignment/payment"
+        if (
+            path === ROUTES.ADMIN_CONSIGNMENT &&
+            (pathname === ROUTES.ADMIN_CONSIGNMENT_PAYMENT || pathname.startsWith(ROUTES.ADMIN_CONSIGNMENT_PAYMENT + "/"))
+        ) {
+            return false;
+        }
         const fromParam = searchParams.get("from");
 
         if (path === ROUTES.ADMIN_STOCK_TRANSFERS_INCOMING) {
