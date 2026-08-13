@@ -25,6 +25,7 @@ import { PrintReceiptLayout } from "@/features/checkout/components/print-receipt
 import type { CashDrawerSession } from "@/features/checkout/types";
 import { db } from "@/lib/db";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { Show } from "@/components/ui/show";
 
 export function Checkout() {
     const state = useCheckoutState();
@@ -318,56 +319,62 @@ export function Checkout() {
                 }}
             />
 
-            <PaymentDialog
-                open={state.isPayModalOpen}
-                onOpenChange={state.setIsPayModalOpen}
-                grandTotal={state.grandTotal}
-                cartItems={state.cart.map((item) => {
-                    const payloadItem: {
-                        product_uid: string;
-                        quantity: number;
-                        harga_satuan?: number;
-                    } = {
-                        product_uid: item.product_uid,
-                        quantity: item.qty,
-                    };
-                    if (item.is_jasa) {
-                        payloadItem.harga_satuan = item.price;
-                    }
-                    return payloadItem;
-                })}
-                discount={state.discountAmount}
-                tax={state.ppn}
-                selectedMember={state.selectedMember}
-                onPaySuccess={state.handlePaymentSuccess}
-                cartList={state.cart}
-                onLocalProductsReload={state.reloadLocalProducts}
-                namaTransaksi={state.namaTransaksi}
-            />
+            <Show.When isTrue={state.isPayModalOpen}>
+                <PaymentDialog
+                    open={state.isPayModalOpen}
+                    onOpenChange={state.setIsPayModalOpen}
+                    grandTotal={state.grandTotal}
+                    cartItems={state.cart.map((item) => {
+                        const payloadItem: {
+                            product_uid: string;
+                            quantity: number;
+                            harga_satuan?: number;
+                        } = {
+                            product_uid: item.product_uid,
+                            quantity: item.qty,
+                        };
+                        if (item.is_jasa) {
+                            payloadItem.harga_satuan = item.price;
+                        }
+                        return payloadItem;
+                    })}
+                    discount={state.discountAmount}
+                    tax={state.ppn}
+                    selectedMember={state.selectedMember}
+                    onPaySuccess={state.handlePaymentSuccess}
+                    cartList={state.cart}
+                    onLocalProductsReload={state.reloadLocalProducts}
+                    namaTransaksi={state.namaTransaksi}
+                />
+            </Show.When>
 
-            <HoldListDialog
-                open={state.isHoldListOpen}
-                onOpenChange={state.setIsHoldListOpen}
-                holdList={state.holdList}
-                onRecall={state.handleRecall}
-                onClearAll={state.handleClearHoldList}
-                isProcessing={state.isProcessing}
-            />
+            <Show.When isTrue={state.isHoldListOpen}>
+                <HoldListDialog
+                    open={state.isHoldListOpen}
+                    onOpenChange={state.setIsHoldListOpen}
+                    holdList={state.holdList}
+                    onRecall={state.handleRecall}
+                    onClearAll={state.handleClearHoldList}
+                    isProcessing={state.isProcessing}
+                />
+            </Show.When>
 
-            <ReceiptDialog
-                open={state.isReceiptOpen}
-                onOpenChange={(open) => {
-                    if (!open) {
-                        state.handleNewTransaction();
-                    } else {
-                        state.setIsReceiptOpen(true);
-                    }
-                }}
-                receipt={state.receipt}
-                cashierName={state.user?.name || ""}
-                onNewTransaction={state.handleNewTransaction}
-                onReprint={state.handleReprint}
-            />
+            <Show.When isTrue={state.isReceiptOpen}>
+                <ReceiptDialog
+                    open={state.isReceiptOpen}
+                    onOpenChange={(open) => {
+                        if (!open) {
+                            state.handleNewTransaction();
+                        } else {
+                            state.setIsReceiptOpen(true);
+                        }
+                    }}
+                    receipt={state.receipt}
+                    cashierName={state.user?.name || ""}
+                    onNewTransaction={state.handleNewTransaction}
+                    onReprint={state.handleReprint}
+                />
+            </Show.When>
 
             {/* Cash Drawer Dialogs */}
             <BukaShiftModal
@@ -378,34 +385,42 @@ export function Checkout() {
                 isOnline={isOnline}
             />
 
-            <InfoSesiAktifModal
-                open={isInfoSesiOpen}
-                onOpenChange={setIsInfoSesiOpen}
-                sessionId={activeDrawerSession?.uid || null}
-                token={cashDrawerToken}
-                onCloseSuccess={handleCloseShiftSuccess}
-                isOnline={isOnline}
-            />
+            <Show.When isTrue={isInfoSesiOpen}>
+                <InfoSesiAktifModal
+                    open={isInfoSesiOpen}
+                    onOpenChange={setIsInfoSesiOpen}
+                    sessionId={activeDrawerSession?.uid || null}
+                    token={cashDrawerToken}
+                    onCloseSuccess={handleCloseShiftSuccess}
+                    isOnline={isOnline}
+                />
+            </Show.When>
 
-            <OfflineTransactionsDialog
-                open={isOfflineTransactionsOpen}
-                onOpenChange={setIsOfflineTransactionsOpen}
-            />
+            <Show.When isTrue={isOfflineTransactionsOpen}>
+                <OfflineTransactionsDialog
+                    open={isOfflineTransactionsOpen}
+                    onOpenChange={setIsOfflineTransactionsOpen}
+                />
+            </Show.When>
 
-            <PastTransactionsDialog
-                open={isPastTransactionsOpen}
-                onOpenChange={setIsPastTransactionsOpen}
-                onReprint={(uid) => {
-                    state.handleReprint(uid);
-                    setIsPastTransactionsOpen(false);
-                }}
-                lastTransactionId={state.lastTransactionId}
-            />
+            <Show.When isTrue={isPastTransactionsOpen}>
+                <PastTransactionsDialog
+                    open={isPastTransactionsOpen}
+                    onOpenChange={setIsPastTransactionsOpen}
+                    onReprint={(uid) => {
+                        state.handleReprint(uid);
+                        setIsPastTransactionsOpen(false);
+                    }}
+                    lastTransactionId={state.lastTransactionId}
+                />
+            </Show.When>
 
-            <CashierSettingsDialog
-                open={state.isSettingsOpen}
-                onOpenChange={state.setIsSettingsOpen}
-            />
+            <Show.When isTrue={state.isSettingsOpen}>
+                <CashierSettingsDialog
+                    open={state.isSettingsOpen}
+                    onOpenChange={state.setIsSettingsOpen}
+                />
+            </Show.When>
 
             {/* Hidden Print Receipt container */}
             <PrintReceiptLayout

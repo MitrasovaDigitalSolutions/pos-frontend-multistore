@@ -14,8 +14,8 @@ export function QueryProvider({ children }: QueryProviderProps) {
             new QueryClient({
                 defaultOptions: {
                     queries: {
-                        staleTime: 0, // Disable caching to ensure fresh POS data
-                        gcTime: 5 * 60 * 1000, // 5 minutes
+                        staleTime: 5 * 60 * 1000, // 5 minutes default caching for master data
+                        gcTime: 15 * 60 * 1000, // 15 minutes garbage collection
                         retry: 2,
                         refetchOnWindowFocus: false,
                     },

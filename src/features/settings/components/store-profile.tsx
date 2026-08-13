@@ -185,50 +185,36 @@ export function StoreProfile() {
     const onSubmit = async (data: StoreSettingsInput) => {
         setIsSaving(true);
         try {
-            let hasChanged = false;
+            const updateTasks: Promise<unknown>[] = [];
 
             for (const key of Object.keys(data) as Array<keyof StoreSettingsInput>) {
                 const formValue = data[key];
                 const originalValue = settings[key];
 
                 if (key === "app_logo_url") {
-                    // Handle image upload updates
                     if (formValue instanceof File) {
-                        await settingsApi.update(key, formValue);
-                        hasChanged = true;
+                        updateTasks.push(settingsApi.update(key, formValue));
                     } else if (formValue === null && originalValue !== null && originalValue !== "") {
-                        // User removed the logo
-                        await settingsApi.update(key, null);
-                        hasChanged = true;
+                        updateTasks.push(settingsApi.update(key, null));
                     }
-                } else if (key === "tax_rate_ppn") {
-                    // Compare numbers as strings
+                } else if (key === "tax_rate_ppn" || key === "point_rate") {
                     const formTaxStr = String(formValue);
                     const origTaxStr = originalValue !== null && originalValue !== undefined ? String(originalValue) : "";
                     if (formTaxStr !== origTaxStr) {
-                        await settingsApi.update(key, formTaxStr);
-                        hasChanged = true;
-                    }
-                } else if (key === "point_rate") {
-                    // Compare numbers as strings
-                    const formPointStr = String(formValue);
-                    const origPointStr = originalValue !== null && originalValue !== undefined ? String(originalValue) : "";
-                    if (formPointStr !== origPointStr) {
-                        await settingsApi.update(key, formPointStr);
-                        hasChanged = true;
+                        updateTasks.push(settingsApi.update(key, formTaxStr));
                     }
                 } else {
                     const formStr = formValue !== null && formValue !== undefined ? String(formValue) : "";
                     const origStr = originalValue !== null && originalValue !== undefined ? String(originalValue) : "";
 
                     if (formStr !== origStr) {
-                        await settingsApi.update(key, formValue as string | null);
-                        hasChanged = true;
+                        updateTasks.push(settingsApi.update(key, formValue as string | null));
                     }
                 }
             }
 
-            if (hasChanged) {
+            if (updateTasks.length > 0) {
+                await Promise.all(updateTasks);
                 await fetchSettings();
                 toast.success("Pengaturan toko berhasil disimpan.");
             } else {

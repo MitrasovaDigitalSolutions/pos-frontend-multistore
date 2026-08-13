@@ -1,21 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useForm, FormProvider, useWatch } from "react-hook-form";
+import { FormDatePicker } from "@/components/forms/form-date-picker";
+import { FormSelect } from "@/components/forms/form-select";
+import { Badge } from "@/components/ui/badge";
+import type { CommandOption } from "@/components/ui/command-select";
+import { DataTable } from "@/components/ui/data-table";
+import { useFlatChartOfAccounts } from "@/features/accounting/api/coa-api";
+import { useGeneralLedger } from "@/features/accounting/api/reports-api";
+import type { GeneralLedgerEntry } from "@/features/accounting/types";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { todayStr } from "@/lib/date-utils";
+import { IconBook } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
-import { IconBook } from "@tabler/icons-react";
-import { FormDatePicker } from "@/components/forms/form-date-picker";
-import { FormSelect } from "@/components/forms/form-select";
-import type { CommandOption } from "@/components/ui/command-select";
-import { DataTable } from "@/components/ui/data-table";
-import { Badge } from "@/components/ui/badge";
-import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { todayStr } from "@/lib/date-utils";
-import { useGeneralLedger } from "@/features/accounting/api/reports-api";
-import { useFlatChartOfAccounts } from "@/features/accounting/api/coa-api";
-import type { GeneralLedgerEntry } from "@/features/accounting/types";
+import { useMemo, useState } from "react";
+import { FormProvider, useForm, useWatch } from "react-hook-form";
 
 interface BukuBesarFilterValues {
     from: string;
@@ -45,10 +45,16 @@ export function BukuBesarView() {
         name: ["from", "to", "coaUid"],
     });
 
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+    // Reset page to 1 whenever filters change (during render)
+    const [prevFilter, setPrevFilter] = useState({ from, to, coaUid });
+    if (
+        prevFilter.from !== from ||
+        prevFilter.to !== to ||
+        prevFilter.coaUid !== coaUid
+    ) {
+        setPrevFilter({ from, to, coaUid });
         setPage(1);
-    }, [from, to, coaUid]);
+    }
 
     const { data, isLoading, isFetching } = useGeneralLedger({
         from: from || undefined,
