@@ -29,6 +29,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils";
 import { IconCheck, IconEdit, IconTrash } from "@tabler/icons-react";
 import { DataTableActionButton } from "./data-table-actions";
+export { DataTableActionButton, DataTableTextActionButton } from "./data-table-actions";
 import {
     ColumnDef,
     flexRender,
@@ -36,6 +37,7 @@ import {
     getSortedRowModel,
     SortingState,
     useReactTable,
+    Row,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { motion } from "framer-motion";
@@ -43,7 +45,6 @@ import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Eye, InfoIc
 import * as React from "react";
 import { useDeviceResponsive } from "@/hooks/use-device";
 import { DataGrid } from "@/components/ui/data-grid";
-import { Row } from "@tanstack/react-table";
 
 import "@tanstack/react-table";
 

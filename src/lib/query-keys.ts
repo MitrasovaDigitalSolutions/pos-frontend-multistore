@@ -206,4 +206,17 @@ export const queryKeys = {
         all: ["coa-mappings"] as const,
         list: () => [...queryKeys.coaMappings.all, "list"] as const,
     },
+
+    // Supplier Sales (katalog)
+    supplierSales: {
+        all: ["supplier-sales"] as const,
+        detail: (uid: string) => [...queryKeys.supplierSales.all, "detail", uid] as const,
+    },
+
+    // Request Transfer (permintaan stok antar cabang)
+    requestTransfers: {
+        all: ["request-transfers"] as const,
+        summary: (supplierUid: string, supplierSalesUid?: string | null) =>
+            [...queryKeys.requestTransfers.all, "summary", supplierUid, supplierSalesUid ?? "null"] as const,
+    },
 } as const;

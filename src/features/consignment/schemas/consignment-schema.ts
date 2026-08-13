@@ -10,15 +10,34 @@ export const consignmentItemSchema = z.object({
 });
 
 export const consignmentReceivingSchema = z.object({
-  supplier_uid: z.string().nullable().optional(),
+  supplier_uid: z
+    .string()
+    .nullable()
+    .optional()
+    .refine((val) => Boolean(val && val.trim().length > 0), {
+      message: "Supplier / Pemasok wajib dipilih",
+    }),
   supplier: z.string().nullable().optional(),
-  tanggal_terima: z.string().min(1, "Tanggal terima wajib diisi"),
+  tanggal_terima: z
+    .string()
+    .nullable()
+    .optional()
+    .refine((val) => Boolean(val && val.trim().length > 0), {
+      message: "Tanggal terima wajib diisi",
+    }),
+  tanggal_jatuh_tempo: z
+    .string()
+    .nullable()
+    .optional()
+    .refine((val) => Boolean(val && val.trim().length > 0), {
+      message: "Tanggal jatuh tempo wajib diisi",
+    }),
   catatan: z.string().nullable().optional(),
   items: z.array(consignmentItemSchema).min(1, "Minimal 1 item konsinyasi wajib diisi"),
 });
 
 export const consignmentPaymentSchema = z.object({
-  jumlah_bayar: z.number().min(1, "Jumlah bayar minimal 1"),
+  jumlah_bayar: z.number().min(0, "Jumlah bayar tidak boleh negatif"),
   cash_account_uid: z.string().min(1, "Akun kas wajib dipilih"),
   tanggal_bayar: z.string().optional(),
   catatan: z.string().nullable().optional(),

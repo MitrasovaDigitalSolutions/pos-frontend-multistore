@@ -26,7 +26,7 @@ export interface ConfirmDialogProps {
     cancelText?: string;
     onConfirm: () => void | Promise<void>;
     isLoading?: boolean;
-    variant?: "danger" | "warning" | "info" | "success";
+    variant?: "danger" | "warning" | "info" | "success" | "primary";
 }
 
 export function ConfirmDialog({
@@ -40,11 +40,17 @@ export function ConfirmDialog({
     isLoading = false,
     variant = "warning",
 }: ConfirmDialogProps) {
+    const [isInternalLoading, setIsInternalLoading] = React.useState(false);
+    const showLoading = isLoading || isInternalLoading;
+
     const handleConfirm = async () => {
+        setIsInternalLoading(true);
         try {
             await onConfirm();
         } catch (error) {
             console.error(error);
+        } finally {
+            setIsInternalLoading(false);
         }
     };
 
@@ -70,9 +76,14 @@ export function ConfirmDialog({
             confirmBtn: "bg-emerald-600 hover:bg-emerald-700 text-white focus-visible:ring-emerald-500",
             icon: IconCircleCheck,
         },
+        primary: {
+            iconBg: "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50",
+            confirmBtn: "bg-emerald-600 hover:bg-emerald-700 text-white focus-visible:ring-emerald-500",
+            icon: IconCircleCheck,
+        },
     };
 
-    const style = variantStyles[variant];
+    const style = (variant && variantStyles[variant as keyof typeof variantStyles]) || variantStyles.warning;
     const Icon = style.icon;
 
     return (
@@ -113,7 +124,7 @@ export function ConfirmDialog({
                         variant="outline"
                         className="w-full sm:w-auto flex-1 p-2 h-11 sm:h-10 text-xs font-bold border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 rounded-xl cursor-pointer order-2 sm:order-1"
                         onClick={() => onOpenChange(false)}
-                        disabled={isLoading}
+                        disabled={showLoading}
                     >
                         {cancelText}
                     </Button>
@@ -124,9 +135,9 @@ export function ConfirmDialog({
                             style.confirmBtn
                         )}
                         onClick={handleConfirm}
-                        disabled={isLoading}
+                        disabled={showLoading}
                     >
-                        {isLoading && <IconLoader2 size={14} className="animate-spin" />}
+                        {showLoading && <IconLoader2 size={14} className="animate-spin" />}
                         <span>{confirmText}</span>
                     </Button>
                 </div>

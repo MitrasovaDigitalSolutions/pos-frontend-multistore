@@ -1,14 +1,14 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiGetData, apiGetList, apiPost, apiPut, apiDelete } from "@/shared/api/api-client";
+import { apiDelete, apiGetData, apiGetList, apiPost, apiPostData, apiPutData } from "@/shared/api/api-client";
 import type { PaginatedResponse } from "@/types/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
+  ConsignmentPayment,
   ConsignmentReceiving,
   ConsignmentReceivingParams,
-  CreateConsignmentReceivingPayload,
   CreateConsignmentPaymentPayload,
-  ReturnableItem,
+  CreateConsignmentReceivingPayload,
   PriceComparisonItem,
-  ConsignmentPayment,
+  ReturnableItem,
 } from "../types";
 
 export const CONSIGNMENT_QUERY_KEYS = {
@@ -56,7 +56,18 @@ export function useCreateConsignmentDraftMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateConsignmentReceivingPayload) =>
-      apiPost<ConsignmentReceiving, CreateConsignmentReceivingPayload>("/v1/consignment/receiving", payload),
+      apiPostData<ConsignmentReceiving, CreateConsignmentReceivingPayload>("/v1/consignment/receiving", payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CONSIGNMENT_QUERY_KEYS.all });
+    },
+  });
+}
+
+export function useBulkConsignmentMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateConsignmentReceivingPayload) =>
+      apiPostData<ConsignmentReceiving, CreateConsignmentReceivingPayload>("/v1/consignment/receiving/bulk", payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CONSIGNMENT_QUERY_KEYS.all });
     },
@@ -67,7 +78,7 @@ export function useUpdateConsignmentDraftMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ uid, payload }: { uid: string; payload: CreateConsignmentReceivingPayload }) =>
-      apiPut<ConsignmentReceiving, CreateConsignmentReceivingPayload>(`/v1/consignment/receiving/${uid}`, payload),
+      apiPutData<ConsignmentReceiving, CreateConsignmentReceivingPayload>(`/v1/consignment/receiving/${uid}`, payload),
     onSuccess: (_, { uid }) => {
       queryClient.invalidateQueries({ queryKey: CONSIGNMENT_QUERY_KEYS.all });
       queryClient.invalidateQueries({ queryKey: CONSIGNMENT_QUERY_KEYS.receivingDetail(uid) });
@@ -88,7 +99,7 @@ export function useDeleteConsignmentDraftMutation() {
 export function useCompleteConsignmentMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (uid: string) => apiPost<ConsignmentReceiving>(`/v1/consignment/receiving/${uid}/complete`, {}),
+    mutationFn: (uid: string) => apiPostData<ConsignmentReceiving>(`/v1/consignment/receiving/${uid}/complete`, {}),
     onSuccess: (_, uid) => {
       queryClient.invalidateQueries({ queryKey: CONSIGNMENT_QUERY_KEYS.all });
       queryClient.invalidateQueries({ queryKey: CONSIGNMENT_QUERY_KEYS.receivingDetail(uid) });
@@ -99,7 +110,7 @@ export function useCompleteConsignmentMutation() {
 export function useVoidConsignmentMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (uid: string) => apiPost<ConsignmentReceiving>(`/v1/consignment/receiving/${uid}/void`, {}),
+    mutationFn: (uid: string) => apiPostData<ConsignmentReceiving>(`/v1/consignment/receiving/${uid}/void`, {}),
     onSuccess: (_, uid) => {
       queryClient.invalidateQueries({ queryKey: CONSIGNMENT_QUERY_KEYS.all });
       queryClient.invalidateQueries({ queryKey: CONSIGNMENT_QUERY_KEYS.receivingDetail(uid) });
@@ -111,7 +122,7 @@ export function useCreateConsignmentPaymentMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ uid, payload }: { uid: string; payload: CreateConsignmentPaymentPayload }) =>
-      apiPost<ConsignmentPayment, CreateConsignmentPaymentPayload>(`/v1/consignment/receiving/${uid}/payment`, payload),
+      apiPostData<ConsignmentPayment, CreateConsignmentPaymentPayload>(`/v1/consignment/receiving/${uid}/payment`, payload),
     onSuccess: (_, { uid }) => {
       queryClient.invalidateQueries({ queryKey: CONSIGNMENT_QUERY_KEYS.all });
       queryClient.invalidateQueries({ queryKey: CONSIGNMENT_QUERY_KEYS.receivingDetail(uid) });
@@ -122,7 +133,7 @@ export function useCreateConsignmentPaymentMutation() {
 export function useCompareConsignmentPricesMutation() {
   return useMutation({
     mutationFn: (payload: { items: { product_uid: string; harga_beli: number }[] }) =>
-      apiPost<PriceComparisonItem[]>(`/v1/consignment/receiving/compare-prices`, payload),
+      apiPostData<PriceComparisonItem[]>(`/v1/consignment/receiving/compare-prices`, payload),
   });
 }
 

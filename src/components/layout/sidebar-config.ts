@@ -16,7 +16,8 @@ import {
     IconBuildingBank,
     IconBuildingStore,
     IconBuildingWarehouse,
-    IconArrowsLeftRight
+    IconArrowsLeftRight,
+    IconTruckDelivery
 } from "@tabler/icons-react";
 
 export interface SidebarMenuItem {
@@ -183,6 +184,14 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     hasPermission(roles, permissions, "view_stock_transfers") ||
                     hasPermission(roles, permissions, "manage_stock_transfers"),
                 items: [
+                    {
+                        path: ROUTES.ADMIN_REQUEST_TRANSFERS,
+                        label: "Request Transfer",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_request_transfers") ||
+                            hasPermission(roles, permissions, "manage_request_transfers"),
+                    },
                     {
                         path: ROUTES.ADMIN_STOCK_TRANSFERS,
                         label: "Transfer Keluar",
@@ -416,8 +425,6 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     hasRole(roles, "admin") ||
                     hasPermission(roles, permissions, "view_products") ||
                     hasPermission(roles, permissions, "manage_products") ||
-                    hasPermission(roles, permissions, "view_suppliers") ||
-                    hasPermission(roles, permissions, "manage_suppliers") ||
                     hasPermission(roles, permissions, "view_members") ||
                     hasPermission(roles, permissions, "manage_members"),
                 items: [
@@ -428,14 +435,6 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasRole(roles, "admin") ||
                             hasPermission(roles, permissions, "view_products") ||
                             hasPermission(roles, permissions, "manage_products"),
-                    },
-                    {
-                        path: ROUTES.ADMIN_SUPPLIERS,
-                        label: "Supplier",
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") ||
-                            hasPermission(roles, permissions, "view_suppliers") ||
-                            hasPermission(roles, permissions, "manage_suppliers"),
                     },
                     {
                         path: ROUTES.ADMIN_MEMBERS,
@@ -514,6 +513,19 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                         path: ROUTES.ADMIN_BRANDS,
                         label: "Brand",
                         permission: (roles) => hasRole(roles, "admin"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_SUPPLIERS,
+                        label: "Supplier",
+                        permission: (roles) => hasRole(roles, "admin"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_SUPPLIER_SALES,
+                        label: "Sales ",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_request_transfers") ||
+                            hasPermission(roles, permissions, "manage_request_transfers"),
                     },
                 ],
             },

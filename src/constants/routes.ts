@@ -50,6 +50,10 @@ export const ROUTES = {
     ADMIN_ACCOUNTING_GENERAL_LEDGER: "/admin/accounting/general-ledger",
     ADMIN_ACCOUNTING_UNBALANCED: "/admin/accounting/unbalanced",
     ADMIN_ACCOUNTING_CATEGORY_MAPPING: "/admin/accounting/category-mapping",
+    ADMIN_SUPPLIER_SALES: "/admin/sales",
+    ADMIN_REQUEST_TRANSFERS: "/admin/request-transfer",
+    ADMIN_REQUEST_TRANSFERS_CREATE: "/admin/request-transfer/create",
+    ADMIN_REQUEST_TRANSFERS_DETAIL: "/admin/request-transfer/detail",
 
     // Protected - POS
     CHECKOUT: "/checkout",

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { useForm } from "react-hook-form";
-import { IconPlus, IconReceipt2, IconCheck, IconTrash, IconEye, IconBan, IconCash } from "@tabler/icons-react";
+import { IconPlus, IconReceipt2, IconBan, IconCash } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -35,7 +35,7 @@ const CONSIGNMENT_STATUS_OPTIONS = [
 ];
 
 export function ConsignmentList() {
-  const router = useRouter();
+  const router = useAppRouter();
 
   const filterMethods = useForm<ConsignmentFilterValues>({
     defaultValues: {
@@ -121,7 +121,7 @@ export function ConsignmentList() {
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-slate-100 p-6 rounded-2xl shadow-2xs">
         <div>
@@ -134,14 +134,6 @@ export function ConsignmentList() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => router.push("/admin/consignment/payment")}
-            className="h-10 text-xs font-bold border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl gap-1.5 cursor-pointer"
-          >
-            <IconCash size={16} className="text-emerald-600" />
-            <span>Pelunasan</span>
-          </Button>
           <Button
             onClick={() => router.push("/admin/consignment/create")}
             className="h-10 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-1.5 cursor-pointer shadow-2xs"
@@ -183,72 +175,49 @@ export function ConsignmentList() {
           perPage={15}
           meta={data?.meta}
           onPageChange={setPage}
-          actionColumnWidth="w-36"
+          onView={(item) => router.push(`/admin/consignment/${item.uid}`)}
+          hideView={(item) => item.status === "draft"}
+          onEdit={(item) => router.push(`/admin/consignment/${item.uid}/edit`)}
+          hideEdit={(item) => item.status !== "draft"}
+          onCheck={(item) => {
+            setActiveItem(item);
+            setIsCompleteOpen(true);
+          }}
+          hideCheck={(item) => item.status !== "draft"}
+          onDelete={(item) => {
+            setActiveItem(item);
+            setIsDeleteOpen(true);
+          }}
+          hideDelete={(item) => item.status !== "draft"}
           extraActions={(item) => {
-            const isDraft = item.status === "draft";
             const isCompleted = item.status === "completed";
             const hasPayments = item.payments && item.payments.length > 0;
             const hasSales = item.items?.some((i) => (i.qty_terjual || 0) > 0);
 
+            if (!isCompleted) return null;
+
             return (
-              <div className="flex items-center justify-end gap-1">
+              <>
                 <DataTableActionButton
-                  variant="slate"
-                  onClick={() => router.push(`/admin/consignment/${item.uid}`)}
-                  tooltip="Lihat detail konsinyasi"
+                  variant="emerald"
+                  onClick={() => router.push(`/admin/consignment/payment?uid=${item.uid}`)}
+                  tooltip="Bayar & Tutup Sesi"
                 >
-                  <IconEye size={15} />
+                  <IconCash size={15} />
                 </DataTableActionButton>
-
-                {isDraft && (
-                  <>
-                    <DataTableActionButton
-                      variant="emerald"
-                      onClick={() => {
-                        setActiveItem(item);
-                        setIsCompleteOpen(true);
-                      }}
-                      tooltip="Selesaikan & naikkan stok"
-                    >
-                      <IconCheck size={15} />
-                    </DataTableActionButton>
-                    <DataTableActionButton
-                      variant="rose"
-                      onClick={() => {
-                        setActiveItem(item);
-                        setIsDeleteOpen(true);
-                      }}
-                      tooltip="Hapus draft"
-                    >
-                      <IconTrash size={15} />
-                    </DataTableActionButton>
-                  </>
+                {!hasSales && !hasPayments && (
+                  <DataTableActionButton
+                    variant="rose"
+                    onClick={() => {
+                      setActiveItem(item);
+                      setIsVoidOpen(true);
+                    }}
+                    tooltip="Batalkan konsinyasi"
+                  >
+                    <IconBan size={15} />
+                  </DataTableActionButton>
                 )}
-
-                {isCompleted && (
-                  <>
-                    <DataTableActionButton
-                      variant="emerald"
-                      onClick={() => router.push(`/admin/consignment/payment?uid=${item.uid}`)}
-                      tooltip="Bayar & Tutup Sesi"
-                    >
-                      <IconCash size={15} />
-                    </DataTableActionButton>
-                    {!hasSales && !hasPayments && (
-                      <DataTableActionButton
-                        variant="rose"
-                        onClick={() => {
-                          setActiveItem(item);
-                          setIsVoidOpen(true);
-                        }}
-                        tooltip="Batalkan konsinyasi"
-                      >
-                        <IconBan size={15} />
-                      </DataTableActionButton>
-                    )}
-                  </>
-                )}
-              </div>
+              </>
             );
           }}
         />
