@@ -42,7 +42,7 @@ export function RolePermissionCategory({
         selectedRole?.permissions.some((rp) => rp.name === p.name)
     ).length;
 
-    const Icon = category.icon;
+    const Icon = category?.icon || IconLoader;
 
     return (
         <div className="bg-white overflow-hidden transition-all duration-200">

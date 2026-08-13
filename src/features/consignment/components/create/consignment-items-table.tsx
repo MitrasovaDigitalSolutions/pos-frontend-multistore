@@ -1,21 +1,27 @@
 "use client";
 
+import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { FormNumberInput } from "@/components/forms/form-number-input";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { AppButton } from "@/components/shared/app-button";
 import type { Product } from "@/features/master/products/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconPackage, IconTrash } from "@tabler/icons-react";
+import { useEffect, useRef, useState } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import type { ConsignmentReceivingFormValues } from "../../schemas/consignment-schema";
 
 interface ConsignmentItemsTableProps {
   productsMap: Map<string, Product>;
   onRemoveItem: (index: number) => void;
+  disabled?: boolean;
 }
 
-export function ConsignmentItemsTable({ productsMap, onRemoveItem }: ConsignmentItemsTableProps) {
-  const { control, watch, setValue } = useFormContext<ConsignmentReceivingFormValues>();
+export function ConsignmentItemsTable({
+  productsMap,
+  onRemoveItem,
+  disabled = false,
+}: ConsignmentItemsTableProps) {
+  const { control, watch } = useFormContext<ConsignmentReceivingFormValues>();
   const { fields } = useFieldArray({
     control,
     name: "items",
@@ -23,111 +29,135 @@ export function ConsignmentItemsTable({ productsMap, onRemoveItem }: Consignment
 
   const watchItems = watch("items") || [];
 
-  return (
-    <div className="bg-white border border-slate-100 rounded-2xl shadow-2xs p-6 space-y-4">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
-          <div className="p-1 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-100">
-            <IconPackage size={18} />
-          </div>
-          <span>Daftar Barang Titipan</span>
-          <span className="text-xs font-medium text-slate-400">({fields.length} Produk)</span>
-        </h3>
-      </div>
+  const [flashIndex, setFlashIndex] = useState<number | null>(null);
+  const prevLengthRef = useRef(fields.length);
+  const tableEndRef = useRef<HTMLDivElement>(null);
 
-      {fields.length === 0 ? (
-        <div className="text-center py-12 border-2 border-dashed border-slate-100 rounded-xl bg-slate-50/50">
-          <IconPackage className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-          <p className="text-xs font-semibold text-slate-600">Belum ada barang titipan ditambahkan.</p>
-          <p className="text-[11px] text-slate-400 mt-0.5">
-            Gunakan barcode scanner atau pencarian di atas untuk menambahkan produk konsinyasi.
-          </p>
+  useEffect(() => {
+    if (fields.length > prevLengthRef.current) {
+      const newIndex = fields.length - 1;
+      setFlashIndex(newIndex);
+      const timer = setTimeout(() => setFlashIndex(null), 800);
+      tableEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      return () => clearTimeout(timer);
+    }
+    prevLengthRef.current = fields.length;
+  }, [fields.length]);
+
+  const totalItems = watchItems.reduce((acc, item) => acc + Number(item?.kuantitas || 0), 0);
+  const totalValue = watchItems.reduce(
+    (acc, item) => acc + Number(item?.kuantitas || 0) * Number(item?.harga_beli || 0),
+    0
+  );
+
+  if (fields.length === 0) {
+    return (
+      <div className="border border-dashed border-slate-200 rounded-2xl p-8 text-center bg-white shadow-xs">
+        <div className="w-14 h-14 mx-auto mb-3 bg-emerald-50 rounded-2xl flex items-center justify-center border border-emerald-100/50">
+          <IconPackage size={26} className="text-emerald-600" />
         </div>
-      ) : (
+        <p className="text-sm font-bold text-slate-800">Belum ada barang konsinyasi</p>
+        <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+          Scan barcode atau masukkan kode/nama produk pada kotak di atas untuk menambahkan barang titipan.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="border border-slate-100 rounded-2xl overflow-hidden shadow-xs bg-white">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/70 text-slate-500 font-bold">
-                <th className="py-2.5 px-3 text-left w-12">#</th>
-                <th className="py-2.5 px-3 text-left">Produk</th>
-                <th className="py-2.5 px-3 text-center w-28">Qty Titipan</th>
-                <th className="py-2.5 px-3 text-right w-36">Harga Beli (Rp)</th>
-                <th className="py-2.5 px-3 text-center w-36">Penyesuaian Jual</th>
-                <th className="py-2.5 px-3 text-right w-36">Subtotal</th>
-                <th className="py-2.5 px-3 text-center w-14">Aksi</th>
+              <tr className="bg-slate-50/80 border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <th className="p-3 w-10">No</th>
+                <th className="p-3 w-32 min-w-[120px]">Barcode</th>
+                <th className="p-3 min-w-[260px]">Nama Produk</th>
+                <th className="p-3 text-center w-24 min-w-[90px]">Qty</th>
+                <th className="p-3 text-right w-36 min-w-[130px]">Harga Beli</th>
+                <th className="p-3 text-right w-36 min-w-[130px]">Subtotal</th>
+                <th className="p-3 w-14 text-center sticky right-0 bg-slate-50 border-l border-slate-100 z-10">
+                  Aksi
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-50">
               {fields.map((field, index) => {
                 const item = watchItems[index];
                 const product = productsMap.get(item?.product_uid || "");
                 const qty = Number(item?.kuantitas || 0);
                 const hargaBeli = Number(item?.harga_beli || 0);
                 const subtotal = qty * hargaBeli;
-                const updateHargaJual = !!item?.update_harga_jual;
+                const isFlashing = flashIndex === index;
 
                 return (
-                  <tr key={field.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="py-3 px-3 text-slate-400 font-medium">{index + 1}</td>
-                    <td className="py-3 px-3">
-                      <div className="flex flex-col">
-                        <span className="font-bold text-slate-800 text-xs">
+                  <tr
+                    key={field.id}
+                    className={`
+                      group transition-all duration-300 hover:bg-slate-50/60
+                      ${isFlashing ? "bg-emerald-50 ring-1 ring-inset ring-emerald-200" : ""}
+                    `}
+                  >
+                    <td className="p-3 text-slate-400 font-mono font-bold">{index + 1}</td>
+
+                    <td className="p-3">
+                      <span className="font-mono text-slate-500 text-[11px]">
+                        {product?.barcode || "—"}
+                      </span>
+                    </td>
+
+                    <td className="p-3 min-w-[260px]">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-slate-800 text-xs">
                           {product?.nama || "Produk Konsinyasi"}
                         </span>
-                        <span className="text-[11px] text-slate-400 font-mono">
-                          {product?.barcode || "—"}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-3">
-                      <FormNumberInput<ConsignmentReceivingFormValues>
-                        name={`items.${index}.kuantitas`}
-                        min={0.01}
-                        className="h-8 text-xs text-center font-bold"
-                      />
-                    </td>
-                    <td className="py-3 px-3">
-                      <FormNumberInput<ConsignmentReceivingFormValues>
-                        name={`items.${index}.harga_beli`}
-                        min={0}
-                        className="h-8 text-xs text-right font-bold"
-                      />
-                    </td>
-                    <td className="py-3 px-3">
-                      <div className="flex flex-col items-center gap-1.5">
-                        <label className="flex items-center gap-1.5 text-[11px] text-slate-600 font-medium cursor-pointer">
-                          <Checkbox
-                            checked={updateHargaJual}
-                            onCheckedChange={(checked) =>
-                              setValue(`items.${index}.update_harga_jual`, !!checked)
-                            }
-                          />
-                          <span>Ubah Harga</span>
-                        </label>
-
-                        {updateHargaJual && (
-                          <FormNumberInput<ConsignmentReceivingFormValues>
-                            name={`items.${index}.harga_jual_baru`}
-                            min={0}
-                            placeholder="Harga jual..."
-                            className="h-7 text-[11px] text-right font-bold w-28"
-                          />
+                        {isFlashing && (
+                          <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200 shrink-0">
+                            ⚡ baru
+                          </span>
                         )}
                       </div>
                     </td>
-                    <td className="py-3 px-3 text-right font-bold text-slate-900">
+
+                    <td className="p-3">
+                      <FormNumberInput<ConsignmentReceivingFormValues>
+                        name={`items.${index}.kuantitas`}
+                        min={0.01}
+                        allowDecimal={true}
+                        disabled={disabled}
+                        className="w-full h-8 text-center text-xs font-bold text-slate-800 rounded-lg border-slate-200 focus-visible:ring-emerald-400/20 focus-visible:border-emerald-400"
+                      />
+                    </td>
+
+                    <td className="p-3">
+                      <FormNominalInput<ConsignmentReceivingFormValues>
+                        name={`items.${index}.harga_beli`}
+                        disabled={disabled}
+                        className="w-full h-8 text-right text-xs font-bold text-slate-800 font-mono rounded-lg border-slate-200 focus-visible:ring-emerald-400/20 focus-visible:border-emerald-400"
+                      />
+                    </td>
+
+                    <td className="p-3 text-right font-bold text-slate-900 font-mono">
                       {formatRupiah(subtotal)}
                     </td>
-                    <td className="py-3 px-3 text-center">
-                      <Button
+
+                    <td
+                      className={`p-3 text-center sticky right-0 border-l border-slate-100/80 z-10 transition-colors ${
+                        isFlashing ? "bg-emerald-50" : "bg-white group-hover:bg-slate-50/60"
+                      }`}
+                    >
+                      <AppButton
                         type="button"
                         variant="ghost"
-                        size="icon"
+                        size="icon-xs"
                         onClick={() => onRemoveItem(index)}
-                        className="h-7 w-7 text-slate-400 hover:text-rose-600 rounded-lg cursor-pointer"
+                        disabled={disabled}
+                        className="text-rose-400 hover:text-rose-600 hover:bg-rose-50"
+                        title="Hapus item"
                       >
-                        <IconTrash size={15} />
-                      </Button>
+                        <IconTrash size={16} />
+                      </AppButton>
                     </td>
                   </tr>
                 );
@@ -135,7 +165,34 @@ export function ConsignmentItemsTable({ productsMap, onRemoveItem }: Consignment
             </tbody>
           </table>
         </div>
-      )}
+
+        {/* Footer totals */}
+        <div className="bg-slate-50/80 border-t border-slate-100 px-4 py-3 flex justify-between items-center flex-wrap gap-2">
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              Total Items
+            </span>
+            <span className="text-sm font-extrabold text-slate-800">
+              {totalItems} pcs
+            </span>
+            <span className="text-slate-200">|</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              {fields.length} produk
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              Total Nilai Titipan
+            </span>
+            <span className="text-base font-extrabold text-emerald-600 font-mono">
+              {formatRupiah(totalValue)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div ref={tableEndRef} />
     </div>
   );
 }

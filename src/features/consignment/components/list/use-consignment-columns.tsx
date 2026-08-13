@@ -2,11 +2,10 @@
 
 import { useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { formatToReadableDateTime } from "@/lib/date-utils";
+import { formatToReadableDate } from "@/lib/date-utils";
 import type { ConsignmentReceiving } from "../../types";
-import { CONSIGNMENT_STATUS_BADGE } from "../../constants";
 
 export function useConsignmentColumns() {
   return useMemo<ColumnDef<ConsignmentReceiving>[]>(
@@ -28,7 +27,7 @@ export function useConsignmentColumns() {
         size: 140,
         cell: ({ row }) => (
           <span className="text-xs text-slate-600">
-            {formatToReadableDateTime(row.original.tanggal_terima || row.original.created_at)}
+            {formatToReadableDate(row.original.tanggal_terima || row.original.created_at)}
           </span>
         ),
       },
@@ -92,15 +91,7 @@ export function useConsignmentColumns() {
         header: "Status",
         size: 140,
         meta: { headerClassName: "text-center", cellClassName: "text-center" },
-        cell: ({ row }) => {
-          const status = row.original.status;
-          const info = CONSIGNMENT_STATUS_BADGE[status] || { label: status, variant: "secondary" };
-          return (
-            <Badge variant={info.variant} className="px-2.5 py-0.5 text-xs font-bold shadow-2xs">
-              {info.label}
-            </Badge>
-          );
-        },
+        cell: ({ row }) => <StatusBadge status={row.original.status} />,
       },
     ],
     []

@@ -3,16 +3,12 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { formatToReadableDateTime } from "@/lib/date-utils";
+import { formatToReadableDate } from "@/lib/date-utils";
 import {
   IconArrowLeft,
   IconBan,
   IconCash,
-  IconCheck,
-  IconEdit,
-  IconPackage,
-  IconPrinter
+  IconFileDescription,
 } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -20,54 +16,80 @@ import { toast } from "sonner";
 import {
   useCompleteConsignmentMutation,
   useConsignmentReceivingDetail,
+  useDeleteConsignmentDraftMutation,
   useVoidConsignmentMutation,
 } from "../../api/consignment-api";
 import { CONSIGNMENT_STATUS_BADGE } from "../../constants";
+import { ConsignmentCreatePage } from "../create/consignment-create-page";
+import { ConsignmentItemsTab } from "./consignment-items-tab";
+import { ConsignmentPaymentsTab } from "./consignment-payments-tab";
+import { ConsignmentSummaryCard } from "./consignment-summary-card";
 
 interface ConsignmentDetailPageProps {
   uid: string;
 }
 
+function ConsignmentDetailSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse p-6">
+      <div className="flex justify-between items-center border-b pb-4">
+        <div className="h-9 w-48 bg-slate-100 rounded-xl" />
+        <div className="h-9 w-32 bg-slate-100 rounded-xl" />
+      </div>
+      <div className="grid grid-cols-12 gap-6">
+        <div className="col-span-4 h-64 bg-slate-100 rounded-2xl" />
+        <div className="col-span-8 h-96 bg-slate-100 rounded-2xl" />
+      </div>
+    </div>
+  );
+}
+
 export function ConsignmentDetailPage({ uid }: ConsignmentDetailPageProps) {
   const router = useRouter();
-  const { data: item, isLoading } = useConsignmentReceivingDetail(uid);
-
+  const [activeTab, setActiveTab] = useState<"items" | "payments">("items");
   const [isCompleteOpen, setIsCompleteOpen] = useState(false);
   const [isVoidOpen, setIsVoidOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
+  const { data: item, isLoading } = useConsignmentReceivingDetail(uid);
 
   const completeMutation = useCompleteConsignmentMutation();
   const voidMutation = useVoidConsignmentMutation();
+  const deleteMutation = useDeleteConsignmentDraftMutation();
 
   if (isLoading) {
-    return (
-      <div className="p-12 text-center text-xs font-semibold text-slate-500">
-        Memuat detail konsinyasi...
-      </div>
-    );
+    return <ConsignmentDetailSkeleton />;
   }
 
   if (!item) {
     return (
-      <div className="p-12 text-center text-xs font-semibold text-slate-500">
-        Data konsinyasi tidak ditemukan.
+      <div className="p-12 text-center bg-white border border-slate-100 rounded-2xl shadow-2xs max-w-md mx-auto my-12">
+        <p className="text-sm font-bold text-slate-800">Detail Konsinyasi Tidak Ditemukan</p>
+        <p className="text-xs text-slate-400 mt-1">
+          Data konsinyasi yang Anda cari tidak ditemukan atau telah dihapus.
+        </p>
+        <Button
+          onClick={() => router.push("/admin/consignment")}
+          className="mt-4 bg-slate-900 text-white text-xs font-bold rounded-xl"
+        >
+          Kembali ke Daftar Konsinyasi
+        </Button>
       </div>
     );
   }
 
-  const isDraft = item.status === "draft";
-  const isCompleted = item.status === "completed";
-  const isClosed = item.status === "closed";
-  const isVoid = item.status === "void";
+  if (item.status === "draft") {
+    return <ConsignmentCreatePage initialData={item} />;
+  }
 
-  const statusInfo = CONSIGNMENT_STATUS_BADGE[item.status] || { label: item.status, variant: "secondary" };
+  const isCompleted = item.status === "completed";
+
+  const statusInfo = CONSIGNMENT_STATUS_BADGE[item.status] || {
+    label: item.status,
+    variant: "secondary" as const,
+  };
   const hasPayments = item.payments && item.payments.length > 0;
   const hasSales = item.items?.some((i) => (i.qty_terjual || 0) > 0);
-
-  const totalNilai =
-    item.items?.reduce(
-      (acc, it) => acc + Number(it.kuantitas || 0) * Number(it.harga_beli || 0),
-      0
-    ) || 0;
 
   const handleComplete = async () => {
     try {
@@ -91,41 +113,46 @@ export function ConsignmentDetailPage({ uid }: ConsignmentDetailPageProps) {
     }
   };
 
+  const handleDelete = async () => {
+    try {
+      await deleteMutation.mutateAsync(item.uid);
+      toast.success(`Draft konsinyasi ${item.nomor_konsinyasi} berhasil dihapus.`);
+      setIsDeleteOpen(false);
+      router.push("/admin/consignment");
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      toast.error(error?.response?.data?.message || error?.message || "Gagal menghapus draft.");
+    }
+  };
+
   return (
-    <div className="space-y-6 p-6">
-      {/* Top Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => router.push("/admin/consignment")}
-          className="text-xs font-bold text-slate-600 hover:text-slate-900 gap-1.5 rounded-xl cursor-pointer"
-        >
-          <IconArrowLeft size={16} />
-          <span>Kembali ke Daftar Konsinyasi</span>
-        </Button>
+    <div className="space-y-6">
+      {/* Top Header / Action Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+        <div className="flex items-center gap-4">
+          <Button
+            type="button"
+            onClick={() => router.push("/admin/consignment")}
+            variant="outline"
+            className="p-2 h-9 w-9 rounded-xl border-slate-200 text-slate-500 hover:text-slate-900 bg-white cursor-pointer"
+          >
+            <IconArrowLeft size={18} />
+          </Button>
+          <div>
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <span>Detail Konsinyasi: {item.nomor_konsinyasi}</span>
+              <Badge variant={statusInfo.variant} className="px-2 py-0.5 text-[9px] font-bold">
+                {statusInfo.label}
+              </Badge>
+            </h2>
+            <p className="text-xs text-slate-400">
+              Supplier: <span className="font-semibold text-slate-600">{item.supplier || item.supplier_relationship?.nama || "—"}</span> | Tanggal Terima: {formatToReadableDate(item.tanggal_terima || item.created_at)}
+            </p>
+          </div>
+        </div>
 
-        <div className="flex items-center gap-2">
-          {isDraft && (
-            <>
-              <Button
-                variant="outline"
-                onClick={() => router.push(`/admin/consignment/${item.uid}/edit`)}
-                className="h-9 text-xs font-bold border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl gap-1.5 cursor-pointer"
-              >
-                <IconEdit size={15} />
-                <span>Edit Draft</span>
-              </Button>
-              <Button
-                onClick={() => setIsCompleteOpen(true)}
-                className="h-9 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-1.5 cursor-pointer shadow-2xs"
-              >
-                <IconCheck size={15} />
-                <span>Selesaikan (Complete)</span>
-              </Button>
-            </>
-          )}
-
+        {/* Action Buttons */}
+        <div className="flex flex-wrap items-center gap-2">
           {isCompleted && (
             <>
               <Button
@@ -140,7 +167,7 @@ export function ConsignmentDetailPage({ uid }: ConsignmentDetailPageProps) {
                 <Button
                   variant="outline"
                   onClick={() => setIsVoidOpen(true)}
-                  className="h-9 text-xs font-bold border-rose-200 text-rose-600 hover:bg-rose-50 rounded-xl gap-1.5 cursor-pointer"
+                  className="h-9 text-xs font-bold border-rose-200 text-rose-600 hover:bg-rose-50 rounded-xl gap-1.5 cursor-pointer bg-white"
                 >
                   <IconBan size={15} />
                   <span>Batalkan (Void)</span>
@@ -148,158 +175,82 @@ export function ConsignmentDetailPage({ uid }: ConsignmentDetailPageProps) {
               )}
             </>
           )}
-
-          <Button
-            variant="outline"
-            onClick={() => window.print()}
-            className="h-9 text-xs font-bold border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl gap-1.5 cursor-pointer"
-          >
-            <IconPrinter size={15} />
-            <span>Cetak</span>
-          </Button>
         </div>
       </div>
 
-      {/* Header Info Banner */}
-      <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-2xs space-y-4">
-        {isClosed && (
-          <div className="bg-slate-50 border border-slate-200 text-slate-700 p-3 rounded-xl text-xs font-semibold flex items-center gap-2">
-            <IconCheck size={16} className="text-emerald-600 shrink-0" />
-            <span>Sesi konsinyasi ini telah <strong>ditutup & lunas</strong>. Sisa barang titipan yang belum laku telah otomatis dikembalikan ke supplier.</span>
-          </div>
-        )}
-
-        {isVoid && (
-          <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3 rounded-xl text-xs font-semibold flex items-center gap-2">
-            <IconBan size={16} className="text-rose-600 shrink-0" />
-            <span>Penerimaan konsinyasi ini telah <strong>dibatalkan (Void)</strong>. Stok fisik barang telah ditarik kembali dari sistem.</span>
-          </div>
-        )}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-lg font-bold text-emerald-600">
-                {item.nomor_konsinyasi}
-              </span>
-              <Badge variant={statusInfo.variant} className="px-2.5 py-0.5 text-xs font-bold">
-                {statusInfo.label}
-              </Badge>
-            </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Diterima pada: {formatToReadableDateTime(item.tanggal_terima || item.created_at)}
-            </p>
-          </div>
-
-          <div className="text-right">
-            <span className="text-xs font-medium text-slate-400 block">Total Nilai Titipan</span>
-            <span className="text-xl font-bold text-slate-900">{formatRupiah(totalNilai)}</span>
-          </div>
+      {/* Main Content Layout Grid (Matching PO Detail Page) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Summary Card */}
+        <div className="lg:col-span-4 space-y-6">
+          <ConsignmentSummaryCard item={item} />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-          <div>
-            <span className="text-slate-400 block font-medium">Supplier / Pemasok:</span>
-            <span className="font-bold text-slate-800">
-              {item.supplier || item.supplier_relationship?.nama || "—"}
-            </span>
-          </div>
-          <div>
-            <span className="text-slate-400 block font-medium">Pencatat / User:</span>
-            <span className="font-bold text-slate-800">{item.user?.nama || "—"}</span>
-          </div>
-          <div>
-            <span className="text-slate-400 block font-medium">Sisa Hutang:</span>
-            <span className="font-bold text-rose-600">
-              {item.sisa_hutang ? formatRupiah(item.sisa_hutang) : "Rp 0 (Lunas)"}
-            </span>
-          </div>
-        </div>
-
-        {item.catatan && (
-          <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs text-slate-600">
-            <span className="font-bold">Catatan:</span> {item.catatan}
-          </div>
-        )}
-      </div>
-
-      {/* Items Table */}
-      <div className="bg-white border border-slate-100 rounded-2xl shadow-2xs p-6 space-y-4">
-        <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
-          <IconPackage size={18} className="text-emerald-600" />
-          <span>Daftar Barang Titipan</span>
-        </h3>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/70 text-slate-500 font-bold">
-                <th className="py-2.5 px-3 text-left">Produk</th>
-                <th className="py-2.5 px-3 text-center">Qty Titipan</th>
-                <th className="py-2.5 px-3 text-center">Qty Terjual</th>
-                <th className="py-2.5 px-3 text-center">Qty Diretur</th>
-                <th className="py-2.5 px-3 text-center">Sisa Titipan</th>
-                <th className="py-2.5 px-3 text-right">Harga Beli</th>
-                <th className="py-2.5 px-3 text-right">Subtotal</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {item.items?.map((it, idx) => {
-                const qty = Number(it.kuantitas || 0);
-                const price = Number(it.harga_beli || 0);
-                const subtotal = qty * price;
-                const sisa = it.sisa !== undefined ? it.sisa : qty - Number(it.qty_terjual || 0) - Number(it.qty_diretur || 0);
-
-                return (
-                  <tr key={it.uid || idx} className="hover:bg-slate-50/50">
-                    <td className="py-3 px-3">
-                      <span className="font-bold text-slate-800">{it.product?.nama || "Produk"}</span>
-                    </td>
-                    <td className="py-3 px-3 text-center font-bold text-slate-900">{qty} pcs</td>
-                    <td className="py-3 px-3 text-center font-bold text-emerald-600">{it.qty_terjual || 0} pcs</td>
-                    <td className="py-3 px-3 text-center font-bold text-amber-600">{it.qty_diretur || 0} pcs</td>
-                    <td className="py-3 px-3 text-center font-bold text-slate-700">{sisa} pcs</td>
-                    <td className="py-3 px-3 text-right font-medium text-slate-700">{formatRupiah(price)}</td>
-                    <td className="py-3 px-3 text-right font-bold text-slate-900">{formatRupiah(subtotal)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Payment History Section */}
-      {item.payments && item.payments.length > 0 && (
-        <div className="bg-white border border-slate-100 rounded-2xl shadow-2xs p-6 space-y-4">
-          <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
-            <IconCash size={18} className="text-emerald-600" />
-            <span>Riwayat Pembayaran Konsinyasi</span>
-          </h3>
-
-          <div className="space-y-3">
-            {item.payments.map((p) => (
-              <div
-                key={p.uid}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-xl text-xs gap-2"
+        {/* Right Column: Tabbed Content Panel */}
+        <div className="lg:col-span-8 bg-white border border-slate-100 rounded-2xl shadow-2xs overflow-hidden flex flex-col">
+          {/* Segmented Pill Tab Header */}
+          <div className="border-b border-slate-100 bg-slate-50/50 p-2.5 sm:p-3 overflow-x-auto whitespace-nowrap scrollbar-none flex-nowrap">
+            <div className="inline-flex items-center gap-1.5 p-1 bg-slate-200/60 rounded-xl border border-slate-200/50 shrink-0">
+              <button
+                type="button"
+                onClick={() => setActiveTab("items")}
+                className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer shrink-0 ${
+                  activeTab === "items"
+                    ? "bg-white text-slate-900 font-extrabold shadow-2xs border border-slate-200/60"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-white/40"
+                }`}
               >
-                <div>
-                  <span className="font-mono font-bold text-emerald-600 block">{p.nomor_pembayaran}</span>
-                  <span className="text-slate-500">
-                    {formatToReadableDateTime(p.tanggal_bayar || p.created_at || "")} • Akun:{" "}
-                    <strong className="text-slate-700">{p.cashAccount?.nama || p.metode_pembayaran}</strong>
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="font-bold text-slate-900 text-sm block">{formatRupiah(p.jumlah_bayar)}</span>
-                  <span className="text-emerald-600 font-semibold text-[11px]">Lunas (Sesi Ditutup)</span>
-                </div>
-              </div>
-            ))}
+                <IconFileDescription
+                  size={16}
+                  className={activeTab === "items" ? "text-emerald-600" : "text-slate-400"}
+                />
+                <span>Daftar Barang Titipan</span>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono transition-colors ${
+                    activeTab === "items"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-slate-200/80 text-slate-600"
+                  }`}
+                >
+                  {item.items?.length || 0}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("payments")}
+                className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer shrink-0 ${
+                  activeTab === "payments"
+                    ? "bg-white text-slate-900 font-extrabold shadow-2xs border border-slate-200/60"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-white/40"
+                }`}
+              >
+                <IconCash
+                  size={16}
+                  className={activeTab === "payments" ? "text-emerald-600" : "text-slate-400"}
+                />
+                <span>Riwayat Pelunasan</span>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold font-mono transition-colors ${
+                    activeTab === "payments"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-slate-200/80 text-slate-600"
+                  }`}
+                >
+                  {item.payments?.length || 0}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Tab Content Body */}
+          <div className="p-4 sm:p-5">
+            {activeTab === "items" && <ConsignmentItemsTab items={item.items} />}
+            {activeTab === "payments" && <ConsignmentPaymentsTab payments={item.payments} />}
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Dialogs */}
+      {/* Confirmation Dialogs */}
       <ConfirmDialog
         open={isCompleteOpen}
         onOpenChange={setIsCompleteOpen}
@@ -320,6 +271,17 @@ export function ConsignmentDetailPage({ uid }: ConsignmentDetailPageProps) {
         variant="danger"
         isLoading={voidMutation.isPending}
         onConfirm={handleVoid}
+      />
+
+      <ConfirmDialog
+        open={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        title="Hapus Draft Konsinyasi"
+        description={`Apakah Anda yakin ingin menghapus draft konsinyasi "${item.nomor_konsinyasi}"?`}
+        confirmText="Ya, Hapus"
+        variant="danger"
+        isLoading={deleteMutation.isPending}
+        onConfirm={handleDelete}
       />
     </div>
   );

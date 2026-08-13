@@ -128,7 +128,7 @@ export function OfflineTransactionsTable({
                             records.map((record) => {
                                 const { date, time } = formatDateTime(record.timestamp);
                                 const status = STATUS_CONFIG[record.status] || STATUS_CONFIG.pending;
-                                const StatusIcon = status.icon;
+                                const StatusIcon = status?.icon || IconClock;
                                 const isSyncable = record.status === "pending" || record.status === "failed";
                                 const isChecked = selectedUids.has(record.uid);
 
@@ -139,7 +139,7 @@ export function OfflineTransactionsTable({
                                     ? record.metode_pembayaran
                                     : String(record.payload.metode_pembayaran || "cash") as "cash" | "card" | "debt";
                                 const payment = PAYMENT_LABELS[payMode] || PAYMENT_LABELS.cash;
-                                const PayIcon = payment.icon;
+                                const PayIcon = payment?.icon || IconCash;
 
                                 // Total / Amount
                                 const displayTotal = isDebtPayment

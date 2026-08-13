@@ -47,6 +47,7 @@ export interface ConsignmentReceiving {
   supplier_uid: string | null;
   supplier: string | null;
   tanggal_terima: string;
+  tanggal_jatuh_tempo?: string | null;
   catatan: string | null;
   status: ConsignmentStatus;
   created_at: string;
@@ -110,7 +111,8 @@ export interface CreateConsignmentItemPayload {
 export interface CreateConsignmentReceivingPayload {
   supplier_uid?: string | null;
   supplier?: string | null;
-  tanggal_terima?: string;
+  tanggal_terima?: string | null;
+  tanggal_jatuh_tempo?: string | null;
   catatan?: string | null;
   items: CreateConsignmentItemPayload[];
 }

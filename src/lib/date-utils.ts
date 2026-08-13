@@ -80,6 +80,13 @@ export function subDaysStr(days: number): string {
 }
 
 /**
+ * Mengembalikan string tanggal N hari yang akan datang dengan format yyyy-MM-dd.
+ */
+export function addDaysStr(days: number): string {
+  return format(subDays(new Date(), -days), "yyyy-MM-dd");
+}
+
+/**
  * Memformat tanggal ke format UTC ISO String standar (YYYY-MM-DDTHH:mm:ss.SSSZ).
  */
 export function formatUTC(dateInput?: Date | string | number | null): string {

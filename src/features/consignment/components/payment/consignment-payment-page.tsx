@@ -1,19 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import type { ColumnDef } from "@tanstack/react-table";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { IconArrowLeft, IconCash, IconCheck } from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components/ui/data-table";
-import { Badge } from "@/components/ui/badge";
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
+import { Button } from "@/components/ui/button";
+import { DataTable } from "@/components/ui/data-table";
+import { DataTableActionButton } from "@/components/ui/data-table-actions";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { formatToReadableDateTime } from "@/lib/date-utils";
+import { formatToReadableDate } from "@/lib/date-utils";
+import { IconArrowLeft, IconCash, IconCheck } from "@tabler/icons-react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { useConsignmentPayments } from "../../api/consignment-api";
-import { CONSIGNMENT_STATUS_BADGE } from "../../constants";
 import type { ConsignmentReceiving } from "../../types";
 import { ConsignmentPaymentDialog } from "./consignment-payment-dialog";
 
@@ -46,8 +46,9 @@ export function ConsignmentPaymentPage() {
     search: activeFilters.search || undefined,
   });
 
-  // Derived state: Automatically find target item if passed via URL param without triggering useEffect setState
-  const urlTargetItem = targetUid && data?.data ? data.data.find((item) => item.uid === targetUid) || null : null;
+  // Derived state: Automatically find target item if passed via URL param
+  const urlTargetItem =
+    targetUid && data?.data ? data.data.find((item) => item.uid === targetUid) || null : null;
   const activeItem = selectedItem || urlTargetItem;
   const isPaymentOpen = Boolean(urlTargetItem) || isManualModalOpen;
 
@@ -72,7 +73,7 @@ export function ConsignmentPaymentPage() {
       header: "Nomor Konsinyasi",
       size: 180,
       cell: ({ row }) => (
-        <span className="font-mono text-xs font-bold text-emerald-600">
+        <span className="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400">
           {row.original.nomor_konsinyasi}
         </span>
       ),
@@ -83,7 +84,7 @@ export function ConsignmentPaymentPage() {
       size: 140,
       cell: ({ row }) => (
         <span className="text-xs text-slate-600">
-          {formatToReadableDateTime(row.original.tanggal_terima || row.original.created_at)}
+          {formatToReadableDate(row.original.tanggal_terima || row.original.created_at)}
         </span>
       ),
     },
@@ -104,6 +105,9 @@ export function ConsignmentPaymentPage() {
       meta: { headerClassName: "text-right", cellClassName: "text-right" },
       cell: ({ row }) => {
         const hutang = Number(row.original.sisa_hutang || 0);
+        if (hutang <= 0) {
+          return <span className="text-xs text-slate-400">—</span>;
+        }
         return (
           <span className="text-xs font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
             {formatRupiah(hutang)}
@@ -116,17 +120,7 @@ export function ConsignmentPaymentPage() {
       header: "Status Sesi",
       size: 140,
       meta: { headerClassName: "text-center", cellClassName: "text-center" },
-      cell: ({ row }) => {
-        const info = CONSIGNMENT_STATUS_BADGE[row.original.status as keyof typeof CONSIGNMENT_STATUS_BADGE] || {
-          label: row.original.status,
-          variant: "secondary" as const,
-        };
-        return (
-          <Badge variant={info.variant} className="px-2.5 py-0.5 text-xs font-bold shadow-2xs">
-            {info.label}
-          </Badge>
-        );
-      },
+      cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
   ];
 
@@ -142,23 +136,29 @@ export function ConsignmentPaymentPage() {
   };
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Navigation & Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => router.push("/admin/consignment")}
-          className="text-xs font-bold text-slate-600 hover:text-slate-900 gap-1.5 rounded-xl cursor-pointer"
-        >
-          <IconArrowLeft size={16} />
-          <span>Kembali ke Konsinyasi</span>
-        </Button>
-
-        <h1 className="text-base font-bold text-slate-900 flex items-center gap-2">
-          <IconCash className="w-5 h-5 text-emerald-600" />
-          Pelunasan Pembayaran Konsinyasi
-        </h1>
+    <div className="space-y-6">
+      {/* Header Banner (Identical layout to Consignment Receiving) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-slate-100 p-6 rounded-2xl shadow-2xs">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <IconCash className="w-6 h-6 text-emerald-600" />
+            Pelunasan Konsinyasi
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Proses pelunasan hasil penjualan konsinyasi kepada supplier dan penutupan sesi titipan.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push("/admin/consignment")}
+            className="h-10 text-xs font-bold border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl gap-1.5 cursor-pointer bg-white"
+          >
+            <IconArrowLeft size={16} />
+            <span>Kembali ke Konsinyasi</span>
+          </Button>
+        </div>
       </div>
 
       {/* Filter Form */}
@@ -175,7 +175,7 @@ export function ConsignmentPaymentPage() {
         />
       </FilterForm>
 
-      {/* DataTable */}
+      {/* Main DataTable */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-2xs overflow-hidden p-4">
         <DataTable
           columns={columns}
@@ -187,30 +187,31 @@ export function ConsignmentPaymentPage() {
           meta={data?.meta}
           onPageChange={setPage}
           actionColumnWidth="w-36"
+          onView={(item) => router.push(`/admin/consignment/${item.uid}`)}
           extraActions={(item) => {
             const isClosed = item.status === "closed";
             if (isClosed) {
               return (
                 <span className="text-xs font-bold text-emerald-600 flex items-center gap-1 justify-end">
                   <IconCheck size={14} />
-                  Sudah Lunas & Ditutup
+                  Lunas
                 </span>
               );
             }
             return (
-              <Button
-                size="sm"
+              <DataTableActionButton
+                variant="emerald"
                 onClick={() => handleOpenPayment(item)}
-                className="h-8 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-1 cursor-pointer shadow-2xs"
+                tooltip="Bayar & Tutup Sesi Konsinyasi"
               >
-                <IconCash size={14} />
-                <span>Bayar & Tutup</span>
-              </Button>
+                <IconCash size={16} />
+              </DataTableActionButton>
             );
           }}
         />
       </div>
 
+      {/* Payment Action Dialog */}
       <ConsignmentPaymentDialog
         open={isPaymentOpen}
         onOpenChange={handleCloseDialog}

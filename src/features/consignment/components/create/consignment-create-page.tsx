@@ -1,113 +1,144 @@
 "use client";
 
-import { FormDatePicker } from "@/components/forms/form-date-picker";
-import { FormInput } from "@/components/forms/form-input";
-import { FormSelect } from "@/components/forms/form-select";
 import { BarcodeInput } from "@/components/shared/barcode-input";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ProductFormDialog } from "@/features/master/products/components/product-form-dialog";
 import type { Product } from "@/features/master/products/types";
+import { BulkSubmitBar } from "@/features/purchase/components/shared/bulk-submit-bar";
+import { formatToISO, todayStr } from "@/lib/date-utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IconArrowLeft, IconBarcode, IconBuildingStore } from "@tabler/icons-react";
+import {
+  IconArrowLeft,
+  IconBarcode,
+  IconCheck,
+  IconInfoCircle,
+  IconUpload,
+  IconX,
+} from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import {
+  useBulkConsignmentMutation,
+  useCompareConsignmentPricesMutation,
   useCompleteConsignmentMutation,
   useCreateConsignmentDraftMutation,
-  useScanConsignmentProductMutation,
   useUpdateConsignmentDraftMutation,
 } from "../../api/consignment-api";
 import {
   consignmentReceivingSchema,
   type ConsignmentReceivingFormValues,
 } from "../../schemas/consignment-schema";
-import type { ConsignmentReceiving } from "../../types";
+import type { ConsignmentReceiving, PriceComparisonItem } from "../../types";
+import { ConsignmentHeaderCard } from "./consignment-header-card";
+import { ConsignmentInstructionPanel } from "./consignment-instruction-panel";
 import { ConsignmentItemsTable } from "./consignment-items-table";
-import { ConsignmentSummaryCard } from "./consignment-summary-card";
+import {
+  ConsignmentPriceAlertDialog,
+  type ConsignmentPriceAlertFormInput,
+} from "./consignment-price-alert-dialog";
 
 interface ConsignmentCreatePageProps {
   initialData?: ConsignmentReceiving;
-  suppliers?: { value: string; label: string }[];
 }
 
-export function ConsignmentCreatePage({ initialData, suppliers = [] }: ConsignmentCreatePageProps) {
+export function ConsignmentCreatePage({ initialData }: ConsignmentCreatePageProps) {
   const router = useRouter();
   const isEditMode = Boolean(initialData);
 
   const [productsMap, setProductsMap] = useState<Map<string, Product>>(new Map());
+  const [notFoundQuery, setNotFoundQuery] = useState("");
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+  const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
+
+  // Price comparison state
+  const [isPriceAlertOpen, setIsPriceAlertOpen] = useState(false);
+  const [priceAlerts, setPriceAlerts] = useState<PriceComparisonItem[]>([]);
 
   const form = useForm<ConsignmentReceivingFormValues>({
     resolver: zodResolver(consignmentReceivingSchema),
     defaultValues: {
       supplier_uid: initialData?.supplier_uid || "",
       supplier: initialData?.supplier || "",
-      tanggal_terima: initialData?.tanggal_terima || new Date().toISOString().split("T")[0],
+      tanggal_terima: initialData?.tanggal_terima
+        ? formatToISO(initialData.tanggal_terima)
+        : todayStr(),
+      tanggal_jatuh_tempo: initialData?.tanggal_jatuh_tempo
+        ? formatToISO(initialData.tanggal_jatuh_tempo)
+        : "",
       catatan: initialData?.catatan || "",
-      items: initialData?.items?.map((i) => ({
-        product_uid: i.product_uid,
-        kuantitas: Number(i.kuantitas || 1),
-        harga_beli: Number(i.harga_beli || 0),
-        update_harga_jual: i.update_harga_jual || false,
-        harga_jual_baru: i.harga_jual_baru ? Number(i.harga_jual_baru) : null,
-        margin_baru: i.margin_baru ? Number(i.margin_baru) : null,
-      })) || [],
+      items:
+        initialData?.items?.map((i) => ({
+          product_uid: i.product_uid,
+          kuantitas: Number(i.kuantitas || 1),
+          harga_beli: Number(i.harga_beli || 0),
+          update_harga_jual: Boolean(i.update_harga_jual),
+          harga_jual_baru: i.harga_jual_baru ? Number(i.harga_jual_baru) : null,
+          margin_baru: i.margin_baru ? Number(i.margin_baru) : null,
+        })) || [],
     },
   });
+
+  // Pre-fill productsMap from initialData if available
+  useEffect(() => {
+    if (initialData?.items) {
+      const map = new Map<string, Product>();
+      initialData.items.forEach((item) => {
+        if (item.product) {
+          map.set(item.product_uid, item.product);
+        }
+      });
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setProductsMap(map);
+    }
+  }, [initialData]);
 
   const createDraftMutation = useCreateConsignmentDraftMutation();
   const updateDraftMutation = useUpdateConsignmentDraftMutation();
   const completeMutation = useCompleteConsignmentMutation();
-  const scanMutation = useScanConsignmentProductMutation();
+  const bulkMutation = useBulkConsignmentMutation();
+  const comparePricesMutation = useCompareConsignmentPricesMutation();
 
-  const handleBarcodeSubmit = useCallback(
-    async (barcode: string) => {
-      if (!barcode.trim()) return;
-      try {
-        const res = await scanMutation.mutateAsync(barcode);
-        if (res) {
-          const currentItems = form.getValues("items") || [];
-          const existingIdx = currentItems.findIndex((it) => it.product_uid === res.product_uid);
+  const isSubmitting =
+    createDraftMutation.isPending ||
+    updateDraftMutation.isPending ||
+    completeMutation.isPending ||
+    bulkMutation.isPending ||
+    comparePricesMutation.isPending;
 
-          // Store product info in local map
-          setProductsMap((prev) => {
-            const next = new Map(prev);
-            next.set(res.product_uid, {
-              uid: res.product_uid,
-              nama: res.nama,
-              barcode: res.barcode,
-              harga_beli: res.harga_beli,
-              harga_jual: res.harga_jual,
-            } as Product);
-            return next;
-          });
+  const handleProductFound = (product: Product) => {
+    const currentItems = form.getValues("items") || [];
+    const existingIdx = currentItems.findIndex((it) => it.product_uid === product.uid);
 
-          if (existingIdx >= 0) {
-            const currentQty = Number(currentItems[existingIdx].kuantitas || 0);
-            form.setValue(`items.${existingIdx}.kuantitas`, currentQty + 1);
-            toast.success(`Qty "${res.nama}" ditambah (+1).`);
-          } else {
-            form.setValue("items", [
-              ...currentItems,
-              {
-                product_uid: res.product_uid,
-                kuantitas: 1,
-                harga_beli: res.harga_beli,
-                update_harga_jual: false,
-                harga_jual_baru: null,
-                margin_baru: null,
-              },
-            ]);
-            toast.success(`"${res.nama}" berhasil ditambahkan.`);
-          }
-        }
-      } catch (err: unknown) {
-        const error = err as { response?: { data?: { message?: string } }; message?: string };
-        toast.error(error?.response?.data?.message || error?.message || "Produk tidak ditemukan.");
-      }
-    },
-    [form, scanMutation]
-  );
+    // Save product definition in map
+    setProductsMap((prev) => {
+      const next = new Map(prev);
+      next.set(product.uid, product);
+      return next;
+    });
+
+    if (existingIdx >= 0) {
+      const currentQty = Number(currentItems[existingIdx].kuantitas || 0);
+      form.setValue(`items.${existingIdx}.kuantitas`, currentQty + 1);
+      toast.success(`Qty "${product.nama}" ditambah (+1).`);
+    } else {
+      form.setValue("items", [
+        ...currentItems,
+        {
+          product_uid: product.uid,
+          kuantitas: 1,
+          harga_beli: product.harga_beli || 0,
+          update_harga_jual: false,
+          harga_jual_baru: null,
+          margin_baru: null,
+        },
+      ]);
+      toast.success(`"${product.nama}" ditambahkan ke daftar.`);
+    }
+  };
 
   const handleSaveDraft = async () => {
     const isValid = await form.trigger();
@@ -128,35 +159,101 @@ export function ConsignmentCreatePage({ initialData, suppliers = [] }: Consignme
       router.push("/admin/consignment");
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } }; message?: string };
-      toast.error(error?.response?.data?.message || error?.message || "Gagal menyimpan draft konsinyasi.");
+      toast.error(
+        error?.response?.data?.message || error?.message || "Gagal menyimpan draft konsinyasi."
+      );
     }
   };
 
-  const handleCompleteDirect = async () => {
+  const handleCompleteClick = async () => {
     const isValid = await form.trigger();
     if (!isValid) {
       toast.error("Mohon lengkapi data penerimaan konsinyasi dengan benar.");
       return;
     }
 
+    const items = form.getValues("items") || [];
+    if (items.length === 0) {
+      toast.error("Minimal 1 barang konsinyasi wajib diisi.");
+      return;
+    }
+
+    // Check for price changes
+    try {
+      const payload = items.map((i) => ({
+        product_uid: i.product_uid,
+        harga_beli: Number(i.harga_beli || 0),
+      }));
+      const rawRes = await comparePricesMutation.mutateAsync({ items: payload });
+      const alertsList: PriceComparisonItem[] = Array.isArray(rawRes)
+        ? rawRes
+        : Array.isArray((rawRes as unknown as { data: PriceComparisonItem[] })?.data)
+          ? (rawRes as unknown as { data: PriceComparisonItem[] }).data
+          : [];
+
+      const activeAlerts = alertsList.filter((a) => a.perlu_alert);
+
+      if (activeAlerts.length > 0) {
+        setPriceAlerts(activeAlerts);
+        setIsPriceAlertOpen(true);
+        return;
+      }
+    } catch (err) {
+      console.error("Error comparing consignment prices:", err);
+    }
+
+    setIsCompleteDialogOpen(true);
+  };
+
+  const handleCompleteWithPrices = (formValues: ConsignmentPriceAlertFormInput) => {
+    setIsPriceAlertOpen(false);
+
+    // Apply updated prices to form items
+    const currentItems = form.getValues("items") || [];
+    const nextItems = currentItems.map((item) => {
+      const alertUpdate = formValues.items.find((u) => u.product_uid === item.product_uid);
+      if (alertUpdate && alertUpdate.update_harga_jual) {
+        return {
+          ...item,
+          update_harga_jual: true,
+          harga_jual_baru: alertUpdate.harga_jual_baru,
+          margin_baru: alertUpdate.margin_baru,
+        };
+      }
+      return item;
+    });
+
+    form.setValue("items", nextItems);
+    setIsCompleteDialogOpen(true);
+  };
+
+  const handleCompleteWithoutPrices = () => {
+    setIsPriceAlertOpen(false);
+    setIsCompleteDialogOpen(true);
+  };
+
+  const handleCompleteConfirmed = async () => {
     const values = form.getValues();
     try {
-      let targetUid = initialData?.uid;
-      if (isEditMode && initialData) {
+      if (isEditMode && initialData?.uid) {
+        // Document already exists as draft (has UID): update draft first, then hit complete endpoint
         await updateDraftMutation.mutateAsync({ uid: initialData.uid, payload: values });
+        await completeMutation.mutateAsync(initialData.uid);
       } else {
-        const res = await createDraftMutation.mutateAsync(values);
-        targetUid = res?.uid;
+        // New document from scratch (no UID): hit bulk endpoint (creates + completes in 1 request)
+        await bulkMutation.mutateAsync(values);
       }
 
-      if (targetUid) {
-        await completeMutation.mutateAsync(targetUid);
-        toast.success("Penerimaan konsinyasi berhasil diselesaikan (stok fisik bertambah).");
-        router.push("/admin/consignment");
-      }
+      toast.success("Penerimaan konsinyasi berhasil diselesaikan. Stok fisik bertambah.");
+      setIsCompleteDialogOpen(false);
+      router.push("/admin/consignment");
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } }; message?: string };
-      toast.error(error?.response?.data?.message || error?.message || "Gagal menyelesaikan penerimaan konsinyasi.");
+      toast.error(
+        error?.response?.data?.message ||
+        error?.message ||
+        "Gagal menyelesaikan penerimaan konsinyasi."
+      );
     }
   };
 
@@ -168,103 +265,192 @@ export function ConsignmentCreatePage({ initialData, suppliers = [] }: Consignme
     );
   };
 
+  const items = useWatch({
+    control: form.control,
+    name: "items",
+    defaultValue: [],
+  });
+  const itemCount = items.reduce((acc, item) => acc + Number(item?.kuantitas || 0), 0);
+  const totalValue = items.reduce(
+    (acc, item) => acc + Number(item?.kuantitas || 0) * Number(item?.harga_beli || 0),
+    0
+  );
+  const uniqueProductCount = items.length;
+
   return (
     <FormProvider {...form}>
-      <div className="space-y-6 p-6">
-        {/* Navigation Bar */}
-        <div className="flex items-center justify-between">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => router.push("/admin/consignment")}
-            className="text-xs font-bold text-slate-600 hover:text-slate-900 gap-1.5 rounded-xl cursor-pointer"
-          >
-            <IconArrowLeft size={16} />
-            <span>Kembali ke Daftar Konsinyasi</span>
-          </Button>
-
-          <span className="text-xs font-mono font-bold text-slate-400">
-            {isEditMode ? initialData?.nomor_konsinyasi : "Draft Konsinyasi Baru"}
-          </span>
+      <div className="space-y-6">
+        {/* Navigation / Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          <div className="flex items-center gap-4">
+            <Button
+              type="button"
+              onClick={() => router.push("/admin/consignment")}
+              variant="outline"
+              className="p-2 h-9 w-9 rounded-xl border-slate-200 text-slate-500 hover:text-slate-900 bg-white cursor-pointer"
+            >
+              <IconArrowLeft size={18} />
+            </Button>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <span>
+                  {isEditMode
+                    ? `Edit Penerimaan Konsinyasi — ${initialData?.nomor_konsinyasi || ""}`
+                    : "Input Penerimaan Konsinyasi Baru"}
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold border bg-amber-50 text-amber-700 border-amber-100">
+                  Draft
+                </span>
+              </h2>
+              <p className="text-xs text-slate-400">
+                Penerimaan konsinyasi menaikkan stok fisik tanpa pencatatan hutang dagang pada GL.
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Header Info Card */}
-        <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-2xs space-y-4">
-          <h2 className="text-base font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
-            <IconBuildingStore className="w-5 h-5 text-emerald-600" />
-            Informasi Penerimaan Konsinyasi
-          </h2>
+        {/* Main Content Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left Column */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* Barcode scanner box */}
+            <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-xs space-y-4">
+              <div className="flex items-center gap-2 pb-3 border-b border-slate-50">
+                <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg border border-emerald-100/30">
+                  <IconBarcode size={18} />
+                </div>
+                <h3 className="text-xs font-bold text-slate-900">Scan Barcode Penerimaan Konsinyasi</h3>
+              </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">Supplier / Pemasok *</label>
-              {suppliers.length > 0 ? (
-                <FormSelect<ConsignmentReceivingFormValues>
-                  name="supplier_uid"
-                  options={suppliers}
-                  placeholder="Pilih supplier..."
-                />
-              ) : (
-                <FormInput<ConsignmentReceivingFormValues>
-                  name="supplier"
-                  placeholder="Nama supplier..."
-                  className="h-10 text-xs"
-                />
+              <BarcodeInput
+                onProductFound={(product) => {
+                  setNotFoundQuery("");
+                  handleProductFound(product);
+                }}
+                onError={(msg) => toast.error(msg)}
+                onProductNotFound={(query) => {
+                  setNotFoundQuery(query);
+                  setIsCreateDialogOpen(true);
+                }}
+                onInputChange={() => {
+                  if (notFoundQuery) {
+                    setNotFoundQuery("");
+                  }
+                }}
+                disabled={isSubmitting}
+                placeholder="Scan barcode atau ketik nama/kode produk untuk mencari..."
+              />
+
+              {notFoundQuery && (
+                <div className="flex items-center justify-between p-3.5 bg-rose-50/50 border border-rose-100 rounded-xl text-rose-900 text-xs">
+                  <div className="flex items-center gap-2">
+                    <IconInfoCircle size={16} className="text-rose-500 shrink-0" />
+                    <span>
+                      Produk <strong>&quot;{notFoundQuery}&quot;</strong> tidak ditemukan.
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Button
+                      type="button"
+                      onClick={() => setIsCreateDialogOpen(true)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold h-8 px-3 rounded-lg border-none cursor-pointer"
+                    >
+                      Tambah Produk Baru
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setNotFoundQuery("")}
+                      className="h-8 w-8 p-0 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-rose-100/50 cursor-pointer border-none flex items-center justify-center shrink-0"
+                    >
+                      <IconX size={16} />
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">Tanggal Terima *</label>
-              <FormDatePicker<ConsignmentReceivingFormValues>
-                name="tanggal_terima"
-                className="h-10 text-xs"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">Catatan / Keterangan</label>
-              <FormInput<ConsignmentReceivingFormValues>
-                name="catatan"
-                placeholder="Catatan tambahan (opsional)..."
-                className="h-10 text-xs"
+            {/* Items Table */}
+            <div className="pb-16">
+              <ConsignmentItemsTable
+                productsMap={productsMap}
+                onRemoveItem={handleRemoveItem}
+                disabled={isSubmitting}
               />
             </div>
           </div>
-        </div>
 
-        {/* Barcode Scanner Bar */}
-        <div className="bg-white border border-slate-100 p-4 rounded-2xl shadow-2xs flex flex-col sm:flex-row items-center gap-3">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-700 whitespace-nowrap">
-            <IconBarcode className="w-5 h-5 text-emerald-600" />
-            <span>Scan Barcode Produk:</span>
-          </div>
-          <div className="flex-1 w-full">
-            <BarcodeInput
-              onProductFound={(product) => {
-                handleBarcodeSubmit(product.barcode || product.uid);
-              }}
-              onSearchSubmit={handleBarcodeSubmit}
-              placeholder="Scan barcode atau masukkan kode produk lalu tekan Enter..."
-            />
+          {/* Right Column */}
+          <div className="lg:col-span-4 space-y-6">
+            <ConsignmentHeaderCard isPending={isSubmitting} />
+            <ConsignmentInstructionPanel />
           </div>
         </div>
 
-        {/* Main Content Layout (Table + Sticky Summary) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          <div className="lg:col-span-2">
-            <ConsignmentItemsTable productsMap={productsMap} onRemoveItem={handleRemoveItem} />
-          </div>
+        {/* Sticky Bottom Action Bar */}
+        <BulkSubmitBar
+          itemCount={itemCount}
+          productCount={uniqueProductCount}
+          total={totalValue}
+          onSubmit={handleCompleteClick}
+          onSecondarySubmit={handleSaveDraft}
+          onReset={() => setIsResetDialogOpen(true)}
+          isSubmitting={isSubmitting}
+          submitLabel={isEditMode ? "Simpan & Selesaikan" : "Selesaikan Konsinyasi"}
+          submitIcon={<IconCheck size={16} />}
+          secondarySubmitLabel="Simpan Draft"
+          secondarySubmitIcon={<IconUpload size={16} />}
+        />
 
-          <div className="lg:col-span-1">
-            <ConsignmentSummaryCard
-              onSaveDraft={handleSaveDraft}
-              onComplete={handleCompleteDirect}
-              isSavingDraft={createDraftMutation.isPending || updateDraftMutation.isPending}
-              isCompleting={completeMutation.isPending}
-              isEditMode={isEditMode}
-            />
-          </div>
-        </div>
+        {/* Dialogs */}
+        <ProductFormDialog
+          open={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
+          editingProduct={null}
+          onSuccess={(product) => {
+            setNotFoundQuery("");
+            handleProductFound(product);
+          }}
+          infoMessage={
+            notFoundQuery ? `Produk "${notFoundQuery}" tidak ditemukan. Silakan buat baru.` : undefined
+          }
+        />
+
+        <ConsignmentPriceAlertDialog
+          open={isPriceAlertOpen}
+          onOpenChange={setIsPriceAlertOpen}
+          priceAlerts={priceAlerts}
+          isFinalizing={isSubmitting}
+          onCompleteWithoutPrices={handleCompleteWithoutPrices}
+          onCompleteWithPrices={handleCompleteWithPrices}
+        />
+
+        <ConfirmDialog
+          open={isResetDialogOpen}
+          onOpenChange={setIsResetDialogOpen}
+          title="Kosongkan Penerimaan Konsinyasi"
+          description="Apakah Anda yakin ingin mengosongkan seluruh data penerimaan konsinyasi? Semua barang titipan yang telah ditambahkan akan dibersihkan."
+          confirmText="Ya, Kosongkan"
+          cancelText="Batal"
+          variant="warning"
+          onConfirm={() => {
+            form.setValue("items", []);
+            setIsResetDialogOpen(false);
+            toast.info("Data penerimaan konsinyasi berhasil dikosongkan.");
+          }}
+        />
+
+        <ConfirmDialog
+          open={isCompleteDialogOpen}
+          onOpenChange={setIsCompleteDialogOpen}
+          title="Selesaikan Penerimaan Konsinyasi"
+          description="Stok fisik barang akan bertambah secara otomatis. Penerimaan ini bersifat off-book (hutang timbul saat barang terjual di Kasir). Apakah Anda yakin ingin menyelesaikan penerimaan konsinyasi ini?"
+          confirmText="Ya, Selesaikan"
+          cancelText="Batal"
+          variant="success"
+          isLoading={isSubmitting}
+          onConfirm={handleCompleteConfirmed}
+        />
       </div>
     </FormProvider>
   );

@@ -60,6 +60,14 @@ export async function apiPostData<T, D = unknown>(
     return response.data;
 }
 
+export async function apiPutData<T, D = unknown>(
+    url: string,
+    payload?: D,
+): Promise<T> {
+    const response = await apiPut<ApiResponse<T>, D>(url, payload);
+    return response.data;
+}
+
 export async function apiGetList<T>(
     url: string,
     params?: PaginationParams,
