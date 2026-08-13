@@ -64,6 +64,7 @@ export function ConsignmentItemsTable({
       }, 80);
       return () => clearTimeout(timer);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastAddedUid, watchItems.length]);
 
   const totalItems = watchItems.reduce((acc, item) => acc + Number(item?.kuantitas || 0), 0);
@@ -192,9 +193,8 @@ export function ConsignmentItemsTable({
                     </td>
 
                     <td
-                      className={`p-3 text-center sticky right-0 border-l border-slate-100/80 z-10 transition-colors ${
-                        isFlashing ? "bg-emerald-50" : "bg-white group-hover:bg-slate-50/60"
-                      }`}
+                      className={`p-3 text-center sticky right-0 border-l border-slate-100/80 z-10 transition-colors ${isFlashing ? "bg-emerald-50" : "bg-white group-hover:bg-slate-50/60"
+                        }`}
                     >
                       <AppButton
                         type="button"

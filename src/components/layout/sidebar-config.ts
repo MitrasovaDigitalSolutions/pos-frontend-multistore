@@ -416,8 +416,6 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     hasRole(roles, "admin") ||
                     hasPermission(roles, permissions, "view_products") ||
                     hasPermission(roles, permissions, "manage_products") ||
-                    hasPermission(roles, permissions, "view_suppliers") ||
-                    hasPermission(roles, permissions, "manage_suppliers") ||
                     hasPermission(roles, permissions, "view_members") ||
                     hasPermission(roles, permissions, "manage_members"),
                 items: [
@@ -428,14 +426,6 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasRole(roles, "admin") ||
                             hasPermission(roles, permissions, "view_products") ||
                             hasPermission(roles, permissions, "manage_products"),
-                    },
-                    {
-                        path: ROUTES.ADMIN_SUPPLIERS,
-                        label: "Supplier",
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") ||
-                            hasPermission(roles, permissions, "view_suppliers") ||
-                            hasPermission(roles, permissions, "manage_suppliers"),
                     },
                     {
                         path: ROUTES.ADMIN_MEMBERS,
@@ -513,6 +503,11 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     {
                         path: ROUTES.ADMIN_BRANDS,
                         label: "Brand",
+                        permission: (roles) => hasRole(roles, "admin"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_SUPPLIERS,
+                        label: "Supplier",
                         permission: (roles) => hasRole(roles, "admin"),
                     },
                 ],
