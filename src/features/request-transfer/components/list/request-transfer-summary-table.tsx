@@ -2,16 +2,12 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { hasPermission, hasRole } from "@/constants/roles";
-import { ROUTES } from "@/constants/routes";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { IconPlus } from "@tabler/icons-react";
 import { DataTable } from "@/components/ui/data-table";
-import type { RequestTransferSummary } from "../types";
+import { ROUTES } from "@/constants/routes";
+import type { RequestTransferSummary } from "../../types";
 
-interface RequestTransferSummaryListProps {
+interface RequestTransferSummaryTableProps {
     summaries: RequestTransferSummary[];
     meta?: {
         current_page: number;
@@ -25,10 +21,9 @@ interface RequestTransferSummaryListProps {
     onPerPageChange: (perPage: number) => void;
     isLoading?: boolean;
     isFetching?: boolean;
-    filterElement?: React.ReactNode;
 }
 
-export function RequestTransferSummaryList({
+export function RequestTransferSummaryTable({
     summaries,
     meta,
     page,
@@ -37,15 +32,7 @@ export function RequestTransferSummaryList({
     onPerPageChange,
     isLoading = false,
     isFetching = false,
-    filterElement,
-}: RequestTransferSummaryListProps) {
-    const { data: session } = useSession();
-    const userRoles = session?.user?.roles || [];
-    const userPermissions = session?.user?.permissions || [];
-    const canManage =
-        hasRole(userRoles, "admin") ||
-        hasPermission(userRoles, userPermissions, "manage_request_transfers");
-
+}: RequestTransferSummaryTableProps) {
     const router = useRouter();
 
     const openSummary = (s: RequestTransferSummary) => {
@@ -104,47 +91,25 @@ export function RequestTransferSummaryList({
                 size: 130,
             },
         ],
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [canManage],
+        [],
     );
 
     return (
-        <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
-            <div className="flex justify-between items-center border-b border-slate-50 pb-4">
-                <div>
-                    <h3 className="text-sm font-bold text-slate-900">Summary Request Transfer</h3>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                        Daftar permintaan stok yang masih pending, dikelompokkan per supplier dan katalog.
-                    </p>
-                </div>
-                {canManage && (
-                    <Button
-                        onClick={() => router.push(ROUTES.ADMIN_REQUEST_TRANSFERS_CREATE)}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
-                    >
-                        <IconPlus size={16} /> Buat Request
-                    </Button>
-                )}
-            </div>
-
-            {filterElement}
-
-            <DataTable
-                columns={columns}
-                data={summaries}
-                isLoading={isLoading}
-                isFetching={isFetching}
-                emptyMessage="Tidak ada summary request transfer pending."
-                page={page}
-                perPage={perPage}
-                onPageChange={onPageChange}
-                onPerPageChange={onPerPageChange}
-                meta={meta}
-                entityName="summary"
-                virtualize={true}
-                estimateRowHeight={44}
-                onView={openSummary}
-            />
-        </section>
+        <DataTable
+            columns={columns}
+            data={summaries}
+            isLoading={isLoading}
+            isFetching={isFetching}
+            emptyMessage="Tidak ada summary request transfer pending."
+            page={page}
+            perPage={perPage}
+            onPageChange={onPageChange}
+            onPerPageChange={onPerPageChange}
+            meta={meta}
+            entityName="summary"
+            virtualize={true}
+            estimateRowHeight={44}
+            onView={openSummary}
+        />
     );
 }

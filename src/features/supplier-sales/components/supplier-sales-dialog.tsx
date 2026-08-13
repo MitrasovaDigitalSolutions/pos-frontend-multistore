@@ -40,24 +40,24 @@ export function SupplierSalesDialog({
                 { uid: editingSale.uid, data },
                 {
                     onSuccess: () => {
-                        toast.success("Katalog berhasil diperbarui.");
+                        toast.success("Sales berhasil diperbarui.");
                         onOpenChange(false);
-                        reset({ supplier_uid: "", nama: "", keterangan: null, status: "active" });
+                        reset({ supplier_uid: "", nama: "", keterangan: "", status: "active" });
                     },
                     onError: (err) => {
-                        toast.error(err.message || "Gagal memperbarui katalog.");
+                        toast.error(err.message || "Gagal memperbarui sales.");
                     },
                 },
             );
         } else {
             createSale.mutate(data, {
                 onSuccess: () => {
-                    toast.success("Katalog berhasil dibuat.");
+                    toast.success("Sales berhasil dibuat.");
                     onOpenChange(false);
-                    reset({ supplier_uid: "", nama: "", keterangan: null, status: "active" });
+                    reset({ supplier_uid: "", nama: "", keterangan: "", status: "active" });
                 },
                 onError: (err) => {
-                    toast.error(err.message || "Gagal membuat katalog.");
+                    toast.error(err.message || "Gagal membuat sales.");
                 },
             });
         }
@@ -70,12 +70,12 @@ export function SupplierSalesDialog({
             title={
                 <>
                     <IconTag size={20} className="text-emerald-500" />
-                    <span>{isEdit ? "Ubah Katalog Sales Supplier" : "Tambah Katalog Baru"}</span>
+                    <span>{isEdit ? "Ubah Sales " : "Tambah Sales Baru"}</span>
                 </>
             }
             className="max-w-md"
         >
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <FormSelect<SupplierSalesInput>
                     name="supplier_uid"
                     label="Supplier *"
@@ -88,15 +88,15 @@ export function SupplierSalesDialog({
 
                 <FormInput<SupplierSalesInput>
                     name="nama"
-                    label="Nama Katalog *"
-                    placeholder="Contoh: Katalog Bulan Ini"
+                    label="Nama Sales *"
+                    placeholder="Contoh: Sales Bulan Ini"
                     disabled={isPending}
                 />
 
                 <FormTextarea
                     name="keterangan"
                     label="Keterangan"
-                    placeholder="Catatan singkat katalog..."
+                    placeholder="Catatan singkat sales..."
                     disabled={isPending}
                 />
 
@@ -115,7 +115,7 @@ export function SupplierSalesDialog({
                     className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4"
                     disabled={isPending}
                 >
-                    {isPending ? "Menyimpan..." : isEdit ? "Simpan Perubahan" : "Buat Katalog"}
+                    {isPending ? "Menyimpan..." : isEdit ? "Simpan Perubahan" : "Buat Sales"}
                 </Button>
             </form>
         </BaseDialog>

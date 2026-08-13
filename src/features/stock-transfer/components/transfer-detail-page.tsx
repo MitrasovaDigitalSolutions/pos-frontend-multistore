@@ -208,7 +208,7 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 max-w-6xl mx-auto animate-pulse">
+      <div className="space-y-6animate-pulse">
         {/* Header Bar Skeleton */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">

@@ -7,7 +7,8 @@ import { BaseDialog } from "@/components/ui/base-dialog";
 import { BarcodeInput } from "@/components/shared/barcode-input";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { Product } from "@/features/master/products/types";
-import { useAddSupplierSaleItem, useRemoveSupplierSaleItem } from "../api/supplier-sales-api";
+import { useAddSupplierSaleItem, useRemoveSupplierSaleItem, useUpdateSupplierSaleItem, useSupplierSaleDetail } from "../api/supplier-sales-api";
+import { NumberInput } from "@/components/ui/number-input";
 import type { SupplierSale } from "../types";
 
 interface SupplierSaleItemsDialogProps {
@@ -22,16 +23,20 @@ export function SupplierSaleItemsDialog({
     onOpenChange,
 }: SupplierSaleItemsDialogProps) {
     const addItem = useAddSupplierSaleItem();
+    const updateItem = useUpdateSupplierSaleItem();
     const removeItem = useRemoveSupplierSaleItem();
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [productToRemove, setProductToRemove] = useState<string | null>(null);
 
-    const items = sale?.items || [];
+    // Fetch live detail agar items selalu sinkron setelah mutation
+    const { data: liveDetail, isFetching } = useSupplierSaleDetail(sale?.uid ?? "");
+    const items = liveDetail?.items ?? sale?.items ?? [];
+    const isListLoading = isFetching || addItem.isPending || removeItem.isPending;
 
     const handleProductFound = (product: Product) => {
         if (!sale) return;
         if (items.some((i) => i.product_uid === product.uid)) {
-            toast.info("Produk sudah ada di katalog.");
+            toast.info("Produk sudah ada di sales.");
             return;
         }
         addItem.mutate(
@@ -43,8 +48,22 @@ export function SupplierSaleItemsDialog({
                 },
             },
             {
-                onSuccess: () => toast.success(`"${product.nama}" ditambahkan ke katalog.`),
+                onSuccess: () => toast.success(`"${product.nama}" ditambahkan ke sales.`),
                 onError: (err) => toast.error(err.message || "Gagal menambahkan produk."),
+            },
+        );
+    };
+
+    const handleUpdatePrice = (productUid: string, newPrice: number) => {
+        if (!sale) return;
+        updateItem.mutate(
+            {
+                uid: sale.uid,
+                productUid,
+                data: { product_uid: productUid, harga_estimasi: newPrice },
+            },
+            {
+                onError: (err) => toast.error(err.message || "Gagal memperbarui harga estimasi."),
             },
         );
     };
@@ -55,7 +74,7 @@ export function SupplierSaleItemsDialog({
             { uid: sale.uid, productUid: productToRemove },
             {
                 onSuccess: () => {
-                    toast.success("Produk dihapus dari katalog.");
+                    toast.success("Produk dihapus dari sales.");
                     setIsConfirmOpen(false);
                     setProductToRemove(null);
                 },
@@ -77,9 +96,10 @@ export function SupplierSaleItemsDialog({
                         <span>Kelola Produk — {sale?.nama || ""}</span>
                     </>
                 }
-                className="max-w-2xl"
+                className="sm:max-w-2xl"
+                scrollable
             >
-                <div className="space-y-4 pt-4">
+                <div className="space-y-4">
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             Cari / Scan Produk
@@ -89,17 +109,26 @@ export function SupplierSaleItemsDialog({
                             placeholder="Scan barcode SKU atau ketik nama produk..."
                         />
                         <p className="text-[10px] text-slate-400">
-                            Harga estimasi default diambil dari harga beli produk.
+                            Harga estimasi default diambil dari harga beli produk dan dapat diubah secara langsung di tabel.
                         </p>
                     </div>
 
-                    {items.length > 0 ? (
+                    <div className="relative">
+                        {isListLoading && (
+                            <div className="absolute inset-0 z-10 bg-white/70 backdrop-blur-[1px] rounded-xl flex items-center justify-center">
+                                <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 bg-white border border-emerald-100 shadow-sm rounded-full px-3 py-1.5">
+                                    <span className="w-3.5 h-3.5 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
+                                    Memperbarui...
+                                </div>
+                            </div>
+                        )}
+                        {items.length > 0 ? (
                         <div className="border border-slate-100 rounded-xl overflow-hidden shadow-2xs">
                             <table className="w-full text-xs text-left">
                                 <thead className="bg-slate-50/80 border-b border-slate-100 font-bold text-slate-600">
                                     <tr>
                                         <th className="px-3.5 py-2.5">Produk</th>
-                                        <th className="px-3.5 py-2.5 text-right w-40">Harga Estimasi</th>
+                                        <th className="px-3.5 py-2.5 text-right w-44">Harga Estimasi</th>
                                         <th className="px-3 py-2.5 text-center w-12">Aksi</th>
                                     </tr>
                                 </thead>
@@ -119,9 +148,16 @@ export function SupplierSaleItemsDialog({
                                                 </div>
                                             </td>
                                             <td className="px-3.5 py-2.5 text-right">
-                                                <span className="font-semibold text-slate-700">
-                                                    Rp {Number(item.harga_estimasi).toLocaleString("id-ID")}
-                                                </span>
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <span className="text-[11px] text-slate-400 font-medium">Rp</span>
+                                                    <NumberInput
+                                                        value={item.harga_estimasi}
+                                                        onChange={(val) => handleUpdatePrice(item.product_uid, val || 0)}
+                                                        min={0}
+                                                        allowNegative={false}
+                                                        className="h-7 w-28 text-right text-xs font-bold border-slate-200 rounded-lg px-2"
+                                                    />
+                                                </div>
                                             </td>
                                             <td className="px-3 py-2.5 text-center">
                                                 <button
@@ -131,7 +167,7 @@ export function SupplierSaleItemsDialog({
                                                         setIsConfirmOpen(true);
                                                     }}
                                                     className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
-                                                    title="Hapus produk dari katalog"
+                                                    title="Hapus produk dari sales"
                                                 >
                                                     <IconTrash size={15} />
                                                 </button>
@@ -149,19 +185,20 @@ export function SupplierSaleItemsDialog({
                             <div>
                                 <p className="text-xs font-bold text-slate-700">Belum Ada Produk</p>
                                 <p className="text-[11px] text-slate-400 max-w-sm mx-auto mt-0.5">
-                                    Gunakan kotak pencarian / scanner di atas untuk menambahkan produk ke katalog.
+                                    Gunakan kotak pencarian / scanner di atas untuk menambahkan produk ke sales.
                                 </p>
                             </div>
                         </div>
                     )}
+                    </div>
                 </div>
             </BaseDialog>
 
             <ConfirmDialog
                 open={isConfirmOpen}
                 onOpenChange={setIsConfirmOpen}
-                title="Hapus Produk dari Katalog"
-                description="Apakah Anda yakin ingin menghapus produk ini dari katalog?"
+                title="Hapus Produk dari Sales"
+                description="Apakah Anda yakin ingin menghapus produk ini dari sales?"
                 confirmText="Ya, Hapus"
                 cancelText="Batal"
                 onConfirm={handleConfirmRemove}

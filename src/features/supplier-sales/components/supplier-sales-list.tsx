@@ -4,13 +4,14 @@ import { useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { hasPermission, hasRole } from "@/constants/roles";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { IconPlus } from "@tabler/icons-react";
+import { IconBoxSeam, IconPlus } from "@tabler/icons-react";
 import { DataTable } from "@/components/ui/data-table";
+import { DataTableActionButton } from "@/components/ui/data-table-actions";
 import { toast } from "sonner";
 import type { SupplierSale } from "../types";
 import { useDeleteSupplierSale } from "../api/supplier-sales-api";
+import { Button } from "@/components/ui/button";
 
 interface SupplierSalesListProps {
     sales: SupplierSale[];
@@ -66,12 +67,12 @@ export function SupplierSalesList({
         if (!saleToDelete) return;
         deleteSale.mutate(saleToDelete.uid, {
             onSuccess: () => {
-                toast.success(`Katalog "${saleToDelete.nama}" berhasil dihapus.`);
+                toast.success(`Sales "${saleToDelete.nama}" berhasil dihapus.`);
                 setIsConfirmOpen(false);
                 setSaleToDelete(null);
             },
             onError: (err) => {
-                toast.error(err.message || "Gagal menghapus katalog.");
+                toast.error(err.message || "Gagal menghapus sales.");
             },
         });
     };
@@ -80,7 +81,7 @@ export function SupplierSalesList({
         () => [
             {
                 accessorKey: "nama",
-                header: "Nama Katalog",
+                header: "Nama Sales",
                 cell: ({ row }) => (
                     <div className="flex flex-col gap-0.5">
                         <span className="font-bold text-slate-900 text-xs">{row.original.nama}</span>
@@ -114,42 +115,26 @@ export function SupplierSalesList({
                 header: "Status",
                 cell: ({ row }) => (
                     <span
-                        className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                            row.original.status === "active"
-                                ? "text-emerald-700 bg-emerald-50 border-emerald-200/60"
-                                : "text-slate-500 bg-slate-50 border-slate-200"
-                        }`}
+                        className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${row.original.status === "active"
+                            ? "text-emerald-700 bg-emerald-50 border-emerald-200/60"
+                            : "text-slate-500 bg-slate-50 border-slate-200"
+                            }`}
                     >
                         {row.original.status === "active" ? "Aktif" : "Nonaktif"}
                     </span>
                 ),
                 size: 110,
             },
-            {
-                id: "actions",
-                header: "Aksi",
-                cell: ({ row }) => (
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onManageItems(row.original)}
-                        className="text-[10px] font-bold text-emerald-700 border-emerald-200 hover:bg-emerald-50 cursor-pointer"
-                    >
-                        Kelola Produk
-                    </Button>
-                ),
-                size: 130,
-            },
         ],
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [canManage, onManageItems],
+        [canManage],
     );
 
     return (
         <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
             <div className="flex justify-between items-center border-b border-slate-50 pb-4">
                 <div>
-                    <h3 className="text-sm font-bold text-slate-900">Katalog Sales Supplier</h3>
+                    <h3 className="text-sm font-bold text-slate-900">Sales </h3>
                     <p className="text-[11px] text-slate-400 mt-0.5">
                         Daftar produk + harga estimasi per supplier untuk mempermudah permintaan stok antar cabang.
                     </p>
@@ -159,7 +144,7 @@ export function SupplierSalesList({
                         onClick={onAddClick}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
                     >
-                        <IconPlus size={16} /> Tambah Katalog
+                        <IconPlus size={16} /> Tambah Sales
                     </Button>
                 )}
             </div>
@@ -171,32 +156,41 @@ export function SupplierSalesList({
                 data={sales}
                 isLoading={isLoading}
                 isFetching={isFetching}
-                emptyMessage="Tidak ada katalog sales supplier ditemukan."
+                emptyMessage="Tidak ada sales supplier ditemukan."
                 page={page}
                 perPage={perPage}
                 onPageChange={onPageChange}
                 onPerPageChange={onPerPageChange}
                 meta={meta}
-                entityName="katalog"
+                entityName="sales"
                 virtualize={true}
                 estimateRowHeight={44}
                 onEdit={canManage ? (sale) => onEdit(sale as SupplierSale) : undefined}
                 onDelete={canManage ? (sale) => handleDelete(sale as SupplierSale) : undefined}
+                extraActions={(sale) => (
+                    <DataTableActionButton
+                        variant="emerald"
+                        tooltip="Kelola Produk"
+                        onClick={() => onManageItems(sale as SupplierSale)}
+                    >
+                        <IconBoxSeam size={15} />
+                    </DataTableActionButton>
+                )}
             />
 
             <ConfirmDialog
                 open={isConfirmOpen}
                 onOpenChange={setIsConfirmOpen}
-                title="Hapus Katalog"
+                title="Hapus Sales"
                 description={
                     saleToDelete ? (
                         <span>
-                            Apakah Anda yakin ingin menghapus katalog{" "}
+                            Apakah Anda yakin ingin menghapus sales{" "}
                             <strong className="font-semibold text-slate-900">{saleToDelete.nama}</strong>?
                             Produk di dalamnya ikut terhapus.
                         </span>
                     ) : (
-                        "Apakah Anda yakin ingin menghapus katalog ini?"
+                        "Apakah Anda yakin ingin menghapus sales ini?"
                     )
                 }
                 confirmText="Ya, Hapus"

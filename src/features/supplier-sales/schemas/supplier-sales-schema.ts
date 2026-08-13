@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const supplierSalesSchema = z.object({
     supplier_uid: z.string().min(1, "Supplier wajib dipilih"),
-    nama: z.string().min(1, "Nama katalog wajib diisi"),
+    nama: z.string().min(1, "Nama sales wajib diisi"),
     keterangan: z
         .string()
         .optional()
