@@ -45,6 +45,8 @@ export const PERMISSIONS = {
   VIEW_MANUAL_JOURNALS: "view_manual_journals",
   MANAGE_STOCK_TRANSFERS: "manage_stock_transfers",
   VIEW_STOCK_TRANSFERS: "view_stock_transfers",
+  MANAGE_REQUEST_TRANSFERS: "manage_request_transfers",
+  VIEW_REQUEST_TRANSFERS: "view_request_transfers",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

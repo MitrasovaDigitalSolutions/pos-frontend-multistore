@@ -16,7 +16,8 @@ import {
     IconBuildingBank,
     IconBuildingStore,
     IconBuildingWarehouse,
-    IconArrowsLeftRight
+    IconArrowsLeftRight,
+    IconTruckDelivery
 } from "@tabler/icons-react";
 
 export interface SidebarMenuItem {
@@ -206,6 +207,33 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasRole(roles, "admin") ||
                             hasPermission(roles, permissions, "view_stock_transfers") ||
                             hasPermission(roles, permissions, "manage_stock_transfers"),
+                    },
+                ],
+            },
+            {
+                type: "submenu",
+                label: "Permintaan Stok",
+                icon: IconTruckDelivery,
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") ||
+                    hasPermission(roles, permissions, "view_request_transfers") ||
+                    hasPermission(roles, permissions, "manage_request_transfers"),
+                items: [
+                    {
+                        path: ROUTES.ADMIN_REQUEST_TRANSFERS,
+                        label: "Request Transfer",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_request_transfers") ||
+                            hasPermission(roles, permissions, "manage_request_transfers"),
+                    },
+                    {
+                        path: ROUTES.ADMIN_SUPPLIER_SALES,
+                        label: "Katalog Sales Supplier",
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_request_transfers") ||
+                            hasPermission(roles, permissions, "manage_request_transfers"),
                     },
                 ],
             },
