@@ -1,6 +1,7 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiGetData, apiGetList, apiPost, apiPut, apiDelete } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
+import { invalidateSupplierQueries } from "@/lib/cache-invalidation";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
 import type { Supplier } from "../types";
 import type { SupplierInput } from "../schemas/supplier-schema";
@@ -46,9 +47,7 @@ export function useCreateSupplier() {
                 data,
             ),
         onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.suppliers.all,
-            });
+            invalidateSupplierQueries(queryClient);
         },
     });
 }
@@ -62,9 +61,7 @@ export function useUpdateSupplier() {
                 data,
             ),
         onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.suppliers.all,
-            });
+            invalidateSupplierQueries(queryClient);
         },
     });
 }
@@ -74,9 +71,7 @@ export function useDeleteSupplier() {
     return useMutation<ApiResponse<void>, Error, string>({
         mutationFn: (uid) => apiDelete<ApiResponse<void>>(`/v1/inventory/suppliers/${uid}`),
         onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.suppliers.all,
-            });
+            invalidateSupplierQueries(queryClient);
         },
     });
 }

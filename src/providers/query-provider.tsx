@@ -14,10 +14,11 @@ export function QueryProvider({ children }: QueryProviderProps) {
             new QueryClient({
                 defaultOptions: {
                     queries: {
-                        staleTime: 5 * 60 * 1000, // 5 minutes default caching for master data
+                        staleTime: 60 * 1000, // 1 minute smart caching
                         gcTime: 15 * 60 * 1000, // 15 minutes garbage collection
                         retry: 2,
-                        refetchOnWindowFocus: false,
+                        refetchOnWindowFocus: false, // Low-end PC friendly: no background focus-spam
+                        refetchOnMount: true, // Seamless navigation sync if invalidated
                     },
                     mutations: {
                         retry: 1,

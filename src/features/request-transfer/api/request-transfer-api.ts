@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiGetData, apiGetList, apiPost } from "@/shared/api/api-client";
 import { ENDPOINTS } from "@/shared/api/endpoints";
 import { queryKeys } from "@/lib/query-keys";
+import { invalidateStockQueries } from "@/lib/cache-invalidation";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
 import type { RequestTransfer, RequestTransferDetail, RequestTransferSummary } from "../types";
 import type { RequestTransferInput } from "../schemas/request-transfer-schema";
@@ -40,7 +41,7 @@ export function useCreateRequestTransfer() {
                 payload,
             ),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.requestTransfers.all });
+            invalidateStockQueries(queryClient);
         },
     });
 }
@@ -53,7 +54,7 @@ export function useRejectRequestTransfer() {
                 ENDPOINTS.REQUEST_TRANSFER.REJECT(summaryUid),
             ),
         onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.requestTransfers.all });
+            invalidateStockQueries(queryClient);
             queryClient.invalidateQueries({
                 queryKey: queryKeys.requestTransfers.summary(variables.summaryUid),
             });
@@ -70,7 +71,7 @@ export function useOrderRequestTransfer() {
                 supplier_uid ? { supplier_uid } : {},
             ),
         onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.requestTransfers.all });
+            invalidateStockQueries(queryClient);
             queryClient.invalidateQueries({
                 queryKey: queryKeys.requestTransfers.summary(variables.summaryUid),
             });
@@ -86,7 +87,7 @@ export function useSendRequestTransfer() {
                 ENDPOINTS.REQUEST_TRANSFER.SEND(summaryUid),
             ),
         onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.requestTransfers.all });
+            invalidateStockQueries(queryClient);
             queryClient.invalidateQueries({
                 queryKey: queryKeys.requestTransfers.summary(variables.summaryUid),
             });

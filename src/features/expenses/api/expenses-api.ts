@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiGetList, apiPost, apiPut, apiDelete, apiGet } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
+import { invalidateFinanceQueries } from "@/lib/cache-invalidation";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
 import type { Expense, ExpenseCategory, UpcomingDue } from "../types";
 import type { ExpenseCategoryInput, ExpenseInput } from "../schemas/expense-schema";
@@ -80,9 +81,7 @@ export function useCreateExpense() {
         mutationFn: (data) =>
             apiPost<ApiResponse<Expense>, ExpenseInput>("/v1/expenses", data),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.expenses.list() });
-            queryClient.invalidateQueries({ queryKey: queryKeys.expenses.upcoming() });
-            queryClient.invalidateQueries({ queryKey: ["cash-accounts"] });
+            invalidateFinanceQueries(queryClient);
         },
     });
 }
@@ -93,9 +92,7 @@ export function useUpdateExpense() {
         mutationFn: ({ uid, data }) =>
             apiPut<ApiResponse<Expense>, ExpenseInput>(`/v1/expenses/${uid}`, data),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.expenses.list() });
-            queryClient.invalidateQueries({ queryKey: queryKeys.expenses.upcoming() });
-            queryClient.invalidateQueries({ queryKey: ["cash-accounts"] });
+            invalidateFinanceQueries(queryClient);
         },
     });
 }
@@ -105,9 +102,7 @@ export function useDeleteExpense() {
     return useMutation<ApiResponse<void>, Error, string>({
         mutationFn: (uid) => apiDelete<ApiResponse<void>>(`/v1/expenses/${uid}`),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.expenses.list() });
-            queryClient.invalidateQueries({ queryKey: queryKeys.expenses.upcoming() });
-            queryClient.invalidateQueries({ queryKey: ["cash-accounts"] });
+            invalidateFinanceQueries(queryClient);
         },
     });
 }

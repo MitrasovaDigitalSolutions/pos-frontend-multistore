@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tansta
 import { apiGetData, apiGetList, apiPost, apiPut, apiPatch, apiDelete, apiGet } from "@/shared/api/api-client";
 import { apiClient } from "@/shared/api/axios";
 import { queryKeys } from "@/lib/query-keys";
+import { invalidateStockQueries, invalidateSupplierQueries, invalidateFinanceQueries } from "@/lib/cache-invalidation";
 import { ENDPOINTS } from "@/shared/api/endpoints";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
 import type { Receiving, PurchaseOrder, ReceivingPayment, CashAccount, PurchaseReturn, PaymentSummary, SupplierDebtSummary } from "../types";
@@ -70,10 +71,9 @@ export function useCreateReceiving() {
                 data,
             ),
         onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.purchase.receivings(),
-            });
-            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+            invalidateStockQueries(queryClient);
+            invalidateSupplierQueries(queryClient);
+            invalidateFinanceQueries(queryClient);
         },
     });
 }
@@ -87,10 +87,9 @@ export function useBulkCreateReceiving() {
                 data,
             ),
         onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.purchase.receivings(),
-            });
-            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+            invalidateStockQueries(queryClient);
+            invalidateSupplierQueries(queryClient);
+            invalidateFinanceQueries(queryClient);
         },
     });
 }
@@ -107,6 +106,7 @@ export function useCreateReceivingHeader() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.purchase.receivings(),
             });
+            invalidateSupplierQueries(queryClient);
         },
     });
 }
@@ -123,6 +123,7 @@ export function useBulkReplaceReceivingItems() {
             queryClient.invalidateQueries({
                 queryKey: ["purchase"],
             });
+            invalidateStockQueries(queryClient);
         },
     });
 }
@@ -135,10 +136,9 @@ export function useCompleteReceiving() {
                 ENDPOINTS.PURCHASE.RECEIVING.COMPLETE(uid),
             ),
         onSuccess: (_, _uid) => {
-            queryClient.invalidateQueries({
-                queryKey: ["purchase"],
-            });
-            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+            invalidateStockQueries(queryClient);
+            invalidateSupplierQueries(queryClient);
+            invalidateFinanceQueries(queryClient);
         },
     });
 }
@@ -773,18 +773,9 @@ export function useFinalizePurchaseReturn() {
                 data,
             ),
         onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.purchase.returns(),
-            });
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.products.all,
-            });
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.cashAccounts.all,
-            });
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.purchase.receivings(),
-            });
+            invalidateStockQueries(queryClient);
+            invalidateSupplierQueries(queryClient);
+            invalidateFinanceQueries(queryClient);
         },
     });
 }

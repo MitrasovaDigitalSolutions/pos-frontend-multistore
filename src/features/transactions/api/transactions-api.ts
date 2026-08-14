@@ -1,6 +1,7 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiGetData, apiGetList, apiPost } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
+import { invalidateStockQueries, invalidateFinanceQueries } from "@/lib/cache-invalidation";
 import type { Transaction, TransactionQueryParams } from "../types";
 import type { PaginatedResponse } from "@/types/api";
 
@@ -20,7 +21,13 @@ export function useTransactionsList(params?: TransactionQueryParams) {
 }
 
 export function useVoidTransaction() {
+    const queryClient = useQueryClient();
     return useMutation<{ message: string; transaction: Transaction }, Error, { id: string | number; void_reason: string }>({
         mutationFn: ({ id, void_reason }) => apiPost(`/v1/transactions/${id}/void`, { void_reason }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all });
+            invalidateStockQueries(queryClient);
+            invalidateFinanceQueries(queryClient);
+        },
     });
 }

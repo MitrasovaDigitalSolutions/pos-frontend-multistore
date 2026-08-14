@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiGetData, apiGetList, apiPost, apiPut, apiDelete } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
+import { invalidateStockQueries } from "@/lib/cache-invalidation";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
 import type { StockMovement, Opname, OpnameItem } from "../types";
 import type { AdjustmentInput } from "../schemas/adjustment-schema";
@@ -67,10 +68,7 @@ export function useCreateAdjustment() {
                 data,
             ),
         onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.inventory.movements(),
-            });
-            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+            invalidateStockQueries(queryClient);
         },
     });
 }
@@ -152,13 +150,10 @@ export function useFinalizeOpname() {
                 undefined,
             ),
         onSuccess: (_, uid) => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.inventory.opnames(),
-            });
+            invalidateStockQueries(queryClient);
             queryClient.invalidateQueries({
                 queryKey: queryKeys.inventory.opnameDetail(uid),
             });
-            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
     });
 }

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiGet, apiPost, apiPatch, apiDelete, apiGetList } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
+import { invalidateStoreQueries } from "@/lib/cache-invalidation";
 import type { Store, StoreUser } from "../types";
 import type { StoreInput } from "../schemas/store-schema";
 import type { PaginatedResponse, PaginationParams } from "@/types/api";
@@ -17,7 +18,7 @@ export function useCreateStore() {
     return useMutation({
         mutationFn: (data: StoreInput) => apiPost<Store, StoreInput>("/v1/stores", data),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.stores.all });
+            invalidateStoreQueries(queryClient);
         },
     });
 }
@@ -28,7 +29,7 @@ export function useUpdateStore() {
         mutationFn: ({ uid, data }: { uid: string; data: StoreInput }) =>
             apiPatch<Store, StoreInput>(`/v1/stores/${uid}`, data),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.stores.all });
+            invalidateStoreQueries(queryClient);
         },
     });
 }

@@ -60,9 +60,9 @@ export function CloseShiftForm({
             const { data } = await axios.get(`/api/proxy/v1/cash-drawer/sessions/${sessionId}/struk-setoran`);
             const printerName = getSetting("printer_id") || "EPSON LX-310 ESC/P";
             await PrinterService.print(printerName,buildCashDepositText(data));
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Print failed:", error);
-            toast.error(`Gagal Mencetak Struk`,error);
+            toast.error(`Gagal Mencetak Struk`);
         }
     };
 

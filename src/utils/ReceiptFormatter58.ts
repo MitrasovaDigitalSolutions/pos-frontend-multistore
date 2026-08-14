@@ -1,6 +1,41 @@
+export interface ReceiptItemInput {
+    kuantitas?: number | string;
+    harga_satuan: number;
+    harga_grosir?: number | null;
+    min_qty_grosir?: number | null;
+    nama_produk?: string;
+    diskon_item?: number;
+    [key: string]: unknown;
+}
+
+export interface ReceiptSale {
+    uid?: string | number;
+    nomor_transaksi?: string;
+    metode_pembayaran?: string;
+    card_amount?: number;
+    cash_received?: number;
+    kembalian?: number;
+    total?: number;
+    subtotal?: number;
+    diskon?: number;
+    pajak?: number;
+    total_bayar?: number;
+    created_at?: string;
+    items?: ReceiptItemInput[];
+    [key: string]: unknown;
+}
+
+export interface ReceiptSettings {
+    nama_toko?: string;
+    alamat?: string;
+    telepon?: string;
+    footer_text?: string;
+    [key: string]: unknown;
+}
+
 export interface ReceiptData {
-    sale: any;
-    setting: any;
+    sale: ReceiptSale;
+    setting: ReceiptSettings;
 }
 
 const money = (value: number | string) =>
@@ -25,14 +60,14 @@ const formatDate = (value?: string | Date | null): string => {
 };
 
 export function buildReceipt58(data: ReceiptData): string {
-    const { sale, setting: app } = data;
+    const { sale, setting: _app } = data;
 
     const isDebt = sale.metode_pembayaran === "debt";
-    const isOffline = String(sale.uid).startsWith("OFFLINE-");
-    const hasCardDp = isDebt && (sale.card_amount ?? 0) > 0;
+    const _isOffline = String(sale.uid).startsWith("OFFLINE-");
+    const _hasCardDp = isDebt && (sale.card_amount ?? 0) > 0;
 
-    const items = (sale.items || []).map((item: any) => {
-        const qty = Number(item.kuantitas);
+    const items = (sale.items || []).map((item: ReceiptItemInput) => {
+        const qty = Number(item.kuantitas || 0);
         const normalPrice = item.harga_satuan;
         const hGrosir = item.harga_grosir;
         const minQty = item.min_qty_grosir;
@@ -46,12 +81,10 @@ export function buildReceipt58(data: ReceiptData): string {
             minQty > 0 &&
             qty >= minQty;
 
-        console.log(isWholesaleActive)
-
         const wholesaleQty = isWholesaleActive ? Math.floor(qty / minQty!) * minQty : 0;
         const normalQty = qty - wholesaleQty;
         const totalSavings = isWholesaleActive
-            ? Math.max(0, qty * normalPrice - (wholesaleQty * hGrosir + normalQty * normalPrice))
+            ? Math.max(0, qty * normalPrice - (wholesaleQty * (hGrosir ?? 0) + normalQty * normalPrice))
             : 0;
 
         return { ...item, qty, isWholesaleActive, wholesaleQty, totalSavings };
@@ -230,7 +263,7 @@ ${
 
 <hr/>
 
-${items.map((item: any) => `
+${items.map((item) => `
 <div class="item">
     <div class="product-name">
         ${item.nama_produk}

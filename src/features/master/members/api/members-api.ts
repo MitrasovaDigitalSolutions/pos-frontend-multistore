@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiGetData, apiGetList, apiPost, apiPut, apiDelete, apiGet, apiPatch } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
+import { invalidateMemberQueries } from "@/lib/cache-invalidation";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
 import type { Member } from "../types";
 import type { MemberInput } from "../schemas/member-schema";
@@ -25,7 +26,7 @@ export function useCreateMember() {
         mutationFn: (data) =>
             apiPost<ApiResponse<Member>, MemberInput>("/v1/members", data),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
+            invalidateMemberQueries(queryClient);
         },
     });
 }
@@ -36,7 +37,7 @@ export function useUpdateMember() {
         mutationFn: ({ uid, data }) =>
             apiPut<ApiResponse<Member>, MemberInput>(`/v1/members/${uid}`, data),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
+            invalidateMemberQueries(queryClient);
         },
     });
 }
@@ -46,7 +47,7 @@ export function useDeleteMember() {
     return useMutation<ApiResponse<void>, Error, string>({
         mutationFn: (uid) => apiDelete<ApiResponse<void>>(`/v1/members/${uid}`),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
+            invalidateMemberQueries(queryClient);
         },
     });
 }

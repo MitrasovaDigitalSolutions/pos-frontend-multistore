@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiDelete, apiGetData, apiGetList, apiPost, apiPut } from "@/shared/api/api-client";
 import { ENDPOINTS } from "@/shared/api/endpoints";
 import { queryKeys } from "@/lib/query-keys";
+import { invalidateSupplierQueries } from "@/lib/cache-invalidation";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
 import type { SupplierSale, SupplierSaleItem } from "../types";
 import type { SupplierSalesInput, SupplierSalesItemInput } from "../schemas/supplier-sales-schema";
@@ -33,7 +34,7 @@ export function useCreateSupplierSale() {
     return useMutation<ApiResponse<SupplierSale>, Error, SupplierSalesInput>({
         mutationFn: (data) => apiPost<ApiResponse<SupplierSale>, SupplierSalesInput>(ENDPOINTS.SUPPLIER_SALES.CREATE, data),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.supplierSales.all });
+            invalidateSupplierQueries(queryClient);
         },
     });
 }
@@ -43,7 +44,7 @@ export function useUpdateSupplierSale() {
     return useMutation<ApiResponse<SupplierSale>, Error, { uid: string; data: Partial<SupplierSalesInput> }>({
         mutationFn: ({ uid, data }) => apiPut<ApiResponse<SupplierSale>, Partial<SupplierSalesInput>>(ENDPOINTS.SUPPLIER_SALES.UPDATE(uid), data),
         onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.supplierSales.all });
+            invalidateSupplierQueries(queryClient);
             queryClient.invalidateQueries({ queryKey: queryKeys.supplierSales.detail(variables.uid) });
         },
     });
@@ -54,7 +55,7 @@ export function useDeleteSupplierSale() {
     return useMutation<ApiResponse<void>, Error, string>({
         mutationFn: (uid) => apiDelete<ApiResponse<void>>(ENDPOINTS.SUPPLIER_SALES.DELETE(uid)),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.supplierSales.all });
+            invalidateSupplierQueries(queryClient);
         },
     });
 }
@@ -64,7 +65,7 @@ export function useAddSupplierSaleItem() {
     return useMutation<ApiResponse<SupplierSaleItem>, Error, { uid: string; data: SupplierSalesItemInput }>({
         mutationFn: ({ uid, data }) => apiPost<ApiResponse<SupplierSaleItem>, SupplierSalesItemInput>(ENDPOINTS.SUPPLIER_SALES.ADD_ITEM(uid), data),
         onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.supplierSales.all });
+            invalidateSupplierQueries(queryClient);
             queryClient.invalidateQueries({ queryKey: queryKeys.supplierSales.detail(variables.uid) });
         },
     });
@@ -76,7 +77,7 @@ export function useUpdateSupplierSaleItem() {
         mutationFn: ({ uid, productUid, data }) =>
             apiPut<ApiResponse<SupplierSaleItem>, SupplierSalesItemInput>(ENDPOINTS.SUPPLIER_SALES.UPDATE_ITEM(uid, productUid), data),
         onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.supplierSales.all });
+            invalidateSupplierQueries(queryClient);
             queryClient.invalidateQueries({ queryKey: queryKeys.supplierSales.detail(variables.uid) });
         },
     });
@@ -87,7 +88,7 @@ export function useRemoveSupplierSaleItem() {
     return useMutation<ApiResponse<void>, Error, { uid: string; productUid: string }>({
         mutationFn: ({ uid, productUid }) => apiDelete<ApiResponse<void>>(ENDPOINTS.SUPPLIER_SALES.REMOVE_ITEM(uid, productUid)),
         onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.supplierSales.all });
+            invalidateSupplierQueries(queryClient);
             queryClient.invalidateQueries({ queryKey: queryKeys.supplierSales.detail(variables.uid) });
         },
     });

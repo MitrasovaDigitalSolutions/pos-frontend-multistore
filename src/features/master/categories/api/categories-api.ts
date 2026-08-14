@@ -1,6 +1,7 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiGetList, apiPost, apiPut, apiDelete } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
+import { invalidateCategoryBrandQueries } from "@/lib/cache-invalidation";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
 import type { Category } from "../types";
 import type { CategoryInput } from "../schemas/category-schema";
@@ -36,9 +37,7 @@ export function useCreateCategory() {
         mutationFn: (data) =>
             apiPost<ApiResponse<Category>, CategoryInput>("/v1/categories", data),
         onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.categories.all,
-            });
+            invalidateCategoryBrandQueries(queryClient);
         },
     });
 }
@@ -49,9 +48,7 @@ export function useUpdateCategory() {
         mutationFn: ({ uid, data }) =>
             apiPut<ApiResponse<Category>, CategoryInput>(`/v1/categories/${uid}`, data),
         onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.categories.all,
-            });
+            invalidateCategoryBrandQueries(queryClient);
         },
     });
 }
@@ -61,9 +58,7 @@ export function useDeleteCategory() {
     return useMutation<ApiResponse<void>, Error, string>({
         mutationFn: (uid) => apiDelete<ApiResponse<void>>(`/v1/categories/${uid}`),
         onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.categories.all,
-            });
+            invalidateCategoryBrandQueries(queryClient);
         },
     });
 }
