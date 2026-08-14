@@ -58,8 +58,8 @@ export function RequestTransferListPage({ mode = "outgoing" }: RequestTransferLi
     }
 
     return (
-        <div className="space-y-6">
-            <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4">
+        <div className="space-y-4 sm:space-y-6">
+            <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-4 sm:p-6 space-y-4">
                 <RequestTransferSummaryHeader canManage={canManage} mode={mode} />
 
                 <RequestTransferFilters

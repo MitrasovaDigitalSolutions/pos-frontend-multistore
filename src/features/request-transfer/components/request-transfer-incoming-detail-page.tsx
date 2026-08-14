@@ -116,24 +116,24 @@ export function RequestTransferIncomingDetailPage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
             {/* Stock Transfer Style Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-2xs">
+                <div className="flex items-center gap-3.5">
                     <Button
                         type="button"
                         onClick={() => router.push(ROUTES.ADMIN_REQUEST_TRANSFERS_INCOMING)}
                         variant="outline"
-                        className="p-2 h-9 w-9 rounded-xl border-slate-200 text-slate-500 hover:text-slate-900 bg-white cursor-pointer shadow-xs"
+                        className="p-2 h-9 w-9 rounded-xl border-slate-200 text-slate-500 hover:text-slate-900 bg-white cursor-pointer shadow-xs shrink-0"
                     >
                         <IconArrowLeft size={18} />
                     </Button>
                     <div>
-                        <div className="flex items-center gap-2">
-                            <h2 className="text-lg font-bold text-slate-900">Kelola Request Masuk</h2>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <h2 className="text-base sm:text-lg font-bold text-slate-900">Kelola Request Masuk</h2>
                             <Badge
                                 variant="outline"
-                                className="text-xs px-2.5 py-0.5 font-bold border border-emerald-200 bg-emerald-50 text-emerald-700"
+                                className="text-[10px] px-2 py-0.5 font-bold border border-emerald-200 bg-emerald-50 text-emerald-700"
                             >
                                 INCOMING REQUEST
                             </Badge>
@@ -146,13 +146,13 @@ export function RequestTransferIncomingDetailPage() {
 
                 {/* Header Action Buttons */}
                 {detail && (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
                         <Button
                             type="button"
                             onClick={() => handleActionTrigger("reject")}
                             disabled={isPendingAction}
                             variant="outline"
-                            className="border-rose-200 hover:border-rose-300 hover:bg-rose-50/50 text-rose-600 font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer bg-white"
+                            className="flex-1 sm:flex-none border-rose-200 hover:border-rose-300 hover:bg-rose-50/50 text-rose-600 font-bold text-xs h-9 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer bg-white"
                         >
                             <IconX size={16} /> Tolak Request
                         </Button>
@@ -160,7 +160,7 @@ export function RequestTransferIncomingDetailPage() {
                             type="button"
                             onClick={handleCreatePO}
                             disabled={isPendingAction}
-                            className="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer shadow-xs"
+                            className="flex-1 sm:flex-none bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs h-9 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                         >
                             <IconCheck size={16} /> Buat PO
                         </Button>
@@ -170,7 +170,7 @@ export function RequestTransferIncomingDetailPage() {
                             onClick={() => handleActionTrigger("send")}
                             disabled={isPendingAction || !allSufficient}
                             title={!allSufficient ? "Tidak dapat dikirim karena terdapat barang yang stok sumbernya kurang" : undefined}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <IconSend size={16} /> Kirim Transfer Stok
                         </Button>
@@ -186,9 +186,9 @@ export function RequestTransferIncomingDetailPage() {
             )}
 
             {detail && (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
                     {/* Left Column: Dynamic Matrix Table */}
-                    <div className="lg:col-span-8 space-y-6">
+                    <div className="lg:col-span-8 space-y-4 sm:space-y-6">
                         <RequestTransferIncomingTable
                             requests={detail.requests}
                             groupedItems={detail.items}
@@ -196,7 +196,7 @@ export function RequestTransferIncomingDetailPage() {
                     </div>
 
                     {/* Right Column: Info Cards (Rute Toko, Supplier, Summary) */}
-                    <div className="lg:col-span-4 space-y-6">
+                    <div className="lg:col-span-4 space-y-4 sm:space-y-6">
                         {/* Store Route Card */}
                         <Card className="border-slate-100 shadow-xs rounded-2xl bg-white">
                             <CardHeader className="border-b border-slate-50">

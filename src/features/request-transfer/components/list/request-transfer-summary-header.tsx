@@ -21,7 +21,7 @@ export function RequestTransferSummaryHeader({ canManage, mode = "outgoing" }: R
         : "Daftar permintaan stok yang diajukan oleh toko ini ke toko sumber / pusat.";
 
     return (
-        <div className="flex justify-between items-center border-b border-slate-50 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div>
                 <h3 className="text-sm font-bold text-slate-900">{title}</h3>
                 <p className="text-[11px] text-slate-400 mt-0.5">
@@ -31,7 +31,7 @@ export function RequestTransferSummaryHeader({ canManage, mode = "outgoing" }: R
             {!isIncoming && canManage && (
                 <Button
                     onClick={() => router.push(ROUTES.ADMIN_REQUEST_TRANSFERS_CREATE)}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer w-full sm:w-auto shrink-0 shadow-2xs"
                 >
                     <IconPlus size={16} /> Buat Request
                 </Button>

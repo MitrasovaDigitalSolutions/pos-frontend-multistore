@@ -105,30 +105,30 @@ export function RequestTransferIncomingTable({
     return (
         <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden">
             {/* Toolbar */}
-            <div className="px-3.5 py-2.5 border-b border-slate-100 bg-slate-50/60 flex flex-wrap items-center justify-between gap-2.5">
+            <div className="p-3 sm:px-3.5 sm:py-2.5 border-b border-slate-100 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                 {/* View Toggle */}
-                <div className="flex items-center gap-1.5 p-0.5 bg-slate-200/70 rounded-lg">
+                <div className="grid grid-cols-2 sm:flex items-center gap-1.5 p-1 bg-slate-200/70 rounded-xl sm:rounded-lg w-full sm:w-auto">
                     <button
                         type="button"
                         onClick={() => setViewMode("matrix")}
-                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${viewMode === "matrix"
+                        className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:py-1 rounded-lg sm:rounded-md text-[11px] font-bold transition-all cursor-pointer ${viewMode === "matrix"
                             ? "bg-white text-slate-900 shadow-2xs"
                             : "text-slate-600 hover:text-slate-900"
                             }`}
                     >
-                        <IconTable size={13} className="text-emerald-600" />
-                        <span>Matrix Barang & Toko ({storeColumns.length})</span>
+                        <IconTable size={13} className="text-emerald-600 shrink-0" />
+                        <span className="truncate">Matrix ({storeColumns.length} Toko)</span>
                     </button>
                     <button
                         type="button"
                         onClick={() => setViewMode("documents")}
-                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${viewMode === "documents"
+                        className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:py-1 rounded-lg sm:rounded-md text-[11px] font-bold transition-all cursor-pointer ${viewMode === "documents"
                             ? "bg-white text-slate-900 shadow-2xs"
                             : "text-slate-600 hover:text-slate-900"
                             }`}
                     >
-                        <IconFileText size={13} className="text-blue-600" />
-                        <span>Dokumen Request ({requests.length})</span>
+                        <IconFileText size={13} className="text-blue-600 shrink-0" />
+                        <span className="truncate">Dokumen ({requests.length})</span>
                     </button>
                 </div>
 
@@ -143,7 +143,7 @@ export function RequestTransferIncomingTable({
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Cari produk..."
-                        className="w-full pl-8 pr-2.5 py-1 text-[11px] rounded-lg border border-slate-200 bg-white placeholder:text-slate-400 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all"
+                        className="w-full pl-8 pr-2.5 py-1.5 sm:py-1 text-[11px] rounded-lg border border-slate-200 bg-white placeholder:text-slate-400 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all"
                     />
                 </div>
             </div>

@@ -38,24 +38,24 @@ export function RequestTransferDetailPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
             {/* Stock Transfer Style Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-2xs">
+                <div className="flex items-center gap-3.5">
                     <Button
                         type="button"
                         onClick={() => router.push(ROUTES.ADMIN_REQUEST_TRANSFERS)}
                         variant="outline"
-                        className="p-2 h-9 w-9 rounded-xl border-slate-200 text-slate-500 hover:text-slate-900 bg-white cursor-pointer shadow-xs"
+                        className="p-2 h-9 w-9 rounded-xl border-slate-200 text-slate-500 hover:text-slate-900 bg-white cursor-pointer shadow-xs shrink-0"
                     >
                         <IconArrowLeft size={18} />
                     </Button>
                     <div>
-                        <div className="flex items-center gap-2">
-                            <h2 className="text-lg font-bold text-slate-900">Detail Request Transfer</h2>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <h2 className="text-base sm:text-lg font-bold text-slate-900">Detail Request Transfer</h2>
                             <Badge
                                 variant="outline"
-                                className="text-xs px-2.5 py-0.5 font-bold border border-blue-200 bg-blue-50 text-blue-700"
+                                className="text-[10px] px-2 py-0.5 font-bold border border-blue-200 bg-blue-50 text-blue-700"
                             >
                                 REQUEST KELUAR
                             </Badge>
@@ -67,7 +67,7 @@ export function RequestTransferDetailPage() {
                 </div>
 
                 {detail && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 self-start sm:self-auto">
                         <Badge
                             variant="outline"
                             className="text-xs px-3 py-1 font-bold border border-amber-200 bg-amber-50 text-amber-800 flex items-center gap-1.5"
@@ -86,11 +86,11 @@ export function RequestTransferDetailPage() {
             )}
 
             {detail && (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
                     {/* Left Column: Items Table */}
-                    <div className="lg:col-span-8 space-y-6">
+                    <div className="lg:col-span-8 space-y-4 sm:space-y-6">
                         <Card className="border-slate-100 shadow-xs rounded-2xl bg-white overflow-hidden">
-                            <CardHeader className="pb-3 border-b border-slate-50 flex flex-row items-center justify-between">
+                            <CardHeader className="p-4 sm:p-5 pb-3 border-b border-slate-50 flex flex-row items-center justify-between">
                                 <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                                     <IconPackage size={16} className="text-blue-600" />
                                     <span>Daftar Barang Diminta ({detail.items.length} Product)</span>
@@ -98,7 +98,7 @@ export function RequestTransferDetailPage() {
                             </CardHeader>
 
                             <div className="overflow-x-auto">
-                                <table className="w-full text-xs text-left">
+                                <table className="w-full text-xs text-left min-w-[500px]">
                                     <thead className="bg-slate-100/80 border-b border-slate-200 text-[10px] font-bold text-slate-600 uppercase tracking-wider">
                                         <tr>
                                             <th className="px-3.5 py-2.5">Nama Produk</th>

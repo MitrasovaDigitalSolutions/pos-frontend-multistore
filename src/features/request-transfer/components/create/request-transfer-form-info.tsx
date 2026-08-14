@@ -46,7 +46,7 @@ export function RequestTransferFormInfo({
   );
 
   return (
-    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs space-y-4">
+    <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-2xs space-y-4">
       {/* Card Header */}
       <div className="flex items-center justify-between border-b border-slate-50 pb-2.5">
         <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
@@ -59,7 +59,7 @@ export function RequestTransferFormInfo({
       </div>
 
       {/* Selectors Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {/* Target Store (request_to) Selector */}
         <div className="space-y-1">
           <div className="flex items-center justify-between">

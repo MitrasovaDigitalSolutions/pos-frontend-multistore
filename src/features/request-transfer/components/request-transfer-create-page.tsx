@@ -137,12 +137,12 @@ export function RequestTransferCreatePage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
             <RequestTransferCreateHeader />
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
                 {/* Left Form Sections */}
-                <div className="lg:col-span-8 space-y-6">
+                <div className="lg:col-span-8 space-y-4 sm:space-y-6">
                     <RequestTransferFormInfo
                         requestTo={requestTo}
                         supplierUid={supplierUid}
@@ -171,7 +171,7 @@ export function RequestTransferCreatePage() {
                 </div>
 
                 {/* Right Summary Sidebar */}
-                <div className="lg:col-span-4 space-y-6">
+                <div className="lg:col-span-4 space-y-4 sm:space-y-6">
                     <RequestTransferSummaryCard
                         storeName={selectedStore ? (selectedStore.is_central ? `${selectedStore.nama} (Pusat)` : selectedStore.nama) : undefined}
                         supplierName={selectedSupplier?.nama}
@@ -182,7 +182,6 @@ export function RequestTransferCreatePage() {
                         isPending={isPending}
                         canSubmit={canSubmit}
                     />
-
                 </div>
             </div>
         </div>
