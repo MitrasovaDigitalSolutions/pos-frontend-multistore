@@ -26,12 +26,12 @@ export function CentralOverviewTab({
     isLoadingTrend,
 }: CentralOverviewTabProps) {
     return (
-        <div className="space-y-6">
-            {/* 1. Top KPI Summary Cards */}
+        <div className="space-y-4 sm:space-y-5">
+            {/* 1. Top KPI Summary Metric Tiles */}
             <CentralKpiCards overview={overview} isLoading={isLoadingOverview} />
 
-            {/* 2. Main Grid: Sales Chart + Store Breakdown */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* 2. Main Analytics Grid: Sales Chart + Store Distribution Ranking */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-start">
                 <div className="lg:col-span-8">
                     <CentralSalesChart
                         trendData={trendData}

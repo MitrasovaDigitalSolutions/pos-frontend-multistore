@@ -3,6 +3,13 @@
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import {
+    IconArrowUpRight,
+    IconChartBar,
+    IconCoin,
+    IconReceipt2,
+    IconWallet,
+} from "@tabler/icons-react";
 import type { CentralOverviewData } from "../../types/central-reports-types";
 
 interface CentralKpiCardsProps {
@@ -13,9 +20,15 @@ interface CentralKpiCardsProps {
 export function CentralKpiCards({ overview, isLoading }: CentralKpiCardsProps) {
     if (isLoading || !overview) {
         return (
-            <Card className="bg-white border border-slate-100 rounded-2xl shadow-sm p-4 animate-pulse">
-                <Skeleton className="h-24 w-full" />
-            </Card>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {[1, 2, 3, 4].map((i) => (
+                    <Card key={i} className="p-4 bg-white border border-slate-100 rounded-xl shadow-2xs space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-7 w-36" />
+                        <Skeleton className="h-3 w-28" />
+                    </Card>
+                ))}
+            </div>
         );
     }
 
@@ -32,80 +45,119 @@ export function CentralKpiCards({ overview, isLoading }: CentralKpiCardsProps) {
     } = overview;
 
     return (
-        <Card className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden mb-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 lg:divide-x divide-slate-100">
-                {/* 1. Omset Penjualan */}
-                <div className="p-5 flex flex-col justify-between bg-slate-50/40">
-                    <div>
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                            Total Penjualan
-                        </span>
-                        <h4 className="text-xs font-bold text-slate-700 mt-1">
-                            Omset Bersih (Net Sales)
-                        </h4>
-                        <div className="text-xl font-extrabold tracking-tight mt-1 text-emerald-600 font-mono">
-                            {formatRupiah(net_sales)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* 1. Omset Penjualan (Net Sales) */}
+            <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-50/70 via-white to-white border border-emerald-100/80 shadow-2xs flex flex-col justify-between space-y-2.5">
+                <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
+                        <div className="w-5 h-5 rounded-md bg-emerald-600 text-white flex items-center justify-center">
+                            <IconCoin size={12} />
                         </div>
-                    </div>
-                    <p className="text-[10px] text-slate-400 mt-3 leading-normal">
-                        {sales_count} transaksi dari {stores_count} cabang | Diskon: {formatRupiah(discount_total)}
-                    </p>
+                        Omset Bersih
+                    </span>
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded">
+                        {stores_count} Cabang
+                    </span>
                 </div>
 
-                {/* 2. Laba Kotor */}
-                <div className="p-5 flex flex-col justify-between bg-white">
-                    <div>
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                            Keuntungan Kotor
-                        </span>
-                        <h4 className="text-xs font-bold text-slate-700 mt-1">
-                            Laba Kotor (Gross Profit)
-                        </h4>
-                        <div className="text-xl font-extrabold tracking-tight mt-1 text-blue-600 font-mono">
-                            {formatRupiah(gross_profit)}
-                        </div>
+                <div>
+                    <div className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 font-mono">
+                        {formatRupiah(net_sales)}
                     </div>
-                    <p className="text-[10px] text-slate-400 mt-3 leading-normal">
-                        Margin Laba: <strong className="text-slate-700">{profit_margin}%</strong> dari omset bersih.
-                    </p>
-                </div>
-
-                {/* 3. Pengeluaran */}
-                <div className="p-5 flex flex-col justify-between bg-slate-50/40">
-                    <div>
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                            Beban & Operasional
-                        </span>
-                        <h4 className="text-xs font-bold text-slate-700 mt-1">
-                            Total Pengeluaran
-                        </h4>
-                        <div className="text-xl font-extrabold tracking-tight mt-1 text-amber-600 font-mono">
-                            {formatRupiah(total_expenses)}
-                        </div>
+                    <div className="flex items-center justify-between text-[10px] text-slate-500 mt-1">
+                        <span>{sales_count.toLocaleString("id-ID")} transaksi</span>
+                        {discount_total > 0 && (
+                            <span className="text-slate-400">
+                                Diskon: {formatRupiah(discount_total)}
+                            </span>
+                        )}
                     </div>
-                    <p className="text-[10px] text-slate-400 mt-3 leading-normal">
-                        Pengeluaran Rutin: {formatRupiah(overview.total_recurring_expenses || 0)}
-                    </p>
-                </div>
-
-                {/* 4. Laba Bersih */}
-                <div className="p-5 flex flex-col justify-between bg-white">
-                    <div>
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                            Hasil Akhir
-                        </span>
-                        <h4 className="text-xs font-bold text-slate-700 mt-1">
-                            Laba Bersih (Net Profit)
-                        </h4>
-                        <div className={`text-xl font-extrabold tracking-tight mt-1 font-mono ${net_profit >= 0 ? "text-emerald-700" : "text-rose-600"}`}>
-                            {formatRupiah(net_profit)}
-                        </div>
-                    </div>
-                    <p className="text-[10px] text-slate-400 mt-3 leading-normal">
-                        Total barang terjual: <strong className="text-slate-700">{items_sold.toLocaleString("id-ID")} pcs</strong>
-                    </p>
                 </div>
             </div>
-        </Card>
+
+            {/* 2. Laba Kotor (Gross Profit) */}
+            <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50/70 via-white to-white border border-blue-100/80 shadow-2xs flex flex-col justify-between space-y-2.5">
+                <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-800 flex items-center gap-1.5">
+                        <div className="w-5 h-5 rounded-md bg-blue-600 text-white flex items-center justify-center">
+                            <IconChartBar size={12} />
+                        </div>
+                        Laba Kotor
+                    </span>
+                    <span className="text-[10px] font-bold text-blue-700 bg-blue-100/80 px-1.5 py-0.5 rounded">
+                        Margin {profit_margin}%
+                    </span>
+                </div>
+
+                <div>
+                    <div className="text-lg sm:text-xl font-extrabold tracking-tight text-blue-700 font-mono">
+                        {formatRupiah(gross_profit)}
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-slate-500 mt-1">
+                        <span>Margin kotor</span>
+                        <span className="font-semibold text-blue-700">{profit_margin}% dari omset</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* 3. Pengeluaran (Expenses) */}
+            <div className="p-4 rounded-xl bg-gradient-to-br from-amber-50/70 via-white to-white border border-amber-100/80 shadow-2xs flex flex-col justify-between space-y-2.5">
+                <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-800 flex items-center gap-1.5">
+                        <div className="w-5 h-5 rounded-md bg-amber-600 text-white flex items-center justify-center">
+                            <IconWallet size={12} />
+                        </div>
+                        Total Pengeluaran
+                    </span>
+                </div>
+
+                <div>
+                    <div className="text-lg sm:text-xl font-extrabold tracking-tight text-amber-700 font-mono">
+                        {formatRupiah(total_expenses)}
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-slate-500 mt-1">
+                        <span>Beban rutin</span>
+                        <span>{formatRupiah(overview.total_recurring_expenses || 0)}</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* 4. Laba Bersih (Net Profit) */}
+            <div className={`p-4 rounded-xl bg-gradient-to-br ${
+                net_profit >= 0
+                    ? "from-emerald-50/70 via-white to-white border-emerald-200/90"
+                    : "from-rose-50/70 via-white to-white border-rose-200/90"
+            } border shadow-2xs flex flex-col justify-between space-y-2.5`}>
+                <div className="flex items-center justify-between">
+                    <span className={`text-[10px] font-extrabold uppercase tracking-wider ${
+                        net_profit >= 0 ? "text-emerald-800" : "text-rose-800"
+                    } flex items-center gap-1.5`}>
+                        <div className={`w-5 h-5 rounded-md ${
+                            net_profit >= 0 ? "bg-emerald-700" : "bg-rose-600"
+                        } text-white flex items-center justify-center`}>
+                            <IconReceipt2 size={12} />
+                        </div>
+                        Laba Bersih
+                    </span>
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-slate-600">
+                        <IconArrowUpRight size={12} className="text-emerald-600" /> {items_sold.toLocaleString("id-ID")} pcs
+                    </span>
+                </div>
+
+                <div>
+                    <div className={`text-lg sm:text-xl font-extrabold tracking-tight font-mono ${
+                        net_profit >= 0 ? "text-emerald-700" : "text-rose-600"
+                    }`}>
+                        {formatRupiah(net_profit)}
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-slate-500 mt-1">
+                        <span>Hasil bersih</span>
+                        <span className="font-semibold text-slate-700">
+                            {net_sales > 0 ? Math.round((net_profit / net_sales) * 100) : 0}% Net Margin
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 }

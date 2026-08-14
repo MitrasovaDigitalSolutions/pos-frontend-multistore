@@ -55,3 +55,11 @@ Follow a strict feature-based architecture under `src/features/<feature_name>/`:
 ### 7. Clean Code & React Compiler Standards
 - **Zero Unused Variables/Imports**: Clean up all unused variables, parameters, and imports (`@typescript-eslint/no-unused-vars`). Do NOT declare variables or imports that are never read.
 - **No Synchronous `setState` Inside `useEffect`**: Strictly avoid calling `setState` or `dispatch` synchronously inside `useEffect` bodies (`react-hooks/set-state-in-effect`). Derive state during render, use key-based resets, or handle state updates in event handlers/callbacks.
+
+### 8. Mobile-First & Responsive UI/UX Standards
+- **Mandatory Mobile Responsiveness**: All UI pages, components, dialogs, charts, and tables MUST be 100% responsive and ergonomic across mobile (<640px), tablet (640-1024px), and desktop (>1024px).
+- **Dynamic Viewport Height (`100dvh`)**: Use `h-[100dvh]` and `max-h-[100dvh]` on full-screen containers instead of raw `100vh` to prevent bottom content clipping under mobile browser URL/navigation toolbars.
+- **Bottom Scroll Clearance**: Preserve generous bottom padding (`pb-28 sm:pb-8`) on scrollable main views so bottom-most cards, submit buttons, and statistics are never obstructed by mobile browser chrome or device gesture bars.
+- **Horizontal Overflow Protection**: Always wrap wide tables, charts, matrix grids, and data rows with `overflow-x-auto` to prevent horizontal page blowout on mobile screens.
+- **Adaptive Stacking**: Use `flex-col sm:flex-row`, `w-full sm:w-auto`, and responsive grids (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-...`) for toolbars, headers, filter forms, button groups, and KPI tiles.
+- **Touch-Friendly Hit Targets**: Ensure all buttons, selectors, tabs, and interactive controls have comfortable touch dimensions (minimum height 36px–44px) on mobile viewports.

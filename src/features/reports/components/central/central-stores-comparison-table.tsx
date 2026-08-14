@@ -124,44 +124,44 @@ export function CentralStoresComparisonTable({
 
     return (
         <div className="space-y-3">
-            <DataTable<CentralStoreComparisonRow, unknown>
-                columns={columns}
-                data={stores}
-                isLoading={isLoading}
-            // searchKey="store_name"
-            // searchPlaceholder="Cari nama cabang..."
-            />
+            <div className="overflow-x-auto min-w-full">
+                <DataTable<CentralStoreComparisonRow, unknown>
+                    columns={columns}
+                    data={stores}
+                    isLoading={isLoading}
+                />
+            </div>
 
             {/* Total Consolidation Summary Banner */}
             {totals && stores.length > 0 && (
-                <div className="bg-slate-50/60 border border-slate-100 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
-                    <div className="font-extrabold uppercase tracking-wider text-xs text-slate-800">
+                <div className="bg-slate-50/80 border border-slate-100 rounded-xl p-3.5 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs shadow-2xs">
+                    <div className="font-extrabold uppercase tracking-wider text-[11px] text-slate-800 shrink-0">
                         Total Konsolidasi ({stores.length} Cabang)
                     </div>
-                    <div className="flex flex-wrap items-center gap-6 font-mono">
-                        <div>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase block font-sans">Total Transaksi</span>
-                            <span className="font-bold text-slate-800 text-sm">{totals.sales_count.toLocaleString("id-ID")} trx</span>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-wrap items-center gap-3 sm:gap-5 font-mono">
+                        <div className="bg-white/80 p-2 sm:p-0 rounded-lg sm:bg-transparent border sm:border-0 border-slate-100">
+                            <span className="text-[9px] text-slate-400 font-bold uppercase block font-sans">Total Trx</span>
+                            <span className="font-bold text-slate-800 text-xs sm:text-sm">{totals.sales_count.toLocaleString("id-ID")} trx</span>
                         </div>
-                        <div>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase block font-sans">Omset Bersih</span>
-                            <span className="font-bold text-emerald-600 text-sm">{formatRupiah(totals.net_sales)}</span>
+                        <div className="bg-white/80 p-2 sm:p-0 rounded-lg sm:bg-transparent border sm:border-0 border-slate-100">
+                            <span className="text-[9px] text-slate-400 font-bold uppercase block font-sans">Omset Bersih</span>
+                            <span className="font-bold text-emerald-600 text-xs sm:text-sm">{formatRupiah(totals.net_sales)}</span>
                         </div>
-                        <div>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase block font-sans">Laba Kotor</span>
-                            <span className="font-bold text-blue-600 text-sm">{formatRupiah(totals.gross_profit)}</span>
+                        <div className="bg-white/80 p-2 sm:p-0 rounded-lg sm:bg-transparent border sm:border-0 border-slate-100">
+                            <span className="text-[9px] text-slate-400 font-bold uppercase block font-sans">Laba Kotor</span>
+                            <span className="font-bold text-blue-600 text-xs sm:text-sm">{formatRupiah(totals.gross_profit)}</span>
                         </div>
-                        <div>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase block font-sans">Pengeluaran</span>
-                            <span className="font-bold text-amber-600 text-sm">{formatRupiah(totals.total_expenses)}</span>
+                        <div className="bg-white/80 p-2 sm:p-0 rounded-lg sm:bg-transparent border sm:border-0 border-slate-100">
+                            <span className="text-[9px] text-slate-400 font-bold uppercase block font-sans">Pengeluaran</span>
+                            <span className="font-bold text-amber-600 text-xs sm:text-sm">{formatRupiah(totals.total_expenses)}</span>
                         </div>
-                        <div>
-                            <span className="text-[10px] text-emerald-700 font-bold uppercase block font-sans">Laba Bersih</span>
-                            <span className="font-extrabold text-emerald-700 text-base">{formatRupiah(totals.net_profit)}</span>
+                        <div className="bg-white/80 p-2 sm:p-0 rounded-lg sm:bg-transparent border sm:border-0 border-slate-100">
+                            <span className="text-[9px] text-emerald-700 font-bold uppercase block font-sans">Laba Bersih</span>
+                            <span className="font-extrabold text-emerald-700 text-xs sm:text-sm">{formatRupiah(totals.net_profit)}</span>
                         </div>
-                        <div>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase block font-sans">Valuasi Stok</span>
-                            <span className="font-bold text-slate-700 text-sm">{formatRupiah(totals.stock_value)}</span>
+                        <div className="bg-white/80 p-2 sm:p-0 rounded-lg sm:bg-transparent border sm:border-0 border-slate-100">
+                            <span className="text-[9px] text-slate-400 font-bold uppercase block font-sans">Valuasi Stok</span>
+                            <span className="font-bold text-slate-700 text-xs sm:text-sm">{formatRupiah(totals.stock_value)}</span>
                         </div>
                     </div>
                 </div>

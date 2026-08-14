@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { startOfMonthStr, todayStr } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card } from "@/components/ui/card";
 import {
     useCentralOverview,
     useCentralStoresComparison,
@@ -92,8 +93,8 @@ export function CentralReportPage() {
     };
 
     return (
-        <div className="space-y-6 pb-12 font-sans">
-            {/* Header Filters with React Hook Form & FilterForm */}
+        <div className="space-y-4 sm:space-y-6 font-sans">
+            {/* 1. Header Filter Bar (Compact & Responsive) */}
             <CentralHeaderFilters
                 methods={methods}
                 onSubmit={onSubmitFilter}
@@ -104,76 +105,91 @@ export function CentralReportPage() {
                 appliedFilters={appliedFilters}
             />
 
-            {/* Clean & Interactive Tabs Navigation */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-4">
-                <div className="bg-slate-100/80 p-1.5 rounded-2xl inline-flex flex-wrap sm:flex-nowrap gap-1">
-                    <TabsList className="bg-transparent p-0 gap-1 flex-wrap sm:flex-nowrap h-auto border-0">
-                        <TabsTrigger
-                            value="overview"
-                            className={cn(
-                                "px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer border-0 shadow-none",
-                                activeTab === "overview"
-                                    ? "bg-white text-emerald-700 shadow-sm scale-[1.02]"
-                                    : "text-slate-500 hover:text-slate-900 hover:bg-slate-200/50"
-                            )}
-                        >
-                            <IconChartLine size={18} className="shrink-0" />
-                            <span>Ringkasan Konsolidasi</span>
-                        </TabsTrigger>
+            {/* 2. Unified Card Container wrapping Tab Navigation & Content */}
+            <Card className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    {/* Integrated Tab Navigation Header Bar */}
+                    <div className="border-b border-slate-100 bg-slate-50/60 p-2.5 sm:px-4 sm:py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <TabsList className="bg-slate-200/70 p-1 rounded-xl gap-1 flex-wrap sm:flex-nowrap h-auto border-0 w-full sm:w-auto">
+                            <TabsTrigger
+                                value="overview"
+                                className={cn(
+                                    "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border-0 shadow-none flex-1 sm:flex-initial",
+                                    activeTab === "overview"
+                                        ? "bg-white text-emerald-800 shadow-2xs"
+                                        : "text-slate-600 hover:text-slate-900"
+                                )}
+                            >
+                                <IconChartLine size={15} className="shrink-0 text-emerald-600" />
+                                <span>Ringkasan Konsolidasi</span>
+                            </TabsTrigger>
 
-                        <TabsTrigger
-                            value="stores"
-                            className={cn(
-                                "px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer border-0 shadow-none",
-                                activeTab === "stores"
-                                    ? "bg-white text-emerald-700 shadow-sm scale-[1.02]"
-                                    : "text-slate-500 hover:text-slate-900 hover:bg-slate-200/50"
-                            )}
-                        >
-                            <IconBuildingStore size={18} className="shrink-0" />
-                            <span>Perbandingan Cabang</span>
-                        </TabsTrigger>
+                            <TabsTrigger
+                                value="stores"
+                                className={cn(
+                                    "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border-0 shadow-none flex-1 sm:flex-initial",
+                                    activeTab === "stores"
+                                        ? "bg-white text-blue-800 shadow-2xs"
+                                        : "text-slate-600 hover:text-slate-900"
+                                )}
+                            >
+                                <IconBuildingStore size={15} className="shrink-0 text-blue-600" />
+                                <span>Perbandingan Cabang</span>
+                            </TabsTrigger>
 
-                        <TabsTrigger
-                            value="inventory"
-                            className={cn(
-                                "px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer border-0 shadow-none",
-                                activeTab === "inventory"
-                                    ? "bg-white text-emerald-700 shadow-sm scale-[1.02]"
-                                    : "text-slate-500 hover:text-slate-900 hover:bg-slate-200/50"
-                            )}
-                        >
-                            <IconBox size={18} className="shrink-0" />
-                            <span>Valuasi Stok Cabang</span>
-                        </TabsTrigger>
-                    </TabsList>
-                </div>
+                            <TabsTrigger
+                                value="inventory"
+                                className={cn(
+                                    "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border-0 shadow-none flex-1 sm:flex-initial",
+                                    activeTab === "inventory"
+                                        ? "bg-white text-purple-800 shadow-2xs"
+                                        : "text-slate-600 hover:text-slate-900"
+                                )}
+                            >
+                                <IconBox size={15} className="shrink-0 text-purple-600" />
+                                <span>Valuasi Stok Cabang</span>
+                            </TabsTrigger>
+                        </TabsList>
 
-                <TabsContent value="overview">
-                    <CentralOverviewTab
-                        overview={overviewData}
-                        trendData={trendData}
-                        byStore={byStore}
-                        onByStoreToggle={setByStore}
-                        isLoadingOverview={isLoadingOverview}
-                        isLoadingTrend={isLoadingTrend}
-                    />
-                </TabsContent>
+                        {/* Quick Stats Indicator Badge */}
+                        <div className="hidden sm:flex items-center gap-2 text-[11px] text-slate-500 font-semibold px-1">
+                            <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <span>
+                                Periode: <strong className="text-slate-700">{appliedFilters.from}</strong> s/d{" "}
+                                <strong className="text-slate-700">{appliedFilters.to}</strong>
+                            </span>
+                        </div>
+                    </div>
 
-                <TabsContent value="stores">
-                    <CentralStoresComparisonTab
-                        data={storesData}
-                        isLoading={isLoadingStores}
-                    />
-                </TabsContent>
+                    {/* Integrated Tab Body Wrapping Detail Data */}
+                    <div className="p-4 sm:p-6 bg-slate-50/20">
+                        <TabsContent value="overview" className="mt-0 focus-visible:outline-none">
+                            <CentralOverviewTab
+                                overview={overviewData}
+                                trendData={trendData}
+                                byStore={byStore}
+                                onByStoreToggle={setByStore}
+                                isLoadingOverview={isLoadingOverview}
+                                isLoadingTrend={isLoadingTrend}
+                            />
+                        </TabsContent>
 
-                <TabsContent value="inventory">
-                    <CentralInventoryTab
-                        data={inventoryData}
-                        isLoading={isLoadingInventory}
-                    />
-                </TabsContent>
-            </Tabs>
+                        <TabsContent value="stores" className="mt-0 focus-visible:outline-none">
+                            <CentralStoresComparisonTab
+                                data={storesData}
+                                isLoading={isLoadingStores}
+                            />
+                        </TabsContent>
+
+                        <TabsContent value="inventory" className="mt-0 focus-visible:outline-none">
+                            <CentralInventoryTab
+                                data={inventoryData}
+                                isLoading={isLoadingInventory}
+                            />
+                        </TabsContent>
+                    </div>
+                </Tabs>
+            </Card>
         </div>
     );
 }
