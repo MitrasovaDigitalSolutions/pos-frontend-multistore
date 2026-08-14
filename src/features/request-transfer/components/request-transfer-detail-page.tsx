@@ -98,14 +98,12 @@ export function RequestTransferDetailPage() {
                             </CardHeader>
 
                             <div className="overflow-x-auto">
-                                <table className="w-full text-xs text-left min-w-[500px]">
+                                <table className="w-full text-xs text-left min-w-[340px]">
                                     <thead className="bg-slate-100/80 border-b border-slate-200 text-[10px] font-bold text-slate-600 uppercase tracking-wider">
                                         <tr>
                                             <th className="px-3.5 py-2.5">Nama Produk</th>
-                                            <th className="px-3.5 py-2.5 text-right">Qty Diminta</th>
-                                            <th className="px-3.5 py-2.5 text-right">Qty PO</th>
-                                            <th className="px-3.5 py-2.5 text-right">Qty Dikirim</th>
-                                            <th className="px-3.5 py-2.5 text-center">Status</th>
+                                            <th className="px-3.5 py-2.5 text-right w-32">Qty Diminta</th>
+                                            <th className="px-3.5 py-2.5 text-center w-28">Status</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 bg-white">
@@ -125,12 +123,6 @@ export function RequestTransferDetailPage() {
                                                 <td className="px-3.5 py-2.5 text-right font-extrabold text-slate-900 text-xs">
                                                     {Number(item.kuantitas).toLocaleString("id-ID")}
                                                 </td>
-                                                <td className="px-3.5 py-2.5 text-right font-medium text-slate-600 text-xs">
-                                                    {Number(item.qty_dipesan ?? 0).toLocaleString("id-ID")}
-                                                </td>
-                                                <td className="px-3.5 py-2.5 text-right font-medium text-emerald-700 text-xs">
-                                                    {Number(item.qty_dikirim ?? 0).toLocaleString("id-ID")}
-                                                </td>
                                                 <td className="px-3.5 py-2.5 text-center">
                                                     <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border bg-amber-50 text-amber-700 border-amber-200">
                                                         <IconClock size={11} /> Pending
@@ -147,7 +139,7 @@ export function RequestTransferDetailPage() {
                                             <td className="px-3.5 py-2.5 text-right text-slate-900 font-extrabold text-xs">
                                                 {totalQtySum.toLocaleString("id-ID")}
                                             </td>
-                                            <td colSpan={3}></td>
+                                            <td></td>
                                         </tr>
                                     </tfoot>
                                 </table>
