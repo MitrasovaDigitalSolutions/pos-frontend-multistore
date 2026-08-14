@@ -10,6 +10,7 @@ import { useSupplierSelectConfig } from "@/features/master/suppliers/hooks/use-s
 import { purchaseOrderHeaderSchema, type PurchaseOrderHeaderInput } from "@/features/purchase/schemas/order-schema";
 import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
 import type { PurchaseOrder } from "@/features/purchase/types";
+import type { Supplier } from "@/features/master/suppliers/types";
 
 interface UsePoHeaderFormProps {
     currentId: string;
@@ -22,6 +23,10 @@ export function usePoHeaderForm({
     currentOrder,
     isCurrentNew,
 }: UsePoHeaderFormProps) {
+    const store = getPurchaseItemsStore(currentId, "po");
+    const headerData = store((state) => state.headerData);
+    const setHeaderData = store((state) => state.setHeaderData);
+
     const headerForm = useForm<PurchaseOrderHeaderInput>({
         resolver: zodResolver(purchaseOrderHeaderSchema) as unknown as Resolver<PurchaseOrderHeaderInput>,
         defaultValues: {
@@ -33,10 +38,6 @@ export function usePoHeaderForm({
 
     const { reset: resetHeader, formState: { isDirty: isHeaderDirty } } = headerForm;
 
-    const store = getPurchaseItemsStore(currentId, "po");
-    const headerData = store((state) => state.headerData);
-    const setHeaderData = store((state) => state.setHeaderData);
-
     const { data: suppliers = [], isLoading: suppliersLoading } = useAllSuppliers();
 
     const supplierOptions = suppliers.map((s) => ({
@@ -44,16 +45,27 @@ export function usePoHeaderForm({
         label: s.nama,
     }));
 
+    const targetUid = currentOrder?.supplier_uid || headerData?.supplier_uid || undefined;
+    const targetSupplierName =
+        currentOrder?.supplier?.nama ||
+        currentOrder?.supplier_name ||
+        headerData?.supplier_nama ||
+        suppliers.find((s) => s.uid === targetUid)?.nama;
+
+    const targetSupplier: Supplier | undefined =
+        targetSupplierName && targetUid
+            ? ({ uid: targetUid, nama: targetSupplierName } as Supplier)
+            : (currentOrder?.supplier || undefined);
+
     const supplierSelectProps = useSupplierSelectConfig({
-        targetUid: currentOrder?.supplier_uid,
-        targetSupplier: currentOrder?.supplier,
+        targetUid: targetUid || null,
+        targetSupplier,
     });
 
-    const hasInitializedRef = useRef(false);
-    const isClearedRef = useRef(false);
+    const lastSyncedHeaderRef = useRef<string | null>(null);
 
     // ─── Header Form Sync Effects ─────────────────────────────────────────────
-    
+
     // 1. Detect when headerData is cleared externally (e.g. via reset/clearAll)
     useEffect(() => {
         if (isCurrentNew && headerData === null) {
@@ -62,15 +74,14 @@ export function usePoHeaderForm({
                 tanggal_po: todayStr(),
                 catatan: "",
             });
-            hasInitializedRef.current = false;
-            isClearedRef.current = false;
+            lastSyncedHeaderRef.current = null;
         }
     }, [isCurrentNew, headerData, resetHeader]);
 
-    // 2. Save to Zustand store on any change to form values (only when new, not cleared, and form is dirty)
+    // 2. Save to Zustand store on any change to form values (only when new and form is dirty)
     const watchedHeaderValues = useWatch({ control: headerForm.control });
     useEffect(() => {
-        if (isCurrentNew && isHeaderDirty && !isClearedRef.current) {
+        if (isCurrentNew && isHeaderDirty) {
             setHeaderData({
                 supplier_uid: watchedHeaderValues.supplier_uid || null,
                 tanggal_terima: watchedHeaderValues.tanggal_po || null,
@@ -79,15 +90,18 @@ export function usePoHeaderForm({
         }
     }, [watchedHeaderValues, isCurrentNew, isHeaderDirty, setHeaderData]);
 
-    // 3. Load initial defaults from Zustand store (if they exist) when creating a new PO
+    // 3. Load initial defaults / updates from Zustand store when creating a new PO
     useEffect(() => {
-        if (isCurrentNew && headerData && !hasInitializedRef.current) {
-            hasInitializedRef.current = true;
-            resetHeader({
-                supplier_uid: headerData.supplier_uid ? String(headerData.supplier_uid) : (undefined as unknown as string),
-                tanggal_po: headerData.tanggal_terima || todayStr(),
-                catatan: headerData.catatan || "",
-            });
+        if (isCurrentNew && headerData) {
+            const syncKey = `${headerData.supplier_uid || ""}_${headerData.tanggal_terima || ""}_${headerData.catatan || ""}`;
+            if (lastSyncedHeaderRef.current !== syncKey) {
+                lastSyncedHeaderRef.current = syncKey;
+                resetHeader({
+                    supplier_uid: headerData.supplier_uid ? String(headerData.supplier_uid) : (undefined as unknown as string),
+                    tanggal_po: headerData.tanggal_terima || todayStr(),
+                    catatan: headerData.catatan || "",
+                });
+            }
         }
     }, [isCurrentNew, headerData, resetHeader]);
 

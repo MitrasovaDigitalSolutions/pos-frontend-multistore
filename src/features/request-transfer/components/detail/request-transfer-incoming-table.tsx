@@ -70,6 +70,7 @@ export function RequestTransferIncomingTable({
             return {
                 productUid: gItem.product_uid,
                 nama: gItem.nama || gItem.product_uid,
+                barcode: gItem.barcode || null,
                 totalQty: Number(gItem.kuantitas || 0),
                 stokSource: Number(gItem.stok_source ?? 0),
                 cukup: gItem.cukup ?? false,
@@ -82,7 +83,7 @@ export function RequestTransferIncomingTable({
     const filteredMatrixRows = useMemo(() => {
         if (!searchQuery.trim()) return matrixRows;
         const q = searchQuery.toLowerCase();
-        return matrixRows.filter((r) => r.nama.toLowerCase().includes(q));
+        return matrixRows.filter((r) => r.nama.toLowerCase().includes(q) || (r.barcode && r.barcode.toLowerCase().includes(q)));
     }, [matrixRows, searchQuery]);
 
     // Calculate totals per store column
@@ -106,7 +107,7 @@ export function RequestTransferIncomingTable({
             {/* Toolbar */}
             <div className="px-3.5 py-2.5 border-b border-slate-100 bg-slate-50/60 flex flex-wrap items-center justify-between gap-2.5">
                 {/* View Toggle */}
-                <div className="flex items-center gap-1 p-0.5 bg-slate-200/70 rounded-lg">
+                <div className="flex items-center gap-1.5 p-0.5 bg-slate-200/70 rounded-lg">
                     <button
                         type="button"
                         onClick={() => setViewMode("matrix")}
@@ -184,7 +185,14 @@ export function RequestTransferIncomingTable({
                                         <td className="px-3 py-2 font-semibold text-slate-900 text-[11px]">
                                             <div className="flex items-center gap-1.5">
                                                 <IconPackage size={13} className="text-slate-400 shrink-0" />
-                                                <span className="truncate">{row.nama}</span>
+                                                <div className="min-w-0">
+                                                    <span className="truncate block">{row.nama}</span>
+                                                    {row.barcode && (
+                                                        <span className="text-[9px] text-slate-400 font-mono block">
+                                                            {row.barcode}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </td>
 

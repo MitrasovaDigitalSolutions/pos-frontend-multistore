@@ -32,9 +32,14 @@ export function RequestTransferGroupedItems({ items }: RequestTransferGroupedIte
                             {items.map((item) => (
                                 <tr key={item.product_uid} className="hover:bg-slate-50/50 transition-colors">
                                     <td className="px-3.5 py-2.5">
-                                        <span className="font-bold text-slate-900 text-xs">
+                                        <span className="font-bold text-slate-900 text-xs block">
                                             {item.nama || item.product_uid}
                                         </span>
+                                        {item.barcode && (
+                                            <span className="text-[10px] text-slate-400 font-mono block">
+                                                {item.barcode}
+                                            </span>
+                                        )}
                                     </td>
                                     <td className="px-3.5 py-2.5 text-right font-semibold text-slate-700">
                                         {Number(item.kuantitas).toLocaleString("id-ID")}

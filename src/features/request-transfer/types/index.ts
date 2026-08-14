@@ -55,6 +55,9 @@ export interface RequestTransferSummary {
 export interface RequestTransferGroupedItem {
     product_uid: string;
     nama?: string | null;
+    barcode?: string | null;
+    harga_beli?: number | null;
+    harga_jual?: number | null;
     kuantitas: number;
     qty_dipesan: number;
     qty_dikirim: number;

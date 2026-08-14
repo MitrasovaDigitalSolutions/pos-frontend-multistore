@@ -113,7 +113,14 @@ export function RequestTransferDetailPage() {
                                             <tr key={item.product_uid} className="hover:bg-slate-50/80 transition-colors">
                                                 <td className="px-3.5 py-2.5 font-bold text-slate-900 text-xs flex items-center gap-1.5">
                                                     <IconPackage size={14} className="text-slate-400 shrink-0" />
-                                                    <span>{item.nama || item.product_uid}</span>
+                                                    <div>
+                                                        <span>{item.nama || item.product_uid}</span>
+                                                        {item.barcode && (
+                                                            <span className="text-[10px] text-slate-400 font-mono block font-normal">
+                                                                {item.barcode}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </td>
                                                 <td className="px-3.5 py-2.5 text-right font-extrabold text-slate-900 text-xs">
                                                     {Number(item.kuantitas).toLocaleString("id-ID")}

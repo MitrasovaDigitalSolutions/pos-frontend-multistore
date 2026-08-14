@@ -1,5 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { ChevronsLeft, ChevronsRight } from "lucide-react";
+import { IconLogout } from "@tabler/icons-react";
+
 import { Scrollable } from "@/components/ui/scrollable";
 import {
     Tooltip,
@@ -7,28 +13,22 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn, getImageUrl } from "@/lib/utils";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { useSettingsStore } from "@/stores/settings-store";
-import {
-    IconLogout
-} from "@tabler/icons-react";
-import { ChevronsLeft, ChevronsRight } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { signOut } from "@/lib/auth-helpers";
-import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { NAVIGATION_CONFIG } from "./sidebar-config";
-import { SidebarLink } from "./sidebar-link";
-import { SidebarSubmenu } from "./sidebar-submenu";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { ROUTES } from "@/constants/routes";
+
+import {
+    NAVIGATION_CONFIG,
+    filterNavItems,
+} from "./sidebar-config";
+import { SidebarItem } from "./sidebar-item";
 
 export function AdminSidebar() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const { data: session } = useSession();
-    const user = session?.user;
 
     const { isCollapsed, toggle, isMobileOpen, setMobileOpen } = useSidebarStore();
     const [mounted, setMounted] = useState(false);
@@ -57,10 +57,10 @@ export function AdminSidebar() {
     }, [pathname, setMobileOpen]);
 
     const collapsed = mounted ? isCollapsed : false;
-    const currentTab = searchParams.get("tab") || "inventory";
+    const currentTab = searchParams.get("tab") || undefined;
 
-    const userRoles = user?.roles || [];
-    const userPermissions = user?.permissions || [];
+    const userRoles = session?.user?.roles || [];
+    const userPermissions = session?.user?.permissions || [];
 
     const getSetting = useSettingsStore((state) => state.getSetting);
     const isLoadingSettings = useSettingsStore((state) => state.isLoading);
@@ -75,90 +75,12 @@ export function AdminSidebar() {
         setIsLogoutConfirmOpen(true);
     };
 
-    const isActive = (path: string, tab?: string) => {
-        if (tab) {
-            return pathname === path && currentTab === tab;
-        }
-        if (path === ROUTES.ADMIN_STOCK) {
-            return pathname === path && currentTab !== "receiving";
-        }
-        // Exact match for root admin & checkout to prevent false positives
-        if (path === "/admin" || path === "/checkout") {
-            return pathname === path;
-        }
-        // Prevent "/admin/expenses" from matching when on "/admin/expenses/categories"
-        if (path === "/admin/expenses" && (pathname === "/admin/expenses/categories" || pathname.startsWith("/admin/expenses/categories/"))) {
-            return false;
-        }
-        // Prevent "/admin/reports/sales" from matching when on "/admin/reports/sales/by-category"
-        if (path === ROUTES.ADMIN_REPORTS_SALES && (pathname === ROUTES.ADMIN_REPORTS_SALES_BY_CATEGORY || pathname.startsWith(ROUTES.ADMIN_REPORTS_SALES_BY_CATEGORY + "/"))) {
-            return false;
-        }
-        // Prevent "/admin/consignment" from matching when on "/admin/consignment/payment"
-        if (
-            path === ROUTES.ADMIN_CONSIGNMENT &&
-            (pathname === ROUTES.ADMIN_CONSIGNMENT_PAYMENT || pathname.startsWith(ROUTES.ADMIN_CONSIGNMENT_PAYMENT + "/"))
-        ) {
-            return false;
-        }
-        const fromParam = searchParams.get("from");
-
-        if (path === ROUTES.ADMIN_STOCK_TRANSFERS_INCOMING) {
-            return (
-                pathname === path ||
-                pathname.startsWith(path + "/") ||
-                (pathname.startsWith(ROUTES.ADMIN_STOCK_TRANSFERS) && fromParam === "incoming")
-            );
-        }
-
-        if (path === ROUTES.ADMIN_STOCK_TRANSFERS_VALIDATIONS) {
-            return (
-                pathname === path ||
-                pathname.startsWith(path + "/") ||
-                (pathname.startsWith(ROUTES.ADMIN_STOCK_TRANSFERS) && fromParam === "validations")
-            );
-        }
-
-        if (path === ROUTES.ADMIN_REQUEST_TRANSFERS_INCOMING) {
-            return pathname === path || pathname.startsWith(path + "/");
-        }
-
-        // Prevent "/admin/request-transfer" (Request Transfer) from matching when on Kelola Request Masuk routes
-        if (path === ROUTES.ADMIN_REQUEST_TRANSFERS) {
-            if (
-                pathname === ROUTES.ADMIN_REQUEST_TRANSFERS_INCOMING ||
-                pathname.startsWith(ROUTES.ADMIN_REQUEST_TRANSFERS_INCOMING + "/")
-            ) {
-                return false;
-            }
-        }
-
-
-        // Prevent "/admin/inventory/stock-transfer" (Transfer Keluar) from matching when on Transfer Masuk or Validasi routes
-        if (path === ROUTES.ADMIN_STOCK_TRANSFERS) {
-            if (
-                pathname === ROUTES.ADMIN_STOCK_TRANSFERS_INCOMING ||
-                pathname.startsWith(ROUTES.ADMIN_STOCK_TRANSFERS_INCOMING + "/") ||
-                pathname === ROUTES.ADMIN_STOCK_TRANSFERS_VALIDATIONS ||
-                pathname.startsWith(ROUTES.ADMIN_STOCK_TRANSFERS_VALIDATIONS + "/") ||
-                fromParam === "incoming" ||
-                fromParam === "validations"
-            ) {
-                return false;
-            }
-        }
-
-        // For all other routes, use prefix matching so nested routes
-        // (e.g. /admin/purchase/order/4/items) highlight the parent menu item
-        return pathname === path || pathname.startsWith(path + "/");
-    };
-
     return (
         <TooltipProvider delayDuration={0}>
             {/* Mobile Sidebar Overlay Backdrop */}
             {mounted && isMobileOpen && (
                 <div
-                    className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
+                    className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-40 lg:hidden transition-opacity duration-300"
                     onClick={() => setMobileOpen(false)}
                 />
             )}
@@ -169,12 +91,14 @@ export function AdminSidebar() {
                     // Mobile overlay vs Desktop inline layouts
                     "fixed inset-y-0 left-0 z-50 lg:relative lg:translate-x-0 lg:z-20",
                     mounted && isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
-                    collapsed ? "w-16" : "w-52.5"
+                    collapsed ? "w-16" : "w-56"
                 )}
             >
+                {/* Desktop Collapse Toggle Button */}
                 <button
+                    type="button"
                     onClick={toggle}
-                    className="absolute top-2 -right-4 z-10 w-4 h-16 hidden lg:flex items-center justify-center rounded-tr-md rounded-br-md bg-gray-950 text-gray-400 hover:text-white hover:bg-gray-900 shadow-md cursor-pointer transition-all outline-none"
+                    className="absolute top-2 -right-4 z-30 w-4 h-16 hidden lg:flex items-center justify-center rounded-tr-md rounded-br-md bg-gray-950 text-gray-400 hover:text-white hover:bg-gray-900 shadow-md cursor-pointer transition-all outline-none"
                     title={collapsed ? "Perluas Menu" : "Sembunyikan Menu"}
                 >
                     {collapsed ? (
@@ -184,11 +108,11 @@ export function AdminSidebar() {
                     )}
                 </button>
 
-                {/* Top Header Logo */}
+                {/* ─── Top Header Logo ────────────────────────────────────────── */}
                 <div
                     className={cn(
-                        "py-7 flex items-center gap-2 border-b border-gray-950/20 shrink-0",
-                        collapsed ? "justify-center px-0" : "px-5"
+                        "py-7 flex items-center border-b border-gray-950/20 shrink-0 transition-all",
+                        collapsed ? "justify-center px-0" : "px-5 gap-2"
                     )}
                 >
                     {isSettingsLoading ? (
@@ -215,7 +139,7 @@ export function AdminSidebar() {
                     )}
                 </div>
 
-                {/* Middle Scrollable Section (Menu List) */}
+                {/* ─── Middle Scrollable Section (Menu List) ───────────────────── */}
                 <Scrollable className="flex-1 min-h-0 py-2">
                     <div
                         className={cn(
@@ -224,11 +148,7 @@ export function AdminSidebar() {
                         )}
                     >
                         {NAVIGATION_CONFIG.map((section) => {
-                            // Filter items based on active user role/permission checks
-                            const visibleItems = section.items.filter((item) =>
-                                item.permission(userRoles, userPermissions)
-                            );
-
+                            const visibleItems = filterNavItems(section.items, userRoles, userPermissions);
                             if (visibleItems.length === 0) return null;
 
                             return (
@@ -240,41 +160,25 @@ export function AdminSidebar() {
                                     ) : (
                                         <div className="h-px bg-gray-900 my-2 w-10 mx-auto" />
                                     )}
+
                                     <ul
                                         className={cn(
                                             "space-y-0.5",
                                             collapsed && "flex flex-col gap-1"
                                         )}
                                     >
-                                        {visibleItems.map((item) => {
-                                            if (item.type === "link") {
-                                                return (
-                                                    <SidebarLink
-                                                        key={item.path + (item.tab || "")}
-                                                        path={item.path}
-                                                        label={item.label}
-                                                        icon={item.icon}
-                                                        tab={item.tab}
-                                                        collapsed={collapsed}
-                                                        isActive={isActive(item.path, item.tab)}
-                                                    />
-                                                );
-                                            } else {
-                                                return (
-                                                    <SidebarSubmenu
-                                                        key={item.label}
-                                                        label={item.label}
-                                                        icon={item.icon}
-                                                        items={item.items}
-                                                        collapsed={collapsed}
-                                                        pathname={pathname}
-                                                        userRoles={userRoles}
-                                                        userPermissions={userPermissions}
-                                                        isActive={isActive}
-                                                    />
-                                                );
-                                            }
-                                        })}
+                                        {visibleItems.map((item) => (
+                                            <SidebarItem
+                                                key={item.label + (item.path || "")}
+                                                item={item}
+                                                depth={0}
+                                                collapsed={collapsed}
+                                                pathname={pathname}
+                                                currentTab={currentTab}
+                                                searchParams={searchParams}
+                                                onItemClick={() => setMobileOpen(false)}
+                                            />
+                                        ))}
                                     </ul>
                                 </div>
                             );
@@ -282,13 +186,14 @@ export function AdminSidebar() {
                     </div>
                 </Scrollable>
 
-                {/* Bottom Fixed Section (Logout Button) */}
+                {/* ─── Bottom Fixed Section (Logout Button) ───────────────────── */}
                 <div className={cn("p-4 border-t border-gray-900 bg-gray-950 shrink-0", collapsed ? "px-2" : "px-4")}>
                     <ul className="space-y-0.5">
                         {collapsed ? (
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <button
+                                        type="button"
                                         onClick={handleLogout}
                                         className="w-10 h-10 mx-auto flex items-center justify-center rounded-xl text-rose-500 hover:text-rose-300 hover:bg-rose-950/20 transition-all cursor-pointer border-none bg-transparent outline-none"
                                     >
@@ -305,6 +210,7 @@ export function AdminSidebar() {
                         ) : (
                             <li>
                                 <button
+                                    type="button"
                                     onClick={handleLogout}
                                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-950/20 transition-all text-left cursor-pointer border-none bg-transparent outline-none"
                                 >
@@ -317,6 +223,7 @@ export function AdminSidebar() {
                 </div>
             </aside>
 
+            {/* Logout Confirmation Dialog */}
             <ConfirmDialog
                 open={isLogoutConfirmOpen}
                 onOpenChange={setIsLogoutConfirmOpen}

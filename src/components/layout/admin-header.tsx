@@ -12,10 +12,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { NAVIGATION_CONFIG } from "./sidebar-config";
+import { getNavTitle } from "./sidebar-config";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { formatToReadableDate } from "@/lib/date-utils";
-import { ROUTES } from "@/constants/routes";
 import { StoreSwitcher } from "./store-switcher";
 
 export function AdminHeader() {
@@ -28,61 +27,10 @@ export function AdminHeader() {
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const currentTab = searchParams.get("tab") || "inventory";
+  const currentTab = searchParams.get("tab") || undefined;
 
   const getTitle = () => {
-    const fromParam = searchParams.get("from");
-
-    if (pathname.startsWith(ROUTES.ADMIN_STOCK_TRANSFERS)) {
-      if (pathname === ROUTES.ADMIN_STOCK_TRANSFERS_INCOMING || fromParam === "incoming") {
-        return "Transfer Masuk";
-      }
-      if (pathname === ROUTES.ADMIN_STOCK_TRANSFERS_VALIDATIONS || fromParam === "validations") {
-        return "Validasi Transfer";
-      }
-      if (pathname === ROUTES.ADMIN_STOCK_TRANSFERS || fromParam === "outgoing") {
-        return "Transfer Keluar";
-      }
-    }
-    // Search NAVIGATION_CONFIG for matching route
-    // First pass: try exact match
-    for (const section of NAVIGATION_CONFIG) {
-      for (const item of section.items) {
-        if (item.type === "link") {
-          if (item.path === pathname) {
-            if (item.tab && item.tab !== currentTab) {
-              continue;
-            }
-            return item.label;
-          }
-        } else if (item.type === "submenu") {
-          for (const subItem of item.items) {
-            if (subItem.path === pathname) {
-              return subItem.label;
-            }
-          }
-        }
-      }
-    }
-
-    // Second pass: try prefix match for nested routes (e.g. /admin/purchase/order/4/items)
-    for (const section of NAVIGATION_CONFIG) {
-      for (const item of section.items) {
-        if (item.type === "link" && item.path !== "/admin" && item.path !== "/checkout") {
-          if (pathname.startsWith(item.path + "/")) {
-            return item.label;
-          }
-        } else if (item.type === "submenu") {
-          for (const subItem of item.items) {
-            if (pathname.startsWith(subItem.path + "/")) {
-              return subItem.label;
-            }
-          }
-        }
-      }
-    }
-
-    return "Dashboard Admin";
+    return getNavTitle(pathname, currentTab, searchParams);
   };
 
   // if (pathname.startsWith("/admin/users")) {

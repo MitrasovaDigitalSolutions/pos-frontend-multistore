@@ -94,6 +94,7 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
         setIsCreateDialogOpen,
         suppliersLoading,
         supplierOptions,
+        supplierSelectProps,
         isSubmitting,
         isConfirmOpen,
         setIsConfirmOpen,
@@ -248,6 +249,7 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
                             form={headerForm}
                             supplierOptions={supplierOptions}
                             suppliersLoading={suppliersLoading}
+                            supplierSelectProps={supplierSelectProps}
                             disabled={isSubmitting}
                         />
                         <POInstructionPanel />

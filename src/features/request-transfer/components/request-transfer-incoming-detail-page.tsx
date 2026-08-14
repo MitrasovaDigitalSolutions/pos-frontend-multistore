@@ -100,11 +100,15 @@ export function RequestTransferIncomingDetailPage() {
 
         const prefilledData = {
             supplier_uid: detail.supplier_uid || null,
+            supplier_nama: detail.supplier_nama || null,
+            supplier_sales_uid: detail.supplier_sales_uid || null,
+            supplier_sales_nama: detail.supplier_sales_nama || null,
             items: (detail.items || []).map((item) => ({
                 product_uid: item.product_uid,
-                barcode: null,
+                barcode: item.barcode || null,
                 nama: item.nama || item.product_uid,
                 kuantitas: Number(item.kuantitas || 0),
+                harga_estimasi: Number(item.harga_beli || 0),
             })),
         };
         sessionStorage.setItem(`po-prefill-${summaryUid}`, JSON.stringify(prefilledData));
@@ -287,7 +291,7 @@ export function RequestTransferIncomingDetailPage() {
                                         className={`font-bold text-xs ${allSufficient ? "text-emerald-700" : "text-amber-700"
                                             }`}
                                     >
-                                        {allSufficient ? "Stok Cukup ✅" : "Perlu Order PO ⚠️"}
+                                        {allSufficient ? "Stok Cukup" : "Perlu Order PO"}
                                     </span>
                                 </div>
                             </CardContent>

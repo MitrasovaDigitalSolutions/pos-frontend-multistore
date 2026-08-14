@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { getPurchaseItemsStore, clearPurchaseItemsStore, selectItemCount, selectTotal } from "@/stores/purchase-items-store";
+import { getPurchaseItemsStore, selectItemCount, selectTotal } from "@/stores/purchase-items-store";
 import type { PurchaseItemLocal, PurchaseOrder } from "@/features/purchase/types";
 
 import { usePoHeaderForm } from "./use-po-header-form";
@@ -43,14 +43,13 @@ export function usePoFlow({ poId, order, onSaveSuccess }: UsePoFlowProps) {
     useEffect(() => {
         if (isCurrentNew && isInitialMountRef.current) {
             isInitialMountRef.current = false;
+            const poStore = getPurchaseItemsStore("new", "po");
 
             if (summaryUid) {
                 try {
                     const rawPrefill = sessionStorage.getItem(`po-prefill-${summaryUid}`);
                     if (rawPrefill) {
                         const parsed = JSON.parse(rawPrefill);
-                        clearPurchaseItemsStore("new", "po");
-                        const poStore = getPurchaseItemsStore("new", "po");
 
                         const prefilledItems: PurchaseItemLocal[] = (parsed.items || []).map(
                             (
@@ -59,6 +58,8 @@ export function usePoFlow({ poId, order, onSaveSuccess }: UsePoFlowProps) {
                                     barcode?: string | null;
                                     nama?: string | null;
                                     kuantitas?: number | null;
+                                    harga_estimasi?: number | null;
+                                    harga_beli?: number | null;
                                 },
                                 idx: number,
                             ) => ({
@@ -67,15 +68,17 @@ export function usePoFlow({ poId, order, onSaveSuccess }: UsePoFlowProps) {
                                 barcode: item.barcode || null,
                                 nama: item.nama || item.product_uid,
                                 kuantitas: Number(item.kuantitas || 0),
-                                harga_estimasi: 0,
+                                harga_estimasi: Number(item.harga_estimasi ?? item.harga_beli ?? 0),
                             }),
                         );
-
 
                         poStore.setState({
                             items: prefilledItems,
                             headerData: {
                                 supplier_uid: parsed.supplier_uid || null,
+                                supplier_nama: parsed.supplier_nama || null,
+                                supplier_sales_uid: parsed.supplier_sales_uid || null,
+                                supplier_sales_nama: parsed.supplier_sales_nama || null,
                             },
                             lastUpdated: Date.now(),
                         });
@@ -88,7 +91,7 @@ export function usePoFlow({ poId, order, onSaveSuccess }: UsePoFlowProps) {
                 }
             }
 
-            clearPurchaseItemsStore("new", "po");
+            poStore.getState().clearAll();
         }
     }, [isCurrentNew, summaryUid]);
 
@@ -154,6 +157,7 @@ export function usePoFlow({ poId, order, onSaveSuccess }: UsePoFlowProps) {
         // Lookup Loading States / Options
         suppliersLoading: headerState.suppliersLoading,
         supplierOptions: headerState.supplierOptions,
+        supplierSelectProps: headerState.supplierSelectProps,
 
         // Submission
         isSubmitting: finalizerState.isSubmitting,
