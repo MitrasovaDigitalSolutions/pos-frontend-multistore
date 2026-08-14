@@ -109,18 +109,18 @@ export function CentralReportPage() {
             <Card className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                     {/* Integrated Tab Navigation Header Bar */}
-                    <div className="border-b border-slate-100 bg-slate-50/60 p-2 sm:px-4 sm:py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                        <TabsList className="grid grid-cols-3 sm:flex sm:flex-nowrap bg-slate-200/70 p-1 rounded-xl gap-1 h-auto border-0 w-full sm:w-auto">
+                    <div className="border-b border-slate-100 bg-slate-50/70 p-2 sm:p-2.5">
+                        <TabsList className="grid grid-cols-3 sm:flex sm:flex-nowrap bg-slate-100/90 border border-slate-200/70 p-1 sm:p-1.5 rounded-xl gap-1 sm:gap-1.5 !h-auto group-data-horizontal/tabs:!h-auto w-full sm:w-auto items-stretch">
                             <TabsTrigger
                                 value="overview"
                                 className={cn(
-                                    "px-2 sm:px-3.5 py-2 sm:py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer border-0 shadow-none text-center",
+                                    "!h-auto py-2 px-2 sm:px-3.5 rounded-lg text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer border-0 text-center",
                                     activeTab === "overview"
-                                        ? "bg-white text-emerald-800 shadow-2xs"
-                                        : "text-slate-600 hover:text-slate-900"
+                                        ? "bg-white text-emerald-800 shadow-xs ring-1 ring-slate-200/60"
+                                        : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"
                                 )}
                             >
-                                <IconChartLine size={15} className="shrink-0 text-emerald-600" />
+                                <IconChartLine size={15} className={cn("shrink-0", activeTab === "overview" ? "text-emerald-600" : "text-slate-400")} />
                                 <span className="truncate">
                                     <span className="inline sm:hidden">Ringkasan</span>
                                     <span className="hidden sm:inline">Ringkasan Konsolidasi</span>
@@ -130,13 +130,13 @@ export function CentralReportPage() {
                             <TabsTrigger
                                 value="stores"
                                 className={cn(
-                                    "px-2 sm:px-3.5 py-2 sm:py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer border-0 shadow-none text-center",
+                                    "!h-auto py-2 px-2 sm:px-3.5 rounded-lg text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer border-0 text-center",
                                     activeTab === "stores"
-                                        ? "bg-white text-blue-800 shadow-2xs"
-                                        : "text-slate-600 hover:text-slate-900"
+                                        ? "bg-white text-blue-800 shadow-xs ring-1 ring-slate-200/60"
+                                        : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"
                                 )}
                             >
-                                <IconBuildingStore size={15} className="shrink-0 text-blue-600" />
+                                <IconBuildingStore size={15} className={cn("shrink-0", activeTab === "stores" ? "text-blue-600" : "text-slate-400")} />
                                 <span className="truncate">
                                     <span className="inline sm:hidden">Cabang</span>
                                     <span className="hidden sm:inline">Perbandingan Cabang</span>
@@ -146,30 +146,19 @@ export function CentralReportPage() {
                             <TabsTrigger
                                 value="inventory"
                                 className={cn(
-                                    "px-2 sm:px-3.5 py-2 sm:py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer border-0 shadow-none text-center",
+                                    "!h-auto py-2 px-2 sm:px-3.5 rounded-lg text-xs font-bold transition-all duration-150 flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer border-0 text-center",
                                     activeTab === "inventory"
-                                        ? "bg-white text-purple-800 shadow-2xs"
-                                        : "text-slate-600 hover:text-slate-900"
+                                        ? "bg-white text-purple-800 shadow-xs ring-1 ring-slate-200/60"
+                                        : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"
                                 )}
                             >
-                                <IconBox size={15} className="shrink-0 text-purple-600" />
+                                <IconBox size={15} className={cn("shrink-0", activeTab === "inventory" ? "text-purple-600" : "text-slate-400")} />
                                 <span className="truncate">
                                     <span className="inline sm:hidden">Stok</span>
                                     <span className="hidden sm:inline">Valuasi Stok Cabang</span>
                                 </span>
                             </TabsTrigger>
                         </TabsList>
-
-                        {/* Quick Stats Indicator Badge */}
-                        <div className="flex items-center justify-between sm:justify-start gap-2 text-[10px] sm:text-[11px] text-slate-500 font-semibold px-1">
-                            <div className="flex items-center gap-1.5">
-                                <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                <span>
-                                    Periode: <strong className="text-slate-700">{appliedFilters.from}</strong> s/d{" "}
-                                    <strong className="text-slate-700">{appliedFilters.to}</strong>
-                                </span>
-                            </div>
-                        </div>
                     </div>
 
                     {/* Integrated Tab Body Wrapping Detail Data */}
