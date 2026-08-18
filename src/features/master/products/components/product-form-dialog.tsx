@@ -109,52 +109,34 @@ export function ProductFormDialog({
         }
     }, [isJasa, setValue]);
 
+    // Single consolidated effect for margin and wholesale price calculations
     useEffect(() => {
-        const activeId = document.activeElement?.id;
+        const activeId = typeof document !== "undefined" ? document.activeElement?.id : undefined;
+        if (!activeId) return;
+
+        const hBeli = Number(hargaBeli) || 0;
+        const hJual = Number(harga) || 0;
+        const minQty = Number(minQtyGrosir) || 0;
 
         if (activeId === "harga_beli" || activeId === "harga") {
-            const hBeli = Number(hargaBeli) || 0;
-            const hJual = Number(harga) || 0;
             if (hBeli > 0) {
                 const calculatedMargin = ((hJual - hBeli) / hBeli) * 100;
                 setValue("margin", parseFloat(calculatedMargin.toFixed(2)));
             } else {
                 setValue("margin", 0);
             }
-        }
-    }, [hargaBeli, harga, setValue]);
-
-    useEffect(() => {
-        const activeId = document.activeElement?.id;
-
-        if (activeId === "margin") {
-            const hBeli = Number(hargaBeli) || 0;
+        } else if (activeId === "margin") {
             const mrg = Number(margin) || 0;
             const calculatedHarga = hBeli * (1 + mrg / 100);
             setValue("harga", Math.round(calculatedHarga));
-        }
-    }, [margin, hargaBeli, setValue]);
-
-    // Bi-directional calculation for wholesale price per unit <-> wholesale total
-    useEffect(() => {
-        const activeId = document.activeElement?.id;
-        const minQty = Number(minQtyGrosir) || 0;
-
-        if (activeId === "harga_grosir" || activeId === "min_qty_grosir") {
+        } else if (activeId === "harga_grosir" || activeId === "min_qty_grosir") {
             const unitPrice = Number(hargaGrosir) || 0;
             if (minQty > 0 && unitPrice > 0) {
                 setValue("harga_grosir_total", Math.round(unitPrice * minQty));
             } else if (!hargaGrosir) {
                 setValue("harga_grosir_total", null);
             }
-        }
-    }, [hargaGrosir, minQtyGrosir, setValue]);
-
-    useEffect(() => {
-        const activeId = document.activeElement?.id;
-        const minQty = Number(minQtyGrosir) || 0;
-
-        if (activeId === "harga_grosir_total") {
+        } else if (activeId === "harga_grosir_total") {
             const totalPrice = Number(hargaGrosirTotal) || 0;
             if (minQty > 0 && totalPrice > 0) {
                 setValue("harga_grosir", Math.round(totalPrice / minQty));
@@ -162,7 +144,7 @@ export function ProductFormDialog({
                 setValue("harga_grosir", null);
             }
         }
-    }, [hargaGrosirTotal, minQtyGrosir, setValue]);
+    }, [hargaBeli, harga, margin, hargaGrosir, minQtyGrosir, hargaGrosirTotal, setValue]);
 
     const onSubmit = (data: ProductInput) => {
         const formData = new FormData();
@@ -171,26 +153,19 @@ export function ProductFormDialog({
         const brandUid = data.brand_uid;
         let brandName = "Umum";
         if (brandUid) {
-            const caches = queryClient.getQueriesData<{ pages?: { data?: Brand[] }[] }>({
-                queryKey: [...queryKeys.brands.all, "infinite"],
-            });
-            let foundBrandName: string | null = null;
-            for (const [, cacheData] of caches) {
-                if (cacheData?.pages) {
-                    for (const page of cacheData.pages) {
-                        const brand = page.data?.find((b) => String(b.uid) === String(brandUid));
-                        if (brand) {
-                            foundBrandName = brand.nama;
-                            break;
-                        }
+            if (editingProduct?.brand_uid === brandUid && editingProduct.brand) {
+                brandName = editingProduct.brand.nama;
+            } else {
+                const caches = queryClient.getQueriesData<{ pages?: { data?: Brand[] }[] }>({
+                    queryKey: [...queryKeys.brands.all, "infinite"],
+                });
+                for (const [, cacheData] of caches) {
+                    const found = cacheData?.pages?.flatMap(p => p.data || []).find(b => String(b?.uid) === String(brandUid));
+                    if (found) {
+                        brandName = found.nama;
+                        break;
                     }
                 }
-                if (foundBrandName) break;
-            }
-            if (foundBrandName) {
-                brandName = foundBrandName;
-            } else if (editingProduct?.brand_uid === brandUid && editingProduct.brand) {
-                brandName = editingProduct.brand.nama;
             }
         }
         formData.append("merek", brandName);

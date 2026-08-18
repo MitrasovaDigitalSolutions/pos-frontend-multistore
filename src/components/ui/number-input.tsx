@@ -1,5 +1,5 @@
 import { Input } from "@/components/ui/input";
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 export interface NumberInputProps extends Omit<
     React.ComponentProps<typeof Input>,
@@ -95,11 +95,15 @@ export const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [value]);
 
-        // Restore cursor position after formatting state updates
-        useLayoutEffect(() => {
+        // Restore cursor position after formatting state updates via async frame callback to avoid layout thrashing
+        useEffect(() => {
             if (inputRef.current && cursorPosition !== null) {
-                inputRef.current.setSelectionRange(cursorPosition, cursorPosition);
+                const targetPos = cursorPosition;
+                const raf = requestAnimationFrame(() => {
+                    inputRef.current?.setSelectionRange(targetPos, targetPos);
+                });
                 setCursorPosition(null);
+                return () => cancelAnimationFrame(raf);
             }
         }, [cursorPosition]);
 

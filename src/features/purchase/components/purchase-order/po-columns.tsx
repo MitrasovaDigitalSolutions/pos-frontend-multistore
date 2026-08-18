@@ -2,7 +2,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { PurchaseOrder } from "../../types";
-import { formatDate } from "@/lib/date-utils";
+import { formatDate, formatToTime } from "@/lib/date-utils";
 import {
     PO_STATUS_LABELS,
     type POStatus,
@@ -12,12 +12,20 @@ export const poColumns: ColumnDef<PurchaseOrder>[] = [
     {
         accessorKey: "tanggal_po",
         header: "Tanggal PO",
-        cell: ({ row }) => (
-            <span className="text-slate-600 font-medium text-xs">
-                {formatDate(row.original.tanggal_po, "dd MMM yyyy")}
-            </span>
-        ),
-        size: 120,
+        cell: ({ row }) => {
+            const rawDate = row.original.tanggal_po || row.original.created_at;
+            return (
+                <div className="flex flex-col">
+                    <span className="text-slate-700 font-semibold text-xs">
+                        {formatDate(rawDate, "dd MMM yyyy")}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                        {formatToTime(rawDate)} WIB
+                    </span>
+                </div>
+            );
+        },
+        size: 130,
     },
     {
         accessorKey: "nomor_po",

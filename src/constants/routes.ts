@@ -35,7 +35,9 @@ export const ROUTES = {
     ADMIN_AUDIT: "/admin/audit",
     ADMIN_TRANSACTIONS: "/admin/transactions",
     ADMIN_PURCHASE_ORDER: "/admin/purchase/order",
+    ADMIN_PURCHASE_ORDER_CREATE: "/admin/purchase/order/new",
     ADMIN_PURCHASE_RECEIVING: "/admin/purchase/receiving",
+
     ADMIN_PURCHASE_PAYMENT: "/admin/purchase/payment",
     ADMIN_PURCHASE_RETURN: "/admin/purchase/return",
     ADMIN_CONSIGNMENT: "/admin/consignment",
@@ -52,8 +54,11 @@ export const ROUTES = {
     ADMIN_ACCOUNTING_CATEGORY_MAPPING: "/admin/accounting/category-mapping",
     ADMIN_SUPPLIER_SALES: "/admin/sales",
     ADMIN_REQUEST_TRANSFERS: "/admin/request-transfer",
+    ADMIN_REQUEST_TRANSFERS_INCOMING: "/admin/request-transfer/incoming",
+    ADMIN_REQUEST_TRANSFERS_INCOMING_DETAIL: "/admin/request-transfer/incoming/detail",
     ADMIN_REQUEST_TRANSFERS_CREATE: "/admin/request-transfer/create",
     ADMIN_REQUEST_TRANSFERS_DETAIL: "/admin/request-transfer/detail",
+
 
     // Protected - POS
     CHECKOUT: "/checkout",

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { getPurchaseItemsStore, clearPurchaseItemsStore, selectItemCount, selectTotal } from "@/stores/purchase-items-store";
-import type { PurchaseOrder } from "@/features/purchase/types";
+import { useSearchParams } from "next/navigation";
+import { getPurchaseItemsStore, selectItemCount, selectTotal } from "@/stores/purchase-items-store";
+import type { PurchaseItemLocal, PurchaseOrder } from "@/features/purchase/types";
 
 import { usePoHeaderForm } from "./use-po-header-form";
 import { usePoScanner } from "./use-po-scanner";
@@ -15,6 +16,9 @@ interface UsePoFlowProps {
 }
 
 export function usePoFlow({ poId, order, onSaveSuccess }: UsePoFlowProps) {
+    const searchParams = useSearchParams();
+    const summaryUid = searchParams?.get("summary_uid");
+
     const [currentId, setCurrentId] = useState(poId);
     const [currentOrder, setCurrentOrder] = useState<PurchaseOrder | undefined>(order);
     const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
@@ -34,14 +38,63 @@ export function usePoFlow({ poId, order, onSaveSuccess }: UsePoFlowProps) {
 
     const isCurrentNew = !currentId || currentId === "new";
 
-    // ─── Clear Stale Local Store on Mount for New PO ───────────────────────────
+    // ─── Clear / Prefill Local Store on Mount for New PO ─────────────────────
     const isInitialMountRef = useRef(true);
     useEffect(() => {
         if (isCurrentNew && isInitialMountRef.current) {
             isInitialMountRef.current = false;
-            clearPurchaseItemsStore("new", "po");
+            const poStore = getPurchaseItemsStore("new", "po");
+
+            if (summaryUid) {
+                try {
+                    const rawPrefill = sessionStorage.getItem(`po-prefill-${summaryUid}`);
+                    if (rawPrefill) {
+                        const parsed = JSON.parse(rawPrefill);
+
+                        const prefilledItems: PurchaseItemLocal[] = (parsed.items || []).map(
+                            (
+                                item: {
+                                    product_uid: string;
+                                    barcode?: string | null;
+                                    nama?: string | null;
+                                    kuantitas?: number | null;
+                                    harga_estimasi?: number | null;
+                                    harga_beli?: number | null;
+                                },
+                                idx: number,
+                            ) => ({
+                                temp_uid: `${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 5)}`,
+                                product_uid: item.product_uid,
+                                barcode: item.barcode || null,
+                                nama: item.nama || item.product_uid,
+                                kuantitas: Number(item.kuantitas || 0),
+                                harga_estimasi: Number(item.harga_estimasi ?? item.harga_beli ?? 0),
+                            }),
+                        );
+
+                        poStore.setState({
+                            items: prefilledItems,
+                            headerData: {
+                                supplier_uid: parsed.supplier_uid || null,
+                                supplier_nama: parsed.supplier_nama || null,
+                                supplier_sales_uid: parsed.supplier_sales_uid || null,
+                                supplier_sales_nama: parsed.supplier_sales_nama || null,
+                            },
+                            lastUpdated: Date.now(),
+                        });
+
+                        sessionStorage.removeItem(`po-prefill-${summaryUid}`);
+                        return;
+                    }
+                } catch (e) {
+                    console.error("Failed to parse po-prefill:", e);
+                }
+            }
+
+            poStore.getState().clearAll();
         }
-    }, [isCurrentNew]);
+    }, [isCurrentNew, summaryUid]);
+
 
     // ─── Zustand Store ────────────────────────────────────────────────────────
     const store = getPurchaseItemsStore(currentId, "po");
@@ -104,6 +157,7 @@ export function usePoFlow({ poId, order, onSaveSuccess }: UsePoFlowProps) {
         // Lookup Loading States / Options
         suppliersLoading: headerState.suppliersLoading,
         supplierOptions: headerState.supplierOptions,
+        supplierSelectProps: headerState.supplierSelectProps,
 
         // Submission
         isSubmitting: finalizerState.isSubmitting,

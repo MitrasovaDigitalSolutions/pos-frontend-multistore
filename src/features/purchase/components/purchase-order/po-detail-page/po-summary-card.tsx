@@ -1,6 +1,6 @@
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { PurchaseOrder } from "../../../types";
-import { formatDate } from "@/lib/date-utils";
+import { formatDate, formatToTime } from "@/lib/date-utils";
 
 interface POSummaryCardProps {
     order: PurchaseOrder;
@@ -9,6 +9,8 @@ interface POSummaryCardProps {
 }
 
 export function POSummaryCard({ order, getStatusClass, getStatusLabel }: POSummaryCardProps) {
+    const rawDate = order.tanggal_po || order.created_at;
+
     return (
         <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5 space-y-4">
             <h3 className="text-xs font-bold text-slate-900 pb-3 border-b border-slate-50">
@@ -22,9 +24,14 @@ export function POSummaryCard({ order, getStatusClass, getStatusLabel }: POSumma
                 </div>
                 <div className="space-y-1">
                     <span className="text-[10px] font-bold text-slate-400 uppercase">Tanggal PO</span>
-                    <p className="font-semibold text-slate-700">
-                        {formatDate(order.tanggal_po, "dd MMM yyyy")}
-                    </p>
+                    <div>
+                        <p className="font-semibold text-slate-700">
+                            {formatDate(rawDate, "dd MMM yyyy")}
+                        </p>
+                        <p className="text-[11px] text-slate-400 font-mono">
+                            {formatToTime(rawDate)} WIB
+                        </p>
+                    </div>
                 </div>
                 <div className="space-y-1">
                     <span className="text-[10px] font-bold text-slate-400 uppercase">Supplier</span>

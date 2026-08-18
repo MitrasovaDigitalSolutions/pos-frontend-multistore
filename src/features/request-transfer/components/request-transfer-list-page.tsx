@@ -4,12 +4,16 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
-import { useRequestTransferSummaries } from "../api/request-transfer-api";
+import { useIncomingRequestTransfers, useOutgoingRequestTransfers } from "../api/request-transfer-api";
 import { RequestTransferSummaryHeader } from "./list/request-transfer-summary-header";
 import { RequestTransferFilters, type RequestTransferFilterValues } from "./list/request-transfer-filters";
 import { RequestTransferSummaryTable } from "./list/request-transfer-summary-table";
 
-export function RequestTransferListPage() {
+interface RequestTransferListPageProps {
+    mode?: "outgoing" | "incoming";
+}
+
+export function RequestTransferListPage({ mode = "outgoing" }: RequestTransferListPageProps) {
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
@@ -35,11 +39,17 @@ export function RequestTransferListPage() {
         setPage(1);
     };
 
-    const { data: summariesData, isLoading, isFetching } = useRequestTransferSummaries({
+    const filterParams = {
         page,
         per_page: perPage,
         search: debouncedSearch || undefined,
-    });
+    };
+
+    const outgoingResult = useOutgoingRequestTransfers(filterParams);
+    const incomingResult = useIncomingRequestTransfers(filterParams);
+
+    const activeQuery = mode === "incoming" ? incomingResult : outgoingResult;
+    const { data: summariesData, isLoading, isFetching } = activeQuery;
 
     if (!canAccess) {
         return (
@@ -48,9 +58,9 @@ export function RequestTransferListPage() {
     }
 
     return (
-        <div className="space-y-6">
-            <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4">
-                <RequestTransferSummaryHeader canManage={canManage} />
+        <div className="space-y-4 sm:space-y-6">
+            <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-4 sm:p-6 space-y-4">
+                <RequestTransferSummaryHeader canManage={canManage} mode={mode} />
 
                 <RequestTransferFilters
                     onFilterSubmit={handleFilterSubmit}
@@ -66,8 +76,11 @@ export function RequestTransferListPage() {
                     onPerPageChange={setPerPage}
                     isLoading={isLoading}
                     isFetching={isFetching}
+                    mode={mode}
                 />
+
             </section>
         </div>
     );
 }
+

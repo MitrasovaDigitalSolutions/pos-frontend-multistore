@@ -6,6 +6,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Receipt } from "../types";
 import { useSettingsStore } from "@/stores/settings-store";
 
+import { invalidateStockQueries, invalidateFinanceQueries } from "@/lib/cache-invalidation";
+
 // ─── Bulk Checkout Mutation ──────────────────────────────────────────────────
 // Sends all checkout items and payment details in a single request to the backend.
 export function useBulkCheckout() {
@@ -44,9 +46,11 @@ export function useBulkCheckout() {
             return response;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+            invalidateStockQueries(queryClient);
+            invalidateFinanceQueries(queryClient);
             queryClient.invalidateQueries({ queryKey: ["cash-drawer"] });
             queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all });
         },
     });
 }

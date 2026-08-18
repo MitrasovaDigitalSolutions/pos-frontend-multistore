@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { ROUTES } from "@/constants/routes";
-import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
-import { useAllSupplierSales } from "@/features/supplier-sales/api/supplier-sales-api";
 import type { Product } from "@/features/master/products/types";
+import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
+import { useStores } from "@/features/stores/api/stores-api";
+import { useAllSupplierSales } from "@/features/supplier-sales/api/supplier-sales-api";
+import { useAppRouter } from "@/hooks/use-app-router";
+import { useState } from "react";
+import { toast } from "sonner";
 import { useCreateRequestTransfer } from "../api/request-transfer-api";
 import type { RequestLineItem } from "../schemas/request-transfer-schema";
 import { RequestTransferCreateHeader } from "./create/request-transfer-create-header";
@@ -15,24 +16,30 @@ import { RequestTransferItemsTable } from "./create/request-transfer-items-table
 import { RequestTransferSummaryCard } from "./create/request-transfer-summary-card";
 
 export function RequestTransferCreatePage() {
-    const router = useRouter();
+    const router = useAppRouter();
+
     const createRequest = useCreateRequestTransfer();
 
+    const { data: storesRes, isLoading: isLoadingStores } = useStores({ per_page: 1000 });
     const { data: suppliers, isLoading: isLoadingSuppliers } = useAllSuppliers();
     const { data: supplierSales, isLoading: isLoadingSales } = useAllSupplierSales();
 
+    const stores = storesRes?.data || [];
+
+    const [requestTo, setRequestTo] = useState("");
     const [supplierUid, setSupplierUid] = useState("");
     const [supplierSalesUid, setSupplierSalesUid] = useState<string | null>(null);
     const [catatan, setCatatan] = useState("");
     const [items, setItems] = useState<RequestLineItem[]>([]);
 
+    const selectedStore = stores.find((s) => s.uid === requestTo);
     const selectedSupplier = suppliers?.find((s) => s.uid === supplierUid);
     const selectedCatalog = supplierSales?.find((s) => s.uid === supplierSalesUid);
+
 
     const handleSupplierChange = (uid: string) => {
         setSupplierUid(uid);
         setSupplierSalesUid(null);
-        setItems([]);
     };
 
     const handleCatalogChange = (uid: string) => {
@@ -92,21 +99,23 @@ export function RequestTransferCreatePage() {
     const totalQty = items.reduce((acc, curr) => acc + curr.kuantitas, 0);
     const hasValidItems = items.some((i) => i.kuantitas > 0);
     const isPending = createRequest.isPending;
-    const canSubmit = !!supplierUid && hasValidItems;
+    const canSubmit = !!requestTo && hasValidItems;
 
     const handleSubmit = () => {
-        if (!supplierUid) {
-            toast.error("Supplier wajib dipilih.");
+        if (!requestTo) {
+            toast.error("Toko Sumber (Tujuan) wajib dipilih.");
             return;
         }
         if (!hasValidItems) {
             toast.error("Minimal 1 item dengan kuantitas lebih dari 0.");
             return;
         }
+
         createRequest.mutate(
             {
-                supplier_uid: supplierUid,
-                supplier_sales_uid: supplierSalesUid,
+                request_to: requestTo || null,
+                supplier_uid: supplierUid || null,
+                supplier_sales_uid: supplierSalesUid || null,
                 catatan: catatan || null,
                 items: items
                     .filter((i) => i.kuantitas > 0)
@@ -128,21 +137,25 @@ export function RequestTransferCreatePage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
             <RequestTransferCreateHeader />
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
                 {/* Left Form Sections */}
-                <div className="lg:col-span-8 space-y-6">
+                <div className="lg:col-span-8 space-y-4 sm:space-y-6">
                     <RequestTransferFormInfo
+                        requestTo={requestTo}
                         supplierUid={supplierUid}
                         supplierSalesUid={supplierSalesUid}
                         catatan={catatan}
+                        stores={stores}
                         suppliers={suppliers || []}
                         supplierSales={supplierSales || []}
+                        isLoadingStores={isLoadingStores}
                         isLoadingSuppliers={isLoadingSuppliers}
                         isLoadingSales={isLoadingSales}
                         disabled={isPending}
+                        onRequestToChange={setRequestTo}
                         onSupplierChange={handleSupplierChange}
                         onCatalogChange={handleCatalogChange}
                         onCatatanChange={setCatatan}
@@ -158,8 +171,9 @@ export function RequestTransferCreatePage() {
                 </div>
 
                 {/* Right Summary Sidebar */}
-                <div className="lg:col-span-4 space-y-6">
+                <div className="lg:col-span-4 space-y-4 sm:space-y-6">
                     <RequestTransferSummaryCard
+                        storeName={selectedStore ? (selectedStore.is_central ? `${selectedStore.nama} (Pusat)` : selectedStore.nama) : undefined}
                         supplierName={selectedSupplier?.nama}
                         catalogName={selectedCatalog?.nama}
                         totalJenis={totalJenis}
@@ -173,3 +187,4 @@ export function RequestTransferCreatePage() {
         </div>
     );
 }
+

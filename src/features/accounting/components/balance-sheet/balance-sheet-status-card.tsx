@@ -113,30 +113,10 @@ export function BalanceSheetStatusCard({
                         {isBalanced ? (
                             <motion.div
                                 initial={{ width: "0%" }}
-                                animate={{
-                                    width: "100%",
-                                    backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-                                }}
-                                transition={{
-                                    width: { duration: 0.8, ease: "easeOut" },
-                                    backgroundPosition: { duration: 5, ease: "linear", repeat: Infinity },
-                                }}
-                                className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-teal-300 via-cyan-400 via-indigo-500 via-purple-500 to-emerald-400 bg-[length:300%_100%] relative overflow-hidden shadow-md shadow-emerald-500/20"
-                            >
-                                {/* Fluid sheen animation overlay */}
-                                <motion.div
-                                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent w-1/2 -skew-x-12"
-                                    animate={{
-                                        x: ["-150%", "300%"],
-                                    }}
-                                    transition={{
-                                        duration: 2.2,
-                                        ease: "easeInOut",
-                                        repeat: Infinity,
-                                        repeatDelay: 0.5,
-                                    }}
-                                />
-                            </motion.div>
+                                animate={{ width: "100%" }}
+                                transition={{ duration: 0.8, ease: "easeOut" }}
+                                className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-600 relative overflow-hidden shadow-md shadow-emerald-500/20"
+                            />
                         ) : (
                             <div className="flex h-full rounded-full overflow-hidden w-full">
                                 <motion.div

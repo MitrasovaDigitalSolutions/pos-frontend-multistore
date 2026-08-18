@@ -8,7 +8,7 @@ interface RequestTransferRequestsBreakdownProps {
 
 export function RequestTransferRequestsBreakdown({ requests }: RequestTransferRequestsBreakdownProps) {
     return (
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs space-y-3">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-2xs space-y-3">
             <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                 Rincian Request ({requests.length})
             </h3>
@@ -16,7 +16,7 @@ export function RequestTransferRequestsBreakdown({ requests }: RequestTransferRe
             {requests.map((r) => (
                 <div
                     key={r.uid}
-                    className="border border-slate-100 rounded-xl p-4 space-y-2"
+                    className="border border-slate-100 rounded-xl p-3 sm:p-4 space-y-2"
                 >
                     <div className="flex justify-between items-center flex-wrap gap-2">
                         <div className="flex flex-col gap-0.5">

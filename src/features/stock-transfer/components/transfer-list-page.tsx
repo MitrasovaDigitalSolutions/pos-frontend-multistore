@@ -168,7 +168,7 @@ export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
               setSortOrder(order);
               setPage(1);
             }}
-            getRowMotionProps={(item) => {
+            getRowClassName={(item) => {
               const st = (item.status || "").toLowerCase().trim();
               const isFinishedOrRejected = [
                 TRANSFER_STATUS.FINISH,
@@ -182,26 +182,7 @@ export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
                 "ditolak",
               ].includes(st);
 
-              if (!isFinishedOrRejected) {
-                return {
-                  animate: {
-                    backgroundColor: [
-                      "#fffbeb", // Amber-50
-                      "#fef3c7", // Amber-100
-                      "#fffbeb", // Amber-50
-                    ],
-                  },
-                  transition: {
-                    duration: 1.8,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  },
-                };
-              }
-              return {
-                animate: { backgroundColor: "#ffffff" },
-                transition: { duration: 0.2 },
-              };
+              return !isFinishedOrRejected ? "bg-amber-50/60 hover:bg-amber-50" : "";
             }}
             extraActions={(item) => {
               const st = (item.status || "").toLowerCase().trim();

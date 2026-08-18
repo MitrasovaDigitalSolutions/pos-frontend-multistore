@@ -1,4 +1,5 @@
 import { queryKeys } from "@/lib/query-keys";
+import { invalidateProductMasterQueries, invalidateStockQueries } from "@/lib/cache-invalidation";
 import {
     apiDelete,
     apiGet,
@@ -30,8 +31,8 @@ export function useAssignProductStore() {
             ),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: queryKeys.productStores.list(variables.productUid) });
-            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
-            queryClient.invalidateQueries({ queryKey: queryKeys.productCatalog.all });
+            invalidateProductMasterQueries(queryClient);
+            invalidateStockQueries(queryClient);
         },
     });
 }
@@ -50,8 +51,8 @@ export function useUpdateProductStore() {
             ),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: queryKeys.productStores.list(variables.productUid) });
-            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
-            queryClient.invalidateQueries({ queryKey: queryKeys.productCatalog.all });
+            invalidateProductMasterQueries(queryClient);
+            invalidateStockQueries(queryClient);
         },
     });
 }
@@ -63,8 +64,8 @@ export function useDetachProductStore() {
             apiDelete<void>(`/v1/products/${productUid}/stores/${storeUid}`),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: queryKeys.productStores.list(variables.productUid) });
-            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
-            queryClient.invalidateQueries({ queryKey: queryKeys.productCatalog.all });
+            invalidateProductMasterQueries(queryClient);
+            invalidateStockQueries(queryClient);
         },
     });
 }

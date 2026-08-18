@@ -1,4 +1,5 @@
 import { queryKeys } from "@/lib/query-keys";
+import { invalidateProductMasterQueries } from "@/lib/cache-invalidation";
 import {
     apiDelete,
     apiGet,
@@ -62,8 +63,7 @@ export function useCreateProduct() {
                 newProduct,
             ),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
-            queryClient.invalidateQueries({ queryKey: queryKeys.productCatalog.all });
+            invalidateProductMasterQueries(queryClient);
         },
     });
 }
@@ -81,8 +81,7 @@ export function useUpdateProduct() {
                 data,
             ),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
-            queryClient.invalidateQueries({ queryKey: queryKeys.productCatalog.all });
+            invalidateProductMasterQueries(queryClient);
         },
     });
 }
@@ -100,8 +99,7 @@ export function useToggleProductStatus() {
                 { status },
             ),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
-            queryClient.invalidateQueries({ queryKey: queryKeys.productCatalog.all });
+            invalidateProductMasterQueries(queryClient);
         },
     });
 }
@@ -111,8 +109,7 @@ export function useDeleteProduct() {
     return useMutation<ApiResponse<void>, Error, string>({
         mutationFn: (uid) => apiDelete<ApiResponse<void>>(`/v1/products/${uid}`),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
-            queryClient.invalidateQueries({ queryKey: queryKeys.productCatalog.all });
+            invalidateProductMasterQueries(queryClient);
         },
     });
 }

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiGetData, apiGetList, apiPost, apiPatch } from "@/shared/api/api-client";
 import { ENDPOINTS } from "@/shared/api/endpoints";
 import { queryKeys } from "@/lib/query-keys";
+import { invalidateStockQueries } from "@/lib/cache-invalidation";
 import type { ApiResponse, PaginationParams } from "@/types/api";
 import type { StockTransfer } from "../types";
 
@@ -50,7 +51,7 @@ export function useCreateStockTransfer() {
     mutationFn: (payload: { store_uid_destination: string; catatan?: string | null; items: { product_uid: string; kuantitas: number }[] }) =>
       apiPost<ApiResponse<StockTransfer>, typeof payload>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.CREATE, payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers(), refetchType: "all" });
+      invalidateStockQueries(qc);
     },
   });
 }
@@ -61,7 +62,7 @@ export function useUpdateStockTransfer() {
     mutationFn: ({ uid, payload }: { uid: string; payload: { store_uid_destination: string; catatan?: string; items: { product_uid: string; kuantitas: number }[] } }) =>
       apiPatch<ApiResponse<StockTransfer>, typeof payload>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.UPDATE(uid), payload),
     onSuccess: (_, variables) => {
-      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers(), refetchType: "all" });
+      invalidateStockQueries(qc);
       qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(variables.uid), refetchType: "all" });
     },
   });
@@ -72,7 +73,7 @@ export function useFinalizeStockTransfer() {
   return useMutation({
     mutationFn: (uid: string) => apiPost<ApiResponse<StockTransfer>, void>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.FINALIZE(uid)),
     onSuccess: (_, uid) => {
-      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers(), refetchType: "all" });
+      invalidateStockQueries(qc);
       qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(uid), refetchType: "all" });
     },
   });
@@ -94,7 +95,7 @@ export function useReceiveStockTransfer() {
         payload
       ),
     onSuccess: (_, variables) => {
-      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers(), refetchType: "all" });
+      invalidateStockQueries(qc);
       qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(variables.uid), refetchType: "all" });
     },
   });
@@ -115,7 +116,7 @@ export function useValidateStockTransferItem() {
         payload
       ),
     onSuccess: (_, variables) => {
-      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers(), refetchType: "all" });
+      invalidateStockQueries(qc);
       qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(variables.uid), refetchType: "all" });
     },
   });
@@ -127,7 +128,7 @@ export function useCancelStockTransfer() {
     mutationFn: ({ uid, alasan }: { uid: string; alasan?: string }) =>
       apiPost<ApiResponse<StockTransfer>, { alasan?: string }>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.CANCEL(uid), { alasan }),
     onSuccess: (_, variables) => {
-      qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransfers(), refetchType: "all" });
+      invalidateStockQueries(qc);
       qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(variables.uid), refetchType: "all" });
     },
   });

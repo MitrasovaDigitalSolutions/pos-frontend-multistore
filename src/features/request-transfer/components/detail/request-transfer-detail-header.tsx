@@ -11,6 +11,7 @@ interface RequestTransferDetailHeaderProps {
     isPendingAction: boolean;
     anySufficient: boolean;
     onSetConfirmAction: (action: "reject" | "order" | "send") => void;
+    mode?: "outgoing" | "incoming";
 }
 
 export function RequestTransferDetailHeader({
@@ -18,8 +19,14 @@ export function RequestTransferDetailHeader({
     isPendingAction,
     anySufficient,
     onSetConfirmAction,
+    mode = "outgoing",
 }: RequestTransferDetailHeaderProps) {
     const router = useRouter();
+
+    const backRoute =
+        mode === "incoming"
+            ? ROUTES.ADMIN_REQUEST_TRANSFERS_INCOMING
+            : ROUTES.ADMIN_REQUEST_TRANSFERS;
 
     return (
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -27,21 +34,22 @@ export function RequestTransferDetailHeader({
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => router.push(ROUTES.ADMIN_REQUEST_TRANSFERS)}
+                    onClick={() => router.push(backRoute)}
                     className="flex items-center gap-1.5 text-[11px] font-bold text-slate-600 cursor-pointer"
                 >
                     <IconArrowLeft size={14} /> Kembali
                 </Button>
+
                 <div>
                     <h2 className="text-sm font-bold text-slate-900">
-                        {detail?.supplier_nama || "Detail Summary"}
+                        Summary Request: {detail?.request_to_nama || "Pusat"}
                     </h2>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                        {detail?.supplier_sales_nama
-                            ? `Katalog: ${detail.supplier_sales_nama}`
-                            : "Tanpa katalog"}
+                        Supplier: {detail?.supplier_nama || "Tanpa Supplier"}
+                        {detail?.supplier_sales_nama ? ` • Katalog: ${detail.supplier_sales_nama}` : ""}
                     </p>
                 </div>
+
             </div>
 
             {detail && (

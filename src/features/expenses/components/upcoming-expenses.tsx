@@ -1,26 +1,30 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useUpcomingExpenses } from "../api/expenses-api";
+import { hasPermission, hasRole } from "@/constants/roles";
 import {
-    IconHourglass,
     IconAlertTriangle,
+    IconBell,
+    IconCalendar,
     IconCheck,
     IconCoins,
-    IconMinus,
-    IconCalendar,
-    IconBell
+    IconHourglass,
+    IconMinus
 } from "@tabler/icons-react";
-import { useSession } from "next-auth/react";
-import { hasRole, hasPermission } from "@/constants/roles";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
+import { useSession } from "next-auth/react";
+import { useSyncExternalStore, useState } from "react";
+import { useUpcomingExpenses } from "../api/expenses-api";
+
+const emptySubscribe = () => () => {};
+const useMounted = () => useSyncExternalStore(emptySubscribe, () => true, () => false);
 
 interface UpcomingExpensesProps {
     onPayCategory: (categoryUid: string, categoryName: string) => void;
 }
 
 export function UpcomingExpenses({ onPayCategory }: UpcomingExpensesProps) {
+    const mounted = useMounted();
     const { data: upcoming = [], isLoading } = useUpcomingExpenses();
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
@@ -29,28 +33,11 @@ export function UpcomingExpenses({ onPayCategory }: UpcomingExpensesProps) {
         hasRole(userRoles, "admin") ||
         hasPermission(userRoles, userPermissions, "manage_expenses");
 
-    const [isMinimized, setIsMinimized] = useState(false);
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setMounted(true);
+    const [isMinimized, setIsMinimized] = useState<boolean>(() => {
+        if (typeof window === "undefined") return false;
         const saved = localStorage.getItem("upcoming-expenses-minimized");
-        if (saved !== null) {
-            setIsMinimized(JSON.parse(saved));
-        }
-    }, []);
-
-    // Auto-minimize if loaded and no bills left
-    useEffect(() => {
-        if (!isLoading && upcoming.length === 0) {
-            const saved = localStorage.getItem("upcoming-expenses-minimized");
-            if (saved === null) {
-                // eslint-disable-next-line react-hooks/set-state-in-effect
-                setIsMinimized(true);
-            }
-        }
-    }, [upcoming.length, isLoading]);
+        return saved !== null ? JSON.parse(saved) : false;
+    });
 
     const toggleMinimize = () => {
         const nextState = !isMinimized;

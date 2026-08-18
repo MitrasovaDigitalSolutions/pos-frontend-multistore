@@ -11,6 +11,9 @@ export type ParentType = "po" | "receiving" | "return";
 export interface SavedHeaderData {
     purchase_order_uid?: string | null;
     supplier_uid?: string | null;
+    supplier_nama?: string | null;
+    supplier_sales_uid?: string | null;
+    supplier_sales_nama?: string | null;
     nomor_faktur?: string | null;
     nilai_faktur?: number | null;
     tanggal_terima?: string | null;
@@ -178,7 +181,7 @@ export function clearPurchaseItemsStore(parentId: string, parentType: ParentType
     const storageKey = `purchase-items-${parentType}-${parentId}`;
 
     // Reset in-memory store state first (clears items + headerData)
-    // This prevents any lingering useWatch effects from re-persisting stale data
+    // This resets the state and notifies all subscribed React components
     const existing = storeRegistry.get(key);
     if (existing) {
         existing.getState().clearAll();
@@ -190,9 +193,6 @@ export function clearPurchaseItemsStore(parentId: string, parentType: ParentType
     } catch {
         // ignore
     }
-
-    // Remove from registry
-    storeRegistry.delete(key);
 }
 
 // ─── Selectors ──────────────────────────────────────────────────────────────

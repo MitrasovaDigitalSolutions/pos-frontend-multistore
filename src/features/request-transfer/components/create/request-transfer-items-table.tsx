@@ -46,7 +46,7 @@ export function RequestTransferItemsTable({
   }, [items, lastScannedUid]);
 
   return (
-    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs space-y-4">
+    <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-2xs space-y-4">
       {/* Header Banner */}
       <div className="flex items-center justify-between border-b border-slate-50 pb-2.5">
         <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
@@ -80,8 +80,8 @@ export function RequestTransferItemsTable({
 
       {/* Selected Items Table */}
       {items.length > 0 ? (
-        <div className="border border-slate-100 rounded-xl overflow-hidden shadow-2xs">
-          <table className="w-full text-xs text-left">
+        <div className="border border-slate-100 rounded-xl overflow-x-auto shadow-2xs">
+          <table className="w-full text-xs text-left min-w-[380px]">
             <thead className="bg-slate-50/80 border-b border-slate-100 font-bold text-slate-600">
               <tr>
                 <th className="px-3.5 py-2.5">Produk</th>

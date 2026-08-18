@@ -216,7 +216,8 @@ export const queryKeys = {
     // Request Transfer (permintaan stok antar cabang)
     requestTransfers: {
         all: ["request-transfers"] as const,
-        summary: (supplierUid: string, supplierSalesUid?: string | null) =>
-            [...queryKeys.requestTransfers.all, "summary", supplierUid, supplierSalesUid ?? "null"] as const,
+        incoming: (params?: unknown) => [...queryKeys.requestTransfers.all, "incoming", params] as const,
+        outgoing: (params?: unknown) => [...queryKeys.requestTransfers.all, "outgoing", params] as const,
+        summary: (summaryUid: string) => [...queryKeys.requestTransfers.all, "summary", summaryUid] as const,
     },
 } as const;
