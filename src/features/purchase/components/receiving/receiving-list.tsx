@@ -13,7 +13,6 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
     useDeleteReceiving,
-    useUpdateReceiving,
 } from "../../api/purchase-api";
 import { ReceivingDetailDialog } from "./receiving-detail-dialog";
 import { clearPurchaseItemsStore } from "@/stores/purchase-items-store";
@@ -26,7 +25,7 @@ import {
     type PaymentStatus,
 } from "@/constants/purchase";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { formatToReadableDateTime } from "@/lib/date-utils";
+import { formatDate, formatToTime } from "@/lib/date-utils";
 import { receivingColumns } from "./receiving-columns";
 
 interface ReceivingListProps {
@@ -65,7 +64,6 @@ export function ReceivingList({
     const router = useAppRouter();
     const { data: session } = useSession();
     const deleteReceiving = useDeleteReceiving();
-    const updateReceiving = useUpdateReceiving();
 
     const [selectedReceiving, setSelectedReceiving] = useState<Receiving | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -93,52 +91,6 @@ export function ReceivingList({
         hasRole(userRoles, "admin") ||
         hasPermission(userRoles, userPermissions, "manage_purchase");
     const canDeleteDraft = hasManagePurchase;
-
-    const handleFinalize = (receiving: Receiving) => {
-        setConfirmDialog({
-            open: true,
-            title: "Selesaikan Penerimaan",
-            description: "Apakah Anda yakin ingin menyelesaikan penerimaan ini? Stok produk akan langsung ditambahkan ke inventori dan tidak dapat diubah lagi.",
-            confirmText: "Ya, Selesaikan",
-            cancelText: "Batal",
-            variant: "warning",
-            onConfirm: () => {
-                const itemsInput = (receiving.items || []).map((item) => ({
-                    product_uid: item.product_uid,
-                    kuantitas: item.kuantitas,
-                    harga_beli: item.harga_beli || 0,
-                    update_harga_jual: false,
-                    harga_jual_baru: null,
-                    margin_baru: null,
-                }));
-
-                updateReceiving.mutate(
-                    {
-                        uid: receiving.uid,
-                        data: {
-                            supplier_uid: receiving.supplier_uid,
-                            nomor_faktur: receiving.nomor_faktur,
-                            nilai_faktur: receiving.nilai_faktur,
-                            status_pembayaran: receiving.status_pembayaran,
-                            status: RECEIVING_STATUS.COMPLETED,
-                            catatan: receiving.catatan,
-                            items: itemsInput,
-                        },
-                    },
-                    {
-                        onSuccess: () => {
-                            toast.success("Penerimaan barang berhasil diselesaikan.");
-                            clearPurchaseItemsStore(receiving.uid, "receiving");
-                            setConfirmDialog((prev) => ({ ...prev, open: false }));
-                        },
-                        onError: (err) => {
-                            toast.error(err.message || "Gagal menyelesaikan penerimaan.");
-                        },
-                    }
-                );
-            },
-        });
-    };
 
     const handleDelete = (uid: string) => {
         setConfirmDialog({
@@ -218,8 +170,6 @@ export function ReceivingList({
                 onView={handleDetailClick}
                 onEdit={handleEditClick}
                 hideEdit={(rec) => !(rec.status === RECEIVING_STATUS.DRAFT && hasManagePurchase)}
-                onCheck={handleFinalize}
-                hideCheck={(rec) => !(rec.status === RECEIVING_STATUS.DRAFT && hasManagePurchase)}
                 onDelete={(rec) => handleDelete(rec.uid)}
                 hideDelete={(rec) => !(rec.status === RECEIVING_STATUS.DRAFT && canDeleteDraft)}
                 renderCardItem={(row) => {
@@ -229,7 +179,9 @@ export function ReceivingList({
                     const paymentStatus = (rec.status_pembayaran || "unpaid") as PaymentStatus;
                     const paymentLabel = PAYMENT_STATUS_LABELS[paymentStatus] || paymentStatus;
                     const supplierName = rec.supplier_relationship ? rec.supplier_relationship.nama : rec.supplier || "-";
-                    const formattedDate = rec.created_at ? formatToReadableDateTime(rec.created_at) : "-";
+                    const rawDate = rec.tanggal_terima || rec.created_at;
+                    const formattedDate = rawDate ? formatDate(rawDate, "dd MMM yyyy") : "-";
+                    const formattedTime = rawDate ? `${formatToTime(rawDate)} WIB` : "";
                     const isFromPo = !!rec.purchase_order_uid;
 
                     return (
@@ -255,8 +207,11 @@ export function ReceivingList({
                                                 {isFromPo ? "PO" : "Langsung"}
                                             </span>
                                         </div>
-                                        <div className="text-[10px] text-slate-400 font-medium truncate">
-                                            {formattedDate}
+                                        <div className="text-[10px] text-slate-400 font-medium truncate flex flex-col">
+                                            <span>{formattedDate}</span>
+                                            {formattedTime && (
+                                                <span className="font-mono text-slate-400 text-[9px]">{formattedTime}</span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -333,7 +288,7 @@ export function ReceivingList({
                 cancelText={confirmDialog.cancelText}
                 variant={confirmDialog.variant}
                 onConfirm={confirmDialog.onConfirm}
-                isLoading={updateReceiving.isPending || deleteReceiving.isPending}
+                isLoading={deleteReceiving.isPending}
             />
         </section>
     );

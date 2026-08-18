@@ -79,7 +79,7 @@ export function ReceivingHeaderDialog({ open, onOpenChange, receiving }: Receivi
                 supplier_uid: receiving.supplier_uid ? String(receiving.supplier_uid) : null,
                 nomor_faktur: receiving.nomor_faktur || "",
                 nilai_faktur: receiving.nilai_faktur || 0,
-                tanggal_terima: receiving.created_at ? formatToISO(receiving.created_at) : "",
+                tanggal_terima: receiving.tanggal_terima ? formatToISO(receiving.tanggal_terima) : receiving.created_at ? formatToISO(receiving.created_at) : "",
                 status_pembayaran: receiving.status_pembayaran || PAYMENT_STATUS.PENDING,
                 catatan: receiving.catatan || "",
             });

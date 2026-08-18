@@ -6,20 +6,28 @@ import {
     type ReceivingStatus
 } from "@/constants/purchase";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { formatToReadableDateTime } from "@/lib/date-utils";
+import { formatDate, formatToTime } from "@/lib/date-utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Receiving } from "../../types";
 
 export const receivingColumns: ColumnDef<Receiving>[] = [
     {
-        accessorKey: "created_at",
-        header: "Tanggal",
-        cell: ({ row }) => (
-            <span className="text-slate-600 font-medium text-xs">
-                {formatToReadableDateTime(row.original.created_at)}
-            </span>
-        ),
-        size: 160,
+        accessorKey: "tanggal_terima",
+        header: "Tanggal Terima",
+        cell: ({ row }) => {
+            const rawDate = row.original.tanggal_terima || row.original.created_at;
+            return (
+                <div className="flex flex-col">
+                    <span className="text-slate-700 font-semibold text-xs">
+                        {formatDate(rawDate, "dd MMM yyyy")}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                        {formatToTime(rawDate)} WIB
+                    </span>
+                </div>
+            );
+        },
+        size: 130,
     },
     {
         accessorKey: "nomor_penerimaan",

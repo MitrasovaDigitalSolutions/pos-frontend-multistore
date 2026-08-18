@@ -25,7 +25,7 @@ import {
     useFinalizePurchaseOrder,
     usePurchaseOrderReceivings,
 } from "../../../api/purchase-api";
-import { formatDate } from "@/lib/date-utils";
+import { formatDate, formatToTime } from "@/lib/date-utils";
 import { useActivityLogs } from "@/features/stock/api/stock-api";
 import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
 import { hasPermission, hasRole } from "@/constants/roles";
@@ -306,7 +306,7 @@ export function PODetailPage({ poId }: PODetailPageProps) {
                             </span>
                         </h2>
                         <p className="text-xs text-slate-400">
-                            Supplier: <span className="font-semibold text-slate-600">{order.supplier?.nama || order.supplier_name || "-"}</span> | Tanggal PO: {formatDate(order.tanggal_po, "dd MMM yyyy")}
+                            Supplier: <span className="font-semibold text-slate-600">{order.supplier?.nama || order.supplier_name || "-"}</span> | Tanggal PO: {formatDate(order.tanggal_po || order.created_at, "dd MMM yyyy")}, {formatToTime(order.tanggal_po || order.created_at)} WIB
                         </p>
                     </div>
                 </div>

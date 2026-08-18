@@ -13,7 +13,7 @@ import {
     PAYMENT_STATUS_CLASSES,
     type PaymentStatus,
 } from "@/constants/purchase";
-import { formatToReadableDateTime } from "@/lib/date-utils";
+import { formatDate, formatToTime, formatToReadableDateTime } from "@/lib/date-utils";
 
 interface ReceivingDetailDialogProps {
     open: boolean;
@@ -110,10 +110,15 @@ export function ReceivingDetailDialog({
                             <p className="font-bold text-slate-900">{receiving.nomor_penerimaan}</p>
                         </div>
                         <div className="space-y-1">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase">Tanggal Masuk</span>
-                            <p className="font-semibold text-slate-700">
-                                {formatToReadableDateTime(receiving.created_at)}
-                            </p>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase">Tanggal Terima</span>
+                            <div>
+                                <p className="font-semibold text-slate-700">
+                                    {formatDate(receiving.tanggal_terima || receiving.created_at, "dd MMMM yyyy")}
+                                </p>
+                                <p className="text-[11px] text-slate-400 font-mono">
+                                    {formatToTime(receiving.tanggal_terima || receiving.created_at)} WIB
+                                </p>
+                            </div>
                         </div>
                         <div className="space-y-1">
                             <span className="text-[10px] font-bold text-slate-400 uppercase">Supplier</span>

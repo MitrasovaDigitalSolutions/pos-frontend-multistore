@@ -1,41 +1,9 @@
-export interface ReceiptItemInput {
-    kuantitas?: number | string;
-    harga_satuan: number;
-    harga_grosir?: number | null;
-    min_qty_grosir?: number | null;
-    nama_produk?: string;
-    diskon_item?: number;
-    [key: string]: unknown;
-}
-
-export interface ReceiptSale {
-    uid?: string | number;
-    nomor_transaksi?: string;
-    metode_pembayaran?: string;
-    card_amount?: number;
-    cash_received?: number;
-    kembalian?: number;
-    total?: number;
-    subtotal?: number;
-    diskon?: number;
-    pajak?: number;
-    total_bayar?: number;
-    created_at?: string;
-    items?: ReceiptItemInput[];
-    [key: string]: unknown;
-}
-
-export interface ReceiptSettings {
-    nama_toko?: string;
-    alamat?: string;
-    telepon?: string;
-    footer_text?: string;
-    [key: string]: unknown;
-}
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface ReceiptData {
-    sale: ReceiptSale;
-    setting: ReceiptSettings;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    sale: Record<string, any>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setting: Record<string, any>;
 }
 
 const money = (value: number | string) =>
@@ -60,13 +28,14 @@ const formatDate = (value?: string | Date | null): string => {
 };
 
 export function buildReceipt58(data: ReceiptData): string {
-    const { sale, setting: _app } = data;
+    const { sale, setting: app } = data;
 
     const isDebt = sale.metode_pembayaran === "debt";
-    const _isOffline = String(sale.uid).startsWith("OFFLINE-");
-    const _hasCardDp = isDebt && (sale.card_amount ?? 0) > 0;
+    const isOffline = String(sale.uid).startsWith("OFFLINE-");
+    const hasCardDp = isDebt && (sale.card_amount ?? 0) > 0;
 
-    const items = (sale.items || []).map((item: ReceiptItemInput) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const items = (sale.items || []).map((item: Record<string, any>) => {
         const qty = Number(item.kuantitas || 0);
         const normalPrice = item.harga_satuan;
         const hGrosir = item.harga_grosir;
@@ -263,7 +232,8 @@ ${
 
 <hr/>
 
-${items.map((item) => `
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+${items.map((item: Record<string, any>) => `
 <div class="item">
     <div class="product-name">
         ${item.nama_produk}

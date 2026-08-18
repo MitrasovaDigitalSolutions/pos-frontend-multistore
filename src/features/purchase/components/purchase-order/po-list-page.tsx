@@ -19,7 +19,7 @@ import { hasPermission, hasRole } from "@/constants/roles";
 import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { formatDate } from "@/lib/date-utils";
+import { formatDate, formatToTime } from "@/lib/date-utils";
 import { IconChevronRight, IconCircleX, IconPlus } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 import { useDeferredValue, useMemo, useState } from "react";
@@ -28,7 +28,6 @@ import { toast } from "sonner";
 import {
     useCancelPurchaseOrder,
     useDeletePurchaseOrder,
-    useFinalizePurchaseOrder,
     usePurchaseOrders,
 } from "../../api/purchase-api";
 import type { PurchaseOrder } from "../../types";
@@ -46,7 +45,6 @@ export function POListPage() {
     const { data: session } = useSession();
     const router = useAppRouter();
     const deleteOrder = useDeletePurchaseOrder();
-    const finalizeOrder = useFinalizePurchaseOrder();
     const cancelOrder = useCancelPurchaseOrder();
     const { data: suppliers = [] } = useAllSuppliers();
 
@@ -173,28 +171,6 @@ export function POListPage() {
     const hasManagePurchase =
         hasRole(userRoles, "admin") ||
         hasPermission(userRoles, userPermissions, "manage_purchase");
-
-    const handleFinalize = (order: PurchaseOrder) => {
-        setConfirmDialog({
-            open: true,
-            title: "Finalisasi Purchase Order",
-            description: `Apakah Anda yakin ingin memfinalisasi Purchase Order '${order.nomor_po}'? Status akan berubah menjadi ordered dan tidak dapat diedit secara langsung.`,
-            confirmText: "Ya, Finalisasi",
-            cancelText: "Batal",
-            variant: "success",
-            onConfirm: () => {
-                finalizeOrder.mutate(order.uid, {
-                    onSuccess: () => {
-                        toast.success("Purchase Order berhasil difinalisasi.");
-                        setConfirmDialog((prev) => ({ ...prev, open: false }));
-                    },
-                    onError: (err) => {
-                        toast.error(err.message || "Gagal memfinalisasi PO.");
-                    },
-                });
-            },
-        });
-    };
 
     const handleCancel = (order: PurchaseOrder) => {
         setConfirmDialog({
@@ -350,8 +326,6 @@ export function POListPage() {
                     onView={(order) => router.push(`/admin/purchase/order/${order.uid}`)}
                     onEdit={(order) => router.push(`/admin/purchase/order/${order.uid}/items`)}
                     hideEdit={(order) => !(order.status === PO_STATUS.DRAFT && hasManagePurchase)}
-                    onCheck={handleFinalize}
-                    hideCheck={(order) => !(order.status === PO_STATUS.DRAFT && hasManagePurchase)}
                     onDelete={(order) => handleDelete(order.uid)}
                     hideDelete={(order) => !(order.status === PO_STATUS.DRAFT && hasManagePurchase)}
                     extraActions={(order) => {
@@ -377,10 +351,11 @@ export function POListPage() {
                         const status = order.status as POStatus;
                         const statusLabel = PO_STATUS_LABELS[status] || status;
                         const supplierName = order.supplier ? order.supplier.nama : order.supplier_name || "-";
-                        const formattedDate = order.tanggal_po ? formatDate(order.tanggal_po, "dd MMM yyyy") : "-";
+                        const rawDate = order.tanggal_po || order.created_at;
+                        const formattedDate = rawDate ? formatDate(rawDate, "dd MMM yyyy") : "-";
+                        const formattedTime = rawDate ? `${formatToTime(rawDate)} WIB` : "";
 
                         const canEdit = order.status === PO_STATUS.DRAFT && hasManagePurchase;
-                        const canFinalize = order.status === PO_STATUS.DRAFT && hasManagePurchase;
 
                         return (
                             <div
@@ -398,8 +373,11 @@ export function POListPage() {
                                             <div className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate group-hover:text-emerald-600 transition-colors font-mono">
                                                 {order.nomor_po}
                                             </div>
-                                            <div className="text-[10px] text-slate-400 font-medium truncate">
-                                                {formattedDate}
+                                            <div className="text-[10px] text-slate-400 font-medium truncate flex flex-col">
+                                                <span>{formattedDate}</span>
+                                                {formattedTime && (
+                                                    <span className="font-mono text-slate-400 text-[9px]">{formattedTime}</span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -438,18 +416,6 @@ export function POListPage() {
                                                 Edit
                                             </button>
                                         )}
-                                        {canFinalize && (
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleFinalize(order);
-                                                }}
-                                                className="px-2 py-1 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 hover:bg-blue-600 hover:text-white font-bold text-[10px] transition-all cursor-pointer"
-                                            >
-                                                Finalisasi
-                                            </button>
-                                        )}
                                     </div>
 
                                     <button
@@ -479,7 +445,7 @@ export function POListPage() {
                     cancelText={confirmDialog.cancelText}
                     variant={confirmDialog.variant}
                     onConfirm={confirmDialog.onConfirm}
-                    isLoading={deleteOrder.isPending || finalizeOrder.isPending || cancelOrder.isPending}
+                    isLoading={deleteOrder.isPending || cancelOrder.isPending}
                 />
             </section>
         </div>
