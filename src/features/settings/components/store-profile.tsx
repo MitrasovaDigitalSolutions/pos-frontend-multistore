@@ -3,6 +3,9 @@
 import { useCashAccounts } from "@/features/cash/api/cash-api";
 import { settingsApi } from "@/features/settings/api/settings-api";
 import { useSettingsStore } from "@/stores/settings-store";
+import { useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import { queryKeys } from "@/lib/query-keys";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getImageUrl, cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
@@ -26,6 +29,8 @@ import { FloatingSaveBar } from "./floating-save-bar";
 import { StoreSettingsInput, storeSettingsSchema } from "../schemas/settings-schema";
 
 export function StoreProfile() {
+    const queryClient = useQueryClient();
+    const { update: updateSession } = useSession();
     const { settings, fetchSettings, isLoading: isSettingsLoading } = useSettingsStore();
     const { data: cashAccountsData, isLoading: isCashAccountsLoading } = useCashAccounts();
     const cashAccounts = cashAccountsData || [];
@@ -216,6 +221,10 @@ export function StoreProfile() {
             if (updateTasks.length > 0) {
                 await Promise.all(updateTasks);
                 await fetchSettings();
+                await queryClient.invalidateQueries({ queryKey: queryKeys.stores.all });
+                if (updateSession) {
+                    await updateSession();
+                }
                 toast.success("Pengaturan toko berhasil disimpan.");
             } else {
                 toast.info("Tidak ada perubahan pengaturan untuk disimpan.");

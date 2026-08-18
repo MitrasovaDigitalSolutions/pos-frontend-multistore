@@ -7,6 +7,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { IconBuildingStore } from "@tabler/icons-react";
 import { useActiveStoreStore } from "@/stores/active-store-store";
 import { useSettingsStore } from "@/stores/settings-store";
+import { useStores } from "@/features/stores/api/stores-api";
 import { FormSelect } from "@/components/forms/form-select";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/query-keys";
@@ -18,7 +19,32 @@ export function StoreSwitcher() {
     const { activeStoreUid, setActiveStore } = useActiveStoreStore();
     const [mounted, setMounted] = useState(false);
 
-    const stores = useMemo(() => session?.user?.stores ?? [], [session?.user?.stores]);
+    const { data: storesRes } = useStores({ per_page: 1000 });
+    const sessionStores = useMemo(() => session?.user?.stores ?? [], [session?.user?.stores]);
+    const apiStores = storesRes?.data;
+    const settingsAppName = useSettingsStore((state) => state.settings?.app_name);
+
+    // Merge session stores with live API data & current store settings app_name
+    const stores = useMemo(() => {
+        let list = sessionStores;
+        if (apiStores && apiStores.length > 0) {
+            if (sessionStores.length > 0) {
+                list = sessionStores.map((sessStore) => {
+                    const foundInApi = apiStores.find((apiS) => apiS.uid === sessStore.uid);
+                    return foundInApi || sessStore;
+                });
+            } else {
+                list = apiStores;
+            }
+        }
+
+        return list.map((s) => {
+            if (s.uid === activeStoreUid && settingsAppName && settingsAppName.trim() !== "") {
+                return { ...s, nama: settingsAppName };
+            }
+            return s;
+        });
+    }, [apiStores, sessionStores, activeStoreUid, settingsAppName]);
 
     const activeStore = useMemo(
         () => stores.find((s) => s.uid === activeStoreUid),
