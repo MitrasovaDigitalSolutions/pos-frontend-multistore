@@ -12,7 +12,7 @@ import { FormSelect } from "@/components/forms/form-select";
 import { Input } from "@/components/ui/input";
 import { IconCash, IconLoader2, IconReceipt } from "@tabler/icons-react";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { todayStr } from "@/lib/date-utils";
+import { todayStr, toLocalISOString } from "@/lib/date-utils";
 import { getErrorMessage } from "@/shared/errors/api-error";
 import { useCashAccounts, useBulkCreatePayment } from "@/features/purchase/api/purchase-api";
 import { bulkPaymentSchema, type BulkPaymentInput } from "@/features/purchase/schemas/payment-schema";
@@ -90,7 +90,12 @@ export function BulkPayDebtDialog({
             return;
         }
 
-        bulkPaymentMutation.mutate(data, {
+        const payload = {
+            ...data,
+            tanggal_bayar: toLocalISOString(data.tanggal_bayar),
+        };
+
+        bulkPaymentMutation.mutate(payload, {
             onSuccess: (res) => {
                 toast.success(res?.message || "Pelunasan hutang sekaligus berhasil disimpan.");
                 onOpenChange(false);

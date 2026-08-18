@@ -52,7 +52,7 @@ export function RequestTransferSummaryTable({
         () => [
             {
                 accessorKey: "request_to_nama",
-                header: "Toko Sumber",
+                header: "Tujuan Request",
                 cell: ({ row }) => (
                     <span className="font-bold text-slate-900 text-xs">
                         {row.original.request_to_nama || "Pusat"}

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import { useAppRouter } from "@/hooks/use-app-router";
 import { clearPurchaseItemsStore } from "@/stores/purchase-items-store";
-import { formatUTC } from "@/lib/date-utils";
+import { toLocalISOString } from "@/lib/date-utils";
 import {
     useCreatePurchaseOrderHeader,
     useUpdatePurchaseOrder,
@@ -38,6 +38,9 @@ export function usePoFinalizer({
 }: UsePoFinalizerProps) {
     const router = useAppRouter();
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [isValidating, setIsValidating] = useState(false);
+    const [isFinalizing, setIsFinalizing] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     const createHeader = useCreatePurchaseOrderHeader();
     const updateHeader = useUpdatePurchaseOrder();
@@ -45,7 +48,25 @@ export function usePoFinalizer({
     const bulkCreatePO = useBulkCreatePurchaseOrder();
     const finalizeOrder = useFinalizePurchaseOrder();
 
+    const isAnyMutationPending =
+        createHeader.isPending ||
+        updateHeader.isPending ||
+        bulkReplace.isPending ||
+        bulkCreatePO.isPending ||
+        finalizeOrder.isPending;
+
+    const isConfirmLoading =
+        isFinalizing ||
+        bulkCreatePO.isPending ||
+        updateHeader.isPending ||
+        bulkReplace.isPending ||
+        finalizeOrder.isPending;
+
+    const isSubmitting = isValidating || isFinalizing || isAnyMutationPending;
+
     const handleSaveFlow = async (data: PurchaseOrderHeaderInput) => {
+        if (isSaving || isFinalizing || isValidating) return;
+
         if (items.length === 0) {
             toast.error("Harap tambahkan minimal 1 barang sebelum menyimpan PO.");
             return;
@@ -54,10 +75,11 @@ export function usePoFinalizer({
         const payloadHeader = {
             ...data,
             supplier_uid: data.supplier_uid,
-            tanggal_po: formatUTC(data.tanggal_po),
+            tanggal_po: toLocalISOString(data.tanggal_po),
             catatan: data.catatan || null,
         };
 
+        setIsSaving(true);
         try {
             if (isCurrentNew) {
                 // 1. Create Purchase Order header draft
@@ -108,14 +130,19 @@ export function usePoFinalizer({
         } catch (err: unknown) {
             const errorObj = err as { message?: string };
             toast.error(errorObj.message || "Gagal menyimpan Purchase Order.");
+        } finally {
+            setIsSaving(false);
         }
     };
 
     const handleFinalizeConfirm = async () => {
+        if (isSaving) return;
+
+        setIsFinalizing(true);
         const headerData = headerForm.getValues();
         const payloadHeader = {
             supplier_uid: headerData.supplier_uid,
-            tanggal_po: formatUTC(headerData.tanggal_po),
+            tanggal_po: toLocalISOString(headerData.tanggal_po),
             catatan: headerData.catatan || null,
         };
 
@@ -134,6 +161,7 @@ export function usePoFinalizer({
                 await bulkCreatePO.mutateAsync(payload);
 
                 toast.success("Purchase Order berhasil diproses & dikirim!");
+                setIsConfirmOpen(false);
                 clearAll();
                 clearPurchaseItemsStore("new", "po");
                 router.push("/admin/purchase/order");
@@ -161,6 +189,7 @@ export function usePoFinalizer({
                 await finalizeOrder.mutateAsync(currentId);
 
                 toast.success("Purchase Order berhasil diproses & dikirim!");
+                setIsConfirmOpen(false);
                 clearAll();
                 clearPurchaseItemsStore(currentId, "po");
                 router.push("/admin/purchase/order");
@@ -168,43 +197,61 @@ export function usePoFinalizer({
         } catch (err: unknown) {
             const errorObj = err as { message?: string };
             toast.error(errorObj.message || "Gagal memproses Purchase Order.");
-        } finally {
+            setIsFinalizing(false);
             setIsConfirmOpen(false);
         }
     };
 
     const handleSaveClick = () => {
+        if (isSaving || isFinalizing || isValidating) return;
         headerForm.handleSubmit(handleSaveFlow, () => {
             toast.error("Harap isi semua kolom wajib dengan benar.");
         })();
     };
 
     const onProcessClick = async () => {
+        if (isValidating || isFinalizing || isSaving) return;
+
         if (items.length === 0) {
             toast.error("Harap tambahkan minimal 1 barang sebelum memproses PO.");
             return;
         }
 
-        const isHeaderValid = await headerForm.trigger();
-        if (!isHeaderValid) {
-            toast.error("Harap isi semua kolom wajib dengan benar.");
-            return;
-        }
+        setIsValidating(true);
+        try {
+            const isHeaderValid = await headerForm.trigger();
+            if (!isHeaderValid) {
+                toast.error("Harap isi semua kolom wajib dengan benar.");
+                setIsValidating(false);
+                return;
+            }
 
-        setIsConfirmOpen(true);
+            setIsValidating(false);
+            setIsConfirmOpen(true);
+        } catch (err: unknown) {
+            const errorObj = err as { message?: string };
+            toast.error(errorObj.message || "Gagal memvalidasi Purchase Order.");
+            setIsValidating(false);
+        }
     };
 
-    const isSubmitting =
-        createHeader.isPending ||
-        updateHeader.isPending ||
-        bulkReplace.isPending ||
-        bulkCreatePO.isPending ||
-        finalizeOrder.isPending;
+    const handleConfirmClose = (open: boolean) => {
+        setIsConfirmOpen(open);
+        if (!open && !isConfirmLoading) {
+            setIsFinalizing(false);
+            setIsValidating(false);
+        }
+    };
 
     return {
         isSubmitting,
+        isValidating,
+        isFinalizing,
+        isConfirmLoading,
+        isSaving,
         isConfirmOpen,
         setIsConfirmOpen,
+        handleConfirmClose,
         handleSaveClick,
         onProcessClick,
         handleFinalizeConfirm,

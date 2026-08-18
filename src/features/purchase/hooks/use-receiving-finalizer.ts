@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import { PAYMENT_STATUS } from "@/constants/purchase";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { formatUTC, todayStr } from "@/lib/date-utils";
+import { toLocalISOString, todayStr } from "@/lib/date-utils";
 import { getErrorMessage } from "@/shared/errors/api-error";
 import { clearPurchaseItemsStore } from "@/stores/purchase-items-store";
 
@@ -90,7 +90,7 @@ export function useReceivingFinalizer({
             ...data,
             purchase_order_uid: data.purchase_order_uid || null,
             supplier_uid: data.supplier_uid || null,
-            tanggal_terima: formatUTC(data.tanggal_terima),
+            tanggal_terima: toLocalISOString(data.tanggal_terima),
         };
 
         if (isCurrentNew) {
@@ -114,7 +114,7 @@ export function useReceivingFinalizer({
                             supplier_uid: res.data.supplier_uid || "",
                             nomor_faktur: res.data.nomor_faktur || null,
                             nilai_faktur: res.data.nilai_faktur ? Number(res.data.nilai_faktur) : 0,
-                            tanggal_terima: formatUTC(res.data.tanggal_terima || todayStr()),
+                            tanggal_terima: toLocalISOString(res.data.tanggal_terima || todayStr()),
                             status_pembayaran: res.data.status_pembayaran || PAYMENT_STATUS.PENDING,
                             catatan: res.data.catatan || null,
                             items: itemsPayload,
@@ -144,7 +144,7 @@ export function useReceivingFinalizer({
                 supplier_uid: data.supplier_uid,
                 nomor_faktur: data.nomor_faktur || null,
                 nilai_faktur: Number(data.nilai_faktur),
-                tanggal_terima: formatUTC(data.tanggal_terima),
+                tanggal_terima: toLocalISOString(data.tanggal_terima),
                 status_pembayaran: data.status_pembayaran,
                 catatan: data.catatan,
                 status: currentReceiving?.status || "draft",
@@ -274,7 +274,7 @@ export function useReceivingFinalizer({
                     supplier_uid: headerData.supplier_uid || "",
                     nomor_faktur: formData.nomor_faktur || null,
                     nilai_faktur: Number(formData.nilai_faktur),
-                    tanggal_terima: formatUTC(headerData.tanggal_terima || todayStr()),
+                    tanggal_terima: toLocalISOString(headerData.tanggal_terima || todayStr()),
                     status_pembayaran: currentReceiving?.status_pembayaran || PAYMENT_STATUS.PENDING,
                     metode_transaksi: formData.metode_transaksi || headerData.metode_transaksi || "credit",
                     cash_account_uid: formData.cash_account_uid || headerData.cash_account_uid || null,
@@ -305,7 +305,7 @@ export function useReceivingFinalizer({
                 supplier_uid: currentReceiving?.supplier_uid || "",
                 nomor_faktur: formData.nomor_faktur,
                 nilai_faktur: Number(formData.nilai_faktur),
-                tanggal_terima: formatUTC(currentReceiving?.tanggal_terima || currentReceiving?.created_at || todayStr()),
+                tanggal_terima: toLocalISOString(currentReceiving?.tanggal_terima || currentReceiving?.created_at || todayStr()),
                 status_pembayaran: currentReceiving?.status_pembayaran || PAYMENT_STATUS.PENDING,
                 metode_transaksi: formData.metode_transaksi || currentReceiving?.metode_transaksi || "credit",
                 cash_account_uid: formData.cash_account_uid || currentReceiving?.cash_account_uid || null,

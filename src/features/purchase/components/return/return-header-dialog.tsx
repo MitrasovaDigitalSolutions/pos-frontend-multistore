@@ -17,7 +17,7 @@ import type { Supplier } from "@/features/master/suppliers/types";
 import { useSupplierCreateModal } from "@/features/master/suppliers/hooks/use-supplier-create-modal";
 import { purchaseReturnHeaderSchema, type PurchaseReturnHeaderInput } from "../../schemas/return-schema";
 import type { PurchaseReturn, Receiving } from "../../types";
-import { formatToISO } from "@/lib/date-utils";
+import { formatToISO, toLocalISOString } from "@/lib/date-utils";
 
 interface ReturnHeaderDialogProps {
     open: boolean;
@@ -95,7 +95,7 @@ export function ReturnHeaderDialog({ open, onOpenChange, returnObj }: ReturnHead
         const payload = {
             receiving_uid: data.receiving_uid,
             supplier_uid: data.supplier_uid,
-            tanggal_retur: data.tanggal_retur,
+            tanggal_retur: toLocalISOString(data.tanggal_retur),
             catatan: data.catatan,
             status: returnObj.status, // Preserve draft status
             items: itemsPayload,

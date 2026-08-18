@@ -6,7 +6,9 @@ import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
 import { useStores } from "@/features/stores/api/stores-api";
 import { useAllSupplierSales } from "@/features/supplier-sales/api/supplier-sales-api";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { useState } from "react";
+import { useActiveStoreStore } from "@/stores/active-store-store";
+import { useSearchParams } from "next/navigation";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { useCreateRequestTransfer } from "../api/request-transfer-api";
 import type { RequestLineItem } from "../schemas/request-transfer-schema";
@@ -17,20 +19,77 @@ import { RequestTransferSummaryCard } from "./create/request-transfer-summary-ca
 
 export function RequestTransferCreatePage() {
     const router = useAppRouter();
+    const searchParams = useSearchParams();
+
+    const paramRequestTo = searchParams.get("request_to") || searchParams.get("toko_tujuan") || "";
+    const paramSupplier = searchParams.get("supplier_uid") || searchParams.get("supplier") || "";
+    const paramSales = searchParams.get("supplier_sales_uid") || searchParams.get("sales_uid") || searchParams.get("katalog_uid") || "";
 
     const createRequest = useCreateRequestTransfer();
+    const activeStoreUid = useActiveStoreStore((state) => state.activeStoreUid);
 
     const { data: storesRes, isLoading: isLoadingStores } = useStores({ per_page: 1000 });
     const { data: suppliers, isLoading: isLoadingSuppliers } = useAllSuppliers();
     const { data: supplierSales, isLoading: isLoadingSales } = useAllSupplierSales();
 
-    const stores = storesRes?.data || [];
+    // Filter out current active store so user only requests from other stores
+    const stores = useMemo(() => {
+        return (storesRes?.data || []).filter((s) => !activeStoreUid || s.uid !== activeStoreUid);
+    }, [storesRes?.data, activeStoreUid]);
 
     const [requestTo, setRequestTo] = useState("");
     const [supplierUid, setSupplierUid] = useState("");
     const [supplierSalesUid, setSupplierSalesUid] = useState<string | null>(null);
     const [catatan, setCatatan] = useState("");
     const [items, setItems] = useState<RequestLineItem[]>([]);
+
+    const isInitializedRef = useRef(false);
+
+    // Auto-prefill form and catalog items from query parameters
+    useEffect(() => {
+        if (isInitializedRef.current) return;
+
+        let initialized = false;
+
+        if (paramRequestTo) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setRequestTo(paramRequestTo);
+            initialized = true;
+        }
+
+        if (paramSupplier) {
+            setSupplierUid(paramSupplier);
+            initialized = true;
+        }
+
+        if (paramSales && supplierSales && supplierSales.length > 0) {
+            const sale = supplierSales.find((s) => s.uid === paramSales);
+            if (sale) {
+                setSupplierSalesUid(paramSales);
+                if (sale.supplier_uid && !paramSupplier) {
+                    setSupplierUid(sale.supplier_uid);
+                }
+                const catalogLines: RequestLineItem[] = (sale.items || []).map((i) => ({
+                    product_uid: i.product_uid,
+                    nama: i.product?.nama || i.product_uid,
+                    barcode: i.product?.barcode || null,
+                    kuantitas: 0,
+                }));
+                setItems((prev) => {
+                    const merged = [...prev];
+                    for (const line of catalogLines) {
+                        if (!merged.some((m) => m.product_uid === line.product_uid)) {
+                            merged.push(line);
+                        }
+                    }
+                    return merged;
+                });
+                isInitializedRef.current = true;
+            }
+        } else if (!paramSales && initialized) {
+            isInitializedRef.current = true;
+        }
+    }, [paramRequestTo, paramSupplier, paramSales, supplierSales]);
 
     const selectedStore = stores.find((s) => s.uid === requestTo);
     const selectedSupplier = suppliers?.find((s) => s.uid === supplierUid);
@@ -39,7 +98,12 @@ export function RequestTransferCreatePage() {
 
     const handleSupplierChange = (uid: string) => {
         setSupplierUid(uid);
-        setSupplierSalesUid(null);
+        if (uid && supplierSalesUid) {
+            const currentSale = supplierSales?.find((s) => s.uid === supplierSalesUid);
+            if (currentSale && currentSale.supplier_uid !== uid) {
+                setSupplierSalesUid(null);
+            }
+        }
     };
 
     const handleCatalogChange = (uid: string) => {
@@ -47,6 +111,9 @@ export function RequestTransferCreatePage() {
         if (uid) {
             const sale = supplierSales?.find((s) => s.uid === uid);
             if (sale) {
+                if (sale.supplier_uid) {
+                    setSupplierUid(sale.supplier_uid);
+                }
                 const catalogLines: RequestLineItem[] = (sale.items || []).map((i) => ({
                     product_uid: i.product_uid,
                     nama: i.product?.nama || i.product_uid,
@@ -103,7 +170,7 @@ export function RequestTransferCreatePage() {
 
     const handleSubmit = () => {
         if (!requestTo) {
-            toast.error("Toko Sumber (Tujuan) wajib dipilih.");
+            toast.error("Toko tujuan request wajib dipilih.");
             return;
         }
         if (!hasValidItems) {

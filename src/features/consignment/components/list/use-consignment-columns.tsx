@@ -16,7 +16,7 @@ export function useConsignmentColumns() {
         size: 180,
         meta: { headerClassName: "text-left", cellClassName: "text-left font-bold text-slate-900" },
         cell: ({ row }) => (
-          <span className="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400">
+          <span className="font-mono text-xs font-bold text-slate-900 dark:text-slate-100">
             {row.original.nomor_konsinyasi}
           </span>
         ),

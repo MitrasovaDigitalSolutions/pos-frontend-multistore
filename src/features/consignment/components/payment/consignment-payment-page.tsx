@@ -74,7 +74,7 @@ export function ConsignmentPaymentPage() {
       header: "Nomor Konsinyasi",
       size: 180,
       cell: ({ row }) => (
-        <span className="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400">
+        <span className="font-mono text-xs font-bold text-slate-900 dark:text-slate-100">
           {row.original.nomor_konsinyasi}
         </span>
       ),

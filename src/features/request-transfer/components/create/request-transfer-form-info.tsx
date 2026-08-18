@@ -45,6 +45,12 @@ export function RequestTransferFormInfo({
     (s) => !supplierUid || s.supplier_uid === supplierUid
   );
 
+  const salesOptions = filteredSales.map((s) => ({
+    value: s.uid,
+    label: s.nama,
+    description: s.supplier?.nama ? `Supplier: ${s.supplier.nama}` : undefined,
+  }));
+
   return (
     <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-2xs space-y-4">
       {/* Card Header */}
@@ -53,7 +59,7 @@ export function RequestTransferFormInfo({
           <div className="p-1 rounded-md bg-emerald-50 text-emerald-600">
             <IconBuildingStore size={15} />
           </div>
-          <span>Toko Sumber & Detail Request</span>
+          <span>Tujuan Request & Informasi</span>
         </h3>
         <span className="text-[11px] text-slate-400 font-medium">Langkah 1 dari 2</span>
       </div>
@@ -64,7 +70,7 @@ export function RequestTransferFormInfo({
         <div className="space-y-1">
           <div className="flex items-center justify-between">
             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-              Toko Sumber (Tujuan) <span className="text-rose-500">*</span>
+              Request Ke <span className="text-rose-500">*</span>
             </label>
           </div>
 
@@ -75,7 +81,7 @@ export function RequestTransferFormInfo({
               value: s.uid,
               label: s.is_central ? `${s.nama} (Pusat)` : s.nama,
             }))}
-            placeholder="Pilih toko sumber..."
+            placeholder="Pilih toko tujuan request..."
             searchPlaceholder="Cari toko..."
             isLoading={isLoadingStores}
             disabled={disabled}
@@ -112,12 +118,12 @@ export function RequestTransferFormInfo({
           <CommandSelect
             value={supplierSalesUid ?? ""}
             onChange={onCatalogChange}
-            options={filteredSales.map((s) => ({ value: s.uid, label: s.nama }))}
-            placeholder="Pilih katalog (auto-isi)..."
+            options={salesOptions}
+            placeholder="Pilih katalog sales..."
             searchPlaceholder="Cari katalog sales..."
             isLoading={isLoadingSales}
-            disabled={disabled || !supplierUid}
-            emptyMessage={!supplierUid ? "Pilih supplier terlebih dahulu" : "Tidak ada katalog sales"}
+            disabled={disabled}
+            emptyMessage="Tidak ada katalog sales"
           />
         </div>
       </div>

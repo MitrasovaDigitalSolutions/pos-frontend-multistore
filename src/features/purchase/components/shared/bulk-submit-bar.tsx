@@ -12,11 +12,14 @@ interface BulkSubmitBarProps {
     onSecondarySubmit?: () => void;
     onReset: () => void;
     isSubmitting?: boolean;
+    isSecondarySubmitting?: boolean;
     disabled?: boolean;
     submitLabel?: string;
     submitIcon?: React.ReactNode;
+    submitLoadingText?: string;
     secondarySubmitLabel?: string;
     secondarySubmitIcon?: React.ReactNode;
+    secondarySubmitLoadingText?: string;
     className?: string;
 }
 
@@ -28,14 +31,18 @@ export function BulkSubmitBar({
     onSecondarySubmit,
     onReset,
     isSubmitting = false,
+    isSecondarySubmitting = false,
     disabled = false,
     submitLabel,
     submitIcon,
+    submitLoadingText,
     secondarySubmitLabel,
     secondarySubmitIcon,
+    secondarySubmitLoadingText,
     className,
 }: BulkSubmitBarProps) {
     const hasItems = itemCount > 0;
+    const isAnySubmitting = isSubmitting || isSecondarySubmitting;
 
     return (
         <div className={cn("sticky bottom-2 sm:bottom-0 z-30 mt-4", className)}>
@@ -85,7 +92,7 @@ export function BulkSubmitBar({
                             type="button"
                             variant="outline"
                             onClick={onReset}
-                            disabled={isSubmitting || disabled}
+                            disabled={isAnySubmitting || disabled}
                             title="Reset Form"
                             leftIcon={<RefreshCcw size={15} className="shrink-0" />}
                             className={cn(
@@ -102,8 +109,10 @@ export function BulkSubmitBar({
                                 type="button"
                                 variant="outline"
                                 onClick={onSecondarySubmit}
-                                disabled={!hasItems || isSubmitting || disabled}
-                                leftIcon={secondarySubmitIcon || <IconUpload size={15} />}
+                                disabled={!hasItems || isAnySubmitting || disabled}
+                                isLoading={isSecondarySubmitting}
+                                loadingText={secondarySubmitLoadingText || "Menyimpan..."}
+                                leftIcon={!isSecondarySubmitting ? (secondarySubmitIcon || <IconUpload size={15} />) : null}
                                 className="col-span-5 sm:col-auto flex-1 flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-bold border border-emerald-600 text-emerald-700 dark:text-emerald-400 bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:shadow-md disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none transition-all cursor-pointer truncate h-auto"
                             >
                                 <span className="truncate">{secondarySubmitLabel || "Simpan"}</span>
@@ -114,9 +123,9 @@ export function BulkSubmitBar({
                         <AppButton
                             type="button"
                             onClick={onSubmit}
-                            disabled={!hasItems || disabled}
+                            disabled={!hasItems || isAnySubmitting || disabled}
                             isLoading={isSubmitting}
-                            loadingText="Mengirim..."
+                            loadingText={submitLoadingText || "Memproses..."}
                             leftIcon={!isSubmitting ? (submitIcon || <IconUpload size={15} />) : null}
                             className={cn(
                                 "flex-1 flex items-center justify-center gap-1.5 px-3 sm:px-6 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 hover:shadow-lg hover:shadow-emerald-600/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none transition-all cursor-pointer truncate h-auto",

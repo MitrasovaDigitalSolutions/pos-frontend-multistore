@@ -208,7 +208,7 @@ export function RequestTransferIncomingDetailPage() {
                             <CardContent className="space-y-3 text-xs">
                                 <div>
                                     <span className="text-[10px] font-bold text-slate-400 uppercase block">
-                                        Toko Sumber (Tujuan Request)
+                                        Toko Tujuan Request
                                     </span>
                                     <span className="font-bold text-slate-900 text-sm block mt-0.5">
                                         {detail.request_to_nama || "Toko Pusat"}

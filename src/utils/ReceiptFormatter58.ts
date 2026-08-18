@@ -1,4 +1,20 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface ReceiptRawItem {
+    nama_produk?: string;
+    kuantitas?: number;
+    harga_satuan?: number;
+    harga_grosir?: number | null;
+    min_qty_grosir?: number | null;
+    diskon_item?: number | null;
+    [key: string]: unknown;
+}
+
+export interface ReceiptProcessedItem extends ReceiptRawItem {
+    qty: number;
+    isWholesaleActive: boolean;
+    wholesaleQty: number;
+    totalSavings: number;
+}
+
 export interface ReceiptData {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     sale: Record<string, any>;
@@ -34,12 +50,11 @@ export function buildReceipt58(data: ReceiptData): string {
     const isOffline = String(sale.uid).startsWith("OFFLINE-");
     const hasCardDp = isDebt && (sale.card_amount ?? 0) > 0;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const items = (sale.items || []).map((item: Record<string, any>) => {
+    const items: ReceiptProcessedItem[] = ((sale.items as ReceiptRawItem[]) || []).map((item: ReceiptRawItem) => {
         const qty = Number(item.kuantitas || 0);
-        const normalPrice = item.harga_satuan;
-        const hGrosir = item.harga_grosir;
-        const minQty = item.min_qty_grosir;
+        const normalPrice = Number(item.harga_satuan || 0);
+        const hGrosir = item.harga_grosir ? Number(item.harga_grosir) : null;
+        const minQty = item.min_qty_grosir ? Number(item.min_qty_grosir) : null;
 
         const isWholesaleActive =
             hGrosir !== null &&
@@ -50,7 +65,7 @@ export function buildReceipt58(data: ReceiptData): string {
             minQty > 0 &&
             qty >= minQty;
 
-        const wholesaleQty = isWholesaleActive ? Math.floor(qty / minQty!) * minQty : 0;
+        const wholesaleQty = isWholesaleActive && minQty ? Math.floor(qty / minQty) * minQty : 0;
         const normalQty = qty - wholesaleQty;
         const totalSavings = isWholesaleActive
             ? Math.max(0, qty * normalPrice - (wholesaleQty * (hGrosir ?? 0) + normalQty * normalPrice))
@@ -231,17 +246,15 @@ ${
 }
 
 <hr/>
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-${items.map((item: Record<string, any>) => `
+${items.map((item: ReceiptProcessedItem) => `
 <div class="item">
     <div class="product-name">
         ${item.nama_produk}
     </div>
 
     <div class="item-detail">
-        <span style="padding-left:20px"><b>${item.qty} x </b> ${money(item.harga_satuan)}</span>
-        <span>${money(item.qty * item.harga_satuan)}</span>
+        <span style="padding-left:20px"><b>${item.qty} x </b> ${money(item.harga_satuan ?? 0)}</span>
+        <span>${money(item.qty * (item.harga_satuan ?? 0))}</span>
     </div>
 
     ${

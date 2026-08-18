@@ -161,8 +161,13 @@ export function usePoFlow({ poId, order, onSaveSuccess }: UsePoFlowProps) {
 
         // Submission
         isSubmitting: finalizerState.isSubmitting,
+        isValidating: finalizerState.isValidating,
+        isFinalizing: finalizerState.isFinalizing,
+        isConfirmLoading: finalizerState.isConfirmLoading,
+        isSaving: finalizerState.isSaving,
         isConfirmOpen: finalizerState.isConfirmOpen,
         setIsConfirmOpen: finalizerState.setIsConfirmOpen,
+        handleConfirmClose: finalizerState.handleConfirmClose,
         onProcessClick: finalizerState.onProcessClick,
         handleFinalizeConfirm: finalizerState.handleFinalizeConfirm,
 
