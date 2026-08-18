@@ -8,6 +8,8 @@ interface ScrollableProps extends React.ComponentPropsWithoutRef<typeof ScrollAr
   orientation?: "vertical" | "horizontal" | "both"
   scrollbarClassName?: string
   thumbClassName?: string
+  viewportRef?: React.Ref<HTMLDivElement>
+  onScroll?: React.UIEventHandler<HTMLDivElement>
 }
 
 const scrollbarClass = (scrollbarClassName?: string) =>
@@ -25,7 +27,7 @@ const thumbClass = (thumbClassName?: string) =>
   )
 
 export const Scrollable = React.forwardRef<HTMLDivElement, ScrollableProps>(
-  ({ className, children, orientation = "vertical", scrollbarClassName, thumbClassName, ...props }, ref) => {
+  ({ className, children, orientation = "vertical", scrollbarClassName, thumbClassName, viewportRef, onScroll, ...props }, ref) => {
     const renderBoth = orientation === "both"
     return (
       <ScrollAreaPrimitive.Root
@@ -35,6 +37,8 @@ export const Scrollable = React.forwardRef<HTMLDivElement, ScrollableProps>(
         {...props}
       >
         <ScrollAreaPrimitive.Viewport
+          ref={viewportRef}
+          onScroll={onScroll}
           data-slot="scrollable-viewport"
           className="flex-1 min-h-0 w-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1"
         >
