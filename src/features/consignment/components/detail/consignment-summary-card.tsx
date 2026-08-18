@@ -41,7 +41,7 @@ export function ConsignmentSummaryCard({ item }: ConsignmentSummaryCardProps) {
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
             No. Konsinyasi
           </span>
-          <p className="font-mono font-bold text-emerald-600 truncate">{item.nomor_konsinyasi}</p>
+          <p className="font-mono font-bold text-slate-900 dark:text-slate-100 truncate">{item.nomor_konsinyasi}</p>
         </div>
 
         <div className="space-y-1">
