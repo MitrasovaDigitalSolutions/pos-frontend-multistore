@@ -117,10 +117,7 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
                 if (targetStore) {
                     const toastId = toast.loading(`Sedang berpindah ke ${targetStore.nama}...`);
                     setActiveStore(data.activeStore);
-                    await Promise.all([
-                        queryClient.invalidateQueries(),
-                        fetchSettings(),
-                    ]);
+                    await queryClient.invalidateQueries();
                     toast.success(`Berhasil berpindah ke ${targetStore.nama}`, { id: toastId });
                     hasChanges = true;
                 }

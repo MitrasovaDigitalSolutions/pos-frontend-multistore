@@ -8,7 +8,7 @@ import { useSession } from "next-auth/react";
 import { queryKeys } from "@/lib/query-keys";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getImageUrl, cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import PrinterService, { type PrinterDevice } from "@/services/printer.service";
@@ -30,7 +30,10 @@ import { StoreSettingsInput, storeSettingsSchema } from "../schemas/settings-sch
 
 export function StoreProfile() {
     const queryClient = useQueryClient();
-    const { update: updateSession } = useSession();
+    const { data: session, update: updateSession } = useSession();
+    const userRoles = useMemo(() => session?.user?.roles || [], [session?.user?.roles]);
+    const isAdmin = useMemo(() => userRoles.includes("admin"), [userRoles]);
+
     const { settings, fetchSettings, isLoading: isSettingsLoading } = useSettingsStore();
     const { data: cashAccountsData, isLoading: isCashAccountsLoading } = useCashAccounts();
     const cashAccounts = cashAccountsData || [];
@@ -65,13 +68,14 @@ export function StoreProfile() {
     const { formState: { dirtyFields, errors } } = methods;
 
     // Tabs definition mapping to form fields
-    const tabs = [
+    const allTabs = useMemo(() => [
         {
             id: "profile",
             label: "Identitas Toko",
             description: "Profil dasar & logo toko",
             icon: Store,
             fields: ["app_name", "app_phone", "app_address", "app_logo_url"] as const,
+            adminOnly: false,
         },
         {
             id: "finance",
@@ -79,6 +83,7 @@ export function StoreProfile() {
             description: "Tarif PPN & poin member",
             icon: IconAdjustments,
             fields: ["tax_rate_ppn", "point_rate", "point_system_enabled"] as const,
+            adminOnly: true,
         },
         {
             id: "inventory",
@@ -86,6 +91,7 @@ export function StoreProfile() {
             description: "Kalkulasi HPP & izin produk cabang",
             icon: Boxes,
             fields: ["hpp_adjustment_method", "branch_can_create_product"] as const,
+            adminOnly: true,
         },
         {
             id: "cash",
@@ -93,6 +99,7 @@ export function StoreProfile() {
             description: "Pemetaan kas & fitur laci kasir",
             icon: Wallet,
             fields: ["cash_account_register_uid", "cash_account_main_uid", "cash_account_bank_uid", "cash_in_out_enabled"] as const,
+            adminOnly: true,
         },
         {
             id: "printer",
@@ -100,8 +107,21 @@ export function StoreProfile() {
             description: "Printer struk belanja",
             icon: IconPrinter,
             fields: ["printer_id"] as const,
+            adminOnly: false,
         },
-    ];
+    ], []);
+
+    const tabs = useMemo(() => {
+        return allTabs.filter((tab) => !tab.adminOnly || isAdmin);
+    }, [allTabs, isAdmin]);
+
+    // Safety fallback: if non-admin has an admin-only activeTab, reset to profile
+    useEffect(() => {
+        if (!isAdmin && ["finance", "inventory", "cash"].includes(activeTab)) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setActiveTab("profile");
+        }
+    }, [isAdmin, activeTab]);
 
     // Check if a tab is dirty
     const isTabDirty = (tabFields: readonly string[]) => {
@@ -193,6 +213,21 @@ export function StoreProfile() {
             const updateTasks: Promise<unknown>[] = [];
 
             for (const key of Object.keys(data) as Array<keyof StoreSettingsInput>) {
+                // If not admin, ignore any admin-only settings fields to ensure strict authorization
+                if (!isAdmin && [
+                    "tax_rate_ppn",
+                    "point_rate",
+                    "point_system_enabled",
+                    "hpp_adjustment_method",
+                    "branch_can_create_product",
+                    "cash_account_register_uid",
+                    "cash_account_main_uid",
+                    "cash_account_bank_uid",
+                    "cash_in_out_enabled",
+                ].includes(key)) {
+                    continue;
+                }
+
                 const formValue = data[key];
                 const originalValue = settings[key];
 
@@ -410,21 +445,21 @@ export function StoreProfile() {
                         </Show.When>
 
                         {/* Tab 2: Keuangan & Pajak */}
-                        <Show.When isTrue={activeTab === "finance"}>
+                        <Show.When isTrue={isAdmin && activeTab === "finance"}>
                             <div className="animate-fade-in">
                                 <TabFinance isSaving={isSaving} />
                             </div>
                         </Show.When>
 
                         {/* Tab 3: Inventori & HPP */}
-                        <Show.When isTrue={activeTab === "inventory"}>
+                        <Show.When isTrue={isAdmin && activeTab === "inventory"}>
                             <div className="animate-fade-in">
                                 <TabInventory isSaving={isSaving} />
                             </div>
                         </Show.When>
 
                         {/* Tab 4: Pemetaan Kas Default */}
-                        <Show.When isTrue={activeTab === "cash"}>
+                        <Show.When isTrue={isAdmin && activeTab === "cash"}>
                             <div className="animate-fade-in">
                                 <TabCash isSaving={isSaving} cashAccountOptions={cashAccountOptions} />
                             </div>

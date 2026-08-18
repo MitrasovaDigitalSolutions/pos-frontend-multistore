@@ -71,19 +71,16 @@ export function StoreSwitcher() {
             if (newStore) {
                 const toastId = toast.loading(`Sedang berpindah ke ${newStore.nama}...`);
                 setActiveStore(uid);
-                Promise.all([
-                    queryClient.invalidateQueries({
-                        predicate: (query) =>
-                            !(
-                                [
-                                    queryKeys.stores.all[0],
-                                    queryKeys.categories.all[0],
-                                    queryKeys.brands.all[0],
-                                ] as string[]
-                            ).includes(query.queryKey[0] as string),
-                    }),
-                    useSettingsStore.getState().fetchSettings(),
-                ]).then(() => {
+                queryClient.invalidateQueries({
+                    predicate: (query) =>
+                        !(
+                            [
+                                queryKeys.stores.all[0],
+                                queryKeys.categories.all[0],
+                                queryKeys.brands.all[0],
+                            ] as string[]
+                        ).includes(query.queryKey[0] as string),
+                }).then(() => {
                     toast.success(`Berhasil berpindah ke ${newStore.nama}`, {
                         id: toastId,
                     });

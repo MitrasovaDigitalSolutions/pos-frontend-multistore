@@ -39,6 +39,8 @@ interface SettingsState {
     getTaxRate: () => number;
 }
 
+let inFlightFetch: Promise<void> | null = null;
+
 export const useSettingsStore = create<SettingsState>((set, get) => ({
     settings: loadCachedSettings(),
     settingsMeta: {},
@@ -46,27 +48,37 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     error: null,
 
     fetchSettings: async () => {
-        set({ isLoading: true, error: null });
-        try {
-            const data = await settingsApi.getAll();
-            const settingsMap: Record<string, string | null> = {};
-            const metaMap: Record<string, AppSetting> = {};
-            data.forEach((setting) => {
-                settingsMap[setting.key] = setting.value;
-                metaMap[setting.key] = setting;
-            });
-            saveCachedSettings(settingsMap);
-            set({ settings: settingsMap, settingsMeta: metaMap, isLoading: false });
-        } catch (error) {
-            // If API fails and we have no settings in memory, restore from cache
-            const current = get().settings;
-            if (Object.keys(current).length === 0) {
-                const cached = loadCachedSettings();
-                set({ settings: cached, error: error as Error, isLoading: false });
-            } else {
-                set({ error: error as Error, isLoading: false });
-            }
+        if (inFlightFetch) {
+            return inFlightFetch;
         }
+
+        inFlightFetch = (async () => {
+            set({ isLoading: true, error: null });
+            try {
+                const data = await settingsApi.getAll();
+                const settingsMap: Record<string, string | null> = {};
+                const metaMap: Record<string, AppSetting> = {};
+                data.forEach((setting) => {
+                    settingsMap[setting.key] = setting.value;
+                    metaMap[setting.key] = setting;
+                });
+                saveCachedSettings(settingsMap);
+                set({ settings: settingsMap, settingsMeta: metaMap, isLoading: false });
+            } catch (error) {
+                // If API fails and we have no settings in memory, restore from cache
+                const current = get().settings;
+                if (Object.keys(current).length === 0) {
+                    const cached = loadCachedSettings();
+                    set({ settings: cached, error: error as Error, isLoading: false });
+                } else {
+                    set({ error: error as Error, isLoading: false });
+                }
+            } finally {
+                inFlightFetch = null;
+            }
+        })();
+
+        return inFlightFetch;
     },
 
     getSetting: (key: string, defaultValue = "") => {
