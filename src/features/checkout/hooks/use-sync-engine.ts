@@ -313,8 +313,16 @@ export function useSyncEngine() {
     }, [isOnline, syncSingleTransaction, updatePendingCount]);
 
     // ─── Sync Catalog (Products + Members) into IndexedDB ─────────────────────────
-    const syncCatalog = useCallback(async () => {
+    const syncCatalog = useCallback(async (force = false) => {
         if (!isOnline || isCatalogSyncingRef.current) return;
+
+        if (!force && typeof window !== "undefined") {
+            const lastSynced = localStorage.getItem("catalog_last_synced_at");
+            if (lastSynced) {
+                const elapsed = Date.now() - new Date(lastSynced).getTime();
+                if (elapsed < CATALOG_SYNC_INTERVAL_MS) return;
+            }
+        }
 
         try {
             isCatalogSyncingRef.current = true;
@@ -409,6 +417,8 @@ export function useSyncEngine() {
         }
     }, [isOnline]);
 
+    const triggerCatalogSync = useCallback(() => syncCatalog(true), [syncCatalog]);
+
     // Initialize pending count on mount and listen to global pending count updates
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -466,7 +476,7 @@ export function useSyncEngine() {
         triggerSync: syncOfflineTransactions,
         triggerSingleSync: syncSingleTransaction,
         triggerSelectedSync: syncSelectedTransactions,
-        triggerCatalogSync: syncCatalog,
+        triggerCatalogSync,
         triggerSingleDebtPaymentSync: syncSingleDebtPayment,
         triggerDebtPaymentSync: syncOfflineDebtPayments,
         updatePendingCount,
