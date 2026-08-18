@@ -96,8 +96,10 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
         supplierOptions,
         supplierSelectProps,
         isSubmitting,
+        isConfirmLoading,
+        isSaving,
         isConfirmOpen,
-        setIsConfirmOpen,
+        handleConfirmClose,
         onProcessClick,
         handleFinalizeConfirm,
         productForm,
@@ -262,13 +264,17 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
                     onSecondarySubmit={handleSaveClick}
                     onReset={handleReset}
                     isSubmitting={isSubmitting}
+                    isSecondarySubmitting={isSaving}
+                    disabled={isConfirmOpen}
                     itemCount={itemCount}
                     total={totalValue}
                     productCount={uniqueProductCount}
                     submitLabel="Proses PO"
                     submitIcon={<IconCheck size={16} />}
+                    submitLoadingText="Memproses..."
                     secondarySubmitLabel="Simpan PO"
                     secondarySubmitIcon={<IconCheck size={16} />}
+                    secondarySubmitLoadingText="Menyimpan..."
                 />
 
                 {/* Create Product Dialog */}
@@ -286,14 +292,14 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
                 {/* Process Confirmation Dialog */}
                 <ConfirmDialog
                     open={isConfirmOpen}
-                    onOpenChange={setIsConfirmOpen}
+                    onOpenChange={handleConfirmClose}
                     title="Proses Purchase Order?"
                     description="Apakah Anda yakin ingin memproses Purchase Order ini? Status akan berubah menjadi ordered dan data tidak dapat diubah lagi."
                     confirmText="Ya, Proses"
                     cancelText="Batal"
                     variant="success"
                     onConfirm={handleFinalizeConfirm}
-                    isLoading={isSubmitting}
+                    isLoading={isConfirmLoading}
                 />
 
                 {/* Reset Confirmation Dialog */}

@@ -37,6 +37,96 @@ export function getDefaultDateRange() {
 }
 
 /**
+ * Mengubah input tanggal/waktu (UTC string, ISO string, Date, atau timestamp)
+ * menjadi string ISO (YYYY-MM-DDTHH:mm:ss.SSSZ) yang nilainya telah disesuaikan
+ * dengan zona waktu lokal tempat browser diakses.
+ *
+ * Contoh di Indonesia (WIB / UTC+7):
+ * Input:  "2026-08-18T01:36:36.873Z"
+ * Output: "2026-08-18T08:36:36.873Z"
+ *
+ * Input tanggal saja: "2026-08-18"
+ * Output: "2026-08-18T08:36:36.873Z" (menggunakan jam lokal saat ini)
+ */
+export function toLocalISOString(dateInput?: Date | string | number | null): string {
+  if (dateInput === null || dateInput === "") return "";
+  const input = dateInput ?? new Date();
+
+  let date: Date | null = null;
+  if (typeof input === "string" && /^\d{4}-\d{2}-\d{2}$/.test(input.trim())) {
+    const [year, month, day] = input.trim().split("-").map(Number);
+    const now = new Date();
+    date = new Date(year, month - 1, day, now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+  } else {
+    date = parseToDate(input);
+  }
+
+  if (!date || isNaN(date.getTime())) return "";
+
+  // getTimezoneOffset() mengembalikan selisih menit antara UTC dan waktu lokal (WIB: -420)
+  const offsetMinutes = date.getTimezoneOffset();
+  const localShiftedTime = new Date(date.getTime() - offsetMinutes * 60 * 1000);
+  return localShiftedTime.toISOString();
+}
+
+/**
+ * Mengubah input tanggal/waktu menjadi string ISO lengkap dengan tanda offset zona waktu browser.
+ * Format: YYYY-MM-DDTHH:mm:ss.SSS+HH:mm
+ *
+ * Contoh di Indonesia (WIB / UTC+7):
+ * Input:  "2026-08-18T01:36:36.873Z"
+ * Output: "2026-08-18T08:36:36.873+07:00"
+ */
+export function toLocalOffsetISOString(dateInput?: Date | string | number | null): string {
+  if (dateInput === null || dateInput === "") return "";
+  const input = dateInput ?? new Date();
+
+  let date: Date | null = null;
+  if (typeof input === "string" && /^\d{4}-\d{2}-\d{2}$/.test(input.trim())) {
+    const [year, month, day] = input.trim().split("-").map(Number);
+    const now = new Date();
+    date = new Date(year, month - 1, day, now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+  } else {
+    date = parseToDate(input);
+  }
+
+  if (!date || isNaN(date.getTime())) return "";
+
+  const offsetMinutes = date.getTimezoneOffset();
+  const sign = offsetMinutes <= 0 ? "+" : "-";
+  const absOffset = Math.abs(offsetMinutes);
+  const offsetHours = String(Math.floor(absOffset / 60)).padStart(2, "0");
+  const offsetMins = String(absOffset % 60).padStart(2, "0");
+  const offsetFormatted = `${sign}${offsetHours}:${offsetMins}`;
+
+  const localShiftedTime = new Date(date.getTime() - offsetMinutes * 60 * 1000);
+  return localShiftedTime.toISOString().replace(/Z$/, offsetFormatted);
+}
+
+/**
+ * Mendapatkan nama identifier zona waktu browser saat ini (misal: "Asia/Jakarta").
+ */
+export function getBrowserTimezone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  } catch {
+    return "UTC";
+  }
+}
+
+/**
+ * Mendapatkan string offset UTC dari browser saat ini (misal: "+07:00" atau "+08:00").
+ */
+export function getBrowserUtcOffset(): string {
+  const offsetMinutes = new Date().getTimezoneOffset();
+  const sign = offsetMinutes <= 0 ? "+" : "-";
+  const absOffset = Math.abs(offsetMinutes);
+  const offsetHours = String(Math.floor(absOffset / 60)).padStart(2, "0");
+  const offsetMins = String(absOffset % 60).padStart(2, "0");
+  return `${sign}${offsetHours}:${offsetMins}`;
+}
+
+/**
  * Mengubah input tanggal menjadi string ISO-8601 di zona waktu UTC+7 (WIB).
  * Format: YYYY-MM-DDTHH:mm:ss.SSS+07:00
  */
@@ -87,16 +177,11 @@ export function addDaysStr(days: number): string {
 }
 
 /**
- * Memformat tanggal ke format UTC ISO String standar (YYYY-MM-DDTHH:mm:ss.SSSZ).
+ * Memformat tanggal ke format ISO standar dengan penyesuaian zona waktu lokal browser.
+ * (Contoh di Indonesia UTC+7: "2026-08-18" -> "2026-08-18T08:36:36.873Z")
  */
 export function formatUTC(dateInput?: Date | string | number | null): string {
-  const date = parseToDate(dateInput);
-  if (!date) return "";
-  
-  const now = new Date();
-  date.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
-  
-  return date.toISOString();
+  return toLocalISOString(dateInput);
 }
 
 /**

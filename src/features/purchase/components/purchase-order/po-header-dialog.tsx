@@ -18,7 +18,7 @@ import { useSupplierCreateModal } from "@/features/master/suppliers/hooks/use-su
 import { useUpdatePurchaseOrder } from "@/features/purchase/api/purchase-api";
 import { purchaseOrderHeaderSchema, type PurchaseOrderHeaderInput } from "@/features/purchase/schemas/order-schema";
 import type { PurchaseOrder } from "@/features/purchase/types";
-import { formatToISO } from "@/lib/date-utils";
+import { formatToISO, toLocalISOString } from "@/lib/date-utils";
 
 interface POHeaderDialogProps {
     open: boolean;
@@ -75,7 +75,7 @@ export function POHeaderDialog({ open, onOpenChange, order }: POHeaderDialogProp
                 uid: order.uid,
                 data: {
                     supplier_uid: data.supplier_uid,
-                    tanggal_po: data.tanggal_po,
+                    tanggal_po: toLocalISOString(data.tanggal_po),
                     catatan: data.catatan || null,
                 },
             },
