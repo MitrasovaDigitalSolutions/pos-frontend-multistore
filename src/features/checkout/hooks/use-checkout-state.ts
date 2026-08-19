@@ -2,7 +2,6 @@
 
 import { lookupBarcode } from "@/features/checkout/api/checkout-api";
 import type { CartItem, HoldTransaction, Receipt, ReceiptItem } from "@/features/checkout/types";
-import { useProducts } from "@/features/master/products/api/products-api";
 import type { Product } from "@/features/master/products/types";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useCheckoutStore } from "@/stores/checkout-store";
@@ -12,68 +11,26 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { db } from "@/lib/db";
 import { useNetworkStatus } from "@/hooks/use-network-status";
-import axios from "axios";
-import PrinterService from "@/services/printer.service";
-import { formatDate } from "@/lib/date-utils";
-
+import { productLocalRepository } from "@/features/checkout/services/product-local-repository";
 import { calculateItemSubtotal } from "@/features/checkout/utils/cart-utils";
 import { buildReceipt58 } from "@/utils/ReceiptFormatter58";
+import printerService from "@/services/printer.service";
+import { formatDate } from "@/lib/date-utils";
+import axios from "axios";
+
+import { useActiveStoreStore } from "@/stores/active-store-store";
 
 export function useCheckoutState() {
     const router = useAppRouter();
     const { data: session, update } = useSession();
     const user = session?.user;
     const getSetting = useSettingsStore((state) => state.getSetting);
+    const activeStoreUid = useActiveStoreStore((state) => state.activeStoreUid);
 
     const isOnline = useNetworkStatus();
-    // Products list from API for Catalog & Search
-    const { data: productsData, refetch: refetchProducts } = useProducts({
-        per_page: 9,
-    });
-
-    const [localProducts, setLocalProducts] = useState<Product[]>([]);
-
-    const reloadLocalProducts = useCallback(async () => {
-        try {
-            const items = await db.products.toArray();
-            setLocalProducts(items.filter((item) => item.status === "active"));
-        } catch (err) {
-            console.error("Gagal load produk lokal:", err);
-        }
-    }, []);
-
-    useEffect(() => {
-        let isMounted = true;
-        if (productsData?.data) {
-            db.products.bulkPut(productsData.data).then(() => {
-                if (isMounted) {
-                    reloadLocalProducts();
-                }
-            });
-        } else {
-            Promise.resolve().then(() => {
-                if (isMounted) {
-                    reloadLocalProducts();
-                }
-            });
-        }
-        return () => {
-            isMounted = false;
-        };
-    }, [productsData, reloadLocalProducts]);
-
-    useEffect(() => {
-        const handleCatalogSynced = () => {
-            reloadLocalProducts();
-        };
-
-        window.addEventListener("pos_catalog_synced", handleCatalogSynced);
-        return () => {
-            window.removeEventListener("pos_catalog_synced", handleCatalogSynced);
-        };
-    }, [reloadLocalProducts]);
-
-    const products = localProducts;
+    const products = useMemo<Product[]>(() => [], []);
+    const refetchProducts = useCallback(() => { }, []);
+    const reloadLocalProducts = useCallback(() => { }, []);
 
     // Connect to local checkout Zustand store
     const storeCart = useCheckoutStore((state) => state.cart);
@@ -95,6 +52,17 @@ export function useCheckoutState() {
     const namaTransaksiStore = useCheckoutStore((state) => state.namaTransaksi);
     const setNamaTransaksi = useCheckoutStore((state) => state.setNamaTransaksi);
 
+    // Reset draft cart when switching stores
+    const prevStoreRef = useRef(activeStoreUid);
+    useEffect(() => {
+        if (prevStoreRef.current && prevStoreRef.current !== activeStoreUid) {
+            clearCart();
+            setSelectedMember(null);
+            setNamaTransaksi("");
+        }
+        prevStoreRef.current = activeStoreUid;
+    }, [activeStoreUid, clearCart, setSelectedMember, setNamaTransaksi]);
+
     // Hydration check to prevent Next.js hydration mismatches
     const [mounted, setMounted] = useState(false);
     useEffect(() => {
@@ -103,7 +71,6 @@ export function useCheckoutState() {
         setTimeout(() => barcodeInputRef.current?.focus(), 100);
     }, []);
 
-    // Expose cart, holdList & selectedMember safely
     const cart = useMemo(() => (mounted ? storeCart : []), [mounted, storeCart]);
     const holdList = useMemo(() => (mounted ? storeHoldList : []), [mounted, storeHoldList]);
     const selectedMember = useMemo(() => (mounted ? storeSelectedMember : null), [mounted, storeSelectedMember]);
@@ -274,57 +241,27 @@ export function useCheckoutState() {
         setBarcodeInput("");
         if (!query) return;
 
-        let found = products?.find(
-            (p) => p.barcode?.toLowerCase() === query.toLowerCase(),
-        );
-        if (!found) {
-            found = products?.find((p) =>
-                p.nama.toLowerCase().includes(query.toLowerCase()),
-            );
-        }
-        if (!found) {
-            const queryWords = query.toLowerCase().split(/\s+/);
-            found = products?.find((p) =>
-                queryWords.every((word) => p.nama.toLowerCase().includes(word))
-            );
-        }
+        // 1. Search IndexedDB via productLocalRepository (Fast Index Scan)
+        let found = await productLocalRepository.lookupBarcodeLocal(query);
 
-        // Search full IndexedDB table if not found in memory state
-        if (!found) {
+        // 2. Fallback to online API lookup if not found in local IndexedDB and online
+        if (!found && isOnline) {
             try {
-                const dbProduct = await db.products
-                    .where("barcode")
-                    .equalsIgnoreCase(query)
-                    .first();
-                if (dbProduct) {
-                    found = dbProduct;
-                } else {
-                    const dbProductByName = await db.products
-                        .where("nama")
-                        .equalsIgnoreCase(query)
-                        .first();
-                    if (dbProductByName) found = dbProductByName;
+                const prod = await lookupBarcode(query);
+                if (prod) {
+                    found = prod;
                 }
-            } catch (err) {
-                console.error("Error mencari produk di IndexedDB:", err);
+            } catch {
+                // Ignore API lookup error
             }
         }
 
         if (found) {
             await handleAddProduct(found);
-        } else if (isOnline) {
-            try {
-                const prod = await lookupBarcode(query);
-                if (prod) {
-                    await handleAddProduct(prod);
-                } else {
-                    toast.error(`Produk "${query}" tidak ditemukan!`);
-                }
-            } catch {
-                toast.error(`Produk "${query}" tidak ditemukan!`);
-            }
+        } else if (!isOnline) {
+            toast.error(`Produk "${query}" tidak ditemukan di database offline!`);
         } else {
-            toast.error(`Produk "${query}" tidak ditemukan secara offline!`);
+            toast.error(`Produk "${query}" tidak ditemukan!`);
         }
     };
 
@@ -387,7 +324,7 @@ export function useCheckoutState() {
             // const receiptText = buildReceipt(data);
             // await QZService.print(printerName, receiptText);
             const receiptText = buildReceipt58(data);
-            await PrinterService.print(printerName,receiptText)
+            await printerService.print(printerName, receiptText)
         } catch (err) {
             console.error("Gagal mencetak struk:", err);
             toast.error("Gagal mencetak struk. Pastikan Print Service aktif.");
@@ -452,8 +389,8 @@ export function useCheckoutState() {
 
             // const receiptText = buildReceipt({ sale, setting });
             // await QZService.print(printerName, receiptText);
-            const receiptText = buildReceipt58({sale, setting})
-            await PrinterService.print(printerName,receiptText)
+            const receiptText = buildReceipt58({ sale, setting })
+            await printerService.print(printerName, receiptText)
 
         } catch (err) {
             console.error("Gagal mencetak struk offline:", err);

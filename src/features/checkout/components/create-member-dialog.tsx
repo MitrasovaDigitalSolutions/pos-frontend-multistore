@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { IconUser } from "@tabler/icons-react";
 import { toast } from "sonner";
 import type { Member } from "@/features/master/members/types";
+import { db } from "@/lib/db";
 
 interface CreateMemberDialogProps {
     open: boolean;
@@ -61,9 +62,13 @@ export function CreateMemberDialog({
 
     const onSubmit = (data: MemberInput) => {
         createMember.mutate(data, {
-            onSuccess: (res) => {
+            onSuccess: async (res) => {
                 toast.success("Member baru berhasil dibuat!");
                 if (res.data) {
+                    await db.members.put(res.data);
+                    if (typeof window !== "undefined") {
+                        window.dispatchEvent(new Event("pos_member_updated"));
+                    }
                     onSuccess(res.data);
                 }
                 onOpenChange(false);

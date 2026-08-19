@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { db } from "@/lib/db";
+import { getCatalogLastSyncedAt } from "@/features/checkout/services/catalog-sync-manager";
 
 export type OfflineReadinessStatus =
     | "checking"
@@ -60,7 +61,7 @@ export function useOfflineReadiness(): OfflineReadinessState {
     const updateDbCounts = useCallback(async () => {
         const { productsCount, membersCount } = await getDbCounts();
         if (!mountedRef.current) return;
-        const lastSyncedAt = localStorage.getItem("catalog_last_synced_at") ?? null;
+        const lastSyncedAt = getCatalogLastSyncedAt();
         setState((prev) => ({
             ...prev,
             productsCount,
@@ -92,7 +93,7 @@ export function useOfflineReadiness(): OfflineReadinessState {
                     swStatus: "none",
                     productsCount,
                     membersCount,
-                    lastSyncedAt: localStorage.getItem("catalog_last_synced_at") ?? null,
+                    lastSyncedAt: getCatalogLastSyncedAt(),
                     isDevMode: true,
                 });
             });
@@ -125,7 +126,7 @@ export function useOfflineReadiness(): OfflineReadinessState {
                         swStatus,
                         productsCount,
                         membersCount,
-                        lastSyncedAt: localStorage.getItem("catalog_last_synced_at") ?? null,
+                        lastSyncedAt: getCatalogLastSyncedAt(),
                         isDevMode: false,
                     });
                 });
@@ -182,6 +183,25 @@ export function useOfflineReadiness(): OfflineReadinessState {
             serwistCleanup?.();
         };
     }, []);
+
+    // Listen to real-time catalog and member sync events
+    useEffect(() => {
+        const handleSynced = () => {
+            void updateDbCounts();
+        };
+
+        if (typeof window !== "undefined") {
+            window.addEventListener("pos_catalog_synced", handleSynced);
+            window.addEventListener("pos_member_updated", handleSynced);
+        }
+
+        return () => {
+            if (typeof window !== "undefined") {
+                window.removeEventListener("pos_catalog_synced", handleSynced);
+                window.removeEventListener("pos_member_updated", handleSynced);
+            }
+        };
+    }, [updateDbCounts]);
 
     // Periodically re-check DB counts (e.g., after catalog sync completes)
     useEffect(() => {

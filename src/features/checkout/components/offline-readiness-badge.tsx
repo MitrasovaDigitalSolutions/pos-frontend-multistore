@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/date-utils";
 import type { OfflineReadinessState, OfflineReadinessStatus } from "@/hooks/use-offline-readiness";
+import type { SyncProgress } from "@/features/checkout/services/catalog-sync-manager";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -27,6 +28,7 @@ interface OfflineReadinessBadgeProps {
     state: OfflineReadinessState;
     onRefreshRequest?: () => void;
     isSyncing?: boolean;
+    catalogProgress?: SyncProgress;
 }
 
 interface StatusConfig {
@@ -37,7 +39,17 @@ interface StatusConfig {
     pulse: boolean;
 }
 
-function getStatusConfig(status: OfflineReadinessStatus): StatusConfig {
+function getStatusConfig(status: OfflineReadinessStatus, isCatalogSyncing = false, progress?: SyncProgress): StatusConfig {
+    if (isCatalogSyncing && progress) {
+        return {
+            icon: <Loader2 size={13} className="animate-spin text-emerald-400" />,
+            label: progress.percent > 0 ? `Sinkronisasi ${progress.percent}%` : "Menyinkronkan...",
+            badgeClass: "bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/25 hover:text-emerald-200",
+            dotClass: "bg-emerald-400",
+            pulse: true,
+        };
+    }
+
     switch (status) {
         case "checking":
             return {
@@ -92,9 +104,11 @@ export function OfflineReadinessBadge({
     state,
     onRefreshRequest,
     isSyncing = false,
+    catalogProgress,
 }: OfflineReadinessBadgeProps) {
     const [isOpen, setIsOpen] = useState(false);
-    const config = getStatusConfig(state.status);
+    const isActuallySyncing = isSyncing || Boolean(catalogProgress?.isSyncing);
+    const config = getStatusConfig(state.status, isActuallySyncing, catalogProgress);
 
     return (
         <div className="relative">
@@ -137,7 +151,7 @@ export function OfflineReadinessBadge({
                         onClick={() => setIsOpen(false)}
                     />
                     {/* Panel */}
-                    <div className="absolute right-0 top-full mt-2 z-50 w-72 bg-slate-900/95 backdrop-blur-md border border-slate-800 rounded-xl shadow-2xl shadow-black/50 p-4 text-xs animate-in fade-in slide-in-from-top-1 duration-150">
+                    <div className="absolute right-0 top-full mt-2 z-50 w-80 bg-slate-900/95 backdrop-blur-md border border-slate-800 rounded-xl shadow-2xl shadow-black/50 p-4 text-xs animate-in fade-in slide-in-from-top-1 duration-150">
                         {/* Header */}
                         <div className="flex items-center justify-between mb-3 border-b border-slate-800/80 pb-2">
                             <span className="font-bold text-slate-200 text-[13px]">
@@ -150,6 +164,22 @@ export function OfflineReadinessBadge({
                                 <X size={14} />
                             </button>
                         </div>
+
+                        {/* Progress Bar Active Sync */}
+                        {catalogProgress?.isSyncing && (
+                            <div className="mb-3 p-2.5 bg-emerald-950/30 border border-emerald-500/30 rounded-lg space-y-1.5">
+                                <div className="flex justify-between items-center text-[10px] font-bold text-emerald-300">
+                                    <span>{catalogProgress.message || "Menyinkronkan data..."}</span>
+                                    <span>{catalogProgress.percent}%</span>
+                                </div>
+                                <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                    <div
+                                        className="bg-emerald-400 h-full transition-all duration-300 rounded-full"
+                                        style={{ width: `${catalogProgress.percent}%` }}
+                                    />
+                                </div>
+                            </div>
+                        )}
 
                         {/* Status Items */}
                         <div className="space-y-3">

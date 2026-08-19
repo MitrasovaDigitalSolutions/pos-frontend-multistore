@@ -11,6 +11,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { DataTableTextActionButton } from "@/components/ui/data-table-actions";
 import type { Product } from "@/features/master/products/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { useDebounce } from "@/hooks/use-debounce";
 import {
     IconPackage,
     IconPlus
@@ -19,10 +20,12 @@ import { cn } from "@/lib/utils";
 import { Show } from "@/components/ui/show";
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { productLocalRepository } from "@/features/checkout/services/product-local-repository";
+
 interface ProductSearchDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    products: Product[];
+    products?: Product[];
     onAddProduct: (product: Product) => void;
     initialSearchQuery?: string;
 }
@@ -37,12 +40,23 @@ interface ProductSearchFilterValues {
 export function ProductSearchDialog({
     open,
     onOpenChange,
-    products,
+    products = [],
     onAddProduct,
     initialSearchQuery = "",
 }: ProductSearchDialogProps) {
+    const isInMemory = products && products.length > 0;
+
     const [page, setPage] = useState(1);
-    const [perPage, setPerPage] = useState(5);
+    const [perPage, setPerPage] = useState(10);
+    const [sortBy, setSortBy] = useState<string | undefined>(undefined);
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>(undefined);
+    const [isLoading, setIsLoading] = useState(!isInMemory);
+    const [localData, setLocalData] = useState<{
+        items: Product[];
+        total: number;
+    }>({ items: [], total: 0 });
+    const [dbCategories, setDbCategories] = useState<Array<{ uid: string; nama: string }>>([]);
+    const [dbBrands, setDbBrands] = useState<Array<{ uid: string; nama: string }>>([]);
 
     const methods = useForm<ProductSearchFilterValues>({
         defaultValues: {
@@ -54,11 +68,21 @@ export function ProductSearchDialog({
     });
 
     const searchQuery = useWatch({ control: methods.control, name: "search" }) || "";
+    const debouncedSearchQuery = useDebounce(searchQuery, 250);
     const selectedCategory = useWatch({ control: methods.control, name: "category_uid" }) || "all";
     const selectedBrand = useWatch({ control: methods.control, name: "brand_uid" }) || "all";
     const stockFilter = useWatch({ control: methods.control, name: "stock" }) || "all";
 
-    // Track previous filters to reset page to 1 during render phase when a filter changes
+    // Track previous open state to activate loading skeleton immediately on open
+    const [prevOpen, setPrevOpen] = useState(open);
+    if (open !== prevOpen) {
+        setPrevOpen(open);
+        if (open && !isInMemory) {
+            setIsLoading(true);
+        }
+    }
+
+    // Track previous filters to reset page to 1 and show loading skeleton during render phase when a filter changes
     const [prevFilters, setPrevFilters] = useState({
         search: initialSearchQuery,
         category: "all",
@@ -67,19 +91,65 @@ export function ProductSearchDialog({
     });
 
     if (
-        searchQuery !== prevFilters.search ||
+        debouncedSearchQuery !== prevFilters.search ||
         selectedCategory !== prevFilters.category ||
         selectedBrand !== prevFilters.brand ||
         stockFilter !== prevFilters.stock
     ) {
         setPrevFilters({
-            search: searchQuery,
+            search: debouncedSearchQuery,
             category: selectedCategory,
             brand: selectedBrand,
             stock: stockFilter,
         });
         setPage(1);
+        if (!isInMemory) {
+            setIsLoading(true);
+        }
     }
+
+    // Load distinct categories & brands from IndexedDB on dialog open
+    useEffect(() => {
+        if (open && !isInMemory) {
+            productLocalRepository.getDistinctCategoriesAndBrands().then((res) => {
+                setDbCategories(res.categories);
+                setDbBrands(res.brands);
+            });
+        }
+    }, [open, isInMemory]);
+
+    // Query IndexedDB directly for paginated results when products array is not supplied
+    useEffect(() => {
+        let isCurrent = true;
+        if (open && !isInMemory) {
+            productLocalRepository
+                .getPaginatedProductsLocal({
+                    search: debouncedSearchQuery,
+                    category_uid: selectedCategory,
+                    brand_uid: selectedBrand,
+                    stock: stockFilter,
+                    page,
+                    perPage,
+                    sortBy,
+                    sortOrder,
+                })
+                .then((res) => {
+                    if (isCurrent) {
+                        setLocalData({ items: res.items, total: res.total });
+                        setIsLoading(false);
+                    }
+                })
+                .catch((err) => {
+                    console.error("Error querying local products:", err);
+                    if (isCurrent) {
+                        setIsLoading(false);
+                    }
+                });
+        }
+        return () => {
+            isCurrent = false;
+        };
+    }, [open, isInMemory, debouncedSearchQuery, selectedCategory, selectedBrand, stockFilter, page, perPage, sortBy, sortOrder]);
 
     // Auto-focus search input after transition on mount
     useEffect(() => {
@@ -92,6 +162,7 @@ export function ProductSearchDialog({
 
     // Derive unique categories and brands from loaded products list (for complete offline compatibility)
     const categories = useMemo(() => {
+        if (!isInMemory) return dbCategories;
         const unique = new Map<string, string>();
         products.forEach((p) => {
             if (p.category?.uid && p.category?.nama) {
@@ -99,9 +170,10 @@ export function ProductSearchDialog({
             }
         });
         return Array.from(unique.entries()).map(([uid, nama]) => ({ uid, nama }));
-    }, [products]);
+    }, [isInMemory, dbCategories, products]);
 
     const brands = useMemo(() => {
+        if (!isInMemory) return dbBrands;
         const unique = new Map<string, string>();
         products.forEach((p) => {
             if (p.brand?.uid && p.brand?.nama) {
@@ -111,7 +183,7 @@ export function ProductSearchDialog({
             }
         });
         return Array.from(unique.entries()).map(([uid, nama]) => ({ uid, nama }));
-    }, [products]);
+    }, [isInMemory, dbBrands, products]);
 
     const categoryOptions = useMemo(() => [
         { value: "all", label: "Semua Kategori" },
@@ -130,13 +202,12 @@ export function ProductSearchDialog({
         { value: "empty", label: "Habis (0)" },
     ];
 
-    // Filter products locally in memory
+    // Filter products locally in memory if array is supplied
     const filteredProducts = useMemo(() => {
+        if (!isInMemory) return localData.items;
         return products.filter((p) => {
-            // Must be active to sell
             if (p.status !== "active") return false;
 
-            // Search query matching: name, barcode, or brand (supports fuzzy multi-word lookup)
             if (searchQuery.trim()) {
                 const queryWords = searchQuery.toLowerCase().trim().split(/\s+/);
                 const isMatch = queryWords.every((word) => {
@@ -153,24 +224,20 @@ export function ProductSearchDialog({
                 if (!isMatch) return false;
             }
 
-            // Category filter
             if (selectedCategory !== "all") {
                 if (p.category_uid !== selectedCategory && p.category?.uid !== selectedCategory) {
                     return false;
                 }
             }
 
-            // Brand filter
             if (selectedBrand !== "all") {
                 if (p.brand_uid !== selectedBrand && p.brand?.uid !== selectedBrand && p.merek !== selectedBrand) {
                     return false;
                 }
             }
 
-            // Stock filter
             if (stockFilter !== "all") {
                 if (p.is_jasa) {
-                    // Services/labor are always available, exclude them for low/empty filters
                     if (stockFilter !== "available") return false;
                 } else {
                     if (stockFilter === "available" && p.stok <= 0) return false;
@@ -181,7 +248,50 @@ export function ProductSearchDialog({
 
             return true;
         });
-    }, [products, searchQuery, selectedCategory, selectedBrand, stockFilter]);
+    }, [isInMemory, localData.items, products, searchQuery, selectedCategory, selectedBrand, stockFilter]);
+
+    const sortedFilteredProducts = useMemo(() => {
+        if (!isInMemory) return filteredProducts;
+        if (!sortBy || !sortOrder) return filteredProducts;
+        const sorted = [...filteredProducts];
+        const isDesc = sortOrder === "desc";
+        sorted.sort((a, b) => {
+            let valA: unknown;
+            let valB: unknown;
+
+            if (sortBy === "category.nama") {
+                valA = a.category?.nama || "";
+                valB = b.category?.nama || "";
+            } else {
+                valA = (a as unknown as Record<string, unknown>)[sortBy];
+                valB = (b as unknown as Record<string, unknown>)[sortBy];
+            }
+
+            if (typeof valA === "number" && typeof valB === "number") {
+                return isDesc ? valB - valA : valA - valB;
+            }
+
+            if (typeof valA === "string") valA = valA.toLowerCase();
+            if (typeof valB === "string") valB = valB.toLowerCase();
+
+            if (valA === undefined || valA === null) return isDesc ? -1 : 1;
+            if (valB === undefined || valB === null) return isDesc ? 1 : -1;
+
+            if (valA < valB) return isDesc ? 1 : -1;
+            if (valA > valB) return isDesc ? -1 : 1;
+            return 0;
+        });
+        return sorted;
+    }, [isInMemory, filteredProducts, sortBy, sortOrder]);
+
+    const totalItems = isInMemory ? sortedFilteredProducts.length : localData.total;
+    const totalPages = Math.max(1, Math.ceil(totalItems / perPage));
+
+    const displayProducts = useMemo(() => {
+        if (!isInMemory) return localData.items;
+        const start = (page - 1) * perPage;
+        return sortedFilteredProducts.slice(start, start + perPage);
+    }, [isInMemory, localData.items, sortedFilteredProducts, page, perPage]);
 
     const handleSelectProduct = useCallback((product: Product) => {
         if (!product.is_jasa && product.stok <= 0) return;
@@ -189,7 +299,31 @@ export function ProductSearchDialog({
         onOpenChange(false);
     }, [onAddProduct, onOpenChange]);
 
-    const handleFilterReset = () => {
+    const handleSortChange = useCallback((newSortBy: string | undefined, newSortOrder: "asc" | "desc" | undefined) => {
+        if (!isInMemory) {
+            setIsLoading(true);
+        }
+        setSortBy(newSortBy);
+        setSortOrder(newSortOrder);
+        setPage(1);
+    }, [isInMemory]);
+
+    const handlePageChange = useCallback((newPage: number) => {
+        if (!isInMemory) {
+            setIsLoading(true);
+        }
+        setPage(newPage);
+    }, [isInMemory]);
+
+    const handlePerPageChange = useCallback((newPerPage: number) => {
+        if (!isInMemory) {
+            setIsLoading(true);
+        }
+        setPerPage(newPerPage);
+        setPage(1);
+    }, [isInMemory]);
+
+    const handleFilterReset = useCallback(() => {
         methods.reset({
             search: "",
             category_uid: "all",
@@ -197,15 +331,21 @@ export function ProductSearchDialog({
             stock: "all",
         });
         setPage(1);
+        if (!isInMemory) {
+            setIsLoading(true);
+        }
         setTimeout(() => {
             const inputEl = document.getElementById("search") as HTMLInputElement;
             inputEl?.focus();
         }, 50);
-    };
+    }, [methods, isInMemory]);
 
-    const handleFilterSubmit = () => {
+    const handleFilterSubmit = useCallback(() => {
         setPage(1);
-    };
+        if (!isInMemory) {
+            setIsLoading(true);
+        }
+    }, [isInMemory]);
 
     // Columns configuration for the reusable DataTable component
     const columns = useMemo<ColumnDef<Product>[]>(
@@ -216,18 +356,24 @@ export function ProductSearchDialog({
                 cell: ({ row }) => {
                     const p = row.original;
                     return (
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-slate-800 hover:text-emerald-700 transition-colors">
+                        <div className="flex flex-col gap-0.5 min-w-0 max-w-[200px] xs:max-w-[240px] sm:max-w-xs md:max-w-sm">
+                            <span
+                                className="font-bold text-slate-800 hover:text-emerald-700 transition-colors truncate block"
+                                title={p.nama}
+                            >
                                 {p.nama}
                             </span>
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
                                 {p.is_jasa && (
-                                    <span className="text-[9px] font-extrabold px-1.5 py-0.2 bg-blue-50 text-blue-600 rounded">
+                                    <span className="text-[9px] font-extrabold px-1.5 py-0.2 bg-blue-50 text-blue-600 rounded shrink-0">
                                         JASA
                                     </span>
                                 )}
                                 {p.brand?.nama && (
-                                    <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-1 py-px rounded">
+                                    <span
+                                        className="text-[9px] font-bold text-slate-400 bg-slate-100 px-1 py-px rounded truncate max-w-[120px]"
+                                        title={p.brand.nama}
+                                    >
                                         {p.brand.nama}
                                     </span>
                                 )}
@@ -240,21 +386,27 @@ export function ProductSearchDialog({
                 accessorKey: "barcode",
                 header: "Barcode / SKU",
                 cell: ({ row }) => (
-                    <span className="font-mono text-xs text-slate-600">
+                    <span
+                        className="font-mono text-xs text-slate-600 truncate block max-w-[130px]"
+                        title={row.original.barcode || ""}
+                    >
                         {row.original.barcode || "-"}
                     </span>
                 ),
-                size: 150,
+                size: 140,
             },
             {
                 accessorKey: "category.nama",
                 header: "Kategori",
                 cell: ({ row }) => (
-                    <span className="text-xs text-slate-500">
+                    <span
+                        className="text-xs text-slate-500 truncate block max-w-[130px]"
+                        title={row.original.category?.nama || ""}
+                    >
                         {row.original.category?.nama || "-"}
                     </span>
                 ),
-                size: 150,
+                size: 140,
             },
             {
                 accessorKey: "stok",
@@ -398,12 +550,22 @@ export function ProductSearchDialog({
                     {/* ─── Product Results List (Table via DataTable) ─── */}
                     <DataTable
                         columns={columns}
-                        data={filteredProducts}
-                        clientPagination={true}
+                        data={displayProducts}
+                        isLoading={isLoading}
+                        isFetching={isLoading}
                         page={page}
                         perPage={perPage}
-                        onPageChange={setPage}
-                        onPerPageChange={setPerPage}
+                        onPageChange={handlePageChange}
+                        onPerPageChange={handlePerPageChange}
+                        sortBy={sortBy}
+                        sortOrder={sortOrder}
+                        onSortChange={handleSortChange}
+                        meta={{
+                            current_page: page,
+                            last_page: totalPages,
+                            per_page: perPage,
+                            total: totalItems,
+                        }}
                         entityName="produk"
                         emptyMessage="Tidak ada produk ditemukan."
                         virtualize={false}

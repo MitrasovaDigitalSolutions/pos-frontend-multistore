@@ -3,6 +3,7 @@ import { Check, ChevronsUpDown, Search, Loader2, Plus } from "lucide-react"
 import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 import { cn } from "@/lib/utils"
 import { STORE_BADGE_HQ, STORE_LABEL_HQ } from "@/constants/store"
+import { Scrollable } from "@/components/ui/scrollable"
 
 export interface CommandOption {
   value: string
@@ -119,7 +120,7 @@ export const CommandList = React.forwardRef<
     isLoadingMore?: boolean
     isLoading?: boolean
   }
->(({ className, onScrollBottom, hasMore, isLoadingMore, isLoading, onScroll, ...props }, ref) => {
+>(({ className, onScrollBottom, hasMore, isLoadingMore, isLoading, onScroll, children, ...props }, ref) => {
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     onScroll?.(e)
     const target = e.currentTarget
@@ -131,12 +132,14 @@ export const CommandList = React.forwardRef<
   }
 
   return (
-    <div
+    <Scrollable
       ref={ref}
       onScroll={handleScroll}
-      className={cn("max-h-[200px] overflow-y-auto overflow-x-hidden p-1 custom-scrollbar", className)}
+      className={cn("max-h-[220px] p-1", className)}
       {...props}
-    />
+    >
+      {children}
+    </Scrollable>
   )
 })
 CommandList.displayName = "CommandList"

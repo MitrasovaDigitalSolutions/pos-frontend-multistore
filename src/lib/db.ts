@@ -53,7 +53,9 @@ export interface OfflineDebtPaymentRecord {
     metode_pembayaran: "cash" | "card"; // Payment method for display
 }
 
-class POSDatabase extends Dexie {
+import { useActiveStoreStore } from "@/stores/active-store-store";
+
+export class POSDatabase extends Dexie {
     products!: Table<Product, string>;
     members!: Table<Member, string>;
     offlineQueue!: Table<OfflineTransaction, number>;
@@ -63,8 +65,8 @@ class POSDatabase extends Dexie {
     offlineDrawerActions!: Table<OfflineDrawerAction, number>;
     offlineDebtPayments!: Table<OfflineDebtPaymentRecord, string>;
 
-    constructor() {
-        super("POSDatabase");
+    constructor(dbName = "POSDatabase") {
+        super(dbName);
         this.version(2).stores({
             products: "uid, nama, barcode, status, updated_at",
             members: "uid, nama, kode, status, updated_at",
@@ -98,16 +100,43 @@ class POSDatabase extends Dexie {
     }
 }
 
-export const db = new POSDatabase();
+// Multi-Store Database Instance Cache
+const dbInstances = new Map<string, POSDatabase>();
 
-if (typeof window !== "undefined") {
-    // Auto-recovery for database upgrade schema changes (e.g. changing primary key)
-    db.open().catch((err) => {
-        console.warn("Gagal membuka database, menghapus dan membuat ulang database lokal:", err);
-        Dexie.delete("POSDatabase").then(() => {
-            db.open().catch((err2) => {
-                console.error("Gagal membuka database baru setelah pembuatan ulang:", err2);
+export function getDb(storeUid?: string | null): POSDatabase {
+    const activeUid = storeUid ?? useActiveStoreStore.getState().activeStoreUid;
+    const dbName = activeUid ? `POSDatabase_${activeUid}` : "POSDatabase";
+
+    let instance = dbInstances.get(dbName);
+    if (!instance) {
+        instance = new POSDatabase(dbName);
+        dbInstances.set(dbName, instance);
+
+        if (typeof window !== "undefined") {
+            instance.open().catch((err) => {
+                console.warn(`Gagal membuka database ${dbName}, mereset schema:`, err);
+                Dexie.delete(dbName).then(() => {
+                    instance?.open().catch((err2) => {
+                        console.error(`Gagal membuka database ${dbName} setelah reset:`, err2);
+                    });
+                });
             });
-        });
-    });
+        }
+    }
+    return instance;
 }
+
+/**
+ * Dynamic DB Proxy yang secara otomatis mengarah ke database cabang (Store) yang sedang aktif.
+ * Memastikan data produk, member, stok, dan antrean transaksi offline terisolasi 100% per cabang!
+ */
+export const db = new Proxy({} as POSDatabase, {
+    get(_target, prop) {
+        const activeDb = getDb();
+        const value = (activeDb as unknown as Record<string, unknown>)[prop as string];
+        if (typeof value === "function") {
+            return value.bind(activeDb);
+        }
+        return value;
+    },
+});

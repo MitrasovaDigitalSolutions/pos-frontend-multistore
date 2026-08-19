@@ -1,11 +1,9 @@
 "use client";
 
 import type { Member } from "@/features/master/members/types";
-import type { Product } from "@/features/master/products/types";
 import { useNetworkStatus } from "@/hooks/use-network-status";
-import type { PaginationParams } from "@/types/api";
 import { db } from "@/lib/db";
-import { apiGetData, apiGetList, apiPatch, apiPost } from "@/shared/api/api-client";
+import { apiPatch, apiPost } from "@/shared/api/api-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,20 +12,35 @@ import { useCheckoutStore } from "@/stores/checkout-store";
 import type { ApiResponse } from "@/types/api";
 import type { MemberPayment } from "@/features/master/members/api/members-api";
 
-// Catalog auto-sync interval: every 30 minutes when online
-const CATALOG_SYNC_INTERVAL_MS = 30 * 60 * 1000;
+import {
+    catalogSyncManager,
+    type SyncProgress,
+    CATALOG_SYNC_INTERVAL_MS,
+} from "@/features/checkout/services/catalog-sync-manager";
+
+import { useActiveStoreStore } from "@/stores/active-store-store";
 
 export function useSyncEngine() {
     const isOnline = useNetworkStatus();
     const queryClient = useQueryClient();
+    const activeStoreUid = useActiveStoreStore((state) => state.activeStoreUid);
     const [isSyncing, setIsSyncing] = useState(false);
-    const [isCatalogSyncing, setIsCatalogSyncing] = useState(false);
+    const [catalogProgress, setCatalogProgress] = useState<SyncProgress>(
+        catalogSyncManager.getProgress()
+    );
     const [pendingCount, setPendingCount] = useState(0);
     const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
     const [syncError, setSyncError] = useState<string | null>(null);
 
     const isSyncingRef = useRef(false);
-    const isCatalogSyncingRef = useRef(false);
+
+    // Subscribe ke global catalogSyncManager progress updates
+    useEffect(() => {
+        const unsubscribe = catalogSyncManager.subscribe((prog) => {
+            setCatalogProgress(prog);
+        });
+        return unsubscribe;
+    }, []);
 
     // Update the pending transactions count from IndexedDB
     const updatePendingCount = useCallback(async () => {
@@ -312,101 +325,10 @@ export function useSyncEngine() {
         }
     }, [isOnline, syncSingleTransaction, updatePendingCount]);
 
-    // ─── Sync Catalog (Products + Members) into IndexedDB ─────────────────────────
-    const syncCatalog = useCallback(async () => {
-        if (!isOnline || isCatalogSyncingRef.current) return;
-
-        try {
-            isCatalogSyncingRef.current = true;
-            setIsCatalogSyncing(true);
-
-            // 1. Sync Products (Incremental based on updated_after)
-            const localProducts = await db.products.toArray();
-            let lastProductUpdate: string | undefined;
-
-            if (localProducts.length > 0) {
-                const timestamps = localProducts
-                    .map((p) => p.updated_at)
-                    .filter((t): t is string => !!t)
-                    .sort();
-                if (timestamps.length > 0) {
-                    lastProductUpdate = timestamps[timestamps.length - 1];
-                }
-            }
-
-            let currentPage = 1;
-            let lastPage = 1;
-            const perPage = 100;
-
-            while (currentPage <= lastPage) {
-                const params: PaginationParams & { updated_after?: string } = {
-                    page: currentPage,
-                    per_page: perPage,
-                };
-                if (lastProductUpdate) {
-                    params.updated_after = lastProductUpdate;
-                }
-
-                const res = await apiGetList<Product>("/v1/products", params);
-                if (res.data && res.data.length > 0) {
-                    await db.products.bulkPut(res.data);
-                }
-
-                lastPage = res.meta?.last_page || 1;
-                currentPage++;
-            }
-
-            // 2. Sync Members (Fetch all)
-            try {
-                const members = await apiGetData<Member[]>("/v1/members/all");
-                if (members && members.length > 0) {
-                    // Find pending offline debt payments to preserve un-synced debt reductions
-                    const pendingDebts = await db.offlineDebtPayments
-                        .where("status")
-                        .equals("pending")
-                        .toArray();
-
-                    const pendingDeductions: Record<string, number> = {};
-                    for (const p of pendingDebts) {
-                        pendingDeductions[p.member_uid] = (pendingDeductions[p.member_uid] || 0) + (p.amount || 0);
-                    }
-
-                    const adjustedMembers = members.map((m) => {
-                        const deduction = pendingDeductions[m.uid] || 0;
-                        if (deduction > 0) {
-                            return {
-                                ...m,
-                                hutang: Math.max(0, (m.hutang || 0) - deduction),
-                            };
-                        }
-                        return m;
-                    });
-
-                    await db.members.clear();
-                    await db.members.bulkPut(adjustedMembers);
-
-                    const currentSelected = useCheckoutStore.getState().selectedMember;
-                    if (currentSelected) {
-                        const match = adjustedMembers.find((m) => m.uid === currentSelected.uid);
-                        if (match) {
-                            useCheckoutStore.getState().setSelectedMember(match);
-                        }
-                    }
-                }
-            } catch (err) {
-                console.warn("Gagal sinkronisasi data member:", err);
-            }
-
-            localStorage.setItem("catalog_last_synced_at", new Date().toISOString());
-            if (typeof window !== "undefined") {
-                window.dispatchEvent(new Event("pos_catalog_synced"));
-            }
-        } catch (err) {
-            console.error("Gagal sinkronisasi katalog:", err);
-        } finally {
-            isCatalogSyncingRef.current = false;
-            setIsCatalogSyncing(false);
-        }
+    // ─── Sync Catalog Trigger (Delegates to Singleton) ─────────────────────────
+    const triggerCatalogSync = useCallback(async (force = true) => {
+        if (!isOnline) return false;
+        return await catalogSyncManager.startSync({ force, isManual: true });
     }, [isOnline]);
 
     // Initialize pending count on mount and listen to global pending count updates
@@ -433,32 +355,43 @@ export function useSyncEngine() {
         };
     }, [updatePendingCount]);
 
-    // Sync catalog when coming back online (one-time trigger)
+    // Sync catalog when coming back online or when switching stores
     useEffect(() => {
         if (isOnline) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            syncCatalog();
+            catalogSyncManager.startSync({ force: false, isManual: false });
             syncOfflineDrawerActions();
         }
-        // NOTE: syncOfflineTransactions and syncOfflineDebtPayments are intentionally NOT called here.
-        // Offline items must be synced manually from the monitoring dialog.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOnline, syncOfflineDrawerActions]);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        updatePendingCount();
+    }, [isOnline, activeStoreUid, syncOfflineDrawerActions, updatePendingCount]);
 
     // Periodic catalog sync every 30 minutes while online
     useEffect(() => {
         if (!isOnline) return;
 
         const interval = setInterval(() => {
-            syncCatalog();
+            catalogSyncManager.startSync({ force: false, isManual: false });
         }, CATALOG_SYNC_INTERVAL_MS);
 
         return () => clearInterval(interval);
-    }, [isOnline, syncCatalog]);
+    }, [isOnline, activeStoreUid]);
+
+    // Sync catalog delta when window regains focus while online
+    useEffect(() => {
+        if (!isOnline) return;
+        const handleWindowFocus = () => {
+            catalogSyncManager.startSync({ force: false, isManual: false });
+        };
+        window.addEventListener("focus", handleWindowFocus);
+        return () => {
+            window.removeEventListener("focus", handleWindowFocus);
+        };
+    }, [isOnline]);
 
     return {
         isSyncing,
-        isCatalogSyncing,
+        isCatalogSyncing: catalogProgress.isSyncing,
+        catalogProgress,
         pendingCount,
         lastSyncedAt,
         syncError,
@@ -466,7 +399,8 @@ export function useSyncEngine() {
         triggerSync: syncOfflineTransactions,
         triggerSingleSync: syncSingleTransaction,
         triggerSelectedSync: syncSelectedTransactions,
-        triggerCatalogSync: syncCatalog,
+        triggerCatalogSync,
+        cancelCatalogSync: () => catalogSyncManager.cancelSync(),
         triggerSingleDebtPaymentSync: syncSingleDebtPayment,
         triggerDebtPaymentSync: syncOfflineDebtPayments,
         updatePendingCount,

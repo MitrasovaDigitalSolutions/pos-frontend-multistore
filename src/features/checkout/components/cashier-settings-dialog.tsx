@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { Show } from "@/components/ui/show";
+import { catalogSyncManager } from "@/features/checkout/services/catalog-sync-manager";
 
 interface CashierSettingsDialogProps {
     open: boolean;
@@ -40,6 +41,13 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
     const [printerOptions, setPrinterOptions] = useState<{ value: string; label: string }[]>([]);
     const [isLoadingPrinters, setIsLoadingPrinters] = useState(false);
     const [qzError, setQzError] = useState<string | null>(null);
+    const [isSyncing, setIsSyncing] = useState(false);
+
+    useEffect(() => {
+        return catalogSyncManager.subscribe((p) => {
+            setIsSyncing(p.isSyncing);
+        });
+    }, []);
 
     const methods = useForm<CashierSettingsInput>({
         values: {
@@ -113,14 +121,17 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
             }
 
             if (data.activeStore && data.activeStore !== activeStoreUid) {
+                if (catalogSyncManager.isCurrentlySyncing()) {
+                    toast.warning("Mohon tunggu, proses sinkronisasi katalog sedang berlangsung.");
+                    setIsSaving(false);
+                    return;
+                }
+
                 const targetStore = stores.find((s) => s.uid === data.activeStore);
                 if (targetStore) {
                     const toastId = toast.loading(`Sedang berpindah ke ${targetStore.nama}...`);
                     setActiveStore(data.activeStore);
-                    await Promise.all([
-                        queryClient.invalidateQueries(),
-                        fetchSettings(),
-                    ]);
+                    await queryClient.invalidateQueries();
                     toast.success(`Berhasil berpindah ke ${targetStore.nama}`, { id: toastId });
                     hasChanges = true;
                 }
@@ -293,6 +304,18 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
 
                         <Show.When isTrue={activeTab === "store"}>
                             <div className="space-y-4">
+                                <Show.When isTrue={isSyncing}>
+                                    <div className="bg-amber-50 border border-amber-200/90 rounded-xl p-3 text-[11px] text-amber-900 flex items-start gap-2.5 shadow-xs">
+                                        <Loader2 size={15} className="animate-spin text-amber-600 shrink-0 mt-0.5" />
+                                        <div className="flex-1">
+                                            <span className="font-bold block text-amber-950">Sinkronisasi Katalog Sedang Berjalan</span>
+                                            <span className="text-amber-800 text-[10.5px] leading-relaxed">
+                                                Perpindahan toko terkunci sementara demi integritas data lokal hingga proses pengunduhan katalog selesai.
+                                            </span>
+                                        </div>
+                                    </div>
+                                </Show.When>
+
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
                                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
@@ -312,6 +335,7 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
                                             description: s.is_central ? STORE_LABEL_HQ : STORE_LABEL_BRANCH,
                                         }))}
                                         placeholder="Pilih Toko"
+                                        disabled={isSaving || isSyncing}
                                         leftIcon={
                                             <IconBuildingStore
                                                 size={16}
