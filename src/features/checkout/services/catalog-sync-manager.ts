@@ -42,8 +42,8 @@ const DEFAULT_PROGRESS: SyncProgress = {
 
 // Interval otomatis sync katalog saat online (30 menit)
 export const CATALOG_SYNC_INTERVAL_MS = 30 * 60 * 1000;
-// Ukuran batch produk & member per halaman (250 item agar cepat dan stabil)
-export const CATALOG_SYNC_PER_PAGE = 250;
+// Ukuran batch produk & member per halaman (1000 item agar cepat dan stabil)
+export const CATALOG_SYNC_PER_PAGE = 1000;
 
 export function getCatalogLastSyncedAt(storeUid?: string | null): string | null {
     if (typeof window === "undefined") return null;
