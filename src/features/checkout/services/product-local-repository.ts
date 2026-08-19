@@ -22,7 +22,7 @@ export interface PaginatedLocalProductsResult {
 export class ProductLocalRepository {
     private static instance: ProductLocalRepository | null = null;
 
-    private constructor() {}
+    private constructor() { }
 
     public static getInstance(): ProductLocalRepository {
         if (!ProductLocalRepository.instance) {
