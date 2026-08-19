@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { Show } from "@/components/ui/show";
+import { catalogSyncManager } from "@/features/checkout/services/catalog-sync-manager";
 
 interface CashierSettingsDialogProps {
     open: boolean;
@@ -113,6 +114,12 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
             }
 
             if (data.activeStore && data.activeStore !== activeStoreUid) {
+                if (catalogSyncManager.isCurrentlySyncing()) {
+                    toast.warning("Mohon tunggu, proses sinkronisasi katalog sedang berlangsung.");
+                    setIsSaving(false);
+                    return;
+                }
+
                 const targetStore = stores.find((s) => s.uid === data.activeStore);
                 if (targetStore) {
                     const toastId = toast.loading(`Sedang berpindah ke ${targetStore.nama}...`);

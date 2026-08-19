@@ -3,10 +3,8 @@
 import { AppButton } from "@/components/shared/app-button";
 import { CommandSelect } from "@/components/ui/command-select";
 import { PayDebtDialog } from "@/features/debts/components/pay-debt-dialog";
-import { useAllMembers } from "@/features/master/members/api/members-api";
 import type { Member } from "@/features/master/members/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { useNetworkStatus } from "@/hooks/use-network-status";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/stores/settings-store";
@@ -72,9 +70,8 @@ export function CheckoutTotalsSection({
     namaTransaksi,
     onNamaTransaksiChange,
 }: CheckoutTotalsSectionProps) {
-    const isOnline = useNetworkStatus();
-    const { data: membersData = [], isLoading: isMembersLoading } = useAllMembers();
     const [localMembers, setLocalMembers] = useState<Member[]>([]);
+    const [isMembersLoading, setIsMembersLoading] = useState(false);
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
     const [isPayDebtOpen, setIsPayDebtOpen] = useState(false);
     const getTaxRate = useSettingsStore((state) => state.getTaxRate);
@@ -130,24 +127,23 @@ export function CheckoutTotalsSection({
         }
     }, []);
 
-    const reloadLocalMembers = useCallback(() => {
-        db.members.toArray().then((items) => {
+    const reloadLocalMembers = useCallback(async () => {
+        try {
+            setIsMembersLoading(true);
+            const items = await db.members.toArray();
             setLocalMembers(items);
-        });
-        loadPendingDebts();
+            await loadPendingDebts();
+        } catch (err) {
+            console.error("Gagal memuat member lokal:", err);
+        } finally {
+            setIsMembersLoading(false);
+        }
     }, [loadPendingDebts]);
 
     useEffect(() => {
         let isMounted = true;
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        loadPendingDebts();
-        if (!isOnline || membersData.length === 0) {
-            db.members.toArray().then((items) => {
-                if (isMounted) {
-                    setLocalMembers(items);
-                }
-            });
-        }
+        reloadLocalMembers();
 
         const handleMemberUpdated = () => {
             if (isMounted) {
@@ -167,23 +163,20 @@ export function CheckoutTotalsSection({
                 window.removeEventListener("pos_catalog_synced", handleMemberUpdated);
             }
         };
-    }, [membersData, isOnline, reloadLocalMembers, loadPendingDebts]);
+    }, [reloadLocalMembers]);
 
     const members = useMemo(() => {
-        if (isOnline && membersData.length > 0) {
-            return membersData.map((m) => {
-                const pendingDeduction = pendingDebtMap[m.uid] || 0;
-                if (pendingDeduction > 0) {
-                    return {
-                        ...m,
-                        hutang: Math.max(0, (m.hutang || 0) - pendingDeduction),
-                    };
-                }
-                return m;
-            });
-        }
-        return localMembers;
-    }, [isOnline, membersData, localMembers, pendingDebtMap]);
+        return localMembers.map((m) => {
+            const pendingDeduction = pendingDebtMap[m.uid] || 0;
+            if (pendingDeduction > 0) {
+                return {
+                    ...m,
+                    hutang: Math.max(0, (m.hutang || 0) - pendingDeduction),
+                };
+            }
+            return m;
+        });
+    }, [localMembers, pendingDebtMap]);
 
     const activeMember = useMemo(() => {
         if (!selectedMember) return null;

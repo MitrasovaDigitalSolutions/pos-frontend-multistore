@@ -10,6 +10,8 @@ import { useSession } from "next-auth/react";
 import { useActiveStoreStore } from "@/stores/active-store-store";
 import { Show } from "@/components/ui/show";
 
+import type { SyncProgress } from "@/features/checkout/services/catalog-sync-manager";
+
 interface CheckoutTopBarProps {
     transactionId: string | null;
     activeDrawerSession: { uid: string } | null | undefined;
@@ -24,6 +26,7 @@ interface CheckoutTopBarProps {
     offlineReadiness?: OfflineReadinessState;
     onCatalogSyncRequest?: () => void;
     isCatalogSyncing?: boolean;
+    catalogProgress?: SyncProgress;
 }
 
 export function CheckoutTopBar({
@@ -40,6 +43,7 @@ export function CheckoutTopBar({
     offlineReadiness,
     onCatalogSyncRequest,
     isCatalogSyncing = false,
+    catalogProgress,
 }: CheckoutTopBarProps) {
     const getSetting = useSettingsStore((state) => state.getSetting);
     const appName = getSetting("app_name", "Mitrasova POS");
@@ -120,6 +124,7 @@ export function CheckoutTopBar({
                         state={offlineReadiness!}
                         onRefreshRequest={onCatalogSyncRequest}
                         isSyncing={isCatalogSyncing}
+                        catalogProgress={catalogProgress}
                     />
                 </Show.When>
 

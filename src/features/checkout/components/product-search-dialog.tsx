@@ -19,10 +19,12 @@ import { cn } from "@/lib/utils";
 import { Show } from "@/components/ui/show";
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { productLocalRepository } from "@/features/checkout/services/product-local-repository";
+
 interface ProductSearchDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    products: Product[];
+    products?: Product[];
     onAddProduct: (product: Product) => void;
     initialSearchQuery?: string;
 }
@@ -37,12 +39,20 @@ interface ProductSearchFilterValues {
 export function ProductSearchDialog({
     open,
     onOpenChange,
-    products,
+    products = [],
     onAddProduct,
     initialSearchQuery = "",
 }: ProductSearchDialogProps) {
     const [page, setPage] = useState(1);
-    const [perPage, setPerPage] = useState(5);
+    const [perPage, setPerPage] = useState(10);
+    const [localData, setLocalData] = useState<{
+        items: Product[];
+        total: number;
+    }>({ items: [], total: 0 });
+    const [dbCategories, setDbCategories] = useState<Array<{ uid: string; nama: string }>>([]);
+    const [dbBrands, setDbBrands] = useState<Array<{ uid: string; nama: string }>>([]);
+
+    const isInMemory = products && products.length > 0;
 
     const methods = useForm<ProductSearchFilterValues>({
         defaultValues: {
@@ -81,6 +91,40 @@ export function ProductSearchDialog({
         setPage(1);
     }
 
+    // Load distinct categories & brands from IndexedDB on dialog open
+    useEffect(() => {
+        if (open && !isInMemory) {
+            productLocalRepository.getDistinctCategoriesAndBrands().then((res) => {
+                setDbCategories(res.categories);
+                setDbBrands(res.brands);
+            });
+        }
+    }, [open, isInMemory]);
+
+    // Query IndexedDB directly for paginated results when products array is not supplied
+    useEffect(() => {
+        let isCurrent = true;
+        if (open && !isInMemory) {
+            productLocalRepository
+                .getPaginatedProductsLocal({
+                    search: searchQuery,
+                    category_uid: selectedCategory,
+                    brand_uid: selectedBrand,
+                    stock: stockFilter,
+                    page,
+                    perPage,
+                })
+                .then((res) => {
+                    if (isCurrent) {
+                        setLocalData({ items: res.items, total: res.total });
+                    }
+                });
+        }
+        return () => {
+            isCurrent = false;
+        };
+    }, [open, isInMemory, searchQuery, selectedCategory, selectedBrand, stockFilter, page, perPage]);
+
     // Auto-focus search input after transition on mount
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -92,6 +136,7 @@ export function ProductSearchDialog({
 
     // Derive unique categories and brands from loaded products list (for complete offline compatibility)
     const categories = useMemo(() => {
+        if (!isInMemory) return dbCategories;
         const unique = new Map<string, string>();
         products.forEach((p) => {
             if (p.category?.uid && p.category?.nama) {
@@ -99,9 +144,10 @@ export function ProductSearchDialog({
             }
         });
         return Array.from(unique.entries()).map(([uid, nama]) => ({ uid, nama }));
-    }, [products]);
+    }, [isInMemory, dbCategories, products]);
 
     const brands = useMemo(() => {
+        if (!isInMemory) return dbBrands;
         const unique = new Map<string, string>();
         products.forEach((p) => {
             if (p.brand?.uid && p.brand?.nama) {
@@ -111,7 +157,7 @@ export function ProductSearchDialog({
             }
         });
         return Array.from(unique.entries()).map(([uid, nama]) => ({ uid, nama }));
-    }, [products]);
+    }, [isInMemory, dbBrands, products]);
 
     const categoryOptions = useMemo(() => [
         { value: "all", label: "Semua Kategori" },
@@ -130,13 +176,12 @@ export function ProductSearchDialog({
         { value: "empty", label: "Habis (0)" },
     ];
 
-    // Filter products locally in memory
+    // Filter products locally in memory if array is supplied
     const filteredProducts = useMemo(() => {
+        if (!isInMemory) return localData.items;
         return products.filter((p) => {
-            // Must be active to sell
             if (p.status !== "active") return false;
 
-            // Search query matching: name, barcode, or brand (supports fuzzy multi-word lookup)
             if (searchQuery.trim()) {
                 const queryWords = searchQuery.toLowerCase().trim().split(/\s+/);
                 const isMatch = queryWords.every((word) => {
@@ -153,24 +198,20 @@ export function ProductSearchDialog({
                 if (!isMatch) return false;
             }
 
-            // Category filter
             if (selectedCategory !== "all") {
                 if (p.category_uid !== selectedCategory && p.category?.uid !== selectedCategory) {
                     return false;
                 }
             }
 
-            // Brand filter
             if (selectedBrand !== "all") {
                 if (p.brand_uid !== selectedBrand && p.brand?.uid !== selectedBrand && p.merek !== selectedBrand) {
                     return false;
                 }
             }
 
-            // Stock filter
             if (stockFilter !== "all") {
                 if (p.is_jasa) {
-                    // Services/labor are always available, exclude them for low/empty filters
                     if (stockFilter !== "available") return false;
                 } else {
                     if (stockFilter === "available" && p.stok <= 0) return false;
@@ -181,7 +222,7 @@ export function ProductSearchDialog({
 
             return true;
         });
-    }, [products, searchQuery, selectedCategory, selectedBrand, stockFilter]);
+    }, [isInMemory, localData.items, products, searchQuery, selectedCategory, selectedBrand, stockFilter]);
 
     const handleSelectProduct = useCallback((product: Product) => {
         if (!product.is_jasa && product.stok <= 0) return;

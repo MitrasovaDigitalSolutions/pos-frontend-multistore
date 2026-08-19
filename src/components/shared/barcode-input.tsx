@@ -5,6 +5,7 @@ import { IconBarcode, IconSearch, IconLoader2 } from "@tabler/icons-react";
 import { lookupProductByBarcode } from "@/features/purchase/api/purchase-api";
 import type { Product } from "@/features/master/products/types";
 import { useQuery } from "@tanstack/react-query";
+import { productLocalRepository } from "@/features/checkout/services/product-local-repository";
 
 interface BarcodeInputProps {
     onProductFound: (product: Product) => void;
@@ -47,6 +48,7 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
         const [focusedIndex, setFocusedIndex] = useState(-1);
         const [debouncedValue, setDebouncedValue] = useState("");
         const dropdownRef = useRef<HTMLDivElement>(null);
+        const [localSuggestions, setLocalSuggestions] = useState<Product[]>([]);
 
         // Scroll focused suggestion into view
         useEffect(() => {
@@ -65,6 +67,23 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
             }, 300);
             return () => clearTimeout(timer);
         }, [value]);
+
+        // Fetch suggestions from IndexedDB if in local mode
+        useEffect(() => {
+            let isCurrent = true;
+            if (debouncedValue.trim().length >= 2 && (!products || products.length === 0)) {
+                productLocalRepository.searchSuggestionsLocal(debouncedValue, 8).then((res) => {
+                    if (isCurrent) {
+                        setLocalSuggestions(res);
+                    }
+                });
+            } else {
+                setLocalSuggestions([]);
+            }
+            return () => {
+                isCurrent = false;
+            };
+        }, [debouncedValue, products]);
 
         // Show/hide dropdown based on input content
         useEffect(() => {
@@ -99,7 +118,7 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                     return [];
                 }
             },
-            enabled: !isLocalMode && debouncedValue.trim().length >= 2,
+            enabled: !isLocalMode && localSuggestions.length === 0 && debouncedValue.trim().length >= 2,
             retry: false,
             staleTime: 30000,
         });
@@ -118,8 +137,11 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                     })
                     .slice(0, 8);
             }
+            if (localSuggestions.length > 0) {
+                return localSuggestions;
+            }
             return apiProducts || [];
-        }, [value, isLocalMode, products, apiProducts]);
+        }, [value, isLocalMode, products, localSuggestions, apiProducts]);
 
         // Auto-focus on mount
         useEffect(() => {
@@ -172,27 +194,34 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
             setIsSearching(true);
 
             try {
-                // 1. Try local match by barcode
-                let found = products.find(
-                    (p) => p.barcode?.toLowerCase() === query.toLowerCase(),
-                );
+                let found: Product | null | undefined = null;
 
-                // 2. Try local match by name (precise)
-                if (!found) {
-                    found = products.find((p) =>
-                        p.nama.toLowerCase().includes(query.toLowerCase()),
+                if (isLocalMode) {
+                    // 1. Try match by barcode
+                    found = products.find(
+                        (p) => p.barcode?.toLowerCase() === query.toLowerCase(),
                     );
+
+                    // 2. Try match by name (precise)
+                    if (!found) {
+                        found = products.find((p) =>
+                            p.nama.toLowerCase().includes(query.toLowerCase()),
+                        );
+                    }
+
+                    // 2b. Try match by split words (fuzzy)
+                    if (!found) {
+                        const queryWords = query.toLowerCase().trim().split(/\s+/);
+                        found = products.find((p) =>
+                            queryWords.every((word) => p.nama.toLowerCase().includes(word))
+                        );
+                    }
+                } else {
+                    // Search directly from IndexedDB B-tree
+                    found = await productLocalRepository.lookupBarcodeLocal(query);
                 }
 
-                // 2b. Try local match by split words (fuzzy)
-                if (!found) {
-                    const queryWords = query.toLowerCase().trim().split(/\s+/);
-                    found = products.find((p) =>
-                        queryWords.every((word) => p.nama.toLowerCase().includes(word))
-                    );
-                }
-
-                // 3. Try API barcode lookup (only when not in local/offline mode)
+                // 3. Try API barcode lookup if still not found
                 if (!found && !isLocalMode) {
                     try {
                         const results = await lookupProductByBarcode(query);

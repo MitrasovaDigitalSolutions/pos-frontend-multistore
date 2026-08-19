@@ -12,12 +12,20 @@ import { FormSelect } from "@/components/forms/form-select";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/query-keys";
 import { STORE_BADGE_HQ, STORE_LABEL_HQ, STORE_LABEL_BRANCH } from "@/constants/store";
+import { catalogSyncManager } from "@/features/checkout/services/catalog-sync-manager";
 
 export function StoreSwitcher() {
     const { data: session } = useSession();
     const queryClient = useQueryClient();
     const { activeStoreUid, setActiveStore } = useActiveStoreStore();
     const [mounted, setMounted] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
+
+    useEffect(() => {
+        return catalogSyncManager.subscribe((p) => {
+            setIsSyncing(p.isSyncing);
+        });
+    }, []);
 
     const { data: storesRes } = useStores({ per_page: 1000 });
     const sessionStores = useMemo(() => session?.user?.stores ?? [], [session?.user?.stores]);
@@ -66,6 +74,11 @@ export function StoreSwitcher() {
     if (!mounted || stores.length === 0) return null;
 
     const handleSelectStore = (uid: string) => {
+        if (isSyncing) {
+            toast.warning("Mohon tunggu, proses sinkronisasi katalog toko sedang berjalan...");
+            return;
+        }
+
         if (uid && uid !== activeStoreUid) {
             const newStore = stores.find((s) => s.uid === uid);
             if (newStore) {
@@ -100,6 +113,7 @@ export function StoreSwitcher() {
                         description: s.is_central ? STORE_LABEL_HQ : STORE_LABEL_BRANCH,
                     }))}
                     onChange={handleSelectStore}
+                    disabled={isSyncing}
                     size="sm"
                     className="rounded-full h-8 sm:h-9 px-2 sm:px-2.5 border-slate-200 shadow-sm hover:border-slate-300 focus:ring-emerald-500/20 text-[11px] sm:text-xs font-bold text-slate-700 bg-white min-w-0"
                     leftIcon={

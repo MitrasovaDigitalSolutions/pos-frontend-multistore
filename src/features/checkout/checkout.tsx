@@ -166,6 +166,7 @@ export function Checkout() {
                 offlineReadiness={offlineReadiness}
                 onCatalogSyncRequest={syncEngine.triggerCatalogSync}
                 isCatalogSyncing={syncEngine.isCatalogSyncing}
+                catalogProgress={syncEngine.catalogProgress}
             />
 
             {/* Mobile Tab Switcher */}
