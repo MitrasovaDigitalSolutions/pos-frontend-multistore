@@ -376,6 +376,18 @@ export function useSyncEngine() {
         return () => clearInterval(interval);
     }, [isOnline, activeStoreUid]);
 
+    // Sync catalog delta when window regains focus while online
+    useEffect(() => {
+        if (!isOnline) return;
+        const handleWindowFocus = () => {
+            catalogSyncManager.startSync({ force: false, isManual: false });
+        };
+        window.addEventListener("focus", handleWindowFocus);
+        return () => {
+            window.removeEventListener("focus", handleWindowFocus);
+        };
+    }, [isOnline]);
+
     return {
         isSyncing,
         isCatalogSyncing: catalogProgress.isSyncing,

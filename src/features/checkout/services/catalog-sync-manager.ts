@@ -7,6 +7,7 @@ import type { Member } from "@/features/master/members/types";
 import type { PaginationParams } from "@/types/api";
 import { useCheckoutStore } from "@/stores/checkout-store";
 import { useActiveStoreStore } from "@/stores/active-store-store";
+import { productLocalRepository } from "@/features/checkout/services/product-local-repository";
 import type { AxiosRequestConfig } from "axios";
 
 export interface ProductSyncResponse {
@@ -84,7 +85,7 @@ export class CatalogSyncManager {
     }
 
     public isCurrentlySyncing(): boolean {
-        return this.activeSyncPromise !== null;
+        return this.currentProgress.isSyncing;
     }
 
     public subscribe(listener: (progress: SyncProgress) => void): () => void {
@@ -107,7 +108,8 @@ export class CatalogSyncManager {
     }
 
     /**
-     * Memeriksa apakah katalog lokal toko aktif sudah kadaluwarsa dan butuh sync.
+     * Memeriksa apakah katalog lokal toko aktif sudah kadaluwarsa atau butuh delta sync.
+     * Mengembalikan true agar delta sync dengan updated_after selalu aktif saat masuk ke checkout.
      */
     public async isSyncNeeded(storeUid?: string | null): Promise<boolean> {
         try {
@@ -119,8 +121,7 @@ export class CatalogSyncManager {
             const lastSyncedAt = getCatalogLastSyncedAt(targetUid);
             if (!lastSyncedAt) return true;
 
-            const timeDiff = Date.now() - new Date(lastSyncedAt).getTime();
-            return timeDiff > CATALOG_SYNC_INTERVAL_MS;
+            return true;
         } catch {
             return true;
         }
@@ -152,19 +153,17 @@ export class CatalogSyncManager {
             this.syncingStoreUid = null;
         }
 
-        // SHARED PROMISE LOCK: Jika ada proses sync yang sedang aktif untuk store yang SAMA, gunakan promise yang sama
-        if (this.activeSyncPromise && this.syncingStoreUid === targetStoreUid) {
+        // Jika sedang berjalan untuk store yang SAMA, gunakan promise yang sama (deduplikasi)
+        if (this.activeSyncPromise) {
             return this.activeSyncPromise;
         }
 
-        // Kunci secara sinkron di memori sebelum ada microtask/await
         this.syncingStoreUid = targetStoreUid;
-        this.activeSyncPromise = this.executeSync(targetStoreUid, options).finally(() => {
-            if (this.syncingStoreUid === targetStoreUid) {
+        this.activeSyncPromise = this.executeSync(targetStoreUid, options)
+            .finally(() => {
                 this.activeSyncPromise = null;
                 this.syncingStoreUid = null;
-            }
-        });
+            });
 
         return this.activeSyncPromise;
     }
@@ -180,11 +179,12 @@ export class CatalogSyncManager {
         const isManual = options?.isManual ?? false;
         const resetAll = options?.resetAll ?? false;
 
-        // Freshness check jika bukan force atau manual trigger
-        if (!force && !isManual) {
-            const needed = await this.isSyncNeeded(targetStoreUid);
-            if (!needed) {
-                return false;
+        // Cooldown 3 detik untuk mencegah duplicate requests jika komponen di-mount ulang seketika
+        const lastSyncedAt = getCatalogLastSyncedAt(targetStoreUid);
+        if (!force && !isManual && !resetAll && lastSyncedAt) {
+            const timeDiff = Date.now() - new Date(lastSyncedAt).getTime();
+            if (timeDiff < 3_000) {
+                return true;
             }
         }
 
@@ -203,7 +203,6 @@ export class CatalogSyncManager {
         try {
             const { lastSyncedKey } = getStoreSyncKeys(targetStoreUid);
             const localProductsCount = await targetDb.products.count();
-            const lastSyncedAt = getCatalogLastSyncedAt(targetStoreUid);
 
             // True Delta Sync: jika sudah ada data lokal dan pernah sync sebelumnya (dan bukan resetAll)
             const isIncremental = !resetAll && Boolean(lastSyncedAt) && localProductsCount > 0;
@@ -376,6 +375,9 @@ export class CatalogSyncManager {
             const nowIso = new Date().toISOString();
             localStorage.setItem(lastSyncedKey, nowIso);
             localStorage.setItem("catalog_last_synced_at", nowIso);
+
+            // Invalidate local category & brand cache agar produk baru langsung terdeteksi
+            productLocalRepository.invalidateCache();
 
             this.updateProgress({
                 isSyncing: false,
