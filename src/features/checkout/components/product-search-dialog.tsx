@@ -224,6 +224,15 @@ export function ProductSearchDialog({
         });
     }, [isInMemory, localData.items, products, searchQuery, selectedCategory, selectedBrand, stockFilter]);
 
+    const totalItems = isInMemory ? filteredProducts.length : localData.total;
+    const totalPages = Math.max(1, Math.ceil(totalItems / perPage));
+
+    const displayProducts = useMemo(() => {
+        if (!isInMemory) return localData.items;
+        const start = (page - 1) * perPage;
+        return filteredProducts.slice(start, start + perPage);
+    }, [isInMemory, localData.items, filteredProducts, page, perPage]);
+
     const handleSelectProduct = useCallback((product: Product) => {
         if (!product.is_jasa && product.stok <= 0) return;
         onAddProduct(product);
@@ -257,18 +266,24 @@ export function ProductSearchDialog({
                 cell: ({ row }) => {
                     const p = row.original;
                     return (
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-slate-800 hover:text-emerald-700 transition-colors">
+                        <div className="flex flex-col gap-0.5 min-w-0 max-w-[200px] xs:max-w-[240px] sm:max-w-xs md:max-w-sm">
+                            <span
+                                className="font-bold text-slate-800 hover:text-emerald-700 transition-colors truncate block"
+                                title={p.nama}
+                            >
                                 {p.nama}
                             </span>
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
                                 {p.is_jasa && (
-                                    <span className="text-[9px] font-extrabold px-1.5 py-0.2 bg-blue-50 text-blue-600 rounded">
+                                    <span className="text-[9px] font-extrabold px-1.5 py-0.2 bg-blue-50 text-blue-600 rounded shrink-0">
                                         JASA
                                     </span>
                                 )}
                                 {p.brand?.nama && (
-                                    <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-1 py-px rounded">
+                                    <span
+                                        className="text-[9px] font-bold text-slate-400 bg-slate-100 px-1 py-px rounded truncate max-w-[120px]"
+                                        title={p.brand.nama}
+                                    >
                                         {p.brand.nama}
                                     </span>
                                 )}
@@ -281,21 +296,27 @@ export function ProductSearchDialog({
                 accessorKey: "barcode",
                 header: "Barcode / SKU",
                 cell: ({ row }) => (
-                    <span className="font-mono text-xs text-slate-600">
+                    <span
+                        className="font-mono text-xs text-slate-600 truncate block max-w-[130px]"
+                        title={row.original.barcode || ""}
+                    >
                         {row.original.barcode || "-"}
                     </span>
                 ),
-                size: 150,
+                size: 140,
             },
             {
                 accessorKey: "category.nama",
                 header: "Kategori",
                 cell: ({ row }) => (
-                    <span className="text-xs text-slate-500">
+                    <span
+                        className="text-xs text-slate-500 truncate block max-w-[130px]"
+                        title={row.original.category?.nama || ""}
+                    >
                         {row.original.category?.nama || "-"}
                     </span>
                 ),
-                size: 150,
+                size: 140,
             },
             {
                 accessorKey: "stok",
@@ -439,12 +460,20 @@ export function ProductSearchDialog({
                     {/* ─── Product Results List (Table via DataTable) ─── */}
                     <DataTable
                         columns={columns}
-                        data={filteredProducts}
-                        clientPagination={true}
+                        data={displayProducts}
                         page={page}
                         perPage={perPage}
                         onPageChange={setPage}
-                        onPerPageChange={setPerPage}
+                        onPerPageChange={(newPerPage) => {
+                            setPerPage(newPerPage);
+                            setPage(1);
+                        }}
+                        meta={{
+                            current_page: page,
+                            last_page: totalPages,
+                            per_page: perPage,
+                            total: totalItems,
+                        }}
                         entityName="produk"
                         emptyMessage="Tidak ada produk ditemukan."
                         virtualize={false}
