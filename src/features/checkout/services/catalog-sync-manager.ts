@@ -1,13 +1,20 @@
 "use client";
 
 import { getDb } from "@/lib/db";
-import { apiGetList } from "@/shared/api/api-client";
+import { apiGetData, apiGetList } from "@/shared/api/api-client";
 import type { Product } from "@/features/master/products/types";
 import type { Member } from "@/features/master/members/types";
 import type { PaginationParams } from "@/types/api";
 import { useCheckoutStore } from "@/stores/checkout-store";
 import { useActiveStoreStore } from "@/stores/active-store-store";
 import type { AxiosRequestConfig } from "axios";
+
+export interface ProductSyncResponse {
+    items: Product[];
+    next_after_ts: string | null;
+    next_after_uid: string | null;
+    has_more: boolean;
+}
 
 export interface SyncProgress {
     isSyncing: boolean;
@@ -52,7 +59,6 @@ function getStoreSyncKeys(storeUid?: string | null) {
     const uid = storeUid ?? useActiveStoreStore.getState().activeStoreUid ?? "default";
     return {
         lastSyncedKey: `catalog_last_synced_at_${uid}`,
-        checkpointPageKey: `pos_catalog_sync_checkpoint_page_${uid}`,
     };
 }
 
@@ -195,10 +201,9 @@ export class CatalogSyncManager {
         };
 
         try {
-            const { lastSyncedKey, checkpointPageKey } = getStoreSyncKeys(targetStoreUid);
+            const { lastSyncedKey } = getStoreSyncKeys(targetStoreUid);
             const localProductsCount = await targetDb.products.count();
             const lastSyncedAt = getCatalogLastSyncedAt(targetStoreUid);
-            const savedCheckpoint = localStorage.getItem(checkpointPageKey);
 
             // True Delta Sync: jika sudah ada data lokal dan pernah sync sebelumnya (dan bukan resetAll)
             const isIncremental = !resetAll && Boolean(lastSyncedAt) && localProductsCount > 0;
@@ -208,16 +213,6 @@ export class CatalogSyncManager {
                 lastProductUpdate = lastSyncedAt;
             }
 
-            // Tentukan starting page (checkpoint resume untuk full sync yang terputus)
-            let currentPage = 1;
-            if (!isIncremental && savedCheckpoint) {
-                const parsed = parseInt(savedCheckpoint, 10);
-                if (!Number.isNaN(parsed) && parsed > 1) {
-                    currentPage = parsed;
-                }
-            }
-
-            let lastPage = currentPage;
             const perPage = CATALOG_SYNC_PER_PAGE;
             let totalSyncedThisSession = 0;
 
@@ -225,65 +220,63 @@ export class CatalogSyncManager {
                 isSyncing: true,
                 stage: "products",
                 isIncremental,
-                page: currentPage,
-                lastPage: Math.max(lastPage, currentPage),
+                page: 0,
+                lastPage: 0,
                 percent: 5,
                 message: isIncremental
                     ? "Memeriksa pembaruan data produk terbaru..."
                     : "Sedang mengunduh katalog...",
             });
 
-            // ─── 1. Sync Products via Pagination Loop ─────────────────────────────
-            while (currentPage <= lastPage) {
+            // ─── 1. Sync Products via Cursor (keyset pagination) ─────────────────
+            // Endpoint /v1/products/sync: O(1) per halaman, tanpa COUNT/OFFSET,
+            // payload minimal (tanpa relasi berat). Cursor (after_ts, after_uid)
+            // self-contained — tidak perlu checkpoint page.
+            let afterTs: string | undefined;
+            let afterUid: string | undefined;
+            let hasMore = true;
+            let productPages = 0;
+
+            while (hasMore) {
                 // Guard: jika store berganti atau dibatalkan, hentikan seketika!
                 if (signal.aborted || useActiveStoreStore.getState().activeStoreUid !== targetStoreUid) {
                     console.log(`[CatalogSyncManager] Sync produk untuk store ${targetStoreUid} dihentikan karena perpindahan toko.`);
                     return false;
                 }
 
-                const params: PaginationParams & { updated_after?: string } = {
-                    page: currentPage,
-                    per_page: perPage,
+                const params: Record<string, string | number | undefined> = {
+                    limit: perPage,
+                    updated_after: lastProductUpdate,
+                    after_ts: afterTs,
+                    after_uid: afterUid,
                 };
-                if (lastProductUpdate) {
-                    params.updated_after = lastProductUpdate;
-                }
 
-                const res = await apiGetList<Product>("/v1/products", params, reqConfig);
+                const res = await apiGetData<ProductSyncResponse>("/v1/products/sync", { params, ...reqConfig });
 
                 if (signal.aborted || useActiveStoreStore.getState().activeStoreUid !== targetStoreUid) {
                     return false;
                 }
 
-                if (res.data && res.data.length > 0) {
-                    await targetDb.products.bulkPut(res.data);
-                    totalSyncedThisSession += res.data.length;
+                if (res.items.length > 0) {
+                    await targetDb.products.bulkPut(res.items);
+                    totalSyncedThisSession += res.items.length;
                 }
 
-                lastPage = res.meta?.last_page || 1;
-                const totalItems = res.meta?.total || (lastPage * perPage);
-                const progressPercent = Math.min(
-                    90,
-                    Math.round((currentPage / lastPage) * 85) + 5
-                );
+                afterTs = res.next_after_ts ?? undefined;
+                afterUid = res.next_after_uid ?? undefined;
+                hasMore = res.has_more;
+                productPages++;
 
                 this.updateProgress({
-                    page: currentPage,
-                    lastPage,
-                    percent: progressPercent,
+                    page: productPages,
+                    lastPage: 0,
+                    percent: Math.min(90, 5 + productPages * 5),
                     syncedItemsCount: totalSyncedThisSession,
-                    totalEstimate: totalItems,
+                    totalEstimate: 0,
                     message: isIncremental
                         ? `Memperbarui ${totalSyncedThisSession} item produk...`
                         : `Sedang mengunduh katalog...`,
                 });
-
-                // Simpan checkpoint jika full sync (agar bisa resume jika koneksi terputus/pindah toko)
-                if (!isIncremental && currentPage < lastPage) {
-                    localStorage.setItem(checkpointPageKey, String(currentPage + 1));
-                }
-
-                currentPage++;
             }
 
             if (signal.aborted || useActiveStoreStore.getState().activeStoreUid !== targetStoreUid) {
@@ -379,11 +372,10 @@ export class CatalogSyncManager {
                 return false;
             }
 
-            // Selesai sukses: Simpan timestamp dan hapus checkpoint
+            // Selesai sukses: Simpan timestamp
             const nowIso = new Date().toISOString();
             localStorage.setItem(lastSyncedKey, nowIso);
             localStorage.setItem("catalog_last_synced_at", nowIso);
-            localStorage.removeItem(checkpointPageKey);
 
             this.updateProgress({
                 isSyncing: false,
