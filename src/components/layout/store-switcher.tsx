@@ -15,6 +15,7 @@ import { STORE_BADGE_HQ, STORE_LABEL_HQ, STORE_LABEL_BRANCH } from "@/constants/
 import { catalogSyncManager } from "@/features/checkout/services/catalog-sync-manager";
 import { IconLoader2 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function StoreSwitcher() {
     const { data: session } = useSession();
@@ -112,59 +113,79 @@ export function StoreSwitcher() {
 
     return (
         <FormProvider {...methods}>
-            <div
-                className={cn(
-                    "w-[125px] xs:w-[155px] sm:w-[225px] shrink-0 relative",
-                    isSyncing && "cursor-not-allowed"
-                )}
-                onClickCapture={handleContainerClick}
-                title={isSyncing ? "Toko terkunci sementara: Sinkronisasi katalog sedang berjalan..." : undefined}
-            >
-                <FormSelect<{ activeStore: string }>
-                    name="activeStore"
-                    options={stores.map((s) => ({
-                        value: s.uid,
-                        label: s.nama,
-                        description: s.is_central ? STORE_LABEL_HQ : STORE_LABEL_BRANCH,
-                    }))}
-                    onChange={handleSelectStore}
-                    disabled={isSyncing}
-                    size="sm"
-                    className={cn(
-                        "rounded-full h-8 sm:h-9 px-2 sm:px-2.5 border-slate-200 shadow-sm hover:border-slate-300 focus:ring-emerald-500/20 text-[11px] sm:text-xs font-bold text-slate-700 bg-white min-w-0 transition-all",
-                        isSyncing && "opacity-80 bg-amber-50/50 border-amber-300 text-amber-900 pointer-events-none"
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <div
+                        className={cn(
+                            "w-[125px] xs:w-[155px] sm:w-[225px] shrink-0 relative",
+                            isSyncing && "cursor-not-allowed"
+                        )}
+                        onClickCapture={handleContainerClick}
+                    >
+                        <FormSelect<{ activeStore: string }>
+                            name="activeStore"
+                            options={stores.map((s) => ({
+                                value: s.uid,
+                                label: s.nama,
+                                description: s.is_central ? STORE_LABEL_HQ : STORE_LABEL_BRANCH,
+                            }))}
+                            onChange={handleSelectStore}
+                            disabled={isSyncing}
+                            size="sm"
+                            className={cn(
+                                "rounded-full h-8 sm:h-9 px-2 sm:px-2.5 border-slate-200 shadow-sm hover:border-slate-300 focus:ring-emerald-500/20 text-[11px] sm:text-xs font-bold text-slate-700 bg-white min-w-0 transition-all",
+                                isSyncing && "opacity-85 bg-amber-50/70 border-amber-300 text-amber-900 pointer-events-none"
+                            )}
+                            leftIcon={
+                                isSyncing ? (
+                                    <IconLoader2
+                                        size={14}
+                                        className="shrink-0 animate-spin text-amber-600"
+                                    />
+                                ) : (
+                                    <IconBuildingStore
+                                        size={14}
+                                        className={`shrink-0 ${activeStore?.is_central ? "text-emerald-600" : "text-slate-500"
+                                            }`}
+                                    />
+                                )
+                            }
+                            rightElement={
+                                isSyncing ? (
+                                    <span className="hidden xs:inline-flex shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-amber-100 text-amber-800 border border-amber-300 leading-none animate-pulse">
+                                        Syncing
+                                    </span>
+                                ) : activeStore?.is_central ? (
+                                    <span className="hidden xs:inline-flex shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80 leading-none">
+                                        {STORE_BADGE_HQ}
+                                    </span>
+                                ) : (
+                                    <span className="hidden xs:inline-flex shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-slate-100 text-slate-600 border border-slate-200/80 leading-none">
+                                        Cabang
+                                    </span>
+                                )
+                            }
+                        />
+                    </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" align="center" className="max-w-xs p-2.5 bg-slate-900 border border-slate-800 text-white rounded-xl shadow-xl">
+                    {isSyncing ? (
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 font-bold text-amber-400 text-xs">
+                                <IconLoader2 size={13} className="animate-spin shrink-0" />
+                                <span>Sinkronisasi Katalog Sedang Berjalan</span>
+                            </div>
+                            <p className="text-[11px] text-slate-300 leading-snug">
+                                Toko dikunci sementara demi keamanan data produk & member hingga proses pengunduhan selesai.
+                            </p>
+                        </div>
+                    ) : (
+                        <span className="text-[11px] font-semibold text-slate-200">
+                            Pilih cabang atau toko aktif
+                        </span>
                     )}
-                    leftIcon={
-                        isSyncing ? (
-                            <IconLoader2
-                                size={14}
-                                className="shrink-0 animate-spin text-amber-600"
-                            />
-                        ) : (
-                            <IconBuildingStore
-                                size={14}
-                                className={`shrink-0 ${activeStore?.is_central ? "text-emerald-600" : "text-slate-500"
-                                    }`}
-                            />
-                        )
-                    }
-                    rightElement={
-                        isSyncing ? (
-                            <span className="hidden xs:inline-flex shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-amber-100 text-amber-800 border border-amber-300 leading-none animate-pulse">
-                                Syncing
-                            </span>
-                        ) : activeStore?.is_central ? (
-                            <span className="hidden xs:inline-flex shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80 leading-none">
-                                {STORE_BADGE_HQ}
-                            </span>
-                        ) : (
-                            <span className="hidden xs:inline-flex shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-slate-100 text-slate-600 border border-slate-200/80 leading-none">
-                                Cabang
-                            </span>
-                        )
-                    }
-                />
-            </div>
+                </TooltipContent>
+            </Tooltip>
         </FormProvider>
     );
 }
