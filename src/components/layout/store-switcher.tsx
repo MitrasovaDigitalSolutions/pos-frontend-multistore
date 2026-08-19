@@ -113,7 +113,7 @@ export function StoreSwitcher() {
 
     return (
         <FormProvider {...methods}>
-            <Tooltip>
+            <Tooltip open={isSyncing ? undefined : false}>
                 <TooltipTrigger asChild>
                     <div
                         className={cn(
@@ -168,8 +168,8 @@ export function StoreSwitcher() {
                         />
                     </div>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" align="center" className="max-w-xs p-2.5 bg-slate-900 border border-slate-800 text-white rounded-xl shadow-xl">
-                    {isSyncing ? (
+                {isSyncing && (
+                    <TooltipContent side="bottom" align="center" className="max-w-xs p-2.5 bg-slate-900 border border-slate-800 text-white rounded-xl shadow-xl">
                         <div className="space-y-1">
                             <div className="flex items-center gap-1.5 font-bold text-amber-400 text-xs">
                                 <IconLoader2 size={13} className="animate-spin shrink-0" />
@@ -179,12 +179,8 @@ export function StoreSwitcher() {
                                 Toko dikunci sementara demi keamanan data produk & member hingga proses pengunduhan selesai.
                             </p>
                         </div>
-                    ) : (
-                        <span className="text-[11px] font-semibold text-slate-200">
-                            Pilih cabang atau toko aktif
-                        </span>
-                    )}
-                </TooltipContent>
+                    </TooltipContent>
+                )}
             </Tooltip>
         </FormProvider>
     );
