@@ -10,6 +10,8 @@ export interface PaginatedLocalProductsParams {
     stock?: string;
     page?: number;
     perPage?: number;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
 }
 
 export interface PaginatedLocalProductsResult {
@@ -21,6 +23,11 @@ export interface PaginatedLocalProductsResult {
 
 export class ProductLocalRepository {
     private static instance: ProductLocalRepository | null = null;
+    private cachedCategoriesAndBrands: {
+        categories: Array<{ uid: string; nama: string }>;
+        brands: Array<{ uid: string; nama: string }>;
+        timestamp: number;
+    } | null = null;
 
     private constructor() { }
 
@@ -29,6 +36,10 @@ export class ProductLocalRepository {
             ProductLocalRepository.instance = new ProductLocalRepository();
         }
         return ProductLocalRepository.instance;
+    }
+
+    public invalidateCache(): void {
+        this.cachedCategoriesAndBrands = null;
     }
 
     /**
@@ -107,6 +118,7 @@ export class ProductLocalRepository {
 
     /**
      * Mengambil data produk terpaginasi dari IndexedDB untuk dialog pencarian produk.
+     * Mendukung pengurutan (sorting) global pada seluruh 19.000+ data secara instan.
      */
     public async getPaginatedProductsLocal(
         params: PaginatedLocalProductsParams
@@ -117,11 +129,14 @@ export class ProductLocalRepository {
         const categoryUid = params.category_uid || "all";
         const brandUid = params.brand_uid || "all";
         const stockFilter = params.stock || "all";
+        const sortBy = params.sortBy;
+        const sortOrder = params.sortOrder;
+        const offset = (page - 1) * perPage;
 
         try {
             const collection = db.products.filter((p) => {
-                // Hanya produk aktif yang bisa dijual
-                if (p.status !== "active") return false;
+                // Hanya produk aktif yang bisa dijual (fallback jika status undefined maka tetap dianggap active)
+                if (p.status && p.status !== "active") return false;
 
                 // Filter Kata Kunci (Nama, Barcode, Merek)
                 if (search) {
@@ -166,11 +181,43 @@ export class ProductLocalRepository {
                 return true;
             });
 
-            const total = await collection.count();
-            const totalPages = Math.ceil(total / perPage) || 1;
-            const offset = (page - 1) * perPage;
+            // Ambil semua matching data untuk sorting komprehensif pada seluruh dataset
+            const allItems = await collection.toArray();
+            const total = allItems.length;
 
-            const items = await collection.offset(offset).limit(perPage).toArray();
+            if (sortBy && sortOrder) {
+                const isDesc = sortOrder === "desc";
+                allItems.sort((a, b) => {
+                    let valA: unknown;
+                    let valB: unknown;
+
+                    if (sortBy === "category.nama") {
+                        valA = a.category?.nama || "";
+                        valB = b.category?.nama || "";
+                    } else {
+                        valA = (a as unknown as Record<string, unknown>)[sortBy];
+                        valB = (b as unknown as Record<string, unknown>)[sortBy];
+                    }
+
+                    // Numeric comparison untuk harga dan stok
+                    if (typeof valA === "number" && typeof valB === "number") {
+                        return isDesc ? valB - valA : valA - valB;
+                    }
+
+                    if (typeof valA === "string") valA = valA.toLowerCase();
+                    if (typeof valB === "string") valB = valB.toLowerCase();
+
+                    if (valA === undefined || valA === null) return isDesc ? -1 : 1;
+                    if (valB === undefined || valB === null) return isDesc ? 1 : -1;
+
+                    if (valA < valB) return isDesc ? 1 : -1;
+                    if (valA > valB) return isDesc ? -1 : 1;
+                    return 0;
+                });
+            }
+
+            const items = allItems.slice(offset, offset + perPage);
+            const totalPages = Math.max(1, Math.ceil(total / perPage));
 
             return {
                 items,
@@ -191,16 +238,28 @@ export class ProductLocalRepository {
 
     /**
      * Mengambil daftar unik kategori dan brand dari IndexedDB untuk filter dialog.
+     * Menggunakan short-term cache (60 detik) untuk efisiensi memory & I/O 19.000+ produk.
      */
     public async getDistinctCategoriesAndBrands(): Promise<{
         categories: Array<{ uid: string; nama: string }>;
         brands: Array<{ uid: string; nama: string }>;
     }> {
+        const now = Date.now();
+        if (
+            this.cachedCategoriesAndBrands &&
+            now - this.cachedCategoriesAndBrands.timestamp < 60_000
+        ) {
+            return {
+                categories: this.cachedCategoriesAndBrands.categories,
+                brands: this.cachedCategoriesAndBrands.brands,
+            };
+        }
+
         try {
             const categoriesMap = new Map<string, string>();
             const brandsMap = new Map<string, string>();
 
-            await db.products.each((p) => {
+            await db.products.where("status").equals("active").each((p) => {
                 if (p.category?.uid && p.category?.nama) {
                     categoriesMap.set(p.category.uid, p.category.nama);
                 }
@@ -211,10 +270,16 @@ export class ProductLocalRepository {
                 }
             });
 
-            return {
-                categories: Array.from(categoriesMap.entries()).map(([uid, nama]) => ({ uid, nama })),
-                brands: Array.from(brandsMap.entries()).map(([uid, nama]) => ({ uid, nama })),
+            const categories = Array.from(categoriesMap.entries()).map(([uid, nama]) => ({ uid, nama }));
+            const brands = Array.from(brandsMap.entries()).map(([uid, nama]) => ({ uid, nama }));
+
+            this.cachedCategoriesAndBrands = {
+                categories,
+                brands,
+                timestamp: now,
             };
+
+            return { categories, brands };
         } catch (err) {
             console.error("Error getting distinct categories & brands from IndexedDB:", err);
             return { categories: [], brands: [] };

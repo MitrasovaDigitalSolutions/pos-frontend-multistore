@@ -462,14 +462,15 @@ export function DataTable<TData, TValue>({
 
         const pageNumbers: (number | string)[] = [];
         const maxVisiblePages = 5;
+        const totalPages = Math.max(1, metaToUse.last_page);
 
-        if (metaToUse.last_page <= maxVisiblePages) {
-            for (let i = 1; i <= metaToUse.last_page; i++) {
+        if (totalPages <= maxVisiblePages) {
+            for (let i = 1; i <= totalPages; i++) {
                 pageNumbers.push(i);
             }
         } else {
             const startPage = Math.max(1, currentPageVal - 1);
-            const endPage = Math.min(metaToUse.last_page, currentPageVal + 1);
+            const endPage = Math.min(totalPages, currentPageVal + 1);
 
             if (startPage > 1) {
                 pageNumbers.push(1);
@@ -477,15 +478,15 @@ export function DataTable<TData, TValue>({
             }
 
             for (let i = startPage; i <= endPage; i++) {
-                if (i !== 1 && i !== metaToUse.last_page) {
+                if (i !== 1 && i !== totalPages) {
                     pageNumbers.push(i);
                 }
             }
 
-            if (endPage < metaToUse.last_page) {
-                if (endPage < metaToUse.last_page - 1)
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1)
                     pageNumbers.push("ellipsis-end");
-                pageNumbers.push(metaToUse.last_page);
+                pageNumbers.push(totalPages);
             }
         }
 
@@ -658,27 +659,49 @@ export function DataTable<TData, TValue>({
                             {isLoading ? (
                                 // Skeletal row loading animation
                                 Array.from({
-                                    length: Math.min(perPage || 5, 5),
+                                    length: Math.min(perPage || 10, 10),
                                 }).map((_, rowIndex) => (
                                     <TableRow
                                         key={rowIndex}
                                         className="border-b border-slate-100 group"
                                     >
-                                        {tableColumns.map((col, colIndex) => (
-                                            <TableCell
-                                                key={colIndex}
-                                                className={cn(
-                                                    "py-4 px-4",
-                                                    col.meta?.cellClassName
-                                                )}
-                                                style={{
-                                                    width: col.size,
-                                                    minWidth: col.size,
-                                                }}
-                                            >
-                                                <div className="h-4 bg-slate-100/80 animate-pulse rounded-lg w-2/3" />
-                                            </TableCell>
-                                        ))}
+                                        {tableColumns.map((col, colIndex) => {
+                                            const isCenter = col.meta?.cellClassName?.includes("text-center");
+                                            const isRight = col.meta?.cellClassName?.includes("text-right");
+                                            const isAction = col.id === "actions";
+                                            const isNumber = col.id === "rowNumber";
+
+                                            return (
+                                                <TableCell
+                                                    key={colIndex}
+                                                    className={cn(
+                                                        "py-3.5 px-4",
+                                                        col.meta?.cellClassName
+                                                    )}
+                                                    style={{
+                                                        width: col.size,
+                                                        minWidth: col.size,
+                                                    }}
+                                                >
+                                                    {isAction ? (
+                                                        <div className="h-7 w-16 bg-slate-100/90 animate-pulse rounded-lg mx-auto" />
+                                                    ) : isNumber ? (
+                                                        <div className="h-4 w-6 bg-slate-100/80 animate-pulse rounded-md mx-auto" />
+                                                    ) : isRight ? (
+                                                        <div className="h-4 w-20 bg-slate-100/80 animate-pulse rounded-md ml-auto" />
+                                                    ) : isCenter ? (
+                                                        <div className="h-4 w-16 bg-slate-100/80 animate-pulse rounded-md mx-auto" />
+                                                    ) : colIndex === 1 ? (
+                                                        <div className="space-y-1.5 py-0.5">
+                                                            <div className="h-3.5 bg-slate-100/90 animate-pulse rounded-md w-4/5" />
+                                                            <div className="h-2.5 bg-slate-100/70 animate-pulse rounded-md w-2/5" />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="h-4 bg-slate-100/80 animate-pulse rounded-md w-3/4" />
+                                                    )}
+                                                </TableCell>
+                                            );
+                                        })}
                                     </TableRow>
                                 ))
                             ) : rows.length === 0 ? (
@@ -893,25 +916,23 @@ export function DataTable<TData, TValue>({
                                     </div>
                                 )}
 
-                                {!isSinglePage && (
-                                    <Pagination className="w-auto mx-0">
-                                        <PaginationContent>
-                                            <PaginationItem>
-                                                <PaginationPrevious
-                                                    onClick={() => handlePageChange(currentPageVal - 1)}
-                                                    disabled={currentPageVal === 1}
-                                                />
-                                            </PaginationItem>
-                                            {renderPaginationItems()}
-                                            <PaginationItem>
-                                                <PaginationNext
-                                                    onClick={() => handlePageChange(currentPageVal + 1)}
-                                                    disabled={currentPageVal === computedMeta.last_page}
-                                                />
-                                            </PaginationItem>
-                                        </PaginationContent>
-                                    </Pagination>
-                                )}
+                                <Pagination className="w-auto mx-0">
+                                    <PaginationContent>
+                                        <PaginationItem>
+                                            <PaginationPrevious
+                                                onClick={() => handlePageChange(currentPageVal - 1)}
+                                                disabled={currentPageVal <= 1}
+                                            />
+                                        </PaginationItem>
+                                        {renderPaginationItems()}
+                                        <PaginationItem>
+                                            <PaginationNext
+                                                onClick={() => handlePageChange(currentPageVal + 1)}
+                                                disabled={currentPageVal >= (computedMeta?.last_page ?? 1)}
+                                            />
+                                        </PaginationItem>
+                                    </PaginationContent>
+                                </Pagination>
                             </div>
                         </div>
 
@@ -947,33 +968,31 @@ export function DataTable<TData, TValue>({
                             </div>
 
                             {/* Baris 2: Navigasi Stepper Mobile dengan Maksimal 3 Bullet Angka */}
-                            {!isSinglePage && (
-                                <div className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-slate-100 dark:border-slate-800/60">
-                                    <button
-                                        type="button"
-                                        onClick={() => handlePageChange(currentPageVal - 1)}
-                                        disabled={currentPageVal === 1}
-                                        className="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 font-bold text-[10px] sm:text-[11px] disabled:opacity-30 hover:bg-slate-50 active:scale-95 transition-all cursor-pointer flex items-center gap-0.5 shadow-2xs"
-                                    >
-                                        <ChevronLeft size={12} />
-                                        <span>Sebelumnya</span>
-                                    </button>
+                            <div className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-slate-100 dark:border-slate-800/60">
+                                <button
+                                    type="button"
+                                    onClick={() => handlePageChange(currentPageVal - 1)}
+                                    disabled={currentPageVal <= 1}
+                                    className="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 font-bold text-[10px] sm:text-[11px] disabled:opacity-30 hover:bg-slate-50 active:scale-95 transition-all cursor-pointer flex items-center gap-0.5 shadow-2xs"
+                                >
+                                    <ChevronLeft size={12} />
+                                    <span>Sebelumnya</span>
+                                </button>
 
-                                    <div className="flex items-center gap-1">
-                                        {renderMobilePaginationItems()}
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => handlePageChange(currentPageVal + 1)}
-                                        disabled={currentPageVal === computedMeta.last_page}
-                                        className="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 font-bold text-[10px] sm:text-[11px] disabled:opacity-30 hover:bg-slate-50 active:scale-95 transition-all cursor-pointer flex items-center gap-0.5 shadow-2xs"
-                                    >
-                                        <span>Selanjutnya</span>
-                                        <ChevronRight size={12} />
-                                    </button>
+                                <div className="flex items-center gap-1">
+                                    {renderMobilePaginationItems()}
                                 </div>
-                            )}
+
+                                <button
+                                    type="button"
+                                    onClick={() => handlePageChange(currentPageVal + 1)}
+                                    disabled={currentPageVal >= (computedMeta?.last_page ?? 1)}
+                                    className="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 font-bold text-[10px] sm:text-[11px] disabled:opacity-30 hover:bg-slate-50 active:scale-95 transition-all cursor-pointer flex items-center gap-0.5 shadow-2xs"
+                                >
+                                    <span>Selanjutnya</span>
+                                    <ChevronRight size={12} />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 );

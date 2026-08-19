@@ -11,6 +11,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { DataTableTextActionButton } from "@/components/ui/data-table-actions";
 import type { Product } from "@/features/master/products/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { useDebounce } from "@/hooks/use-debounce";
 import {
     IconPackage,
     IconPlus
@@ -43,16 +44,19 @@ export function ProductSearchDialog({
     onAddProduct,
     initialSearchQuery = "",
 }: ProductSearchDialogProps) {
+    const isInMemory = products && products.length > 0;
+
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
+    const [sortBy, setSortBy] = useState<string | undefined>(undefined);
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>(undefined);
+    const [isLoading, setIsLoading] = useState(!isInMemory);
     const [localData, setLocalData] = useState<{
         items: Product[];
         total: number;
     }>({ items: [], total: 0 });
     const [dbCategories, setDbCategories] = useState<Array<{ uid: string; nama: string }>>([]);
     const [dbBrands, setDbBrands] = useState<Array<{ uid: string; nama: string }>>([]);
-
-    const isInMemory = products && products.length > 0;
 
     const methods = useForm<ProductSearchFilterValues>({
         defaultValues: {
@@ -64,11 +68,21 @@ export function ProductSearchDialog({
     });
 
     const searchQuery = useWatch({ control: methods.control, name: "search" }) || "";
+    const debouncedSearchQuery = useDebounce(searchQuery, 250);
     const selectedCategory = useWatch({ control: methods.control, name: "category_uid" }) || "all";
     const selectedBrand = useWatch({ control: methods.control, name: "brand_uid" }) || "all";
     const stockFilter = useWatch({ control: methods.control, name: "stock" }) || "all";
 
-    // Track previous filters to reset page to 1 during render phase when a filter changes
+    // Track previous open state to activate loading skeleton immediately on open
+    const [prevOpen, setPrevOpen] = useState(open);
+    if (open !== prevOpen) {
+        setPrevOpen(open);
+        if (open && !isInMemory) {
+            setIsLoading(true);
+        }
+    }
+
+    // Track previous filters to reset page to 1 and show loading skeleton during render phase when a filter changes
     const [prevFilters, setPrevFilters] = useState({
         search: initialSearchQuery,
         category: "all",
@@ -77,18 +91,21 @@ export function ProductSearchDialog({
     });
 
     if (
-        searchQuery !== prevFilters.search ||
+        debouncedSearchQuery !== prevFilters.search ||
         selectedCategory !== prevFilters.category ||
         selectedBrand !== prevFilters.brand ||
         stockFilter !== prevFilters.stock
     ) {
         setPrevFilters({
-            search: searchQuery,
+            search: debouncedSearchQuery,
             category: selectedCategory,
             brand: selectedBrand,
             stock: stockFilter,
         });
         setPage(1);
+        if (!isInMemory) {
+            setIsLoading(true);
+        }
     }
 
     // Load distinct categories & brands from IndexedDB on dialog open
@@ -107,23 +124,32 @@ export function ProductSearchDialog({
         if (open && !isInMemory) {
             productLocalRepository
                 .getPaginatedProductsLocal({
-                    search: searchQuery,
+                    search: debouncedSearchQuery,
                     category_uid: selectedCategory,
                     brand_uid: selectedBrand,
                     stock: stockFilter,
                     page,
                     perPage,
+                    sortBy,
+                    sortOrder,
                 })
                 .then((res) => {
                     if (isCurrent) {
                         setLocalData({ items: res.items, total: res.total });
+                        setIsLoading(false);
+                    }
+                })
+                .catch((err) => {
+                    console.error("Error querying local products:", err);
+                    if (isCurrent) {
+                        setIsLoading(false);
                     }
                 });
         }
         return () => {
             isCurrent = false;
         };
-    }, [open, isInMemory, searchQuery, selectedCategory, selectedBrand, stockFilter, page, perPage]);
+    }, [open, isInMemory, debouncedSearchQuery, selectedCategory, selectedBrand, stockFilter, page, perPage, sortBy, sortOrder]);
 
     // Auto-focus search input after transition on mount
     useEffect(() => {
@@ -224,14 +250,48 @@ export function ProductSearchDialog({
         });
     }, [isInMemory, localData.items, products, searchQuery, selectedCategory, selectedBrand, stockFilter]);
 
-    const totalItems = isInMemory ? filteredProducts.length : localData.total;
+    const sortedFilteredProducts = useMemo(() => {
+        if (!isInMemory) return filteredProducts;
+        if (!sortBy || !sortOrder) return filteredProducts;
+        const sorted = [...filteredProducts];
+        const isDesc = sortOrder === "desc";
+        sorted.sort((a, b) => {
+            let valA: unknown;
+            let valB: unknown;
+
+            if (sortBy === "category.nama") {
+                valA = a.category?.nama || "";
+                valB = b.category?.nama || "";
+            } else {
+                valA = (a as unknown as Record<string, unknown>)[sortBy];
+                valB = (b as unknown as Record<string, unknown>)[sortBy];
+            }
+
+            if (typeof valA === "number" && typeof valB === "number") {
+                return isDesc ? valB - valA : valA - valB;
+            }
+
+            if (typeof valA === "string") valA = valA.toLowerCase();
+            if (typeof valB === "string") valB = valB.toLowerCase();
+
+            if (valA === undefined || valA === null) return isDesc ? -1 : 1;
+            if (valB === undefined || valB === null) return isDesc ? 1 : -1;
+
+            if (valA < valB) return isDesc ? 1 : -1;
+            if (valA > valB) return isDesc ? -1 : 1;
+            return 0;
+        });
+        return sorted;
+    }, [isInMemory, filteredProducts, sortBy, sortOrder]);
+
+    const totalItems = isInMemory ? sortedFilteredProducts.length : localData.total;
     const totalPages = Math.max(1, Math.ceil(totalItems / perPage));
 
     const displayProducts = useMemo(() => {
         if (!isInMemory) return localData.items;
         const start = (page - 1) * perPage;
-        return filteredProducts.slice(start, start + perPage);
-    }, [isInMemory, localData.items, filteredProducts, page, perPage]);
+        return sortedFilteredProducts.slice(start, start + perPage);
+    }, [isInMemory, localData.items, sortedFilteredProducts, page, perPage]);
 
     const handleSelectProduct = useCallback((product: Product) => {
         if (!product.is_jasa && product.stok <= 0) return;
@@ -239,7 +299,31 @@ export function ProductSearchDialog({
         onOpenChange(false);
     }, [onAddProduct, onOpenChange]);
 
-    const handleFilterReset = () => {
+    const handleSortChange = useCallback((newSortBy: string | undefined, newSortOrder: "asc" | "desc" | undefined) => {
+        if (!isInMemory) {
+            setIsLoading(true);
+        }
+        setSortBy(newSortBy);
+        setSortOrder(newSortOrder);
+        setPage(1);
+    }, [isInMemory]);
+
+    const handlePageChange = useCallback((newPage: number) => {
+        if (!isInMemory) {
+            setIsLoading(true);
+        }
+        setPage(newPage);
+    }, [isInMemory]);
+
+    const handlePerPageChange = useCallback((newPerPage: number) => {
+        if (!isInMemory) {
+            setIsLoading(true);
+        }
+        setPerPage(newPerPage);
+        setPage(1);
+    }, [isInMemory]);
+
+    const handleFilterReset = useCallback(() => {
         methods.reset({
             search: "",
             category_uid: "all",
@@ -247,15 +331,21 @@ export function ProductSearchDialog({
             stock: "all",
         });
         setPage(1);
+        if (!isInMemory) {
+            setIsLoading(true);
+        }
         setTimeout(() => {
             const inputEl = document.getElementById("search") as HTMLInputElement;
             inputEl?.focus();
         }, 50);
-    };
+    }, [methods, isInMemory]);
 
-    const handleFilterSubmit = () => {
+    const handleFilterSubmit = useCallback(() => {
         setPage(1);
-    };
+        if (!isInMemory) {
+            setIsLoading(true);
+        }
+    }, [isInMemory]);
 
     // Columns configuration for the reusable DataTable component
     const columns = useMemo<ColumnDef<Product>[]>(
@@ -461,13 +551,15 @@ export function ProductSearchDialog({
                     <DataTable
                         columns={columns}
                         data={displayProducts}
+                        isLoading={isLoading}
+                        isFetching={isLoading}
                         page={page}
                         perPage={perPage}
-                        onPageChange={setPage}
-                        onPerPageChange={(newPerPage) => {
-                            setPerPage(newPerPage);
-                            setPage(1);
-                        }}
+                        onPageChange={handlePageChange}
+                        onPerPageChange={handlePerPageChange}
+                        sortBy={sortBy}
+                        sortOrder={sortOrder}
+                        onSortChange={handleSortChange}
                         meta={{
                             current_page: page,
                             last_page: totalPages,
