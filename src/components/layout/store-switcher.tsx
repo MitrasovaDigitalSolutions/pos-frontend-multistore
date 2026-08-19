@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { queryKeys } from "@/lib/query-keys";
 import { STORE_BADGE_HQ, STORE_LABEL_HQ, STORE_LABEL_BRANCH } from "@/constants/store";
 import { catalogSyncManager } from "@/features/checkout/services/catalog-sync-manager";
+import { IconLoader2 } from "@tabler/icons-react";
+import { cn } from "@/lib/utils";
 
 export function StoreSwitcher() {
     const { data: session } = useSession();
@@ -75,7 +77,7 @@ export function StoreSwitcher() {
 
     const handleSelectStore = (uid: string) => {
         if (isSyncing) {
-            toast.warning("Mohon tunggu, proses sinkronisasi katalog toko sedang berjalan...");
+            toast.warning("Toko tidak dapat diganti saat proses sinkronisasi katalog sedang berjalan. Harap tunggu sebentar.");
             return;
         }
 
@@ -102,9 +104,22 @@ export function StoreSwitcher() {
         }
     };
 
+    const handleContainerClick = () => {
+        if (isSyncing) {
+            toast.warning("Toko terkunci sementara saat proses sinkronisasi katalog sedang berjalan. Harap tunggu hingga selesai.");
+        }
+    };
+
     return (
         <FormProvider {...methods}>
-            <div className="w-[125px] xs:w-[155px] sm:w-[225px] shrink-0">
+            <div
+                className={cn(
+                    "w-[125px] xs:w-[155px] sm:w-[225px] shrink-0 relative",
+                    isSyncing && "cursor-not-allowed"
+                )}
+                onClickCapture={handleContainerClick}
+                title={isSyncing ? "Toko terkunci sementara: Sinkronisasi katalog sedang berjalan..." : undefined}
+            >
                 <FormSelect<{ activeStore: string }>
                     name="activeStore"
                     options={stores.map((s) => ({
@@ -115,17 +130,30 @@ export function StoreSwitcher() {
                     onChange={handleSelectStore}
                     disabled={isSyncing}
                     size="sm"
-                    className="rounded-full h-8 sm:h-9 px-2 sm:px-2.5 border-slate-200 shadow-sm hover:border-slate-300 focus:ring-emerald-500/20 text-[11px] sm:text-xs font-bold text-slate-700 bg-white min-w-0"
+                    className={cn(
+                        "rounded-full h-8 sm:h-9 px-2 sm:px-2.5 border-slate-200 shadow-sm hover:border-slate-300 focus:ring-emerald-500/20 text-[11px] sm:text-xs font-bold text-slate-700 bg-white min-w-0 transition-all",
+                        isSyncing && "opacity-80 bg-amber-50/50 border-amber-300 text-amber-900 pointer-events-none"
+                    )}
                     leftIcon={
-                        <IconBuildingStore
-                            size={14}
-                            className={`shrink-0 ${
-                                activeStore?.is_central ? "text-emerald-600" : "text-slate-500"
-                            }`}
-                        />
+                        isSyncing ? (
+                            <IconLoader2
+                                size={14}
+                                className="shrink-0 animate-spin text-amber-600"
+                            />
+                        ) : (
+                            <IconBuildingStore
+                                size={14}
+                                className={`shrink-0 ${activeStore?.is_central ? "text-emerald-600" : "text-slate-500"
+                                    }`}
+                            />
+                        )
                     }
                     rightElement={
-                        activeStore?.is_central ? (
+                        isSyncing ? (
+                            <span className="hidden xs:inline-flex shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-amber-100 text-amber-800 border border-amber-300 leading-none animate-pulse">
+                                Syncing
+                            </span>
+                        ) : activeStore?.is_central ? (
                             <span className="hidden xs:inline-flex shrink-0 px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80 leading-none">
                                 {STORE_BADGE_HQ}
                             </span>
