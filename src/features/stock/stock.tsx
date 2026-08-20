@@ -118,36 +118,35 @@ export function StockManagement() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6 pb-28 sm:pb-8">
             {currentTab === "inventory" ? (
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                     {/* Stock Levels & Movements */}
-                    <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
-                        <div className="flex justify-between items-center border-b border-slate-50 pb-6">
+                    <section className="bg-white border border-slate-100 rounded-2xl shadow-xs p-3.5 sm:p-5 space-y-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5 sm:pb-4">
                             <div>
-                                <h3 className="text-sm font-bold text-slate-900">
+                                <h3 className="text-sm sm:text-base font-bold text-slate-900 leading-tight">
                                     Stock Opname & Penyesuaian Stok
                                 </h3>
                                 <p className="text-[11px] text-slate-400 mt-0.5">
-                                    Peninjauan stok real-time, opname fisik, and
-                                    adjustment manual.
+                                    Peninjauan stok real-time, opname fisik, dan penyesuaian stok manual.
                                 </p>
                             </div>
                             {hasManageInventory && (
-                                <div className="flex gap-2">
+                                <div className="flex items-center gap-2 w-full sm:w-auto">
                                     <Button
                                         onClick={() => setIsAdjustmentOpen(true)}
-                                        className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
+                                        className="flex-1 sm:flex-none bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9 px-3.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-xs border-none"
                                     >
-                                        <IconActivity size={16} /> Penyesuaian Stok
-                                        (Manual)
+                                        <IconActivity size={15} />
+                                        <span>Penyesuaian Stok</span>
                                     </Button>
                                     <Button
                                         onClick={() => setIsOpnameModalOpen(true)}
-                                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
+                                        className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 px-3.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-xs border-none"
                                     >
-                                        <IconClipboardCheck size={16} /> Stock
-                                        Opname Baru
+                                        <IconClipboardCheck size={15} />
+                                        <span>Opname Baru</span>
                                     </Button>
                                 </div>
                             )}

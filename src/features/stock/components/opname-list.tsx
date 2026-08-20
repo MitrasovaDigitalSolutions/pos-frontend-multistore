@@ -195,6 +195,7 @@ export function OpnameList({
                 virtualize={true}
                 estimateRowHeight={44}
                 onView={(op) => onViewDetail(op.uid)}
+                hideView={(op) => op.status === OPNAME_STATUS.DRAFT}
                 onEdit={(op) => router.push(`/admin/inventory/stock-opname/${op.uid}/items`)}
                 hideEdit={(op) => !(op.status === OPNAME_STATUS.DRAFT && hasManageInventory)}
                 onCheck={handleFinalize}
