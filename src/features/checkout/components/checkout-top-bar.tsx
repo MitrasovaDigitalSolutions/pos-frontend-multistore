@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { OfflineReadinessBadge } from "@/features/checkout/components/offline-readiness-badge";
 import type { OfflineReadinessState } from "@/hooks/use-offline-readiness";
-import { getImageUrl } from "@/lib/utils";
+import { cn, getImageUrl } from "@/lib/utils";
 import { useSettingsStore } from "@/stores/settings-store";
 import { IconCash, IconHome, IconLogout, IconScan, IconWifi, IconBuildingStore } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
@@ -85,11 +85,17 @@ export function CheckoutTopBar({
                 <Button
                     variant="ghost"
                     onClick={onInfoSesiClick}
-                    disabled={!activeDrawerSession}
-                    className="text-[11px] font-bold text-emerald-400 hover:text-emerald-350 hover:bg-emerald-950/20 h-7 px-2 sm:px-2.5 rounded-md flex items-center gap-1.5 cursor-pointer bg-transparent border-none disabled:opacity-40 transition-colors"
+                    className={cn(
+                        "text-[11px] font-bold h-7 px-2 sm:px-2.5 rounded-md flex items-center gap-1.5 cursor-pointer bg-transparent border-none transition-colors",
+                        activeDrawerSession
+                            ? "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/20"
+                            : "text-amber-400 hover:text-amber-300 hover:bg-amber-950/20"
+                    )}
                 >
                     <IconCash size={15} />
-                    <span className="hidden sm:inline">Info Laci Kasir</span>
+                    <span className="hidden sm:inline">
+                        {activeDrawerSession ? "Info Laci Kasir" : "Buka Shift Kasir"}
+                    </span>
                 </Button>
                 <div className="w-px h-4 bg-slate-800" />
 

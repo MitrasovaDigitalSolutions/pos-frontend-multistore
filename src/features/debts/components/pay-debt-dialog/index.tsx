@@ -18,6 +18,7 @@ import type { CardType, PayMethod } from "../../types/types";
 import { useNetworkStatus } from "@/hooks/use-network-status";
 import { NetworkError } from "@/shared/errors/api-error";
 import { format } from "date-fns";
+import { useSession } from "next-auth/react";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -33,6 +34,7 @@ interface PayDebtDialogProps {
 export function PayDebtDialog({ open, onOpenChange, member, onSuccess }: PayDebtDialogProps) {
     const payDebtMutation = usePayMemberDebt();
     const isOnline = useNetworkStatus();
+    const { data: session } = useSession();
 
     // ── Form state ────────────────────────────────────────────────────────────
     const [cashReceived, setCashReceived] = useState("");
@@ -119,6 +121,38 @@ export function PayDebtDialog({ open, onOpenChange, member, onSuccess }: PayDebt
                 await db.members.put({ ...member, hutang: newDebt });
             }
 
+            // Also update local cash drawer active session & movements if offline and payMethod is cash
+            if (payMethod === "cash" && session?.cashDrawerSessionId) {
+                const activeSessionId = session.cashDrawerSessionId;
+                try {
+                    const dbSession = await db.cashDrawerSessions.get(activeSessionId);
+                    if (dbSession) {
+                        const newExpectedCash = (dbSession.expected_cash || 0) + actualPayAmount;
+                        await db.cashDrawerSessions.update(activeSessionId, {
+                            expected_cash: newExpectedCash,
+                            updated_at: now,
+                        });
+                        const movementUid = `OFFLINE-MOV-${crypto.randomUUID()}`;
+                        await db.cashDrawerMovements.add({
+                            uid: movementUid,
+                            cash_drawer_session_uid: activeSessionId,
+                            user_uid: dbSession.user_uid,
+                            type: "cash_in",
+                            amount: actualPayAmount,
+                            balance_before: dbSession.expected_cash,
+                            balance_after: newExpectedCash,
+                            reference_uid: clientUid,
+                            reference_type: "debt_payment",
+                            note: `Pembayaran Hutang Member: ${member.nama}`,
+                            created_at: now,
+                            updated_at: now,
+                        });
+                    }
+                } catch (cdErr) {
+                    console.error("Gagal update sesi cash drawer lokal:", cdErr);
+                }
+            }
+
             if (typeof window !== "undefined") {
                 window.dispatchEvent(new Event("pos_member_updated"));
                 window.dispatchEvent(new Event("pos_pending_count_updated"));
@@ -140,6 +174,12 @@ export function PayDebtDialog({ open, onOpenChange, member, onSuccess }: PayDebt
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!isValid) return;
+
+        if (!session?.cashDrawerSessionId) {
+            toast.warning("Silakan buka shift laci kasir terlebih dahulu untuk melakukan pembayaran hutang.");
+            onOpenChange(false);
+            return;
+        }
 
         // Offline mode: save directly to local DB
         if (!isOnline) {

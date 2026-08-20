@@ -17,6 +17,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { DebtHistoryDialog } from "./debt-history-dialog";
 import { PayDebtDialog } from "./pay-debt-dialog";
+import { toast } from "sonner";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
 
 interface MemberDebtsFilterValues {
@@ -148,6 +149,10 @@ export function MemberDebtsPage() {
                     <DataTableTextActionButton
                         variant="emerald"
                         onClick={() => {
+                            if (!session?.cashDrawerSessionId) {
+                                toast.warning("Silakan buka shift laci kasir terlebih dahulu untuk melakukan pembayaran hutang.");
+                                return;
+                            }
                             setPayingMember(row.original);
                             setIsPayOpen(true);
                         }}

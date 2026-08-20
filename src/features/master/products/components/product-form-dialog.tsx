@@ -15,13 +15,14 @@ import type { Category } from "@/features/master/categories/types";
 import { queryKeys } from "@/lib/query-keys";
 import { getImageUrl } from "@/lib/utils";
 import { IconInfoCircle, IconPackage } from "@tabler/icons-react";
+import { useForm, FormProvider, useWatch, type Resolver } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { Show } from "@/components/ui/show";
 import { useCreateProduct, useUpdateProduct } from "../api/products-api";
-import { type ProductInput } from "../schemas/product-schema";
+import { productSchema, type ProductInput } from "../schemas/product-schema";
 import type { Product } from "../types";
 
 interface ProductFormDialogProps {
@@ -31,6 +32,24 @@ interface ProductFormDialogProps {
     onSuccess?: (product: Product) => void;
     infoMessage?: string;
 }
+
+const defaultProductValues: ProductInput = {
+    nama: "",
+    merek: "",
+    barcode: "",
+    harga: 0,
+    harga_grosir: null,
+    min_qty_grosir: null,
+    harga_grosir_total: null,
+    stok: 0,
+    harga_beli: 0,
+    margin: 0,
+    category_uid: null,
+    brand_uid: null,
+    image: undefined,
+    is_jasa: false,
+    is_grosir: false,
+};
 
 export function ProductFormDialog({
     open,
@@ -43,6 +62,11 @@ export function ProductFormDialog({
     const updateProduct = useUpdateProduct();
     const queryClient = useQueryClient();
 
+    const methods = useForm<ProductInput>({
+        resolver: zodResolver(productSchema) as Resolver<ProductInput>,
+        defaultValues: defaultProductValues,
+    });
+
     const {
         register,
         handleSubmit,
@@ -50,36 +74,40 @@ export function ProductFormDialog({
         setValue,
         reset,
         formState: { errors },
-    } = useFormContext<ProductInput>();
+    } = methods;
 
     const isPending = createProduct.isPending || updateProduct.isPending;
 
     useEffect(() => {
-        if (open && editingProduct) {
-            const storeProduct = editingProduct.product_stores?.[0];
-            const rawHGrosir = editingProduct.harga_grosir ?? storeProduct?.harga_grosir ?? null;
-            const rawMinQty = editingProduct.min_qty_grosir ?? storeProduct?.min_qty_grosir ?? null;
-            const hGrosir = rawHGrosir !== null && rawHGrosir !== undefined ? Number(rawHGrosir) : null;
-            const minQty = rawMinQty !== null && rawMinQty !== undefined ? Number(rawMinQty) : null;
-            const hGrosirTotal = (hGrosir && minQty) ? Math.round(hGrosir * minQty) : null;
+        if (open) {
+            if (editingProduct) {
+                const storeProduct = editingProduct.product_stores?.[0];
+                const rawHGrosir = editingProduct.harga_grosir ?? storeProduct?.harga_grosir ?? null;
+                const rawMinQty = editingProduct.min_qty_grosir ?? storeProduct?.min_qty_grosir ?? null;
+                const hGrosir = rawHGrosir !== null && rawHGrosir !== undefined ? Number(rawHGrosir) : null;
+                const minQty = rawMinQty !== null && rawMinQty !== undefined ? Number(rawMinQty) : null;
+                const hGrosirTotal = (hGrosir && minQty) ? Math.round(hGrosir * minQty) : null;
 
-            reset({
-                nama: editingProduct.nama,
-                merek: editingProduct.merek || "",
-                barcode: editingProduct.barcode || "",
-                harga: editingProduct.harga ?? storeProduct?.harga_jual ?? 0,
-                harga_grosir: hGrosir,
-                min_qty_grosir: minQty,
-                harga_grosir_total: hGrosirTotal,
-                stok: editingProduct.stok ?? storeProduct?.stok ?? 0,
-                harga_beli: editingProduct.harga_beli ?? storeProduct?.harga_beli ?? 0,
-                margin: editingProduct.margin ?? storeProduct?.margin ?? 0,
-                category_uid: editingProduct.category_uid ?? null,
-                brand_uid: editingProduct.brand_uid ?? null,
-                image: undefined,
-                is_jasa: !!editingProduct.is_jasa,
-                is_grosir: Boolean(editingProduct.is_grosir ?? storeProduct?.is_grosir ?? false),
-            });
+                reset({
+                    nama: editingProduct.nama,
+                    merek: editingProduct.merek || "",
+                    barcode: editingProduct.barcode || "",
+                    harga: editingProduct.harga ?? storeProduct?.harga_jual ?? 0,
+                    harga_grosir: hGrosir,
+                    min_qty_grosir: minQty,
+                    harga_grosir_total: hGrosirTotal,
+                    stok: editingProduct.stok ?? storeProduct?.stok ?? 0,
+                    harga_beli: editingProduct.harga_beli ?? storeProduct?.harga_beli ?? 0,
+                    margin: editingProduct.margin ?? storeProduct?.margin ?? 0,
+                    category_uid: editingProduct.category_uid ?? null,
+                    brand_uid: editingProduct.brand_uid ?? null,
+                    image: undefined,
+                    is_jasa: !!editingProduct.is_jasa,
+                    is_grosir: Boolean(editingProduct.is_grosir ?? storeProduct?.is_grosir ?? false),
+                });
+            } else {
+                reset(defaultProductValues);
+            }
         }
     }, [open, editingProduct, reset]);
 
@@ -265,174 +293,178 @@ export function ProductFormDialog({
             className="sm:max-w-4xl"
             scrollable={true}
         >
-            <form
-                onSubmit={handleSubmit(onSubmit, onError)}
-                className="grid grid-cols-1 md:grid-cols-3 gap-6 "
-            >
-                {infoMessage && (
-                    <div className="md:col-span-3 p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-medium flex items-center gap-2.5">
-                        <IconInfoCircle size={18} className="text-amber-600 shrink-0" />
-                        <p className="font-bold">Info:</p> {infoMessage}
-                    </div>
-                )}
-                {/* Kolom Kiri: Upload Gambar */}
-                <div className="md:col-span-1">
-                    <FormImageUpload<ProductInput>
-                        name="image"
-                        label="Gambar Produk"
-                        disabled={isPending}
-                        initialUrl={initialImageUrl}
-                    />
-                </div>
-
-                {/* Kolom Kanan: Detail & Informasi Produk */}
-                <div className="md:col-span-2 space-y-4">
-                    {/* Barcode & Nama Produk */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="col-span-1 space-y-1.5">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                Barcode / SKU
-                            </label>
-                            <Input
-                                type="text"
-                                placeholder="Contoh: 8990002004"
-                                className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                                disabled={isPending}
-                                {...register("barcode")}
-                            />
-                            {errors.barcode && (
-                                <p className="text-[10px] text-rose-500 font-medium">
-                                    {errors.barcode.message}
-                                </p>
-                            )}
+            <FormProvider {...methods}>
+                <form
+                    onSubmit={handleSubmit(onSubmit, onError)}
+                    className="grid grid-cols-1 md:grid-cols-3 gap-6"
+                >
+                    {infoMessage && (
+                        <div className="md:col-span-3 p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-medium flex items-center gap-2.5">
+                            <IconInfoCircle size={18} className="text-amber-600 shrink-0" />
+                            <p className="font-bold">Info:</p> {infoMessage}
                         </div>
-
-                        <div className="col-span-1 space-y-1.5">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                Nama Produk
-                            </label>
-                            <Input
-                                type="text"
-                                placeholder="Nama produk lengkap..."
-                                className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                                disabled={isPending}
-                                {...register("nama")}
-                            />
-                            {errors.nama && (
-                                <p className="text-[10px] text-rose-500 font-medium">
-                                    {errors.nama.message}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Kategori, Brand & Stok */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <FormSelect<ProductInput, Category>
-                            name="category_uid"
-                            label="Kategori"
-                            {...categorySelectProps}
-                            placeholder="Pilih Kategori"
-                            searchPlaceholder="Cari kategori..."
+                    )}
+                    {/* Kolom Kiri: Upload Gambar */}
+                    <div className="md:col-span-1 space-y-4">
+                        <FormImageUpload<ProductInput>
+                            name="image"
+                            label="Gambar Produk"
                             disabled={isPending}
-                            size="md"
-                        />
-                        <FormSelect<ProductInput, Brand>
-                            name="brand_uid"
-                            label="Brand"
-                            {...brandSelectProps}
-                            placeholder="Pilih Brand"
-                            searchPlaceholder="Cari brand..."
-                            disabled={isPending}
-                            size="md"
-                        />
-                    </div>
-
-                    <FormSwitch<ProductInput>
-                        name="is_jasa"
-                        label="Produk Jasa / Layanan"
-                        description="Aktifkan jika produk ini berupa layanan atau jasa yang tidak memerlukan stok fisik."
-                        disabled={isPending}
-                    />
-
-                    {/* Keuangan: Harga Beli, Harga Jual, Margin */}
-                    <div className="grid grid-cols-3 gap-3">
-                        <FormNominalInput<ProductInput>
-                            name="harga_beli"
-                            label="Harga Beli (Rp)"
-                            placeholder="Contoh: 8.000"
-                            disabled={isPending}
+                            initialUrl={initialImageUrl}
                         />
 
-                        <FormNominalInput<ProductInput>
-                            name="harga"
-                            label="Harga Jual (Rp)"
-                            placeholder="Contoh: 10.000"
-                            disabled={isPending}
-                        />
-
-                        <FormNumberInput<ProductInput>
-                            name="margin"
-                            label="Margin (%)"
-                            placeholder="Contoh: 20"
+                        <FormSwitch<ProductInput>
+                            name="is_jasa"
+                            label="Produk Jasa / Layanan"
+                            description="Aktifkan jika produk ini berupa layanan yang tidak memerlukan stok fisik."
                             disabled={isPending}
                         />
                     </div>
 
-                    {/* Fitur Grosir */}
-                    <FormSwitch<ProductInput>
-                        name="is_grosir"
-                        label="Harga Grosir / Kuantitas Bertingkat"
-                        description="Aktifkan jika produk ini memiliki penentuan harga grosir khusus untuk pembelian jumlah banyak."
-                        disabled={isPending}
-                    />
-
-                    <Show.When isTrue={Boolean(isGrosir)}>
-                        <div className="p-3.5 bg-emerald-50/50 border border-emerald-200/60 rounded-2xl space-y-3 animate-in fade-in-50 duration-200">
-                            <div className="flex items-center justify-between">
-                                <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                                    Konfigurasi Harga Grosir
+                    {/* Kolom Kanan: Detail & Informasi Produk */}
+                    <div className="md:col-span-2 space-y-4">
+                        {/* Barcode & Nama Produk */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="col-span-1 space-y-1.5">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    Barcode / SKU
                                 </label>
-                                <span className="text-[10px] text-slate-400 font-medium">
-                                    Otomatis sinkron harga unit &amp; total akumulasi
-                                </span>
+                                <Input
+                                    type="text"
+                                    placeholder="Contoh: 8990002004"
+                                    className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                                    disabled={isPending}
+                                    {...register("barcode")}
+                                />
+                                {errors.barcode && (
+                                    <p className="text-[10px] text-rose-500 font-medium">
+                                        {errors.barcode.message}
+                                    </p>
+                                )}
                             </div>
-                            <div className="grid grid-cols-3 gap-3">
-                                <FormNumberInput<ProductInput>
-                                    name="min_qty_grosir"
-                                    label="Min. Qty Grosir (Pcs)"
-                                    placeholder="Contoh: 12"
+
+                            <div className="col-span-1 space-y-1.5">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    Nama Produk
+                                </label>
+                                <Input
+                                    type="text"
+                                    placeholder="Nama produk lengkap..."
+                                    className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
                                     disabled={isPending}
+                                    {...register("nama")}
                                 />
-                                <FormNominalInput<ProductInput>
-                                    name="harga_grosir"
-                                    label="Harga Unit Grosir (Rp)"
-                                    placeholder="Contoh: 4.800"
-                                    disabled={isPending}
-                                />
-                                <FormNominalInput<ProductInput>
-                                    name="harga_grosir_total"
-                                    label="Total Akumulasi Grosir (Rp)"
-                                    placeholder="Contoh: 57.600"
-                                    disabled={isPending}
-                                />
+                                {errors.nama && (
+                                    <p className="text-[10px] text-rose-500 font-medium">
+                                        {errors.nama.message}
+                                    </p>
+                                )}
                             </div>
                         </div>
-                    </Show.When>
 
-                    {/* Submit Button */}
-                    <div className="pt-2">
-                        <Button
-                            type="submit"
-                            className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
-                            disabled={isPending}
-                        >
-                            {isPending ? "Menyimpan..." : "Simpan Produk"}
-                        </Button>
+                        {/* Kategori & Brand */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <FormSelect<ProductInput, Category>
+                                name="category_uid"
+                                label="Kategori"
+                                {...categorySelectProps}
+                                placeholder="Pilih Kategori"
+                                searchPlaceholder="Cari kategori..."
+                                disabled={isPending}
+                                size="md"
+                            />
+                            <FormSelect<ProductInput, Brand>
+                                name="brand_uid"
+                                label="Brand"
+                                {...brandSelectProps}
+                                placeholder="Pilih Brand"
+                                searchPlaceholder="Cari brand..."
+                                disabled={isPending}
+                                size="md"
+                            />
+                        </div>
+
+                        {/* Keuangan: Harga Beli, Margin, Harga Jual, Stok */}
+                        <div className="grid grid-cols-3 gap-3">
+                            <FormNominalInput<ProductInput>
+                                name="harga_beli"
+                                label="Harga Beli (Modal)"
+                                placeholder="0"
+                                disabled={isPending}
+                            />
+                            <FormNumberInput<ProductInput>
+                                name="margin"
+                                label="Margin (%)"
+                                placeholder="0"
+                                disabled={isPending}
+                            />
+                            <FormNominalInput<ProductInput>
+                                name="harga"
+                                label="Harga Jual *"
+                                placeholder="0"
+                                disabled={isPending}
+                            />
+                        </div>
+
+                        <div>
+                            <FormNumberInput<ProductInput>
+                                name="stok"
+                                label="Stok Awal"
+                                placeholder="0"
+                                disabled={isPending || isJasa}
+                            />
+                        </div>
+
+                        {/* Fitur Grosir */}
+                        <div className="pt-2 border-t border-slate-100">
+                            <FormSwitch<ProductInput>
+                                name="is_grosir"
+                                label="Aktifkan Harga Grosir"
+                                description="Beri potongan harga jika beli dalam jumlah banyak"
+                                disabled={isPending}
+                            />
+                        </div>
+
+                        <Show.When isTrue={Boolean(isGrosir)}>
+                            <div className="p-3.5 bg-emerald-50/50 border border-emerald-100 rounded-xl space-y-3">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <FormNumberInput<ProductInput>
+                                        name="min_qty_grosir"
+                                        label="Min. Qty Grosir"
+                                        placeholder="Contoh: 12"
+                                        disabled={isPending}
+                                    />
+                                    <FormNominalInput<ProductInput>
+                                        name="harga_grosir"
+                                        label="Harga Grosir / Satuan (Rp)"
+                                        placeholder="Contoh: 4.800"
+                                        disabled={isPending}
+                                    />
+                                </div>
+                                <div>
+                                    <FormNominalInput<ProductInput>
+                                        name="harga_grosir_total"
+                                        label="Total Akumulasi Grosir (Rp)"
+                                        placeholder="Contoh: 57.600"
+                                        disabled={isPending}
+                                    />
+                                </div>
+                            </div>
+                        </Show.When>
+
+                        {/* Submit Button */}
+                        <div className="pt-2">
+                            <Button
+                                type="submit"
+                                className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
+                                disabled={isPending}
+                            >
+                                {isPending ? "Menyimpan..." : "Simpan Produk"}
+                            </Button>
+                        </div>
                     </div>
-                </div>
-            </form>
+                </form>
+            </FormProvider>
         </BaseDialog>
     );
 }

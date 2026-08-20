@@ -61,17 +61,18 @@ export function ConsignmentPaymentDialog({
       catatan: "",
     },
   });
+  const { reset } = form;
 
   useEffect(() => {
     if (open && receiving) {
-      form.reset({
+      reset({
         jumlah_bayar: Number(receiving.sisa_hutang || 0),
         cash_account_uid: "",
         tanggal_bayar: todayStr(),
         catatan: "",
       });
     }
-  }, [open, receiving, form]);
+  }, [open, receiving, reset]);
 
   const cashAccountOptions = (Array.isArray(cashAccounts) ? cashAccounts : []).map(
     (acc: { uid: string; nama: string; saldo?: number }) => ({

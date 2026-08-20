@@ -44,16 +44,17 @@ export function PaymentVoidDialog({
             alasan: "",
         },
     });
+    const { reset, handleSubmit } = methods;
 
     useEffect(() => {
         if (open) {
-            methods.reset({ alasan: "" });
+            reset({ alasan: "" });
         }
-    }, [open, methods]);
+    }, [open, reset]);
 
     if (!payment) return null;
 
-    const handleSubmit = methods.handleSubmit((data) => {
+    const onFormSubmit = handleSubmit((data) => {
         onConfirm(data.alasan);
     });
 
@@ -66,7 +67,7 @@ export function PaymentVoidDialog({
                 showCloseButton={false}
             >
                 <FormProvider {...methods}>
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form onSubmit={onFormSubmit} className="space-y-4">
                         <div className="flex flex-col items-center text-center">
                             {/* Danger Icon Container */}
                             <div className="w-12 h-12 rounded-full border bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-900/50 flex items-center justify-center mb-4 animate-in fade-in zoom-in-75 duration-300">

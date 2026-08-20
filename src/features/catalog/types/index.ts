@@ -60,3 +60,20 @@ export interface BulkAssignPayload {
     assignments: BulkAssignmentItem[];
 }
 
+export interface StoreAssignState {
+    checked: boolean;
+    is_custom: boolean;
+    harga_jual: number | null;
+    is_grosir: boolean;
+    harga_grosir: number | null;
+    min_qty_grosir: number | null;
+}
+
+export interface CatalogAssignFormValues {
+    global_harga_jual: number | null;
+    global_is_grosir: boolean;
+    global_harga_grosir: number | null;
+    global_min_qty_grosir: number | null;
+    stores: Record<string, StoreAssignState>;
+}
+

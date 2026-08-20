@@ -20,6 +20,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface BukaShiftModalProps {
     open: boolean;
+    onOpenChange?: (open: boolean) => void;
     token?: string;
     onSuccess: (sessionId: string) => void;
     isLoading?: boolean;
@@ -28,6 +29,7 @@ interface BukaShiftModalProps {
 
 export function BukaShiftModal({
     open,
+    onOpenChange,
     token,
     onSuccess,
     isLoading = false,
@@ -45,12 +47,22 @@ export function BukaShiftModal({
     const methods = useForm<OpenCashDrawerInput>({
         resolver: zodResolver(openCashDrawerSchema) as Resolver<OpenCashDrawerInput>,
         defaultValues: {
-            opening_balance: 100000,
-            opening_note: "Modal awal shift.",
+            opening_balance: null as unknown as number,
+            opening_note: "",
         },
     });
 
-    const { handleSubmit, formState: { isSubmitting } } = methods;
+    const { handleSubmit, reset, formState: { isSubmitting } } = methods;
+
+    // Reset to empty initial balance when modal opens
+    React.useEffect(() => {
+        if (open) {
+            reset({
+                opening_balance: null as unknown as number,
+                opening_note: "",
+            });
+        }
+    }, [open, reset]);
 
     const onSubmit = async (data: OpenCashDrawerInput) => {
         try {
@@ -81,7 +93,7 @@ export function BukaShiftModal({
         <>
             <BaseDialog
                 open={open}
-                onOpenChange={() => { }}
+                onOpenChange={onOpenChange || (() => { })}
                 title={
                     <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
@@ -102,7 +114,8 @@ export function BukaShiftModal({
                     </div>
                 }
                 className="max-w-md"
-                showCloseButton={false}
+                showCloseButton={true}
+                scrollable={false}
             >
                 <FormProvider {...methods}>
                     <form onSubmit={handleSubmit(onSubmit)} className="pt-4 space-y-4">

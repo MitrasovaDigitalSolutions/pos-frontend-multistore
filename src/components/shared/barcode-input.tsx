@@ -21,13 +21,15 @@ interface BarcodeInputProps {
     refocusOnFound?: boolean;
 }
 
+const EMPTY_PRODUCTS: Product[] = [];
+
 export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
     function BarcodeInput({
         onProductFound,
         onError,
         disabled = false,
         placeholder = "Scan barcode atau ketik nama produk...",
-        products = [],
+        products = EMPTY_PRODUCTS,
         mode = "purchase",
         searchLabel = "Cari",
         onSearchSubmit,
@@ -50,6 +52,8 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
         const dropdownRef = useRef<HTMLDivElement>(null);
         const [localSuggestions, setLocalSuggestions] = useState<Product[]>([]);
 
+        const hasExplicitProducts = Boolean(products && products.length > 0);
+
         // Scroll focused suggestion into view
         useEffect(() => {
             if (focusedIndex >= 0 && dropdownRef.current) {
@@ -71,19 +75,19 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
         // Fetch suggestions from IndexedDB if in local mode
         useEffect(() => {
             let isCurrent = true;
-            if (debouncedValue.trim().length >= 2 && (!products || products.length === 0)) {
+            if (debouncedValue.trim().length >= 2 && !hasExplicitProducts) {
                 productLocalRepository.searchSuggestionsLocal(debouncedValue, 8).then((res) => {
                     if (isCurrent) {
                         setLocalSuggestions(res);
                     }
                 });
             } else {
-                setLocalSuggestions([]);
+                setLocalSuggestions((prev) => (prev.length === 0 ? prev : []));
             }
             return () => {
                 isCurrent = false;
             };
-        }, [debouncedValue, products]);
+        }, [debouncedValue, hasExplicitProducts]);
 
         // Show/hide dropdown based on input content
         useEffect(() => {

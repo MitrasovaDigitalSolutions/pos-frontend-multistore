@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
@@ -36,6 +36,7 @@ export function ParentCategoryDialog({
             nama: "",
         },
     });
+    const { reset } = methods;
 
     const createMutation = useCreateParentCategory();
     const updateMutation = useUpdateParentCategory();
@@ -44,11 +45,11 @@ export function ParentCategoryDialog({
 
     useEffect(() => {
         if (open) {
-            methods.reset({
+            reset({
                 nama: parentCategory?.nama ?? "",
             });
         }
-    }, [open, parentCategory, methods]);
+    }, [open, parentCategory, reset]);
 
     const onSubmit = async (values: ParentCategoryInput) => {
         try {

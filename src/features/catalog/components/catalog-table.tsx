@@ -1,20 +1,19 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTableActionButton } from "@/components/ui/data-table-actions";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { getImageUrl } from "@/lib/utils";
-import { IconBuildingStore, IconPackage, IconPlus, IconUser } from "@tabler/icons-react";
+import { IconBuildingStore, IconPlus, IconUser } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useDeleteCatalogProduct } from "../api/catalog-api";
 import type { CatalogProduct } from "../types";
 import { STORE_BADGE_HQ } from "@/constants/store";
+import { Show } from "@/components/ui/show";
 
 interface CatalogTableProps {
     products: CatalogProduct[];
@@ -89,97 +88,73 @@ export function CatalogTable({
             {
                 accessorKey: "barcode",
                 header: "Barcode / SKU",
-                enableSorting: false,
-                size: 130,
                 cell: ({ row }) => (
-                    <span className="font-mono text-xs text-slate-600">
-                        {row.original.barcode || "—"}
+                    <span className="font-bold text-slate-900">
+                        {row.original.barcode || "-"}
                     </span>
                 ),
+                size: 120,
             },
             {
                 accessorKey: "nama",
                 header: "Nama Produk",
+                cell: ({ row }) => (
+                    <div className="flex flex-col gap-0.5">
+                        <span className="font-semibold text-slate-800">
+                            {row.original.nama}
+                        </span>
+                        {row.original.is_jasa && (
+                            <span className="badge text-[9px] border-none bg-blue-50 text-blue-700 w-fit px-1.5 py-px rounded font-semibold">
+                                Jasa
+                            </span>
+                        )}
+                    </div>
+                ),
                 size: 320,
-                cell: ({ row }) => {
-                    const p = row.original;
-                    const imgUrl = getImageUrl(p.image_url || p.image_path);
-
-                    return (
-                        <div className="flex items-center gap-2.5">
-                            {imgUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                    src={imgUrl}
-                                    alt={p.nama}
-                                    className="w-9 h-9 object-cover rounded-lg border border-slate-200 shrink-0"
-                                />
-                            ) : (
-                                <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
-                                    <IconPackage size={18} />
-                                </div>
-                            )}
-
-                            <div className="flex flex-col gap-0.5 min-w-0">
-                                <span className="font-semibold text-slate-800 text-sm leading-tight truncate">
-                                    {p.nama}
-                                </span>
-                                {p.is_jasa && (
-                                    <div>
-                                        <Badge className="text-[9px] px-1.5 py-0 bg-blue-50 text-blue-700 border-blue-100">
-                                            Jasa
-                                        </Badge>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    );
-                },
             },
             {
-                accessorKey: "category.nama",
+                id: "category",
+                accessorFn: (row) => row.category?.nama || "",
                 header: "Kategori",
-                enableSorting: false,
-                size: 170,
                 cell: ({ row }) => (
-                    <span className="text-xs text-slate-600 font-medium">
-                        {row.original.category?.nama || "—"}
+                    <span className="text-slate-500 text-xs">
+                        {row.original.category?.nama || "-"}
                     </span>
                 ),
+                size: 170,
             },
             {
-                accessorKey: "merek",
-                header: "Merek / Brand",
-                enableSorting: false,
-                size: 170,
+                id: "merek",
+                accessorFn: (row) => row.brand?.nama || row.merek || "",
+                header: "Merek/Brand",
                 cell: ({ row }) => (
-                    <span className="text-xs text-slate-500">
-                        {row.original.brand?.nama || row.original.merek || "—"}
+                    <span className="text-slate-500 text-xs">
+                        {row.original.brand?.nama || row.original.merek || "-"}
                     </span>
                 ),
+                size: 170,
             },
             {
                 accessorKey: "harga_beli",
                 header: "Harga Beli",
-                enableSorting: false,
-                size: 120,
                 meta: {
                     headerClassName: "text-right",
                     cellClassName: "text-right text-slate-500 text-xs",
                 },
+                size: 120,
                 cell: ({ row }) =>
-                    row.original.harga_beli != null
+                    row.original.harga_beli !== null && row.original.harga_beli !== undefined
                         ? formatRupiah(row.original.harga_beli)
-                        : "—",
+                        : "-",
             },
             {
                 accessorKey: "harga",
-                header: "Harga Jual (Master)",
-                size: 150,
+                header: "Harga Jual",
                 meta: {
                     headerClassName: "text-right",
                     cellClassName: "text-right font-bold text-slate-800",
                 },
+                size: 140,
                 cell: ({ row }) => {
                     const p = row.original;
                     const price = p.harga_jual ?? p.harga;
@@ -191,11 +166,11 @@ export function CatalogTable({
                     return (
                         <div className="flex flex-col items-end">
                             <span className="font-bold text-slate-800">{formatRupiah(price)}</span>
-                            {hasGrosir ? (
-                                <span className="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-1.5 py-0.2 rounded mt-0.5 whitespace-nowrap">
-                                    Grosir: {formatRupiah(Number(hargaGrosir))} (≥{minQtyGrosir} Pcs)
+                            <Show.When isTrue={hasGrosir}>
+                                <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-50/90 border border-emerald-200/80 px-1.5 py-0.5 rounded-md mt-0.5 whitespace-nowrap leading-none font-mono">
+                                    Grosir: {formatRupiah(Number(hargaGrosir))}
                                 </span>
-                            ) : null}
+                            </Show.When>
                         </div>
                     );
                 },
@@ -203,26 +178,24 @@ export function CatalogTable({
             {
                 accessorKey: "margin",
                 header: "Margin",
-                enableSorting: false,
-                size: 100,
                 meta: {
                     headerClassName: "text-right",
                     cellClassName: "text-right text-slate-500 text-xs",
                 },
+                size: 120,
                 cell: ({ row }) =>
-                    row.original.margin != null
+                    row.original.margin !== null && row.original.margin !== undefined
                         ? `${row.original.margin}%`
-                        : "—",
+                        : "-",
             },
             {
                 accessorKey: "status",
                 header: "Status",
-                enableSorting: false,
-                size: 110,
                 meta: {
                     headerClassName: "text-center",
                     cellClassName: "text-center",
                 },
+                size: 80,
                 cell: ({ row }) => <StatusBadge status={row.original.status} />,
             },
             {
@@ -293,7 +266,7 @@ export function CatalogTable({
                 sortOrder={sortOrder}
                 onSortChange={onSortChange}
                 virtualize={true}
-                estimateRowHeight={52}
+                estimateRowHeight={44}
                 onEdit={isAdmin ? onEdit : undefined}
                 onDelete={isAdmin ? handleRemoveProduct : undefined}
                 extraActions={(item) =>
