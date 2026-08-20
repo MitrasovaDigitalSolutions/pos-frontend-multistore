@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { OfflineReadinessBadge } from "@/features/checkout/components/offline-readiness-badge";
 import type { OfflineReadinessState } from "@/hooks/use-offline-readiness";
-import { getImageUrl } from "@/lib/utils";
+import { cn, getImageUrl } from "@/lib/utils";
 import { useSettingsStore } from "@/stores/settings-store";
 import { IconCash, IconHome, IconLogout, IconScan, IconWifi, IconBuildingStore } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";

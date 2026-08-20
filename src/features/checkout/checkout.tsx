@@ -13,6 +13,7 @@ import { PastTransactionsDialog } from "@/features/checkout/components/past-tran
 import { CashierSettingsDialog } from "@/features/checkout/components/cashier-settings-dialog";
 import { BukaShiftModal, InfoSesiAktifModal } from "@/features/checkout/components/cash-drawer";
 import { useCurrentCashDrawer } from "@/features/checkout/api/cash-drawer-api";
+import { useSession } from "next-auth/react";
 import { signOut } from "@/lib/auth-helpers";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { IconSettings } from "@tabler/icons-react";
@@ -28,21 +29,25 @@ import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { Show } from "@/components/ui/show";
 
 export function Checkout() {
-    const state = useCheckoutState();
-    const syncEngine = useSyncEngine();
     const isOnline = useNetworkStatus();
+    const syncEngine = useSyncEngine();
     const offlineReadiness = useOfflineReadiness();
 
     // Cash Drawer Sesi States
     const [isInfoSesiOpen, setIsInfoSesiOpen] = useState(false);
     const [hasAutoOpened, setHasAutoOpened] = useState(false);
+    const [isBukaShiftOpen, setIsBukaShiftOpen] = useState(false);
+    const [hasAutoOpenedShift, setHasAutoOpenedShift] = useState(false);
     const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [isOfflineTransactionsOpen, setIsOfflineTransactionsOpen] = useState(false);
     const [isPastTransactionsOpen, setIsPastTransactionsOpen] = useState(false);
     const [activeMobileTab, setActiveMobileTab] = useState<"cart" | "totals">("cart");
 
-    const cashDrawerToken = state.session?.accessToken;
+    const [localDrawerSession, setLocalDrawerSession] = useState<CashDrawerSession | null>(null);
+
+    const { data: session } = useSession();
+    const cashDrawerToken = session?.accessToken;
 
     // Query for active cash drawer
     const {
@@ -51,19 +56,30 @@ export function Checkout() {
         refetch: refetchCurrentDrawer,
     } = useCurrentCashDrawer(cashDrawerToken);
 
-    const [localDrawerSession, setLocalDrawerSession] = useState<CashDrawerSession | null>(null);
+    const activeDrawerSession = isOnline ? currentDrawerData?.data : localDrawerSession;
+
+    const validateCanPay = useCallback(() => {
+        if (!activeDrawerSession || !session?.cashDrawerSessionId) {
+            toast.warning("Silakan buka shift laci kasir terlebih dahulu untuk melakukan transaksi.");
+            setIsBukaShiftOpen(true);
+            return false;
+        }
+        return true;
+    }, [activeDrawerSession, session?.cashDrawerSessionId]);
+
+    const state = useCheckoutState({ validateCanPay });
 
     // Update localDrawerSession and save to local DB when online
     useEffect(() => {
         if (isOnline && currentDrawerData?.data) {
-            const session = currentDrawerData.data;
+            const currentSession = currentDrawerData.data;
             // eslint-disable-next-line react-hooks/set-state-in-effect
-            setLocalDrawerSession(session);
-            db.cashDrawerSessions.put(session).catch((err) => {
+            setLocalDrawerSession(currentSession);
+            db.cashDrawerSessions.put(currentSession).catch((err) => {
                 console.error("Gagal menyimpan sesi laci kasir ke DB lokal:", err);
             });
-            if (session.movements) {
-                db.cashDrawerMovements.bulkPut(session.movements).catch((err) => {
+            if (currentSession.movements) {
+                db.cashDrawerMovements.bulkPut(currentSession.movements).catch((err) => {
                     console.error("Gagal menyimpan riwayat laci kasir ke DB lokal:", err);
                 });
             }
@@ -73,15 +89,15 @@ export function Checkout() {
     // Load from local DB when offline
     useEffect(() => {
         if (!isOnline && state.session?.cashDrawerSessionId) {
-            db.cashDrawerSessions.get(state.session.cashDrawerSessionId).then(async (session) => {
-                if (session) {
+            db.cashDrawerSessions.get(state.session.cashDrawerSessionId).then(async (dbSession) => {
+                if (dbSession) {
                     const movements = await db.cashDrawerMovements
                         .where("cash_drawer_session_uid")
-                        .equals(session.uid)
+                        .equals(dbSession.uid)
                         .toArray();
                     movements.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
                     setLocalDrawerSession({
-                        ...session,
+                        ...dbSession,
                         movements,
                     });
                 } else {
@@ -98,14 +114,18 @@ export function Checkout() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOnline, state.session?.cashDrawerSessionId]);
 
-    const activeDrawerSession = isOnline ? currentDrawerData?.data : localDrawerSession;
-
     const isSessionLoaded = state.session !== undefined;
-    const hasCashDrawerSession = !!state.session?.cashDrawerSessionId;
 
-    const isBukaShiftOpen = isSessionLoaded && (
-        !hasCashDrawerSession || (!isDrawerLoading && !activeDrawerSession)
-    );
+    // Auto open buka shift modal once if no active drawer session
+    useEffect(() => {
+        if (isSessionLoaded && !isDrawerLoading) {
+            if (!activeDrawerSession && !hasAutoOpenedShift) {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
+                setIsBukaShiftOpen(true);
+                setHasAutoOpenedShift(true);
+            }
+        }
+    }, [isSessionLoaded, isDrawerLoading, activeDrawerSession, hasAutoOpenedShift]);
 
     useEffect(() => {
         if (activeDrawerSession) {
@@ -124,6 +144,7 @@ export function Checkout() {
     }, [activeDrawerSession, state.session, state.update, hasAutoOpened]);
 
     const handleOpenShiftSuccess = async (sessionId: string) => {
+        setIsBukaShiftOpen(false);
         await state.update({ cashDrawerSessionId: sessionId });
         refetchCurrentDrawer();
         setIsInfoSesiOpen(true);
@@ -131,6 +152,9 @@ export function Checkout() {
 
     const handleCloseShiftSuccess = () => {
         setHasAutoOpened(false);
+        setHasAutoOpenedShift(false);
+        refetchCurrentDrawer();
+        setIsBukaShiftOpen(true);
     };
 
     /**
@@ -255,6 +279,7 @@ export function Checkout() {
                         onReprint={handleReprintFromDrawer}
                         namaTransaksi={state.namaTransaksi}
                         onNamaTransaksiChange={state.setNamaTransaksi}
+                        validateCanPay={validateCanPay}
                     />
                 </div>
             </div>
@@ -390,6 +415,7 @@ export function Checkout() {
             {/* Cash Drawer Dialogs */}
             <BukaShiftModal
                 open={isBukaShiftOpen}
+                onOpenChange={setIsBukaShiftOpen}
                 token={cashDrawerToken}
                 onSuccess={handleOpenShiftSuccess}
                 isLoading={isDrawerLoading}

@@ -457,6 +457,11 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
         }
     }, [lastTransactionId, printOfflineReceipt, printOnlineReceipt]);
 
+    const optionsRef = useRef(options);
+    useEffect(() => {
+        optionsRef.current = options;
+    }, [options]);
+
     // ─── Clock & Keyboard Shortcuts ───────────────────────────────────────────
     useEffect(() => {
         const updateTime = () => {
@@ -469,7 +474,10 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "F1") {
                 e.preventDefault();
-                if (cart.length > 0) setIsPayModalOpen(true);
+                if (cart.length > 0) {
+                    if (optionsRef.current?.validateCanPay && !optionsRef.current.validateCanPay()) return;
+                    setIsPayModalOpen(true);
+                }
             } else if (e.key === "F4") {
                 e.preventDefault();
                 handleReprint();
