@@ -39,6 +39,7 @@ export function ConsignmentItemMobileCard({
 
   return (
     <div
+      id={`consignment-item-card-${index}`}
       className={`
         bg-white rounded-2xl border transition-all duration-300 p-3.5 space-y-3 shadow-xs
         ${

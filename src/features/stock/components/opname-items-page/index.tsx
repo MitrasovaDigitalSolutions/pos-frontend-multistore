@@ -38,6 +38,7 @@ import {
 } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
+import { OpnameItemMobileCard } from "./opname-item-mobile-card";
 import { toast } from "sonner";
 import {
     useFinalizeOpname,
@@ -276,9 +277,11 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
 
         // Scroll and highlight the added product
         setTimeout(() => {
-            const rowElement = document.getElementById(`opname-row-${product.uid}`);
+            const rowElement =
+                document.getElementById(`opname-row-${product.uid}`) ||
+                document.getElementById(`opname-card-${product.uid}`);
             if (rowElement) {
-                rowElement.scrollIntoView({ behavior: "smooth", block: "center" });
+                rowElement.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
                 // Add a dynamic glowing effect
                 rowElement.classList.add("bg-emerald-50/80", "ring-2", "ring-emerald-500/20");
@@ -521,37 +524,57 @@ function OpnameItemsContainer({ opnameId, opname }: { opnameId: string; opname: 
                                 </AppButton>
                             )}
                         </div>
+                        <div className="p-4 sm:p-5">
+                            {/* ── Mobile Card List View (< 768px) ── */}
+                            <div className="block md:hidden space-y-2.5">
+                                {items.map((item, idx) => (
+                                    <OpnameItemMobileCard
+                                        key={item.temp_uid}
+                                        item={item}
+                                        index={idx}
+                                        updateItem={updateItem}
+                                        removeItem={removeItem}
+                                    />
+                                ))}
+                                {items.length === 0 && (
+                                    <div className="text-center py-10 text-slate-400 font-semibold text-xs border border-dashed border-slate-200 rounded-2xl">
+                                        Belum ada barang yang ditambahkan. Gunakan scanner atau autocomplete di atas.
+                                    </div>
+                                )}
+                            </div>
 
-                        <div className="overflow-x-auto">
-                            <Table className="w-full text-left border-collapse">
-                                <TableHeader className="bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-wider hover:bg-transparent">
-                                    <TableRow className="hover:bg-transparent border-b border-slate-100">
-                                        <TableHead className="p-4 font-bold text-slate-500 uppercase tracking-wider">Nama Produk</TableHead>
-                                        <TableHead className="p-4 text-right font-bold text-slate-500 uppercase tracking-wider">Stok Sistem</TableHead>
-                                        <TableHead className="p-4 text-center w-36 font-bold text-slate-500 uppercase tracking-wider">Stok Fisik</TableHead>
-                                        <TableHead className="p-4 text-right font-bold text-slate-500 uppercase tracking-wider">Selisih</TableHead>
-                                        <TableHead className="p-4 font-bold text-slate-500 uppercase tracking-wider sm:min-w-60">Alasan Selisih</TableHead>
-                                        <TableHead className="p-4 text-center w-16 font-bold text-slate-500 uppercase tracking-wider">Aksi</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody className="divide-y divide-slate-100">
-                                    {items.map((item) => (
-                                        <OpnameItemRow
-                                            key={item.temp_uid}
-                                            item={item}
-                                            updateItem={updateItem}
-                                            removeItem={removeItem}
-                                        />
-                                    ))}
-                                    {items.length === 0 && (
-                                        <TableRow>
-                                            <TableCell colSpan={6} className="text-center py-12 text-slate-400 font-semibold text-xs">
-                                                Belum ada barang yang ditambahkan. Gunakan scanner atau autocomplete di atas.
-                                            </TableCell>
+                            {/* ── Desktop Table View (≥ 768px) ── */}
+                            <div className="hidden md:block overflow-x-auto">
+                                <Table className="w-full text-left border-collapse">
+                                    <TableHeader className="bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-wider hover:bg-transparent">
+                                        <TableRow className="hover:bg-transparent border-b border-slate-100">
+                                            <TableHead className="p-4 font-bold text-slate-500 uppercase tracking-wider">Nama Produk</TableHead>
+                                            <TableHead className="p-4 text-right font-bold text-slate-500 uppercase tracking-wider">Stok Sistem</TableHead>
+                                            <TableHead className="p-4 text-center w-36 font-bold text-slate-500 uppercase tracking-wider">Stok Fisik</TableHead>
+                                            <TableHead className="p-4 text-right font-bold text-slate-500 uppercase tracking-wider">Selisih</TableHead>
+                                            <TableHead className="p-4 font-bold text-slate-500 uppercase tracking-wider sm:min-w-60">Alasan Selisih</TableHead>
+                                            <TableHead className="p-4 text-center w-16 font-bold text-slate-500 uppercase tracking-wider">Aksi</TableHead>
                                         </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
+                                    </TableHeader>
+                                    <TableBody className="divide-y divide-slate-100">
+                                        {items.map((item) => (
+                                            <OpnameItemRow
+                                                key={item.temp_uid}
+                                                item={item}
+                                                updateItem={updateItem}
+                                                removeItem={removeItem}
+                                            />
+                                        ))}
+                                        {items.length === 0 && (
+                                            <TableRow>
+                                                <TableCell colSpan={6} className="text-center py-12 text-slate-400 font-semibold text-xs">
+                                                    Belum ada barang yang ditambahkan. Gunakan scanner atau autocomplete di atas.
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         </div>
                     </div>
                 </div>

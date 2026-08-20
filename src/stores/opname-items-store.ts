@@ -58,18 +58,15 @@ export function createOpnameItemsStore(opnameId: string) {
                             (i) => i.product_uid === product.product_uid,
                         );
                         if (existing) {
+                            const updatedExisting = { ...existing, stok_fisik: existing.stok_fisik + 1 };
+                            const others = state.items.filter((i) => i.product_uid !== product.product_uid);
                             return {
-                                items: state.items.map((i) =>
-                                    i.product_uid === product.product_uid
-                                        ? { ...i, stok_fisik: i.stok_fisik + 1 }
-                                        : i,
-                                ),
+                                items: [updatedExisting, ...others],
                                 lastUpdated: Date.now(),
                             };
                         }
                         return {
                             items: [
-                                ...state.items,
                                 {
                                     temp_uid: generateTempId(),
                                     product_uid: product.product_uid,
@@ -79,6 +76,7 @@ export function createOpnameItemsStore(opnameId: string) {
                                     stok_fisik: product.stok_fisik ?? 1,
                                     alasan: product.alasan || "Opname rutin",
                                 },
+                                ...state.items,
                             ],
                             lastUpdated: Date.now(),
                         };
