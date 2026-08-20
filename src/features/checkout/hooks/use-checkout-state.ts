@@ -20,7 +20,11 @@ import axios from "axios";
 
 import { useActiveStoreStore } from "@/stores/active-store-store";
 
-export function useCheckoutState() {
+export interface UseCheckoutStateOptions {
+    validateCanPay?: () => boolean;
+}
+
+export function useCheckoutState(options?: UseCheckoutStateOptions) {
     const router = useAppRouter();
     const { data: session, update } = useSession();
     const user = session?.user;
@@ -490,7 +494,7 @@ export function useCheckoutState() {
             clearInterval(timer);
             window.removeEventListener("keydown", handleKeyDown);
         };
-    }, [cart, handleHold, openHoldList, handleVoidDraft, handleReprint]);
+    }, [cart, handleHold, openHoldList, handleVoidDraft, handleReprint, options]);
 
     const hasAccessAdmin = !!(
         user?.roles?.includes("admin") ||

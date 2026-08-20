@@ -1,7 +1,14 @@
 import { z } from "zod";
 
 export const openCashDrawerSchema = z.object({
-    opening_balance: z.coerce.number().min(0, "Saldo awal minimal Rp 0"),
+    opening_balance: z
+        .union([z.number(), z.null(), z.undefined()])
+        .refine((val): val is number => val !== null && val !== undefined, {
+            message: "Saldo awal wajib diisi",
+        })
+        .refine((val) => typeof val === "number" && !isNaN(val) && val >= 0, {
+            message: "Saldo awal minimal Rp 0",
+        }),
     opening_note: z.string().optional(),
 });
 

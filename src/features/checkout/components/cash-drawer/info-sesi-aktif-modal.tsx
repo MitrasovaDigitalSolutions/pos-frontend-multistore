@@ -73,6 +73,7 @@ export function InfoSesiAktifModal({
                     : "max-w-full sm:max-w-lg"
             )}
             showCloseButton={false}
+            scrollable={false}
         >
             {subView === "info" && (
                 <SessionDetailsView

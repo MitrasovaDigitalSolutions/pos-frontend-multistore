@@ -44,6 +44,7 @@ interface CheckoutTotalsSectionProps {
     onReprint: () => void;
     namaTransaksi: string;
     onNamaTransaksiChange: (name: string) => void;
+    validateCanPay?: () => boolean;
 }
 
 export function CheckoutTotalsSection({
@@ -69,6 +70,7 @@ export function CheckoutTotalsSection({
     onReprint,
     namaTransaksi,
     onNamaTransaksiChange,
+    validateCanPay,
 }: CheckoutTotalsSectionProps) {
     const [localMembers, setLocalMembers] = useState<Member[]>([]);
     const [isMembersLoading, setIsMembersLoading] = useState(false);
@@ -321,7 +323,12 @@ export function CheckoutTotalsSection({
                                     </div>
                                     <button
                                         type="button"
-                                        onClick={() => setIsPayDebtOpen(true)}
+                                        onClick={() => {
+                                            if (validateCanPay && !validateCanPay()) {
+                                                return;
+                                            }
+                                            setIsPayDebtOpen(true);
+                                        }}
                                         className="h-7 px-2.5 bg-rose-600 hover:bg-rose-700 text-white border-none rounded-lg text-[9.5px] font-black flex items-center gap-1 cursor-pointer transition-all shadow-xs"
                                     >
                                         <IconCash size={13} />

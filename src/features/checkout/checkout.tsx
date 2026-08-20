@@ -156,7 +156,13 @@ export function Checkout() {
                 transactionId={state.transactionId}
                 activeDrawerSession={activeDrawerSession}
                 hasAccessAdmin={state.hasAccessAdmin}
-                onInfoSesiClick={() => setIsInfoSesiOpen(true)}
+                onInfoSesiClick={() => {
+                    if (activeDrawerSession) {
+                        setIsInfoSesiOpen(true);
+                    } else {
+                        setIsBukaShiftOpen(true);
+                    }
+                }}
                 onLogout={handleLogout}
                 onDashboardClick={() => state.router.push("/admin")}
                 isOnline={syncEngine.isOnline}
@@ -241,7 +247,11 @@ export function Checkout() {
                         onHold={state.handleHold}
                         onRecallOpen={state.openHoldList}
                         onVoid={state.handleVoidDraft}
-                        onPayOpen={() => state.setIsPayModalOpen(true)}
+                        onPayOpen={() => {
+                            if (validateCanPay()) {
+                                state.setIsPayModalOpen(true);
+                            }
+                        }}
                         onReprint={handleReprintFromDrawer}
                         namaTransaksi={state.namaTransaksi}
                         onNamaTransaksiChange={state.setNamaTransaksi}

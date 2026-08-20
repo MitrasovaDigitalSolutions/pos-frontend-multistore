@@ -135,6 +135,12 @@ export function usePaymentProcess({
             return;
         }
 
+        if (!session?.cashDrawerSessionId) {
+            toast.warning("Silakan buka shift laci kasir terlebih dahulu untuk melakukan transaksi.");
+            onOpenChange(false);
+            return;
+        }
+
         if (payMode === "debt" && !selectedMember) {
             toast.error("Harap pilih member terlebih dahulu untuk pembayaran hutang.");
             return;
