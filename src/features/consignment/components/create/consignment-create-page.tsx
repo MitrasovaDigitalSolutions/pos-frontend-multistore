@@ -122,12 +122,16 @@ export function ConsignmentCreatePage({ initialData }: ConsignmentCreatePageProp
     });
 
     if (existingIdx >= 0) {
-      const currentQty = Number(currentItems[existingIdx].kuantitas || 0);
-      form.setValue(`items.${existingIdx}.kuantitas`, currentQty + 1);
+      const existingItem = currentItems[existingIdx];
+      const otherItems = currentItems.filter((_, idx) => idx !== existingIdx);
+      const currentQty = Number(existingItem.kuantitas || 0);
+      form.setValue("items", [
+        { ...existingItem, kuantitas: currentQty + 1 },
+        ...otherItems,
+      ]);
       toast.success(`Qty "${product.nama}" ditambah (+1).`);
     } else {
       form.setValue("items", [
-        ...currentItems,
         {
           product_uid: product.uid,
           kuantitas: 1,
@@ -136,6 +140,7 @@ export function ConsignmentCreatePage({ initialData }: ConsignmentCreatePageProp
           harga_jual_baru: null,
           margin_baru: null,
         },
+        ...currentItems,
       ]);
       toast.success(`"${product.nama}" ditambahkan ke daftar.`);
     }

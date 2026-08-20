@@ -135,19 +135,21 @@ export function RequestTransferCreatePage() {
 
     const handleProductFound = (product: Product) => {
         setItems((prev) => {
-            if (prev.some((i) => i.product_uid === product.uid)) {
-                toast.info(`Produk "${product.nama}" sudah ada di daftar.`);
-                return prev;
+            const existing = prev.find((i) => i.product_uid === product.uid);
+            if (existing) {
+                const others = prev.filter((i) => i.product_uid !== product.uid);
+                toast.success(`Qty "${product.nama}" ditambah (+1).`);
+                return [{ ...existing, kuantitas: (existing.kuantitas || 0) + 1 }, ...others];
             }
-            toast.success(`"${product.nama}" ditambahkan`);
+            toast.success(`"${product.nama}" ditambahkan ke daftar`);
             return [
-                ...prev,
                 {
                     product_uid: product.uid,
                     nama: product.nama,
                     barcode: product.barcode || null,
                     kuantitas: 1,
                 },
+                ...prev,
             ];
         });
     };

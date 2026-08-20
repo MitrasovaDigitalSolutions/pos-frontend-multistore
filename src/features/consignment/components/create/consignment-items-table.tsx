@@ -42,9 +42,10 @@ export function ConsignmentItemsTable({
 
   useEffect(() => {
     if (fields.length > prevLengthRef.current) {
-      const newIndex = fields.length - 1;
-      setFlashIndex(newIndex);
-      const timer = setTimeout(() => setFlashIndex(null), 800);
+      const timer = setTimeout(() => {
+        setFlashIndex(0);
+        setTimeout(() => setFlashIndex(null), 800);
+      }, 30);
       return () => clearTimeout(timer);
     }
     prevLengthRef.current = fields.length;
@@ -53,11 +54,22 @@ export function ConsignmentItemsTable({
   useEffect(() => {
     if (lastAddedUid && watchItems.length > 0) {
       const targetIndex = watchItems.findIndex((it) => it.product_uid === lastAddedUid);
-      const indexToFocus = targetIndex >= 0 ? targetIndex : watchItems.length - 1;
+      const indexToFocus = targetIndex >= 0 ? targetIndex : 0;
       const timer = setTimeout(() => {
+        const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+        const targetElement = isMobile
+          ? document.getElementById(`consignment-item-card-${indexToFocus}`)
+          : document.getElementById(`consignment-item-row-${indexToFocus}`);
+
+        if (targetElement) {
+          targetElement.scrollIntoView({
+            behavior: "smooth",
+            block: isMobile ? "center" : "nearest",
+          });
+        }
+
         const qtyEl = qtyInputRefs.current.get(indexToFocus);
         if (qtyEl) {
-          qtyEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
           qtyEl.focus({ preventScroll: true });
           qtyEl.select();
         }
@@ -174,6 +186,7 @@ export function ConsignmentItemsTable({
                 return (
                   <tr
                     key={field.id}
+                    id={`consignment-item-row-${index}`}
                     className={`
                       group transition-all duration-300 hover:bg-slate-50/60
                       ${isFlashing ? "bg-emerald-50 ring-1 ring-inset ring-emerald-200" : ""}

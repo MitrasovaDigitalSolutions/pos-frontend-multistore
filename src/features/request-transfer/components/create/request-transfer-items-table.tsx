@@ -6,6 +6,7 @@ import { NumberInput } from "@/components/ui/number-input";
 import { BarcodeInput } from "@/components/shared/barcode-input";
 import type { Product } from "@/features/master/products/types";
 import type { RequestLineItem } from "../../schemas/request-transfer-schema";
+import { RequestTransferItemMobileCard } from "./request-transfer-item-mobile-card";
 
 interface RequestTransferItemsTableProps {
   items: RequestLineItem[];
@@ -36,7 +37,8 @@ export function RequestTransferItemsTable({
       const timer = setTimeout(() => {
         const inputEl = qtyInputRefs.current.get(lastScannedUid);
         if (inputEl) {
-          inputEl.focus();
+          inputEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          inputEl.focus({ preventScroll: true });
           inputEl.select();
         }
         setLastScannedUid(null);
@@ -44,6 +46,11 @@ export function RequestTransferItemsTable({
       return () => clearTimeout(timer);
     }
   }, [items, lastScannedUid]);
+
+  const handleEnterKey = () => {
+    barcodeInputRef.current?.focus();
+    barcodeInputRef.current?.select();
+  };
 
   return (
     <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-2xs space-y-4">
@@ -78,83 +85,106 @@ export function RequestTransferItemsTable({
         />
       </div>
 
-      {/* Selected Items Table */}
+      {/* Selected Items */}
       {items.length > 0 ? (
-        <div className="border border-slate-100 rounded-xl overflow-x-auto shadow-2xs">
-          <table className="w-full text-xs text-left min-w-[380px]">
-            <thead className="bg-slate-50/80 border-b border-slate-100 font-bold text-slate-600">
-              <tr>
-                <th className="px-3.5 py-2.5">Produk</th>
-                <th className="px-3.5 py-2.5 text-center w-36">Kuantitas</th>
-                <th className="px-3 py-2.5 text-center w-12">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 bg-white">
-              {items.map((item) => (
-                <tr key={item.product_uid} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-3.5 py-2.5">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="font-bold text-slate-900 text-xs">{item.nama}</span>
-                      {item.barcode && (
-                        <span className="font-mono text-[10px] text-slate-400">
-                          {item.barcode}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-3.5 py-2.5">
-                    <div className="flex items-center justify-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => onUpdateQty(item.product_uid, Math.max(0, item.kuantitas - 1))}
-                        className="w-7 h-7 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-all cursor-pointer"
-                      >
-                        <IconMinus size={13} />
-                      </button>
-                      <NumberInput
-                        ref={(el) => {
-                          if (el) {
-                            qtyInputRefs.current.set(item.product_uid, el);
-                          } else {
-                            qtyInputRefs.current.delete(item.product_uid);
-                          }
-                        }}
-                        value={item.kuantitas}
-                        onChange={(val) => onUpdateQty(item.product_uid, val || 0)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            barcodeInputRef.current?.focus();
-                            barcodeInputRef.current?.select();
-                          }
-                        }}
-                        min={0}
-                        allowNegative={false}
-                        className="h-7 w-14 text-center text-xs font-bold border-slate-200 rounded-lg px-1"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => onUpdateQty(item.product_uid, item.kuantitas + 1)}
-                        className="w-7 h-7 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-all cursor-pointer"
-                      >
-                        <IconPlus size={13} />
-                      </button>
-                    </div>
-                  </td>
-                  <td className="px-3 py-2.5 text-center">
-                    <button
-                      type="button"
-                      onClick={() => onRemoveItem(item.product_uid)}
-                      className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
-                      title="Hapus produk dari daftar"
-                    >
-                      <IconTrash size={15} />
-                    </button>
-                  </td>
+        <div className="space-y-3">
+          {/* ── Mobile Card List View (< 768px) ── */}
+          <div className="block md:hidden space-y-2.5">
+            {items.map((item, idx) => (
+              <RequestTransferItemMobileCard
+                key={item.product_uid}
+                item={item}
+                index={idx}
+                onUpdateQty={onUpdateQty}
+                onRemoveItem={onRemoveItem}
+                qtyInputRef={(el) => {
+                  if (el) {
+                    qtyInputRefs.current.set(item.product_uid, el);
+                  } else {
+                    qtyInputRefs.current.delete(item.product_uid);
+                  }
+                }}
+                onEnterPress={handleEnterKey}
+              />
+            ))}
+          </div>
+
+          {/* ── Desktop Table View (≥ 768px) ── */}
+          <div className="hidden md:block border border-slate-100 rounded-xl overflow-x-auto shadow-2xs">
+            <table className="w-full text-xs text-left min-w-[380px]">
+              <thead className="bg-slate-50/80 border-b border-slate-100 font-bold text-slate-600">
+                <tr>
+                  <th className="px-3.5 py-2.5">Produk</th>
+                  <th className="px-3.5 py-2.5 text-center w-36">Kuantitas</th>
+                  <th className="px-3 py-2.5 text-center w-12">Aksi</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {items.map((item) => (
+                  <tr key={item.product_uid} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-3.5 py-2.5">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-bold text-slate-900 text-xs">{item.nama}</span>
+                        {item.barcode && (
+                          <span className="font-mono text-[10px] text-slate-400">
+                            {item.barcode}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-3.5 py-2.5">
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => onUpdateQty(item.product_uid, Math.max(0, item.kuantitas - 1))}
+                          className="w-7 h-7 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-all cursor-pointer"
+                        >
+                          <IconMinus size={13} />
+                        </button>
+                        <NumberInput
+                          ref={(el) => {
+                            if (el) {
+                              qtyInputRefs.current.set(item.product_uid, el);
+                            } else {
+                              qtyInputRefs.current.delete(item.product_uid);
+                            }
+                          }}
+                          value={item.kuantitas}
+                          onChange={(val) => onUpdateQty(item.product_uid, val || 0)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleEnterKey();
+                            }
+                          }}
+                          min={0}
+                          allowNegative={false}
+                          className="h-7 w-14 text-center text-xs font-bold border-slate-200 rounded-lg px-1"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => onUpdateQty(item.product_uid, item.kuantitas + 1)}
+                          className="w-7 h-7 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-all cursor-pointer"
+                        >
+                          <IconPlus size={13} />
+                        </button>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2.5 text-center">
+                      <button
+                        type="button"
+                        onClick={() => onRemoveItem(item.product_uid)}
+                        className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
+                        title="Hapus produk dari daftar"
+                      >
+                        <IconTrash size={15} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
         <div className="p-7 text-center bg-slate-50/50 border border-dashed border-slate-200 rounded-xl space-y-2">

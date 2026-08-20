@@ -131,12 +131,14 @@ export function TransferCreatePage({ editUid }: TransferCreatePageProps) {
   const selectedDestStore = stores.find((s) => s.uid === destinationUid);
 
   const handleProductFound = (product: Product) => {
-    if (items.some((i) => i.product_uid === product.uid)) {
-      toast.error(`Produk "${product.nama}" sudah ada di daftar pengiriman`);
+    const existing = items.find((i) => i.product_uid === product.uid);
+    if (existing) {
+      const others = items.filter((i) => i.product_uid !== product.uid);
+      setItems([{ ...existing, kuantitas: existing.kuantitas + 1 }, ...others]);
+      toast.success(`Qty "${product.nama}" ditambah (+1).`);
       return;
     }
     setItems([
-      ...items,
       {
         product_uid: product.uid,
         nama: product.nama,
@@ -144,8 +146,9 @@ export function TransferCreatePage({ editUid }: TransferCreatePageProps) {
         stok_tersedia: product.stok,
         kuantitas: 1,
       },
+      ...items,
     ]);
-    toast.success(`"${product.nama}" ditambahkan`);
+    toast.success(`"${product.nama}" ditambahkan ke daftar`);
   };
 
   const updateQty = (uid: string, qty: number) => {
