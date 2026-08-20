@@ -140,7 +140,6 @@ export function ProductTable({
                 {
                     accessorKey: "barcode",
                     header: "Barcode / SKU",
-                    enableSorting: false,
                     cell: ({ row }) => (
                         <span className="font-bold text-slate-900">
                             {row.original.barcode || "-"}
@@ -166,9 +165,9 @@ export function ProductTable({
                     size: 320
                 },
                 {
-                    accessorKey: "category",
+                    id: "category",
+                    accessorFn: (row) => row.category?.nama || "",
                     header: "Kategori",
-                    enableSorting: false,
                     cell: ({ row }) => (
                         <span className="text-slate-500 text-xs">
                             {row.original.category?.nama || "-"}
@@ -177,9 +176,9 @@ export function ProductTable({
                     size: 170
                 },
                 {
-                    accessorKey: "merek",
+                    id: "merek",
+                    accessorFn: (row) => row.brand?.nama || row.merek || "",
                     header: "Merek/Brand",
-                    enableSorting: false,
                     cell: ({ row }) => (
                         <span className="text-slate-500 text-xs">
                             {row.original.brand?.nama || row.original.merek || "-"}
@@ -190,7 +189,6 @@ export function ProductTable({
                 {
                     accessorKey: "harga_beli",
                     header: "Harga Beli",
-                    enableSorting: false,
                     meta: {
                         headerClassName: "text-right",
                         cellClassName: "text-right text-slate-500 text-xs",
@@ -264,7 +262,6 @@ export function ProductTable({
                 {
                     accessorKey: "status",
                     header: "Status",
-                    enableSorting: false,
                     meta: {
                         headerClassName: "text-center",
                         cellClassName: "text-center",

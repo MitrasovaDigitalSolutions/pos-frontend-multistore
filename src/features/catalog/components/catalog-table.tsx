@@ -89,7 +89,6 @@ export function CatalogTable({
             {
                 accessorKey: "barcode",
                 header: "Barcode / SKU",
-                enableSorting: false,
                 size: 130,
                 cell: ({ row }) => (
                     <span className="font-mono text-xs text-slate-600">
@@ -137,9 +136,9 @@ export function CatalogTable({
                 },
             },
             {
-                accessorKey: "category.nama",
+                id: "category",
+                accessorFn: (row) => row.category?.nama || "",
                 header: "Kategori",
-                enableSorting: false,
                 size: 170,
                 cell: ({ row }) => (
                     <span className="text-xs text-slate-600 font-medium">
@@ -148,9 +147,9 @@ export function CatalogTable({
                 ),
             },
             {
-                accessorKey: "merek",
+                id: "merek",
+                accessorFn: (row) => row.brand?.nama || row.merek || "",
                 header: "Merek / Brand",
-                enableSorting: false,
                 size: 170,
                 cell: ({ row }) => (
                     <span className="text-xs text-slate-500">
@@ -161,7 +160,6 @@ export function CatalogTable({
             {
                 accessorKey: "harga_beli",
                 header: "Harga Beli",
-                enableSorting: false,
                 size: 120,
                 meta: {
                     headerClassName: "text-right",
@@ -203,7 +201,6 @@ export function CatalogTable({
             {
                 accessorKey: "margin",
                 header: "Margin",
-                enableSorting: false,
                 size: 100,
                 meta: {
                     headerClassName: "text-right",
@@ -217,7 +214,6 @@ export function CatalogTable({
             {
                 accessorKey: "status",
                 header: "Status",
-                enableSorting: false,
                 size: 110,
                 meta: {
                     headerClassName: "text-center",
