@@ -7,7 +7,7 @@ import type { Product } from "@/features/master/products/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconPackage, IconTrash } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
-import { useFieldArray, useFormContext } from "react-hook-form";
+import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import type { ConsignmentReceivingFormValues } from "../../schemas/consignment-schema";
 import { ConsignmentItemMobileCard } from "./consignment-item-mobile-card";
 
@@ -26,17 +26,16 @@ export function ConsignmentItemsTable({
   barcodeInputRef,
   lastAddedUid,
 }: ConsignmentItemsTableProps) {
-  const { control, watch } = useFormContext<ConsignmentReceivingFormValues>();
+  const { control } = useFormContext<ConsignmentReceivingFormValues>();
   const { fields } = useFieldArray({
     control,
     name: "items",
   });
 
-  const watchItems = watch("items") || [];
+  const watchItems = useWatch({ control, name: "items" }) || [];
 
   const [flashIndex, setFlashIndex] = useState<number | null>(null);
   const prevLengthRef = useRef(fields.length);
-  const tableEndRef = useRef<HTMLDivElement>(null);
 
   const qtyInputRefs = useRef<Map<number, HTMLInputElement>>(new Map());
   const hargaBeliInputRefs = useRef<Map<number, HTMLInputElement>>(new Map());
@@ -46,7 +45,6 @@ export function ConsignmentItemsTable({
       const newIndex = fields.length - 1;
       setFlashIndex(newIndex);
       const timer = setTimeout(() => setFlashIndex(null), 800);
-      tableEndRef.current?.scrollIntoView({ behavior: "smooth" });
       return () => clearTimeout(timer);
     }
     prevLengthRef.current = fields.length;
@@ -59,18 +57,19 @@ export function ConsignmentItemsTable({
       const timer = setTimeout(() => {
         const qtyEl = qtyInputRefs.current.get(indexToFocus);
         if (qtyEl) {
-          qtyEl.focus();
+          qtyEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          qtyEl.focus({ preventScroll: true });
           qtyEl.select();
         }
-      }, 80);
+      }, 60);
       return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastAddedUid, watchItems.length]);
 
-  const totalItems = watchItems.reduce((acc, item) => acc + Number(item?.kuantitas || 0), 0);
-  const totalValue = watchItems.reduce(
-    (acc, item) => acc + Number(item?.kuantitas || 0) * Number(item?.harga_beli || 0),
+  const totalItems = (watchItems || []).reduce((acc: number, item) => acc + Number(item?.kuantitas || 0), 0);
+  const totalValue = (watchItems || []).reduce(
+    (acc: number, item) => acc + Number(item?.kuantitas || 0) * Number(item?.harga_beli || 0),
     0
   );
 
@@ -299,8 +298,6 @@ export function ConsignmentItemsTable({
           </span>
         </div>
       </div>
-
-      <div ref={tableEndRef} />
     </div>
   );
 }
