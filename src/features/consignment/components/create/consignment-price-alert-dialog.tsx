@@ -48,8 +48,9 @@ export function ConsignmentPriceAlertDialog({
       items: [],
     },
   });
+  const { control, reset, setValue, getValues } = alertFormMethods;
 
-  const formItems = useWatch({ name: "items", control: alertFormMethods.control });
+  const formItems = useWatch({ name: "items", control });
   const prevItemsRef = useRef<ConsignmentPriceAlertFormInput["items"]>([]);
 
   useEffect(() => {
@@ -69,10 +70,10 @@ export function ConsignmentPriceAlertDialog({
         };
       });
       prevItemsRef.current = JSON.parse(JSON.stringify(initialItems));
-      alertFormMethods.reset({ items: initialItems });
+      reset({ items: initialItems });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, priceAlerts, alertFormMethods, adjustmentMethod]);
+  }, [open, priceAlerts, reset, adjustmentMethod]);
 
   useEffect(() => {
     if (!formItems || formItems.length === 0) return;
@@ -94,7 +95,7 @@ export function ConsignmentPriceAlertDialog({
             buyPrice * (1 + (item.margin_baru || 0) / 100)
           );
           if (item.harga_jual_baru !== calculatedHargaJual) {
-            alertFormMethods.setValue(`items.${idx}.harga_jual_baru`, calculatedHargaJual);
+            setValue(`items.${idx}.harga_jual_baru`, calculatedHargaJual);
           }
         }
       } else if (activeId === `items.${idx}.harga_jual_baru`) {
@@ -103,7 +104,7 @@ export function ConsignmentPriceAlertDialog({
             buyPrice > 0 ? ((item.harga_jual_baru || 0) / buyPrice - 1) * 100 : 0;
           const roundedMargin = Math.round(calculatedMargin * 100) / 100;
           if (item.margin_baru !== roundedMargin) {
-            alertFormMethods.setValue(`items.${idx}.margin_baru`, roundedMargin);
+            setValue(`items.${idx}.margin_baru`, roundedMargin);
           }
         }
       }
@@ -111,7 +112,7 @@ export function ConsignmentPriceAlertDialog({
 
     prevItemsRef.current = JSON.parse(JSON.stringify(formItems));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formItems, priceAlerts, alertFormMethods, adjustmentMethod]);
+  }, [formItems, priceAlerts, setValue, adjustmentMethod]);
 
   const handleUseSaran = (idx: number, alert: PriceComparisonItem) => {
     const marginLama = alert.margin_lama;
@@ -120,13 +121,13 @@ export function ConsignmentPriceAlertDialog({
       buyPriceNew * (1 + (marginLama || 0) / 100)
     );
 
-    alertFormMethods.setValue(`items.${idx}.margin_baru`, marginLama);
-    alertFormMethods.setValue(`items.${idx}.harga_jual_baru`, calculatedHargaJualSaran);
-    alertFormMethods.setValue(`items.${idx}.update_harga_jual`, true);
+    setValue(`items.${idx}.margin_baru`, marginLama);
+    setValue(`items.${idx}.harga_jual_baru`, calculatedHargaJualSaran);
+    setValue(`items.${idx}.update_harga_jual`, true);
   };
 
   const handleFormSubmit = () => {
-    const formValues = alertFormMethods.getValues();
+    const formValues = getValues();
     onCompleteWithPrices(formValues);
   };
 

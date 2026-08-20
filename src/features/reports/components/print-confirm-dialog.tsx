@@ -30,12 +30,13 @@ export function PrintConfirmDialog<TFieldValues extends FieldValues & BasePrintF
     const methods = useForm<TFieldValues>({
         defaultValues,
     });
+    const { reset } = methods;
 
     useEffect(() => {
         if (open) {
-            methods.reset(defaultValues);
+            reset(defaultValues);
         }
-    }, [open, defaultValues, methods]);
+    }, [open, defaultValues, reset]);
 
     const handleConfirm = (data: TFieldValues) => {
         onConfirm(data);

@@ -9,6 +9,7 @@ import { IconPackage, IconTrash } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import type { ConsignmentReceivingFormValues } from "../../schemas/consignment-schema";
+import { ConsignmentItemMobileCard } from "./consignment-item-mobile-card";
 
 interface ConsignmentItemsTableProps {
   productsMap: Map<string, Product>;
@@ -73,6 +74,21 @@ export function ConsignmentItemsTable({
     0
   );
 
+  const handleQtyEnter = (index: number) => {
+    const hargaBeliEl = hargaBeliInputRefs.current.get(index);
+    if (hargaBeliEl) {
+      hargaBeliEl.focus();
+      hargaBeliEl.select();
+    }
+  };
+
+  const handleHargaBeliEnter = () => {
+    if (barcodeInputRef?.current) {
+      barcodeInputRef.current.focus();
+      barcodeInputRef.current.select();
+    }
+  };
+
   if (fields.length === 0) {
     return (
       <div className="border border-dashed border-slate-200 rounded-2xl p-8 text-center bg-white shadow-xs">
@@ -88,8 +104,50 @@ export function ConsignmentItemsTable({
   }
 
   return (
-    <div className="space-y-3">
-      <div className="border border-slate-100 rounded-2xl overflow-hidden shadow-xs bg-white">
+    <div className="space-y-4">
+      {/* ── Mobile Card Grid (Visible on mobile screens < 768px) ── */}
+      <div className="block md:hidden space-y-3">
+        {fields.map((field, index) => {
+          const item = watchItems[index];
+          const product = productsMap.get(item?.product_uid || "");
+          const isFlashing = flashIndex === index;
+
+          return (
+            <ConsignmentItemMobileCard
+              key={field.id}
+              index={index}
+              item={item}
+              product={product}
+              disabled={disabled}
+              isFlashing={isFlashing}
+              onRemoveItem={() => onRemoveItem(index)}
+              setQtyInputRef={(el) => {
+                if (el) qtyInputRefs.current.set(index, el);
+                else qtyInputRefs.current.delete(index);
+              }}
+              setHargaBeliInputRef={(el) => {
+                if (el) hargaBeliInputRefs.current.set(index, el);
+                else hargaBeliInputRefs.current.delete(index);
+              }}
+              onQtyKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleQtyEnter(index);
+                }
+              }}
+              onHargaBeliKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleHargaBeliEnter();
+                }
+              }}
+            />
+          );
+        })}
+      </div>
+
+      {/* ── Desktop Table View (Visible on screens >= 768px) ── */}
+      <div className="hidden md:block border border-slate-100 rounded-2xl overflow-hidden shadow-xs bg-white">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
@@ -156,11 +214,7 @@ export function ConsignmentItemsTable({
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
                             e.preventDefault();
-                            const hargaBeliEl = hargaBeliInputRefs.current.get(index);
-                            if (hargaBeliEl) {
-                              hargaBeliEl.focus();
-                              hargaBeliEl.select();
-                            }
+                            handleQtyEnter(index);
                           }
                         }}
                         className="w-full h-8 text-center text-xs font-bold text-slate-800 rounded-lg border-slate-200 focus-visible:ring-emerald-400/20 focus-visible:border-emerald-400"
@@ -178,10 +232,7 @@ export function ConsignmentItemsTable({
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
                             e.preventDefault();
-                            if (barcodeInputRef?.current) {
-                              barcodeInputRef.current.focus();
-                              barcodeInputRef.current.select();
-                            }
+                            handleHargaBeliEnter();
                           }
                         }}
                         className="w-full h-8 text-right text-xs font-bold text-slate-800 font-mono rounded-lg border-slate-200 focus-visible:ring-emerald-400/20 focus-visible:border-emerald-400"
@@ -193,8 +244,9 @@ export function ConsignmentItemsTable({
                     </td>
 
                     <td
-                      className={`p-3 text-center sticky right-0 border-l border-slate-100/80 z-10 transition-colors ${isFlashing ? "bg-emerald-50" : "bg-white group-hover:bg-slate-50/60"
-                        }`}
+                      className={`p-3 text-center sticky right-0 border-l border-slate-100/80 z-10 transition-colors ${
+                        isFlashing ? "bg-emerald-50" : "bg-white group-hover:bg-slate-50/60"
+                      }`}
                     >
                       <AppButton
                         type="button"
@@ -202,7 +254,7 @@ export function ConsignmentItemsTable({
                         size="icon-xs"
                         onClick={() => onRemoveItem(index)}
                         disabled={disabled}
-                        className="text-rose-400 hover:text-rose-600 hover:bg-rose-50"
+                        className="text-rose-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
                         title="Hapus item"
                       >
                         <IconTrash size={16} />
@@ -214,30 +266,37 @@ export function ConsignmentItemsTable({
             </tbody>
           </table>
         </div>
+      </div>
 
-        {/* Footer totals */}
-        <div className="bg-slate-50/80 border-t border-slate-100 px-4 py-3 flex justify-between items-center flex-wrap gap-2">
-          <div className="flex items-center gap-3">
+      {/* ── Summary & Totals Banner (Responsive for both Mobile & Desktop) ── */}
+      <div className="bg-white border border-slate-100 rounded-2xl px-4 py-3.5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-xs">
+        <div className="flex items-center gap-3 text-xs flex-wrap">
+          <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              Total Items
+              Total Qty:
             </span>
-            <span className="text-sm font-extrabold text-slate-800">
+            <span className="font-extrabold text-slate-800 font-mono">
               {totalItems} pcs
             </span>
-            <span className="text-slate-200">|</span>
+          </div>
+
+          <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              Total Variasi:
+            </span>
+            <span className="font-extrabold text-slate-800 font-mono">
               {fields.length} produk
             </span>
           </div>
+        </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              Total Nilai Titipan
-            </span>
-            <span className="text-base font-extrabold text-emerald-600 font-mono">
-              {formatRupiah(totalValue)}
-            </span>
-          </div>
+        <div className="flex items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            Total Nilai Titipan:
+          </span>
+          <span className="text-base sm:text-lg font-black text-emerald-600 font-mono">
+            {formatRupiah(totalValue)}
+          </span>
         </div>
       </div>
 

@@ -52,17 +52,17 @@ export function BukaShiftModal({
         },
     });
 
+    const { handleSubmit, reset, formState: { isSubmitting } } = methods;
+
     // Reset to empty initial balance when modal opens
     React.useEffect(() => {
         if (open) {
-            methods.reset({
+            reset({
                 opening_balance: null as unknown as number,
                 opening_note: "",
             });
         }
-    }, [open, methods]);
-
-    const { handleSubmit, formState: { isSubmitting } } = methods;
+    }, [open, reset]);
 
     const onSubmit = async (data: OpenCashDrawerInput) => {
         try {

@@ -36,16 +36,17 @@ export function MemberPaymentVoidDialog({
             alasan: "",
         },
     });
+    const { reset, handleSubmit } = methods;
 
     useEffect(() => {
         if (open) {
-            methods.reset({ alasan: "" });
+            reset({ alasan: "" });
         }
-    }, [open, methods]);
+    }, [open, reset]);
 
     if (!payment) return null;
 
-    const handleConfirm = methods.handleSubmit((data) => {
+    const handleConfirm = handleSubmit((data) => {
         return onConfirm(data.alasan);
     });
 

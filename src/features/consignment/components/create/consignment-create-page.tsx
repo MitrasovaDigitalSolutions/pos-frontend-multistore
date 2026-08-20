@@ -17,7 +17,7 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import {
@@ -51,7 +51,18 @@ export function ConsignmentCreatePage({ initialData }: ConsignmentCreatePageProp
   const barcodeInputRef = useRef<HTMLInputElement>(null);
   const [lastAddedUid, setLastAddedUid] = useState<string | null>(null);
 
-  const [productsMap, setProductsMap] = useState<Map<string, Product>>(new Map());
+  const [productsMap, setProductsMap] = useState<Map<string, Product>>(() => {
+    const map = new Map<string, Product>();
+    if (initialData?.items) {
+      initialData.items.forEach((item) => {
+        if (item.product) {
+          map.set(item.product_uid, item.product);
+        }
+      });
+    }
+    return map;
+  });
+
   const [notFoundQuery, setNotFoundQuery] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
@@ -84,20 +95,6 @@ export function ConsignmentCreatePage({ initialData }: ConsignmentCreatePageProp
         })) || [],
     },
   });
-
-  // Pre-fill productsMap from initialData if available
-  useEffect(() => {
-    if (initialData?.items) {
-      const map = new Map<string, Product>();
-      initialData.items.forEach((item) => {
-        if (item.product) {
-          map.set(item.product_uid, item.product);
-        }
-      });
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setProductsMap(map);
-    }
-  }, [initialData]);
 
   const createDraftMutation = useCreateConsignmentDraftMutation();
   const updateDraftMutation = useUpdateConsignmentDraftMutation();
@@ -314,11 +311,11 @@ export function ConsignmentCreatePage({ initialData }: ConsignmentCreatePageProp
         </div>
 
         {/* Main Content Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start pb-28 sm:pb-8">
           {/* Left Column */}
-          <div className="lg:col-span-8 space-y-6">
+          <div className="lg:col-span-8 space-y-5 sm:space-y-6">
             {/* Barcode scanner box */}
-            <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-xs space-y-4">
+            <div className="bg-white border border-slate-100 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
               <div className="flex items-center gap-2 pb-3 border-b border-slate-50">
                 <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg border border-emerald-100/30">
                   <IconBarcode size={18} />
@@ -348,18 +345,18 @@ export function ConsignmentCreatePage({ initialData }: ConsignmentCreatePageProp
               />
 
               {notFoundQuery && (
-                <div className="flex items-center justify-between p-3.5 bg-rose-50/50 border border-rose-100 rounded-xl text-rose-900 text-xs">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 p-3.5 bg-rose-50/50 border border-rose-100 rounded-xl text-rose-900 text-xs">
                   <div className="flex items-center gap-2">
                     <IconInfoCircle size={16} className="text-rose-500 shrink-0" />
                     <span>
                       Produk <strong>&quot;{notFoundQuery}&quot;</strong> tidak ditemukan.
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end shrink-0">
                     <Button
                       type="button"
                       onClick={() => setIsCreateDialogOpen(true)}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold h-8 px-3 rounded-lg border-none cursor-pointer"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold h-8 px-3 rounded-lg border-none cursor-pointer flex-1 sm:flex-initial"
                     >
                       Tambah Produk Baru
                     </Button>
@@ -377,7 +374,7 @@ export function ConsignmentCreatePage({ initialData }: ConsignmentCreatePageProp
             </div>
 
             {/* Items Table */}
-            <div className="pb-16">
+            <div>
               <ConsignmentItemsTable
                 productsMap={productsMap}
                 onRemoveItem={handleRemoveItem}
@@ -389,7 +386,7 @@ export function ConsignmentCreatePage({ initialData }: ConsignmentCreatePageProp
           </div>
 
           {/* Right Column */}
-          <div className="lg:col-span-4 space-y-6">
+          <div className="lg:col-span-4 space-y-5 sm:space-y-6">
             <ConsignmentHeaderCard isPending={isSubmitting} />
             <ConsignmentInstructionPanel />
           </div>
@@ -415,7 +412,7 @@ export function ConsignmentCreatePage({ initialData }: ConsignmentCreatePageProp
           open={isCreateDialogOpen}
           onOpenChange={setIsCreateDialogOpen}
           editingProduct={null}
-          onSuccess={(product) => {
+          onSuccess={(product: Product) => {
             setNotFoundQuery("");
             handleProductFound(product);
           }}
