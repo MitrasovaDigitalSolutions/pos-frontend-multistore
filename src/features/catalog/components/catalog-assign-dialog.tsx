@@ -1,38 +1,27 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { FormNominalInput } from "@/components/forms/form-nominal-input";
+import { Input } from "@/components/ui/input";
 import {
     IconBuildingStore,
-    IconPackage,
-    IconTag,
     IconCheck,
     IconMinus,
     IconLoader2,
+    IconSearch,
+    IconX,
 } from "@tabler/icons-react";
 import { useStores } from "@/features/stores/api/stores-api";
 import { useProductStores } from "@/features/master/products/api/product-store-api";
 import { useBulkAssignProductStores } from "../api/catalog-api";
-import { STORE_BADGE_HQ } from "@/constants/store";
-import { formatRupiah } from "@/hooks/use-format-rupiah";
-import type { CatalogProduct } from "../types";
-
-export interface CatalogAssignFormValues {
-    global_harga_jual: number | null;
-    stores: Record<
-        string,
-        {
-            checked: boolean;
-            is_custom_price: boolean;
-            harga_jual: number | null;
-        }
-    >;
-}
+import { Scrollable } from "@/components/ui/scrollable";
+import { CatalogAssignProductSummary } from "./assign/catalog-assign-product-summary";
+import { CatalogAssignGlobalPreset } from "./assign/catalog-assign-global-preset";
+import { CatalogAssignStoreRow } from "./assign/catalog-assign-store-row";
+import type { BulkAssignmentItem, CatalogAssignFormValues, CatalogProduct } from "../types";
 
 interface CatalogAssignDialogProps {
     open: boolean;
@@ -45,6 +34,8 @@ export function CatalogAssignDialog({
     onOpenChange,
     product,
 }: CatalogAssignDialogProps) {
+    const [storeSearch, setStoreSearch] = useState("");
+
     const { data: storesRes, isLoading: isLoadingStores } = useStores({ per_page: 1000 });
     const { data: assignments = [], isLoading: isLoadingAssignments } = useProductStores(
         open ? product?.uid : undefined
@@ -57,6 +48,9 @@ export function CatalogAssignDialog({
     const methods = useForm<CatalogAssignFormValues>({
         defaultValues: {
             global_harga_jual: null,
+            global_is_grosir: false,
+            global_harga_grosir: null,
+            global_min_qty_grosir: null,
             stores: {},
         },
     });
@@ -65,29 +59,98 @@ export function CatalogAssignDialog({
 
     useEffect(() => {
         if (open && product && !isLoading) {
+            const masterPrice = Number(product.harga_jual ?? product.harga);
+            const masterHargaGrosir = product.harga_grosir != null ? Number(product.harga_grosir) : null;
+            const masterMinQtyGrosir = product.min_qty_grosir != null ? Number(product.min_qty_grosir) : null;
+
             const storeMap: CatalogAssignFormValues["stores"] = {};
             stores.forEach((s) => {
                 const existing = assignments.find((a) => a.store_uid === s.uid);
+
+                // Check if store has custom pricing or wholesale data differing from master
+                const hasDifferentRetailPrice = Boolean(
+                    existing &&
+                    existing.harga_jual != null &&
+                    Number(existing.harga_jual) !== masterPrice
+                );
+                const hasWholesale = Boolean(
+                    existing && (
+                        existing.is_grosir === true ||
+                        (existing.harga_grosir != null && Number(existing.harga_grosir) > 0)
+                    )
+                );
+                const hasDifferentWholesalePrice = Boolean(
+                    existing &&
+                    existing.harga_grosir != null &&
+                    (masterHargaGrosir == null || Number(existing.harga_grosir) !== masterHargaGrosir)
+                );
+                const hasDifferentMinQty = Boolean(
+                    existing &&
+                    existing.min_qty_grosir != null &&
+                    (masterMinQtyGrosir == null || Number(existing.min_qty_grosir) !== masterMinQtyGrosir)
+                );
+
+                const hasCustom = Boolean(
+                    hasDifferentRetailPrice ||
+                    hasWholesale ||
+                    hasDifferentWholesalePrice ||
+                    hasDifferentMinQty
+                );
+
                 storeMap[s.uid] = {
                     checked: !!existing,
-                    is_custom_price: false,
-                    harga_jual: null,
+                    is_custom: hasCustom,
+                    harga_jual: hasCustom && existing?.harga_jual != null ? Number(existing.harga_jual) : null,
+                    is_grosir: hasCustom ? Boolean(existing?.is_grosir ?? (existing?.harga_grosir != null)) : false,
+                    harga_grosir: hasCustom && existing?.harga_grosir != null ? Number(existing.harga_grosir) : null,
+                    min_qty_grosir: hasCustom && existing?.min_qty_grosir != null ? Number(existing.min_qty_grosir) : null,
                 };
             });
+
             reset({
                 global_harga_jual: null,
+                global_is_grosir: Boolean(product.is_grosir),
+                global_harga_grosir: product.harga_grosir ?? null,
+                global_min_qty_grosir: product.min_qty_grosir ?? null,
                 stores: storeMap,
             });
         }
     }, [open, product, isLoading, stores, assignments, reset]);
 
-    const watchStores = useWatch({ control, name: "stores" }) || {};
+    const watchStores = useWatch({ control, name: "stores" });
+    const watchGlobalPrice = useWatch({ control, name: "global_harga_jual" });
+    const watchGlobalIsGrosir = useWatch({ control, name: "global_is_grosir" });
+    const watchGlobalHargaGrosir = useWatch({ control, name: "global_harga_grosir" });
+    const watchGlobalMinQty = useWatch({ control, name: "global_min_qty_grosir" });
 
-    const storeEntries = stores.map((s) => ({
-        store: s,
-        formState: watchStores[s.uid] || { checked: false, is_custom_price: false, harga_jual: null },
-        currentAssignment: assignments.find((a) => a.store_uid === s.uid),
-    }));
+    const globalValues = useMemo(() => ({
+        global_harga_jual: watchGlobalPrice ?? null,
+        global_is_grosir: Boolean(watchGlobalIsGrosir),
+        global_harga_grosir: watchGlobalHargaGrosir ? Number(watchGlobalHargaGrosir) : null,
+        global_min_qty_grosir: watchGlobalMinQty ? Number(watchGlobalMinQty) : null,
+    }), [watchGlobalPrice, watchGlobalIsGrosir, watchGlobalHargaGrosir, watchGlobalMinQty]);
+
+    const storeEntries = useMemo(() => {
+        const storeMap = watchStores || {};
+        return stores.map((s) => ({
+            store: s,
+            formState: storeMap[s.uid] || {
+                checked: false,
+                is_custom: false,
+                harga_jual: null,
+                is_grosir: false,
+                harga_grosir: null,
+                min_qty_grosir: null,
+            },
+            currentAssignment: assignments.find((a) => a.store_uid === s.uid),
+        }));
+    }, [stores, watchStores, assignments]);
+
+    const filteredStoreEntries = useMemo(() => {
+        if (!storeSearch.trim()) return storeEntries;
+        const q = storeSearch.toLowerCase();
+        return storeEntries.filter((e) => e.store.nama.toLowerCase().includes(q));
+    }, [storeEntries, storeSearch]);
 
     const selectedCount = storeEntries.filter((e) => e.formState.checked).length;
     const allChecked = storeEntries.length > 0 && selectedCount === storeEntries.length;
@@ -106,10 +169,28 @@ export function CatalogAssignDialog({
 
     const toggleCustomPrice = (storeUid: string, current: boolean) => {
         const next = !current;
-        setValue(`stores.${storeUid}.is_custom_price`, next, { shouldDirty: true });
-        if (!next) {
-            // Reset custom price input when disabled
-            setValue(`stores.${storeUid}.harga_jual`, null, { shouldDirty: true });
+        setValue(`stores.${storeUid}.is_custom`, next, { shouldDirty: true });
+        if (next) {
+            const storeMap = watchStores || {};
+            const currentStore = storeMap[storeUid];
+            const existing = assignments.find((a) => a.store_uid === storeUid);
+            const masterPrice = product ? Number(product.harga_jual ?? product.harga) : 0;
+
+            if (currentStore?.harga_jual == null) {
+                const initialPrice = existing?.harga_jual != null
+                    ? Number(existing.harga_jual)
+                    : (globalValues.global_harga_jual ?? masterPrice);
+                setValue(`stores.${storeUid}.harga_jual`, initialPrice, { shouldDirty: true });
+            }
+            if (!currentStore?.is_grosir && (existing?.is_grosir || globalValues.global_is_grosir)) {
+                setValue(`stores.${storeUid}.is_grosir`, true, { shouldDirty: true });
+                if (currentStore?.harga_grosir == null) {
+                    setValue(`stores.${storeUid}.harga_grosir`, existing?.harga_grosir ?? globalValues.global_harga_grosir, { shouldDirty: true });
+                }
+                if (currentStore?.min_qty_grosir == null) {
+                    setValue(`stores.${storeUid}.min_qty_grosir`, existing?.min_qty_grosir ?? globalValues.global_min_qty_grosir, { shouldDirty: true });
+                }
+            }
         }
     };
 
@@ -118,20 +199,55 @@ export function CatalogAssignDialog({
 
         const selectedStores = stores.filter((s) => data.stores[s.uid]?.checked);
         if (selectedStores.length === 0) {
-            toast.warning("Pilih minimal satu toko untuk di-assign.");
+            toast.warning("Pilih minimal satu toko untuk didistribusikan.");
             return;
         }
 
-        const globalVal = data.global_harga_jual;
+        const masterPrice = Number(product.harga_jual ?? product.harga);
+        const globalPrice = data.global_harga_jual != null ? Number(data.global_harga_jual) : null;
+        const globalIsGrosir = Boolean(data.global_is_grosir);
+        const globalHargaGrosir = data.global_harga_grosir ? Number(data.global_harga_grosir) : null;
+        const globalMinQty = data.global_min_qty_grosir ? Number(data.global_min_qty_grosir) : null;
 
-        const payloadAssignments = selectedStores.map((s) => {
+        const payloadAssignments: BulkAssignmentItem[] = selectedStores.map((s) => {
             const storeData = data.stores[s.uid];
-            const isCustom = storeData?.is_custom_price;
-            const customPrice = storeData?.harga_jual;
-            const finalPrice = isCustom && customPrice != null ? customPrice : globalVal;
+            const isCustom = storeData?.is_custom;
+
+            let finalHargaJual = masterPrice;
+            if (isCustom && storeData?.harga_jual != null) {
+                finalHargaJual = Number(storeData.harga_jual);
+            } else if (globalPrice != null) {
+                finalHargaJual = globalPrice;
+            }
+
+            let finalIsGrosir = globalIsGrosir;
+            let finalHargaGrosir = globalHargaGrosir;
+            let finalMinQty = globalMinQty;
+
+            if (isCustom) {
+                finalIsGrosir = Boolean(storeData?.is_grosir);
+                if (finalIsGrosir) {
+                    finalHargaGrosir = storeData?.harga_grosir ? Number(storeData.harga_grosir) : null;
+                    finalMinQty = storeData?.min_qty_grosir ? Number(storeData.min_qty_grosir) : null;
+                } else {
+                    finalHargaGrosir = null;
+                    finalMinQty = null;
+                }
+            }
+
+            // Ensure wholesale integrity (if disabled or incomplete, send null & false)
+            if (!finalIsGrosir || finalHargaGrosir == null || finalMinQty == null || finalMinQty <= 0) {
+                finalIsGrosir = false;
+                finalHargaGrosir = null;
+                finalMinQty = null;
+            }
+
             return {
                 store_uid: s.uid,
-                harga_jual: finalPrice ?? null,
+                harga_jual: finalHargaJual,
+                is_grosir: finalIsGrosir,
+                harga_grosir: finalHargaGrosir,
+                min_qty_grosir: finalMinQty,
             };
         });
 
@@ -140,16 +256,18 @@ export function CatalogAssignDialog({
             {
                 onSuccess: () => {
                     toast.success(
-                        `Produk berhasil di-assign ke ${payloadAssignments.length} toko.`
+                        `Produk master berhasil didistribusikan ke ${payloadAssignments.length} toko.`
                     );
                     onOpenChange(false);
                 },
                 onError: (err) => {
-                    toast.error(err.message || "Gagal menyimpan assignment.");
+                    toast.error(err.message || "Gagal menyimpan distribusi produk.");
                 },
             }
         );
     };
+
+    const masterPrice = product ? (product.harga_jual ?? product.harga) : 0;
 
     return (
         <BaseDialog
@@ -161,201 +279,122 @@ export function CatalogAssignDialog({
                         <IconBuildingStore size={20} />
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-base font-bold text-slate-900">
+                        <span className="text-base font-extrabold text-slate-900">
                             Distribusi Produk ke Toko
                         </span>
                         <span className="text-xs font-medium text-slate-400">
-                            Atur ketersediaan dan penyesuaian harga jual di seluruh cabang
+                            Atur ketersediaan toko, harga jual cabang, serta skema harga grosir
                         </span>
                     </div>
                 </div>
             }
-            className="!max-w-3xl w-full"
-            scrollable
+            className="!max-w-4xl w-full h-[88vh] max-h-[88vh] flex flex-col"
+            scrollable={false}
         >
             <FormProvider {...methods}>
-                <form id="catalog-assign-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                    {/* ── Product Info Summary Card ──────────────────────────── */}
-                    {product && (
-                        <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex items-start gap-3">
-                            <div className="p-2.5 rounded-xl bg-white border border-slate-200 shrink-0 text-slate-400">
-                                <IconPackage size={22} />
-                            </div>
-                            <div className="flex-1 min-w-0 space-y-1">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="font-bold text-sm text-slate-900 leading-tight">
-                                        {product.nama}
-                                    </span>
-                                    {product.is_jasa && (
-                                        <Badge className="text-[9px] px-2 py-0.5 bg-blue-50 text-blue-700 border-blue-100 font-semibold">
-                                            Jasa
-                                        </Badge>
-                                    )}
-                                </div>
-                                <div className="flex items-center gap-3 flex-wrap text-xs text-slate-500">
-                                    {product.barcode && (
-                                        <span className="font-mono bg-white border border-slate-200 px-2 py-0.5 rounded-md text-[11px] font-semibold text-slate-700">
-                                            {product.barcode}
-                                        </span>
-                                    )}
-                                    {product.category && (
-                                        <span>Kategori: <strong className="text-slate-700">{product.category.nama}</strong></span>
-                                    )}
-                                    {product.brand && (
-                                        <span>Brand: <strong className="text-slate-700">{product.brand.nama}</strong></span>
-                                    )}
-                                </div>
-                                <div className="flex items-center gap-2 pt-1">
-                                    <IconTag size={14} className="text-slate-400" />
-                                    <span className="text-xs text-slate-500">Harga Master:</span>
-                                    <span className="font-extrabold text-xs text-slate-900">
-                                        {formatRupiah(product.harga)}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                <form id="catalog-assign-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0 justify-between gap-4 pt-3">
+                    {/* ── Scrollable Body Area ────────────────────────────────────── */}
+                    <Scrollable className="flex-1 min-h-0" scrollbarClassName="z-40">
+                        <div className="flex flex-col gap-5 py-1 pr-3 pb-3">
+                            {/* ── Product Summary Banner ─────────────────────────────────── */}
+                            {product && <CatalogAssignProductSummary product={product} />}
 
-                    {/* ── Global Price Input ─────────────────────────────────── */}
-                    <div className="bg-emerald-50/50 border border-emerald-200/80 rounded-2xl p-4 space-y-2">
-                        <FormNominalInput<CatalogAssignFormValues>
-                            name="global_harga_jual"
-                            label="Harga Jual Global (Opsional)"
-                            placeholder="Masukkan nominal harga jual global..."
-                            className="bg-white"
-                        />
-                        <p className="text-[11px] text-emerald-800/80 leading-relaxed font-medium">
-                            Jika diisi, seluruh toko yang dipilih akan otomatis menggunakan harga jual ini, kecuali toko yang di-checklist untuk menggunakan harga khusus di bawah.
-                        </p>
-                    </div>
+                            {/* ── Global Pricing & Wholesale Preset Card ─────────────────── */}
+                            {product && <CatalogAssignGlobalPreset product={product} />}
 
-                    {/* ── Store Selection Table ──────────────────────────────── */}
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between px-1">
-                            <div className="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={toggleAll}
-                                    className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all shrink-0 cursor-pointer ${allChecked
-                                        ? "bg-emerald-600 border-emerald-600 text-white"
-                                        : someChecked
-                                            ? "bg-emerald-100 border-emerald-400 text-emerald-700"
-                                            : "bg-white border-slate-300 hover:border-emerald-500"
-                                        }`}
-                                >
-                                    {allChecked ? (
-                                        <IconCheck size={14} strokeWidth={3} />
-                                    ) : someChecked ? (
-                                        <IconMinus size={14} strokeWidth={3} />
-                                    ) : null}
-                                </button>
-                                <span className="text-xs font-bold text-slate-800">
-                                    Pilih Toko ({selectedCount} dari {stores.length} toko dipilih)
-                                </span>
-                            </div>
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                Atur Harga Per Toko
-                            </span>
-                        </div>
-
-                        <div className="border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100 bg-white">
-                            {isLoading ? (
-                                <div className="py-12 flex flex-col items-center gap-2 text-slate-400">
-                                    <IconLoader2 size={24} className="animate-spin text-emerald-600" />
-                                    <span className="text-xs font-medium">Memuat data toko...</span>
-                                </div>
-                            ) : stores.length === 0 ? (
-                                <div className="py-12 text-center text-xs text-slate-400 font-medium">
-                                    Tidak ada toko tersedia
-                                </div>
-                            ) : (
-                                storeEntries.map(({ store, formState, currentAssignment }) => {
-                                    const isChecked = formState.checked;
-                                    const isCustomPrice = formState.is_custom_price;
-                                    return (
-                                        <div
-                                            key={store.uid}
-                                            className={`flex items-center gap-4 px-4 py-3.5 transition-colors ${isChecked ? "bg-emerald-50/20" : "hover:bg-slate-50/70"
-                                                }`}
+                            {/* ── Stores List Header & Search ────────────────────────────── */}
+                            <div className="flex flex-col gap-3.5">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-1">
+                                    <div className="flex items-center gap-2.5">
+                                        <button
+                                            type="button"
+                                            onClick={toggleAll}
+                                            className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all shrink-0 cursor-pointer ${
+                                                allChecked
+                                                    ? "bg-emerald-600 border-emerald-600 text-white shadow-xs"
+                                                    : someChecked
+                                                        ? "bg-emerald-100 border-emerald-400 text-emerald-700"
+                                                        : "bg-white border-slate-300 hover:border-emerald-500"
+                                            }`}
+                                            title={allChecked ? "Batalkan semua" : "Pilih semua toko"}
                                         >
-                                            {/* Store Assignment Checkbox */}
+                                            {allChecked ? (
+                                                <IconCheck size={14} strokeWidth={3} />
+                                            ) : someChecked ? (
+                                                <IconMinus size={14} strokeWidth={3} />
+                                            ) : null}
+                                        </button>
+                                        <span className="text-xs font-bold text-slate-800">
+                                            Pilih Toko ({selectedCount} dari {stores.length} toko dipilih)
+                                        </span>
+                                    </div>
+
+                                    {/* Store Search */}
+                                    <div className="relative w-full sm:w-64">
+                                        <IconSearch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                        <Input
+                                            value={storeSearch}
+                                            onChange={(e) => setStoreSearch(e.target.value)}
+                                            placeholder="Cari nama toko cabang..."
+                                            className="h-8.5 pl-8 pr-7 text-xs rounded-xl border-slate-200 bg-white"
+                                        />
+                                        {storeSearch && (
                                             <button
                                                 type="button"
-                                                onClick={() => toggleRow(store.uid, isChecked)}
-                                                className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all shrink-0 cursor-pointer ${isChecked
-                                                    ? "bg-emerald-600 border-emerald-600 text-white"
-                                                    : "bg-white border-slate-300 hover:border-emerald-500"
-                                                    }`}
+                                                onClick={() => setStoreSearch("")}
+                                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
                                             >
-                                                {isChecked && <IconCheck size={14} strokeWidth={3} />}
+                                                <IconX size={13} />
                                             </button>
+                                        )}
+                                    </div>
+                                </div>
 
-                                            {/* Store Info */}
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-bold text-slate-900 truncate">
-                                                        {store.nama}
-                                                    </span>
-                                                    {store.is_central && (
-                                                        <Badge className="text-[9px] px-1.5 py-0 bg-emerald-100 text-emerald-800 border-emerald-200 font-bold shrink-0">
-                                                            {STORE_BADGE_HQ}
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                                <span className="text-[11px] text-slate-400">
-                                                    Harga Terdaftar:{" "}
-                                                    <strong className="text-slate-600 font-semibold">
-                                                        {currentAssignment?.harga_jual != null
-                                                            ? formatRupiah(currentAssignment.harga_jual)
-                                                            : "Belum Terdaftar"}
-                                                    </strong>
-                                                </span>
-                                            </div>
-
-                                            {/* Custom Price Control Section */}
-                                            <div className="flex items-center gap-3 shrink-0">
-                                                {/* Checkbox for custom price override */}
-                                                <label className={`flex items-center gap-1.5 text-xs font-medium cursor-pointer select-none ${!isChecked ? "opacity-40 pointer-events-none" : "text-slate-700"}`}>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={isCustomPrice}
-                                                        onChange={() => toggleCustomPrice(store.uid, isCustomPrice)}
-                                                        disabled={!isChecked}
-                                                        className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 accent-emerald-600 cursor-pointer disabled:cursor-not-allowed"
-                                                    />
-                                                    <span className="text-[11px] font-semibold">Harga Khusus</span>
-                                                </label>
-
-                                                {/* Custom Nominal Input */}
-                                                <div className="w-40">
-                                                    <FormNominalInput<CatalogAssignFormValues>
-                                                        name={`stores.${store.uid}.harga_jual`}
-                                                        placeholder={isCustomPrice ? "Nominal khusus" : "Harga global"}
-                                                        disabled={!isChecked || !isCustomPrice}
-                                                        className="h-9 text-xs"
-                                                    />
-                                                </div>
-                                            </div>
+                                {/* ── Stores Row Cards ───────────────────────────────────────── */}
+                                <div className="flex flex-col gap-3">
+                                    {isLoading ? (
+                                        <div className="py-16 flex flex-col items-center justify-center gap-2 text-slate-400 border border-slate-100 rounded-2xl bg-slate-50/50">
+                                            <IconLoader2 size={24} className="animate-spin text-emerald-600" />
+                                            <span className="text-xs font-semibold">Memuat penugasan toko...</span>
                                         </div>
-                                    );
-                                })
-                            )}
+                                    ) : filteredStoreEntries.length === 0 ? (
+                                        <div className="py-12 text-center text-xs text-slate-400 font-medium border border-dashed border-slate-200 rounded-2xl">
+                                            {storeSearch ? "Tidak ada toko yang sesuai pencarian." : "Tidak ada data toko."}
+                                        </div>
+                                    ) : (
+                                        filteredStoreEntries.map(({ store, formState, currentAssignment }) => (
+                                            <CatalogAssignStoreRow
+                                                key={store.uid}
+                                                store={store}
+                                                formState={formState}
+                                                currentAssignment={currentAssignment}
+                                                globalValues={globalValues}
+                                                masterPrice={masterPrice}
+                                                onToggleChecked={toggleRow}
+                                                onToggleCustom={toggleCustomPrice}
+                                            />
+                                        ))
+                                    )}
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    </Scrollable>
 
-                    {/* ── Footer Actions ─────────────────────────────────────── */}
-                    <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                    {/* ── Sticky / Fixed Footer Actions (Always Visible) ─────────── */}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3.5 border-t border-slate-100 shrink-0 bg-white">
                         <span className="text-xs font-semibold text-slate-500">
-                            {selectedCount} toko dipilih
+                            {selectedCount > 0
+                                ? `${selectedCount} toko akan diperbarui dengan data harga & grosir.`
+                                : "Pilih minimal 1 toko untuk melanjutkan."}
                         </span>
-                        <div className="flex items-center gap-2">
+
+                        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                             <Button
                                 type="button"
                                 variant="outline"
-                                size="sm"
                                 onClick={() => onOpenChange(false)}
                                 disabled={bulkAssign.isPending}
-                                className="h-9 px-4 text-xs font-bold rounded-xl border-slate-200"
+                                className="h-10 px-4 text-xs font-bold rounded-xl border-slate-200 cursor-pointer"
                             >
                                 Batal
                             </Button>
@@ -363,17 +402,17 @@ export function CatalogAssignDialog({
                                 type="submit"
                                 form="catalog-assign-form"
                                 disabled={bulkAssign.isPending || selectedCount === 0}
-                                className="h-9 px-4 text-xs font-bold rounded-xl gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                                className="h-10 px-5 text-xs font-bold rounded-xl gap-2 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-md shadow-emerald-600/10"
                             >
                                 {bulkAssign.isPending ? (
                                     <>
                                         <IconLoader2 size={16} className="animate-spin" />
-                                        Menyimpan...
+                                        <span>Menyimpan Distribusi...</span>
                                     </>
                                 ) : (
                                     <>
                                         <IconCheck size={16} />
-                                        Simpan ke {selectedCount} Toko
+                                        <span>Simpan ke {selectedCount} Toko</span>
                                     </>
                                 )}
                             </Button>
