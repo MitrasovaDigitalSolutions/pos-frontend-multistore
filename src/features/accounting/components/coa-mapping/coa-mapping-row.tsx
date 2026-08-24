@@ -54,6 +54,8 @@ const SLOT_LABELS: Record<string, string> = {
     transfer_inventory_out: "Persediaan Keluar — Gudang Pengirim",
     transfer_inventory_in: "Persediaan Masuk — Gudang Penerima",
     transfer_in_transit: "Barang Dalam Perjalanan (In-Transit)",
+    // Ekuitas & Modal
+    shu_prior_years: "SHU Tahun Lalu (Laba Ditahan / Retained Earnings)",
 };
 
 const SLOT_DESCRIPTIONS: Record<string, string> = {
@@ -97,6 +99,8 @@ const SLOT_DESCRIPTIONS: Record<string, string> = {
     transfer_inventory_out: "Mencatat pengurangan persediaan di gudang pengirim saat stok ditransfer ke gudang lain.",
     transfer_inventory_in: "Mencatat penambahan persediaan di gudang penerima saat stok diterima dari gudang lain.",
     transfer_in_transit: "Akun perantara untuk stok yang sedang dalam perjalanan antar gudang (belum diterima).",
+    // Ekuitas & Modal
+    shu_prior_years: "Menampung akumulasi sisa hasil usaha atau laba ditahan dari tahun-tahun buku sebelumnya.",
 };
 
 export function CoaMappingRow({

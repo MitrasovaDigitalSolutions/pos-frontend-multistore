@@ -2,7 +2,12 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { ChartOfAccount } from "@/features/accounting/types";
 import type { ManualJournal, ManualJournalLine } from "@/features/accounting/types/manual-journal";
-import type { BalanceSheetItem, BalanceSheetDetailCategory } from "@/features/accounting/types";
+import type {
+    BalanceSheetItem,
+    BalanceSheetDetailCategory,
+    BalanceSheetSHU,
+    BalanceSheetSHULaluDetail,
+} from "@/features/accounting/types";
 
 export interface BalanceSheetEditItem {
     uid: string;
@@ -36,6 +41,7 @@ interface BalanceSheetStoreState {
             equity?: { items: BalanceSheetItem[] };
             revenue?: { items: BalanceSheetItem[] };
             expense?: { items: BalanceSheetItem[] };
+            shu?: BalanceSheetSHU;
         },
         coaList: ChartOfAccount[]
     ) => void;
@@ -73,6 +79,27 @@ export const useBalanceSheetStore = create<BalanceSheetStoreState>()(
                 const mapSection = (items: BalanceSheetItem[] | undefined) => {
                     return (items || []).map((item) => {
                         const matched = coaList.find((coa) => coa.kode === item.kode);
+                        const isShuLalu =
+                            item.kode === "3-1200" ||
+                            item.nama.toLowerCase().includes("shu tahun lalu") ||
+                            item.nama.toLowerCase().includes("sisa hasil usaha tahun lalu") ||
+                            item.nama.toLowerCase().includes("laba ditahan");
+
+                        let itemDetail = item.detail;
+                        if (
+                            isShuLalu &&
+                            data.shu?.lalu_detail &&
+                            data.shu.lalu_detail.length > 0 &&
+                            (!itemDetail || itemDetail.length === 0)
+                        ) {
+                            itemDetail = data.shu.lalu_detail.map((d: BalanceSheetSHULaluDetail) => ({
+                                kategori: `SHU Tahun ${d.tahun}`,
+                                amount: d.amount,
+                                debit: d.amount < 0 ? Math.abs(d.amount) : 0,
+                                credit: d.amount > 0 ? d.amount : 0,
+                            }));
+                        }
+
                         return {
                             uid: matched?.uid || `temp-${Math.random().toString(36).substring(2, 9)}`,
                             kode: item.kode,
@@ -80,7 +107,7 @@ export const useBalanceSheetStore = create<BalanceSheetStoreState>()(
                             debit: item.debit || 0,
                             credit: item.credit || 0,
                             amount: item.amount || 0,
-                            detail: item.detail,
+                            detail: itemDetail,
                         };
                     });
                 };

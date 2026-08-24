@@ -11,6 +11,7 @@ import {
     ArrowLeftRight,
     Building2,
     Check,
+    Coins,
     CreditCard,
     Loader2,
     Package,
@@ -141,6 +142,14 @@ export function CoaMappingManager() {
                 icon: <Building2 className="h-4 w-4" />,
                 items: mappings.filter((m: CoaMapping) => m.transaction_type === "cash_ledger"),
             },
+            // 5. Ekuitas & Modal
+            {
+                id: "equity",
+                label: "Ekuitas & Modal",
+                description: "Pemetaan akun ekuitas untuk pencatatan modal, laba ditahan, dan akumulasi SHU tahun sebelumnya.",
+                icon: <Coins className="h-4 w-4" />,
+                items: mappings.filter((m: CoaMapping) => m.transaction_type === "equity"),
+            },
         ].map((group) => {
             const mappedCount = group.items.filter(
                 (m: CoaMapping) => !!formValues[`${m.transaction_type}:${m.slot}`]
@@ -175,6 +184,8 @@ export function CoaMappingManager() {
             "expense",
             // Admin
             "cash_ledger",
+            // Equity
+            "equity",
         ];
 
         // OFFSET: accounts for the sticky header height (120px) plus a bit of breathing room
