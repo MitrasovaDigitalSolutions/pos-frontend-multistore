@@ -47,7 +47,13 @@ export function useCatalogMatch(nama: string, options?: { threshold?: number; li
     });
 }
 
-export function useProducts(params?: PaginationParams & { status?: string; category_uid?: string; brand_uid?: string; is_jasa?: string }) {
+export function useProducts(params?: PaginationParams & {
+    status?: string;
+    category_uid?: string;
+    brand_uid?: string;
+    is_jasa?: string;
+    include_archived?: boolean | number | string;
+}) {
     return useQuery<PaginatedResponse<Product>>({
         queryKey: [...queryKeys.products.list(), params],
         queryFn: () => apiGetList<Product>("/v1/products", params),
@@ -97,6 +103,24 @@ export function useToggleProductStatus() {
             apiPatch<ApiResponse<Product>, { status: "active" | "inactive" }>(
                 `/v1/products/${uid}/status`,
                 { status },
+            ),
+        onSuccess: () => {
+            invalidateProductMasterQueries(queryClient);
+        },
+    });
+}
+
+export function useUnarchiveProduct() {
+    const queryClient = useQueryClient();
+    return useMutation<
+        ApiResponse<Product>,
+        Error,
+        { uid: string; barcode?: string }
+    >({
+        mutationFn: ({ uid, barcode }) =>
+            apiPost<ApiResponse<Product>, { barcode?: string }>(
+                `/v1/products/${uid}/unarchive`,
+                barcode !== undefined ? { barcode } : {},
             ),
         onSuccess: () => {
             invalidateProductMasterQueries(queryClient);
