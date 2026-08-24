@@ -3,7 +3,6 @@
 import { AppButton } from "@/components/shared/app-button";
 import { CommandSelect, type CommandOption } from "@/components/ui/command-select";
 import { NumberInput } from "@/components/ui/number-input";
-import type { OpnameItem } from "../../types";
 import type { OpnameItemLocal } from "@/stores/opname-items-store";
 import {
   IconBarcode,
@@ -15,20 +14,20 @@ import {
 } from "@tabler/icons-react";
 
 interface OpnameItemMobileCardProps {
-  item: OpnameItem | OpnameItemLocal;
+  item: OpnameItemLocal;
   index: number;
   categoryOptions: CommandOption[];
   brandOptions: CommandOption[];
   updateItem: (
-    id: string,
+    temp_uid: string,
     data: Partial<
       Pick<
-        OpnameItem,
+        OpnameItemLocal,
         "stok_fisik" | "alasan" | "brand_uid" | "category_uid"
       >
     >
   ) => void;
-  removeItem: (id: string) => void;
+  removeItem: (temp_uid: string) => void;
   onFocusBarcode?: () => void;
 }
 
@@ -41,13 +40,7 @@ export function OpnameItemMobileCard({
   removeItem,
   onFocusBarcode,
 }: OpnameItemMobileCardProps) {
-  const isOpnameItem = "uid" in item && !("temp_uid" in item);
-  const itemId = isOpnameItem ? item.uid : (item as OpnameItemLocal).temp_uid;
-  const productName = isOpnameItem ? (item.product?.nama || item.product_uid) : (item as OpnameItemLocal).nama;
-  const productBarcode = isOpnameItem ? (item.product?.barcode || "") : ((item as OpnameItemLocal).barcode || "");
-  const diff = isOpnameItem && typeof item.selisih === "number"
-    ? item.selisih
-    : (Number(item.stok_fisik) || 0) - (Number(item.stok_sistem) || 0);
+  const diff = (Number(item.stok_fisik) || 0) - (Number(item.stok_sistem) || 0);
 
   return (
     <div
@@ -62,13 +55,13 @@ export function OpnameItemMobileCard({
           </span>
           <div className="min-w-0 space-y-0.5">
             <h4 className="text-xs font-bold text-slate-800 line-clamp-2 leading-snug break-words">
-              {productName}
+              {item.nama}
             </h4>
             <div className="flex items-center gap-2 flex-wrap text-[10px] text-slate-400 font-medium">
-              {productBarcode && (
+              {item.barcode && (
                 <span className="font-mono flex items-center gap-0.5">
                   <IconBarcode size={12} className="opacity-70" />
-                  {productBarcode}
+                  {item.barcode}
                 </span>
               )}
               <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-md font-semibold font-sans">
@@ -82,7 +75,7 @@ export function OpnameItemMobileCard({
           type="button"
           variant="ghost"
           size="icon-xs"
-          onClick={() => removeItem(itemId)}
+          onClick={() => removeItem(item.temp_uid)}
           className="p-1.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors flex-shrink-0 cursor-pointer"
           title="Hapus produk"
         >
@@ -102,7 +95,7 @@ export function OpnameItemMobileCard({
               variant="ghost"
               size="icon-xs"
               onClick={() =>
-                updateItem(itemId, {
+                updateItem(item.temp_uid, {
                   stok_fisik: Math.max(0, (Number(item.stok_fisik) || 0) - 1),
                 })
               }
@@ -115,7 +108,7 @@ export function OpnameItemMobileCard({
                 id={`opname-qty-${item.product_uid}`}
                 value={item.stok_fisik}
                 onChange={(val) => {
-                  updateItem(itemId, {
+                  updateItem(item.temp_uid, {
                     stok_fisik: val === null ? 0 : Math.max(0, val),
                   });
                 }}
@@ -136,7 +129,7 @@ export function OpnameItemMobileCard({
               variant="ghost"
               size="icon-xs"
               onClick={() =>
-                updateItem(itemId, {
+                updateItem(item.temp_uid, {
                   stok_fisik: (Number(item.stok_fisik) || 0) + 1,
                 })
               }
@@ -175,7 +168,7 @@ export function OpnameItemMobileCard({
             options={categoryOptions}
             value={item.category_uid || ""}
             onChange={(val) =>
-              updateItem(itemId, { category_uid: val || null })
+              updateItem(item.temp_uid, { category_uid: val || null })
             }
             placeholder="Pilih Kategori"
             searchPlaceholder="Cari kategori..."
@@ -194,7 +187,7 @@ export function OpnameItemMobileCard({
             options={brandOptions}
             value={item.brand_uid || ""}
             onChange={(val) =>
-              updateItem(itemId, { brand_uid: val || null })
+              updateItem(item.temp_uid, { brand_uid: val || null })
             }
             placeholder="Pilih Brand"
             searchPlaceholder="Cari brand..."
@@ -215,7 +208,7 @@ export function OpnameItemMobileCard({
           value={item.alasan || ""}
           placeholder="Alasan selisih (misal: Barang rusak, kedaluwarsa)..."
           onChange={(e) => {
-            updateItem(itemId, { alasan: e.target.value });
+            updateItem(item.temp_uid, { alasan: e.target.value });
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
