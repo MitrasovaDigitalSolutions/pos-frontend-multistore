@@ -8,17 +8,15 @@ import { useBrands } from "@/features/master/brands/api/brands-api";
 import { useCategories } from "@/features/master/categories/api/categories-api";
 import { useProducts } from "@/features/master/products/api/products-api";
 import type { Product } from "@/features/master/products/types";
-import {
-  clearOpnameItemsStore,
-  getOpnameItemsStore,
-  type OpnameItemLocal,
-} from "@/stores/opname-items-store";
+import { queryKeys } from "@/lib/query-keys";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   useFinalizeOpname,
   useOpnameDetail,
+  useOpnameItems,
   useUpdateOpname,
   useUpdateOpnameItems,
 } from "../../api/stock-api";
@@ -27,7 +25,7 @@ import { EditHeaderDialog } from "./edit-header-dialog";
 import { ImportOpnameDraftDialog } from "./import-opname-draft-dialog";
 import { OpnameInstructions } from "./opname-instructions";
 import { OpnameItemsHeader } from "./opname-items-header";
-import { OpnameItemsMobileList } from "./opname-items-mobile-list";
+import { OpnameItemsMobileBar } from "./opname-items-mobile-bar";
 import { OpnameItemsTable } from "./opname-items-table";
 import { OpnameScannerCard } from "./opname-scanner-card";
 import { OpnameStatsCards } from "./opname-stats-cards";
@@ -38,11 +36,30 @@ interface OpnameItemsPageProps {
 
 export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
+
+  // Server Pagination State
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [sortBy, setSortBy] = useState<string | undefined>();
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>();
+
+  // Fetch Opname Header & Items with Server-Side Pagination
   const { data: opname, isLoading: opnameLoading } = useOpnameDetail(opnameId);
-  const { data: productsData, isLoading: productsLoading } = useProducts({
-    per_page: 500,
+  const {
+    data: itemsRes,
+    isLoading: itemsLoading,
+    isFetching: itemsFetching,
+  } = useOpnameItems(opnameId, {
+    page,
+    per_page: perPage,
+    sort_by: sortBy,
+    sort_order: sortOrder,
   });
 
+  const { data: productsData, isLoading: productsLoading } = useProducts({
+    per_page: 100,
+  });
   const { data: categoriesData } = useCategories({ per_page: 1000 });
   const { data: brandsData } = useBrands({ per_page: 1000 });
 
@@ -71,37 +88,14 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   const updateOpnameItems = useUpdateOpnameItems();
   const finalizeOpname = useFinalizeOpname();
 
-  // Zustand Store scoped for this opnameId
-  const useStore = getOpnameItemsStore(opnameId);
-  const items = useStore((state) => state.items);
-  const addItem = useStore((state) => state.addItem);
-  const updateItem = useStore((state) => state.updateItem);
-  const removeItem = useStore((state) => state.removeItem);
-  const setItems = useStore((state) => state.setItems);
-  const clearAll = useStore((state) => state.clearAll);
+  // Optimistic / Pending edits for the current view
+  const [pendingEdits, setPendingEdits] = useState<Record<string, Partial<OpnameItem>>>({});
 
   const [isConfirmFinalizeOpen, setIsConfirmFinalizeOpen] = useState(false);
   const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
   const [isEditHeaderOpen, setIsEditHeaderOpen] = useState(false);
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
   const [isImportDraftOpen, setIsImportDraftOpen] = useState(false);
-
-  const handleImportDraftSuccess = (newItems?: OpnameItem[]) => {
-    if (newItems && newItems.length > 0) {
-      const formatted: OpnameItemLocal[] = newItems.map((dbItem: OpnameItem) => ({
-        temp_uid: `db-${dbItem.uid || Math.random().toString(36).substring(2, 9)}`,
-        product_uid: dbItem.product_uid,
-        brand_uid: dbItem.brand_uid || dbItem.product?.brand_uid || dbItem.brand?.uid || null,
-        category_uid: dbItem.category_uid || dbItem.product?.category_uid || dbItem.category?.uid || null,
-        nama: dbItem.product?.nama || "Produk",
-        barcode: dbItem.product?.barcode || "",
-        stok_sistem: dbItem.stok_sistem,
-        stok_fisik: dbItem.stok_fisik,
-        alasan: dbItem.alasan || "Opname rutin",
-      }));
-      setItems(formatted);
-    }
-  };
 
   const barcodeInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -127,118 +121,120 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
     }
   };
 
-  // Sync DB Items to Local Zustand Store on first load
-  const dbItems = opname?.items;
-  useEffect(() => {
-    if (dbItems && dbItems.length > 0) {
-      const currentStoreItems = useStore.getState().items;
-      if (!currentStoreItems || currentStoreItems.length === 0) {
-        const formatted: OpnameItemLocal[] = dbItems.map((dbItem: OpnameItem) => ({
-          temp_uid: `db-${dbItem.uid}`,
-          product_uid: dbItem.product_uid,
-          brand_uid: dbItem.brand_uid || dbItem.product?.brand_uid || dbItem.brand?.uid || null,
-          category_uid: dbItem.category_uid || dbItem.product?.category_uid || dbItem.category?.uid || null,
-          nama: dbItem.product?.nama || "Produk",
-          barcode: dbItem.product?.barcode || "",
-          stok_sistem: dbItem.stok_sistem,
-          stok_fisik: dbItem.stok_fisik,
-          alasan: dbItem.alasan || "Opname rutin",
-        }));
-        setItems(formatted);
-      }
-    }
-  }, [dbItems, opnameId, setItems, useStore]);
+  // Merge server items with pending local modifications
+  const displayedItems = useMemo(() => {
+    return (itemsRes?.data || []).map((item) => {
+      const edit = pendingEdits[item.uid] || pendingEdits[item.product_uid];
+      if (!edit) return item;
+      const stok_fisik = edit.stok_fisik !== undefined ? edit.stok_fisik : item.stok_fisik;
+      const selisih = (Number(stok_fisik) || 0) - (Number(item.stok_sistem) || 0);
+      return {
+        ...item,
+        ...edit,
+        stok_fisik,
+        selisih,
+      };
+    });
+  }, [itemsRes?.data, pendingEdits]);
 
-  if (opnameLoading || !opname) {
-    return (
-      <div className="space-y-4 animate-pulse p-4">
-        <div className="h-10 bg-slate-100 rounded-xl w-1/3" />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-16 bg-slate-100 rounded-xl" />
-          ))}
-        </div>
-        <div className="h-16 bg-slate-100 rounded-xl" />
-        <div className="h-64 bg-slate-100 rounded-xl" />
-      </div>
-    );
-  }
+  const updateItem = (
+    itemId: string,
+    data: Partial<Pick<OpnameItem, "stok_fisik" | "alasan" | "brand_uid" | "category_uid">>
+  ) => {
+    setPendingEdits((prev) => ({
+      ...prev,
+      [itemId]: {
+        ...(prev[itemId] || {}),
+        ...data,
+      },
+    }));
+  };
 
-  const handleProductFound = (product: Product) => {
-    const existing = items.find((i: OpnameItemLocal) => i.product_uid === product.uid);
-    if (existing) {
-      const newCount = (Number(existing.stok_fisik) || 0) + 1;
-      addItem({
-        product_uid: product.uid,
-        brand_uid: product.brand_uid || product.brand?.uid || null,
-        category_uid: product.category_uid || product.category?.uid || null,
-        barcode: product.barcode,
-        nama: product.nama,
-        stok_sistem: product.stok,
-        stok_fisik: newCount,
-        alasan: existing.alasan || "Opname rutin",
+  const removeItem = async (itemId: string) => {
+    const item = displayedItems.find((i) => i.uid === itemId || i.product_uid === itemId);
+    if (!item) return;
+
+    try {
+      await updateOpnameItems.mutateAsync({
+        uid: opnameId,
+        data: {
+          items: [
+            {
+              product_uid: item.product_uid,
+              brand_uid: item.brand_uid || null,
+              category_uid: item.category_uid || null,
+              stok_fisik: 0,
+              alasan: "Dihapus dari opname",
+            },
+          ],
+        },
       });
-      toast.success(`Jumlah ${product.nama} (+1): sekarang ${newCount} pcs`);
-    } else {
-      addItem({
-        product_uid: product.uid,
-        brand_uid: product.brand_uid || product.brand?.uid || null,
-        category_uid: product.category_uid || product.category?.uid || null,
-        barcode: product.barcode,
-        nama: product.nama,
-        stok_sistem: product.stok,
-        stok_fisik: 1,
-        alasan: "Opname rutin",
+      setPendingEdits((prev) => {
+        const copy = { ...prev };
+        delete copy[itemId];
+        delete copy[item.product_uid];
+        return copy;
       });
-      toast.success(`Ditambahkan: ${product.nama} (1 pcs)`);
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventory.opnameDetail(opnameId),
+      });
+      toast.success(`Item ${item.product?.nama || "produk"} berhasil dihapus.`);
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      toast.error(error.message || "Gagal menghapus item.");
     }
+  };
 
-    // Scroll and highlight the added product at the top
-    setTimeout(() => {
-      const isMobile =
-        typeof window !== "undefined" && window.innerWidth < 768;
-      const element = document.getElementById(
-        isMobile
-          ? `opname-card-${product.uid}`
-          : `opname-item-${product.uid}`
-      );
-      if (element) {
-        element.scrollIntoView({
-          behavior: "smooth",
-          block: isMobile ? "center" : "nearest",
-        });
-        element.classList.add("bg-emerald-50", "ring-2", "ring-emerald-400/50");
-        setTimeout(() => {
-          element.classList.remove(
-            "bg-emerald-50",
-            "ring-2",
-            "ring-emerald-400/50"
-          );
-        }, 1400);
-      }
+  const handleProductFound = async (product: Product) => {
+    const existing = displayedItems.find((i) => i.product_uid === product.uid);
+    const existingQty = existing ? Number(existing.stok_fisik) || 0 : 0;
+    const newQty = existingQty + 1;
 
-      const qtyInput = document.getElementById(`opname-qty-${product.uid}`) as HTMLInputElement | null;
-      if (qtyInput) {
-        qtyInput.focus();
-        qtyInput.select();
-      }
-    }, 120);
+    try {
+      await updateOpnameItems.mutateAsync({
+        uid: opnameId,
+        data: {
+          items: [
+            {
+              product_uid: product.uid,
+              brand_uid: product.brand_uid || product.brand?.uid || null,
+              category_uid: product.category_uid || product.category?.uid || null,
+              stok_fisik: newQty,
+              alasan: existing?.alasan || "Opname rutin",
+            },
+          ],
+        },
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventory.opnameDetail(opnameId),
+      });
+      toast.success(`Jumlah ${product.nama} (+1): ${newQty} pcs`);
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      toast.error(error.message || `Gagal menambahkan ${product.nama}`);
+    }
   };
 
   const handleSaveDraft = async (showToast = true) => {
-    if (items.length === 0) {
-      if (showToast) toast.error("Daftar barang opname masih kosong.");
-      return false;
+    const editKeys = Object.keys(pendingEdits);
+    if (editKeys.length === 0) {
+      if (showToast) toast.info("Semua perubahan sudah tersimpan.");
+      return true;
     }
 
     const payload = {
-      items: items.map((item: OpnameItemLocal) => ({
-        product_uid: item.product_uid,
-        brand_uid: item.brand_uid || null,
-        category_uid: item.category_uid || null,
-        stok_fisik: Number(item.stok_fisik) || 0,
-        alasan: item.alasan || "Opname rutin",
-      })),
+      items: editKeys.map((key) => {
+        const original = displayedItems.find((i) => i.uid === key || i.product_uid === key);
+        const edit = pendingEdits[key];
+        return {
+          product_uid: original?.product_uid || key,
+          brand_uid: edit.brand_uid !== undefined ? edit.brand_uid : (original?.brand_uid || null),
+          category_uid: edit.category_uid !== undefined ? edit.category_uid : (original?.category_uid || null),
+          stok_fisik: edit.stok_fisik !== undefined ? Number(edit.stok_fisik) || 0 : (original?.stok_fisik || 0),
+          alasan: edit.alasan !== undefined ? edit.alasan : (original?.alasan || "Opname rutin"),
+        };
+      }),
     };
 
     try {
@@ -246,36 +242,41 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
         uid: opnameId,
         data: payload,
       });
-      if (showToast)
-        toast.success(
-          "Daftar barang stock opname berhasil disimpan sebagai draf."
-        );
+      setPendingEdits({});
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventory.opnameDetail(opnameId),
+      });
+      if (showToast) toast.success("Daftar barang stock opname berhasil disimpan sebagai draf.");
       return true;
     } catch (err: unknown) {
       const error = err as { message?: string };
-      if (showToast)
-        toast.error(error.message || "Gagal menyimpan draf barang.");
+      if (showToast) toast.error(error.message || "Gagal menyimpan draf barang.");
       return false;
     }
   };
 
   const handleFinalize = async () => {
-    if (items.length === 0) {
+    const totalCount = itemsRes?.meta?.total ?? opname?.items_count ?? displayedItems.length;
+    if (totalCount === 0) {
       toast.error("Harap tambahkan minimal 1 barang sebelum finalisasi.");
       return;
     }
 
     const saveSuccess = await handleSaveDraft(false);
     if (!saveSuccess) {
-      toast.error("Gagal menyimpan items sebelum finalisasi.");
+      toast.error("Gagal menyimpan perubahan items sebelum finalisasi.");
       return;
     }
 
     try {
       await finalizeOpname.mutateAsync(opnameId);
       toast.success("Proses finalisasi stock opname berhasil!");
-      clearAll();
-      clearOpnameItemsStore(opnameId);
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventory.opnames(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventory.opnameDetail(opnameId),
+      });
       router.push(ROUTES.ADMIN_STOCK);
     } catch (err: unknown) {
       const error = err as { message?: string };
@@ -290,9 +291,9 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   };
 
   const handleConfirmReset = () => {
-    clearAll();
+    setPendingEdits({});
     setIsConfirmResetOpen(false);
-    toast.info("Daftar barang lokal berhasil dikosongkan.");
+    toast.info("Perubahan lokal yang belum disimpan telah dibatalkan.");
   };
 
   const handleSaveCatatan = async (catatan: string) => {
@@ -310,9 +311,32 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
     }
   };
 
-  // Calculate discrepancy stats
-  const stats = items.reduce(
-    (acc: { positive: number; negative: number; match: number }, item: OpnameItemLocal) => {
+  const handleImportDraftSuccess = () => {
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.inventory.opnameDetail(opnameId),
+    });
+    setPage(1);
+  };
+
+  if (opnameLoading || !opname) {
+    return (
+      <div className="space-y-4 animate-pulse p-4">
+        <div className="h-10 bg-slate-100 rounded-xl w-1/3" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-16 bg-slate-100 rounded-xl" />
+          ))}
+        </div>
+        <div className="h-16 bg-slate-100 rounded-xl" />
+        <div className="h-64 bg-slate-100 rounded-xl" />
+      </div>
+    );
+  }
+
+  const totalItemsCount = itemsRes?.meta?.total ?? opname.items_count ?? displayedItems.length;
+
+  const stats = displayedItems.reduce(
+    (acc: { positive: number; negative: number; match: number }, item: OpnameItem) => {
       const diff = (Number(item.stok_fisik) || 0) - (Number(item.stok_sistem) || 0);
       if (diff > 0) acc.positive++;
       else if (diff < 0) acc.negative++;
@@ -327,7 +351,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
       {/* ── Compact Header / Actions ── */}
       <OpnameItemsHeader
         opname={opname}
-        itemsCount={items.length}
+        itemsCount={totalItemsCount}
         isPendingSave={updateOpnameItems.isPending}
         isPendingFinalize={finalizeOpname.isPending}
         isInstructionsOpen={isInstructionsOpen}
@@ -347,7 +371,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
 
       {/* ── Compact Statistics ── */}
       <OpnameStatsCards
-        totalCount={items.length}
+        totalCount={totalItemsCount}
         matchCount={stats.match}
         positiveCount={stats.positive}
         negativeCount={stats.negative}
@@ -368,10 +392,10 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
               Daftar Perhitungan Fisik
             </h3>
             <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-200/70 text-slate-700 rounded-full">
-              {items.length} Item
+              {totalItemsCount} Item
             </span>
           </div>
-          {items.length > 0 && (
+          {Object.keys(pendingEdits).length > 0 && (
             <AppButton
               type="button"
               variant="ghost"
@@ -379,36 +403,48 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
               onClick={handleReset}
               className="text-[11px] font-bold text-rose-600 hover:text-rose-700 bg-transparent border-none cursor-pointer hover:underline h-auto p-0"
             >
-              Kosongkan Daftar
+              Batalkan Perubahan
             </AppButton>
           )}
         </div>
 
-        {/* Desktop View */}
+        {/* Responsive Table / Card View with Server-Side Pagination */}
         <OpnameItemsTable
-          items={items}
+          items={displayedItems}
+          isLoading={itemsLoading}
+          isFetching={itemsFetching}
+          page={page}
+          perPage={perPage}
+          onPageChange={setPage}
+          onPerPageChange={(pp) => {
+            setPerPage(pp);
+            setPage(1);
+          }}
+          meta={itemsRes?.meta}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={(by, order) => {
+            setSortBy(by);
+            setSortOrder(order);
+            setPage(1);
+          }}
           categoryOptions={categoryOptions}
           brandOptions={brandOptions}
           updateItem={updateItem}
           removeItem={removeItem}
-          onFocusBarcode={handleFocusBarcode}
-        />
-
-        {/* Mobile View */}
-        <OpnameItemsMobileList
-          items={items}
-          categoryOptions={categoryOptions}
-          brandOptions={brandOptions}
-          updateItem={updateItem}
-          removeItem={removeItem}
-          stats={stats}
-          isPendingSave={updateOpnameItems.isPending}
-          isPendingFinalize={finalizeOpname.isPending}
-          onSaveDraft={() => handleSaveDraft(true)}
-          onOpenFinalize={() => setIsConfirmFinalizeOpen(true)}
           onFocusBarcode={handleFocusBarcode}
         />
       </div>
+
+      {/* ── Mobile Sticky Bottom Action Bar ── */}
+      <OpnameItemsMobileBar
+        itemsCount={totalItemsCount}
+        stats={stats}
+        isPendingSave={updateOpnameItems.isPending}
+        isPendingFinalize={finalizeOpname.isPending}
+        onSaveDraft={() => handleSaveDraft(true)}
+        onOpenFinalize={() => setIsConfirmFinalizeOpen(true)}
+      />
 
       {/* ── Confirm Finalize Dialog ── */}
       <ConfirmDialog
@@ -424,14 +460,14 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
         variant="primary"
       />
 
-      {/* ── Confirm Reset / Kosongkan Daftar Dialog ── */}
+      {/* ── Confirm Reset Dialog ── */}
       <ConfirmDialog
         open={isConfirmResetOpen}
         onOpenChange={setIsConfirmResetOpen}
-        title="Kosongkan Daftar Barang"
-        description="Apakah Anda yakin ingin mengosongkan seluruh daftar barang di draf lokal ini? Perubahan yang belum disimpan ke server akan hilang."
-        confirmText="Ya, Kosongkan"
-        cancelText="Batal"
+        title="Batalkan Perubahan Lokal"
+        description="Apakah Anda yakin ingin membatalkan semua perubahan yang belum disimpan ke server?"
+        confirmText="Ya, Batalkan"
+        cancelText="Tutup"
         variant="danger"
         onConfirm={handleConfirmReset}
       />

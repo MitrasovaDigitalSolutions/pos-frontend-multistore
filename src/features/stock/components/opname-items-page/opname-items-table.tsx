@@ -3,6 +3,7 @@ import { CommandSelect, type CommandOption } from "@/components/ui/command-selec
 import { DataTable } from "@/components/ui/data-table";
 import { NumberInput } from "@/components/ui/number-input";
 import { cn } from "@/lib/utils";
+import type { OpnameItem } from "../../types";
 import type { OpnameItemLocal } from "@/stores/opname-items-store";
 import {
     IconBarcode,
@@ -13,44 +14,75 @@ import {
 } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
+import { OpnameItemMobileCard } from "./opname-item-mobile-card";
+
+type TableItem = OpnameItem | OpnameItemLocal;
 
 interface OpnameItemsTableProps {
-    items: OpnameItemLocal[];
+    items: TableItem[];
+    isLoading?: boolean;
+    isFetching?: boolean;
+    page: number;
+    perPage: number;
+    onPageChange: (page: number) => void;
+    onPerPageChange: (perPage: number) => void;
+    meta?: {
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+    };
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+    onSortChange?: (sortBy: string | undefined, sortOrder: "asc" | "desc" | undefined) => void;
     categoryOptions: CommandOption[];
     brandOptions: CommandOption[];
-    updateItem: (temp_uid: string, data: Partial<Pick<OpnameItemLocal, "stok_fisik" | "alasan" | "brand_uid" | "category_uid">>) => void;
-    removeItem: (temp_uid: string) => void;
+    updateItem: (itemId: string, data: Partial<Pick<OpnameItem, "stok_fisik" | "alasan" | "brand_uid" | "category_uid">>) => void;
+    removeItem: (itemId: string) => void;
     onFocusBarcode?: () => void;
 }
 
 export function OpnameItemsTable({
     items,
+    isLoading = false,
+    isFetching = false,
+    page,
+    perPage,
+    onPageChange,
+    onPerPageChange,
+    meta,
+    sortBy,
+    sortOrder,
+    onSortChange,
     categoryOptions,
     brandOptions,
     updateItem,
     removeItem,
     onFocusBarcode,
 }: OpnameItemsTableProps) {
-    const columns = useMemo<ColumnDef<OpnameItemLocal>[]>(() => [
+    const columns = useMemo<ColumnDef<TableItem>[]>(() => [
         {
             accessorKey: "nama",
             header: "Nama Produk",
-            enableSorting: false,
+            enableSorting: true,
             size: 280,
             cell: ({ row }) => {
                 const item = row.original;
+                const isOpnameItem = "uid" in item && !("temp_uid" in item);
+                const productName = isOpnameItem ? (item.product?.nama || item.product_uid) : (item as OpnameItemLocal).nama;
+                const productBarcode = isOpnameItem ? (item.product?.barcode || "") : ((item as OpnameItemLocal).barcode || "");
                 return (
                     <div id={`opname-item-${item.product_uid}`} className="flex flex-col py-0.5 min-w-[200px] max-w-[280px] sm:max-w-[360px]">
                         <span
                             className="text-xs font-bold text-slate-900 leading-tight truncate block"
-                            title={item.nama}
+                            title={productName}
                         >
-                            {item.nama}
+                            {productName}
                         </span>
-                        {item.barcode && (
+                        {productBarcode && (
                             <span className="inline-flex items-center gap-0.5 font-mono text-[9.5px] text-slate-400 bg-slate-50 px-1 py-0.2 rounded mt-0.5 w-fit">
                                 <IconBarcode size={11} className="opacity-70" />
-                                {item.barcode}
+                                {productBarcode}
                             </span>
                         )}
                     </div>
@@ -64,12 +96,14 @@ export function OpnameItemsTable({
             size: 170,
             cell: ({ row }) => {
                 const item = row.original;
+                const isOpnameItem = "uid" in item && !("temp_uid" in item);
+                const itemId = isOpnameItem ? item.uid : (item as OpnameItemLocal).temp_uid;
                 return (
                     <div className="w-38 sm:w-42">
                         <CommandSelect
                             options={categoryOptions}
                             value={item.category_uid || ""}
-                            onChange={(val) => updateItem(item.temp_uid, { category_uid: val || null })}
+                            onChange={(val) => updateItem(itemId, { category_uid: val || null })}
                             placeholder="Pilih Kategori"
                             searchPlaceholder="Cari kategori..."
                             emptyMessage="Tidak ditemukan"
@@ -88,12 +122,14 @@ export function OpnameItemsTable({
             size: 160,
             cell: ({ row }) => {
                 const item = row.original;
+                const isOpnameItem = "uid" in item && !("temp_uid" in item);
+                const itemId = isOpnameItem ? item.uid : (item as OpnameItemLocal).temp_uid;
                 return (
                     <div className="w-34 sm:w-38">
                         <CommandSelect
                             options={brandOptions}
                             value={item.brand_uid || ""}
-                            onChange={(val) => updateItem(item.temp_uid, { brand_uid: val || null })}
+                            onChange={(val) => updateItem(itemId, { brand_uid: val || null })}
                             placeholder="Pilih Brand"
                             searchPlaceholder="Cari brand..."
                             emptyMessage="Tidak ditemukan"
@@ -108,19 +144,22 @@ export function OpnameItemsTable({
         {
             accessorKey: "stok_fisik",
             header: "Stok Fisik",
+            enableSorting: true,
             meta: {
                 headerClassName: "text-center",
                 cellClassName: "text-center",
             },
             cell: ({ row }) => {
                 const item = row.original;
+                const isOpnameItem = "uid" in item && !("temp_uid" in item);
+                const itemId = isOpnameItem ? item.uid : (item as OpnameItemLocal).temp_uid;
                 return (
                     <div className="flex items-center justify-center gap-0.5">
                         <AppButton
                             type="button"
                             variant="ghost"
                             size="icon-xs"
-                            onClick={() => updateItem(item.temp_uid, { stok_fisik: Math.max(0, (Number(item.stok_fisik) || 0) - 1) })}
+                            onClick={() => updateItem(itemId, { stok_fisik: Math.max(0, (Number(item.stok_fisik) || 0) - 1) })}
                             className="w-6 h-6 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-xs cursor-pointer"
                         >
                             <IconMinus size={11} />
@@ -130,7 +169,7 @@ export function OpnameItemsTable({
                                 id={`opname-qty-${item.product_uid}`}
                                 value={item.stok_fisik}
                                 onChange={(val) => {
-                                    updateItem(item.temp_uid, { stok_fisik: val === null ? 0 : Math.max(0, val) });
+                                    updateItem(itemId, { stok_fisik: val === null ? 0 : Math.max(0, val) });
                                 }}
                                 onKeyDown={(e) => {
                                     if (e.key === "Enter") {
@@ -148,7 +187,7 @@ export function OpnameItemsTable({
                             type="button"
                             variant="ghost"
                             size="icon-xs"
-                            onClick={() => updateItem(item.temp_uid, { stok_fisik: (Number(item.stok_fisik) || 0) + 1 })}
+                            onClick={() => updateItem(itemId, { stok_fisik: (Number(item.stok_fisik) || 0) + 1 })}
                             className="w-6 h-6 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-xs cursor-pointer"
                         >
                             <IconPlus size={11} />
@@ -160,6 +199,7 @@ export function OpnameItemsTable({
         {
             accessorKey: "stok_sistem",
             header: "Stok Sistem",
+            enableSorting: true,
             meta: {
                 headerClassName: "text-right",
                 cellClassName: "text-right",
@@ -173,13 +213,23 @@ export function OpnameItemsTable({
         {
             id: "selisih",
             header: "Selisih",
+            accessorFn: (row) => {
+                const isOpnameItem = "uid" in row && !("temp_uid" in row);
+                return isOpnameItem && typeof row.selisih === "number"
+                    ? row.selisih
+                    : (Number(row.stok_fisik) || 0) - (Number(row.stok_sistem) || 0);
+            },
+            enableSorting: true,
             meta: {
                 headerClassName: "text-right",
                 cellClassName: "text-right",
             },
             cell: ({ row }) => {
                 const item = row.original;
-                const diff = (Number(item.stok_fisik) || 0) - (Number(item.stok_sistem) || 0);
+                const isOpnameItem = "uid" in item && !("temp_uid" in item);
+                const diff = isOpnameItem && typeof item.selisih === "number"
+                    ? item.selisih
+                    : (Number(item.stok_fisik) || 0) - (Number(item.stok_sistem) || 0);
                 return (
                     <span
                         className={cn(
@@ -200,13 +250,15 @@ export function OpnameItemsTable({
             enableSorting: false,
             cell: ({ row }) => {
                 const item = row.original;
+                const isOpnameItem = "uid" in item && !("temp_uid" in item);
+                const itemId = isOpnameItem ? item.uid : (item as OpnameItemLocal).temp_uid;
                 return (
                     <input
                         type="text"
                         value={item.alasan || ""}
                         placeholder="Alasan selisih..."
                         onChange={(e) => {
-                            updateItem(item.temp_uid, { alasan: e.target.value });
+                            updateItem(itemId, { alasan: e.target.value });
                         }}
                         onKeyDown={(e) => {
                             if (e.key === "Enter") {
@@ -222,15 +274,42 @@ export function OpnameItemsTable({
     ], [brandOptions, categoryOptions, onFocusBarcode, updateItem]);
 
     return (
-        <div className="hidden md:block">
-            <DataTable<OpnameItemLocal, unknown>
+        <div className="w-full">
+            <DataTable<TableItem, unknown>
                 columns={columns}
                 data={items}
+                isLoading={isLoading}
+                isFetching={isFetching}
+                clientPagination={false}
+                page={page}
+                perPage={perPage}
+                onPageChange={onPageChange}
+                onPerPageChange={onPerPageChange}
+                meta={meta}
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortChange={onSortChange}
                 virtualize={false}
-                showViewToggle={false}
+                showViewToggle={true}
                 emptyMessage="Belum ada barang dihitung. Gunakan scanner barcode atau autocomplete di atas."
                 entityName="barang"
-                onDelete={(item) => removeItem(item.temp_uid)}
+                onDelete={(item) => {
+                    const isOpnameItem = "uid" in item && !("temp_uid" in item);
+                    const id = isOpnameItem ? item.uid : (item as OpnameItemLocal).temp_uid;
+                    removeItem(id);
+                }}
+                renderCardItem={(row) => (
+                    <OpnameItemMobileCard
+                        key={"uid" in row.original && row.original.uid ? row.original.uid : ("temp_uid" in row.original ? (row.original as OpnameItemLocal).temp_uid : row.id)}
+                        item={row.original}
+                        index={(page - 1) * perPage + row.index}
+                        categoryOptions={categoryOptions}
+                        brandOptions={brandOptions}
+                        updateItem={updateItem}
+                        removeItem={removeItem}
+                        onFocusBarcode={onFocusBarcode}
+                    />
+                )}
             />
         </div>
     );
