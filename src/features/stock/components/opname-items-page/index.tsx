@@ -1,24 +1,28 @@
 "use client";
 
 import { AppButton } from "@/components/shared/app-button";
+import type { CommandOption } from "@/components/ui/command-select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ROUTES } from "@/constants/routes";
-import {
-  useFinalizeOpname,
-  useOpnameDetail,
-  useUpdateOpname,
-  useUpdateOpnameItems,
-} from "../../api/stock-api";
-import type { Product } from "@/features/master/products/types";
+import { useBrands } from "@/features/master/brands/api/brands-api";
+import { useCategories } from "@/features/master/categories/api/categories-api";
 import { useProducts } from "@/features/master/products/api/products-api";
+import type { Product } from "@/features/master/products/types";
 import {
   clearOpnameItemsStore,
   getOpnameItemsStore,
   type OpnameItemLocal,
 } from "@/stores/opname-items-store";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import {
+  useFinalizeOpname,
+  useOpnameDetail,
+  useUpdateOpname,
+  useUpdateOpnameItems,
+} from "../../api/stock-api";
+import type { OpnameItem } from "../../types";
 import { EditHeaderDialog } from "./edit-header-dialog";
 import { OpnameInstructions } from "./opname-instructions";
 import { OpnameItemsHeader } from "./opname-items-header";
@@ -26,7 +30,6 @@ import { OpnameItemsMobileList } from "./opname-items-mobile-list";
 import { OpnameItemsTable } from "./opname-items-table";
 import { OpnameScannerCard } from "./opname-scanner-card";
 import { OpnameStatsCards } from "./opname-stats-cards";
-import type { OpnameItem } from "../../types";
 
 interface OpnameItemsPageProps {
   opnameId: string;
@@ -38,6 +41,28 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   const { data: productsData, isLoading: productsLoading } = useProducts({
     per_page: 500,
   });
+
+  const { data: categoriesData } = useCategories({ per_page: 1000 });
+  const { data: brandsData } = useBrands({ per_page: 1000 });
+
+  const categories = useMemo(() => categoriesData?.data || [], [categoriesData?.data]);
+  const brands = useMemo(() => brandsData?.data || [], [brandsData?.data]);
+
+  const categoryOptions: CommandOption[] = useMemo(() => [
+    { value: "", label: "Tanpa Kategori" },
+    ...categories.map((c) => ({
+      value: String(c.uid),
+      label: c.nama,
+    })),
+  ], [categories]);
+
+  const brandOptions: CommandOption[] = useMemo(() => [
+    { value: "", label: "Tanpa Brand" },
+    ...brands.map((b) => ({
+      value: String(b.uid),
+      label: b.nama,
+    })),
+  ], [brands]);
 
   const products = productsData?.data || [];
 
@@ -59,6 +84,30 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   const [isEditHeaderOpen, setIsEditHeaderOpen] = useState(false);
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
 
+  const barcodeInputRef = useRef<HTMLInputElement | null>(null);
+
+  const scrollToInput = () => {
+    const element = document.getElementById("barcode-scanner-section");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(() => {
+        const inputEl = element.querySelector("input");
+        if (inputEl) {
+          inputEl.focus();
+        }
+      }, 250);
+    }
+  };
+
+  const handleFocusBarcode = () => {
+    if (barcodeInputRef.current) {
+      barcodeInputRef.current.focus();
+      barcodeInputRef.current.select();
+    } else {
+      scrollToInput();
+    }
+  };
+
   // Sync DB Items to Local Zustand Store on first load
   const dbItems = opname?.items;
   useEffect(() => {
@@ -68,6 +117,8 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
         const formatted: OpnameItemLocal[] = dbItems.map((dbItem: OpnameItem) => ({
           temp_uid: `db-${dbItem.uid}`,
           product_uid: dbItem.product_uid,
+          brand_uid: dbItem.brand_uid || dbItem.product?.brand_uid || dbItem.brand?.uid || null,
+          category_uid: dbItem.category_uid || dbItem.product?.category_uid || dbItem.category?.uid || null,
           nama: dbItem.product?.nama || "Produk",
           barcode: dbItem.product?.barcode || "",
           stok_sistem: dbItem.stok_sistem,
@@ -100,6 +151,8 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
       const newCount = (Number(existing.stok_fisik) || 0) + 1;
       addItem({
         product_uid: product.uid,
+        brand_uid: product.brand_uid || product.brand?.uid || null,
+        category_uid: product.category_uid || product.category?.uid || null,
         barcode: product.barcode,
         nama: product.nama,
         stok_sistem: product.stok,
@@ -110,6 +163,8 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
     } else {
       addItem({
         product_uid: product.uid,
+        brand_uid: product.brand_uid || product.brand?.uid || null,
+        category_uid: product.category_uid || product.category?.uid || null,
         barcode: product.barcode,
         nama: product.nama,
         stok_sistem: product.stok,
@@ -142,6 +197,12 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
           );
         }, 1400);
       }
+
+      const qtyInput = document.getElementById(`opname-qty-${product.uid}`) as HTMLInputElement | null;
+      if (qtyInput) {
+        qtyInput.focus();
+        qtyInput.select();
+      }
     }, 120);
   };
 
@@ -154,7 +215,9 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
     const payload = {
       items: items.map((item: OpnameItemLocal) => ({
         product_uid: item.product_uid,
-        stok_fisik: item.stok_fisik,
+        brand_uid: item.brand_uid || null,
+        category_uid: item.category_uid || null,
+        stok_fisik: Number(item.stok_fisik) || 0,
         alasan: item.alasan || "Opname rutin",
       })),
     };
@@ -231,7 +294,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   // Calculate discrepancy stats
   const stats = items.reduce(
     (acc: { positive: number; negative: number; match: number }, item: OpnameItemLocal) => {
-      const diff = item.stok_fisik - item.stok_sistem;
+      const diff = (Number(item.stok_fisik) || 0) - (Number(item.stok_sistem) || 0);
       if (diff > 0) acc.positive++;
       else if (diff < 0) acc.negative++;
       else acc.match++;
@@ -304,13 +367,18 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
         {/* Desktop View */}
         <OpnameItemsTable
           items={items}
+          categoryOptions={categoryOptions}
+          brandOptions={brandOptions}
           updateItem={updateItem}
           removeItem={removeItem}
+          onFocusBarcode={handleFocusBarcode}
         />
 
         {/* Mobile View */}
         <OpnameItemsMobileList
           items={items}
+          categoryOptions={categoryOptions}
+          brandOptions={brandOptions}
           updateItem={updateItem}
           removeItem={removeItem}
           stats={stats}
@@ -318,6 +386,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
           isPendingFinalize={finalizeOpname.isPending}
           onSaveDraft={() => handleSaveDraft(true)}
           onOpenFinalize={() => setIsConfirmFinalizeOpen(true)}
+          onFocusBarcode={handleFocusBarcode}
         />
       </div>
 

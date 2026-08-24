@@ -119,6 +119,8 @@ export function useUpdateOpnameItems() {
             data: {
                 items: Array<{
                     product_uid: string;
+                    brand_uid?: string | null;
+                    category_uid?: string | null;
                     stok_fisik: number;
                     alasan?: string | null;
                 }>;
@@ -126,7 +128,18 @@ export function useUpdateOpnameItems() {
         }
     >({
         mutationFn: ({ uid, data }) =>
-            apiPut<ApiResponse<Opname>, { items: Array<{ product_uid: string; stok_fisik: number; alasan?: string | null }> }>(
+            apiPut<
+                ApiResponse<Opname>,
+                {
+                    items: Array<{
+                        product_uid: string;
+                        brand_uid?: string | null;
+                        category_uid?: string | null;
+                        stok_fisik: number;
+                        alasan?: string | null;
+                    }>;
+                }
+            >(
                 `/v1/inventory/opname/${uid}/items`,
                 data,
             ),
@@ -137,6 +150,7 @@ export function useUpdateOpnameItems() {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.inventory.opnameDetail(variables.uid),
             });
+            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
         },
     });
 }

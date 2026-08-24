@@ -1,210 +1,237 @@
-"use client";
-
 import { AppButton } from "@/components/shared/app-button";
-import { FormInput } from "@/components/forms/form-input";
-import { FormNumberInput } from "@/components/forms/form-number-input";
+import { CommandSelect, type CommandOption } from "@/components/ui/command-select";
+import { DataTable } from "@/components/ui/data-table";
+import { NumberInput } from "@/components/ui/number-input";
+import { cn } from "@/lib/utils";
 import type { OpnameItemLocal } from "@/stores/opname-items-store";
 import {
-  IconBarcode,
-  IconMinus,
-  IconPlus,
-  IconTrash,
+    IconBarcode,
+    IconCategory,
+    IconMinus,
+    IconPlus,
+    IconTag,
 } from "@tabler/icons-react";
-import { FormProvider, useForm } from "react-hook-form";
-import { useEffect } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { useMemo } from "react";
 
 interface OpnameItemsTableProps {
-  items: OpnameItemLocal[];
-  updateItem: (temp_uid: string, updates: Partial<OpnameItemLocal>) => void;
-  removeItem: (temp_uid: string) => void;
-}
-
-interface RowInput {
-  stok_fisik: number;
-  alasan: string;
-}
-
-function TableRow({
-  item,
-  index,
-  updateItem,
-  removeItem,
-}: {
-  item: OpnameItemLocal;
-  index: number;
-  updateItem: (temp_uid: string, updates: Partial<OpnameItemLocal>) => void;
-  removeItem: (temp_uid: string) => void;
-}) {
-  const methods = useForm<RowInput>({
-    defaultValues: {
-      stok_fisik: item.stok_fisik,
-      alasan: item.alasan || "Opname rutin",
-    },
-  });
-
-  const { reset } = methods;
-
-  useEffect(() => {
-    reset({
-      stok_fisik: item.stok_fisik,
-      alasan: item.alasan || "Opname rutin",
-    });
-  }, [item.stok_fisik, item.alasan, reset]);
-
-  const diff = item.stok_fisik - item.stok_sistem;
-
-  return (
-    <FormProvider {...methods}>
-      <tr
-        id={`opname-item-${item.product_uid}`}
-        className="hover:bg-slate-50/50 transition-colors border-b border-slate-100/70"
-      >
-        <td className="py-2.5 px-3 text-center text-xs font-mono text-slate-400">
-          {index + 1}
-        </td>
-
-        <td className="py-2.5 px-3">
-          <div className="space-y-0.5 max-w-xs sm:max-w-md">
-            <p className="font-bold text-slate-900 text-xs leading-snug">
-              {item.nama}
-            </p>
-            {item.barcode && (
-              <span className="font-mono text-[10px] text-slate-400 flex items-center gap-1">
-                <IconBarcode size={12} className="opacity-70" />
-                {item.barcode}
-              </span>
-            )}
-          </div>
-        </td>
-
-        <td className="py-2.5 px-3 text-center">
-          <span className="font-mono font-bold text-xs text-slate-700 bg-slate-100 px-2 py-1 rounded-md">
-            {item.stok_sistem}
-          </span>
-        </td>
-
-        <td className="py-2.5 px-3 text-center">
-          <div className="flex items-center justify-center gap-1">
-            <AppButton
-              type="button"
-              variant="ghost"
-              size="icon-xs"
-              onClick={() =>
-                updateItem(item.temp_uid, {
-                  stok_fisik: Math.max(0, item.stok_fisik - 1),
-                })
-              }
-              className="w-7 h-7 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold cursor-pointer"
-            >
-              <IconMinus size={12} />
-            </AppButton>
-            <div className="w-16">
-              <FormNumberInput<RowInput>
-                name="stok_fisik"
-                onValueChange={(val) => {
-                  updateItem(item.temp_uid, { stok_fisik: val || 0 });
-                }}
-                className="h-7 text-center rounded-lg border-slate-200 p-0 text-xs font-bold w-full"
-              />
-            </div>
-            <AppButton
-              type="button"
-              variant="ghost"
-              size="icon-xs"
-              onClick={() =>
-                updateItem(item.temp_uid, { stok_fisik: item.stok_fisik + 1 })
-              }
-              className="w-7 h-7 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold cursor-pointer"
-            >
-              <IconPlus size={12} />
-            </AppButton>
-          </div>
-        </td>
-
-        <td className="py-2.5 px-3 text-center">
-          <span
-            className={`font-mono font-bold text-xs px-2 py-0.5 rounded-md ${
-              diff === 0
-                ? "bg-slate-100 text-slate-500"
-                : diff > 0
-                ? "bg-blue-100 text-blue-700"
-                : "bg-rose-100 text-rose-700"
-            }`}
-          >
-            {diff > 0 ? `+${diff}` : diff}
-          </span>
-        </td>
-
-        <td className="py-2.5 px-3">
-          <FormInput<RowInput>
-            name="alasan"
-            placeholder="Alasan selisih..."
-            onChange={(e) => {
-              updateItem(item.temp_uid, { alasan: e.target.value });
-            }}
-            className="h-7 border-slate-200 focus-visible:ring-emerald-600 rounded-lg text-xs"
-          />
-        </td>
-
-        <td className="py-2.5 px-3 text-center">
-          <AppButton
-            type="button"
-            variant="ghost"
-            size="icon-xs"
-            onClick={() => removeItem(item.temp_uid)}
-            className="p-1.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-            title="Hapus baris"
-          >
-            <IconTrash size={15} />
-          </AppButton>
-        </td>
-      </tr>
-    </FormProvider>
-  );
+    items: OpnameItemLocal[];
+    categoryOptions: CommandOption[];
+    brandOptions: CommandOption[];
+    updateItem: (temp_uid: string, data: Partial<Pick<OpnameItemLocal, "stok_fisik" | "alasan" | "brand_uid" | "category_uid">>) => void;
+    removeItem: (temp_uid: string) => void;
+    onFocusBarcode?: () => void;
 }
 
 export function OpnameItemsTable({
-  items,
-  updateItem,
-  removeItem,
+    items,
+    categoryOptions,
+    brandOptions,
+    updateItem,
+    removeItem,
+    onFocusBarcode,
 }: OpnameItemsTableProps) {
-  return (
-    <div className="hidden md:block overflow-x-auto">
-      <table className="w-full text-left text-xs border-collapse">
-        <thead className="bg-slate-50/70 border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-          <tr>
-            <th className="py-2.5 px-3 text-center w-12">No</th>
-            <th className="py-2.5 px-3">Nama Produk & Barcode</th>
-            <th className="py-2.5 px-3 text-center w-24">Stok Sistem</th>
-            <th className="py-2.5 px-3 text-center w-36">Stok Fisik</th>
-            <th className="py-2.5 px-3 text-center w-24">Selisih</th>
-            <th className="py-2.5 px-3">Alasan Selisih</th>
-            <th className="py-2.5 px-3 text-center w-12">Aksi</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100/60">
-          {items.map((item, index) => (
-            <TableRow
-              key={item.temp_uid}
-              item={item}
-              index={index}
-              updateItem={updateItem}
-              removeItem={removeItem}
+    const columns = useMemo<ColumnDef<OpnameItemLocal>[]>(() => [
+        {
+            accessorKey: "nama",
+            header: "Nama Produk",
+            enableSorting: false,
+            size: 280,
+            cell: ({ row }) => {
+                const item = row.original;
+                return (
+                    <div id={`opname-item-${item.product_uid}`} className="flex flex-col py-0.5 min-w-[200px] max-w-[280px] sm:max-w-[360px]">
+                        <span
+                            className="text-xs font-bold text-slate-900 leading-tight truncate block"
+                            title={item.nama}
+                        >
+                            {item.nama}
+                        </span>
+                        {item.barcode && (
+                            <span className="inline-flex items-center gap-0.5 font-mono text-[9.5px] text-slate-400 bg-slate-50 px-1 py-0.2 rounded mt-0.5 w-fit">
+                                <IconBarcode size={11} className="opacity-70" />
+                                {item.barcode}
+                            </span>
+                        )}
+                    </div>
+                );
+            },
+        },
+        {
+            accessorKey: "category_uid",
+            header: "Kategori",
+            enableSorting: false,
+            size: 170,
+            cell: ({ row }) => {
+                const item = row.original;
+                return (
+                    <div className="w-38 sm:w-42">
+                        <CommandSelect
+                            options={categoryOptions}
+                            value={item.category_uid || ""}
+                            onChange={(val) => updateItem(item.temp_uid, { category_uid: val || null })}
+                            placeholder="Pilih Kategori"
+                            searchPlaceholder="Cari kategori..."
+                            emptyMessage="Tidak ditemukan"
+                            size="sm"
+                            leftIcon={<IconCategory size={12} className="text-slate-400" />}
+                            className="h-7.5 text-[11px] bg-white border-slate-200"
+                        />
+                    </div>
+                );
+            },
+        },
+        {
+            accessorKey: "brand_uid",
+            header: "Brand",
+            enableSorting: false,
+            size: 160,
+            cell: ({ row }) => {
+                const item = row.original;
+                return (
+                    <div className="w-34 sm:w-38">
+                        <CommandSelect
+                            options={brandOptions}
+                            value={item.brand_uid || ""}
+                            onChange={(val) => updateItem(item.temp_uid, { brand_uid: val || null })}
+                            placeholder="Pilih Brand"
+                            searchPlaceholder="Cari brand..."
+                            emptyMessage="Tidak ditemukan"
+                            size="sm"
+                            leftIcon={<IconTag size={12} className="text-slate-400" />}
+                            className="h-7.5 text-[11px] bg-white border-slate-200"
+                        />
+                    </div>
+                );
+            },
+        },
+        {
+            accessorKey: "stok_fisik",
+            header: "Stok Fisik",
+            meta: {
+                headerClassName: "text-center",
+                cellClassName: "text-center",
+            },
+            cell: ({ row }) => {
+                const item = row.original;
+                return (
+                    <div className="flex items-center justify-center gap-0.5">
+                        <AppButton
+                            type="button"
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() => updateItem(item.temp_uid, { stok_fisik: Math.max(0, (Number(item.stok_fisik) || 0) - 1) })}
+                            className="w-6 h-6 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-xs cursor-pointer"
+                        >
+                            <IconMinus size={11} />
+                        </AppButton>
+                        <div className="w-16">
+                            <NumberInput
+                                id={`opname-qty-${item.product_uid}`}
+                                value={item.stok_fisik}
+                                onChange={(val) => {
+                                    updateItem(item.temp_uid, { stok_fisik: val === null ? 0 : Math.max(0, val) });
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        onFocusBarcode?.();
+                                    }
+                                }}
+                                allowDecimal={false}
+                                allowNegative={false}
+                                min={0}
+                                className="h-7 w-full text-center rounded-md border border-slate-200 p-0 text-xs font-bold font-mono outline-none focus-visible:border-emerald-600 focus-visible:ring-emerald-600/20"
+                            />
+                        </div>
+                        <AppButton
+                            type="button"
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() => updateItem(item.temp_uid, { stok_fisik: (Number(item.stok_fisik) || 0) + 1 })}
+                            className="w-6 h-6 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-xs cursor-pointer"
+                        >
+                            <IconPlus size={11} />
+                        </AppButton>
+                    </div>
+                );
+            },
+        },
+        {
+            accessorKey: "stok_sistem",
+            header: "Stok Sistem",
+            meta: {
+                headerClassName: "text-right",
+                cellClassName: "text-right",
+            },
+            cell: ({ row }) => (
+                <span className="font-mono font-semibold text-xs text-slate-700 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-md">
+                    {row.original.stok_sistem} pcs
+                </span>
+            ),
+        },
+        {
+            id: "selisih",
+            header: "Selisih",
+            meta: {
+                headerClassName: "text-right",
+                cellClassName: "text-right",
+            },
+            cell: ({ row }) => {
+                const item = row.original;
+                const diff = (Number(item.stok_fisik) || 0) - (Number(item.stok_sistem) || 0);
+                return (
+                    <span
+                        className={cn(
+                            "font-mono font-bold text-xs px-2 py-0.5 rounded-md border",
+                            diff === 0 && "bg-slate-50 text-slate-400 border-slate-100",
+                            diff > 0 && "bg-blue-50 text-blue-700 border-blue-100",
+                            diff < 0 && "bg-rose-50 text-rose-700 border-rose-100"
+                        )}
+                    >
+                        {diff > 0 ? `+${diff}` : diff} pcs
+                    </span>
+                );
+            },
+        },
+        {
+            accessorKey: "alasan",
+            header: "Alasan Selisih",
+            enableSorting: false,
+            cell: ({ row }) => {
+                const item = row.original;
+                return (
+                    <input
+                        type="text"
+                        value={item.alasan || ""}
+                        placeholder="Alasan selisih..."
+                        onChange={(e) => {
+                            updateItem(item.temp_uid, { alasan: e.target.value });
+                        }}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                                e.preventDefault();
+                                onFocusBarcode?.();
+                            }
+                        }}
+                        className="h-7 w-full border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-md text-xs px-2 bg-transparent outline-none"
+                    />
+                );
+            },
+        },
+    ], [brandOptions, categoryOptions, onFocusBarcode, updateItem]);
+
+    return (
+        <div className="hidden md:block">
+            <DataTable<OpnameItemLocal, unknown>
+                columns={columns}
+                data={items}
+                virtualize={false}
+                showViewToggle={false}
+                emptyMessage="Belum ada barang dihitung. Gunakan scanner barcode atau autocomplete di atas."
+                entityName="barang"
+                onDelete={(item) => removeItem(item.temp_uid)}
             />
-          ))}
-          {items.length === 0 && (
-            <tr>
-              <td
-                colSpan={7}
-                className="text-center py-10 text-slate-400 font-medium"
-              >
-                Belum ada barang dihitung. Scan barcode atau cari produk di
-                atas.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
+        </div>
+    );
 }

@@ -19,6 +19,8 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
+import { useBrands } from "@/features/master/brands/api/brands-api";
+import { useCategories } from "@/features/master/categories/api/categories-api";
 import { toast } from "sonner";
 import {
     useActivityLogs,
@@ -142,6 +144,29 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
         search: opname?.nomor_opname || undefined,
     });
 
+    const { data: categoriesRes } = useCategories({ per_page: 1000 });
+    const { data: brandsRes } = useBrands({ per_page: 1000 });
+
+    const categoryMap = useMemo(() => {
+        const map = new Map<string, string>();
+        if (categoriesRes?.data) {
+            for (const c of categoriesRes.data) {
+                map.set(String(c.uid), c.nama);
+            }
+        }
+        return map;
+    }, [categoriesRes]);
+
+    const brandMap = useMemo(() => {
+        const map = new Map<string, string>();
+        if (brandsRes?.data) {
+            for (const b of brandsRes.data) {
+                map.set(String(b.uid), b.nama);
+            }
+        }
+        return map;
+    }, [brandsRes]);
+
     const finalizeOpname = useFinalizeOpname();
     const logs = logsData?.data || [];
 
@@ -183,6 +208,34 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                 ),
             },
             {
+                accessorKey: "category",
+                header: "Kategori",
+                enableSorting: false,
+                cell: ({ row }) => {
+                    const catUid = row.original.category_uid || row.original.product?.category_uid || row.original.category?.uid;
+                    const catName = (catUid && categoryMap.get(String(catUid))) || row.original.category?.nama || row.original.product?.category?.nama;
+                    return (
+                        <span className="text-xs text-slate-600">
+                            {catName || "-"}
+                        </span>
+                    );
+                },
+            },
+            {
+                accessorKey: "brand",
+                header: "Brand",
+                enableSorting: false,
+                cell: ({ row }) => {
+                    const brandUid = row.original.brand_uid || row.original.product?.brand_uid || row.original.brand?.uid;
+                    const brandName = (brandUid && brandMap.get(String(brandUid))) || row.original.brand?.nama || row.original.product?.brand?.nama;
+                    return (
+                        <span className="text-xs text-slate-600">
+                            {brandName || "-"}
+                        </span>
+                    );
+                },
+            },
+            {
                 accessorKey: "stok_sistem",
                 header: "Stok Sistem",
                 meta: {
@@ -219,10 +272,20 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                             {selisih > 0 ? `+${selisih}` : selisih} pcs
                         </span>
                     );
-                }
+                },
+            },
+            {
+                accessorKey: "alasan",
+                header: "Alasan Selisih",
+                enableSorting: false,
+                cell: ({ row }) => (
+                    <span className="text-xs text-slate-600">
+                        {row.original.alasan || "-"}
+                    </span>
+                ),
             },
         ],
-        []
+        [brandMap, categoryMap]
     );
 
     if (isDetailLoading) {

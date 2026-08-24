@@ -1,23 +1,37 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import type { CommandOption } from "@/components/ui/command-select";
 import type { OpnameItemLocal } from "@/stores/opname-items-store";
 import { IconBarcode, IconCheck, IconDeviceFloppy } from "@tabler/icons-react";
 import { OpnameItemMobileCard } from "./opname-item-mobile-card";
 
 interface OpnameItemsMobileListProps {
   items: OpnameItemLocal[];
-  updateItem: (temp_uid: string, updates: Partial<OpnameItemLocal>) => void;
+  categoryOptions: CommandOption[];
+  brandOptions: CommandOption[];
+  updateItem: (
+    temp_uid: string,
+    updates: Partial<
+      Pick<
+        OpnameItemLocal,
+        "stok_fisik" | "alasan" | "brand_uid" | "category_uid"
+      >
+    >
+  ) => void;
   removeItem: (temp_uid: string) => void;
   stats: { match: number; positive: number; negative: number };
   isPendingSave: boolean;
   isPendingFinalize: boolean;
   onSaveDraft: () => void;
   onOpenFinalize: () => void;
+  onFocusBarcode?: () => void;
 }
 
 export function OpnameItemsMobileList({
   items,
+  categoryOptions,
+  brandOptions,
   updateItem,
   removeItem,
   stats,
@@ -25,6 +39,7 @@ export function OpnameItemsMobileList({
   isPendingFinalize,
   onSaveDraft,
   onOpenFinalize,
+  onFocusBarcode,
 }: OpnameItemsMobileListProps) {
   return (
     <>
@@ -35,8 +50,11 @@ export function OpnameItemsMobileList({
             key={item.temp_uid}
             item={item}
             index={index}
+            categoryOptions={categoryOptions}
+            brandOptions={brandOptions}
             updateItem={updateItem}
             removeItem={removeItem}
+            onFocusBarcode={onFocusBarcode}
           />
         ))}
         {items.length === 0 && (
