@@ -3,6 +3,7 @@
 import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { FormInput } from "@/components/forms/form-input";
 import { Card } from "@/components/ui/card";
+import { useCoaMappings } from "@/features/accounting/api/coa-mapping-api";
 import { useCreateManualJournal, useUpdateManualJournal } from "@/features/accounting/api/manual-journal-api";
 import type { BalanceSheetData, BalanceSheetItem, ChartOfAccount } from "@/features/accounting/types";
 import type { ManualJournal } from "@/features/accounting/types/manual-journal";
@@ -48,6 +49,7 @@ export function BalanceSheetEditor({
     refetch,
 }: BalanceSheetEditorProps) {
     const router = useRouter();
+    const { data: coaMappings } = useCoaMappings();
     const createJournalMutation = useCreateManualJournal();
     const updateJournalMutation = useUpdateManualJournal();
 
@@ -96,7 +98,7 @@ export function BalanceSheetEditor({
     // Initialize edit mode for NEW adjustments
     useEffect(() => {
         if (action === "new" && data && flatAccounts && !hasInitializedNew) {
-            initializeData(data, flatAccounts);
+            initializeData(data, flatAccounts, coaMappings);
             methods.reset({
                 description: "Penyesuaian Neraca Keuangan",
                 transaction_date: asOfDate,
@@ -104,7 +106,7 @@ export function BalanceSheetEditor({
             setEditing(true);
             setHasInitializedNew(true);
         }
-    }, [action, data, flatAccounts, hasInitializedNew, initializeData, methods, asOfDate, setEditing]);
+    }, [action, data, flatAccounts, coaMappings, hasInitializedNew, initializeData, methods, asOfDate, setEditing]);
 
     // Initialize edit mode for EXISTING manual journal
     useEffect(() => {

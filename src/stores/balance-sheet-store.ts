@@ -8,6 +8,7 @@ import type {
     BalanceSheetSHU,
     BalanceSheetSHULaluDetail,
 } from "@/features/accounting/types";
+import type { CoaMapping } from "@/features/accounting/api/coa-mapping-api";
 
 export interface BalanceSheetEditItem {
     uid: string;
@@ -43,7 +44,8 @@ interface BalanceSheetStoreState {
             expense?: { items: BalanceSheetItem[] };
             shu?: BalanceSheetSHU;
         },
-        coaList: ChartOfAccount[]
+        coaList: ChartOfAccount[],
+        coaMappings?: CoaMapping[]
     ) => void;
     initializeFromJournal: (journal: ManualJournal, coaList: ChartOfAccount[]) => void;
     updateItemDebitCredit: (
@@ -75,15 +77,29 @@ export const useBalanceSheetStore = create<BalanceSheetStoreState>()(
 
             setEditing: (editing) => set({ isEditing: editing }),
 
-            initializeData: (data, coaList) => {
+            initializeData: (data, coaList, coaMappings) => {
+                const shuPriorYearsMapping = coaMappings?.find(
+                    (m) => m.transaction_type === "equity" && m.slot === "shu_prior_years"
+                );
+
                 const mapSection = (items: BalanceSheetItem[] | undefined) => {
                     return (items || []).map((item) => {
-                        const matched = coaList.find((coa) => coa.kode === item.kode);
+                        const matched = coaList.find(
+                            (coa) =>
+                                coa.kode === item.kode || (item.uid && coa.uid === item.uid)
+                        );
                         const isShuLalu =
-                            item.kode === "3-1200" ||
-                            item.nama.toLowerCase().includes("shu tahun lalu") ||
-                            item.nama.toLowerCase().includes("sisa hasil usaha tahun lalu") ||
-                            item.nama.toLowerCase().includes("laba ditahan");
+                            (shuPriorYearsMapping?.chart_of_account_uid &&
+                                (matched?.uid === shuPriorYearsMapping.chart_of_account_uid ||
+                                    item.uid === shuPriorYearsMapping.chart_of_account_uid)) ||
+                            (shuPriorYearsMapping?.kode &&
+                                (matched?.kode === shuPriorYearsMapping.kode ||
+                                    item.kode === shuPriorYearsMapping.kode)) ||
+                            (!shuPriorYearsMapping &&
+                                (item.kode === "3-1200" ||
+                                    item.nama.toLowerCase().includes("shu tahun lalu") ||
+                                    item.nama.toLowerCase().includes("sisa hasil usaha tahun lalu") ||
+                                    item.nama.toLowerCase().includes("laba ditahan")));
 
                         let itemDetail = item.detail;
                         if (
@@ -101,7 +117,7 @@ export const useBalanceSheetStore = create<BalanceSheetStoreState>()(
                         }
 
                         return {
-                            uid: matched?.uid || `temp-${Math.random().toString(36).substring(2, 9)}`,
+                            uid: matched?.uid || item.uid || `temp-${Math.random().toString(36).substring(2, 9)}`,
                             kode: item.kode,
                             nama: item.nama,
                             debit: item.debit || 0,

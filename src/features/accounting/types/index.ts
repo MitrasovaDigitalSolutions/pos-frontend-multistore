@@ -26,6 +26,7 @@ export interface BalanceSheetDetailCategory {
 }
 
 export interface BalanceSheetItem {
+    uid?: string;
     kode: string | null;
     nama: string;
     tipe?: string;
