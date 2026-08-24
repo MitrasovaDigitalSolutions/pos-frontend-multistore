@@ -173,6 +173,95 @@ export function useFinalizeOpname() {
 }
 
 
+import { apiClient } from "@/shared/api/axios";
+
+// ─── Opname Import & Template Download Helpers ───────────────────────────────
+
+export async function downloadOpnameTemplateXlsx(): Promise<void> {
+    const response = await apiClient.get("/v1/inventory/opname/sheet/xlsx", {
+        responseType: "blob",
+    });
+    let filename = "template_stock_opname.xlsx";
+    const contentDisposition = response.headers["content-disposition"];
+    if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (filenameMatch && filenameMatch[1]) {
+            filename = filenameMatch[1];
+        }
+    }
+    const contentType = response.headers["content-type"] || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    const blob = new Blob([response.data], { type: typeof contentType === "string" ? contentType : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+}
+
+export async function downloadOpnameSheetPdf(): Promise<void> {
+    const response = await apiClient.get("/v1/inventory/opname/sheet/pdf", {
+        responseType: "blob",
+    });
+    let filename = "lembar_stock_opname.pdf";
+    const contentDisposition = response.headers["content-disposition"];
+    if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (filenameMatch && filenameMatch[1]) {
+            filename = filenameMatch[1];
+        }
+    }
+    const contentType = response.headers["content-type"] || "application/pdf";
+    const blob = new Blob([response.data], { type: typeof contentType === "string" ? contentType : "application/pdf" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+}
+
+export function useImportOpname() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<Opname>, Error, FormData>({
+        mutationFn: (formData) =>
+            apiPost<ApiResponse<Opname>, FormData>(
+                "/v1/inventory/opname/import",
+                formData,
+            ),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.inventory.opnames(),
+            });
+            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+        },
+    });
+}
+
+export function useImportOpnameIntoDraft() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<Opname>, Error, { uid: string; formData: FormData }>({
+        mutationFn: ({ uid, formData }) =>
+            apiPost<ApiResponse<Opname>, FormData>(
+                `/v1/inventory/opname/import/${uid}`,
+                formData,
+            ),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.inventory.opnames(),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.inventory.opnameDetail(variables.uid),
+            });
+            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+        },
+    });
+}
+
 // ─── Opname Deletion Hook ────────────────────────────────────────────────────
 
 export function useDeleteOpname() {

@@ -24,6 +24,7 @@ import {
 } from "../../api/stock-api";
 import type { OpnameItem } from "../../types";
 import { EditHeaderDialog } from "./edit-header-dialog";
+import { ImportOpnameDraftDialog } from "./import-opname-draft-dialog";
 import { OpnameInstructions } from "./opname-instructions";
 import { OpnameItemsHeader } from "./opname-items-header";
 import { OpnameItemsMobileList } from "./opname-items-mobile-list";
@@ -83,6 +84,24 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
   const [isEditHeaderOpen, setIsEditHeaderOpen] = useState(false);
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
+  const [isImportDraftOpen, setIsImportDraftOpen] = useState(false);
+
+  const handleImportDraftSuccess = (newItems?: OpnameItem[]) => {
+    if (newItems && newItems.length > 0) {
+      const formatted: OpnameItemLocal[] = newItems.map((dbItem: OpnameItem) => ({
+        temp_uid: `db-${dbItem.uid || Math.random().toString(36).substring(2, 9)}`,
+        product_uid: dbItem.product_uid,
+        brand_uid: dbItem.brand_uid || dbItem.product?.brand_uid || dbItem.brand?.uid || null,
+        category_uid: dbItem.category_uid || dbItem.product?.category_uid || dbItem.category?.uid || null,
+        nama: dbItem.product?.nama || "Produk",
+        barcode: dbItem.product?.barcode || "",
+        stok_sistem: dbItem.stok_sistem,
+        stok_fisik: dbItem.stok_fisik,
+        alasan: dbItem.alasan || "Opname rutin",
+      }));
+      setItems(formatted);
+    }
+  };
 
   const barcodeInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -314,6 +333,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
         isInstructionsOpen={isInstructionsOpen}
         onToggleInstructions={() => setIsInstructionsOpen(!isInstructionsOpen)}
         onOpenEditHeader={() => setIsEditHeaderOpen(true)}
+        onOpenImportExcel={() => setIsImportDraftOpen(true)}
         onSaveDraft={() => handleSaveDraft(true)}
         onOpenFinalize={() => setIsConfirmFinalizeOpen(true)}
         onBack={() => router.push(ROUTES.ADMIN_STOCK)}
@@ -422,6 +442,14 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
         opname={opname}
         onSave={handleSaveCatatan}
         isPending={updateOpname.isPending}
+      />
+
+      <ImportOpnameDraftDialog
+        open={isImportDraftOpen}
+        onOpenChange={setIsImportDraftOpen}
+        opnameUid={opnameId}
+        nomorOpname={opname.nomor_opname}
+        onImportSuccess={handleImportDraftSuccess}
       />
     </div>
   );
