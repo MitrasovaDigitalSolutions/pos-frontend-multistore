@@ -106,6 +106,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   const [isEditHeaderOpen, setIsEditHeaderOpen] = useState(false);
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
   const [isImportDraftOpen, setIsImportDraftOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   /** Last scan feedback state — shown inline in scanner card */
   const [lastScanFeedback, setLastScanFeedback] = useState<{
@@ -134,15 +135,17 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   }, [dbItemsLoading, dbItemsRes, itemCount, opname?.items, setItems]);
 
   const handleImportDraftSuccess = async (newItems?: OpnameItem[]) => {
-    if (newItems && Array.isArray(newItems) && newItems.length > 0) {
-      const formatted = newItems.map((dbItem: OpnameItem, index: number) => toLocalItem(dbItem, index));
-      setItems(formatted);
-      toast.success(`${formatted.length.toLocaleString("id-ID")} item berhasil dimuat ke draf.`);
-      return;
-    }
-
-    // Fallback: Always refetch fresh items from server to ensure 100% sync
+    setIsSyncing(true);
     try {
+      if (newItems && Array.isArray(newItems) && newItems.length > 0) {
+        await new Promise((resolve) => setTimeout(resolve, 60));
+        const formatted = newItems.map((dbItem: OpnameItem, index: number) => toLocalItem(dbItem, index));
+        setItems(formatted);
+        toast.success(`${formatted.length.toLocaleString("id-ID")} item berhasil dimuat ke draf.`);
+        return;
+      }
+
+      // Fallback: Always refetch fresh items from server to ensure 100% sync
       const [detailRes, itemsRes] = await Promise.all([
         refetchDetail(),
         refetchItems(),
@@ -153,12 +156,16 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
         : (itemsRes.data?.data || []);
 
       if (freshItems.length > 0) {
+        await new Promise((resolve) => setTimeout(resolve, 60));
         const formatted = freshItems.map((dbItem: OpnameItem, index: number) => toLocalItem(dbItem, index));
         setItems(formatted);
         toast.success(`${formatted.length.toLocaleString("id-ID")} item berhasil disinkronkan ke draf.`);
       }
-    } catch {
-      // Ignore error
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      toast.error(error.message || "Gagal menyinkronkan data produk dari server.");
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -371,7 +378,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
       <OpnameItemsHeader
         opname={opname}
         itemsCount={itemCount}
-        isPendingSave={updateOpnameItems.isPending}
+        isPendingSave={updateOpnameItems.isPending || isSyncing}
         isPendingFinalize={finalizeOpname.isPending}
         isInstructionsOpen={isInstructionsOpen}
         onToggleInstructions={() => setIsInstructionsOpen(!isInstructionsOpen)}
@@ -399,7 +406,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
       {/* ── Scanner Card with Inline Feedback ── */}
       <OpnameScannerCard
         products={products}
-        disabled={productsLoading || updateOpnameItems.isPending}
+        disabled={productsLoading || updateOpnameItems.isPending || isSyncing}
         onProductFound={handleProductFound}
         lastScanFeedback={lastScanFeedback}
       />
@@ -415,7 +422,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
               {itemCount.toLocaleString("id-ID")} Item
             </span>
           </div>
-          {itemCount > 0 && (
+          {itemCount > 0 && !isSyncing && (
             <AppButton
               type="button"
               variant="ghost"
@@ -436,6 +443,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
           updateItem={updateItem}
           removeItem={removeItem}
           onFocusBarcode={handleFocusBarcode}
+          isSyncing={isSyncing}
         />
       </div>
 
@@ -443,7 +451,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
       <OpnameItemsMobileBar
         itemsCount={itemCount}
         stats={stats}
-        isPendingSave={updateOpnameItems.isPending}
+        isPendingSave={updateOpnameItems.isPending || isSyncing}
         isPendingFinalize={finalizeOpname.isPending}
         onSaveDraft={() => handleSaveDraft(true)}
         onOpenFinalize={() => setIsConfirmFinalizeOpen(true)}
