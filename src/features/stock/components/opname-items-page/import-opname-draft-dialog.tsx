@@ -128,7 +128,13 @@ export function ImportOpnameDraftDialog({
                     toast.success("File Excel berhasil diunggah ke draf opname!");
                     onOpenChange(false);
                     setSelectedFile(null);
-                    onImportSuccess(res.data?.items);
+                    const rawData = res.data as unknown as Record<string, unknown>;
+                    const rawItems = (Array.isArray(rawData?.items)
+                        ? rawData.items
+                        : Array.isArray(rawData)
+                            ? rawData
+                            : (res as unknown as Record<string, unknown>)?.items) as OpnameItem[] | undefined;
+                    onImportSuccess(rawItems);
                 },
                 onError: (err) => {
                     toast.error(err.message || "Gagal mengimpor file ke draf stock opname.");
