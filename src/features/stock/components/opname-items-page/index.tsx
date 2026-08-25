@@ -401,6 +401,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
         matchCount={stats.match}
         positiveCount={stats.positive}
         negativeCount={stats.negative}
+        isLoading={isSyncing}
       />
 
       {/* ── Scanner Card with Inline Feedback ── */}
