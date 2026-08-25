@@ -2,7 +2,13 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { ChartOfAccount } from "@/features/accounting/types";
 import type { ManualJournal, ManualJournalLine } from "@/features/accounting/types/manual-journal";
-import type { BalanceSheetItem, BalanceSheetDetailCategory } from "@/features/accounting/types";
+import type {
+    BalanceSheetItem,
+    BalanceSheetDetailCategory,
+    BalanceSheetSHU,
+    BalanceSheetSHULaluDetail,
+} from "@/features/accounting/types";
+import type { CoaMapping } from "@/features/accounting/api/coa-mapping-api";
 
 export interface BalanceSheetEditItem {
     uid: string;
@@ -36,8 +42,10 @@ interface BalanceSheetStoreState {
             equity?: { items: BalanceSheetItem[] };
             revenue?: { items: BalanceSheetItem[] };
             expense?: { items: BalanceSheetItem[] };
+            shu?: BalanceSheetSHU;
         },
-        coaList: ChartOfAccount[]
+        coaList: ChartOfAccount[],
+        coaMappings?: CoaMapping[]
     ) => void;
     initializeFromJournal: (journal: ManualJournal, coaList: ChartOfAccount[]) => void;
     updateItemDebitCredit: (
@@ -69,18 +77,53 @@ export const useBalanceSheetStore = create<BalanceSheetStoreState>()(
 
             setEditing: (editing) => set({ isEditing: editing }),
 
-            initializeData: (data, coaList) => {
+            initializeData: (data, coaList, coaMappings) => {
+                const shuPriorYearsMapping = coaMappings?.find(
+                    (m) => m.transaction_type === "equity" && m.slot === "shu_prior_years"
+                );
+
                 const mapSection = (items: BalanceSheetItem[] | undefined) => {
                     return (items || []).map((item) => {
-                        const matched = coaList.find((coa) => coa.kode === item.kode);
+                        const matched = coaList.find(
+                            (coa) =>
+                                coa.kode === item.kode || (item.uid && coa.uid === item.uid)
+                        );
+                        const isShuLalu =
+                            (shuPriorYearsMapping?.chart_of_account_uid &&
+                                (matched?.uid === shuPriorYearsMapping.chart_of_account_uid ||
+                                    item.uid === shuPriorYearsMapping.chart_of_account_uid)) ||
+                            (shuPriorYearsMapping?.kode &&
+                                (matched?.kode === shuPriorYearsMapping.kode ||
+                                    item.kode === shuPriorYearsMapping.kode)) ||
+                            (!shuPriorYearsMapping &&
+                                (item.kode === "3-1200" ||
+                                    item.nama.toLowerCase().includes("shu tahun lalu") ||
+                                    item.nama.toLowerCase().includes("sisa hasil usaha tahun lalu") ||
+                                    item.nama.toLowerCase().includes("laba ditahan")));
+
+                        let itemDetail = item.detail;
+                        if (
+                            isShuLalu &&
+                            data.shu?.lalu_detail &&
+                            data.shu.lalu_detail.length > 0 &&
+                            (!itemDetail || itemDetail.length === 0)
+                        ) {
+                            itemDetail = data.shu.lalu_detail.map((d: BalanceSheetSHULaluDetail) => ({
+                                kategori: `SHU Tahun ${d.tahun}`,
+                                amount: d.amount,
+                                debit: d.amount < 0 ? Math.abs(d.amount) : 0,
+                                credit: d.amount > 0 ? d.amount : 0,
+                            }));
+                        }
+
                         return {
-                            uid: matched?.uid || `temp-${Math.random().toString(36).substring(2, 9)}`,
+                            uid: matched?.uid || item.uid || `temp-${Math.random().toString(36).substring(2, 9)}`,
                             kode: item.kode,
                             nama: item.nama,
                             debit: item.debit || 0,
                             credit: item.credit || 0,
                             amount: item.amount || 0,
-                            detail: item.detail,
+                            detail: itemDetail,
                         };
                     });
                 };

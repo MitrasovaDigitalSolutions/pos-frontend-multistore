@@ -4,7 +4,7 @@ import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IconEdit } from "@tabler/icons-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { Opname } from "../../types";
 
 interface EditHeaderDialogProps {
@@ -22,13 +22,15 @@ export function EditHeaderDialog({
   onSave,
   isPending,
 }: EditHeaderDialogProps) {
+  const [prevOpen, setPrevOpen] = useState(open);
   const [catatan, setCatatan] = useState(opname.catatan || "");
 
-  useEffect(() => {
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       setCatatan(opname.catatan || "");
     }
-  }, [open, opname.catatan]);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

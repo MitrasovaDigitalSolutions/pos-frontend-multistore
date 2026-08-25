@@ -16,6 +16,8 @@ import { useMemo, useState } from "react";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { PrintConfirmDialog } from "@/features/reports/components/print-confirm-dialog";
 
+import { useCoaMappings } from "@/features/accounting/api/coa-mapping-api";
+
 import { BalanceSheetDraftBanner } from "./balance-sheet-draft-banner";
 import { BalanceSheetHeaderFilters } from "./balance-sheet-header-filters";
 import { BalanceSheetSectionCard } from "./balance-sheet-section-card";
@@ -44,6 +46,13 @@ export function BalanceSheetDashboard({
 }: BalanceSheetDashboardProps) {
     const router = useRouter();
 
+    const { data: coaMappings } = useCoaMappings();
+    const shuPriorYearsMapping = useMemo(() => {
+        return coaMappings?.find(
+            (m) => m.transaction_type === "equity" && m.slot === "shu_prior_years"
+        );
+    }, [coaMappings]);
+
     const [viewType, setViewType] = useState<"standard" | "equation">("standard");
     const [showDebitCredit, setShowDebitCredit] = useState<boolean>(false);
     const [isPrintDialogOpen, setIsPrintDialogOpen] = useState<boolean>(false);
@@ -68,16 +77,14 @@ export function BalanceSheetDashboard({
 
     const hasDraft = !!editedData;
 
+    // Handler to initiate in-page editing from view dashboard
     const handleStartEditing = () => {
         if (!data || !flatAccounts) return;
-
-        if (!editedData) {
-            initializeData(data, flatAccounts);
-        }
+        initializeData(data, flatAccounts, coaMappings);
         router.push("/admin/accounting/balance-sheet?action=new");
     };
 
-    // 1. Calculate section values (Assets, Liabilities, Equity, Revenue, Expense)
+    // 1. Calculate section values from live edited data OR fetched API data
     const sectionsData = useMemo(() => {
         if (hasDraft && editedData) {
             return {
@@ -106,7 +113,6 @@ export function BalanceSheetDashboard({
             totalRevenue: data?.revenue?.total_revenue || 0,
             totalExpense: data?.expense?.total_expense || 0,
         };
-
         return fallback;
     }, [hasDraft, editedData, data]);
 
@@ -132,60 +138,57 @@ export function BalanceSheetDashboard({
         return totalRevenue - totalExpense;
     }, [shuData, totalRevenue, totalExpense]);
 
-    const shuLalu = shuData?.lalu || 0;
-    const shuLaluLabel = "SHU Tahun Lalu";
-    const totalSHU = shuData?.total !== undefined ? shuData.total : (netIncome + shuLalu);
-
-    // 3. Reorganize Equity in standard view to append SHU
+    // 3. Reorganize Equity: attach historical SHU lalu_detail to mapped COA and append SHU Tahun Berjalan in standard view
     const equityItems = useMemo(() => {
-        if (viewType === "standard") {
-            const items = [...equity];
-            if (shuData) {
-                if (shuData.lalu !== 0 || (shuData.lalu_detail && shuData.lalu_detail.length > 0)) {
-                    const detailCategories: BalanceSheetDetailCategory[] | undefined =
-                        shuData.lalu_detail && shuData.lalu_detail.length > 0
-                            ? shuData.lalu_detail.map((d) => ({
-                                kategori: `SHU Tahun ${d.tahun}`,
-                                amount: d.amount,
-                                debit: d.amount < 0 ? Math.abs(d.amount) : 0,
-                                credit: d.amount > 0 ? d.amount : 0,
-                            }))
-                            : undefined;
+        // Find and attach details (lalu_detail) to the mapped SHU Tahun Lalu COA account
+        const items = equity.map((item) => {
+            const isShuLalu =
+                (shuPriorYearsMapping?.chart_of_account_uid &&
+                    item.uid === shuPriorYearsMapping.chart_of_account_uid) ||
+                (shuPriorYearsMapping?.kode && item.kode === shuPriorYearsMapping.kode) ||
+                (!shuPriorYearsMapping &&
+                    (item.kode === "3-1200" ||
+                        item.nama.toLowerCase().includes("shu tahun lalu") ||
+                        item.nama.toLowerCase().includes("sisa hasil usaha tahun lalu") ||
+                        item.nama.toLowerCase().includes("laba ditahan")));
 
-                    items.push({
-                        uid: "synthetic-shu-lalu",
-                        kode: null,
-                        nama: shuLaluLabel,
-                        amount: shuData.lalu,
-                        debit: 0,
-                        credit: shuData.lalu,
-                        detail: detailCategories,
-                    });
-                }
-                items.push({
-                    uid: "synthetic-shu-berjalan",
-                    kode: null,
-                    nama: "SHU Tahun Berjalan",
-                    amount: shuData.berjalan,
-                    debit: totalExpense,
-                    credit: totalRevenue,
-                });
-            } else {
-                items.push({
-                    uid: "synthetic-net-income",
-                    kode: null,
-                    nama: "SHU Tahun Berjalan",
-                    amount: netIncome,
-                    debit: totalExpense,
-                    credit: totalRevenue,
-                });
+            if (
+                isShuLalu &&
+                shuData?.lalu_detail &&
+                shuData.lalu_detail.length > 0 &&
+                (!item.detail || item.detail.length === 0)
+            ) {
+                const detailCategories: BalanceSheetDetailCategory[] = shuData.lalu_detail.map((d) => ({
+                    kategori: `SHU Tahun ${d.tahun}`,
+                    amount: d.amount,
+                    debit: d.amount < 0 ? Math.abs(d.amount) : 0,
+                    credit: d.amount > 0 ? d.amount : 0,
+                }));
+                return {
+                    ...item,
+                    detail: detailCategories,
+                };
             }
-            return items;
-        }
-        return equity;
-    }, [equity, viewType, shuData, shuLaluLabel, netIncome, totalExpense, totalRevenue]);
+            return item;
+        });
 
-    const finalEquityTotal = viewType === "standard" ? totalEquity + totalSHU : totalEquity;
+        if (viewType === "standard") {
+            items.push({
+                uid: "synthetic-shu-berjalan",
+                kode: null,
+                nama: "SHU Tahun Berjalan",
+                amount: shuData?.berjalan !== undefined ? shuData.berjalan : netIncome,
+                debit: totalExpense,
+                credit: totalRevenue,
+            });
+        }
+        return items;
+    }, [equity, viewType, shuData, shuPriorYearsMapping, netIncome, totalExpense, totalRevenue]);
+
+    const finalEquityTotal =
+        viewType === "standard"
+            ? totalEquity + (shuData?.berjalan !== undefined ? shuData.berjalan : netIncome)
+            : totalEquity;
 
     // 4. Compute balance metrics
     const { totalLeftVal, totalRightVal, isBalanced, difference } = useMemo(() => {

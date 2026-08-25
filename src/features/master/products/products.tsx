@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,6 +52,7 @@ export function Products() {
     category_uid?: string;
     brand_uid?: string;
     is_jasa?: string;
+    include_archived?: number;
   }>(() => ({
     search: searchParam || undefined,
     status: "active",
@@ -72,22 +73,24 @@ export function Products() {
   });
 
   // Sync URL search param to state and form values
-  useEffect(() => {
+  const [prevSearchParam, setPrevSearchParam] = useState(searchParam);
+  if (searchParam !== prevSearchParam) {
+    setPrevSearchParam(searchParam);
     filterMethods.setValue("search", searchParam);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAppliedFilters((prev) => ({
       ...prev,
       search: searchParam || undefined,
     }));
-  }, [searchParam, filterMethods]);
+  }
 
   const handleFilterSubmit = (data: ProductFilterValues) => {
     setAppliedFilters({
       search: data.search || undefined,
       status: data.status !== "all" ? data.status : undefined,
-      category_uid: data.category_uid !== "all" ? (data.category_uid) : undefined,
-      brand_uid: data.brand_uid !== "all" ? (data.brand_uid) : undefined,
+      category_uid: data.category_uid !== "all" ? data.category_uid : undefined,
+      brand_uid: data.brand_uid !== "all" ? data.brand_uid : undefined,
       is_jasa: data.is_jasa ? "1" : undefined,
+      include_archived: data.status === "archived" ? 1 : undefined,
     });
     setPage(1);
   };
@@ -195,6 +198,7 @@ export function Products() {
     { value: "all", label: "Semua Status" },
     { value: "active", label: "Aktif" },
     { value: "inactive", label: "Nonaktif" },
+    { value: "archived", label: "Diarsipkan" },
   ];
 
   return (

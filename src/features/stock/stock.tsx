@@ -6,12 +6,28 @@ import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { hasPermission, hasRole } from "@/constants/roles";
 import {
     useOpnames,
+    downloadOpnameTemplateXlsx,
+    downloadOpnameSheetPdf,
 } from "@/features/stock/api/stock-api";
 import { AdjustmentDialog } from "@/features/stock/components/adjustment-dialog";
 import { OpnameDialog } from "@/features/stock/components/opname-dialog";
 import { OpnameList } from "@/features/stock/components/opname-list";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { IconActivity, IconClipboardCheck } from "@tabler/icons-react";
+import {
+    IconActivity,
+    IconClipboardCheck,
+    IconDownload,
+    IconFileSpreadsheet,
+    IconFileTypePdf,
+    IconLoader2,
+} from "@tabler/icons-react";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -59,6 +75,34 @@ export function StockManagement() {
     // Modals
     const [isAdjustmentOpen, setIsAdjustmentOpen] = useState(false);
     const [isOpnameModalOpen, setIsOpnameModalOpen] = useState(false);
+    const [isDownloadingXlsx, setIsDownloadingXlsx] = useState(false);
+    const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+
+    const handleDownloadTemplateXlsx = async () => {
+        setIsDownloadingXlsx(true);
+        try {
+            await downloadOpnameTemplateXlsx();
+            toast.success("Template Excel Stock Opname berhasil diunduh.");
+        } catch (error) {
+            console.error("Gagal mengunduh template XLSX:", error);
+            toast.error("Gagal mengunduh template Excel.");
+        } finally {
+            setIsDownloadingXlsx(false);
+        }
+    };
+
+    const handleDownloadSheetPdf = async () => {
+        setIsDownloadingPdf(true);
+        try {
+            await downloadOpnameSheetPdf();
+            toast.success("Lembar Cetak Stock Opname (PDF) berhasil diunduh.");
+        } catch (error) {
+            console.error("Gagal mengunduh lembar PDF:", error);
+            toast.error("Gagal mengunduh lembar PDF.");
+        } finally {
+            setIsDownloadingPdf(false);
+        }
+    };
 
     if (currentTab === "inventory" && !hasViewInventory) {
         return (
@@ -133,7 +177,40 @@ export function StockManagement() {
                                 </p>
                             </div>
                             {hasManageInventory && (
-                                <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                className="flex-1 sm:flex-none border-slate-200 text-slate-700 bg-white hover:bg-slate-50 font-bold text-xs h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                                                disabled={isDownloadingXlsx || isDownloadingPdf}
+                                            >
+                                                {isDownloadingXlsx || isDownloadingPdf ? (
+                                                    <IconLoader2 size={14} className="animate-spin text-slate-500" />
+                                                ) : (
+                                                    <IconDownload size={14} className="text-slate-500" />
+                                                )}
+                                                <span>Dokumen & Template</span>
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-56 bg-white text-slate-800 border border-slate-200 shadow-md p-1.5 rounded-xl">
+                                            <DropdownMenuItem
+                                                onClick={handleDownloadTemplateXlsx}
+                                                className="flex items-center gap-2 px-2.5 py-2 text-xs font-semibold rounded-lg hover:bg-emerald-50 hover:text-emerald-700 cursor-pointer"
+                                            >
+                                                <IconFileSpreadsheet size={15} className="text-emerald-600" />
+                                                <span>Template Excel (.xlsx)</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={handleDownloadSheetPdf}
+                                                className="flex items-center gap-2 px-2.5 py-2 text-xs font-semibold rounded-lg hover:bg-rose-50 hover:text-rose-700 cursor-pointer"
+                                            >
+                                                <IconFileTypePdf size={15} className="text-rose-600" />
+                                                <span>Lembar Opname (.pdf)</span>
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+
                                     <Button
                                         onClick={() => setIsAdjustmentOpen(true)}
                                         className="flex-1 sm:flex-none bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9 px-3.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-xs border-none"
