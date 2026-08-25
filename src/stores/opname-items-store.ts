@@ -19,12 +19,10 @@ interface OpnameItemsState {
     opnameId: string | null;
     /** Internal Map storage keyed by product_uid for O(1) lookups */
     itemsMap: Record<string, OpnameItemLocal>;
+    /** Stable array reference derived from itemsMap — sorted by updated_at desc */
+    items: OpnameItemLocal[];
+    itemCount: number;
     lastUpdated: number;
-
-    // ── Derived Getters ──
-    /** Returns items sorted by updated_at desc (most recently touched first) */
-    readonly items: OpnameItemLocal[];
-    readonly itemCount: number;
 
     // ── O(1) Lookup Methods ──
     hasItem: (productUid: string) => boolean;
@@ -61,12 +59,18 @@ function deriveItems(itemsMap: Record<string, OpnameItemLocal>): OpnameItemLocal
 /**
  * Migration: detect old localStorage format (flat array) and convert to Map format.
  * Old format: { items: OpnameItemLocal[], ... }
- * New format: { itemsMap: Record<string, OpnameItemLocal>, ... }
+ * New format: { itemsMap: Record<string, OpnameItemLocal>, items: OpnameItemLocal[], ... }
  */
 function migrateFromArrayFormat(persistedState: Record<string, unknown>): Record<string, unknown> {
-    // If already has itemsMap, no migration needed
-    if (persistedState.itemsMap && typeof persistedState.itemsMap === "object") {
-        return persistedState;
+    const rawMap = persistedState.itemsMap;
+    if (rawMap && typeof rawMap === "object") {
+        const itemsMap = rawMap as Record<string, OpnameItemLocal>;
+        return {
+            ...persistedState,
+            itemsMap,
+            items: deriveItems(itemsMap),
+            itemCount: Object.keys(itemsMap).length,
+        };
     }
 
     // Check for old "items" array format
@@ -83,14 +87,21 @@ function migrateFromArrayFormat(persistedState: Record<string, unknown>): Record
                 };
             }
         }
+        const derived = deriveItems(migratedMap);
         return {
             ...persistedState,
             itemsMap: migratedMap,
-            items: undefined, // remove old field
+            items: derived,
+            itemCount: derived.length,
         };
     }
 
-    return persistedState;
+    return {
+        ...persistedState,
+        itemsMap: {},
+        items: [],
+        itemCount: 0,
+    };
 }
 
 export function createOpnameItemsStore(opnameId: string) {
@@ -101,16 +112,9 @@ export function createOpnameItemsStore(opnameId: string) {
             (set, get) => ({
                 opnameId,
                 itemsMap: {},
+                items: [],
+                itemCount: 0,
                 lastUpdated: Date.now(),
-
-                // ── Derived Getters (computed on access) ──
-                get items() {
-                    return deriveItems(get().itemsMap);
-                },
-
-                get itemCount() {
-                    return Object.keys(get().itemsMap).length;
-                },
 
                 // ── O(1) Lookup Methods ──
                 hasItem: (productUid) => productUid in get().itemsMap,
@@ -129,24 +133,18 @@ export function createOpnameItemsStore(opnameId: string) {
                         const now = Date.now();
                         const existing = state.itemsMap[product.product_uid];
 
+                        let nextMap: Record<string, OpnameItemLocal>;
                         if (existing) {
-                            // Item already exists → increment qty, bump timestamp
-                            return {
-                                itemsMap: {
-                                    ...state.itemsMap,
-                                    [product.product_uid]: {
-                                        ...existing,
-                                        stok_fisik: (Number(existing.stok_fisik) || 0) + 1,
-                                        updated_at: now,
-                                    },
+                            nextMap = {
+                                ...state.itemsMap,
+                                [product.product_uid]: {
+                                    ...existing,
+                                    stok_fisik: (Number(existing.stok_fisik) || 0) + 1,
+                                    updated_at: now,
                                 },
-                                lastUpdated: now,
                             };
-                        }
-
-                        // New item
-                        return {
-                            itemsMap: {
+                        } else {
+                            nextMap = {
                                 ...state.itemsMap,
                                 [product.product_uid]: {
                                     temp_uid: generateTempId(),
@@ -160,7 +158,14 @@ export function createOpnameItemsStore(opnameId: string) {
                                     alasan: product.alasan || "Opname rutin",
                                     updated_at: now,
                                 },
-                            },
+                            };
+                        }
+
+                        const nextItems = deriveItems(nextMap);
+                        return {
+                            itemsMap: nextMap,
+                            items: nextItems,
+                            itemCount: nextItems.length,
                             lastUpdated: now,
                         };
                     }),
@@ -170,25 +175,34 @@ export function createOpnameItemsStore(opnameId: string) {
                         const existing = state.itemsMap[productUid];
                         if (!existing) return state;
 
-                        return {
-                            itemsMap: {
-                                ...state.itemsMap,
-                                [productUid]: {
-                                    ...existing,
-                                    ...data,
-                                    updated_at: Date.now(),
-                                },
+                        const now = Date.now();
+                        const nextMap = {
+                            ...state.itemsMap,
+                            [productUid]: {
+                                ...existing,
+                                ...data,
+                                updated_at: now,
                             },
-                            lastUpdated: Date.now(),
+                        };
+
+                        const nextItems = deriveItems(nextMap);
+                        return {
+                            itemsMap: nextMap,
+                            items: nextItems,
+                            itemCount: nextItems.length,
+                            lastUpdated: now,
                         };
                     }),
 
                 removeItem: (productUid) =>
                     set((state) => {
-                        const newMap = { ...state.itemsMap };
-                        delete newMap[productUid];
+                        const nextMap = { ...state.itemsMap };
+                        delete nextMap[productUid];
+                        const nextItems = deriveItems(nextMap);
                         return {
-                            itemsMap: newMap,
+                            itemsMap: nextMap,
+                            items: nextItems,
+                            itemCount: nextItems.length,
                             lastUpdated: Date.now(),
                         };
                     }),
@@ -196,22 +210,27 @@ export function createOpnameItemsStore(opnameId: string) {
                 clearAll: () =>
                     set({
                         itemsMap: {},
+                        items: [],
+                        itemCount: 0,
                         lastUpdated: Date.now(),
                     }),
 
                 setItems: (items) =>
                     set(() => {
                         const now = Date.now();
-                        const newMap: Record<string, OpnameItemLocal> = {};
+                        const nextMap: Record<string, OpnameItemLocal> = {};
                         for (let i = 0; i < items.length; i++) {
                             const item = items[i];
-                            newMap[item.product_uid] = {
+                            nextMap[item.product_uid] = {
                                 ...item,
                                 updated_at: item.updated_at ?? (now - i),
                             };
                         }
+                        const nextItems = deriveItems(nextMap);
                         return {
-                            itemsMap: newMap,
+                            itemsMap: nextMap,
+                            items: nextItems,
+                            itemCount: nextItems.length,
                             lastUpdated: now,
                         };
                     }),
@@ -219,16 +238,19 @@ export function createOpnameItemsStore(opnameId: string) {
                 bulkSetItems: (items) =>
                     set((state) => {
                         const now = Date.now();
-                        const newMap = { ...state.itemsMap };
+                        const nextMap = { ...state.itemsMap };
                         for (let i = 0; i < items.length; i++) {
                             const item = items[i];
-                            newMap[item.product_uid] = {
+                            nextMap[item.product_uid] = {
                                 ...item,
                                 updated_at: item.updated_at ?? (now - i),
                             };
                         }
+                        const nextItems = deriveItems(nextMap);
                         return {
-                            itemsMap: newMap,
+                            itemsMap: nextMap,
+                            items: nextItems,
+                            itemCount: nextItems.length,
                             lastUpdated: now,
                         };
                     }),
@@ -236,12 +258,17 @@ export function createOpnameItemsStore(opnameId: string) {
             {
                 name: storageKey,
                 storage: createJSONStorage(() => localStorage),
-                // Only persist the map, not the derived getters
                 partialize: (state) => ({
                     opnameId: state.opnameId,
                     itemsMap: state.itemsMap,
                     lastUpdated: state.lastUpdated,
                 }),
+                onRehydrateStorage: () => (state) => {
+                    if (state && state.itemsMap) {
+                        state.items = deriveItems(state.itemsMap);
+                        state.itemCount = Object.keys(state.itemsMap).length;
+                    }
+                },
                 migrate: (persistedState) => {
                     return migrateFromArrayFormat(persistedState as Record<string, unknown>) as unknown as OpnameItemsState;
                 },
