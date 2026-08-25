@@ -12,16 +12,30 @@ import {
     IconTag,
 } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { OpnameItemMobileCard } from "./opname-item-mobile-card";
+import { OpnameItemsSearchBar } from "./opname-items-search-bar";
 
 interface OpnameItemsTableProps {
     items: OpnameItemLocal[];
     categoryOptions: CommandOption[];
     brandOptions: CommandOption[];
-    updateItem: (temp_uid: string, data: Partial<Pick<OpnameItemLocal, "stok_fisik" | "alasan" | "brand_uid" | "category_uid">>) => void;
-    removeItem: (temp_uid: string) => void;
+    updateItem: (productUid: string, data: Partial<Pick<OpnameItemLocal, "stok_fisik" | "alasan" | "brand_uid" | "category_uid">>) => void;
+    removeItem: (productUid: string) => void;
     onFocusBarcode?: () => void;
+}
+
+/** Client-side search filter — matches by product name or barcode */
+function filterItems(items: OpnameItemLocal[], query: string): OpnameItemLocal[] {
+    const trimmed = query.trim().toLowerCase();
+    if (!trimmed) return items;
+
+    const queryWords = trimmed.split(/\s+/);
+    return items.filter((item) => {
+        const barcodeMatch = item.barcode?.toLowerCase().includes(trimmed) ?? false;
+        const nameWordsMatch = queryWords.every((word) => item.nama.toLowerCase().includes(word));
+        return barcodeMatch || nameWordsMatch;
+    });
 }
 
 export function OpnameItemsTable({
@@ -32,6 +46,13 @@ export function OpnameItemsTable({
     removeItem,
     onFocusBarcode,
 }: OpnameItemsTableProps) {
+    const [searchQuery, setSearchQuery] = useState("");
+
+    const filteredItems = useMemo(
+        () => filterItems(items, searchQuery),
+        [items, searchQuery]
+    );
+
     const columns = useMemo<ColumnDef<OpnameItemLocal>[]>(() => [
         {
             accessorKey: "nama",
@@ -70,7 +91,7 @@ export function OpnameItemsTable({
                         <CommandSelect
                             options={categoryOptions}
                             value={item.category_uid || ""}
-                            onChange={(val) => updateItem(item.temp_uid, { category_uid: val || null })}
+                            onChange={(val) => updateItem(item.product_uid, { category_uid: val || null })}
                             placeholder="Pilih Kategori"
                             searchPlaceholder="Cari kategori..."
                             emptyMessage="Tidak ditemukan"
@@ -94,7 +115,7 @@ export function OpnameItemsTable({
                         <CommandSelect
                             options={brandOptions}
                             value={item.brand_uid || ""}
-                            onChange={(val) => updateItem(item.temp_uid, { brand_uid: val || null })}
+                            onChange={(val) => updateItem(item.product_uid, { brand_uid: val || null })}
                             placeholder="Pilih Brand"
                             searchPlaceholder="Cari brand..."
                             emptyMessage="Tidak ditemukan"
@@ -122,7 +143,7 @@ export function OpnameItemsTable({
                             type="button"
                             variant="ghost"
                             size="icon-xs"
-                            onClick={() => updateItem(item.temp_uid, { stok_fisik: Math.max(0, (Number(item.stok_fisik) || 0) - 1) })}
+                            onClick={() => updateItem(item.product_uid, { stok_fisik: Math.max(0, (Number(item.stok_fisik) || 0) - 1) })}
                             className="w-6 h-6 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-xs cursor-pointer"
                         >
                             <IconMinus size={11} />
@@ -132,7 +153,7 @@ export function OpnameItemsTable({
                                 id={`opname-qty-${item.product_uid}`}
                                 value={item.stok_fisik}
                                 onChange={(val) => {
-                                    updateItem(item.temp_uid, { stok_fisik: val === null ? 0 : Math.max(0, val) });
+                                    updateItem(item.product_uid, { stok_fisik: val === null ? 0 : Math.max(0, val) });
                                 }}
                                 onKeyDown={(e) => {
                                     if (e.key === "Enter") {
@@ -150,7 +171,7 @@ export function OpnameItemsTable({
                             type="button"
                             variant="ghost"
                             size="icon-xs"
-                            onClick={() => updateItem(item.temp_uid, { stok_fisik: (Number(item.stok_fisik) || 0) + 1 })}
+                            onClick={() => updateItem(item.product_uid, { stok_fisik: (Number(item.stok_fisik) || 0) + 1 })}
                             className="w-6 h-6 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-xs cursor-pointer"
                         >
                             <IconPlus size={11} />
@@ -211,7 +232,7 @@ export function OpnameItemsTable({
                         value={item.alasan || ""}
                         placeholder="Alasan selisih..."
                         onChange={(e) => {
-                            updateItem(item.temp_uid, { alasan: e.target.value });
+                            updateItem(item.product_uid, { alasan: e.target.value });
                         }}
                         onKeyDown={(e) => {
                             if (e.key === "Enter") {
@@ -228,19 +249,31 @@ export function OpnameItemsTable({
 
     return (
         <div className="w-full">
+            {/* Search/Filter Bar — always visible when items exist */}
+            <OpnameItemsSearchBar
+                value={searchQuery}
+                onChange={setSearchQuery}
+                totalCount={items.length}
+                filteredCount={filteredItems.length}
+            />
+
             <DataTable<OpnameItemLocal, unknown>
                 columns={columns}
-                data={items}
+                data={filteredItems}
                 clientPagination={true}
                 perPage={10}
                 virtualize={false}
                 showViewToggle={true}
-                emptyMessage="Belum ada barang dihitung. Gunakan scanner barcode atau autocomplete di atas."
+                emptyMessage={
+                    searchQuery.trim()
+                        ? `Tidak ada item yang cocok dengan "${searchQuery}". Coba kata kunci lain.`
+                        : "Belum ada barang dihitung. Gunakan scanner barcode atau autocomplete di atas."
+                }
                 entityName="barang"
-                onDelete={(item) => removeItem(item.temp_uid)}
+                onDelete={(item) => removeItem(item.product_uid)}
                 renderCardItem={(row) => (
                     <OpnameItemMobileCard
-                        key={row.original.temp_uid}
+                        key={row.original.product_uid}
                         item={row.original}
                         index={row.index}
                         categoryOptions={categoryOptions}

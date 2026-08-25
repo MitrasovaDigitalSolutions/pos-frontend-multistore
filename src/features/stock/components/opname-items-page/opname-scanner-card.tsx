@@ -2,19 +2,25 @@
 
 import { BarcodeInput } from "@/components/shared/barcode-input";
 import type { Product } from "@/features/master/products/types";
-import { IconBarcode } from "@tabler/icons-react";
+import { IconBarcode, IconCheck, IconPlus } from "@tabler/icons-react";
 import { toast } from "sonner";
 
 interface OpnameScannerCardProps {
   products: Product[];
   disabled: boolean;
   onProductFound: (product: Product) => void;
+  lastScanFeedback?: {
+    type: "added" | "incremented";
+    productName: string;
+    qty: number;
+  } | null;
 }
 
 export function OpnameScannerCard({
   products,
   disabled,
   onProductFound,
+  lastScanFeedback,
 }: OpnameScannerCardProps) {
   return (
     <div
@@ -31,7 +37,7 @@ export function OpnameScannerCard({
           </h3>
         </div>
         <span className="text-[10px] text-slate-400 hidden sm:inline font-medium">
-          Otomatis menambah & menempatkan barang di urutan teratas
+          Otomatis menambah &amp; menempatkan barang di urutan teratas
         </span>
       </div>
 
@@ -42,6 +48,37 @@ export function OpnameScannerCard({
         products={products}
         placeholder="Scan barcode fisik atau ketik nama barang untuk pencarian cepat..."
       />
+
+      {/* ── Inline Scan Feedback Badge ── */}
+      {lastScanFeedback && (
+        <div
+          className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold animate-in fade-in slide-in-from-top-1 duration-300 ${
+            lastScanFeedback.type === "incremented"
+              ? "bg-blue-50 text-blue-700 border border-blue-200/70"
+              : "bg-emerald-50 text-emerald-700 border border-emerald-200/70"
+          }`}
+        >
+          {lastScanFeedback.type === "incremented" ? (
+            <>
+              <IconCheck size={14} className="shrink-0 text-blue-600" />
+              <span>
+                Sudah ada —{" "}
+                <span className="font-extrabold">{lastScanFeedback.productName}</span>
+                {" "}(qty: {lastScanFeedback.qty - 1} → {lastScanFeedback.qty})
+              </span>
+            </>
+          ) : (
+            <>
+              <IconPlus size={14} className="shrink-0 text-emerald-600" />
+              <span>
+                Ditambahkan —{" "}
+                <span className="font-extrabold">{lastScanFeedback.productName}</span>
+                {" "}({lastScanFeedback.qty} pcs)
+              </span>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }

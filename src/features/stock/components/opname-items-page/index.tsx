@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import {
   useFinalizeOpname,
   useOpnameDetail,
+  useOpnameItems,
   useUpdateOpname,
   useUpdateOpnameItems,
 } from "../../api/stock-api";
@@ -32,9 +33,29 @@ interface OpnameItemsPageProps {
   opnameId: string;
 }
 
+/** Convert a server OpnameItem to the local store format */
+function toLocalItem(dbItem: OpnameItem, index: number): OpnameItemLocal {
+  return {
+    temp_uid: `db-${dbItem.uid || Math.random().toString(36).substring(2, 9)}`,
+    product_uid: String(dbItem.product_uid),
+    brand_uid: dbItem.brand_uid || dbItem.product?.brand_uid || dbItem.brand?.uid || null,
+    category_uid: dbItem.category_uid || dbItem.product?.category_uid || dbItem.category?.uid || null,
+    nama: dbItem.product?.nama || "Produk",
+    barcode: dbItem.product?.barcode || "",
+    stok_sistem: Number(dbItem.stok_sistem) || 0,
+    stok_fisik: Number(dbItem.stok_fisik) || 0,
+    alasan: dbItem.alasan || "Opname rutin",
+    updated_at: Date.now() - index, // preserve order from server
+  };
+}
+
 export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   const router = useRouter();
   const { data: opname, isLoading: opnameLoading } = useOpnameDetail(opnameId);
+  const { data: dbItemsRes, isLoading: dbItemsLoading } = useOpnameItems(opnameId, {
+    per_page: 50000,
+  });
+
   const { data: productsData, isLoading: productsLoading } = useProducts({
     per_page: 500,
   });
@@ -67,14 +88,17 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   const updateOpnameItems = useUpdateOpnameItems();
   const finalizeOpname = useFinalizeOpname();
 
-  // Zustand Store scoped for this opnameId
+  // Zustand Store scoped for this opnameId — now Map-based
   const useStore = getOpnameItemsStore(opnameId);
   const items = useStore((state) => state.items);
+  const itemCount = useStore((state) => state.itemCount);
   const addItem = useStore((state) => state.addItem);
   const updateItem = useStore((state) => state.updateItem);
   const removeItem = useStore((state) => state.removeItem);
   const setItems = useStore((state) => state.setItems);
   const clearAll = useStore((state) => state.clearAll);
+  const hasItem = useStore((state) => state.hasItem);
+  const getItem = useStore((state) => state.getItem);
 
   const [isConfirmFinalizeOpen, setIsConfirmFinalizeOpen] = useState(false);
   const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
@@ -82,42 +106,30 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
   const [isImportDraftOpen, setIsImportDraftOpen] = useState(false);
 
-  const isFirstLoad = useRef(true);
+  /** Last scan feedback state — shown inline in scanner card */
+  const [lastScanFeedback, setLastScanFeedback] = useState<{
+    type: "added" | "incremented";
+    productName: string;
+    qty: number;
+  } | null>(null);
 
-  // Sync initial items from database if store is empty
+  const isHydratedRef = useRef(false);
+
+  // Sync items from server database when loading draft
   useEffect(() => {
-    if (!isFirstLoad.current || opnameLoading || !opname) return;
+    if (isHydratedRef.current || dbItemsLoading || !dbItemsRes) return;
 
-    if (items.length === 0 && opname.items && opname.items.length > 0) {
-      const formatted: OpnameItemLocal[] = opname.items.map((dbItem: OpnameItem) => ({
-        temp_uid: `db-${dbItem.uid || Math.random().toString(36).substring(2, 9)}`,
-        product_uid: dbItem.product_uid,
-        brand_uid: dbItem.brand_uid || dbItem.product?.brand_uid || dbItem.brand?.uid || null,
-        category_uid: dbItem.category_uid || dbItem.product?.category_uid || dbItem.category?.uid || null,
-        nama: dbItem.product?.nama || "Produk",
-        barcode: dbItem.product?.barcode || "",
-        stok_sistem: dbItem.stok_sistem,
-        stok_fisik: dbItem.stok_fisik,
-        alasan: dbItem.alasan || "Opname rutin",
-      }));
+    const dbItems = dbItemsRes.data || [];
+    if (itemCount === 0 && dbItems.length > 0) {
+      const formatted = dbItems.map((dbItem: OpnameItem, index: number) => toLocalItem(dbItem, index));
       setItems(formatted);
     }
-    isFirstLoad.current = false;
-  }, [items.length, opname, opnameLoading, setItems]);
+    isHydratedRef.current = true;
+  }, [dbItemsLoading, dbItemsRes, itemCount, setItems]);
 
   const handleImportDraftSuccess = (newItems?: OpnameItem[]) => {
     if (newItems && newItems.length > 0) {
-      const formatted: OpnameItemLocal[] = newItems.map((dbItem: OpnameItem) => ({
-        temp_uid: `db-${dbItem.uid || Math.random().toString(36).substring(2, 9)}`,
-        product_uid: dbItem.product_uid,
-        brand_uid: dbItem.brand_uid || dbItem.product?.brand_uid || dbItem.brand?.uid || null,
-        category_uid: dbItem.category_uid || dbItem.product?.category_uid || dbItem.category?.uid || null,
-        nama: dbItem.product?.nama || "Produk",
-        barcode: dbItem.product?.barcode || "",
-        stok_sistem: dbItem.stok_sistem,
-        stok_fisik: dbItem.stok_fisik,
-        alasan: dbItem.alasan || "Opname rutin",
-      }));
+      const formatted = newItems.map((dbItem: OpnameItem, index: number) => toLocalItem(dbItem, index));
       setItems(formatted);
     }
   };
@@ -147,9 +159,12 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   };
 
   const handleProductFound = (product: Product) => {
-    const existing = items.find((i) => i.product_uid === product.uid);
-    if (existing) {
-      const newCount = (Number(existing.stok_fisik) || 0) + 1;
+    // O(1) lookup — check if product already exists in Map
+    const isExisting = hasItem(product.uid);
+    const existingItem = isExisting ? getItem(product.uid) : undefined;
+
+    if (isExisting && existingItem) {
+      const newCount = (Number(existingItem.stok_fisik) || 0) + 1;
       addItem({
         product_uid: product.uid,
         brand_uid: product.brand_uid || product.brand?.uid || null,
@@ -158,9 +173,16 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
         nama: product.nama,
         stok_sistem: product.stok,
         stok_fisik: newCount,
-        alasan: existing.alasan || "Opname rutin",
+        alasan: existingItem.alasan || "Opname rutin",
       });
       toast.success(`Jumlah ${product.nama} (+1): ${newCount} pcs`);
+
+      // Set inline feedback for scanner card
+      setLastScanFeedback({
+        type: "incremented",
+        productName: product.nama,
+        qty: newCount,
+      });
     } else {
       addItem({
         product_uid: product.uid,
@@ -173,7 +195,17 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
         alasan: "Opname rutin",
       });
       toast.success(`Ditambahkan: ${product.nama} (1 pcs)`);
+
+      // Set inline feedback for scanner card
+      setLastScanFeedback({
+        type: "added",
+        productName: product.nama,
+        qty: 1,
+      });
     }
+
+    // Clear feedback after 3 seconds
+    setTimeout(() => setLastScanFeedback(null), 3000);
 
     setTimeout(() => {
       const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
@@ -198,7 +230,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   };
 
   const handleSaveDraft = async (showToast = true) => {
-    if (items.length === 0) {
+    if (itemCount === 0) {
       if (showToast) toast.error("Daftar barang opname masih kosong.");
       return false;
     }
@@ -228,7 +260,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   };
 
   const handleFinalize = async () => {
-    if (items.length === 0) {
+    if (itemCount === 0) {
       toast.error("Harap tambahkan minimal 1 barang sebelum finalisasi.");
       return;
     }
@@ -278,7 +310,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
     }
   };
 
-  if (opnameLoading || !opname) {
+  if (opnameLoading || !opname || (dbItemsLoading && itemCount === 0)) {
     return (
       <div className="space-y-4 animate-pulse p-4">
         <div className="h-10 bg-slate-100 rounded-xl w-1/3" />
@@ -309,7 +341,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
       {/* ── Compact Header / Actions ── */}
       <OpnameItemsHeader
         opname={opname}
-        itemsCount={items.length}
+        itemsCount={itemCount}
         isPendingSave={updateOpnameItems.isPending}
         isPendingFinalize={finalizeOpname.isPending}
         isInstructionsOpen={isInstructionsOpen}
@@ -329,17 +361,18 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
 
       {/* ── Compact Statistics ── */}
       <OpnameStatsCards
-        totalCount={items.length}
+        totalCount={itemCount}
         matchCount={stats.match}
         positiveCount={stats.positive}
         negativeCount={stats.negative}
       />
 
-      {/* ── Scanner Card ── */}
+      {/* ── Scanner Card with Inline Feedback ── */}
       <OpnameScannerCard
         products={products}
         disabled={productsLoading || updateOpnameItems.isPending}
         onProductFound={handleProductFound}
+        lastScanFeedback={lastScanFeedback}
       />
 
       {/* ── Items Container ── */}
@@ -350,10 +383,10 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
               Daftar Perhitungan Fisik
             </h3>
             <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-200/70 text-slate-700 rounded-full">
-              {items.length} Item
+              {itemCount.toLocaleString("id-ID")} Item
             </span>
           </div>
-          {items.length > 0 && (
+          {itemCount > 0 && (
             <AppButton
               type="button"
               variant="ghost"
@@ -366,7 +399,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
           )}
         </div>
 
-        {/* Responsive Table / Card View with Client Pagination (10 per page, virtualized) */}
+        {/* Responsive Table / Card View with Search + Client Pagination */}
         <OpnameItemsTable
           items={items}
           categoryOptions={categoryOptions}
@@ -379,7 +412,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
 
       {/* ── Mobile Sticky Bottom Action Bar ── */}
       <OpnameItemsMobileBar
-        itemsCount={items.length}
+        itemsCount={itemCount}
         stats={stats}
         isPendingSave={updateOpnameItems.isPending}
         isPendingFinalize={finalizeOpname.isPending}

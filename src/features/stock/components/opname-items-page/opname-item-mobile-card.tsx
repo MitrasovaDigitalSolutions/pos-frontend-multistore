@@ -19,7 +19,7 @@ interface OpnameItemMobileCardProps {
   categoryOptions: CommandOption[];
   brandOptions: CommandOption[];
   updateItem: (
-    temp_uid: string,
+    productUid: string,
     data: Partial<
       Pick<
         OpnameItemLocal,
@@ -27,7 +27,7 @@ interface OpnameItemMobileCardProps {
       >
     >
   ) => void;
-  removeItem: (temp_uid: string) => void;
+  removeItem: (productUid: string) => void;
   onFocusBarcode?: () => void;
 }
 
@@ -75,7 +75,7 @@ export function OpnameItemMobileCard({
           type="button"
           variant="ghost"
           size="icon-xs"
-          onClick={() => removeItem(item.temp_uid)}
+          onClick={() => removeItem(item.product_uid)}
           className="p-1.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors flex-shrink-0 cursor-pointer"
           title="Hapus produk"
         >
@@ -95,7 +95,7 @@ export function OpnameItemMobileCard({
               variant="ghost"
               size="icon-xs"
               onClick={() =>
-                updateItem(item.temp_uid, {
+                updateItem(item.product_uid, {
                   stok_fisik: Math.max(0, (Number(item.stok_fisik) || 0) - 1),
                 })
               }
@@ -108,7 +108,7 @@ export function OpnameItemMobileCard({
                 id={`opname-qty-${item.product_uid}`}
                 value={item.stok_fisik}
                 onChange={(val) => {
-                  updateItem(item.temp_uid, {
+                  updateItem(item.product_uid, {
                     stok_fisik: val === null ? 0 : Math.max(0, val),
                   });
                 }}
@@ -129,7 +129,7 @@ export function OpnameItemMobileCard({
               variant="ghost"
               size="icon-xs"
               onClick={() =>
-                updateItem(item.temp_uid, {
+                updateItem(item.product_uid, {
                   stok_fisik: (Number(item.stok_fisik) || 0) + 1,
                 })
               }
@@ -168,7 +168,7 @@ export function OpnameItemMobileCard({
             options={categoryOptions}
             value={item.category_uid || ""}
             onChange={(val) =>
-              updateItem(item.temp_uid, { category_uid: val || null })
+              updateItem(item.product_uid, { category_uid: val || null })
             }
             placeholder="Pilih Kategori"
             searchPlaceholder="Cari kategori..."
@@ -187,7 +187,7 @@ export function OpnameItemMobileCard({
             options={brandOptions}
             value={item.brand_uid || ""}
             onChange={(val) =>
-              updateItem(item.temp_uid, { brand_uid: val || null })
+              updateItem(item.product_uid, { brand_uid: val || null })
             }
             placeholder="Pilih Brand"
             searchPlaceholder="Cari brand..."
@@ -208,7 +208,7 @@ export function OpnameItemMobileCard({
           value={item.alasan || ""}
           placeholder="Alasan selisih (misal: Barang rusak, kedaluwarsa)..."
           onChange={(e) => {
-            updateItem(item.temp_uid, { alasan: e.target.value });
+            updateItem(item.product_uid, { alasan: e.target.value });
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
