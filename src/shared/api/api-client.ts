@@ -40,8 +40,11 @@ export async function apiPatch<T, D = unknown>(
     return data;
 }
 
-export async function apiDelete<T>(url: string): Promise<T> {
-    const { data } = await apiClient.delete<T>(url);
+export async function apiDelete<T>(
+    url: string,
+    config?: AxiosRequestConfig,
+): Promise<T> {
+    const { data } = await apiClient.delete<T>(url, config);
     return data;
 }
 

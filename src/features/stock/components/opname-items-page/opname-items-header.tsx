@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { OPNAME_STATUS_CLASSES, OPNAME_STATUS_LABELS } from "@/constants/stock";
+import { formatToReadableDateTime } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import type { Opname } from "../../types";
 import {
@@ -84,7 +85,7 @@ export function OpnameItemsHeader({
   return (
     <div className="flex flex-col gap-2.5 border-b border-slate-100 pb-3">
       <div className="flex items-center justify-between gap-3">
-        {/* ── Title, Status, and Catatan ── */}
+        {/* ── Title, Status, Date, and Catatan ── */}
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
           <Button
             type="button"
@@ -113,7 +114,15 @@ export function OpnameItemsHeader({
               </span>
             </div>
 
-            <div className="flex items-center gap-1 text-[10.5px] text-slate-400 truncate mt-0.5">
+            <div className="flex items-center gap-1.5 text-[10.5px] text-slate-400 truncate mt-0.5">
+              {opname.created_at && (
+                <>
+                  <span className="hidden sm:inline text-slate-500">
+                    {formatToReadableDateTime(opname.created_at)}
+                  </span>
+                  <span className="hidden sm:inline text-slate-300">•</span>
+                </>
+              )}
               <span className="shrink-0">Catatan:</span>
               <span className="font-semibold text-slate-600 truncate max-w-[140px] sm:max-w-xs">
                 {opname.catatan || "—"}

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { persist, createJSONStorage, type StateStorage } from "zustand/middleware";
 
 export interface OpnameItemLocal {
     temp_uid: string;
@@ -23,6 +23,8 @@ interface OpnameItemsState {
     items: OpnameItemLocal[];
     itemCount: number;
     lastUpdated: number;
+    /** Flag to track if there are unsaved local modifications */
+    isDirty: boolean;
 
     // ── O(1) Lookup Methods ──
     hasItem: (productUid: string) => boolean;
@@ -30,6 +32,8 @@ interface OpnameItemsState {
 
     // ── Actions ──
     setOpnameId: (uid: string) => void;
+    setIsDirty: (dirty: boolean) => void;
+    markClean: () => void;
     addItem: (product: {
         product_uid: string;
         brand_uid?: string | null;
@@ -56,10 +60,113 @@ function deriveItems(itemsMap: Record<string, OpnameItemLocal>): OpnameItemLocal
     return Object.values(itemsMap).sort((a, b) => b.updated_at - a.updated_at);
 }
 
+// ─── High-Capacity IndexedDB Storage Adapter ────────────────────────────────
+// Replaces 5MB localStorage with IndexedDB to support 50,000+ items without QuotaExceededError.
+
+const IDB_DB_NAME = "pos-opname-drafts-db";
+const IDB_STORE_NAME = "drafts";
+
+function getIDB(): Promise<IDBDatabase> {
+    return new Promise((resolve, reject) => {
+        if (typeof window === "undefined" || !("indexedDB" in window)) {
+            return reject(new Error("IndexedDB not supported"));
+        }
+        const request = indexedDB.open(IDB_DB_NAME, 1);
+        request.onupgradeneeded = () => {
+            const db = request.result;
+            if (!db.objectStoreNames.contains(IDB_STORE_NAME)) {
+                db.createObjectStore(IDB_STORE_NAME);
+            }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+
+const idbStorage: StateStorage = {
+    getItem: async (name: string): Promise<string | null> => {
+        try {
+            // First check IndexedDB
+            const db = await getIDB();
+            const val = await new Promise<string | null>((resolve) => {
+                const tx = db.transaction(IDB_STORE_NAME, "readonly");
+                const store = tx.objectStore(IDB_STORE_NAME);
+                const req = store.get(name);
+                req.onsuccess = () => resolve(req.result ?? null);
+                req.onerror = () => resolve(null);
+            });
+
+            if (val) return val;
+
+            // Fallback & migration from legacy localStorage if exists
+            if (typeof window !== "undefined" && window.localStorage) {
+                const legacy = localStorage.getItem(name);
+                if (legacy) {
+                    // Migrate to IndexedDB and remove from localStorage to free quota
+                    await idbStorage.setItem(name, legacy);
+                    try {
+                        localStorage.removeItem(name);
+                    } catch {
+                        // ignore
+                    }
+                    return legacy;
+                }
+            }
+
+            return null;
+        } catch {
+            return null;
+        }
+    },
+    setItem: async (name: string, value: string): Promise<void> => {
+        try {
+            const db = await getIDB();
+            await new Promise<void>((resolve, reject) => {
+                const tx = db.transaction(IDB_STORE_NAME, "readwrite");
+                const store = tx.objectStore(IDB_STORE_NAME);
+                const req = store.put(value, name);
+                req.onsuccess = () => resolve();
+                req.onerror = () => reject(req.error);
+            });
+
+            // Clean up any old copy in localStorage to keep quota empty
+            if (typeof window !== "undefined" && window.localStorage) {
+                try {
+                    localStorage.removeItem(name);
+                } catch {
+                    // ignore
+                }
+            }
+        } catch (e) {
+            console.warn("[OpnameStorage] IndexedDB write failed:", e);
+        }
+    },
+    removeItem: async (name: string): Promise<void> => {
+        try {
+            const db = await getIDB();
+            await new Promise<void>((resolve) => {
+                const tx = db.transaction(IDB_STORE_NAME, "readwrite");
+                const store = tx.objectStore(IDB_STORE_NAME);
+                const req = store.delete(name);
+                req.onsuccess = () => resolve();
+                req.onerror = () => resolve();
+            });
+        } catch {
+            // ignore
+        }
+
+        if (typeof window !== "undefined" && window.localStorage) {
+            try {
+                localStorage.removeItem(name);
+            } catch {
+                // ignore
+            }
+        }
+    },
+};
+
 /**
- * Migration: detect old localStorage format (flat array) and convert to Map format.
- * Old format: { items: OpnameItemLocal[], ... }
- * New format: { itemsMap: Record<string, OpnameItemLocal>, items: OpnameItemLocal[], ... }
+ * Migration: detect old format (flat array) and convert to Map format.
  */
 function migrateFromArrayFormat(persistedState: Record<string, unknown>): Record<string, unknown> {
     const rawMap = persistedState.itemsMap;
@@ -70,10 +177,10 @@ function migrateFromArrayFormat(persistedState: Record<string, unknown>): Record
             itemsMap,
             items: deriveItems(itemsMap),
             itemCount: Object.keys(itemsMap).length,
+            isDirty: false,
         };
     }
 
-    // Check for old "items" array format
     const oldItems = persistedState.items;
     if (Array.isArray(oldItems) && oldItems.length > 0) {
         const migratedMap: Record<string, OpnameItemLocal> = {};
@@ -83,7 +190,7 @@ function migrateFromArrayFormat(persistedState: Record<string, unknown>): Record
             if (item && item.product_uid) {
                 migratedMap[item.product_uid] = {
                     ...item,
-                    updated_at: item.updated_at ?? (now - i), // preserve ordering
+                    updated_at: item.updated_at ?? (now - i),
                 };
             }
         }
@@ -93,6 +200,7 @@ function migrateFromArrayFormat(persistedState: Record<string, unknown>): Record
             itemsMap: migratedMap,
             items: derived,
             itemCount: derived.length,
+            isDirty: false,
         };
     }
 
@@ -101,6 +209,7 @@ function migrateFromArrayFormat(persistedState: Record<string, unknown>): Record
         itemsMap: {},
         items: [],
         itemCount: 0,
+        isDirty: false,
     };
 }
 
@@ -115,6 +224,7 @@ export function createOpnameItemsStore(opnameId: string) {
                 items: [],
                 itemCount: 0,
                 lastUpdated: Date.now(),
+                isDirty: false,
 
                 // ── O(1) Lookup Methods ──
                 hasItem: (productUid) => productUid in get().itemsMap,
@@ -127,6 +237,10 @@ export function createOpnameItemsStore(opnameId: string) {
                         opnameId: id,
                         lastUpdated: Date.now(),
                     }),
+
+                setIsDirty: (dirty) => set({ isDirty: dirty }),
+
+                markClean: () => set({ isDirty: false }),
 
                 addItem: (product) =>
                     set((state) => {
@@ -167,6 +281,7 @@ export function createOpnameItemsStore(opnameId: string) {
                             items: nextItems,
                             itemCount: nextItems.length,
                             lastUpdated: now,
+                            isDirty: true,
                         };
                     }),
 
@@ -191,6 +306,7 @@ export function createOpnameItemsStore(opnameId: string) {
                             items: nextItems,
                             itemCount: nextItems.length,
                             lastUpdated: now,
+                            isDirty: true,
                         };
                     }),
 
@@ -204,6 +320,7 @@ export function createOpnameItemsStore(opnameId: string) {
                             items: nextItems,
                             itemCount: nextItems.length,
                             lastUpdated: Date.now(),
+                            isDirty: true,
                         };
                     }),
 
@@ -213,6 +330,7 @@ export function createOpnameItemsStore(opnameId: string) {
                         items: [],
                         itemCount: 0,
                         lastUpdated: Date.now(),
+                        isDirty: true,
                     }),
 
                 setItems: (items) =>
@@ -232,6 +350,7 @@ export function createOpnameItemsStore(opnameId: string) {
                             items: nextItems,
                             itemCount: nextItems.length,
                             lastUpdated: now,
+                            isDirty: false,
                         };
                     }),
 
@@ -252,16 +371,18 @@ export function createOpnameItemsStore(opnameId: string) {
                             items: nextItems,
                             itemCount: nextItems.length,
                             lastUpdated: now,
+                            isDirty: true,
                         };
                     }),
             }),
             {
                 name: storageKey,
-                storage: createJSONStorage(() => localStorage),
+                storage: createJSONStorage(() => idbStorage),
                 partialize: (state) => ({
                     opnameId: state.opnameId,
                     itemsMap: state.itemsMap,
                     lastUpdated: state.lastUpdated,
+                    isDirty: state.isDirty,
                 }),
                 onRehydrateStorage: () => (state) => {
                     if (state && state.itemsMap) {
@@ -291,7 +412,7 @@ export function getOpnameItemsStore(opnameId: string): StoreInstance {
 export function clearOpnameItemsStore(opnameId: string): void {
     const storageKey = `opname-items-${opnameId}`;
     try {
-        localStorage.removeItem(storageKey);
+        idbStorage.removeItem(storageKey);
     } catch {
         // ignore
     }

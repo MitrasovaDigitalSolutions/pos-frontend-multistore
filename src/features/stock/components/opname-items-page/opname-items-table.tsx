@@ -25,6 +25,7 @@ interface OpnameItemsTableProps {
     removeItem: (productUid: string) => void;
     onFocusBarcode?: () => void;
     isSyncing?: boolean;
+    isLoadingItems?: boolean;
 }
 
 /** Client-side search filter — matches by product name or barcode */
@@ -48,6 +49,7 @@ export function OpnameItemsTable({
     removeItem,
     onFocusBarcode,
     isSyncing = false,
+    isLoadingItems = false,
 }: OpnameItemsTableProps) {
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -55,6 +57,8 @@ export function OpnameItemsTable({
         () => filterItems(items, searchQuery),
         [items, searchQuery]
     );
+
+    const isTableLoading = isSyncing || isLoadingItems;
 
     const columns = useMemo<ColumnDef<OpnameItemLocal>[]>(() => [
         {
@@ -256,15 +260,19 @@ export function OpnameItemsTable({
                 filteredCount={filteredItems.length}
             />
 
-            {/* Syncing Progress Banner */}
-            {isSyncing && (
+            {/* Syncing / Loading Progress Banner */}
+            {(isSyncing || isLoadingItems) && (
                 <div className="flex items-center justify-between gap-3 px-3.5 py-2.5 bg-emerald-50/90 border-b border-emerald-100 text-emerald-800 text-xs font-semibold animate-in fade-in duration-200">
                     <div className="flex items-center gap-2">
                         <IconLoader2 size={15} className="animate-spin text-emerald-600 shrink-0" />
-                        <span>Sedang menyinkronkan &amp; mengindeks data produk dari Excel...</span>
+                        <span>
+                            {isSyncing
+                                ? "Sedang menyinkronkan & mengindeks data produk dari Excel..."
+                                : "Sedang memuat seluruh data item opname dari server..."}
+                        </span>
                     </div>
                     <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-200/70 text-emerald-900 rounded-full shrink-0">
-                        Memproses data...
+                        Memproses...
                     </span>
                 </div>
             )}
@@ -272,14 +280,14 @@ export function OpnameItemsTable({
             <DataTable<OpnameItemLocal, unknown>
                 columns={columns}
                 data={filteredItems}
-                isLoading={isSyncing}
+                isLoading={isTableLoading}
                 clientPagination={true}
                 perPage={10}
                 virtualize={false}
                 showViewToggle={true}
                 emptyMessage={
-                    isSyncing
-                        ? "Sedang memuat data produk..."
+                    isTableLoading
+                        ? "Sedang memuat seluruh data item opname..."
                         : searchQuery.trim()
                             ? `Tidak ada item yang cocok dengan "${searchQuery}". Coba kata kunci lain.`
                             : "Belum ada barang dihitung. Gunakan scanner barcode atau autocomplete di atas."

@@ -126,6 +126,8 @@ export const queryKeys = {
         opnames: () => [...queryKeys.inventory.all, "opnames"] as const,
         opnameDetail: (uid: string) =>
             [...queryKeys.inventory.all, "opname", uid] as const,
+        opnameAllItems: (uid: string) =>
+            [...queryKeys.inventory.opnameDetail(uid), "items", "all"] as const,
     },
 
     // Purchase

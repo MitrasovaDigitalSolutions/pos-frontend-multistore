@@ -69,6 +69,8 @@ export const ENDPOINTS = {
             DETAIL: (uid: string) => `/v1/inventory/opname/${uid}`,
             UPDATE: (uid: string) => `/v1/inventory/opname/${uid}`,
             DELETE: (uid: string) => `/v1/inventory/opname/${uid}`,
+            ITEMS: (uid: string) => `/v1/inventory/opname/${uid}/items`,
+            ITEMS_ALL: (uid: string) => `/v1/inventory/opname/${uid}/items/all`,
         },
         SUPPLIERS: {
             LIST: "/v1/inventory/suppliers",

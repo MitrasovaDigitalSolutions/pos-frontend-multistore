@@ -24,6 +24,7 @@ import { ImportOpnameDraftDialog } from "./import-opname-draft-dialog";
 import { OpnameInstructions } from "./opname-instructions";
 import { OpnameItemsHeader } from "./opname-items-header";
 import { OpnameItemsMobileBar } from "./opname-items-mobile-bar";
+import { OpnameItemsSkeleton } from "./opname-items-skeleton";
 import { OpnameItemsTable } from "./opname-items-table";
 import { OpnameScannerCard } from "./opname-scanner-card";
 import { OpnameStatsCards } from "./opname-stats-cards";
@@ -36,7 +37,7 @@ interface OpnameItemsPageProps {
 function toLocalItem(dbItem: OpnameItem, index: number): OpnameItemLocal {
   const raw = dbItem as unknown as Record<string, unknown>;
   return {
-    temp_uid: `db-${dbItem.uid || Math.random().toString(36).substring(2, 9)}`,
+    temp_uid: `db-${dbItem.uid || `item-${index}`}`,
     product_uid: String(dbItem.product_uid || raw.product_uid || ""),
     brand_uid: dbItem.brand_uid || dbItem.product?.brand_uid || dbItem.brand?.uid || null,
     category_uid: dbItem.category_uid || dbItem.product?.category_uid || dbItem.category?.uid || null,
@@ -45,7 +46,7 @@ function toLocalItem(dbItem: OpnameItem, index: number): OpnameItemLocal {
     stok_sistem: Number(dbItem.stok_sistem ?? raw.stok_sistem) || 0,
     stok_fisik: Number(dbItem.stok_fisik ?? raw.stok_fisik) || 0,
     alasan: dbItem.alasan || (raw.alasan as string) || "Opname rutin",
-    updated_at: Date.now() - index, // preserve order from server
+    updated_at: 0 - index, // deterministic ordering from server
   };
 }
 
@@ -84,6 +85,8 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   const useStore = getOpnameItemsStore(opnameId);
   const items = useStore((state) => state.items);
   const itemCount = useStore((state) => state.itemCount);
+  const isDirty = useStore((state) => state.isDirty);
+  const markClean = useStore((state) => state.markClean);
   const addItem = useStore((state) => state.addItem);
   const updateItem = useStore((state) => state.updateItem);
   const removeItem = useStore((state) => state.removeItem);
@@ -189,125 +192,96 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
     const isExisting = hasItem(product.uid);
     const existingItem = isExisting ? getItem(product.uid) : undefined;
 
-    if (isExisting && existingItem) {
-      const newCount = (Number(existingItem.stok_fisik) || 0) + 1;
-      addItem({
-        product_uid: product.uid,
-        brand_uid: product.brand_uid || product.brand?.uid || null,
-        category_uid: product.category_uid || product.category?.uid || null,
-        barcode: product.barcode,
-        nama: product.nama,
-        stok_sistem: product.stok,
-        stok_fisik: newCount,
-        alasan: existingItem.alasan || "Opname rutin",
-      });
-      toast.success(`Jumlah ${product.nama} (+1): ${newCount} pcs`);
-
-      // Set inline feedback for scanner card
+    if (existingItem) {
+      const newQty = (Number(existingItem.stok_fisik) || 0) + 1;
+      updateItem(product.uid, { stok_fisik: newQty });
       setLastScanFeedback({
         type: "incremented",
         productName: product.nama,
-        qty: newCount,
+        qty: newQty,
       });
+      toast.success(
+        `Stok fisik ${product.nama} bertambah (+1) jadi ${newQty} pcs`,
+        { duration: 1800 }
+      );
     } else {
       addItem({
         product_uid: product.uid,
-        brand_uid: product.brand_uid || product.brand?.uid || null,
-        category_uid: product.category_uid || product.category?.uid || null,
-        barcode: product.barcode,
+        brand_uid: product.brand_uid ?? null,
+        category_uid: product.category_uid ?? null,
         nama: product.nama,
-        stok_sistem: product.stok,
+        barcode: product.barcode,
+        stok_sistem: Number(product.stok) || 0,
         stok_fisik: 1,
-        alasan: "Opname rutin",
+        alasan: "Ditemukan saat opname fisik",
       });
-      toast.success(`Ditambahkan: ${product.nama} (1 pcs)`);
-
-      // Set inline feedback for scanner card
       setLastScanFeedback({
         type: "added",
         productName: product.nama,
         qty: 1,
       });
+      toast.success(`${product.nama} berhasil ditambahkan ke daftar`, {
+        duration: 2000,
+      });
     }
-
-    // Clear feedback after 3 seconds
-    setTimeout(() => setLastScanFeedback(null), 3000);
 
     setTimeout(() => {
-      const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-      const element = document.getElementById(`opname-card-${product.uid}`) || document.getElementById(`opname-item-${product.uid}`);
-      if (element) {
-        element.scrollIntoView({
-          behavior: "smooth",
-          block: isMobile ? "center" : "nearest",
-        });
-        element.classList.add("ring-2", "ring-emerald-400/50");
-        setTimeout(() => {
-          element.classList.remove("ring-2", "ring-emerald-400/50");
-        }, 1400);
-      }
-
-      const qtyInput = document.getElementById(`opname-qty-${product.uid}`) as HTMLInputElement | null;
-      if (qtyInput) {
-        qtyInput.focus();
-        qtyInput.select();
-      }
-    }, 80);
+      setLastScanFeedback(null);
+    }, 4000);
   };
 
-  const handleSaveDraft = async (showToast = true) => {
-    if (itemCount === 0) {
-      if (showToast) toast.error("Daftar barang opname masih kosong.");
-      return false;
+  const handleSaveDraft = async (manualToast = true, force = false) => {
+    // Skip hitting /items endpoint if no modifications were made
+    if (!isDirty && !force) {
+      if (manualToast) {
+        toast.info("Tidak ada perubahan item yang perlu disimpan.");
+      }
+      return true;
     }
 
-    const payload = {
-      items: items.map((item) => ({
-        product_uid: item.product_uid,
-        brand_uid: item.brand_uid || null,
-        category_uid: item.category_uid || null,
-        stok_fisik: Number(item.stok_fisik) || 0,
-        alasan: item.alasan || "Opname rutin",
-      })),
-    };
-
     try {
+      const payload = {
+        items: items.map((i) => ({
+          product_uid: i.product_uid,
+          brand_uid: i.brand_uid,
+          category_uid: i.category_uid,
+          stok_fisik: Number(i.stok_fisik) || 0,
+          alasan: i.alasan || "",
+        })),
+      };
+
       await updateOpnameItems.mutateAsync({
         uid: opnameId,
         data: payload,
       });
-      if (showToast) toast.success("Draf stock opname berhasil disimpan.");
+
+      markClean();
+
+      if (manualToast) {
+        toast.success("Draf stock opname berhasil disimpan ke server.");
+      }
       return true;
     } catch (err: unknown) {
       const error = err as { message?: string };
-      if (showToast) toast.error(error.message || "Gagal menyimpan draf.");
+      toast.error(error.message || "Gagal menyimpan draf stock opname.");
       return false;
     }
   };
 
   const handleFinalize = async () => {
-    if (itemCount === 0) {
-      toast.error("Harap tambahkan minimal 1 barang sebelum finalisasi.");
-      return;
-    }
-
-    const saveSuccess = await handleSaveDraft(false);
-    if (!saveSuccess) {
-      toast.error("Gagal menyimpan draf sebelum finalisasi.");
-      return;
-    }
-
     try {
+      // Step 1: Save latest local changes only if dirty (skipped if clean!)
+      const saveSuccess = await handleSaveDraft(false);
+      if (!saveSuccess) return;
+
+      // Step 2: Finalize
       await finalizeOpname.mutateAsync(opnameId);
-      toast.success("Proses finalisasi stock opname selesai!");
-      clearAll();
+      toast.success("Stock Opname berhasil diselesaikan!");
       clearOpnameItemsStore(opnameId);
       router.push(ROUTES.ADMIN_STOCK);
     } catch (err: unknown) {
       const error = err as { message?: string };
-      toast.error(error.message || "Gagal memfinalisasi stock opname.");
-    } finally {
-      setIsConfirmFinalizeOpen(false);
+      toast.error(error.message || "Gagal menyelesaikan Stock Opname.");
     }
   };
 
@@ -325,7 +299,10 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
     try {
       await updateOpname.mutateAsync({
         uid: opnameId,
-        data: { catatan },
+        data: {
+          catatan: catatan,
+          // status: opname?.status ?? "draft",
+        },
       });
       toast.success("Catatan opname berhasil diperbarui.");
       return true;
@@ -339,16 +316,9 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   const hasServerItems = (opname?.items && opname.items.length > 0) || (Array.isArray(dbItems) && dbItems.length > 0);
   if (opnameLoading || !opname || (dbItemsLoading && itemCount === 0 && !hasServerItems)) {
     return (
-      <div className="space-y-4 animate-pulse p-4">
-        <div className="h-10 bg-slate-100 rounded-xl w-1/3" />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-16 bg-slate-100 rounded-xl" />
-          ))}
-        </div>
-        <div className="h-16 bg-slate-100 rounded-xl" />
-        <div className="h-64 bg-slate-100 rounded-xl" />
-      </div>
+      <OpnameItemsSkeleton
+        message={opnameLoading ? "Sedang memuat data Stock Opname..." : "Sedang Memuat Seluruh Data Item Opname..."}
+      />
     );
   }
 
@@ -392,12 +362,12 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
         matchCount={stats.match}
         positiveCount={stats.positive}
         negativeCount={stats.negative}
-        isLoading={isSyncing}
+        isLoading={isSyncing || dbItemsLoading}
       />
 
       {/* ── Scanner Card with Inline Feedback ── */}
       <OpnameScannerCard
-        disabled={updateOpnameItems.isPending || isSyncing}
+        disabled={updateOpnameItems.isPending || isSyncing || dbItemsLoading}
         onProductFound={handleProductFound}
         lastScanFeedback={lastScanFeedback}
       />
@@ -435,6 +405,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
           removeItem={removeItem}
           onFocusBarcode={handleFocusBarcode}
           isSyncing={isSyncing}
+          isLoadingItems={dbItemsLoading}
         />
       </div>
 

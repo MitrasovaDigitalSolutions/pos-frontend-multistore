@@ -1,30 +1,44 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiGetData, apiGetList, apiPost, apiPut, apiDelete } from "@/shared/api/api-client";
+import { apiClient } from "@/shared/api/axios";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateStockQueries } from "@/lib/cache-invalidation";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
 import type { StockMovement, Opname, OpnameItem } from "../types";
 import type { AdjustmentInput } from "../schemas/adjustment-schema";
 import type { OpnameHeaderInput } from "../schemas/opname-schema";
+import { ENDPOINTS } from "@/shared/api/endpoints";
+
+/** Standard 5-minute timeout (300,000ms) for all Stock Opname operations with large datasets */
+const OPNAME_API_TIMEOUT = 300000;
 
 export function useStockMovements(params?: PaginationParams & { tipe?: string }) {
     return useQuery<PaginatedResponse<StockMovement>>({
         queryKey: [...queryKeys.inventory.movements(), params],
-        queryFn: () => apiGetList<StockMovement>("/v1/inventory/movements", params),
+        queryFn: () => apiGetList<StockMovement>(ENDPOINTS.INVENTORY.MOVEMENTS, params),
     });
 }
 
 export function useOpnames(params?: PaginationParams) {
     return useQuery<PaginatedResponse<Opname>>({
         queryKey: [...queryKeys.inventory.opnames(), params],
-        queryFn: () => apiGetList<Opname>("/v1/inventory/opname", params),
+        queryFn: () =>
+            apiGetList<Opname>(
+                ENDPOINTS.INVENTORY.OPNAME.LIST,
+                params,
+                { timeout: OPNAME_API_TIMEOUT },
+            ),
     });
 }
 
 export function useOpnameDetail(uid: string | null) {
     return useQuery<Opname>({
         queryKey: queryKeys.inventory.opnameDetail(uid || ""),
-        queryFn: () => apiGetData<Opname>(`/v1/inventory/opname/${uid}`),
+        queryFn: () =>
+            apiGetData<Opname>(
+                ENDPOINTS.INVENTORY.OPNAME.DETAIL(uid || ""),
+                { timeout: OPNAME_API_TIMEOUT },
+            ),
         enabled: uid !== null && uid !== "",
     });
 }
@@ -32,21 +46,33 @@ export function useOpnameDetail(uid: string | null) {
 export function useOpnameItems(uid: string | null, params?: PaginationParams) {
     return useQuery<PaginatedResponse<OpnameItem>>({
         queryKey: [...queryKeys.inventory.opnameDetail(uid || ""), "items", params],
-        queryFn: () => apiGetList<OpnameItem>(`/v1/inventory/opname/${uid}/items`, params),
+        queryFn: () =>
+            apiGetList<OpnameItem>(
+                ENDPOINTS.INVENTORY.OPNAME.ITEMS(uid || ""),
+                params,
+                { timeout: OPNAME_API_TIMEOUT },
+            ),
         enabled: uid !== null && uid !== "",
     });
 }
 
 export function useOpnameAllItems(uid: string | null) {
     return useQuery<OpnameItem[]>({
-        queryKey: [...queryKeys.inventory.opnameDetail(uid || ""), "items", "all"],
+        queryKey: queryKeys.inventory.opnameAllItems(uid || ""),
         queryFn: async () => {
             try {
-                // Call dedicated compact endpoint if available
-                return await apiGetData<OpnameItem[]>(`/v1/inventory/opname/${uid}/items/all`);
+                // Call dedicated compact endpoint with 5-minute timeout
+                return await apiGetData<OpnameItem[]>(
+                    ENDPOINTS.INVENTORY.OPNAME.ITEMS_ALL(uid || ""),
+                    { timeout: OPNAME_API_TIMEOUT },
+                );
             } catch {
                 // Fallback to regular items endpoint if /all is not yet deployed
-                const res = await apiGetList<OpnameItem>(`/v1/inventory/opname/${uid}/items`, { per_page: 50000 });
+                const res = await apiGetList<OpnameItem>(
+                    ENDPOINTS.INVENTORY.OPNAME.ITEMS(uid || ""),
+                    { per_page: 50000 },
+                    { timeout: OPNAME_API_TIMEOUT },
+                );
                 return res.data || [];
             }
         },
@@ -66,7 +92,11 @@ export interface OpnameProgress {
 export function useOpnameProgress(uid: string | null, enabled = true) {
     return useQuery<OpnameProgress>({
         queryKey: [...queryKeys.inventory.opnameDetail(uid || ""), "progress"],
-        queryFn: () => apiGetData<OpnameProgress>(`/v1/inventory/opname/${uid}/progress`),
+        queryFn: () =>
+            apiGetData<OpnameProgress>(
+                `/v1/inventory/opname/${uid}/progress`,
+                { timeout: OPNAME_API_TIMEOUT },
+            ),
         enabled: uid !== null && uid !== "" && enabled,
         refetchInterval: (query) => {
             const data = query.state.data;
@@ -97,6 +127,7 @@ export function useCreateOpname() {
             apiPost<ApiResponse<Opname>, OpnameHeaderInput>(
                 "/v1/inventory/opname",
                 data,
+                { timeout: OPNAME_API_TIMEOUT },
             ),
         onSuccess: () => {
             queryClient.invalidateQueries({
@@ -114,6 +145,7 @@ export function useUpdateOpname() {
             apiPut<ApiResponse<Opname>, OpnameHeaderInput>(
                 `/v1/inventory/opname/${uid}`,
                 data,
+                { timeout: OPNAME_API_TIMEOUT },
             ),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
@@ -159,6 +191,7 @@ export function useUpdateOpnameItems() {
             >(
                 `/v1/inventory/opname/${uid}/items`,
                 data,
+                { timeout: OPNAME_API_TIMEOUT },
             ),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
@@ -179,6 +212,7 @@ export function useFinalizeOpname() {
             apiPost<ApiResponse<Opname>, undefined>(
                 `/v1/inventory/opname/${uid}/finalize`,
                 undefined,
+                { timeout: OPNAME_API_TIMEOUT },
             ),
         onSuccess: (_, uid) => {
             invalidateStockQueries(queryClient);
@@ -189,15 +223,12 @@ export function useFinalizeOpname() {
     });
 }
 
-
-import { apiClient } from "@/shared/api/axios";
-
 // ─── Opname Import & Template Download Helpers ───────────────────────────────
 
 export async function downloadOpnameTemplateXlsx(): Promise<void> {
     const response = await apiClient.get("/v1/inventory/opname/sheet/xlsx", {
         responseType: "blob",
-        timeout: 120000,
+        timeout: OPNAME_API_TIMEOUT,
     });
     let filename = "template_stock_opname.xlsx";
     const contentDisposition = response.headers["content-disposition"];
@@ -222,7 +253,7 @@ export async function downloadOpnameTemplateXlsx(): Promise<void> {
 export async function downloadOpnameSheetPdf(): Promise<void> {
     const response = await apiClient.get("/v1/inventory/opname/sheet/pdf", {
         responseType: "blob",
-        timeout: 120000,
+        timeout: OPNAME_API_TIMEOUT,
     });
     let filename = "lembar_stock_opname.pdf";
     const contentDisposition = response.headers["content-disposition"];
@@ -251,7 +282,7 @@ export function useImportOpname() {
             apiPost<ApiResponse<Opname>, FormData>(
                 "/v1/inventory/opname/import",
                 formData,
-                { timeout: 300000 },
+                { timeout: OPNAME_API_TIMEOUT },
             ),
         onSuccess: () => {
             queryClient.invalidateQueries({
@@ -269,7 +300,7 @@ export function useImportOpnameIntoDraft() {
             apiPost<ApiResponse<Opname>, FormData>(
                 `/v1/inventory/opname/import/${uid}`,
                 formData,
-                { timeout: 300000 },
+                { timeout: OPNAME_API_TIMEOUT },
             ),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
@@ -291,7 +322,11 @@ export function useImportOpnameIntoDraft() {
 export function useDeleteOpname() {
     const queryClient = useQueryClient();
     return useMutation<ApiResponse<void>, Error, string>({
-        mutationFn: (uid) => apiDelete<ApiResponse<void>>(`/v1/inventory/opname/${uid}`),
+        mutationFn: (uid) =>
+            apiDelete<ApiResponse<void>>(
+                `/v1/inventory/opname/${uid}`,
+                { timeout: OPNAME_API_TIMEOUT },
+            ),
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.inventory.opnames(),
