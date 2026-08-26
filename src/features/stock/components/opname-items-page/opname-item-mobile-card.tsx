@@ -1,13 +1,16 @@
 "use client";
 
 import { AppButton } from "@/components/shared/app-button";
+import { CommandSelect, type CommandOption } from "@/components/ui/command-select";
 import type { OpnameItem } from "@/features/stock/types";
-import { IconBarcode, IconTrash } from "@tabler/icons-react";
+import { IconBarcode, IconCategory, IconTag, IconTrash } from "@tabler/icons-react";
 import { OpnameQtyInput } from "./opname-qty-input";
 
 interface OpnameItemMobileCardProps {
   item: OpnameItem;
   index: number;
+  categoryOptions: CommandOption[];
+  brandOptions: CommandOption[];
   onUpdateQty: (itemUid: string, qty: number) => void;
   onUpdateField: (itemUid: string, field: "alasan" | "brand_uid" | "category_uid", value: string | null) => void;
   onRemoveItem: (itemUid: string) => void;
@@ -17,6 +20,8 @@ interface OpnameItemMobileCardProps {
 export function OpnameItemMobileCard({
   item,
   index,
+  categoryOptions,
+  brandOptions,
   onUpdateQty,
   onUpdateField,
   onRemoveItem,
@@ -24,7 +29,7 @@ export function OpnameItemMobileCard({
 }: OpnameItemMobileCardProps) {
   const stokFisik = Number(item.stok_fisik) || 0;
   const stokSistem = Number(item.stok_sistem) || 0;
-  const diff = Number(item.selisih ?? (stokFisik - stokSistem));
+  const diff = stokFisik - stokSistem;
   const productName = item.nama || item.product?.nama || "Produk";
   const barcode = item.barcode || item.product?.barcode || null;
 
@@ -97,6 +102,39 @@ export function OpnameItemMobileCard({
           >
             {diff > 0 ? `+${diff}` : diff}
           </span>
+        </div>
+      </div>
+
+      {/* ── Category & Brand Selectors ── */}
+      <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-50">
+        <div className="space-y-0.5">
+          <label className="text-[9.5px] font-bold text-slate-400 uppercase">Kategori</label>
+          <CommandSelect
+            options={categoryOptions}
+            value={item.category_uid || ""}
+            onChange={(val) => onUpdateField(item.uid, "category_uid", val || null)}
+            placeholder="Pilih Kategori"
+            searchPlaceholder="Cari kategori..."
+            emptyMessage="Tidak ditemukan"
+            size="sm"
+            leftIcon={<IconCategory size={11} className="text-slate-400" />}
+            className="h-6.5 text-[10.5px] bg-slate-50/50 border-slate-200"
+          />
+        </div>
+
+        <div className="space-y-0.5">
+          <label className="text-[9.5px] font-bold text-slate-400 uppercase">Brand</label>
+          <CommandSelect
+            options={brandOptions}
+            value={item.brand_uid || ""}
+            onChange={(val) => onUpdateField(item.uid, "brand_uid", val || null)}
+            placeholder="Pilih Brand"
+            searchPlaceholder="Cari brand..."
+            emptyMessage="Tidak ditemukan"
+            size="sm"
+            leftIcon={<IconTag size={11} className="text-slate-400" />}
+            className="h-6.5 text-[10.5px] bg-slate-50/50 border-slate-200"
+          />
         </div>
       </div>
 

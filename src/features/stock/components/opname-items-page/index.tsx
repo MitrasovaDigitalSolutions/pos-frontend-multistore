@@ -1,11 +1,14 @@
 "use client";
 
+import type { CommandOption } from "@/components/ui/command-select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ROUTES } from "@/constants/routes";
+import { useBrands } from "@/features/master/brands/api/brands-api";
+import { useCategories } from "@/features/master/categories/api/categories-api";
 import type { Product } from "@/features/master/products/types";
 import { useOpnameUIStore } from "@/stores/opname-items-store";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   useDeleteOpnameItemRow,
@@ -54,6 +57,34 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
     sort_by: sortBy,
     sort_order: sortOrder,
   });
+
+  const { data: categoriesData } = useCategories({ per_page: 500 });
+  const { data: brandsData } = useBrands({ per_page: 500 });
+
+  const categories = useMemo(() => categoriesData?.data || [], [categoriesData?.data]);
+  const brands = useMemo(() => brandsData?.data || [], [brandsData?.data]);
+
+  const categoryOptions: CommandOption[] = useMemo(
+    () => [
+      { value: "", label: "Tanpa Kategori" },
+      ...categories.map((c) => ({
+        value: String(c.uid),
+        label: c.nama,
+      })),
+    ],
+    [categories]
+  );
+
+  const brandOptions: CommandOption[] = useMemo(
+    () => [
+      { value: "", label: "Tanpa Brand" },
+      ...brands.map((b) => ({
+        value: String(b.uid),
+        label: b.nama,
+      })),
+    ],
+    [brands]
+  );
 
   const updateOpname = useUpdateOpname();
   const scanOpnameItem = useScanOpnameItem();
@@ -296,6 +327,8 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
         meta={itemsResponse?.meta}
         isLoading={itemsLoading}
         isFetching={itemsFetching}
+        categoryOptions={categoryOptions}
+        brandOptions={brandOptions}
         onUpdateQty={handleUpdateQty}
         onUpdateField={handleUpdateField}
         onRemoveItem={handleRemoveItem}

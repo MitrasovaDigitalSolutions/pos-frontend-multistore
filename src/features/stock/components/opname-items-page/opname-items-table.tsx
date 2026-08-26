@@ -1,15 +1,17 @@
 "use client";
 
+import { CommandSelect, type CommandOption } from "@/components/ui/command-select";
 import { DataTable } from "@/components/ui/data-table";
 import { cn } from "@/lib/utils";
 import type { OpnameItem } from "@/features/stock/types";
 import { useOpnameUIStore } from "@/stores/opname-items-store";
-import { IconBarcode, IconLoader2 } from "@tabler/icons-react";
+import { IconBarcode, IconCategory, IconLoader2, IconTag } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { OpnameItemMobileCard } from "./opname-item-mobile-card";
 import { OpnameItemsSearchBar } from "./opname-items-search-bar";
 import { OpnameQtyInput } from "./opname-qty-input";
+
 interface OpnameItemsTableProps {
     items: OpnameItem[];
     meta?: {
@@ -20,6 +22,8 @@ interface OpnameItemsTableProps {
     };
     isLoading?: boolean;
     isFetching?: boolean;
+    categoryOptions: CommandOption[];
+    brandOptions: CommandOption[];
     onUpdateQty: (itemUid: string, qty: number) => void;
     onUpdateField: (itemUid: string, field: "alasan" | "brand_uid" | "category_uid", value: string | null) => void;
     onRemoveItem: (itemUid: string) => void;
@@ -32,6 +36,8 @@ export function OpnameItemsTable({
     meta,
     isLoading = false,
     isFetching = false,
+    categoryOptions,
+    brandOptions,
     onUpdateQty,
     onUpdateField,
     onRemoveItem,
@@ -49,13 +55,13 @@ export function OpnameItemsTable({
             accessorKey: "nama",
             header: "Nama Produk",
             enableSorting: true,
-            size: 280,
+            size: 260,
             cell: ({ row }) => {
                 const item = row.original;
                 const name = item.nama || item.product?.nama || "Produk";
                 const barcode = item.barcode || item.product?.barcode || null;
                 return (
-                    <div id={`opname-item-${item.product_uid}`} className="flex flex-col py-0.5 min-w-[180px] max-w-[280px] sm:max-w-[360px]">
+                    <div id={`opname-item-${item.product_uid}`} className="flex flex-col py-0.5 min-w-[170px] max-w-[260px] sm:max-w-[340px]">
                         <span
                             className="text-xs font-bold text-slate-900 leading-tight truncate block"
                             title={name}
@@ -73,10 +79,58 @@ export function OpnameItemsTable({
             },
         },
         {
+            accessorKey: "category_uid",
+            header: "Kategori",
+            enableSorting: false,
+            size: 150,
+            cell: ({ row }) => {
+                const item = row.original;
+                return (
+                    <div className="w-34 sm:w-38">
+                        <CommandSelect
+                            options={categoryOptions}
+                            value={item.category_uid || ""}
+                            onChange={(val) => onUpdateField(item.uid, "category_uid", val || null)}
+                            placeholder="Pilih Kategori"
+                            searchPlaceholder="Cari kategori..."
+                            emptyMessage="Tidak ditemukan"
+                            size="sm"
+                            leftIcon={<IconCategory size={12} className="text-slate-400" />}
+                            className="h-7 text-[11px] bg-white border-slate-200"
+                        />
+                    </div>
+                );
+            },
+        },
+        {
+            accessorKey: "brand_uid",
+            header: "Brand",
+            enableSorting: false,
+            size: 140,
+            cell: ({ row }) => {
+                const item = row.original;
+                return (
+                    <div className="w-32 sm:w-36">
+                        <CommandSelect
+                            options={brandOptions}
+                            value={item.brand_uid || ""}
+                            onChange={(val) => onUpdateField(item.uid, "brand_uid", val || null)}
+                            placeholder="Pilih Brand"
+                            searchPlaceholder="Cari brand..."
+                            emptyMessage="Tidak ditemukan"
+                            size="sm"
+                            leftIcon={<IconTag size={12} className="text-slate-400" />}
+                            className="h-7 text-[11px] bg-white border-slate-200"
+                        />
+                    </div>
+                );
+            },
+        },
+        {
             accessorKey: "stok_sistem",
             header: "Stok Sistem",
             enableSorting: true,
-            size: 110,
+            size: 100,
             meta: {
                 headerClassName: "text-right",
                 cellClassName: "text-right font-mono text-slate-500 text-xs",
@@ -110,14 +164,14 @@ export function OpnameItemsTable({
             accessorKey: "selisih",
             header: "Selisih",
             enableSorting: true,
-            size: 100,
+            size: 95,
             meta: {
                 headerClassName: "text-right",
                 cellClassName: "text-right",
             },
             cell: ({ row }) => {
                 const item = row.original;
-                const diff = Number(item.selisih ?? ((Number(item.stok_fisik) || 0) - (Number(item.stok_sistem) || 0)));
+                const diff = (Number(item.stok_fisik) || 0) - (Number(item.stok_sistem) || 0);
                 return (
                     <span className={cn(
                         "inline-block font-mono font-bold text-[11px] px-1.5 py-0.5 rounded-md",
@@ -165,7 +219,7 @@ export function OpnameItemsTable({
                 );
             },
         },
-    ], [onFocusBarcode, onUpdateField, onUpdateQty]);
+    ], [brandOptions, categoryOptions, onFocusBarcode, onUpdateField, onUpdateQty]);
 
     return (
         <div className="w-full">
@@ -209,6 +263,8 @@ export function OpnameItemsTable({
                         key={row.original.uid}
                         item={row.original}
                         index={row.index}
+                        categoryOptions={categoryOptions}
+                        brandOptions={brandOptions}
                         onUpdateQty={onUpdateQty}
                         onUpdateField={onUpdateField}
                         onRemoveItem={onRemoveItem}
