@@ -1,19 +1,13 @@
 "use client";
 
-import { AppButton } from "@/components/shared/app-button";
-import type { CommandOption } from "@/components/ui/command-select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ROUTES } from "@/constants/routes";
-import { useBrands } from "@/features/master/brands/api/brands-api";
-import { useCategories } from "@/features/master/categories/api/categories-api";
-import { useProducts } from "@/features/master/products/api/products-api";
 import type { Product } from "@/features/master/products/types";
 import { useOpnameUIStore } from "@/stores/opname-items-store";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import {
-  useClearOpnameItems,
   useDeleteOpnameItemRow,
   useFinalizeOpname,
   useOpnameDetail,
@@ -43,9 +37,6 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   const page = useOpnameUIStore((state) => state.page);
   const perPage = useOpnameUIStore((state) => state.perPage);
   const search = useOpnameUIStore((state) => state.search);
-  const filterSelisih = useOpnameUIStore((state) => state.filterSelisih);
-  const categoryUid = useOpnameUIStore((state) => state.categoryUid);
-  const brandUid = useOpnameUIStore((state) => state.brandUid);
   const sortBy = useOpnameUIStore((state) => state.sortBy);
   const sortOrder = useOpnameUIStore((state) => state.sortOrder);
 
@@ -60,53 +51,17 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
     page,
     per_page: perPage,
     search: search || undefined,
-    filter_selisih: filterSelisih !== "all" ? filterSelisih : undefined,
-    category_uid: categoryUid || undefined,
-    brand_uid: brandUid || undefined,
     sort_by: sortBy,
     sort_order: sortOrder,
   });
-
-  const { data: productsData } = useProducts({ per_page: 1000 });
-  const products = useMemo(() => productsData?.data || [], [productsData?.data]);
-
-  const { data: categoriesData } = useCategories({ per_page: 1000 });
-  const { data: brandsData } = useBrands({ per_page: 1000 });
-
-  const categories = useMemo(() => categoriesData?.data || [], [categoriesData?.data]);
-  const brands = useMemo(() => brandsData?.data || [], [brandsData?.data]);
-
-  const categoryOptions: CommandOption[] = useMemo(
-    () => [
-      { value: "", label: "Tanpa Kategori" },
-      ...categories.map((c) => ({
-        value: String(c.uid),
-        label: c.nama,
-      })),
-    ],
-    [categories]
-  );
-
-  const brandOptions: CommandOption[] = useMemo(
-    () => [
-      { value: "", label: "Tanpa Brand" },
-      ...brands.map((b) => ({
-        value: String(b.uid),
-        label: b.nama,
-      })),
-    ],
-    [brands]
-  );
 
   const updateOpname = useUpdateOpname();
   const scanOpnameItem = useScanOpnameItem();
   const updateSingleItem = useUpdateOpnameItemRow();
   const deleteSingleItem = useDeleteOpnameItemRow();
-  const clearOpnameItems = useClearOpnameItems();
   const finalizeOpname = useFinalizeOpname();
 
   const [isConfirmFinalizeOpen, setIsConfirmFinalizeOpen] = useState(false);
-  const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
   const [isEditHeaderOpen, setIsEditHeaderOpen] = useState(false);
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
   const [isImportDraftOpen, setIsImportDraftOpen] = useState(false);
@@ -143,38 +98,45 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
     }
   };
 
-  // ── Scan handler: Sends direct mutation to backend ──
+  // ── Scan barcode / product found handler: ALWAYS hits backend endpoint ──
   const handleProductFound = async (product: Product) => {
     if (!product.barcode) {
       toast.error("Produk tidak memiliki barcode.");
       return;
     }
+    await handleScanDirectBarcode(product.barcode, product.nama);
+  };
+
+  const handleScanDirectBarcode = async (barcode: string, fallbackName?: string) => {
+    const trimmed = barcode.trim();
+    if (!trimmed) return;
 
     try {
       const res = await scanOpnameItem.mutateAsync({
         uid: opnameId,
-        data: { barcode: product.barcode },
+        data: { barcode: trimmed },
       });
 
       const updatedItem = res.data;
+      const productName = updatedItem.product?.nama || updatedItem.nama || fallbackName || `Barcode: ${trimmed}`;
       const isExisting = (Number(updatedItem.stok_fisik) || 0) > 1;
 
       setLastScanFeedback({
         type: isExisting ? "incremented" : "added",
-        productName: product.nama,
+        productName,
         qty: Number(updatedItem.stok_fisik) || 1,
       });
 
       toast.success(
         isExisting
-          ? `Jumlah ${product.nama} (+1): ${updatedItem.stok_fisik} pcs`
-          : `Ditambahkan: ${product.nama} (1 pcs)`
+          ? `Jumlah ${productName} (+1): ${updatedItem.stok_fisik} pcs`
+          : `Ditambahkan: ${productName} (1 pcs)`
       );
 
       setTimeout(() => setLastScanFeedback(null), 3000);
     } catch (err: unknown) {
       const error = err as { message?: string };
-      toast.error(error.message || "Gagal mencatat barcode produk.");
+      toast.error(error.message || `Gagal mencatat barcode "${trimmed}".`);
     }
   };
 
@@ -211,19 +173,6 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
         },
       }
     );
-  };
-
-  const handleConfirmReset = () => {
-    clearOpnameItems.mutate(opnameId, {
-      onSuccess: () => {
-        toast.success("Seluruh daftar barang opname dikosongkan.");
-        setIsConfirmResetOpen(false);
-      },
-      onError: (err) => {
-        toast.error(err.message || "Gagal mengosongkan daftar barang.");
-        setIsConfirmResetOpen(false);
-      },
-    });
   };
 
   const handleImportDraftSuccess = async () => {
@@ -304,18 +253,16 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   };
 
   return (
-    <div className="space-y-3 sm:space-y-3.5 pb-28 sm:pb-8">
+    <div className="space-y-2.5 sm:space-y-3 pb-28 sm:pb-8">
       {/* ── Compact Header / Actions ── */}
       <OpnameItemsHeader
         opname={opname}
         itemsCount={totalCount}
-        isPendingSave={false}
         isPendingFinalize={finalizeOpname.isPending}
         isInstructionsOpen={isInstructionsOpen}
         onToggleInstructions={() => setIsInstructionsOpen(!isInstructionsOpen)}
         onOpenEditHeader={() => setIsEditHeaderOpen(true)}
         onOpenImportExcel={() => setIsImportDraftOpen(true)}
-        onSaveDraft={() => toast.success("Semua perubahan tersimpan otomatis.")}
         onOpenFinalize={() => setIsConfirmFinalizeOpen(true)}
         onBack={() => router.push(ROUTES.ADMIN_STOCK)}
       />
@@ -337,60 +284,30 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
 
       {/* ── Scanner Card with Inline Feedback ── */}
       <OpnameScannerCard
-        products={products}
         disabled={scanOpnameItem.isPending || isSyncing}
         onProductFound={handleProductFound}
+        onScanDirectBarcode={handleScanDirectBarcode}
         lastScanFeedback={lastScanFeedback}
       />
 
-      {/* ── Items Container ── */}
-      <div className="bg-white border border-slate-100 rounded-2xl shadow-2xs overflow-hidden">
-        <div className="px-3.5 py-2.5 border-b border-slate-100 flex justify-between items-center bg-slate-50/40">
-          <div className="flex items-center gap-2">
-            <h3 className="text-xs font-bold text-slate-900">
-              Daftar Perhitungan Fisik
-            </h3>
-            <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-200/70 text-slate-700 rounded-full">
-              {totalCount.toLocaleString("id-ID")} Item
-            </span>
-          </div>
-          {totalCount > 0 && !isSyncing && (
-            <AppButton
-              type="button"
-              variant="ghost"
-              size="xs"
-              onClick={() => setIsConfirmResetOpen(true)}
-              className="text-[11px] font-bold text-rose-600 hover:text-rose-700 bg-transparent border-none cursor-pointer hover:underline h-auto p-0"
-            >
-              Kosongkan Daftar
-            </AppButton>
-          )}
-        </div>
-
-        {/* Responsive Table / Card View with Server-Side Search & Pagination */}
-        <OpnameItemsTable
-          items={items}
-          meta={itemsResponse?.meta}
-          summary={summary}
-          isLoading={itemsLoading}
-          isFetching={itemsFetching}
-          categoryOptions={categoryOptions}
-          brandOptions={brandOptions}
-          onUpdateQty={handleUpdateQty}
-          onUpdateField={handleUpdateField}
-          onRemoveItem={handleRemoveItem}
-          onFocusBarcode={handleFocusBarcode}
-          isSyncing={isSyncing}
-        />
-      </div>
+      {/* ── Items Table with Integrated Search & View Modes ── */}
+      <OpnameItemsTable
+        items={items}
+        meta={itemsResponse?.meta}
+        isLoading={itemsLoading}
+        isFetching={itemsFetching}
+        onUpdateQty={handleUpdateQty}
+        onUpdateField={handleUpdateField}
+        onRemoveItem={handleRemoveItem}
+        onFocusBarcode={handleFocusBarcode}
+        isSyncing={isSyncing}
+      />
 
       {/* ── Mobile Sticky Bottom Action Bar ── */}
       <OpnameItemsMobileBar
         itemsCount={totalCount}
         stats={stats}
-        isPendingSave={false}
         isPendingFinalize={finalizeOpname.isPending}
-        onSaveDraft={() => toast.success("Semua perubahan tersimpan otomatis.")}
         onOpenFinalize={() => setIsConfirmFinalizeOpen(true)}
       />
 
@@ -406,18 +323,6 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
         cancelText="Batal"
         onConfirm={handleFinalize}
         variant="primary"
-      />
-
-      {/* ── Confirm Reset / Kosongkan Daftar Dialog ── */}
-      <ConfirmDialog
-        open={isConfirmResetOpen}
-        onOpenChange={setIsConfirmResetOpen}
-        title="Kosongkan Daftar Barang"
-        description="Apakah Anda yakin ingin menghapus seluruh barang di draf opname ini dari server? Aksi ini tidak dapat dibatalkan."
-        confirmText="Ya, Kosongkan"
-        cancelText="Batal"
-        variant="danger"
-        onConfirm={handleConfirmReset}
       />
 
       <EditHeaderDialog
@@ -438,3 +343,4 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
     </div>
   );
 }
+

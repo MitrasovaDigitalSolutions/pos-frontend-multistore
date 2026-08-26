@@ -6,9 +6,9 @@ import { IconBarcode, IconCheck, IconPlus } from "@tabler/icons-react";
 import { toast } from "sonner";
 
 interface OpnameScannerCardProps {
-  products?: Product[];
   disabled?: boolean;
   onProductFound: (product: Product) => void;
+  onScanDirectBarcode?: (barcode: string) => void;
   lastScanFeedback?: {
     type: "added" | "incremented";
     productName: string;
@@ -17,63 +17,65 @@ interface OpnameScannerCardProps {
 }
 
 export function OpnameScannerCard({
-  products,
   disabled = false,
   onProductFound,
+  onScanDirectBarcode,
   lastScanFeedback,
 }: OpnameScannerCardProps) {
   return (
     <div
       id="barcode-scanner-section"
-      className="bg-white border border-slate-100 rounded-2xl p-3 sm:p-3.5 shadow-2xs space-y-2"
+      className="bg-white border border-slate-100 rounded-xl p-2.5 sm:p-3 shadow-2xs space-y-2"
     >
-      <div className="flex items-center justify-between pb-1.5 border-b border-slate-50">
+      <div className="flex items-center justify-between pb-1 border-b border-slate-50">
         <div className="flex items-center gap-1.5">
           <div className="bg-emerald-50 text-emerald-600 p-1 rounded-md">
-            <IconBarcode size={15} />
+            <IconBarcode size={14} />
           </div>
-          <h3 className="text-xs font-bold text-slate-900">
-            Scan Barcode / Cari Nama Produk
+          <h3 className="text-xs font-bold text-slate-800">
+            Scan Barcode / Cari Produk
           </h3>
         </div>
         <span className="text-[10px] text-slate-400 hidden sm:inline font-medium">
-          Otomatis menambah &amp; menempatkan barang di urutan teratas
+          Tekan Enter setelah input barcode atau pilih produk
         </span>
       </div>
 
       <BarcodeInput
         onProductFound={onProductFound}
+        onProductNotFound={(query) => {
+          if (onScanDirectBarcode) {
+            onScanDirectBarcode(query);
+          } else {
+            toast.error(`Produk "${query}" tidak ditemukan.`);
+          }
+        }}
         onError={(msg) => toast.error(msg)}
         disabled={disabled}
-        products={products}
-        placeholder="Scan barcode fisik atau ketik nama barang untuk pencarian cepat..."
+        placeholder="Scan barcode fisik atau ketik nama produk..."
       />
 
       {/* ── Inline Scan Feedback Badge ── */}
       {lastScanFeedback && (
         <div
-          className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold animate-in fade-in slide-in-from-top-1 duration-300 ${
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold animate-in fade-in slide-in-from-top-1 duration-200 ${
             lastScanFeedback.type === "incremented"
-              ? "bg-blue-50 text-blue-700 border border-blue-200/70"
-              : "bg-emerald-50 text-emerald-700 border border-emerald-200/70"
+              ? "bg-blue-50 text-blue-700 border border-blue-200/60"
+              : "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
           }`}
         >
           {lastScanFeedback.type === "incremented" ? (
             <>
-              <IconCheck size={14} className="shrink-0 text-blue-600" />
-              <span>
-                Sudah ada —{" "}
-                <span className="font-extrabold">{lastScanFeedback.productName}</span>
-                {" "}(qty: {lastScanFeedback.qty - 1} → {lastScanFeedback.qty})
+              <IconCheck size={13} className="shrink-0 text-blue-600" />
+              <span className="truncate">
+                Sudah ada: <span className="font-extrabold">{lastScanFeedback.productName}</span> (stok: {lastScanFeedback.qty} pcs)
               </span>
             </>
           ) : (
             <>
-              <IconPlus size={14} className="shrink-0 text-emerald-600" />
-              <span>
-                Ditambahkan —{" "}
-                <span className="font-extrabold">{lastScanFeedback.productName}</span>
-                {" "}({lastScanFeedback.qty} pcs)
+              <IconPlus size={13} className="shrink-0 text-emerald-600" />
+              <span className="truncate">
+                Ditambahkan: <span className="font-extrabold">{lastScanFeedback.productName}</span> ({lastScanFeedback.qty} pcs)
               </span>
             </>
           )}

@@ -9,7 +9,6 @@ import type { Opname } from "../../types";
 import {
   IconArrowLeft,
   IconCheck,
-  IconDeviceFloppy,
   IconEdit,
   IconHelp,
   IconFileSpreadsheet,
@@ -29,13 +28,11 @@ import { toast } from "sonner";
 interface OpnameItemsHeaderProps {
   opname: Opname;
   itemsCount: number;
-  isPendingSave: boolean;
   isPendingFinalize: boolean;
   isInstructionsOpen: boolean;
   onToggleInstructions: () => void;
   onOpenEditHeader: () => void;
   onOpenImportExcel: () => void;
-  onSaveDraft: () => void;
   onOpenFinalize: () => void;
   onBack: () => void;
 }
@@ -43,13 +40,11 @@ interface OpnameItemsHeaderProps {
 export function OpnameItemsHeader({
   opname,
   itemsCount,
-  isPendingSave,
   isPendingFinalize,
   isInstructionsOpen,
   onToggleInstructions,
   onOpenEditHeader,
   onOpenImportExcel,
-  onSaveDraft,
   onOpenFinalize,
   onBack,
 }: OpnameItemsHeaderProps) {
@@ -200,18 +195,8 @@ export function OpnameItemsHeader({
           </Button>
 
           <Button
-            onClick={onSaveDraft}
-            disabled={itemsCount === 0 || isPendingSave}
-            variant="outline"
-            className="border-blue-200 text-blue-700 hover:bg-blue-50 bg-white font-bold text-xs h-8 px-3 rounded-xl flex items-center gap-1 cursor-pointer"
-          >
-            <IconDeviceFloppy size={14} />
-            <span>{isPendingSave ? "Menyimpan..." : "Simpan Draf"}</span>
-          </Button>
-
-          <Button
             onClick={onOpenFinalize}
-            disabled={itemsCount === 0 || isPendingSave || isPendingFinalize}
+            disabled={itemsCount === 0 || isPendingFinalize}
             className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-8 px-3.5 rounded-xl flex items-center gap-1 cursor-pointer shadow-xs border-none"
           >
             <IconCheck size={14} />

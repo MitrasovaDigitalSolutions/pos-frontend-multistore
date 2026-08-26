@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiGetData, apiGetList, apiPost, apiPut, apiDelete } from "@/shared/api/api-client";
+import { apiGetData, apiGetList, apiPost, apiPut, apiPatch, apiDelete } from "@/shared/api/api-client";
 import { apiClient } from "@/shared/api/axios";
 import { queryKeys } from "@/lib/query-keys";
 import { invalidateStockQueries } from "@/lib/cache-invalidation";
@@ -74,30 +74,6 @@ export function useOpnameItems(uid: string | null, params?: OpnameItemsFilterPar
     });
 }
 
-export function useOpnameAllItems(uid: string | null) {
-    return useQuery<OpnameItem[]>({
-        queryKey: queryKeys.inventory.opnameAllItems(uid || ""),
-        queryFn: async () => {
-            try {
-                // Call dedicated compact endpoint with 5-minute timeout
-                return await apiGetData<OpnameItem[]>(
-                    ENDPOINTS.INVENTORY.OPNAME.ITEMS_ALL(uid || ""),
-                    { timeout: OPNAME_API_TIMEOUT },
-                );
-            } catch {
-                // Fallback to regular items endpoint if /all is not yet deployed
-                const res = await apiGetList<OpnameItem>(
-                    ENDPOINTS.INVENTORY.OPNAME.ITEMS(uid || ""),
-                    { per_page: 50000 },
-                    { timeout: OPNAME_API_TIMEOUT },
-                );
-                return res.data || [];
-            }
-        },
-        enabled: uid !== null && uid !== "",
-    });
-}
-
 export interface OpnameProgress {
     uid: string;
     status: string;
@@ -112,7 +88,7 @@ export function useOpnameProgress(uid: string | null, enabled = true) {
         queryKey: [...queryKeys.inventory.opnameDetail(uid || ""), "progress"],
         queryFn: () =>
             apiGetData<OpnameProgress>(
-                `/v1/inventory/opname/${uid}/progress`,
+                ENDPOINTS.INVENTORY.OPNAME.PROGRESS(uid || ""),
                 { timeout: OPNAME_API_TIMEOUT },
             ),
         enabled: uid !== null && uid !== "" && enabled,
@@ -129,7 +105,7 @@ export function useCreateAdjustment() {
     return useMutation<ApiResponse<void>, Error, AdjustmentInput>({
         mutationFn: (data) =>
             apiPost<ApiResponse<void>, AdjustmentInput>(
-                "/v1/inventory/adjustment",
+                ENDPOINTS.INVENTORY.ADJUSTMENT,
                 data,
             ),
         onSuccess: () => {
@@ -143,7 +119,7 @@ export function useCreateOpname() {
     return useMutation<ApiResponse<Opname>, Error, OpnameHeaderInput>({
         mutationFn: (data) =>
             apiPost<ApiResponse<Opname>, OpnameHeaderInput>(
-                "/v1/inventory/opname",
+                ENDPOINTS.INVENTORY.OPNAME.CREATE,
                 data,
                 { timeout: OPNAME_API_TIMEOUT },
             ),
@@ -161,7 +137,7 @@ export function useUpdateOpname() {
     return useMutation<ApiResponse<Opname>, Error, { uid: string; data: OpnameHeaderInput }>({
         mutationFn: ({ uid, data }) =>
             apiPut<ApiResponse<Opname>, OpnameHeaderInput>(
-                `/v1/inventory/opname/${uid}`,
+                ENDPOINTS.INVENTORY.OPNAME.UPDATE(uid),
                 data,
                 { timeout: OPNAME_API_TIMEOUT },
             ),
@@ -187,14 +163,57 @@ export function useScanOpnameItem() {
                 barcode: string;
                 stok_fisik?: number;
             };
-        }
+        },
+        { previousQueries: Array<[readonly unknown[], OpnameItemsPaginatedResponse | undefined]> }
     >({
         mutationFn: ({ uid, data }) =>
             apiPost<ApiResponse<OpnameItem>, { barcode: string; stok_fisik?: number }>(
-                `/v1/inventory/opname/${uid}/scan`,
+                ENDPOINTS.INVENTORY.OPNAME.SCAN(uid),
                 data,
             ),
-        onSuccess: (_, variables) => {
+        onMutate: async ({ uid, data }) => {
+            const queryFilter = { queryKey: [...queryKeys.inventory.opnameDetail(uid), "items"] };
+            await queryClient.cancelQueries(queryFilter);
+
+            const previousQueries = queryClient.getQueriesData<OpnameItemsPaginatedResponse>(queryFilter);
+
+            queryClient.setQueriesData<OpnameItemsPaginatedResponse>(
+                queryFilter,
+                (old) => {
+                    if (!old || !old.data) return old;
+                    const existingIndex = old.data.findIndex(
+                        (item) => item.barcode === data.barcode || item.product?.barcode === data.barcode
+                    );
+
+                    const items = [...old.data];
+                    if (existingIndex >= 0) {
+                        const existing = items[existingIndex];
+                        const newStokFisik = data.stok_fisik !== undefined ? data.stok_fisik : (Number(existing.stok_fisik) || 0) + 1;
+                        const stokSistem = Number(existing.stok_sistem) || 0;
+                        items[existingIndex] = {
+                            ...existing,
+                            stok_fisik: newStokFisik,
+                            selisih: newStokFisik - stokSistem,
+                        };
+                    }
+
+                    return {
+                        ...old,
+                        data: items,
+                    };
+                }
+            );
+
+            return { previousQueries };
+        },
+        onError: (_err, _variables, context) => {
+            if (context?.previousQueries) {
+                context.previousQueries.forEach(([queryKey, queryData]) => {
+                    queryClient.setQueryData(queryKey, queryData);
+                });
+            }
+        },
+        onSettled: (_, __, variables) => {
             queryClient.invalidateQueries({
                 queryKey: [...queryKeys.inventory.opnameDetail(variables.uid), "items"],
             });
@@ -219,10 +238,11 @@ export function useUpdateOpnameItemRow() {
                 brand_uid?: string | null;
                 category_uid?: string | null;
             };
-        }
+        },
+        { previousQueries: Array<[readonly unknown[], OpnameItemsPaginatedResponse | undefined]> }
     >({
         mutationFn: ({ opnameUid, itemUid, data }) =>
-            apiPut<
+            apiPatch<
                 ApiResponse<OpnameItem>,
                 {
                     stok_fisik?: number;
@@ -231,10 +251,72 @@ export function useUpdateOpnameItemRow() {
                     category_uid?: string | null;
                 }
             >(
-                `/v1/inventory/opname/${opnameUid}/items/${itemUid}`,
+                ENDPOINTS.INVENTORY.OPNAME.ITEM_UPDATE(opnameUid, itemUid),
                 data,
             ),
-        onSuccess: (_, variables) => {
+        onMutate: async ({ opnameUid, itemUid, data }) => {
+            const queryFilter = { queryKey: [...queryKeys.inventory.opnameDetail(opnameUid), "items"] };
+            await queryClient.cancelQueries(queryFilter);
+
+            const previousQueries = queryClient.getQueriesData<OpnameItemsPaginatedResponse>(queryFilter);
+
+            queryClient.setQueriesData<OpnameItemsPaginatedResponse>(
+                queryFilter,
+                (old) => {
+                    if (!old || !old.data) return old;
+                    const items = old.data.map((item) => {
+                        if (item.uid === itemUid) {
+                            const newStokFisik = data.stok_fisik !== undefined ? data.stok_fisik : Number(item.stok_fisik) || 0;
+                            const stokSistem = Number(item.stok_sistem) || 0;
+                            const newSelisih = newStokFisik - stokSistem;
+                            return {
+                                ...item,
+                                ...(data.stok_fisik !== undefined && { stok_fisik: newStokFisik, selisih: newSelisih }),
+                                ...(data.alasan !== undefined && { alasan: data.alasan }),
+                                ...(data.brand_uid !== undefined && { brand_uid: data.brand_uid }),
+                                ...(data.category_uid !== undefined && { category_uid: data.category_uid }),
+                            };
+                        }
+                        return item;
+                    });
+
+                    let newSummary = old.summary;
+                    if (old.summary && data.stok_fisik !== undefined) {
+                        let matchCount = 0;
+                        let positiveCount = 0;
+                        let negativeCount = 0;
+                        items.forEach((item) => {
+                            const diff = Number(item.selisih ?? (Number(item.stok_fisik) - Number(item.stok_sistem)));
+                            if (diff === 0) matchCount++;
+                            else if (diff > 0) positiveCount++;
+                            else negativeCount++;
+                        });
+                        newSummary = {
+                            ...old.summary,
+                            match_count: matchCount,
+                            positive_count: positiveCount,
+                            negative_count: negativeCount,
+                        };
+                    }
+
+                    return {
+                        ...old,
+                        data: items,
+                        summary: newSummary,
+                    };
+                }
+            );
+
+            return { previousQueries };
+        },
+        onError: (_err, _variables, context) => {
+            if (context?.previousQueries) {
+                context.previousQueries.forEach(([queryKey, queryData]) => {
+                    queryClient.setQueryData(queryKey, queryData);
+                });
+            }
+        },
+        onSettled: (_, __, variables) => {
             queryClient.invalidateQueries({
                 queryKey: [...queryKeys.inventory.opnameDetail(variables.opnameUid), "items"],
             });
@@ -253,13 +335,44 @@ export function useDeleteOpnameItemRow() {
         {
             opnameUid: string;
             itemUid: string;
-        }
+        },
+        { previousQueries: Array<[readonly unknown[], OpnameItemsPaginatedResponse | undefined]> }
     >({
         mutationFn: ({ opnameUid, itemUid }) =>
             apiDelete<ApiResponse<void>>(
-                `/v1/inventory/opname/${opnameUid}/items/${itemUid}`,
+                ENDPOINTS.INVENTORY.OPNAME.ITEM_DELETE(opnameUid, itemUid),
             ),
-        onSuccess: (_, variables) => {
+        onMutate: async ({ opnameUid, itemUid }) => {
+            const queryFilter = { queryKey: [...queryKeys.inventory.opnameDetail(opnameUid), "items"] };
+            await queryClient.cancelQueries(queryFilter);
+
+            const previousQueries = queryClient.getQueriesData<OpnameItemsPaginatedResponse>(queryFilter);
+
+            queryClient.setQueriesData<OpnameItemsPaginatedResponse>(
+                queryFilter,
+                (old) => {
+                    if (!old || !old.data) return old;
+                    const items = old.data.filter((item) => item.uid !== itemUid);
+                    const newTotal = Math.max(0, (old.meta?.total ?? items.length) - 1);
+                    return {
+                        ...old,
+                        data: items,
+                        meta: old.meta ? { ...old.meta, total: newTotal } : old.meta,
+                        summary: old.summary ? { ...old.summary, total_count: newTotal } : old.summary,
+                    };
+                }
+            );
+
+            return { previousQueries };
+        },
+        onError: (_err, _variables, context) => {
+            if (context?.previousQueries) {
+                context.previousQueries.forEach(([queryKey, queryData]) => {
+                    queryClient.setQueryData(queryKey, queryData);
+                });
+            }
+        },
+        onSettled: (_, __, variables) => {
             queryClient.invalidateQueries({
                 queryKey: [...queryKeys.inventory.opnameDetail(variables.opnameUid), "items"],
             });
@@ -270,77 +383,12 @@ export function useDeleteOpnameItemRow() {
     });
 }
 
-export function useClearOpnameItems() {
-    const queryClient = useQueryClient();
-    return useMutation<ApiResponse<void>, Error, string>({
-        mutationFn: (opnameUid) =>
-            apiDelete<ApiResponse<void>>(
-                `/v1/inventory/opname/${opnameUid}/items`,
-            ),
-        onSuccess: (_, opnameUid) => {
-            queryClient.invalidateQueries({
-                queryKey: [...queryKeys.inventory.opnameDetail(opnameUid), "items"],
-            });
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.inventory.opnameDetail(opnameUid),
-            });
-        },
-    });
-}
-
-export function useUpdateOpnameItems() {
-    const queryClient = useQueryClient();
-    return useMutation<
-        ApiResponse<Opname>,
-        Error,
-        {
-            uid: string;
-            data: {
-                items: Array<{
-                    product_uid: string;
-                    brand_uid?: string | null;
-                    category_uid?: string | null;
-                    stok_fisik: number;
-                    alasan?: string | null;
-                }>;
-            };
-        }
-    >({
-        mutationFn: ({ uid, data }) =>
-            apiPut<
-                ApiResponse<Opname>,
-                {
-                    items: Array<{
-                        product_uid: string;
-                        brand_uid?: string | null;
-                        category_uid?: string | null;
-                        stok_fisik: number;
-                        alasan?: string | null;
-                    }>;
-                }
-            >(
-                `/v1/inventory/opname/${uid}/items`,
-                data,
-                { timeout: OPNAME_API_TIMEOUT },
-            ),
-        onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.inventory.opnames(),
-            });
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.inventory.opnameDetail(variables.uid),
-            });
-            queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
-        },
-    });
-}
-
 export function useFinalizeOpname() {
     const queryClient = useQueryClient();
     return useMutation<ApiResponse<Opname>, Error, string>({
         mutationFn: (uid) =>
             apiPost<ApiResponse<Opname>, undefined>(
-                `/v1/inventory/opname/${uid}/finalize`,
+                ENDPOINTS.INVENTORY.OPNAME.FINALIZE(uid),
                 undefined,
                 { timeout: OPNAME_API_TIMEOUT },
             ),
@@ -356,7 +404,7 @@ export function useFinalizeOpname() {
 // ─── Opname Import & Template Download Helpers ───────────────────────────────
 
 export async function downloadOpnameTemplateXlsx(): Promise<void> {
-    const response = await apiClient.get("/v1/inventory/opname/sheet/xlsx", {
+    const response = await apiClient.get(ENDPOINTS.INVENTORY.OPNAME.SHEET_XLSX, {
         responseType: "blob",
         timeout: OPNAME_API_TIMEOUT,
     });
@@ -381,7 +429,7 @@ export async function downloadOpnameTemplateXlsx(): Promise<void> {
 }
 
 export async function downloadOpnameSheetPdf(): Promise<void> {
-    const response = await apiClient.get("/v1/inventory/opname/sheet/pdf", {
+    const response = await apiClient.get(ENDPOINTS.INVENTORY.OPNAME.SHEET_PDF, {
         responseType: "blob",
         timeout: OPNAME_API_TIMEOUT,
     });
@@ -410,7 +458,7 @@ export function useImportOpname() {
     return useMutation<ApiResponse<Opname>, Error, FormData>({
         mutationFn: (formData) =>
             apiPost<ApiResponse<Opname>, FormData>(
-                "/v1/inventory/opname/import",
+                ENDPOINTS.INVENTORY.OPNAME.IMPORT,
                 formData,
                 { timeout: OPNAME_API_TIMEOUT },
             ),
@@ -428,7 +476,7 @@ export function useImportOpnameIntoDraft() {
     return useMutation<ApiResponse<Opname>, Error, { uid: string; formData: FormData }>({
         mutationFn: ({ uid, formData }) =>
             apiPost<ApiResponse<Opname>, FormData>(
-                `/v1/inventory/opname/import/${uid}`,
+                ENDPOINTS.INVENTORY.OPNAME.IMPORT_INTO_DRAFT(uid),
                 formData,
                 { timeout: OPNAME_API_TIMEOUT },
             ),
@@ -454,7 +502,7 @@ export function useDeleteOpname() {
     return useMutation<ApiResponse<void>, Error, string>({
         mutationFn: (uid) =>
             apiDelete<ApiResponse<void>>(
-                `/v1/inventory/opname/${uid}`,
+                ENDPOINTS.INVENTORY.OPNAME.DELETE(uid),
                 { timeout: OPNAME_API_TIMEOUT },
             ),
         onSuccess: () => {
