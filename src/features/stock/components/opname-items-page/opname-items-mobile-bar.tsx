@@ -1,23 +1,19 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { IconCheck, IconDeviceFloppy } from "@tabler/icons-react";
+import { IconCheck } from "@tabler/icons-react";
 
 interface OpnameItemsMobileBarProps {
   itemsCount: number;
   stats: { match: number; positive: number; negative: number };
-  isPendingSave: boolean;
   isPendingFinalize: boolean;
-  onSaveDraft: () => void;
   onOpenFinalize: () => void;
 }
 
 export function OpnameItemsMobileBar({
   itemsCount,
   stats,
-  isPendingSave,
   isPendingFinalize,
-  onSaveDraft,
   onOpenFinalize,
 }: OpnameItemsMobileBarProps) {
   return (
@@ -48,21 +44,10 @@ export function OpnameItemsMobileBar({
       <div className="flex items-center gap-1.5 shrink-0">
         <Button
           type="button"
-          onClick={onSaveDraft}
-          disabled={itemsCount === 0 || isPendingSave}
-          variant="outline"
-          size="sm"
-          className="h-8 px-2.5 text-xs font-bold border-blue-200 text-blue-700 bg-blue-50/50 rounded-xl"
-        >
-          <IconDeviceFloppy size={14} className="mr-1" />
-          Draf
-        </Button>
-        <Button
-          type="button"
           onClick={onOpenFinalize}
-          disabled={itemsCount === 0 || isPendingSave || isPendingFinalize}
+          disabled={itemsCount === 0 || isPendingFinalize}
           size="sm"
-          className="h-8 px-3 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white border-none shadow-xs rounded-xl"
+          className="h-8 px-4 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white border-none shadow-xs rounded-xl"
         >
           <IconCheck size={14} className="mr-1" />
           Finalisasi
@@ -71,3 +56,4 @@ export function OpnameItemsMobileBar({
     </div>
   );
 }
+

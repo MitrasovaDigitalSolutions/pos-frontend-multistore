@@ -1,81 +1,77 @@
-import { AppButton } from "@/components/shared/app-button";
+"use client";
+
 import { CommandSelect, type CommandOption } from "@/components/ui/command-select";
 import { DataTable } from "@/components/ui/data-table";
-import { NumberInput } from "@/components/ui/number-input";
 import { cn } from "@/lib/utils";
-import type { OpnameItemLocal } from "@/stores/opname-items-store";
-import {
-    IconBarcode,
-    IconCategory,
-    IconLoader2,
-    IconMinus,
-    IconPlus,
-    IconTag,
-} from "@tabler/icons-react";
+import type { OpnameItem } from "@/features/stock/types";
+import { useOpnameUIStore } from "@/stores/opname-items-store";
+import { IconBarcode, IconCategory, IconLoader2, IconTag } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { OpnameItemMobileCard } from "./opname-item-mobile-card";
 import { OpnameItemsSearchBar } from "./opname-items-search-bar";
+import { OpnameQtyInput } from "./opname-qty-input";
 
 interface OpnameItemsTableProps {
-    items: OpnameItemLocal[];
+    items: OpnameItem[];
+    meta?: {
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+    };
+    isLoading?: boolean;
+    isFetching?: boolean;
     categoryOptions: CommandOption[];
     brandOptions: CommandOption[];
-    updateItem: (productUid: string, data: Partial<Pick<OpnameItemLocal, "stok_fisik" | "alasan" | "brand_uid" | "category_uid">>) => void;
-    removeItem: (productUid: string) => void;
+    onUpdateQty: (itemUid: string, qty: number) => void;
+    onUpdateField: (itemUid: string, field: "alasan" | "brand_uid" | "category_uid", value: string | null) => void;
+    onRemoveItem: (itemUid: string) => void;
     onFocusBarcode?: () => void;
     isSyncing?: boolean;
 }
 
-/** Client-side search filter — matches by product name or barcode */
-function filterItems(items: OpnameItemLocal[], query: string): OpnameItemLocal[] {
-    const trimmed = query.trim().toLowerCase();
-    if (!trimmed) return items;
-
-    const queryWords = trimmed.split(/\s+/);
-    return items.filter((item) => {
-        const barcodeMatch = item.barcode?.toLowerCase().includes(trimmed) ?? false;
-        const nameWordsMatch = queryWords.every((word) => item.nama.toLowerCase().includes(word));
-        return barcodeMatch || nameWordsMatch;
-    });
-}
-
 export function OpnameItemsTable({
     items,
+    meta,
+    isLoading = false,
+    isFetching = false,
     categoryOptions,
     brandOptions,
-    updateItem,
-    removeItem,
+    onUpdateQty,
+    onUpdateField,
+    onRemoveItem,
     onFocusBarcode,
     isSyncing = false,
 }: OpnameItemsTableProps) {
-    const [searchQuery, setSearchQuery] = useState("");
+    const page = useOpnameUIStore((state) => state.page);
+    const setPage = useOpnameUIStore((state) => state.setPage);
+    const sortBy = useOpnameUIStore((state) => state.sortBy);
+    const sortOrder = useOpnameUIStore((state) => state.sortOrder);
+    const setSorting = useOpnameUIStore((state) => state.setSorting);
 
-    const filteredItems = useMemo(
-        () => filterItems(items, searchQuery),
-        [items, searchQuery]
-    );
-
-    const columns = useMemo<ColumnDef<OpnameItemLocal>[]>(() => [
+    const columns = useMemo<ColumnDef<OpnameItem>[]>(() => [
         {
             accessorKey: "nama",
             header: "Nama Produk",
             enableSorting: true,
-            size: 280,
+            size: 260,
             cell: ({ row }) => {
                 const item = row.original;
+                const name = item.nama || item.product?.nama || "Produk";
+                const barcode = item.barcode || item.product?.barcode || null;
                 return (
-                    <div id={`opname-item-${item.product_uid}`} className="flex flex-col py-0.5 min-w-[200px] max-w-[280px] sm:max-w-[360px]">
+                    <div id={`opname-item-${item.product_uid}`} className="flex flex-col py-0.5 min-w-[170px] max-w-[260px] sm:max-w-[340px]">
                         <span
                             className="text-xs font-bold text-slate-900 leading-tight truncate block"
-                            title={item.nama}
+                            title={name}
                         >
-                            {item.nama}
+                            {name}
                         </span>
-                        {item.barcode && (
+                        {barcode && (
                             <span className="inline-flex items-center gap-0.5 font-mono text-[9.5px] text-slate-400 bg-slate-50 px-1 py-0.2 rounded mt-0.5 w-fit">
                                 <IconBarcode size={11} className="opacity-70" />
-                                {item.barcode}
+                                {barcode}
                             </span>
                         )}
                     </div>
@@ -86,21 +82,21 @@ export function OpnameItemsTable({
             accessorKey: "category_uid",
             header: "Kategori",
             enableSorting: false,
-            size: 170,
+            size: 150,
             cell: ({ row }) => {
                 const item = row.original;
                 return (
-                    <div className="w-38 sm:w-42">
+                    <div className="w-34 sm:w-38">
                         <CommandSelect
                             options={categoryOptions}
                             value={item.category_uid || ""}
-                            onChange={(val) => updateItem(item.product_uid, { category_uid: val || null })}
+                            onChange={(val) => onUpdateField(item.uid, "category_uid", val || null)}
                             placeholder="Pilih Kategori"
                             searchPlaceholder="Cari kategori..."
                             emptyMessage="Tidak ditemukan"
                             size="sm"
                             leftIcon={<IconCategory size={12} className="text-slate-400" />}
-                            className="h-7.5 text-[11px] bg-white border-slate-200"
+                            className="h-7 text-[11px] bg-white border-slate-200"
                         />
                     </div>
                 );
@@ -110,75 +106,22 @@ export function OpnameItemsTable({
             accessorKey: "brand_uid",
             header: "Brand",
             enableSorting: false,
-            size: 160,
+            size: 140,
             cell: ({ row }) => {
                 const item = row.original;
                 return (
-                    <div className="w-34 sm:w-38">
+                    <div className="w-32 sm:w-36">
                         <CommandSelect
                             options={brandOptions}
                             value={item.brand_uid || ""}
-                            onChange={(val) => updateItem(item.product_uid, { brand_uid: val || null })}
+                            onChange={(val) => onUpdateField(item.uid, "brand_uid", val || null)}
                             placeholder="Pilih Brand"
                             searchPlaceholder="Cari brand..."
                             emptyMessage="Tidak ditemukan"
                             size="sm"
                             leftIcon={<IconTag size={12} className="text-slate-400" />}
-                            className="h-7.5 text-[11px] bg-white border-slate-200"
+                            className="h-7 text-[11px] bg-white border-slate-200"
                         />
-                    </div>
-                );
-            },
-        },
-        {
-            accessorKey: "stok_fisik",
-            header: "Stok Fisik",
-            enableSorting: true,
-            meta: {
-                headerClassName: "text-center",
-                cellClassName: "text-center",
-            },
-            cell: ({ row }) => {
-                const item = row.original;
-                return (
-                    <div className="flex items-center justify-center gap-0.5">
-                        <AppButton
-                            type="button"
-                            variant="ghost"
-                            size="icon-xs"
-                            onClick={() => updateItem(item.product_uid, { stok_fisik: Math.max(0, (Number(item.stok_fisik) || 0) - 1) })}
-                            className="w-6 h-6 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-xs cursor-pointer"
-                        >
-                            <IconMinus size={11} />
-                        </AppButton>
-                        <div className="w-16">
-                            <NumberInput
-                                id={`opname-qty-${item.product_uid}`}
-                                value={item.stok_fisik}
-                                onChange={(val) => {
-                                    updateItem(item.product_uid, { stok_fisik: val === null ? 0 : Math.max(0, val) });
-                                }}
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter") {
-                                        e.preventDefault();
-                                        onFocusBarcode?.();
-                                    }
-                                }}
-                                allowDecimal={false}
-                                allowNegative={false}
-                                min={0}
-                                className="h-7 w-full text-center rounded-md border border-slate-200 p-0 text-xs font-bold font-mono outline-none focus-visible:border-emerald-600 focus-visible:ring-emerald-600/20"
-                            />
-                        </div>
-                        <AppButton
-                            type="button"
-                            variant="ghost"
-                            size="icon-xs"
-                            onClick={() => updateItem(item.product_uid, { stok_fisik: (Number(item.stok_fisik) || 0) + 1 })}
-                            className="w-6 h-6 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-xs cursor-pointer"
-                        >
-                            <IconPlus size={11} />
-                        </AppButton>
                     </div>
                 );
             },
@@ -187,17 +130,41 @@ export function OpnameItemsTable({
             accessorKey: "stok_sistem",
             header: "Stok Sistem",
             enableSorting: true,
+            size: 100,
             meta: {
                 headerClassName: "text-right",
-                cellClassName: "text-right font-mono text-slate-500",
+                cellClassName: "text-right font-mono text-slate-500 text-xs",
             },
             cell: ({ row }) => `${row.original.stok_sistem} pcs`,
         },
         {
-            id: "selisih",
-            header: "Selisih",
-            accessorFn: (row) => (Number(row.stok_fisik) || 0) - (Number(row.stok_sistem) || 0),
+            accessorKey: "stok_fisik",
+            header: "Stok Fisik",
             enableSorting: true,
+            size: 130,
+            meta: {
+                headerClassName: "text-center",
+                cellClassName: "text-center",
+            },
+            cell: ({ row }) => {
+                const item = row.original;
+                return (
+                    <OpnameQtyInput
+                        itemUid={item.uid}
+                        productUid={item.product_uid}
+                        stokFisik={Number(item.stok_fisik) || 0}
+                        onUpdateQty={onUpdateQty}
+                        onFocusBarcode={onFocusBarcode}
+                        size="sm"
+                    />
+                );
+            },
+        },
+        {
+            accessorKey: "selisih",
+            header: "Selisih",
+            enableSorting: true,
+            size: 95,
             meta: {
                 headerClassName: "text-right",
                 cellClassName: "text-right",
@@ -228,39 +195,39 @@ export function OpnameItemsTable({
                 return (
                     <input
                         type="text"
-                        value={item.alasan || ""}
+                        defaultValue={item.alasan || ""}
                         placeholder="Alasan selisih..."
-                        onChange={(e) => {
-                            updateItem(item.product_uid, { alasan: e.target.value });
+                        onBlur={(e) => {
+                            const val = e.target.value.trim();
+                            if (val !== (item.alasan || "")) {
+                                onUpdateField(item.uid, "alasan", val || null);
+                            }
                         }}
                         onKeyDown={(e) => {
                             if (e.key === "Enter") {
                                 e.preventDefault();
+                                const val = (e.target as HTMLInputElement).value.trim();
+                                if (val !== (item.alasan || "")) {
+                                    onUpdateField(item.uid, "alasan", val || null);
+                                }
+                                (e.target as HTMLInputElement).blur();
                                 onFocusBarcode?.();
                             }
                         }}
-                        className="h-7.5 w-full min-w-[140px] border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-md text-[11px] px-2 outline-none"
+                        className="h-7 w-full min-w-[120px] border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-md text-[11px] px-2 outline-none transition-all"
                     />
                 );
             },
         },
-    ], [brandOptions, categoryOptions, onFocusBarcode, updateItem]);
+    ], [brandOptions, categoryOptions, onFocusBarcode, onUpdateField, onUpdateQty]);
 
     return (
         <div className="w-full">
-            {/* Search/Filter Bar — always visible when items exist */}
-            <OpnameItemsSearchBar
-                value={searchQuery}
-                onChange={setSearchQuery}
-                totalCount={items.length}
-                filteredCount={filteredItems.length}
-            />
-
             {/* Syncing Progress Banner */}
             {isSyncing && (
-                <div className="flex items-center justify-between gap-3 px-3.5 py-2.5 bg-emerald-50/90 border-b border-emerald-100 text-emerald-800 text-xs font-semibold animate-in fade-in duration-200">
+                <div className="flex items-center justify-between gap-3 px-3.5 py-2 bg-emerald-50/90 border border-b-0 border-emerald-100 rounded-t-xl text-emerald-800 text-xs font-semibold animate-in fade-in duration-200">
                     <div className="flex items-center gap-2">
-                        <IconLoader2 size={15} className="animate-spin text-emerald-600 shrink-0" />
+                        <IconLoader2 size={14} className="animate-spin text-emerald-600 shrink-0" />
                         <span>Sedang menyinkronkan &amp; mengindeks data produk dari Excel...</span>
                     </div>
                     <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-200/70 text-emerald-900 rounded-full shrink-0">
@@ -269,32 +236,38 @@ export function OpnameItemsTable({
                 </div>
             )}
 
-            <DataTable<OpnameItemLocal, unknown>
+            <DataTable<OpnameItem, unknown>
                 columns={columns}
-                data={filteredItems}
-                isLoading={isSyncing}
-                clientPagination={true}
-                perPage={10}
+                data={items}
+                isLoading={isLoading || isSyncing}
+                isFetching={isFetching}
+                clientPagination={false}
+                page={page}
+                onPageChange={setPage}
+                meta={meta}
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortChange={(by, order) => {
+                    if (by && order) {
+                        setSorting(by, order);
+                    }
+                }}
                 virtualize={false}
                 showViewToggle={true}
-                emptyMessage={
-                    isSyncing
-                        ? "Sedang memuat data produk..."
-                        : searchQuery.trim()
-                            ? `Tidak ada item yang cocok dengan "${searchQuery}". Coba kata kunci lain.`
-                            : "Belum ada barang dihitung. Gunakan scanner barcode atau autocomplete di atas."
-                }
+                extraToolbarActions={<OpnameItemsSearchBar />}
+                emptyMessage="Belum ada barang dihitung. Gunakan scanner barcode atau upload Excel di atas."
                 entityName="barang"
-                onDelete={(item) => removeItem(item.product_uid)}
+                onDelete={(item) => onRemoveItem(item.uid)}
                 renderCardItem={(row) => (
                     <OpnameItemMobileCard
-                        key={row.original.product_uid}
+                        key={row.original.uid}
                         item={row.original}
                         index={row.index}
                         categoryOptions={categoryOptions}
                         brandOptions={brandOptions}
-                        updateItem={updateItem}
-                        removeItem={removeItem}
+                        onUpdateQty={onUpdateQty}
+                        onUpdateField={onUpdateField}
+                        onRemoveItem={onRemoveItem}
                         onFocusBarcode={onFocusBarcode}
                     />
                 )}
