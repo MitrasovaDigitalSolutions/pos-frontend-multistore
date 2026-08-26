@@ -1,9 +1,12 @@
+"use client";
+
 import { AppButton } from "@/components/shared/app-button";
 import { CommandSelect, type CommandOption } from "@/components/ui/command-select";
 import { DataTable } from "@/components/ui/data-table";
 import { NumberInput } from "@/components/ui/number-input";
 import { cn } from "@/lib/utils";
-import type { OpnameItemLocal } from "@/stores/opname-items-store";
+import type { OpnameItem } from "@/features/stock/types";
+import { useOpnameUIStore } from "@/stores/opname-items-store";
 import {
     IconBarcode,
     IconCategory,
@@ -13,50 +16,52 @@ import {
     IconTag,
 } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { OpnameItemMobileCard } from "./opname-item-mobile-card";
 import { OpnameItemsSearchBar } from "./opname-items-search-bar";
+import type { OpnameItemsSummary } from "../../api/stock-api";
 
 interface OpnameItemsTableProps {
-    items: OpnameItemLocal[];
+    items: OpnameItem[];
+    meta?: {
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+    };
+    summary?: OpnameItemsSummary;
+    isLoading?: boolean;
+    isFetching?: boolean;
     categoryOptions: CommandOption[];
     brandOptions: CommandOption[];
-    updateItem: (productUid: string, data: Partial<Pick<OpnameItemLocal, "stok_fisik" | "alasan" | "brand_uid" | "category_uid">>) => void;
-    removeItem: (productUid: string) => void;
+    onUpdateQty: (itemUid: string, qty: number) => void;
+    onUpdateField: (itemUid: string, field: "alasan" | "brand_uid" | "category_uid", value: string | null) => void;
+    onRemoveItem: (itemUid: string) => void;
     onFocusBarcode?: () => void;
     isSyncing?: boolean;
 }
 
-/** Client-side search filter — matches by product name or barcode */
-function filterItems(items: OpnameItemLocal[], query: string): OpnameItemLocal[] {
-    const trimmed = query.trim().toLowerCase();
-    if (!trimmed) return items;
-
-    const queryWords = trimmed.split(/\s+/);
-    return items.filter((item) => {
-        const barcodeMatch = item.barcode?.toLowerCase().includes(trimmed) ?? false;
-        const nameWordsMatch = queryWords.every((word) => item.nama.toLowerCase().includes(word));
-        return barcodeMatch || nameWordsMatch;
-    });
-}
-
 export function OpnameItemsTable({
     items,
+    meta,
+    summary,
+    isLoading = false,
+    isFetching = false,
     categoryOptions,
     brandOptions,
-    updateItem,
-    removeItem,
+    onUpdateQty,
+    onUpdateField,
+    onRemoveItem,
     onFocusBarcode,
     isSyncing = false,
 }: OpnameItemsTableProps) {
-    const [searchQuery, setSearchQuery] = useState("");
+    const page = useOpnameUIStore((state) => state.page);
+    const setPage = useOpnameUIStore((state) => state.setPage);
+    const sortBy = useOpnameUIStore((state) => state.sortBy);
+    const sortOrder = useOpnameUIStore((state) => state.sortOrder);
+    const setSorting = useOpnameUIStore((state) => state.setSorting);
 
-    const filteredItems = useMemo(
-        () => filterItems(items, searchQuery),
-        [items, searchQuery]
-    );
-
-    const columns = useMemo<ColumnDef<OpnameItemLocal>[]>(() => [
+    const columns = useMemo<ColumnDef<OpnameItem>[]>(() => [
         {
             accessorKey: "nama",
             header: "Nama Produk",
@@ -64,18 +69,20 @@ export function OpnameItemsTable({
             size: 280,
             cell: ({ row }) => {
                 const item = row.original;
+                const name = item.nama || item.product?.nama || "Produk";
+                const barcode = item.barcode || item.product?.barcode || null;
                 return (
                     <div id={`opname-item-${item.product_uid}`} className="flex flex-col py-0.5 min-w-[200px] max-w-[280px] sm:max-w-[360px]">
                         <span
                             className="text-xs font-bold text-slate-900 leading-tight truncate block"
-                            title={item.nama}
+                            title={name}
                         >
-                            {item.nama}
+                            {name}
                         </span>
-                        {item.barcode && (
+                        {barcode && (
                             <span className="inline-flex items-center gap-0.5 font-mono text-[9.5px] text-slate-400 bg-slate-50 px-1 py-0.2 rounded mt-0.5 w-fit">
                                 <IconBarcode size={11} className="opacity-70" />
-                                {item.barcode}
+                                {barcode}
                             </span>
                         )}
                     </div>
@@ -94,7 +101,7 @@ export function OpnameItemsTable({
                         <CommandSelect
                             options={categoryOptions}
                             value={item.category_uid || ""}
-                            onChange={(val) => updateItem(item.product_uid, { category_uid: val || null })}
+                            onChange={(val) => onUpdateField(item.uid, "category_uid", val || null)}
                             placeholder="Pilih Kategori"
                             searchPlaceholder="Cari kategori..."
                             emptyMessage="Tidak ditemukan"
@@ -118,7 +125,7 @@ export function OpnameItemsTable({
                         <CommandSelect
                             options={brandOptions}
                             value={item.brand_uid || ""}
-                            onChange={(val) => updateItem(item.product_uid, { brand_uid: val || null })}
+                            onChange={(val) => onUpdateField(item.uid, "brand_uid", val || null)}
                             placeholder="Pilih Brand"
                             searchPlaceholder="Cari brand..."
                             emptyMessage="Tidak ditemukan"
@@ -140,13 +147,14 @@ export function OpnameItemsTable({
             },
             cell: ({ row }) => {
                 const item = row.original;
+                const stokFisik = Number(item.stok_fisik) || 0;
                 return (
                     <div className="flex items-center justify-center gap-0.5">
                         <AppButton
                             type="button"
                             variant="ghost"
                             size="icon-xs"
-                            onClick={() => updateItem(item.product_uid, { stok_fisik: Math.max(0, (Number(item.stok_fisik) || 0) - 1) })}
+                            onClick={() => onUpdateQty(item.uid, Math.max(0, stokFisik - 1))}
                             className="w-6 h-6 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-xs cursor-pointer"
                         >
                             <IconMinus size={11} />
@@ -154,9 +162,9 @@ export function OpnameItemsTable({
                         <div className="w-16">
                             <NumberInput
                                 id={`opname-qty-${item.product_uid}`}
-                                value={item.stok_fisik}
+                                value={stokFisik}
                                 onChange={(val) => {
-                                    updateItem(item.product_uid, { stok_fisik: val === null ? 0 : Math.max(0, val) });
+                                    onUpdateQty(item.uid, val === null ? 0 : Math.max(0, val));
                                 }}
                                 onKeyDown={(e) => {
                                     if (e.key === "Enter") {
@@ -174,7 +182,7 @@ export function OpnameItemsTable({
                             type="button"
                             variant="ghost"
                             size="icon-xs"
-                            onClick={() => updateItem(item.product_uid, { stok_fisik: (Number(item.stok_fisik) || 0) + 1 })}
+                            onClick={() => onUpdateQty(item.uid, stokFisik + 1)}
                             className="w-6 h-6 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-xs cursor-pointer"
                         >
                             <IconPlus size={11} />
@@ -194,9 +202,8 @@ export function OpnameItemsTable({
             cell: ({ row }) => `${row.original.stok_sistem} pcs`,
         },
         {
-            id: "selisih",
+            accessorKey: "selisih",
             header: "Selisih",
-            accessorFn: (row) => (Number(row.stok_fisik) || 0) - (Number(row.stok_sistem) || 0),
             enableSorting: true,
             meta: {
                 headerClassName: "text-right",
@@ -204,7 +211,7 @@ export function OpnameItemsTable({
             },
             cell: ({ row }) => {
                 const item = row.original;
-                const diff = (Number(item.stok_fisik) || 0) - (Number(item.stok_sistem) || 0);
+                const diff = Number(item.selisih ?? ((Number(item.stok_fisik) || 0) - (Number(item.stok_sistem) || 0)));
                 return (
                     <span className={cn(
                         "inline-block font-mono font-bold text-[11px] px-1.5 py-0.5 rounded-md",
@@ -228,14 +235,13 @@ export function OpnameItemsTable({
                 return (
                     <input
                         type="text"
-                        value={item.alasan || ""}
+                        defaultValue={item.alasan || ""}
                         placeholder="Alasan selisih..."
-                        onChange={(e) => {
-                            updateItem(item.product_uid, { alasan: e.target.value });
-                        }}
+                        onBlur={(e) => onUpdateField(item.uid, "alasan", e.target.value)}
                         onKeyDown={(e) => {
                             if (e.key === "Enter") {
                                 e.preventDefault();
+                                onUpdateField(item.uid, "alasan", (e.target as HTMLInputElement).value);
                                 onFocusBarcode?.();
                             }
                         }}
@@ -244,16 +250,14 @@ export function OpnameItemsTable({
                 );
             },
         },
-    ], [brandOptions, categoryOptions, onFocusBarcode, updateItem]);
+    ], [brandOptions, categoryOptions, onFocusBarcode, onUpdateField, onUpdateQty]);
 
     return (
         <div className="w-full">
-            {/* Search/Filter Bar — always visible when items exist */}
+            {/* Search/Filter Bar — server filter & summary pills */}
             <OpnameItemsSearchBar
-                value={searchQuery}
-                onChange={setSearchQuery}
-                totalCount={items.length}
-                filteredCount={filteredItems.length}
+                summary={summary}
+                totalFiltered={meta?.total ?? items.length}
             />
 
             {/* Syncing Progress Banner */}
@@ -269,32 +273,37 @@ export function OpnameItemsTable({
                 </div>
             )}
 
-            <DataTable<OpnameItemLocal, unknown>
+            <DataTable<OpnameItem, unknown>
                 columns={columns}
-                data={filteredItems}
-                isLoading={isSyncing}
-                clientPagination={true}
-                perPage={10}
+                data={items}
+                isLoading={isLoading || isSyncing}
+                isFetching={isFetching}
+                clientPagination={false}
+                page={page}
+                onPageChange={setPage}
+                meta={meta}
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortChange={(by, order) => {
+                    if (by && order) {
+                        setSorting(by, order);
+                    }
+                }}
                 virtualize={false}
                 showViewToggle={true}
-                emptyMessage={
-                    isSyncing
-                        ? "Sedang memuat data produk..."
-                        : searchQuery.trim()
-                            ? `Tidak ada item yang cocok dengan "${searchQuery}". Coba kata kunci lain.`
-                            : "Belum ada barang dihitung. Gunakan scanner barcode atau autocomplete di atas."
-                }
+                emptyMessage="Belum ada barang dihitung. Gunakan scanner barcode atau upload Excel di atas."
                 entityName="barang"
-                onDelete={(item) => removeItem(item.product_uid)}
+                onDelete={(item) => onRemoveItem(item.uid)}
                 renderCardItem={(row) => (
                     <OpnameItemMobileCard
-                        key={row.original.product_uid}
+                        key={row.original.uid}
                         item={row.original}
                         index={row.index}
                         categoryOptions={categoryOptions}
                         brandOptions={brandOptions}
-                        updateItem={updateItem}
-                        removeItem={removeItem}
+                        onUpdateQty={onUpdateQty}
+                        onUpdateField={onUpdateField}
+                        onRemoveItem={onRemoveItem}
                         onFocusBarcode={onFocusBarcode}
                     />
                 )}

@@ -29,8 +29,26 @@ export function useOpnameDetail(uid: string | null) {
     });
 }
 
-export function useOpnameItems(uid: string | null, params?: PaginationParams) {
-    return useQuery<PaginatedResponse<OpnameItem>>({
+export interface OpnameItemsSummary {
+    total_count: number;
+    match_count: number;
+    positive_count: number;
+    negative_count: number;
+}
+
+export interface OpnameItemsPaginatedResponse extends PaginatedResponse<OpnameItem> {
+    summary?: OpnameItemsSummary;
+}
+
+export interface OpnameItemsFilterParams extends PaginationParams {
+    search?: string;
+    filter_selisih?: "all" | "diff" | "match" | "plus" | "minus" | string;
+    category_uid?: string;
+    brand_uid?: string;
+}
+
+export function useOpnameItems(uid: string | null, params?: OpnameItemsFilterParams) {
+    return useQuery<OpnameItemsPaginatedResponse>({
         queryKey: [...queryKeys.inventory.opnameDetail(uid || ""), "items", params],
         queryFn: () => apiGetList<OpnameItem>(`/v1/inventory/opname/${uid}/items`, params),
         enabled: uid !== null && uid !== "",
@@ -121,6 +139,118 @@ export function useUpdateOpname() {
             });
             queryClient.invalidateQueries({
                 queryKey: queryKeys.inventory.opnameDetail(variables.uid),
+            });
+        },
+    });
+}
+
+export function useScanOpnameItem() {
+    const queryClient = useQueryClient();
+    return useMutation<
+        ApiResponse<OpnameItem>,
+        Error,
+        {
+            uid: string;
+            data: {
+                barcode: string;
+                stok_fisik?: number;
+            };
+        }
+    >({
+        mutationFn: ({ uid, data }) =>
+            apiPost<ApiResponse<OpnameItem>, { barcode: string; stok_fisik?: number }>(
+                `/v1/inventory/opname/${uid}/scan`,
+                data,
+            ),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: [...queryKeys.inventory.opnameDetail(variables.uid), "items"],
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.inventory.opnameDetail(variables.uid),
+            });
+        },
+    });
+}
+
+export function useUpdateOpnameItemRow() {
+    const queryClient = useQueryClient();
+    return useMutation<
+        ApiResponse<OpnameItem>,
+        Error,
+        {
+            opnameUid: string;
+            itemUid: string;
+            data: {
+                stok_fisik?: number;
+                alasan?: string | null;
+                brand_uid?: string | null;
+                category_uid?: string | null;
+            };
+        }
+    >({
+        mutationFn: ({ opnameUid, itemUid, data }) =>
+            apiPut<
+                ApiResponse<OpnameItem>,
+                {
+                    stok_fisik?: number;
+                    alasan?: string | null;
+                    brand_uid?: string | null;
+                    category_uid?: string | null;
+                }
+            >(
+                `/v1/inventory/opname/${opnameUid}/items/${itemUid}`,
+                data,
+            ),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: [...queryKeys.inventory.opnameDetail(variables.opnameUid), "items"],
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.inventory.opnameDetail(variables.opnameUid),
+            });
+        },
+    });
+}
+
+export function useDeleteOpnameItemRow() {
+    const queryClient = useQueryClient();
+    return useMutation<
+        ApiResponse<void>,
+        Error,
+        {
+            opnameUid: string;
+            itemUid: string;
+        }
+    >({
+        mutationFn: ({ opnameUid, itemUid }) =>
+            apiDelete<ApiResponse<void>>(
+                `/v1/inventory/opname/${opnameUid}/items/${itemUid}`,
+            ),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: [...queryKeys.inventory.opnameDetail(variables.opnameUid), "items"],
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.inventory.opnameDetail(variables.opnameUid),
+            });
+        },
+    });
+}
+
+export function useClearOpnameItems() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<void>, Error, string>({
+        mutationFn: (opnameUid) =>
+            apiDelete<ApiResponse<void>>(
+                `/v1/inventory/opname/${opnameUid}/items`,
+            ),
+        onSuccess: (_, opnameUid) => {
+            queryClient.invalidateQueries({
+                queryKey: [...queryKeys.inventory.opnameDetail(opnameUid), "items"],
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.inventory.opnameDetail(opnameUid),
             });
         },
     });
