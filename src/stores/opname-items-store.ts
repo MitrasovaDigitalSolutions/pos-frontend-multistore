@@ -20,8 +20,8 @@ const defaultFilterState: OpnameFilterState = {
     page: 1,
     perPage: 25,
     search: "",
-    sortBy: "updated_at",
-    sortOrder: "desc",
+    sortBy: "nama",
+    sortOrder: "asc",
 };
 
 export const useOpnameUIStore = create<OpnameUIStoreState>((set) => ({
