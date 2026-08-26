@@ -9,12 +9,17 @@ import { OPNAME_STATUS, OPNAME_STATUS_CLASSES, OPNAME_STATUS_LABELS } from "@/co
 import { useAppRouter } from "@/hooks/use-app-router";
 import { formatToReadableDateTime } from "@/lib/date-utils";
 import { queryKeys } from "@/lib/query-keys";
+import { cn } from "@/lib/utils";
 import {
     IconArrowLeft,
+    IconBarcode,
     IconCheck,
+    IconClipboard,
     IconClock,
     IconEdit,
     IconFileDescription,
+    IconMinus,
+    IconPlus,
 } from "@tabler/icons-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
@@ -37,82 +42,36 @@ interface OpnameDetailPageProps {
 
 function OpnameDetailSkeleton() {
     return (
-        <div className="space-y-6 animate-pulse">
+        <div className="space-y-4 animate-pulse">
             {/* Header Area */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-                <div className="flex items-center gap-4">
-                    <Skeleton className="h-9 w-9 rounded-xl" />
-                    <div className="space-y-2">
-                        <Skeleton className="h-5 w-72" />
-                        <Skeleton className="h-3.5 w-44" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-3">
+                    <Skeleton className="h-8 w-8 rounded-xl" />
+                    <div className="space-y-1.5">
+                        <Skeleton className="h-4.5 w-64" />
+                        <Skeleton className="h-3 w-40" />
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Skeleton className="h-10 w-44 rounded-xl" />
-                    <Skeleton className="h-10 w-48 rounded-xl" />
+                    <Skeleton className="h-8 w-36 rounded-xl" />
+                    <Skeleton className="h-8 w-40 rounded-xl" />
                 </div>
             </div>
 
-            {/* Metadata Section */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {Array.from({ length: 3 }).map((_, idx) => (
-                    <div key={idx} className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-3.5">
-                        <Skeleton className="h-4 w-32 border-b border-slate-50 pb-2" />
-                        <div className="space-y-2.5">
-                            <div className="flex justify-between">
-                                <Skeleton className="h-3.5 w-20" />
-                                <Skeleton className="h-3.5 w-28" />
-                            </div>
-                            <div className="flex justify-between">
-                                <Skeleton className="h-3.5 w-24" />
-                                <Skeleton className="h-3.5 w-16" />
-                            </div>
-                        </div>
-                    </div>
+            {/* KPI Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {Array.from({ length: 4 }).map((_, idx) => (
+                    <Skeleton key={idx} className="h-16 rounded-xl" />
                 ))}
             </div>
 
             {/* Core Interaction Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                {/* Items Table (Col-8) */}
-                <div className="lg:col-span-8 bg-white border border-slate-100 rounded-2xl shadow-sm p-5 space-y-4">
-                    <div className="flex items-center gap-2 pb-2 border-b border-slate-50">
-                        <Skeleton className="h-4 w-44" />
-                    </div>
-                    <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/10 space-y-4">
-                        <div className="flex justify-between border-b pb-3 border-slate-100">
-                            <Skeleton className="h-4 w-40" />
-                            <Skeleton className="h-4 w-20" />
-                            <Skeleton className="h-4 w-20" />
-                            <Skeleton className="h-4 w-20" />
-                        </div>
-                        {Array.from({ length: 4 }).map((_, idx) => (
-                            <div key={idx} className="flex justify-between pt-1">
-                                <Skeleton className="h-4 w-48" />
-                                <Skeleton className="h-4 w-16" />
-                                <Skeleton className="h-4 w-16" />
-                                <Skeleton className="h-4 w-16" />
-                            </div>
-                        ))}
-                    </div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                <div className="lg:col-span-8">
+                    <Skeleton className="h-96 rounded-xl" />
                 </div>
-
-                {/* Activity Logs (Col-4) */}
-                <div className="lg:col-span-4 bg-white border border-slate-100 rounded-2xl shadow-sm p-5 space-y-4">
-                    <div className="flex items-center gap-2 pb-2 border-b border-slate-50">
-                        <Skeleton className="h-4 w-24" />
-                    </div>
-                    <div className="space-y-4 pl-3 pr-1 py-1">
-                        {Array.from({ length: 3 }).map((_, idx) => (
-                            <div key={idx} className="relative flex gap-3 pb-4 border-l border-slate-100 pl-4">
-                                <div className="absolute -left-1.5 top-1.5 w-3 h-3 bg-slate-200 rounded-full border-2 border-white" />
-                                <div className="space-y-1.5 w-full">
-                                    <Skeleton className="h-3.5 w-3/4" />
-                                    <Skeleton className="h-3 w-1/2" />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                <div className="lg:col-span-4">
+                    <Skeleton className="h-96 rounded-xl" />
                 </div>
             </div>
         </div>
@@ -124,8 +83,8 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
     const queryClient = useQueryClient();
 
     const [itemsPage, setItemsPage] = useState(1);
-    const [sortBy, setSortBy] = useState<string | undefined>(undefined);
-    const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>(undefined);
+    const [sortBy, setSortBy] = useState<string | undefined>("nama");
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc" | undefined>("asc");
     const [isConfirmFinalizeOpen, setIsConfirmFinalizeOpen] = useState(false);
 
     const { data: opname, isLoading: isDetailLoading, error } = useOpnameDetail(opnameId);
@@ -134,7 +93,7 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
         opnameId,
         {
             page: itemsPage,
-            per_page: 10,
+            per_page: 15,
             sort_by: sortBy,
             sort_order: sortOrder,
         }
@@ -144,8 +103,8 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
         search: opname?.nomor_opname || undefined,
     });
 
-    const { data: categoriesRes } = useCategories({ per_page: 1000 });
-    const { data: brandsRes } = useBrands({ per_page: 1000 });
+    const { data: categoriesRes } = useCategories({ per_page: 500 });
+    const { data: brandsRes } = useBrands({ per_page: 500 });
 
     const categoryMap = useMemo(() => {
         const map = new Map<string, string>();
@@ -188,49 +147,72 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
         }
     };
 
+    const summary = itemsData?.summary;
+    const totalCount = summary?.total_count ?? itemsData?.meta?.total ?? opname?.items_count ?? 0;
+    const matchCount = summary?.match_count ?? 0;
+    const positiveCount = summary?.positive_count ?? 0;
+    const negativeCount = summary?.negative_count ?? 0;
+
     const columns = useMemo<ColumnDef<OpnameItem>[]>(
         () => [
             {
-                accessorKey: "product.nama",
+                accessorKey: "nama",
                 header: "Nama Produk",
-                enableSorting: false,
-                cell: ({ row }) => (
-                    <div className="flex flex-col">
-                        <span className="text-xs font-bold text-slate-900">
-                            {row.original.product?.nama || `Produk ID: ${row.original.product_uid}`}
-                        </span>
-                        {row.original.product?.barcode && (
-                            <span className="text-[10px] font-mono text-slate-400 mt-0.5">
-                                {row.original.product.barcode}
+                enableSorting: true,
+                size: 260,
+                cell: ({ row }) => {
+                    const item = row.original;
+                    const name = item.nama || item.product?.nama || `Produk ID: ${item.product_uid}`;
+                    const barcode = item.barcode || item.product?.barcode || null;
+                    return (
+                        <div className="flex flex-col py-0.5 min-w-[170px] max-w-[260px] sm:max-w-[340px]">
+                            <span className="text-xs font-bold text-slate-900 leading-tight truncate block" title={name}>
+                                {name}
                             </span>
-                        )}
-                    </div>
-                ),
+                            {barcode && (
+                                <span className="inline-flex items-center gap-0.5 font-mono text-[9.5px] text-slate-400 bg-slate-50 px-1 py-0.2 rounded mt-0.5 w-fit">
+                                    <IconBarcode size={11} className="opacity-70" />
+                                    {barcode}
+                                </span>
+                            )}
+                        </div>
+                    );
+                },
             },
             {
-                accessorKey: "category",
+                accessorKey: "category_name",
                 header: "Kategori",
                 enableSorting: false,
+                size: 130,
                 cell: ({ row }) => {
-                    const catUid = row.original.category_uid || row.original.product?.category_uid || row.original.category?.uid;
-                    const catName = (catUid && categoryMap.get(String(catUid))) || row.original.category?.nama || row.original.product?.category?.nama;
+                    const item = row.original;
+                    const catName =
+                        item.category_name ||
+                        (item.category_uid && categoryMap.get(String(item.category_uid))) ||
+                        item.category?.nama ||
+                        item.product?.category?.nama;
                     return (
-                        <span className="text-xs text-slate-600">
-                            {catName || "-"}
+                        <span className="text-xs text-slate-600 truncate block">
+                            {catName || "—"}
                         </span>
                     );
                 },
             },
             {
-                accessorKey: "brand",
+                accessorKey: "brand_name",
                 header: "Brand",
                 enableSorting: false,
+                size: 120,
                 cell: ({ row }) => {
-                    const brandUid = row.original.brand_uid || row.original.product?.brand_uid || row.original.brand?.uid;
-                    const brandName = (brandUid && brandMap.get(String(brandUid))) || row.original.brand?.nama || row.original.product?.brand?.nama;
+                    const item = row.original;
+                    const brandName =
+                        item.brand_name ||
+                        (item.brand_uid && brandMap.get(String(item.brand_uid))) ||
+                        item.brand?.nama ||
+                        item.product?.brand?.nama;
                     return (
-                        <span className="text-xs text-slate-600">
-                            {brandName || "-"}
+                        <span className="text-xs text-slate-600 truncate block">
+                            {brandName || "—"}
                         </span>
                     );
                 },
@@ -238,38 +220,48 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
             {
                 accessorKey: "stok_sistem",
                 header: "Stok Sistem",
+                enableSorting: true,
+                size: 100,
                 meta: {
                     headerClassName: "text-right",
-                    cellClassName: "text-right font-mono text-slate-500",
+                    cellClassName: "text-right font-mono text-slate-500 text-xs",
                 },
                 cell: ({ row }) => `${row.original.stok_sistem} pcs`,
             },
             {
                 accessorKey: "stok_fisik",
                 header: "Stok Fisik",
+                enableSorting: true,
+                size: 100,
                 meta: {
                     headerClassName: "text-right",
-                    cellClassName: "text-right font-mono text-slate-800 font-bold",
+                    cellClassName: "text-right font-mono text-slate-800 font-bold text-xs",
                 },
                 cell: ({ row }) => `${row.original.stok_fisik} pcs`,
             },
             {
                 accessorKey: "selisih",
                 header: "Selisih",
+                enableSorting: true,
+                size: 95,
                 meta: {
                     headerClassName: "text-right",
-                    cellClassName: "text-right font-mono font-bold",
+                    cellClassName: "text-right",
                 },
                 cell: ({ row }) => {
-                    const selisih = row.original.selisih;
-                    const colorClass = selisih === 0
-                        ? "text-slate-400"
-                        : selisih > 0
-                            ? "text-blue-600"
-                            : "text-rose-500";
+                    const diff = (Number(row.original.stok_fisik) || 0) - (Number(row.original.stok_sistem) || 0);
                     return (
-                        <span className={colorClass}>
-                            {selisih > 0 ? `+${selisih}` : selisih} pcs
+                        <span
+                            className={cn(
+                                "inline-block font-mono font-bold text-[11px] px-1.5 py-0.5 rounded-md",
+                                diff === 0
+                                    ? "bg-slate-100 text-slate-500"
+                                    : diff > 0
+                                    ? "bg-blue-50 text-blue-700 border border-blue-100"
+                                    : "bg-rose-50 text-rose-700 border border-rose-100"
+                            )}
+                        >
+                            {diff > 0 ? `+${diff}` : diff} pcs
                         </span>
                     );
                 },
@@ -279,8 +271,8 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                 header: "Alasan Selisih",
                 enableSorting: false,
                 cell: ({ row }) => (
-                    <span className="text-xs text-slate-600">
-                        {row.original.alasan || "-"}
+                    <span className="text-xs text-slate-600 italic truncate block">
+                        {row.original.alasan || "—"}
                     </span>
                 ),
             },
@@ -310,27 +302,36 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-3 sm:space-y-3.5 pb-12">
             {/* Header Area */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-                <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-3">
                     <Button
                         type="button"
                         onClick={() => router.push(ROUTES.ADMIN_STOCK)}
                         variant="outline"
-                        className="p-2 h-9 w-9 rounded-xl border-slate-200 text-slate-500 hover:text-slate-900 bg-white"
+                        size="icon"
+                        className="h-8 w-8 rounded-xl border-slate-200 text-slate-500 hover:text-slate-900 bg-white cursor-pointer"
+                        title="Kembali ke Daftar Stock"
                     >
-                        <IconArrowLeft size={18} />
+                        <IconArrowLeft size={16} />
                     </Button>
                     <div>
-                        <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                            <span>Detail Stock Opname — {opname.nomor_opname}</span>
-                            <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold border ${OPNAME_STATUS_CLASSES[opname.status] || "bg-amber-50 text-amber-700 border-amber-100"}`}>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <h2 className="text-xs sm:text-sm font-bold text-slate-900">
+                                Opname #{opname.nomor_opname}
+                            </h2>
+                            <span
+                                className={cn(
+                                    "px-2 py-0.5 rounded-full text-[9px] font-bold border",
+                                    OPNAME_STATUS_CLASSES[opname.status] || "bg-amber-50 text-amber-700 border-amber-100"
+                                )}
+                            >
                                 {OPNAME_STATUS_LABELS[opname.status]}
                             </span>
-                        </h2>
-                        <p className="text-xs text-slate-400">
-                            ID Dokumen: <span className="font-semibold text-slate-600">{opname.uid}</span>
+                        </div>
+                        <p className="text-[10.5px] text-slate-400 mt-0.5">
+                            ID: <span className="font-mono text-slate-500">{opname.uid}</span>
                         </p>
                     </div>
                 </div>
@@ -340,25 +341,96 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                         <Button
                             onClick={() => router.push(`/admin/inventory/stock-opname/${opname.uid}/items`)}
                             variant="outline"
-                            className="border-slate-200 text-slate-700 hover:text-slate-900 bg-white font-bold text-xs h-10 px-4 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0"
+                            className="border-slate-200 text-slate-700 hover:text-slate-900 bg-white font-bold text-xs h-8 px-3 rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0"
                         >
-                            <IconEdit size={16} /> Edit Koreksi Barang
+                            <IconEdit size={14} />
+                            <span>Edit Koreksi Barang</span>
                         </Button>
                         <Button
                             onClick={() => setIsConfirmFinalizeOpen(true)}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-10 px-5 shadow-sm rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0 border-none"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-8 px-4 shadow-xs rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0 border-none"
                         >
-                            <IconCheck size={16} /> Finalisasi & Update Stok
+                            <IconCheck size={14} />
+                            <span>Finalisasi &amp; Update Stok</span>
                         </Button>
                     </div>
                 )}
             </div>
 
-            {/* Metadata Section */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-3.5">
-                    <h3 className="text-xs font-bold text-slate-800 border-b border-slate-50 pb-2">Informasi Dokumen</h3>
-                    <div className="space-y-2 text-xs">
+            {/* KPI Summary Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {/* Total Scanned */}
+                <div className="bg-white border border-slate-100 rounded-xl p-2.5 shadow-2xs flex items-center justify-between">
+                    <div className="min-w-0">
+                        <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block truncate">
+                            Total Dihitung
+                        </span>
+                        <p className="text-xs sm:text-sm font-bold text-slate-900 mt-0.5">
+                            {totalCount.toLocaleString("id-ID")}{" "}
+                            <span className="text-[9.5px] font-medium text-slate-400">item</span>
+                        </p>
+                    </div>
+                    <div className="bg-slate-50 text-slate-500 p-1.5 rounded-lg shrink-0">
+                        <IconClipboard size={14} />
+                    </div>
+                </div>
+
+                {/* Sesuai Sistem */}
+                <div className="bg-white border border-slate-100 rounded-xl p-2.5 shadow-2xs flex items-center justify-between">
+                    <div className="min-w-0">
+                        <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block truncate">
+                            Sesuai Sistem
+                        </span>
+                        <p className="text-xs sm:text-sm font-bold text-emerald-600 mt-0.5">
+                            {matchCount.toLocaleString("id-ID")}{" "}
+                            <span className="text-[9.5px] font-medium text-emerald-600/70">item</span>
+                        </p>
+                    </div>
+                    <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg shrink-0">
+                        <IconCheck size={14} />
+                    </div>
+                </div>
+
+                {/* Selisih Lebih (+) */}
+                <div className="bg-white border border-slate-100 rounded-xl p-2.5 shadow-2xs flex items-center justify-between">
+                    <div className="min-w-0">
+                        <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block truncate">
+                            Selisih Lebih (+)
+                        </span>
+                        <p className="text-xs sm:text-sm font-bold text-blue-600 mt-0.5">
+                            {positiveCount.toLocaleString("id-ID")}{" "}
+                            <span className="text-[9.5px] font-medium text-blue-600/70">item</span>
+                        </p>
+                    </div>
+                    <div className="bg-blue-50 text-blue-600 p-1.5 rounded-lg shrink-0">
+                        <IconPlus size={14} />
+                    </div>
+                </div>
+
+                {/* Selisih Kurang (-) */}
+                <div className="bg-white border border-slate-100 rounded-xl p-2.5 shadow-2xs flex items-center justify-between">
+                    <div className="min-w-0">
+                        <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block truncate">
+                            Selisih Kurang (-)
+                        </span>
+                        <p className="text-xs sm:text-sm font-bold text-rose-600 mt-0.5">
+                            {negativeCount.toLocaleString("id-ID")}{" "}
+                            <span className="text-[9.5px] font-medium text-rose-600/70">item</span>
+                        </p>
+                    </div>
+                    <div className="bg-rose-50 text-rose-600 p-1.5 rounded-lg shrink-0">
+                        <IconMinus size={14} />
+                    </div>
+                </div>
+            </div>
+
+            {/* Metadata Info & Notes Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="bg-white border border-slate-100 rounded-xl p-3 shadow-2xs space-y-2">
+                    <h3 className="text-xs font-bold text-slate-800 border-b border-slate-50 pb-1.5">
+                        Informasi Dokumen
+                    </h3>
+                    <div className="space-y-1.5 text-xs">
                         <div className="flex justify-between">
                             <span className="text-slate-400">Tanggal Dibuat</span>
                             <span className="font-semibold text-slate-700">
@@ -372,21 +444,13 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                     </div>
                 </div>
 
-                <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-3.5">
-                    <h3 className="text-xs font-bold text-slate-800 border-b border-slate-50 pb-2">Catatan</h3>
+                <div className="bg-white border border-slate-100 rounded-xl p-3 shadow-2xs space-y-2">
+                    <h3 className="text-xs font-bold text-slate-800 border-b border-slate-50 pb-1.5">
+                        Catatan
+                    </h3>
                     <p className="text-xs text-slate-600 italic leading-relaxed">
                         {opname.catatan || "Tidak ada catatan."}
                     </p>
-                </div>
-
-                <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-3.5">
-                    <h3 className="text-xs font-bold text-slate-800 border-b border-slate-50 pb-2">Ringkasan Items</h3>
-                    <div className="space-y-2 text-xs">
-                        <div className="flex justify-between">
-                            <span className="text-slate-400">Total Macam Produk</span>
-                            <span className="font-bold text-slate-900">{opname.items_count || 0}</span>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -396,14 +460,9 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
             )}
 
             {/* Core Interaction Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 items-start">
                 {/* Items Table (Col-8) */}
-                <div className="lg:col-span-8 bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden p-5 space-y-4">
-                    <div className="flex items-center gap-2 pb-2 border-b border-slate-50">
-                        <IconFileDescription size={18} className="text-emerald-600" />
-                        <h3 className="text-xs font-bold text-slate-900">Daftar Koreksi Barang</h3>
-                    </div>
-
+                <div className="lg:col-span-8">
                     <DataTable
                         columns={columns}
                         data={itemsData?.data || []}
@@ -421,50 +480,120 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                             setSortOrder(order);
                             setItemsPage(1);
                         }}
-                        virtualize={false}
+                        showViewToggle={true}
+                        extraToolbarActions={
+                            <div className="flex items-center gap-1.5">
+                                <IconFileDescription size={15} className="text-emerald-600" />
+                                <h3 className="text-xs font-bold text-slate-900">Daftar Koreksi Barang</h3>
+                                <span className="text-[10px] font-bold px-1.5 py-0.2 bg-slate-200/70 text-slate-700 rounded-full">
+                                    {totalCount.toLocaleString("id-ID")} Item
+                                </span>
+                            </div>
+                        }
+                        renderCardItem={(row) => {
+                            const item = row.original;
+                            const name = item.nama || item.product?.nama || `Produk ID: ${item.product_uid}`;
+                            const barcode = item.barcode || item.product?.barcode || null;
+                            const diff = (Number(item.stok_fisik) || 0) - (Number(item.stok_sistem) || 0);
+                            const catName =
+                                item.category_name ||
+                                (item.category_uid && categoryMap.get(String(item.category_uid))) ||
+                                item.category?.nama;
+                            const brandName =
+                                item.brand_name ||
+                                (item.brand_uid && brandMap.get(String(item.brand_uid))) ||
+                                item.brand?.nama;
+
+                            return (
+                                <div
+                                    key={item.uid}
+                                    className="bg-white border border-slate-100 rounded-xl p-2.5 shadow-2xs space-y-2"
+                                >
+                                    <div className="flex items-start justify-between gap-1.5">
+                                        <div className="min-w-0">
+                                            <h4 className="text-xs font-bold text-slate-800 line-clamp-1 leading-snug">
+                                                {name}
+                                            </h4>
+                                            <div className="flex items-center gap-1.5 flex-wrap text-[10px] text-slate-400 font-medium mt-0.5">
+                                                {barcode && (
+                                                    <span className="font-mono flex items-center gap-0.5">
+                                                        <IconBarcode size={11} className="opacity-70" />
+                                                        {barcode}
+                                                    </span>
+                                                )}
+                                                {(catName || brandName) && (
+                                                    <span>• {catName || brandName}</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <span
+                                            className={cn(
+                                                "font-mono font-bold text-[11px] px-1.5 py-0.5 rounded-md shrink-0",
+                                                diff === 0
+                                                    ? "bg-slate-100 text-slate-500"
+                                                    : diff > 0
+                                                    ? "bg-blue-50 text-blue-700 border border-blue-100"
+                                                    : "bg-rose-50 text-rose-700 border border-rose-100"
+                                            )}
+                                        >
+                                            {diff > 0 ? `+${diff}` : diff}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-50 font-mono">
+                                        <span className="text-slate-500">Sistem: {item.stok_sistem} pcs</span>
+                                        <span className="text-slate-800 font-bold">Fisik: {item.stok_fisik} pcs</span>
+                                    </div>
+
+                                    {item.alasan && (
+                                        <div className="text-[10px] text-slate-500 italic bg-slate-50 px-2 py-1 rounded">
+                                            Alasan: {item.alasan}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        }}
                     />
                 </div>
 
                 {/* Activity Logs (Col-4) */}
-                <div className="lg:col-span-4 bg-white border border-slate-100 rounded-2xl shadow-sm p-5 space-y-4">
-                    <div className="flex items-center gap-2 pb-2 border-b border-slate-50">
-                        <IconClock size={18} className="text-emerald-600" />
+                <div className="lg:col-span-4 bg-white border border-slate-100 rounded-xl shadow-2xs p-3.5 space-y-3">
+                    <div className="flex items-center gap-1.5 pb-2 border-b border-slate-50">
+                        <IconClock size={15} className="text-emerald-600" />
                         <h3 className="text-xs font-bold text-slate-900">Log Aktivitas</h3>
                     </div>
 
                     {isLogsLoading ? (
-                        <div className="space-y-4 py-2 pl-3">
+                        <div className="space-y-3 py-1 pl-2">
                             {Array.from({ length: 4 }).map((_, idx) => (
-                                <div key={idx} className="relative flex gap-3 pb-4 last:pb-0 border-l border-slate-100 pl-4">
-                                    <div className="absolute -left-1.5 top-1.5 w-3 h-3 bg-slate-200 rounded-full border-2 border-white shadow-sm" />
-                                    <div className="space-y-1.5 w-full">
-                                        <Skeleton className="h-3.5 w-3/4 animate-pulse" />
-                                        <Skeleton className="h-3 w-1/2 animate-pulse" />
+                                <div key={idx} className="relative flex gap-2.5 pb-3 last:pb-0 border-l border-slate-100 pl-3">
+                                    <div className="absolute -left-1 top-1.5 w-2 h-2 bg-slate-200 rounded-full" />
+                                    <div className="space-y-1 w-full">
+                                        <Skeleton className="h-3 w-3/4" />
+                                        <Skeleton className="h-2.5 w-1/2" />
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <div className="space-y-4 pl-3 pr-1 py-1 max-h-112 overflow-y-auto scrollbar-thin">
+                        <div className="space-y-3 pl-2 pr-1 py-1 max-h-96 overflow-y-auto scrollbar-thin">
                             {logs.map((log) => (
-                                <div key={log.uid} className="relative flex gap-3 pb-4 last:pb-0 border-l border-slate-100 pl-4">
-                                    <div className="absolute -left-1.5 top-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
-                                    <div className="space-y-0.5 text-xs">
-                                        <p className="font-semibold text-slate-800">
+                                <div key={log.uid} className="relative flex gap-2.5 pb-3 last:pb-0 border-l border-slate-100 pl-3">
+                                    <div className="absolute -left-1 top-1 w-2 h-2 bg-emerald-500 rounded-full" />
+                                    <div className="space-y-0.5 text-xs min-w-0">
+                                        <p className="font-semibold text-slate-800 text-[11px] leading-tight">
                                             {log.description}
                                         </p>
-                                        <div className="flex flex-wrap gap-2 text-[10px] text-slate-400 font-mono">
-                                            <span>
-                                                {formatToReadableDateTime(log.created_at)}
-                                            </span>
+                                        <div className="flex flex-wrap gap-1.5 text-[9.5px] text-slate-400 font-mono">
+                                            <span>{formatToReadableDateTime(log.created_at)}</span>
                                             <span>•</span>
-                                            <span>Oleh: {log.user?.name || "System"}</span>
+                                            <span>{log.user?.name || "System"}</span>
                                         </div>
                                     </div>
                                 </div>
                             ))}
                             {logs.length === 0 && (
-                                <p className="text-center py-8 text-slate-400 text-xs">
+                                <p className="text-center py-6 text-slate-400 text-xs">
                                     Belum ada log aktivitas tercatat.
                                 </p>
                             )}
@@ -481,7 +610,7 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                 description="Apakah Anda yakin ingin menyelesaikan stock opname ini? Stok produk di sistem akan secara otomatis disesuaikan secara permanen dengan stok fisik lapangan."
                 confirmText="Ya, Selesaikan"
                 cancelText="Batal"
-                variant="warning"
+                variant="primary"
                 onConfirm={handleFinalize}
                 isLoading={finalizeOpname.isPending}
             />
@@ -513,16 +642,16 @@ function OpnameProgressCard({ uid }: { uid: string }) {
     const errMessage = progressData?.error_message;
 
     return (
-        <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-5 space-y-3.5 text-xs transition-all duration-300 shadow-sm">
-            <div className="flex justify-between items-center font-bold text-blue-850">
+        <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-3.5 space-y-2.5 text-xs transition-all duration-300 shadow-2xs">
+            <div className="flex justify-between items-center font-bold text-blue-900">
                 <span className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-blue-600 animate-ping" />
+                    <span className="h-2 w-2 rounded-full bg-blue-600 animate-ping" />
                     Memproses Koreksi Stok...
                 </span>
-                <span className="font-mono text-sm">{percentage}%</span>
+                <span className="font-mono text-xs">{percentage}%</span>
             </div>
 
-            <div className="w-full h-2 bg-blue-100 rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-blue-100 rounded-full overflow-hidden">
                 <div
                     className="h-full bg-blue-600 transition-all duration-500 rounded-full"
                     style={{ width: `${percentage}%` }}
