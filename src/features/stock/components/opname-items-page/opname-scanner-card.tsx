@@ -6,8 +6,8 @@ import { IconBarcode, IconCheck, IconPlus } from "@tabler/icons-react";
 import { toast } from "sonner";
 
 interface OpnameScannerCardProps {
-  products: Product[];
-  disabled: boolean;
+  products?: Product[];
+  disabled?: boolean;
   onProductFound: (product: Product) => void;
   lastScanFeedback?: {
     type: "added" | "incremented";
@@ -18,7 +18,7 @@ interface OpnameScannerCardProps {
 
 export function OpnameScannerCard({
   products,
-  disabled,
+  disabled = false,
   onProductFound,
   lastScanFeedback,
 }: OpnameScannerCardProps) {

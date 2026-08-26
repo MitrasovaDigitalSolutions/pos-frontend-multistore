@@ -16,24 +16,27 @@ export async function apiGet<T>(
 export async function apiPost<T, D = unknown>(
     url: string,
     payload?: D,
+    config?: AxiosRequestConfig,
 ): Promise<T> {
-    const { data } = await apiClient.post<T>(url, payload);
+    const { data } = await apiClient.post<T>(url, payload, config);
     return data;
 }
 
 export async function apiPut<T, D = unknown>(
     url: string,
     payload?: D,
+    config?: AxiosRequestConfig,
 ): Promise<T> {
-    const { data } = await apiClient.put<T>(url, payload);
+    const { data } = await apiClient.put<T>(url, payload, config);
     return data;
 }
 
 export async function apiPatch<T, D = unknown>(
     url: string,
     payload?: D,
+    config?: AxiosRequestConfig,
 ): Promise<T> {
-    const { data } = await apiClient.patch<T>(url, payload);
+    const { data } = await apiClient.patch<T>(url, payload, config);
     return data;
 }
 
@@ -55,16 +58,18 @@ export async function apiGetData<T>(
 export async function apiPostData<T, D = unknown>(
     url: string,
     payload?: D,
+    config?: AxiosRequestConfig,
 ): Promise<T> {
-    const response = await apiPost<ApiResponse<T>, D>(url, payload);
+    const response = await apiPost<ApiResponse<T>, D>(url, payload, config);
     return response.data;
 }
 
 export async function apiPutData<T, D = unknown>(
     url: string,
     payload?: D,
+    config?: AxiosRequestConfig,
 ): Promise<T> {
-    const response = await apiPut<ApiResponse<T>, D>(url, payload);
+    const response = await apiPut<ApiResponse<T>, D>(url, payload, config);
     return response.data;
 }
 

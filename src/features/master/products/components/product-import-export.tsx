@@ -33,6 +33,7 @@ export function ProductImportExport({
     try {
       const response = await apiClient.get(exportUrl, {
         responseType: "blob",
+        timeout: 120000,
       });
 
       // Extract filename from Content-Disposition if present
@@ -147,6 +148,7 @@ export function ProductImportExport({
         headers: {
           "Content-Type": "multipart/form-data",
         },
+        timeout: 300000,
       });
 
       const responseData = response.data as {

@@ -37,6 +37,23 @@ export function useOpnameItems(uid: string | null, params?: PaginationParams) {
     });
 }
 
+export function useOpnameAllItems(uid: string | null) {
+    return useQuery<OpnameItem[]>({
+        queryKey: [...queryKeys.inventory.opnameDetail(uid || ""), "items", "all"],
+        queryFn: async () => {
+            try {
+                // Call dedicated compact endpoint if available
+                return await apiGetData<OpnameItem[]>(`/v1/inventory/opname/${uid}/items/all`);
+            } catch {
+                // Fallback to regular items endpoint if /all is not yet deployed
+                const res = await apiGetList<OpnameItem>(`/v1/inventory/opname/${uid}/items`, { per_page: 50000 });
+                return res.data || [];
+            }
+        },
+        enabled: uid !== null && uid !== "",
+    });
+}
+
 export interface OpnameProgress {
     uid: string;
     status: string;
@@ -180,6 +197,7 @@ import { apiClient } from "@/shared/api/axios";
 export async function downloadOpnameTemplateXlsx(): Promise<void> {
     const response = await apiClient.get("/v1/inventory/opname/sheet/xlsx", {
         responseType: "blob",
+        timeout: 120000,
     });
     let filename = "template_stock_opname.xlsx";
     const contentDisposition = response.headers["content-disposition"];
@@ -204,6 +222,7 @@ export async function downloadOpnameTemplateXlsx(): Promise<void> {
 export async function downloadOpnameSheetPdf(): Promise<void> {
     const response = await apiClient.get("/v1/inventory/opname/sheet/pdf", {
         responseType: "blob",
+        timeout: 120000,
     });
     let filename = "lembar_stock_opname.pdf";
     const contentDisposition = response.headers["content-disposition"];
@@ -232,6 +251,7 @@ export function useImportOpname() {
             apiPost<ApiResponse<Opname>, FormData>(
                 "/v1/inventory/opname/import",
                 formData,
+                { timeout: 300000 },
             ),
         onSuccess: () => {
             queryClient.invalidateQueries({
@@ -249,6 +269,7 @@ export function useImportOpnameIntoDraft() {
             apiPost<ApiResponse<Opname>, FormData>(
                 `/v1/inventory/opname/import/${uid}`,
                 formData,
+                { timeout: 300000 },
             ),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({

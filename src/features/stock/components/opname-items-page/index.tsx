@@ -6,7 +6,6 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ROUTES } from "@/constants/routes";
 import { useBrands } from "@/features/master/brands/api/brands-api";
 import { useCategories } from "@/features/master/categories/api/categories-api";
-import { useProducts } from "@/features/master/products/api/products-api";
 import type { Product } from "@/features/master/products/types";
 import { clearOpnameItemsStore, getOpnameItemsStore, type OpnameItemLocal } from "@/stores/opname-items-store";
 import { useRouter } from "next/navigation";
@@ -14,8 +13,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   useFinalizeOpname,
+  useOpnameAllItems,
   useOpnameDetail,
-  useOpnameItems,
   useUpdateOpname,
   useUpdateOpnameItems,
 } from "../../api/stock-api";
@@ -53,13 +52,7 @@ function toLocalItem(dbItem: OpnameItem, index: number): OpnameItemLocal {
 export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   const router = useRouter();
   const { data: opname, isLoading: opnameLoading, refetch: refetchDetail } = useOpnameDetail(opnameId);
-  const { data: dbItemsRes, isLoading: dbItemsLoading, refetch: refetchItems } = useOpnameItems(opnameId, {
-    per_page: 50000,
-  });
-
-  const { data: productsData, isLoading: productsLoading } = useProducts({
-    per_page: 500,
-  });
+  const { data: dbItems, isLoading: dbItemsLoading, refetch: refetchItems } = useOpnameAllItems(opnameId);
 
   const { data: categoriesData } = useCategories({ per_page: 1000 });
   const { data: brandsData } = useBrands({ per_page: 1000 });
@@ -82,8 +75,6 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
       label: b.nama,
     })),
   ], [brands]);
-
-  const products = productsData?.data || [];
 
   const updateOpname = useUpdateOpname();
   const updateOpnameItems = useUpdateOpnameItems();
@@ -123,7 +114,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
 
     const serverItems = (opname?.items && opname.items.length > 0)
       ? opname.items
-      : (dbItemsRes?.data || []);
+      : (Array.isArray(dbItems) ? dbItems : []);
 
     if (itemCount === 0 && serverItems.length > 0) {
       const formatted = serverItems.map((dbItem: OpnameItem, index: number) => toLocalItem(dbItem, index));
@@ -132,7 +123,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
     } else if (serverItems.length > 0 || !dbItemsLoading) {
       isHydratedRef.current = true;
     }
-  }, [dbItemsLoading, dbItemsRes, itemCount, opname?.items, setItems]);
+  }, [dbItems, dbItemsLoading, itemCount, opname?.items, setItems]);
 
   const handleImportDraftSuccess = async (newItems?: OpnameItem[]) => {
     setIsSyncing(true);
@@ -153,7 +144,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
 
       const freshItems = (detailRes.data?.items && detailRes.data.items.length > 0)
         ? detailRes.data.items
-        : (itemsRes.data?.data || []);
+        : (Array.isArray(itemsRes.data) ? itemsRes.data : []);
 
       if (freshItems.length > 0) {
         await new Promise((resolve) => setTimeout(resolve, 60));
@@ -345,7 +336,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
     }
   };
 
-  const hasServerItems = (opname?.items && opname.items.length > 0) || (dbItemsRes?.data && dbItemsRes.data.length > 0);
+  const hasServerItems = (opname?.items && opname.items.length > 0) || (Array.isArray(dbItems) && dbItems.length > 0);
   if (opnameLoading || !opname || (dbItemsLoading && itemCount === 0 && !hasServerItems)) {
     return (
       <div className="space-y-4 animate-pulse p-4">
@@ -406,8 +397,7 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
 
       {/* ── Scanner Card with Inline Feedback ── */}
       <OpnameScannerCard
-        products={products}
-        disabled={productsLoading || updateOpnameItems.isPending || isSyncing}
+        disabled={updateOpnameItems.isPending || isSyncing}
         onProductFound={handleProductFound}
         lastScanFeedback={lastScanFeedback}
       />

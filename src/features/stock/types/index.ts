@@ -47,15 +47,19 @@ import type { OpnameStatus } from "@/constants/stock";
 
 export interface OpnameItem {
     uid: string;
-    opname_uid: string;
     product_uid: string;
-    brand_uid?: string | null;
-    category_uid?: string | null;
+    nama?: string;
+    barcode?: string;
     stok_sistem: number;
     stok_fisik: number;
     selisih: number;
-    alasan: string;
-    created_at: string;
+    alasan?: string | null;
+    category_uid?: string | null;
+    category_name?: string | null;
+    brand_uid?: string | null;
+    brand_name?: string | null;
+    opname_uid?: string;
+    created_at?: string;
     product?: Product;
     category?: { uid: string; nama: string } | null;
     brand?: { uid: string; nama: string } | null;
