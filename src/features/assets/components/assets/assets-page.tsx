@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
     IconBuildingWarehouse,
@@ -25,6 +26,17 @@ export function AssetsPage() {
         per_page: 50,
     });
 
+    const filterMethods = useForm<AssetFilterParams>({
+        defaultValues: {
+            search: "",
+            asset_category_uid: "all",
+            status: "all",
+            sumber_perolehan: "all",
+            date_start: "",
+            date_end: "",
+        },
+    });
+
     const { data: assetsData, isLoading, isFetching, refetch } = useAssets(filters);
     const { data: summary, isLoading: isLoadingSummary } = useAssetSummary();
     const { data: categories = [] } = useAssetCategories();
@@ -42,6 +54,40 @@ export function AssetsPage() {
     const [isBulkPenyusutanOpen, setIsBulkPenyusutanOpen] = useState<boolean>(false);
 
     // Handlers
+    const handleFilterSubmit = useCallback((values: AssetFilterParams) => {
+        setFilters((prev) => ({
+            ...prev,
+            page: 1,
+            search: values.search?.trim() ? values.search.trim() : undefined,
+            asset_category_uid:
+                !values.asset_category_uid || values.asset_category_uid === "all"
+                    ? undefined
+                    : values.asset_category_uid,
+            status: !values.status || values.status === "all" ? undefined : values.status,
+            sumber_perolehan:
+                !values.sumber_perolehan || values.sumber_perolehan === "all"
+                    ? undefined
+                    : values.sumber_perolehan,
+            date_start: values.date_start || undefined,
+            date_end: values.date_end || undefined,
+        }));
+    }, []);
+
+    const handleFilterReset = useCallback(() => {
+        filterMethods.reset({
+            search: "",
+            asset_category_uid: "all",
+            status: "all",
+            sumber_perolehan: "all",
+            date_start: "",
+            date_end: "",
+        });
+        setFilters({
+            page: 1,
+            per_page: 50,
+        });
+    }, [filterMethods]);
+
     const handleCreateClick = () => {
         setEditingAsset(null);
         setIsFormDialogOpen(true);
@@ -119,29 +165,33 @@ export function AssetsPage() {
             {/* Metrics Summary Tiles */}
             <AssetMetricsSummary summary={summary} isLoading={isLoadingSummary} />
 
-            {/* Main Table Card */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs overflow-hidden p-3.5 space-y-3">
-                {/* Filter Toolbar */}
+            {/* Main Table & Filter Container */}
+            <div className="space-y-3">
+                {/* Reusable Filter Form */}
                 <AssetFilterToolbar
-                    filters={filters}
-                    onFiltersChange={setFilters}
+                    methods={filterMethods}
+                    onSubmit={handleFilterSubmit}
+                    onReset={handleFilterReset}
                     categories={categories}
                 />
 
                 {/* Table */}
-                <AssetTable
-                    assets={assetsList}
-                    onDetail={handleDetailClick}
-                    onDepreciate={handleDepreciateClick}
-                    onEdit={handleEditClick}
-                    isLoading={isLoading}
-                    isFetching={isFetching}
-                    onRefetch={refetch}
-                />
+                <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs overflow-hidden p-3.5">
+                    <AssetTable
+                        assets={assetsList}
+                        onDetail={handleDetailClick}
+                        onDepreciate={handleDepreciateClick}
+                        onEdit={handleEditClick}
+                        isLoading={isLoading}
+                        isFetching={isFetching}
+                        onRefetch={refetch}
+                    />
+                </div>
             </div>
 
             {/* Dialog: Create / Edit Asset */}
             <AssetFormDialog
+                key={isFormDialogOpen ? (editingAsset?.uid ?? "create-dialog") : "closed-dialog"}
                 open={isFormDialogOpen}
                 onOpenChange={setIsFormDialogOpen}
                 editingAsset={editingAsset}
@@ -150,6 +200,7 @@ export function AssetsPage() {
 
             {/* Dialog: Single Asset Depreciation */}
             <AssetPenyusutanDialog
+                key={isPenyusutanDialogOpen ? (assetToDepreciate?.uid ?? "penyusutan-dialog") : "closed-penyusutan"}
                 open={isPenyusutanDialogOpen}
                 onOpenChange={setIsPenyusutanDialogOpen}
                 asset={assetToDepreciate}
@@ -157,6 +208,7 @@ export function AssetsPage() {
 
             {/* Dialog: Bulk Asset Depreciation */}
             <AssetBulkPenyusutanDialog
+                key={isBulkPenyusutanOpen ? "bulk-open" : "bulk-closed"}
                 open={isBulkPenyusutanOpen}
                 onOpenChange={setIsBulkPenyusutanOpen}
                 activeAssets={assetsList}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
     IconBuildingWarehouse,
@@ -110,8 +111,21 @@ export function AssetDetailSheet({
                 className="max-w-3xl"
             >
                 {isLoading ? (
-                    <div className="p-8 text-center text-xs text-slate-400">
-                        Memuat rincian data aset...
+                    <div className="space-y-4 pt-1">
+                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 space-y-2">
+                            <Skeleton className="h-5 w-48 rounded" />
+                            <div className="flex items-center gap-2">
+                                <Skeleton className="h-4 w-24 rounded" />
+                                <Skeleton className="h-4 w-32 rounded" />
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                            <Skeleton className="h-16 rounded-xl" />
+                            <Skeleton className="h-16 rounded-xl" />
+                            <Skeleton className="h-16 rounded-xl" />
+                            <Skeleton className="h-16 rounded-xl" />
+                        </div>
+                        <Skeleton className="h-40 rounded-xl" />
                     </div>
                 ) : !asset ? (
                     <div className="p-8 text-center text-xs text-rose-500">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BaseDialog } from "@/components/ui/base-dialog";
@@ -46,26 +46,15 @@ export function AssetPenyusutanDialog({
         control,
         setValue,
         watch,
-        reset,
         formState: { errors },
     } = useForm<AssetPenyusutanSchemaInput>({
         resolver: zodResolver(assetPenyusutanSchema),
         defaultValues: {
             tanggal: new Date().toISOString().split("T")[0],
             nominal: 0,
-            keterangan: null,
+            keterangan: asset ? `Penyusutan aset ${asset.nama}` : null,
         },
     });
-
-    useEffect(() => {
-        if (open && asset) {
-            reset({
-                tanggal: new Date().toISOString().split("T")[0],
-                nominal: 0,
-                keterangan: `Penyusutan aset ${asset.nama}`,
-            });
-        }
-    }, [open, asset, reset]);
 
     const watchedNominal = watch("nominal") || 0;
     const isExceedingMax = watchedNominal > maxSusut;
