@@ -246,4 +246,27 @@ export const ENDPOINTS = {
         ORDER: (summaryUid: string) => `/v1/request-transfer/summary/${summaryUid}/order`,
         SEND: (summaryUid: string) => `/v1/request-transfer/summary/${summaryUid}/send`,
     },
+
+    // Assets Management
+    ASSETS: {
+        CATEGORIES: {
+            LIST: "/v1/assets/categories",
+            CREATE: "/v1/assets/categories",
+            DETAIL: (uid: string) => `/v1/assets/categories/${uid}`,
+            UPDATE: (uid: string) => `/v1/assets/categories/${uid}`,
+            DELETE: (uid: string) => `/v1/assets/categories/${uid}`,
+        },
+        LIST: "/v1/assets",
+        SUMMARY: "/v1/assets/summary",
+        CREATE: "/v1/assets",
+        DETAIL: (uid: string) => `/v1/assets/${uid}`,
+        UPDATE: (uid: string) => `/v1/assets/${uid}`,
+        DELETE: (uid: string) => `/v1/assets/${uid}`,
+        PENYUSUTAN: {
+            LIST: (assetUid: string) => `/v1/assets/${assetUid}/penyusutan`,
+            CREATE: (assetUid: string) => `/v1/assets/${assetUid}/penyusutan`,
+            BULK: "/v1/assets/penyusutan-bulk",
+            DELETE: (penyusutanUid: string) => `/v1/assets/penyusutan/${penyusutanUid}`,
+        },
+    },
 } as const;

@@ -362,6 +362,12 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                     },
                     {
+                        label: "Aset & Inventaris",
+                        path: ROUTES.ADMIN_ASSETS,
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                    },
+                    {
                         label: "Buku Besar",
                         path: ROUTES.ADMIN_ACCOUNTING_GENERAL_LEDGER,
                         permission: (roles, permissions) =>
@@ -562,6 +568,13 @@ export function isNavItemActive(
     if (
         path === "/admin/expenses" &&
         (pathname === "/admin/expenses/categories" || pathname.startsWith("/admin/expenses/categories/"))
+    ) {
+        return false;
+    }
+
+    if (
+        path === ROUTES.ADMIN_ASSETS &&
+        (pathname === ROUTES.ADMIN_ASSET_CATEGORIES || pathname.startsWith(ROUTES.ADMIN_ASSET_CATEGORIES + "/"))
     ) {
         return false;
     }
