@@ -2,9 +2,8 @@
 
 import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { DataTable, DataTableActionButton } from "@/components/ui/data-table";
+import { DataTable } from "@/components/ui/data-table";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { IconEdit, IconTrash } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { useDeleteAssetCategory } from "../../api/asset-categories-api";
 import type { AssetCategory } from "../../types";
@@ -164,40 +163,8 @@ export function AssetCategoriesTable({
                     );
                 },
             },
-            {
-                id: "actions",
-                header: "Aksi",
-                size: 90,
-                cell: ({ row }) => {
-                    const c = row.original;
-                    const hasAssets = (c.assets_count ?? 0) > 0;
-                    return (
-                        <div className="flex items-center gap-1.5">
-                            <DataTableActionButton
-                                variant="indigo"
-                                tooltip="Ubah Kategori"
-                                onClick={() => onEdit(c)}
-                            >
-                                <IconEdit className="w-3.5 h-3.5" />
-                            </DataTableActionButton>
-                            <DataTableActionButton
-                                variant="rose"
-                                tooltip={
-                                    hasAssets
-                                        ? "Tidak dapat dihapus karena memiliki aset terdaftar"
-                                        : "Hapus Kategori"
-                                }
-                                disabled={hasAssets}
-                                onClick={() => handleDelete(c)}
-                            >
-                                <IconTrash className="w-3.5 h-3.5" />
-                            </DataTableActionButton>
-                        </div>
-                    );
-                },
-            },
         ],
-        [onEdit]
+        []
     );
 
     return (
@@ -207,6 +174,9 @@ export function AssetCategoriesTable({
                 data={categories}
                 isLoading={isLoading}
                 isFetching={isFetching}
+                onEdit={onEdit}
+                onDelete={handleDelete}
+                disableDelete={(c) => (c.assets_count ?? 0) > 0}
             />
 
             <ConfirmDialog

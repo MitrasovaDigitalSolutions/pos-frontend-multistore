@@ -4,12 +4,7 @@ import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable, DataTableActionButton } from "@/components/ui/data-table";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import {
-    IconEye,
-    IconTrendingDown,
-    IconEdit,
-    IconTrash,
-} from "@tabler/icons-react";
+import { IconTrendingDown } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { useDeleteAsset } from "../../api/assets-api";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
@@ -177,70 +172,8 @@ export function AssetTable({
                     );
                 },
             },
-            {
-                id: "actions",
-                header: "Aksi",
-                size: 140,
-                cell: ({ row }) => {
-                    const a = row.original;
-                    const maxSusut =
-                        (Number(a.nilai_buku) || 0) - (Number(a.nilai_residu) || 0);
-                    const canDepreciate = a.status === "aktif" && maxSusut > 0;
-                    const hasDepreciationHistory = (Number(a.total_penyusutan) || 0) > 0;
-
-                    return (
-                        <div className="flex items-center gap-1.5">
-                            {/* Detail */}
-                            <DataTableActionButton
-                                variant="slate"
-                                tooltip="Lihat Detail & Riwayat"
-                                onClick={() => onDetail(a)}
-                            >
-                                <IconEye className="w-3.5 h-3.5" />
-                            </DataTableActionButton>
-
-                            {/* Susutkan */}
-                            <DataTableActionButton
-                                variant="amber"
-                                tooltip={
-                                    canDepreciate
-                                        ? "Catat Penyusutan"
-                                        : "Aset sudah habis disusutkan"
-                                }
-                                disabled={!canDepreciate}
-                                onClick={() => onDepreciate(a)}
-                            >
-                                <IconTrendingDown className="w-3.5 h-3.5" />
-                            </DataTableActionButton>
-
-                            {/* Edit */}
-                            <DataTableActionButton
-                                variant="indigo"
-                                tooltip="Edit Data Aset"
-                                onClick={() => onEdit(a)}
-                            >
-                                <IconEdit className="w-3.5 h-3.5" />
-                            </DataTableActionButton>
-
-                            {/* Hapus */}
-                            <DataTableActionButton
-                                variant="rose"
-                                tooltip={
-                                    hasDepreciationHistory
-                                        ? "Tidak dapat dihapus karena memiliki riwayat penyusutan"
-                                        : "Hapus Aset"
-                                }
-                                disabled={hasDepreciationHistory}
-                                onClick={() => handleDelete(a)}
-                            >
-                                <IconTrash className="w-3.5 h-3.5" />
-                            </DataTableActionButton>
-                        </div>
-                    );
-                },
-            },
         ],
-        [onDetail, onDepreciate, onEdit]
+        []
     );
 
     return (
@@ -250,6 +183,29 @@ export function AssetTable({
                 data={assets}
                 isLoading={isLoading}
                 isFetching={isFetching}
+                onView={onDetail}
+                onEdit={onEdit}
+                onDelete={handleDelete}
+                disableDelete={(a) => (Number(a.total_penyusutan) || 0) > 0}
+                extraActions={(a) => {
+                    const maxSusut =
+                        (Number(a.nilai_buku) || 0) - (Number(a.nilai_residu) || 0);
+                    const canDepreciate = a.status === "aktif" && maxSusut > 0;
+                    return (
+                        <DataTableActionButton
+                            variant="amber"
+                            tooltip={
+                                canDepreciate
+                                    ? "Catat Penyusutan"
+                                    : "Aset sudah habis disusutkan"
+                            }
+                            disabled={!canDepreciate}
+                            onClick={() => onDepreciate(a)}
+                        >
+                            <IconTrendingDown className="w-3.5 h-3.5" />
+                        </DataTableActionButton>
+                    );
+                }}
             />
 
             <ConfirmDialog

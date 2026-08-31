@@ -573,6 +573,13 @@ export function isNavItemActive(
     }
 
     if (
+        path === ROUTES.ADMIN_ASSETS &&
+        (pathname === ROUTES.ADMIN_ASSET_CATEGORIES || pathname.startsWith(ROUTES.ADMIN_ASSET_CATEGORIES + "/"))
+    ) {
+        return false;
+    }
+
+    if (
         path === ROUTES.ADMIN_REPORTS_SALES &&
         (pathname === ROUTES.ADMIN_REPORTS_SALES_BY_CATEGORY || pathname.startsWith(ROUTES.ADMIN_REPORTS_SALES_BY_CATEGORY + "/"))
     ) {
