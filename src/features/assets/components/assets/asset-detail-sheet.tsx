@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,6 +11,10 @@ import {
     IconCalendar,
     IconTrash,
     IconFileText,
+    IconBuildingBank,
+    IconReceipt2,
+    IconArrowRight,
+    IconCoin,
 } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { useAssetDetail, useDeleteAssetPenyusutan } from "../../api/assets-api";
@@ -103,56 +107,69 @@ export function AssetDetailSheet({
                 open={open}
                 onOpenChange={onOpenChange}
                 title={
-                    <div className="flex items-center gap-2">
-                        <IconBuildingWarehouse className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                        <span>Detail & Riwayat Aset</span>
+                    <div className="flex items-center gap-2.5">
+                        <div className="p-2 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 rounded-xl border border-indigo-100 dark:border-indigo-900/40">
+                            <IconBuildingWarehouse className="w-4.5 h-4.5" />
+                        </div>
+                        <div>
+                            <span className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-slate-100 block">
+                                Detail & Riwayat Aset
+                            </span>
+                            <span className="text-[11px] text-slate-500 font-normal block">
+                                Rincian lengkap nilai kapitalisasi, saldo buku, dan riwayat mutasi penyusutan
+                            </span>
+                        </div>
                     </div>
                 }
-                className="max-w-3xl"
+                className="w-full max-w-[95vw] sm:max-w-3xl md:max-w-4xl lg:max-w-5xl"
             >
                 {isLoading ? (
-                    <div className="space-y-4 pt-1">
-                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 space-y-2">
+                    <div className="space-y-3 pt-1">
+                        <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 space-y-2">
                             <Skeleton className="h-5 w-48 rounded" />
                             <div className="flex items-center gap-2">
                                 <Skeleton className="h-4 w-24 rounded" />
                                 <Skeleton className="h-4 w-32 rounded" />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                            <Skeleton className="h-16 rounded-xl" />
-                            <Skeleton className="h-16 rounded-xl" />
-                            <Skeleton className="h-16 rounded-xl" />
-                            <Skeleton className="h-16 rounded-xl" />
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
+                            <div className="lg:col-span-5 space-y-2.5">
+                                <Skeleton className="h-28 rounded-xl" />
+                                <Skeleton className="h-24 rounded-xl" />
+                            </div>
+                            <div className="lg:col-span-7">
+                                <Skeleton className="h-56 rounded-xl" />
+                            </div>
                         </div>
-                        <Skeleton className="h-40 rounded-xl" />
                     </div>
                 ) : !asset ? (
                     <div className="p-8 text-center text-xs text-rose-500">
                         Data aset tidak ditemukan.
                     </div>
                 ) : (
-                    <div className="space-y-4 pt-1 max-h-[75vh] overflow-y-auto pr-1">
-                        {/* 1. Header Information */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800">
-                            <div>
+                    <div className="space-y-3 pt-1">
+                        {/* 1. Header Information Banner */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800">
+                            <div className="min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <h3 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-slate-100">
+                                    <h3 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-slate-100 truncate">
                                         {asset.nama}
                                     </h3>
                                     {statusBadge(asset.status)}
                                 </div>
-                                <div className="flex items-center gap-2 text-xs text-slate-500 mt-1 flex-wrap">
-                                    <span className="font-mono bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded border text-[11px]">
+                                <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-1 flex-wrap">
+                                    <span className="font-mono bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 text-[10px] font-bold text-slate-700 dark:text-slate-300">
                                         {asset.nomor_aset}
                                     </span>
                                     {asset.kode_aset && (
-                                        <span className="font-mono text-[11px]">
+                                        <span className="font-mono text-[11px] text-slate-600 dark:text-slate-400">
                                             SN: {asset.kode_aset}
                                         </span>
                                     )}
                                     <span>•</span>
-                                    <span>Kategori: {asset.category?.nama || "-"}</span>
+                                    <span className="text-indigo-600 dark:text-indigo-400 font-semibold">
+                                        {asset.category?.nama || "-"}
+                                    </span>
                                     <span>•</span>
                                     <span className="flex items-center gap-1">
                                         <IconCalendar className="w-3.5 h-3.5" />
@@ -168,7 +185,7 @@ export function AssetDetailSheet({
                                         onOpenChange(false);
                                         onAddDepreciation(asset);
                                     }}
-                                    className="h-8 px-3 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-xl shadow-xs shrink-0 cursor-pointer flex items-center gap-1"
+                                    className="h-8 px-3 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-xl shadow-xs shrink-0 cursor-pointer flex items-center gap-1.5 self-start sm:self-auto"
                                 >
                                     <IconTrendingDown className="w-3.5 h-3.5" />
                                     <span>Susutkan Aset</span>
@@ -176,207 +193,217 @@ export function AssetDetailSheet({
                             )}
                         </div>
 
-                        {/* 2. Financial Metrics Grid */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                            <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-0.5">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase">
-                                    Harga Perolehan
-                                </span>
-                                <div className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-slate-100">
-                                    {formatRupiah(Number(asset.harga_perolehan) || 0)}
-                                </div>
-                            </div>
-                            <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-0.5">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase">
-                                    Akumulasi Susut
-                                </span>
-                                <div className="text-xs sm:text-sm font-extrabold text-amber-600 dark:text-amber-400">
-                                    {formatRupiah(Number(asset.total_penyusutan) || 0)}
-                                </div>
-                            </div>
-                            <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-0.5">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase">
-                                    Nilai Buku Saat Ini
-                                </span>
-                                <div className="text-xs sm:text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
-                                    {formatRupiah(Number(asset.nilai_buku) || 0)}
-                                </div>
-                            </div>
-                            <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-0.5">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase">
-                                    Nilai Residu
-                                </span>
-                                <div className="text-xs sm:text-sm font-extrabold text-slate-700 dark:text-slate-300">
-                                    {formatRupiah(Number(asset.nilai_residu) || 0)}
-                                </div>
-                            </div>
-                        </div>
+                        {/* 2. Main 2-Column Responsive Layout */}
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-start">
+                            {/* Kolom Kiri: Finansial, COA, dan Sumber Dana */}
+                            <div className="lg:col-span-5 space-y-3">
+                                {/* Metrics 2x2 Grid */}
+                                <div className="grid grid-cols-2 gap-2">
+                                    {/* Nilai Buku */}
+                                    <div className="p-2.5 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100/60 dark:border-indigo-900/30">
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                                            Nilai Buku Saat Ini
+                                        </span>
+                                        <div className="text-xs sm:text-sm font-extrabold text-indigo-700 dark:text-indigo-400 truncate">
+                                            {formatRupiah(Number(asset.nilai_buku) || 0)}
+                                        </div>
+                                    </div>
 
-                        {/* 3. Accounting & Funding Source */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-                            <div className="p-3 rounded-xl bg-slate-50/50 dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800 space-y-1.5">
-                                <span className="font-bold text-slate-700 dark:text-slate-300 block text-[11px]">
-                                    Akun Buku Besar (COA Terkait)
-                                </span>
-                                <div className="space-y-1 text-[11px]">
-                                    <div>
-                                        <span className="text-slate-400">Akun Aset: </span>
-                                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                                            {(() => {
-                                                const coa =
-                                                    asset.category?.coa_asset ||
-                                                    asset.category?.coaAsset;
-                                                return coa ? `[${coa.kode}] ${coa.nama}` : "-";
-                                            })()}
+                                    {/* Harga Perolehan */}
+                                    <div className="p-2.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100/60 dark:border-emerald-900/30">
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                                            Harga Perolehan
                                         </span>
+                                        <div className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-slate-100 truncate">
+                                            {formatRupiah(Number(asset.harga_perolehan) || 0)}
+                                        </div>
                                     </div>
-                                    <div>
-                                        <span className="text-slate-400">Akumulasi: </span>
-                                        <span className="font-bold text-amber-600 dark:text-amber-400">
-                                            {(() => {
-                                                const coa =
-                                                    asset.category?.coa_akumulasi_penyusutan ||
-                                                    asset.category?.coaAkumulasiPenyusutan;
-                                                return coa ? `[${coa.kode}] ${coa.nama}` : "-";
-                                            })()}
+
+                                    {/* Total Susut */}
+                                    <div className="p-2.5 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100/60 dark:border-amber-900/30">
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                                            Akumulasi Susut
                                         </span>
+                                        <div className="text-xs sm:text-sm font-extrabold text-amber-600 dark:text-amber-400 truncate">
+                                            {formatRupiah(Number(asset.total_penyusutan) || 0)}
+                                        </div>
                                     </div>
-                                    <div>
-                                        <span className="text-slate-400">Beban Susut: </span>
-                                        <span className="font-bold text-indigo-600 dark:text-indigo-400">
-                                            {(() => {
-                                                const coa =
-                                                    asset.category?.coa_beban_penyusutan ||
-                                                    asset.category?.coaBebanPenyusutan;
-                                                return coa ? `[${coa.kode}] ${coa.nama}` : "-";
-                                            })()}
+
+                                    {/* Nilai Residu */}
+                                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800">
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                                            Nilai Residu
                                         </span>
+                                        <div className="text-xs sm:text-sm font-extrabold text-slate-700 dark:text-slate-300 truncate">
+                                            {formatRupiah(Number(asset.nilai_residu) || 0)}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="p-3 rounded-xl bg-slate-50/50 dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800 space-y-1.5">
-                                <span className="font-bold text-slate-700 dark:text-slate-300 block text-[11px]">
-                                    Sumber Dana & Pencatat
-                                </span>
-                                <div className="space-y-1 text-[11px]">
-                                    <div>
-                                        <span className="text-slate-400">Metode: </span>
-                                        <span className="font-bold text-slate-800 dark:text-slate-200 capitalize">
-                                            {asset.sumber_perolehan === "kas"
-                                                ? "Kas / Bank"
-                                                : "Non-Kas / Modal"}
-                                        </span>
+                                {/* Akun COA & Pembiayaan */}
+                                <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-2 text-xs">
+                                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-800 dark:text-slate-200 pb-1 border-b border-slate-100 dark:border-slate-800">
+                                        <IconReceipt2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                                        <span>Konfigurasi Akun COA</span>
                                     </div>
-                                    <div>
-                                        <span className="text-slate-400">Akun Sumber: </span>
-                                        <span className="font-medium text-slate-700 dark:text-slate-300">
-                                            {asset.sumber_perolehan === "kas"
-                                                ? asset.cashAccount?.nama || "-"
-                                                : asset.offsetCoa
-                                                ? `[${asset.offsetCoa.kode}] ${asset.offsetCoa.nama}`
-                                                : "-"}
-                                        </span>
+
+                                    <div className="space-y-1.5 text-[11px]">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-slate-500">Akun Aset:</span>
+                                            <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-right truncate">
+                                                {(() => {
+                                                    const coa =
+                                                        asset.category?.coa_asset ||
+                                                        asset.category?.coaAsset;
+                                                    return coa ? `[${coa.kode}] ${coa.nama}` : "-";
+                                                })()}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-slate-500">Akum. Susut:</span>
+                                            <span className="font-semibold text-amber-600 dark:text-amber-400 text-right truncate">
+                                                {(() => {
+                                                    const coa =
+                                                        asset.category?.coa_akumulasi_penyusutan ||
+                                                        asset.category?.coaAkumulasiPenyusutan;
+                                                    return coa ? `[${coa.kode}] ${coa.nama}` : "-";
+                                                })()}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-slate-500">Beban Susut:</span>
+                                            <span className="font-semibold text-indigo-600 dark:text-indigo-400 text-right truncate">
+                                                {(() => {
+                                                    const coa =
+                                                        asset.category?.coa_beban_penyusutan ||
+                                                        asset.category?.coaBebanPenyusutan;
+                                                    return coa ? `[${coa.kode}] ${coa.nama}` : "-";
+                                                })()}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <span className="text-slate-400">Pencatat: </span>
-                                        <span className="text-slate-600 dark:text-slate-400">
-                                            {asset.creator?.name || asset.creator?.username || "-"}
-                                        </span>
+
+                                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-1.5 text-[11px]">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-slate-500 flex items-center gap-1">
+                                                {asset.sumber_perolehan === "kas" ? (
+                                                    <IconBuildingBank className="w-3 h-3 text-indigo-500" />
+                                                ) : (
+                                                    <IconCoin className="w-3 h-3 text-amber-500" />
+                                                )}
+                                                Sumber Dana:
+                                            </span>
+                                            <span className="font-medium text-slate-800 dark:text-slate-200">
+                                                {asset.sumber_perolehan === "kas"
+                                                    ? `Kas (${asset.cashAccount?.nama || "-"})`
+                                                    : asset.offsetCoa
+                                                    ? `Non-Kas ([${asset.offsetCoa.kode}] ${asset.offsetCoa.nama})`
+                                                    : "Non-Kas"}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-slate-500">Pencatat:</span>
+                                            <span className="text-slate-600 dark:text-slate-400">
+                                                {asset.creator?.name || asset.creator?.username || "-"}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
 
-                        {/* Catatan jika ada */}
-                        {asset.catatan && (
-                            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/30 border border-slate-200/60 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-400 flex items-start gap-2">
-                                <IconFileText className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                                <span>{asset.catatan}</span>
-                            </div>
-                        )}
-
-                        {/* 4. Depreciation History Table */}
-                        <div className="space-y-2 pt-2 border-t border-slate-200/80 dark:border-slate-800">
-                            <div className="flex items-center justify-between">
-                                <h4 className="font-extrabold text-xs text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                                    <IconTrendingDown className="w-4 h-4 text-amber-500" />
-                                    <span>Riwayat Transaksi Penyusutan ({logs.length})</span>
-                                </h4>
+                                {/* Catatan jika ada */}
+                                {asset.catatan && (
+                                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/30 border border-slate-200/60 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-400 flex items-start gap-2">
+                                        <IconFileText className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                                        <span>{asset.catatan}</span>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden">
-                                <table className="w-full text-xs">
-                                    <thead className="bg-slate-100/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-700">
-                                        <tr>
-                                            <th className="p-2.5 text-left">No. Transaksi / Tgl</th>
-                                            <th className="p-2.5 text-right">Nominal Susut</th>
-                                            <th className="p-2.5 text-center">Perubahan Nilai Buku</th>
-                                            <th className="p-2.5 text-left">Keterangan</th>
-                                            <th className="p-2.5 text-center w-12">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                        {logs.length === 0 ? (
+                            {/* Kolom Kanan: Riwayat Transaksi Penyusutan */}
+                            <div className="lg:col-span-7 space-y-2">
+                                <div className="flex items-center justify-between px-1">
+                                    <h4 className="font-extrabold text-xs text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                                        <IconTrendingDown className="w-4 h-4 text-amber-500" />
+                                        <span>Riwayat Penyusutan</span>
+                                        <span className="px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-400">
+                                            {logs.length}
+                                        </span>
+                                    </h4>
+                                </div>
+
+                                <div className="border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden overflow-x-auto max-h-[50dvh]">
+                                    <table className="w-full text-xs">
+                                        <thead className="bg-slate-100/90 dark:bg-slate-800/90 text-slate-600 dark:text-slate-300 font-bold sticky top-0 z-10 border-b border-slate-200 dark:border-slate-700 backdrop-blur-xs">
                                             <tr>
-                                                <td
-                                                    colSpan={5}
-                                                    className="p-6 text-center text-slate-400"
-                                                >
-                                                    Belum ada riwayat penyusutan pada aset ini.
-                                                </td>
+                                                <th className="p-2 text-left min-w-[120px]">No. Transaksi & Tgl</th>
+                                                <th className="p-2 text-right w-24">Nominal</th>
+                                                <th className="p-2 text-center min-w-[140px]">Nilai Buku</th>
+                                                <th className="p-2 text-left min-w-[120px]">Keterangan</th>
+                                                <th className="p-2 text-center w-10">Aksi</th>
                                             </tr>
-                                        ) : (
-                                            logs.map((pys) => (
-                                                <tr
-                                                    key={pys.uid}
-                                                    className="hover:bg-slate-50 dark:hover:bg-slate-900/30 transition-colors"
-                                                >
-                                                    <td className="p-2.5">
-                                                        <div className="font-mono font-bold text-slate-700 dark:text-slate-300 text-[11px]">
-                                                            {pys.nomor_transaksi}
-                                                        </div>
-                                                        <span className="text-[10px] text-slate-400">
-                                                            {formatToReadableDate(pys.tanggal)}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-2.5 text-right font-extrabold text-amber-600 dark:text-amber-400">
-                                                        {formatRupiah(Number(pys.nominal) || 0)}
-                                                    </td>
-                                                    <td className="p-2.5 text-center text-[11px]">
-                                                        <span className="text-slate-500">
-                                                            {formatRupiah(
-                                                                Number(pys.nilai_buku_sebelum) || 0
-                                                            )}
-                                                        </span>
-                                                        <span className="text-slate-400 mx-1">
-                                                            →
-                                                        </span>
-                                                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                                                            {formatRupiah(
-                                                                Number(pys.nilai_buku_sesudah) || 0
-                                                            )}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-2.5 text-slate-600 dark:text-slate-400 text-[11px]">
-                                                        {pys.keterangan || "-"}
-                                                    </td>
-                                                    <td className="p-2.5 text-center">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            onClick={() => handleVoidClick(pys)}
-                                                            className="h-7 w-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg cursor-pointer transition-colors"
-                                                            title="Batalkan / Void Penyusutan"
-                                                        >
-                                                            <IconTrash className="w-3.5 h-3.5" />
-                                                        </Button>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                                            {logs.length === 0 ? (
+                                                <tr>
+                                                    <td
+                                                        colSpan={5}
+                                                        className="p-8 text-center text-slate-400 text-xs"
+                                                    >
+                                                        Belum ada riwayat transaksi penyusutan pada aset ini.
                                                     </td>
                                                 </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
+                                            ) : (
+                                                logs.map((pys) => (
+                                                    <tr
+                                                        key={pys.uid}
+                                                        className="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors"
+                                                    >
+                                                        <td className="p-2">
+                                                            <div className="font-mono font-bold text-slate-800 dark:text-slate-200 text-[11px]">
+                                                                {pys.nomor_transaksi}
+                                                            </div>
+                                                            <span className="text-[10px] text-slate-400">
+                                                                {formatToReadableDate(pys.tanggal)}
+                                                            </span>
+                                                        </td>
+                                                        <td className="p-2 text-right font-extrabold text-amber-600 dark:text-amber-400">
+                                                            {formatRupiah(Number(pys.nominal) || 0)}
+                                                        </td>
+                                                        <td className="p-2 text-center">
+                                                            <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 text-[10px] font-mono">
+                                                                <span className="text-slate-500">
+                                                                    {formatRupiah(
+                                                                        Number(pys.nilai_buku_sebelum) || 0
+                                                                    )}
+                                                                </span>
+                                                                <IconArrowRight className="w-2.5 h-2.5 text-slate-400" />
+                                                                <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                                                                    {formatRupiah(
+                                                                        Number(pys.nilai_buku_sesudah) || 0
+                                                                    )}
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-2 text-slate-600 dark:text-slate-400 text-[11px] truncate max-w-[140px]" title={pys.keterangan || "-"}>
+                                                            {pys.keterangan || "-"}
+                                                        </td>
+                                                        <td className="p-2 text-center">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() => handleVoidClick(pys)}
+                                                                className="h-6.5 w-6.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg cursor-pointer transition-colors"
+                                                                title="Batalkan / Void Penyusutan"
+                                                            >
+                                                                <IconTrash className="w-3.5 h-3.5" />
+                                                            </Button>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
