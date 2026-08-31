@@ -16,7 +16,6 @@ import { AssetFilterToolbar } from "./asset-filter-toolbar";
 import { AssetTable } from "./asset-table";
 import { AssetFormDialog } from "./asset-form-dialog";
 import { AssetDetailSheet } from "./asset-detail-sheet";
-import { AssetPenyusutanDialog } from "./asset-penyusutan-dialog";
 import { AssetBulkPenyusutanDialog } from "./asset-bulk-penyusutan-dialog";
 import type { Asset, AssetFilterParams } from "../../types";
 
@@ -47,9 +46,7 @@ export function AssetsPage() {
 
     const [isDetailSheetOpen, setIsDetailSheetOpen] = useState<boolean>(false);
     const [selectedAssetUid, setSelectedAssetUid] = useState<string | null>(null);
-
-    const [isPenyusutanDialogOpen, setIsPenyusutanDialogOpen] = useState<boolean>(false);
-    const [assetToDepreciate, setAssetToDepreciate] = useState<Asset | null>(null);
+    const [detailMode, setDetailMode] = useState<"history" | "form">("history");
 
     const [isBulkPenyusutanOpen, setIsBulkPenyusutanOpen] = useState<boolean>(false);
 
@@ -100,12 +97,14 @@ export function AssetsPage() {
 
     const handleDetailClick = (asset: Asset) => {
         setSelectedAssetUid(asset.uid);
+        setDetailMode("history");
         setIsDetailSheetOpen(true);
     };
 
     const handleDepreciateClick = (asset: Asset) => {
-        setAssetToDepreciate(asset);
-        setIsPenyusutanDialogOpen(true);
+        setSelectedAssetUid(asset.uid);
+        setDetailMode("form");
+        setIsDetailSheetOpen(true);
     };
 
     const assetsList = assetsData?.data || [];
@@ -198,14 +197,6 @@ export function AssetsPage() {
                 categories={categories}
             />
 
-            {/* Dialog: Single Asset Depreciation */}
-            <AssetPenyusutanDialog
-                key={isPenyusutanDialogOpen ? (assetToDepreciate?.uid ?? "penyusutan-dialog") : "closed-penyusutan"}
-                open={isPenyusutanDialogOpen}
-                onOpenChange={setIsPenyusutanDialogOpen}
-                asset={assetToDepreciate}
-            />
-
             {/* Dialog: Bulk Asset Depreciation */}
             <AssetBulkPenyusutanDialog
                 key={isBulkPenyusutanOpen ? "bulk-open" : "bulk-closed"}
@@ -214,12 +205,13 @@ export function AssetsPage() {
                 activeAssets={assetsList}
             />
 
-            {/* Sheet/Modal: Asset Detail & Depreciation History */}
+            {/* Modal: Asset Detail & In-Dialog Depreciation History/Form */}
             <AssetDetailSheet
+                key={isDetailSheetOpen ? `${selectedAssetUid}-${detailMode}` : "detail-closed"}
                 open={isDetailSheetOpen}
                 onOpenChange={setIsDetailSheetOpen}
                 assetUid={selectedAssetUid}
-                onAddDepreciation={handleDepreciateClick}
+                initialMode={detailMode}
             />
         </div>
     );
