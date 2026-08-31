@@ -148,7 +148,7 @@ export function AssetsPage() {
                         className="h-8.5 px-3 text-xs font-bold border-amber-300 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 hover:bg-amber-100/60 rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer"
                     >
                         <IconLayersLinked className="w-4 h-4 text-amber-500" />
-                        <span>Penyusutan Masal</span>
+                        <span>Penyusutan Multiple</span>
                     </Button>
 
                     <Button

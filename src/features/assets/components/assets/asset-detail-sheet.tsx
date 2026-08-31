@@ -106,19 +106,22 @@ export function AssetDetailSheet({
         ? Math.max(0, (Number(asset.nilai_buku) || 0) - (Number(asset.nilai_residu) || 0))
         : 0;
 
-    // Columns definition for DataTable
+    // Generous and properly sized columns definition for DataTable to prevent overlapping
     const columns: ColumnDef<AssetPenyusutan>[] = useMemo(
         () => [
             {
                 accessorKey: "nomor_transaksi",
                 header: "No. Transaksi & Tgl",
-                size: 150,
+                size: 160,
+                meta: {
+                    cellClassName: "whitespace-nowrap",
+                },
                 cell: ({ row }) => (
-                    <div>
+                    <div className="space-y-0.5">
                         <div className="font-mono font-bold text-slate-800 dark:text-slate-200 text-xs">
                             {row.original.nomor_transaksi}
                         </div>
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-[10px] text-slate-400 block font-normal">
                             {formatToReadableDate(row.original.tanggal)}
                         </span>
                     </div>
@@ -127,28 +130,28 @@ export function AssetDetailSheet({
             {
                 accessorKey: "nominal",
                 header: "Nominal Susut",
-                size: 120,
+                size: 140,
                 meta: {
                     headerClassName: "text-right",
-                    cellClassName: "text-right font-extrabold text-amber-600 dark:text-amber-400 text-xs",
+                    cellClassName: "text-right font-extrabold text-amber-600 dark:text-amber-400 text-xs whitespace-nowrap",
                 },
                 cell: ({ row }) => formatRupiah(Number(row.original.nominal) || 0),
             },
             {
                 id: "perubahan_nilai_buku",
                 header: "Perubahan Nilai Buku",
-                size: 160,
+                size: 240,
                 meta: {
                     headerClassName: "text-center",
-                    cellClassName: "text-center",
+                    cellClassName: "text-center whitespace-nowrap",
                 },
                 cell: ({ row }) => (
-                    <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 text-[10px] font-mono">
-                        <span className="text-slate-500">
+                    <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700/70 text-xs font-mono whitespace-nowrap shadow-2xs">
+                        <span className="text-slate-500 font-medium">
                             {formatRupiah(Number(row.original.nilai_buku_sebelum) || 0)}
                         </span>
-                        <IconArrowRight className="w-2.5 h-2.5 text-slate-400" />
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                        <IconArrowRight className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
                             {formatRupiah(Number(row.original.nilai_buku_sesudah) || 0)}
                         </span>
                     </div>
@@ -157,10 +160,10 @@ export function AssetDetailSheet({
             {
                 accessorKey: "keterangan",
                 header: "Keterangan",
-                size: 160,
+                size: 180,
                 cell: ({ row }) => (
                     <span
-                        className="text-slate-600 dark:text-slate-400 text-[11px] truncate block max-w-[150px]"
+                        className="text-slate-600 dark:text-slate-400 text-[11px] truncate block max-w-[180px]"
                         title={row.original.keterangan || "-"}
                     >
                         {row.original.keterangan || "-"}
@@ -191,7 +194,7 @@ export function AssetDetailSheet({
                         </div>
                     </div>
                 }
-                className="w-full max-w-[95vw] sm:max-w-3xl md:max-w-4xl lg:max-w-5xl"
+                className="w-full max-w-[95vw] sm:max-w-3xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl"
             >
                 {isLoading ? (
                     <div className="space-y-3 pt-1">
@@ -203,11 +206,11 @@ export function AssetDetailSheet({
                             </div>
                         </div>
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
-                            <div className="lg:col-span-5 space-y-2.5">
+                            <div className="lg:col-span-4 space-y-2.5">
                                 <Skeleton className="h-28 rounded-xl" />
                                 <Skeleton className="h-24 rounded-xl" />
                             </div>
-                            <div className="lg:col-span-7">
+                            <div className="lg:col-span-8">
                                 <Skeleton className="h-56 rounded-xl" />
                             </div>
                         </div>
@@ -255,16 +258,16 @@ export function AssetDetailSheet({
                             </div>
                         </div>
 
-                        {/* 2. Main 2-Column Responsive Layout */}
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-start">
+                        {/* 2. Main 2-Column Responsive Layout (4 cols Left, 8 cols Right) */}
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
                             {/* Kolom Kiri: Finansial, COA, dan Sumber Dana */}
-                            <div className="lg:col-span-5 space-y-3">
+                            <div className="lg:col-span-4 space-y-3">
                                 {/* Metrics 2x2 Grid */}
                                 <div className="grid grid-cols-2 gap-2">
                                     {/* Nilai Buku */}
                                     <div className="p-2.5 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100/60 dark:border-indigo-900/30">
                                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                                            Nilai Buku Saat Ini
+                                            Nilai Buku
                                         </span>
                                         <div className="text-xs sm:text-sm font-extrabold text-indigo-700 dark:text-indigo-400 truncate">
                                             {formatRupiah(Number(asset.nilai_buku) || 0)}
@@ -274,7 +277,7 @@ export function AssetDetailSheet({
                                     {/* Harga Perolehan */}
                                     <div className="p-2.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100/60 dark:border-emerald-900/30">
                                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                                            Harga Perolehan
+                                            Harga Beli
                                         </span>
                                         <div className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-slate-100 truncate">
                                             {formatRupiah(Number(asset.harga_perolehan) || 0)}
@@ -284,7 +287,7 @@ export function AssetDetailSheet({
                                     {/* Total Susut */}
                                     <div className="p-2.5 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100/60 dark:border-amber-900/30">
                                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                                            Akumulasi Susut
+                                            Total Susut
                                         </span>
                                         <div className="text-xs sm:text-sm font-extrabold text-amber-600 dark:text-amber-400 truncate">
                                             {formatRupiah(Number(asset.total_penyusutan) || 0)}
@@ -382,7 +385,7 @@ export function AssetDetailSheet({
                             </div>
 
                             {/* Kolom Kanan: Mode Switcher (DataTable Riwayat vs Form Input) */}
-                            <div className="lg:col-span-7">
+                            <div className="lg:col-span-8">
                                 {isFormActive ? (
                                     <AssetDetailDepreciationForm
                                         key={`depreciation-form-${asset.uid}`}

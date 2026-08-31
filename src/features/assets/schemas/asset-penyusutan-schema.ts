@@ -17,7 +17,7 @@ export const bulkAssetPenyusutanItemSchema = z.object({
 });
 
 export const bulkAssetPenyusutanSchema = z.object({
-    tanggal: z.string().min(1, "Tanggal penyusutan masal wajib diisi"),
+    tanggal: z.string().min(1, "Tanggal penyusutan multiple wajib diisi"),
     items: z
         .array(bulkAssetPenyusutanItemSchema)
         .min(1, "Minimal pilih 1 aset untuk disusutkan"),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
@@ -53,7 +53,7 @@ function BulkPenyusutanFormContent({
                 selected: true,
                 asset_uid: a.uid,
                 nominal: 0,
-                keterangan: `Penyusutan masal ${a.nama}`,
+                keterangan: `Penyusutan multiple ${a.nama}`,
             };
         });
         return initialRows;
@@ -153,12 +153,12 @@ function BulkPenyusutanFormContent({
                     (res as unknown as { total_processed?: number })
                         ?.total_processed || selectedItems.length;
                 toast.success(
-                    `Berhasil mencatat penyusutan masal untuk ${processed} aset.`
+                    `Berhasil mencatat penyusutan multiple untuk ${processed} aset.`
                 );
                 onOpenChange(false);
             },
             onError: (err) => {
-                toast.error(err.message || "Gagal mengeksekusi penyusutan masal.");
+                toast.error(err.message || "Gagal mengeksekusi penyusutan multiple.");
             },
         });
     };
@@ -368,22 +368,29 @@ function BulkPenyusutanFormContent({
             </div>
 
             {/* Bottom Summary Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-slate-950 text-white rounded-xl shadow-xs border border-slate-800">
-                <div className="flex items-center gap-4 text-xs">
-                    <div>
-                        <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider block">
-                            Aset Terpilih
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-slate-50/90 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs">
+                <div className="flex items-center gap-3 sm:gap-4 text-xs flex-wrap">
+                    <div className="flex items-center gap-2">
+                        <span className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold text-xs">
+                            {totalSelectedCount} Unit
                         </span>
-                        <span className="font-extrabold text-indigo-300">
-                            {totalSelectedCount} Unit ({selectedItems.length}{" "}
-                            dialokasikan)
-                        </span>
+                        <div className="leading-tight">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                                Aset Terpilih
+                            </span>
+                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                {selectedItems.length} dialokasikan
+                            </span>
+                        </div>
                     </div>
-                    <div className="border-l border-slate-800 pl-4">
-                        <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider block">
-                            Total Penyusutan
+
+                    <div className="h-7 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block" />
+
+                    <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                            Total Nominal Penyusutan
                         </span>
-                        <span className="font-extrabold text-amber-400 text-sm">
+                        <span className="font-extrabold text-amber-600 dark:text-amber-400 text-sm sm:text-base">
                             {formatRupiah(totalNominalBulk)}
                         </span>
                     </div>
@@ -395,19 +402,17 @@ function BulkPenyusutanFormContent({
                         variant="outline"
                         onClick={() => onOpenChange(false)}
                         disabled={isPending}
-                        className="h-8 px-3 text-xs text-slate-300 border-slate-800 hover:bg-slate-900 rounded-xl cursor-pointer"
+                        className="h-8.5 px-3.5 text-xs rounded-xl border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer shadow-2xs"
                     >
                         Batal
                     </Button>
                     <Button
                         type="submit"
                         disabled={isPending || selectedItems.length === 0}
-                        className="h-8 px-4 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl shadow-xs cursor-pointer disabled:opacity-50"
+                        className="h-8.5 px-4 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-xl shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                     >
-                        <IconCheck className="w-3.5 h-3.5 mr-1" />
-                        {isPending
-                            ? "Mengeksekusi..."
-                            : "Eksekusi Penyusutan Masal"}
+                        <IconCheck className="w-4 h-4" />
+                        <span>{isPending ? "Mengeksekusi..." : "Eksekusi Penyusutan Multiple"}</span>
                     </Button>
                 </div>
             </div>
@@ -440,7 +445,7 @@ export function AssetBulkPenyusutanDialog({
                     </div>
                     <div>
                         <span className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-slate-100 block">
-                            Penyusutan Masal Aset (Bulk Depreciation)
+                            Penyusutan Multiple Aset (Bulk Depreciation)
                         </span>
                         <span className="text-[11px] text-slate-500 font-normal block">
                             Alokasikan nilai penyusutan ke beberapa unit aset sekaligus secara efisien
