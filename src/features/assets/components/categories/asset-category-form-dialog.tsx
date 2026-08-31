@@ -12,9 +12,10 @@ import {
     IconBuildingBank,
     IconSparkles,
     IconInfoCircle,
-    IconRotate2,
+    IconAdjustmentsHorizontal,
 } from "@tabler/icons-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import {
     assetCategorySchema,
     type AssetCategorySchemaInput,
@@ -70,11 +71,18 @@ export function AssetCategoryFormDialog({
                     nama: editingCategory.nama,
                     kode: editingCategory.kode || "",
                     keterangan: editingCategory.keterangan || "",
-                    coa_asset_uid: editingCategory.coa_asset_uid || null,
+                    coa_asset_uid:
+                        editingCategory.coa_asset_uid ||
+                        editingCategory.coa_asset?.uid ||
+                        null,
                     coa_akumulasi_penyusutan_uid:
-                        editingCategory.coa_akumulasi_penyusutan_uid || null,
+                        editingCategory.coa_akumulasi_penyusutan_uid ||
+                        editingCategory.coa_akumulasi_penyusutan?.uid ||
+                        null,
                     coa_beban_penyusutan_uid:
-                        editingCategory.coa_beban_penyusutan_uid || null,
+                        editingCategory.coa_beban_penyusutan_uid ||
+                        editingCategory.coa_beban_penyusutan?.uid ||
+                        null,
                 });
                 setIsCustomCoa(
                     !!(
@@ -279,43 +287,50 @@ export function AssetCategoryFormDialog({
 
                         {/* RIGHT COLUMN: Pengaturan Akun Akuntansi (Col 7) */}
                         <div className="md:col-span-7 space-y-3 p-3 sm:p-3.5 rounded-2xl bg-indigo-500/[0.03] dark:bg-indigo-950/20 border border-indigo-200/60 dark:border-indigo-900/40">
-                            {/* Header COA with toggle */}
-                            <div className="flex items-center justify-between gap-2 pb-1 border-b border-indigo-100 dark:border-indigo-900/50">
-                                <div className="flex items-center gap-1.5 min-w-0">
-                                    <IconBuildingBank className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                                    <span className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
-                                        Pengaturan Akun Akuntansi (COA)
-                                    </span>
-                                </div>
-
-                                <div className="shrink-0">
-                                    {!isCustomCoa ? (
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsCustomCoa(true)}
-                                            className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 hover:underline cursor-pointer flex items-center gap-1"
-                                        >
-                                            <span>Ubah Manual</span>
-                                        </button>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            onClick={handleResetToAuto}
-                                            className="text-[10px] font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 hover:underline cursor-pointer flex items-center gap-1"
-                                        >
-                                            <IconRotate2 className="w-3 h-3" />
-                                            <span>Reset Auto</span>
-                                        </button>
-                                    )}
-                                </div>
+                            {/* Header COA */}
+                            <div className="flex items-center gap-1.5 pb-1 border-b border-indigo-100 dark:border-indigo-900/50">
+                                <IconBuildingBank className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                                <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                                    Pengaturan Akun Akuntansi (COA)
+                                </span>
                             </div>
 
-                            {/* Mode Explanation Banner */}
+                            {/* SEGMENTED TAB SWITCHER (Consistent white background on active tab) */}
+                            <div className="grid grid-cols-2 p-1 bg-slate-200/70 dark:bg-slate-800/80 rounded-xl gap-1">
+                                <button
+                                    type="button"
+                                    onClick={handleResetToAuto}
+                                    className={cn(
+                                        "flex items-center justify-center gap-1.5 py-1.5 px-2 text-xs font-bold rounded-lg transition-all cursor-pointer",
+                                        !isCustomCoa
+                                            ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                                            : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                                    )}
+                                >
+                                    <IconSparkles className="w-3.5 h-3.5 shrink-0" />
+                                    <span className="truncate">Otomatis (Sistem)</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCustomCoa(true)}
+                                    className={cn(
+                                        "flex items-center justify-center gap-1.5 py-1.5 px-2 text-xs font-bold rounded-lg transition-all cursor-pointer",
+                                        isCustomCoa
+                                            ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                                            : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                                    )}
+                                >
+                                    <IconAdjustmentsHorizontal className="w-3.5 h-3.5 shrink-0" />
+                                    <span className="truncate">Atur Manual (COA)</span>
+                                </button>
+                            </div>
+
+                            {/* Mode Explanation / Inputs */}
                             {!isCustomCoa ? (
-                                <div className="p-2.5 rounded-xl bg-indigo-50/80 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-900/50 space-y-1">
+                                <div className="p-3 rounded-xl bg-indigo-50/80 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-900/50 space-y-1.5">
                                     <div className="flex items-center gap-1.5 text-indigo-700 dark:text-indigo-300 font-bold text-[11px]">
                                         <IconSparkles className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                                        <span>Mode Auto-Generate COA Aktif</span>
+                                        <span>Mode Otomatis Aktif</span>
                                     </div>
                                     <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-relaxed">
                                         Sistem akan <strong>otomatis membuat 3 akun buku besar baru</strong> yang terisolasi khusus kategori ini:

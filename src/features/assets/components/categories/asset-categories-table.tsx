@@ -92,7 +92,7 @@ export function AssetCategoriesTable({
                 id: "coaAsset",
                 header: "Akun Aset",
                 cell: ({ row }) => {
-                    const coa = row.original.coaAsset;
+                    const coa = row.original.coa_asset || row.original.coaAsset;
                     if (!coa) return <span className="text-slate-400 text-xs">-</span>;
                     return (
                         <div className="text-xs">
@@ -110,7 +110,9 @@ export function AssetCategoriesTable({
                 id: "coaAkumulasi",
                 header: "Akumulasi Penyusutan",
                 cell: ({ row }) => {
-                    const coa = row.original.coaAkumulasiPenyusutan;
+                    const coa =
+                        row.original.coa_akumulasi_penyusutan ||
+                        row.original.coaAkumulasiPenyusutan;
                     if (!coa) return <span className="text-slate-400 text-xs">-</span>;
                     return (
                         <div className="text-xs">
@@ -128,7 +130,9 @@ export function AssetCategoriesTable({
                 id: "coaBeban",
                 header: "Beban Penyusutan",
                 cell: ({ row }) => {
-                    const coa = row.original.coaBebanPenyusutan;
+                    const coa =
+                        row.original.coa_beban_penyusutan ||
+                        row.original.coaBebanPenyusutan;
                     if (!coa) return <span className="text-slate-400 text-xs">-</span>;
                     return (
                         <div className="text-xs">

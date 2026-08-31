@@ -208,25 +208,34 @@ export function AssetDetailSheet({
                                     <div>
                                         <span className="text-slate-400">Akun Aset: </span>
                                         <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                                            {asset.category?.coaAsset
-                                                ? `[${asset.category.coaAsset.kode}] ${asset.category.coaAsset.nama}`
-                                                : "-"}
+                                            {(() => {
+                                                const coa =
+                                                    asset.category?.coa_asset ||
+                                                    asset.category?.coaAsset;
+                                                return coa ? `[${coa.kode}] ${coa.nama}` : "-";
+                                            })()}
                                         </span>
                                     </div>
                                     <div>
                                         <span className="text-slate-400">Akumulasi: </span>
                                         <span className="font-bold text-amber-600 dark:text-amber-400">
-                                            {asset.category?.coaAkumulasiPenyusutan
-                                                ? `[${asset.category.coaAkumulasiPenyusutan.kode}] ${asset.category.coaAkumulasiPenyusutan.nama}`
-                                                : "-"}
+                                            {(() => {
+                                                const coa =
+                                                    asset.category?.coa_akumulasi_penyusutan ||
+                                                    asset.category?.coaAkumulasiPenyusutan;
+                                                return coa ? `[${coa.kode}] ${coa.nama}` : "-";
+                                            })()}
                                         </span>
                                     </div>
                                     <div>
                                         <span className="text-slate-400">Beban Susut: </span>
                                         <span className="font-bold text-indigo-600 dark:text-indigo-400">
-                                            {asset.category?.coaBebanPenyusutan
-                                                ? `[${asset.category.coaBebanPenyusutan.kode}] ${asset.category.coaBebanPenyusutan.nama}`
-                                                : "-"}
+                                            {(() => {
+                                                const coa =
+                                                    asset.category?.coa_beban_penyusutan ||
+                                                    asset.category?.coaBebanPenyusutan;
+                                                return coa ? `[${coa.kode}] ${coa.nama}` : "-";
+                                            })()}
                                         </span>
                                     </div>
                                 </div>

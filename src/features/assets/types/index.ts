@@ -11,6 +11,10 @@ export interface AssetCategory {
     coa_beban_penyusutan_uid?: string | null;
     keterangan?: string | null;
     assets_count?: number;
+    coa_asset?: ChartOfAccount | null;
+    coa_akumulasi_penyusutan?: ChartOfAccount | null;
+    coa_beban_penyusutan?: ChartOfAccount | null;
+    // camelCase aliases for fallback
     coaAsset?: ChartOfAccount | null;
     coaAkumulasiPenyusutan?: ChartOfAccount | null;
     coaBebanPenyusutan?: ChartOfAccount | null;
@@ -47,6 +51,7 @@ export interface Asset {
         saldo?: number;
     } | null;
     offsetCoa?: ChartOfAccount | null;
+    offset_coa?: ChartOfAccount | null;
     creator?: {
         uid: string;
         name?: string;

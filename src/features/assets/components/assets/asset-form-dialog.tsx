@@ -318,7 +318,12 @@ export function AssetFormDialog({
                             />
                             {selectedCategory && (
                                 <p className="text-[10px] text-slate-500 line-clamp-1">
-                                    Akun: {selectedCategory.coaAsset ? `[${selectedCategory.coaAsset.kode}] ${selectedCategory.coaAsset.nama}` : "Auto"}
+                                    Akun: {(() => {
+                                        const coa =
+                                            selectedCategory.coa_asset ||
+                                            selectedCategory.coaAsset;
+                                        return coa ? `[${coa.kode}] ${coa.nama}` : "Auto";
+                                    })()}
                                 </p>
                             )}
                         </div>
