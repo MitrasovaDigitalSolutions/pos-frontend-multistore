@@ -90,7 +90,7 @@ export function AssetCategoriesTable({
             },
             {
                 id: "coaAsset",
-                header: "Akun Aset (1-1xxx)",
+                header: "Akun Aset",
                 cell: ({ row }) => {
                     const coa = row.original.coaAsset;
                     if (!coa) return <span className="text-slate-400 text-xs">-</span>;
@@ -108,7 +108,7 @@ export function AssetCategoriesTable({
             },
             {
                 id: "coaAkumulasi",
-                header: "Akumulasi Penyusutan (1-1xx9)",
+                header: "Akumulasi Penyusutan",
                 cell: ({ row }) => {
                     const coa = row.original.coaAkumulasiPenyusutan;
                     if (!coa) return <span className="text-slate-400 text-xs">-</span>;
@@ -126,7 +126,7 @@ export function AssetCategoriesTable({
             },
             {
                 id: "coaBeban",
-                header: "Beban Penyusutan (5-14xx)",
+                header: "Beban Penyusutan",
                 cell: ({ row }) => {
                     const coa = row.original.coaBebanPenyusutan;
                     if (!coa) return <span className="text-slate-400 text-xs">-</span>;

@@ -5,7 +5,6 @@ import { useForm, Controller } from "react-hook-form";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { NumberInput } from "@/components/ui/number-input";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
@@ -19,6 +18,7 @@ import {
 import { useBulkAssetPenyusutan } from "../../api/assets-api";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { Asset } from "../../types";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface BulkRowState {
     selected: boolean;
@@ -275,17 +275,16 @@ export function AssetBulkPenyusutanDialog({
                                     const maxSusut = Math.max(
                                         0,
                                         (Number(asset.nilai_buku) || 0) -
-                                            (Number(asset.nilai_residu) || 0)
+                                        (Number(asset.nilai_residu) || 0)
                                     );
 
                                     return (
                                         <tr
                                             key={asset.uid}
-                                            className={`transition-colors ${
-                                                rowState.selected
+                                            className={`transition-colors ${rowState.selected
                                                     ? "bg-indigo-50/20 dark:bg-indigo-950/10"
                                                     : "hover:bg-slate-50 dark:hover:bg-slate-900/30"
-                                            }`}
+                                                }`}
                                         >
                                             <td className="p-2.5 text-center">
                                                 <Checkbox
