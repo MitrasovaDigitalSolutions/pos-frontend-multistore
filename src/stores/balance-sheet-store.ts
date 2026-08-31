@@ -2,68 +2,39 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { ChartOfAccount } from "@/features/accounting/types";
 import type { ManualJournal, ManualJournalLine } from "@/features/accounting/types/manual-journal";
-import type {
-    BalanceSheetItem,
-    BalanceSheetDetailCategory,
-    BalanceSheetSHU,
-    BalanceSheetSHULaluDetail,
-} from "@/features/accounting/types";
-import type { CoaMapping } from "@/features/accounting/api/coa-mapping-api";
+import { todayStr } from "@/lib/date-utils";
 
-export interface BalanceSheetEditItem {
-    uid: string;
-    kode: string | null;
-    nama: string;
+export interface ManualJournalLineDraft {
+    id: string;
+    chart_of_account_uid: string;
+    description: string;
     debit: number;
     credit: number;
-    amount: number;
-    detail?: BalanceSheetDetailCategory[];
 }
 
-export interface BalanceSheetEditData {
-    assets: BalanceSheetEditItem[];
-    liabilities: BalanceSheetEditItem[];
-    equity: BalanceSheetEditItem[];
-    revenue: BalanceSheetEditItem[];
-    expense: BalanceSheetEditItem[];
-}
+const createEmptyLine = (): ManualJournalLineDraft => ({
+    id: `line-${Math.random().toString(36).substring(2, 9)}`,
+    chart_of_account_uid: "",
+    description: "",
+    debit: 0,
+    credit: 0,
+});
 
 interface BalanceSheetStoreState {
     isEditing: boolean;
-    editedData: BalanceSheetEditData | null;
     description: string;
     transactionDate: string;
+    lines: ManualJournalLineDraft[];
 
     setEditing: (editing: boolean) => void;
-    initializeData: (
-        data: {
-            assets?: { items: BalanceSheetItem[] };
-            liabilities?: { items: BalanceSheetItem[] };
-            equity?: { items: BalanceSheetItem[] };
-            revenue?: { items: BalanceSheetItem[] };
-            expense?: { items: BalanceSheetItem[] };
-            shu?: BalanceSheetSHU;
-        },
-        coaList: ChartOfAccount[],
-        coaMappings?: CoaMapping[]
-    ) => void;
-    initializeFromJournal: (journal: ManualJournal, coaList: ChartOfAccount[]) => void;
-    updateItemDebitCredit: (
-        section: "assets" | "liabilities" | "equity" | "revenue" | "expense",
-        uid: string,
-        debit: number,
-        credit: number
-    ) => void;
-    addItem: (
-        section: "assets" | "liabilities" | "equity" | "revenue" | "expense",
-        item: Omit<BalanceSheetEditItem, "debit" | "credit" | "amount">
-    ) => void;
-    removeItem: (
-        section: "assets" | "liabilities" | "equity" | "revenue" | "expense",
-        uid: string
-    ) => void;
     setDescription: (desc: string) => void;
     setTransactionDate: (date: string) => void;
+    setLines: (lines: ManualJournalLineDraft[]) => void;
+    addLine: (line?: Partial<ManualJournalLineDraft>) => void;
+    updateLine: (id: string, updates: Partial<ManualJournalLineDraft>) => void;
+    removeLine: (id: string) => void;
+    initializeNew: () => void;
+    initializeFromJournal: (journal: ManualJournal, _coaList?: ChartOfAccount[]) => void;
     reset: () => void;
 }
 
@@ -71,192 +42,81 @@ export const useBalanceSheetStore = create<BalanceSheetStoreState>()(
     persist(
         (set) => ({
             isEditing: false,
-            editedData: null,
             description: "",
             transactionDate: "",
+            lines: [],
 
             setEditing: (editing) => set({ isEditing: editing }),
-
-            initializeData: (data, coaList, coaMappings) => {
-                const shuPriorYearsMapping = coaMappings?.find(
-                    (m) => m.transaction_type === "equity" && m.slot === "shu_prior_years"
-                );
-
-                const mapSection = (items: BalanceSheetItem[] | undefined) => {
-                    return (items || []).map((item) => {
-                        const matched = coaList.find(
-                            (coa) =>
-                                coa.kode === item.kode || (item.uid && coa.uid === item.uid)
-                        );
-                        const isShuLalu =
-                            (shuPriorYearsMapping?.chart_of_account_uid &&
-                                (matched?.uid === shuPriorYearsMapping.chart_of_account_uid ||
-                                    item.uid === shuPriorYearsMapping.chart_of_account_uid)) ||
-                            (shuPriorYearsMapping?.kode &&
-                                (matched?.kode === shuPriorYearsMapping.kode ||
-                                    item.kode === shuPriorYearsMapping.kode)) ||
-                            (!shuPriorYearsMapping &&
-                                (item.kode === "3-1200" ||
-                                    item.nama.toLowerCase().includes("shu tahun lalu") ||
-                                    item.nama.toLowerCase().includes("sisa hasil usaha tahun lalu") ||
-                                    item.nama.toLowerCase().includes("laba ditahan")));
-
-                        let itemDetail = item.detail;
-                        if (
-                            isShuLalu &&
-                            data.shu?.lalu_detail &&
-                            data.shu.lalu_detail.length > 0 &&
-                            (!itemDetail || itemDetail.length === 0)
-                        ) {
-                            itemDetail = data.shu.lalu_detail.map((d: BalanceSheetSHULaluDetail) => ({
-                                kategori: `SHU Tahun ${d.tahun}`,
-                                amount: d.amount,
-                                debit: d.amount < 0 ? Math.abs(d.amount) : 0,
-                                credit: d.amount > 0 ? d.amount : 0,
-                            }));
-                        }
-
-                        return {
-                            uid: matched?.uid || item.uid || `temp-${Math.random().toString(36).substring(2, 9)}`,
-                            kode: item.kode,
-                            nama: item.nama,
-                            debit: item.debit || 0,
-                            credit: item.credit || 0,
-                            amount: item.amount || 0,
-                            detail: itemDetail,
-                        };
-                    });
-                };
-
-                set({
-                    editedData: {
-                        assets: mapSection(data.assets?.items),
-                        liabilities: mapSection(data.liabilities?.items),
-                        equity: mapSection(data.equity?.items),
-                        revenue: mapSection(data.revenue?.items),
-                        expense: mapSection(data.expense?.items),
-                    },
-                    description: "Penyesuaian Neraca Keuangan",
-                    transactionDate: new Date().toISOString().split("T")[0],
-                });
-            },
-
-            initializeFromJournal: (journal, coaList) => {
-                const assets: BalanceSheetEditItem[] = [];
-                const liabilities: BalanceSheetEditItem[] = [];
-                const equity: BalanceSheetEditItem[] = [];
-                const revenue: BalanceSheetEditItem[] = [];
-                const expense: BalanceSheetEditItem[] = [];
-
-                (journal.lines || []).forEach((line: ManualJournalLine) => {
-                    const matchedCoa = coaList.find(
-                        (coa) => coa.uid === line.chart_of_account_uid || coa.kode === line.account?.kode
-                    );
-                    if (!matchedCoa) return;
-
-                    const tipe = matchedCoa.tipe;
-                    const debitVal = Number(line.debit) || 0;
-                    const creditVal = Number(line.credit) || 0;
-
-                    let amount = 0;
-                    if (tipe === "asset" || tipe === "expense") {
-                        amount = debitVal - creditVal;
-                    } else {
-                        amount = creditVal - debitVal;
-                    }
-
-                    const item: BalanceSheetEditItem = {
-                        uid: matchedCoa.uid,
-                        kode: matchedCoa.kode,
-                        nama: matchedCoa.nama,
-                        debit: debitVal,
-                        credit: creditVal,
-                        amount,
-                    };
-
-                    if (tipe === "asset") assets.push(item);
-                    else if (tipe === "liability") liabilities.push(item);
-                    else if (tipe === "equity") equity.push(item);
-                    else if (tipe === "revenue") revenue.push(item);
-                    else if (tipe === "expense") expense.push(item);
-                });
-
-                set({
-                    editedData: {
-                        assets,
-                        liabilities,
-                        equity,
-                        revenue,
-                        expense,
-                    },
-                    description: journal.description || "",
-                    transactionDate: journal.transaction_date ? journal.transaction_date.split("T")[0] : new Date().toISOString().split("T")[0],
-                    isEditing: true,
-                });
-            },
-
-            updateItemDebitCredit: (section, uid, debit, credit) =>
-                set((state) => {
-                    if (!state.editedData) return {};
-                    const isDebitNormal = section === "assets" || section === "expense";
-                    const amount = isDebitNormal ? debit - credit : credit - debit;
-                    return {
-                        editedData: {
-                            ...state.editedData,
-                            [section]: state.editedData[section].map((item) =>
-                                item.uid === uid ? { ...item, debit, credit, amount } : item
-                            ),
-                        },
-                    };
-                }),
-
-            addItem: (section, item) =>
-                set((state) => {
-                    if (!state.editedData) return {};
-                    const exists = state.editedData[section].some(
-                        (i) => i.uid === item.uid || i.kode === item.kode
-                    );
-                    if (exists) return {};
-                    return {
-                        editedData: {
-                            ...state.editedData,
-                            [section]: [
-                                ...state.editedData[section],
-                                {
-                                    ...item,
-                                    debit: 0,
-                                    credit: 0,
-                                    amount: 0,
-                                },
-                            ],
-                        },
-                    };
-                }),
-
-            removeItem: (section, uid) =>
-                set((state) => {
-                    if (!state.editedData) return {};
-                    return {
-                        editedData: {
-                            ...state.editedData,
-                            [section]: state.editedData[section].filter((item) => item.uid !== uid),
-                        },
-                    };
-                }),
-
             setDescription: (desc) => set({ description: desc }),
             setTransactionDate: (date) => set({ transactionDate: date }),
+            setLines: (lines) => set({ lines }),
+
+            addLine: (line) =>
+                set((state) => ({
+                    lines: [
+                        ...state.lines,
+                        {
+                            id: line?.id || `line-${Math.random().toString(36).substring(2, 9)}`,
+                            chart_of_account_uid: line?.chart_of_account_uid || "",
+                            description: line?.description || "",
+                            debit: line?.debit || 0,
+                            credit: line?.credit || 0,
+                        },
+                    ],
+                })),
+
+            updateLine: (id, updates) =>
+                set((state) => ({
+                    lines: state.lines.map((line) =>
+                        line.id === id ? { ...line, ...updates } : line
+                    ),
+                })),
+
+            removeLine: (id) =>
+                set((state) => ({
+                    lines: state.lines.filter((line) => line.id !== id),
+                })),
+
+            initializeNew: () =>
+                set({
+                    isEditing: true,
+                    description: "Penyesuaian Neraca Keuangan",
+                    transactionDate: todayStr(),
+                    lines: [createEmptyLine(), createEmptyLine()],
+                }),
+
+            initializeFromJournal: (journal) => {
+                const initialLines: ManualJournalLineDraft[] = (journal.lines || []).map(
+                    (line: ManualJournalLine, idx) => ({
+                        id: `line-${line.id || idx}-${Math.random().toString(36).substring(2, 7)}`,
+                        chart_of_account_uid: line.chart_of_account_uid || line.account?.uid || "",
+                        description: line.description || "",
+                        debit: Number(line.debit) || 0,
+                        credit: Number(line.credit) || 0,
+                    })
+                );
+
+                set({
+                    isEditing: true,
+                    description: journal.description || "Penyesuaian Neraca Keuangan",
+                    transactionDate: journal.transaction_date
+                        ? journal.transaction_date.substring(0, 10)
+                        : todayStr(),
+                    lines: initialLines.length >= 2 ? initialLines : [createEmptyLine(), createEmptyLine()],
+                });
+            },
 
             reset: () =>
                 set({
                     isEditing: false,
-                    editedData: null,
                     description: "",
                     transactionDate: "",
+                    lines: [],
                 }),
         }),
         {
-            name: "balance-sheet-edit-storage",
+            name: "manual-journal-edit-storage",
         }
     )
 );
+
