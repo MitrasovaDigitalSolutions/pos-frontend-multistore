@@ -2,8 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components/ui/data-table";
+import { DataTable, DataTableActionButton } from "@/components/ui/data-table";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
     IconEye,
@@ -65,12 +64,15 @@ export function AssetTable({
                 header: "No. Aset",
                 size: 130,
                 cell: ({ row }) => (
-                    <div className="space-y-0.5">
-                        <span className="font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200/60 dark:border-slate-700/60 block w-fit">
+                    <div className="space-y-0.5 max-w-[120px]">
+                        <span className="font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200/60 dark:border-slate-700/60 block w-fit truncate max-w-[110px]">
                             {row.original.nomor_aset}
                         </span>
                         {row.original.kode_aset && (
-                            <span className="text-[10px] text-slate-400 font-mono block">
+                            <span
+                                className="text-[10px] text-slate-400 font-mono block truncate"
+                                title={`SN: ${row.original.kode_aset}`}
+                            >
                                 SN: {row.original.kode_aset}
                             </span>
                         )}
@@ -80,17 +82,21 @@ export function AssetTable({
             {
                 accessorKey: "nama",
                 header: "Nama Aset & Kategori",
+                size: 220,
                 cell: ({ row }) => (
-                    <div className="space-y-0.5">
-                        <div className="font-bold text-xs text-slate-900 dark:text-slate-100">
+                    <div className="space-y-0.5 max-w-[200px] sm:max-w-[220px]">
+                        <div
+                            className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate"
+                            title={row.original.nama}
+                        >
                             {row.original.nama}
                         </div>
-                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
-                            <span className="font-medium text-indigo-600 dark:text-indigo-400">
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 truncate">
+                            <span className="font-medium text-indigo-600 dark:text-indigo-400 truncate max-w-[110px]">
                                 {row.original.category?.nama || "-"}
                             </span>
                             <span>•</span>
-                            <span className="capitalize">
+                            <span className="capitalize shrink-0">
                                 {row.original.sumber_perolehan === "kas" ? "Kas/Bank" : "Non-Kas"}
                             </span>
                         </div>
@@ -174,7 +180,7 @@ export function AssetTable({
             {
                 id: "actions",
                 header: "Aksi",
-                size: 130,
+                size: 140,
                 cell: ({ row }) => {
                     const a = row.original;
                     const maxSusut =
@@ -183,60 +189,52 @@ export function AssetTable({
                     const hasDepreciationHistory = (Number(a.total_penyusutan) || 0) > 0;
 
                     return (
-                        <div className="flex items-center gap-0.5">
+                        <div className="flex items-center gap-1.5">
                             {/* Detail */}
-                            <Button
-                                variant="ghost"
-                                size="icon"
+                            <DataTableActionButton
+                                variant="slate"
+                                tooltip="Lihat Detail & Riwayat"
                                 onClick={() => onDetail(a)}
-                                className="h-7.5 w-7.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg cursor-pointer transition-colors"
-                                title="Lihat Detail & Riwayat Penyusutan"
                             >
-                                <IconEye className="w-4 h-4" />
-                            </Button>
+                                <IconEye className="w-3.5 h-3.5" />
+                            </DataTableActionButton>
 
                             {/* Susutkan */}
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => onDepreciate(a)}
-                                disabled={!canDepreciate}
-                                className="h-7.5 w-7.5 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg cursor-pointer transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                                title={
+                            <DataTableActionButton
+                                variant="amber"
+                                tooltip={
                                     canDepreciate
                                         ? "Catat Penyusutan"
                                         : "Aset sudah habis disusutkan"
                                 }
+                                disabled={!canDepreciate}
+                                onClick={() => onDepreciate(a)}
                             >
-                                <IconTrendingDown className="w-4 h-4" />
-                            </Button>
+                                <IconTrendingDown className="w-3.5 h-3.5" />
+                            </DataTableActionButton>
 
                             {/* Edit */}
-                            <Button
-                                variant="ghost"
-                                size="icon"
+                            <DataTableActionButton
+                                variant="indigo"
+                                tooltip="Edit Data Aset"
                                 onClick={() => onEdit(a)}
-                                className="h-7.5 w-7.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg cursor-pointer transition-colors"
-                                title="Edit Info Aset"
                             >
-                                <IconEdit className="w-4 h-4" />
-                            </Button>
+                                <IconEdit className="w-3.5 h-3.5" />
+                            </DataTableActionButton>
 
                             {/* Hapus */}
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDelete(a)}
-                                disabled={hasDepreciationHistory}
-                                className="h-7.5 w-7.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg cursor-pointer transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                                title={
+                            <DataTableActionButton
+                                variant="rose"
+                                tooltip={
                                     hasDepreciationHistory
                                         ? "Tidak dapat dihapus karena memiliki riwayat penyusutan"
                                         : "Hapus Aset"
                                 }
+                                disabled={hasDepreciationHistory}
+                                onClick={() => handleDelete(a)}
                             >
-                                <IconTrash className="w-4 h-4" />
-                            </Button>
+                                <IconTrash className="w-3.5 h-3.5" />
+                            </DataTableActionButton>
                         </div>
                     );
                 },

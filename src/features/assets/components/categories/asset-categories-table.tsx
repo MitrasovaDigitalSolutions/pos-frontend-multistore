@@ -2,8 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components/ui/data-table";
+import { DataTable, DataTableActionButton } from "@/components/ui/data-table";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { IconEdit, IconTrash } from "@tabler/icons-react";
 import { toast } from "sonner";
@@ -52,9 +51,9 @@ export function AssetCategoriesTable({
             {
                 accessorKey: "kode",
                 header: "Kode",
-                size: 110,
+                size: 100,
                 cell: ({ row }) => (
-                    <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200/60 dark:border-slate-700/60">
+                    <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200/60 dark:border-slate-700/60 inline-block truncate max-w-[90px]">
                         {row.original.kode || "-"}
                     </span>
                 ),
@@ -62,13 +61,20 @@ export function AssetCategoriesTable({
             {
                 accessorKey: "nama",
                 header: "Nama Kategori",
+                size: 220,
                 cell: ({ row }) => (
-                    <div className="space-y-0.5">
-                        <div className="font-bold text-xs text-slate-900 dark:text-slate-100">
+                    <div className="max-w-[200px] sm:max-w-[230px] space-y-0.5">
+                        <div
+                            className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate"
+                            title={row.original.nama}
+                        >
                             {row.original.nama}
                         </div>
                         {row.original.keterangan && (
-                            <p className="text-[11px] text-slate-500 line-clamp-1">
+                            <p
+                                className="text-[11px] text-slate-500 truncate"
+                                title={row.original.keterangan}
+                            >
                                 {row.original.keterangan}
                             </p>
                         )}
@@ -78,7 +84,7 @@ export function AssetCategoriesTable({
             {
                 accessorKey: "assets_count",
                 header: "Jumlah Aset",
-                size: 110,
+                size: 100,
                 cell: ({ row }) => {
                     const count = row.original.assets_count ?? 0;
                     return (
@@ -91,11 +97,15 @@ export function AssetCategoriesTable({
             {
                 id: "coaAsset",
                 header: "Akun Aset",
+                size: 170,
                 cell: ({ row }) => {
                     const coa = row.original.coa_asset || row.original.coaAsset;
                     if (!coa) return <span className="text-slate-400 text-xs">-</span>;
                     return (
-                        <div className="text-xs">
+                        <div
+                            className="text-xs max-w-[160px] truncate"
+                            title={`[${coa.kode}] ${coa.nama}`}
+                        >
                             <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
                                 [{coa.kode}]
                             </span>{" "}
@@ -109,13 +119,17 @@ export function AssetCategoriesTable({
             {
                 id: "coaAkumulasi",
                 header: "Akumulasi Penyusutan",
+                size: 180,
                 cell: ({ row }) => {
                     const coa =
                         row.original.coa_akumulasi_penyusutan ||
                         row.original.coaAkumulasiPenyusutan;
                     if (!coa) return <span className="text-slate-400 text-xs">-</span>;
                     return (
-                        <div className="text-xs">
+                        <div
+                            className="text-xs max-w-[170px] truncate"
+                            title={`[${coa.kode}] ${coa.nama}`}
+                        >
                             <span className="font-mono font-bold text-amber-600 dark:text-amber-400">
                                 [{coa.kode}]
                             </span>{" "}
@@ -129,13 +143,17 @@ export function AssetCategoriesTable({
             {
                 id: "coaBeban",
                 header: "Beban Penyusutan",
+                size: 180,
                 cell: ({ row }) => {
                     const coa =
                         row.original.coa_beban_penyusutan ||
                         row.original.coaBebanPenyusutan;
                     if (!coa) return <span className="text-slate-400 text-xs">-</span>;
                     return (
-                        <div className="text-xs">
+                        <div
+                            className="text-xs max-w-[170px] truncate"
+                            title={`[${coa.kode}] ${coa.nama}`}
+                        >
                             <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">
                                 [{coa.kode}]
                             </span>{" "}
@@ -154,30 +172,26 @@ export function AssetCategoriesTable({
                     const c = row.original;
                     const hasAssets = (c.assets_count ?? 0) > 0;
                     return (
-                        <div className="flex items-center gap-1">
-                            <Button
-                                variant="ghost"
-                                size="icon"
+                        <div className="flex items-center gap-1.5">
+                            <DataTableActionButton
+                                variant="indigo"
+                                tooltip="Ubah Kategori"
                                 onClick={() => onEdit(c)}
-                                className="h-7.5 w-7.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg cursor-pointer transition-colors"
-                                title="Edit Kategori"
                             >
-                                <IconEdit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDelete(c)}
-                                disabled={hasAssets}
-                                className="h-7.5 w-7.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg cursor-pointer transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                                title={
+                                <IconEdit className="w-3.5 h-3.5" />
+                            </DataTableActionButton>
+                            <DataTableActionButton
+                                variant="rose"
+                                tooltip={
                                     hasAssets
                                         ? "Tidak dapat dihapus karena memiliki aset terdaftar"
                                         : "Hapus Kategori"
                                 }
+                                disabled={hasAssets}
+                                onClick={() => handleDelete(c)}
                             >
-                                <IconTrash className="w-4 h-4" />
-                            </Button>
+                                <IconTrash className="w-3.5 h-3.5" />
+                            </DataTableActionButton>
                         </div>
                     );
                 },
