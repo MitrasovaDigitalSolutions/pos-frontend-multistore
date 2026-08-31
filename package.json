@@ -60,5 +60,12 @@
     "serwist": "^9.5.11",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "lavamoat": {
+    "allowScripts": {
+      "msw": true,
+      "sharp": true,
+      "unrs-resolver": true
+    }
   }
 }
