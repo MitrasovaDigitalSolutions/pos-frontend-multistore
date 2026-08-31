@@ -141,41 +141,44 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
     }, [totalAssets, totalLiabilities, finalEquityTotal]);
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-3.5">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
-                <div className="flex items-center gap-4">
-                    <div className="relative flex items-center justify-center p-3.5 bg-gradient-to-br from-violet-500 to-fuchsia-600 dark:from-violet-650 dark:to-fuchsia-850 text-white rounded-2xl shadow-lg shadow-violet-500/15 dark:shadow-violet-950/30 ring-4 ring-violet-50 dark:ring-violet-950/20 shrink-0">
-                        <IconBook className="w-6 h-6" />
-                        <div className="absolute inset-0 bg-violet-500 rounded-2xl blur-lg opacity-25 -z-10" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2.5">
+                    <div className="p-2 bg-indigo-600 text-white rounded-xl shadow-xs shrink-0">
+                        <IconBook className="w-4 h-4" />
                     </div>
 
-                    <div className="space-y-1">
-                        <div className="flex items-center gap-2.5 flex-wrap">
-                            <h2 className="text-xl md:text-2xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">
+                    <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <h2 className="text-base sm:text-lg font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-tight">
                                 Detail Jurnal Penyesuaian
                             </h2>
-                            <span className={cn(
-                                "text-[9px] px-2 py-0.5 rounded-full font-extrabold uppercase tracking-wider shadow-sm border",
-                                journal.status === "draft"
-                                    ? "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30"
-                                    : "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-450 dark:border-emerald-900/30"
-                            )}>
-                                {journal.status === "draft" ? `Draft: ${journal.reference_number}` : `Posted: ${journal.reference_number}`}
+                            <span
+                                className={cn(
+                                    "text-[9px] px-2 py-0.5 rounded-md font-extrabold uppercase tracking-wider border",
+                                    journal.status === "draft"
+                                        ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30"
+                                        : "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-450 dark:border-emerald-900/30"
+                                )}
+                            >
+                                {journal.status === "draft"
+                                    ? `Draft: ${journal.reference_number || "-"}`
+                                    : `Posted: ${journal.reference_number || "-"}`}
                             </span>
                         </div>
-                        <p className="text-xs text-slate-450 dark:text-slate-500 leading-relaxed max-w-xl">
-                            Menampilkan tinjauan laporan neraca keuangan yang disesuaikan oleh entri jurnal ini.
+                        <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-snug hidden sm:block">
+                            Menampilkan tinjauan neraca keuangan yang disesuaikan oleh entri jurnal ini.
                         </p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-auto">
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                     <Button
                         variant="outline"
                         size="sm"
                         onClick={() => router.push("/admin/accounting/journals")}
-                        className="h-9 px-4 text-xs font-bold rounded-xl border-slate-200 hover:bg-slate-50 dark:border-slate-850 dark:bg-slate-900 text-slate-700 dark:text-slate-300 shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+                        className="h-8 px-3 text-xs font-bold rounded-xl border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 text-slate-700 dark:text-slate-300 shadow-xs flex items-center gap-1 cursor-pointer"
                     >
                         <IconArrowLeft className="w-3.5 h-3.5 text-slate-400" />
                         Kembali
@@ -183,8 +186,10 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
                     {journal.status === "draft" && (
                         <Button
                             size="sm"
-                            onClick={() => router.push(`/admin/accounting/balance-sheet?action=edit&uid=${journal.uid}`)}
-                            className="h-9 px-4 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-600/10 flex items-center gap-1.5 transition-all cursor-pointer"
+                            onClick={() =>
+                                router.push(`/admin/accounting/balance-sheet?action=edit&uid=${journal.uid}`)
+                            }
+                            className="h-8 px-3 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs flex items-center gap-1 cursor-pointer"
                         >
                             <IconEdit className="w-3.5 h-3.5" />
                             Edit Jurnal
@@ -214,16 +219,16 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
             />
 
             {/* Two-Column Grid */}
-            <div className={cn("grid gap-6", showDebitCredit ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
-                <div className="space-y-6">
+            <div className={cn("grid gap-3.5", showDebitCredit ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
+                <div className="space-y-3.5">
                     <BalanceSheetSectionCard
                         title="Aset"
-                        description="Harta kekayaan perusahaan termasuk kas, rekening bank, piutang, dan stok persediaan barang dagang."
+                        description="Harta kekayaan perusahaan termasuk kas, rekening bank, piutang, dan persediaan."
                         items={assets}
                         total={totalAssets}
                         accentColor="emerald"
                         totalLabel="Total Aset"
-                        icon={<IconWallet className="w-4.5 h-4.5 text-emerald-500" />}
+                        icon={<IconWallet className="w-4 h-4 text-emerald-500" />}
                         isEditing={false}
                         showDebitCredit={showDebitCredit}
                         sectionKey="assets"
@@ -238,7 +243,7 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
                             total={totalRevenue}
                             accentColor="indigo"
                             totalLabel="Total Pendapatan"
-                            icon={<IconCoin className="w-4.5 h-4.5 text-indigo-500" />}
+                            icon={<IconCoin className="w-4 h-4 text-indigo-500" />}
                             isEditing={false}
                             showDebitCredit={showDebitCredit}
                             sectionKey="revenue"
@@ -247,7 +252,7 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
                     )}
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-3.5">
                     <BalanceSheetSectionCard
                         title="Kewajiban (Liabilitas)"
                         description="Kewajiban finansial jangka pendek dan jangka panjang perusahaan kepada pihak lain."
@@ -255,7 +260,7 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
                         total={totalLiabilities}
                         accentColor="amber"
                         totalLabel="Total Kewajiban"
-                        icon={<IconCoin className="w-4.5 h-4.5 text-amber-500" />}
+                        icon={<IconCoin className="w-4 h-4 text-amber-500" />}
                         isEditing={false}
                         showDebitCredit={showDebitCredit}
                         sectionKey="liabilities"
@@ -269,7 +274,7 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
                         total={finalEquityTotal}
                         accentColor="indigo"
                         totalLabel="Total Ekuitas"
-                        icon={<IconTrendingUp className="w-4.5 h-4.5 text-indigo-500" />}
+                        icon={<IconTrendingUp className="w-4 h-4 text-indigo-500" />}
                         isEditing={false}
                         showDebitCredit={showDebitCredit}
                         sectionKey="equity"
@@ -284,7 +289,7 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
                             total={totalExpense}
                             accentColor="amber"
                             totalLabel="Total Beban"
-                            icon={<IconTrendingUp className="w-4.5 h-4.5 text-amber-500" />}
+                            icon={<IconTrendingUp className="w-4 h-4 text-amber-500" />}
                             isEditing={false}
                             showDebitCredit={showDebitCredit}
                             sectionKey="expense"

@@ -1,13 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ROUTES } from "@/constants/routes";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { cn } from "@/lib/utils";
-import { IconArrowRight, IconInfoCircle, IconScale } from "@tabler/icons-react";
+import { IconAlertCircle, IconArrowRight, IconCircleCheck, IconScale } from "@tabler/icons-react";
 
 interface BalanceSheetStatusCardProps {
     isBalanced: boolean;
@@ -28,159 +26,92 @@ export function BalanceSheetStatusCard({
     difference,
     leftLabel,
     rightLabel,
-    leftLegend,
-    rightLegend,
     hideUnbalancedButton = false,
 }: BalanceSheetStatusCardProps) {
     return (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-2xl p-3.5 sm:p-6 shadow-sm">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-3 sm:gap-4 relative z-10">
-                {/* Status Message */}
-                <div className="flex items-start gap-3 sm:gap-4">
-                    <div className={cn(
-                        "w-10 h-10 sm:w-16 sm:h-16 rounded-full flex items-center justify-center shrink-0",
-                        isBalanced ? "bg-gradient-to-br from-emerald-100 to-indigo-100 dark:from-emerald-950/50 dark:to-indigo-950/50" : "bg-rose-100 dark:bg-rose-950/50"
-                    )}>
-                        <IconScale className={cn("w-5 h-5 sm:w-8 sm:h-8", isBalanced ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400 animate-pulse")} />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 sm:p-3.5 shadow-xs">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                {/* Left: Compact Status Indicator */}
+                <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                        className={cn(
+                            "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-xs",
+                            isBalanced
+                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400"
+                                : "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400"
+                        )}
+                    >
+                        {isBalanced ? (
+                            <IconCircleCheck className="w-4.5 h-4.5" />
+                        ) : (
+                            <IconAlertCircle className="w-4.5 h-4.5 animate-pulse" />
+                        )}
                     </div>
-                    <div>
+                    <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="font-extrabold text-xs sm:text-sm text-slate-800 dark:text-slate-100">
-                                Status Keseimbangan Neraca
-                            </h3>
-                            <span className={cn(
-                                "text-[9px] px-2 py-0.5 rounded-full font-extrabold uppercase tracking-wider shadow-sm border",
-                                isBalanced
-                                    ? "bg-gradient-to-r from-emerald-100 to-indigo-100 text-emerald-900 border-emerald-300/60 dark:from-emerald-950/70 dark:to-indigo-950/70 dark:text-emerald-300 dark:border-emerald-800/60"
-                                    : "bg-rose-100 text-rose-800 border-rose-200/60 dark:bg-rose-950/50 dark:text-rose-400 dark:border-rose-900/40"
-                            )}>
-                                {isBalanced ? "Seimbang (Balanced)" : "Tidak Seimbang"}
+                            <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100">
+                                {isBalanced ? "Neraca Seimbang (Balanced)" : "Neraca Belum Seimbang"}
+                            </span>
+                            <span
+                                className={cn(
+                                    "text-[9px] px-2 py-0.5 rounded-md font-extrabold uppercase tracking-wider border",
+                                    isBalanced
+                                        ? "bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40"
+                                        : "bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/40"
+                                )}
+                            >
+                                {isBalanced ? "Sinkron" : `Selisih: ${formatRupiah(difference)}`}
                             </span>
                         </div>
-                        <p className="text-slate-500 dark:text-slate-450 text-[11px] sm:text-xs mt-1.5 sm:mt-2 max-w-xl leading-relaxed hidden sm:block">
+                        <p className="text-slate-400 dark:text-slate-500 text-[11px] truncate">
                             {isBalanced
-                                ? "Sempurna! Persamaan neraca keuangan Anda tepat seimbang. Ini menunjukkan pencatatan jurnal pembukuan Anda sudah sinkron dan akurat."
-                                : "Perhatian! Jumlah saldo tidak seimbang. Silakan periksa kembali nominal input atau entri jurnal penyesuaian Anda."}
-                            {!isBalanced && difference > 0 && (
-                                <span className="block font-extrabold text-rose-600 dark:text-rose-400 mt-1.5 font-mono text-[13px]">
-                                    Selisih (Discrepancy): {formatRupiah(difference)}
-                                </span>
-                            )}
+                                ? "Pencatatan posisi Aset, Kewajiban, dan Ekuitas tepat seimbang."
+                                : "Terdapat perbedaan saldo antara sisi Debit dan Kredit."}
                         </p>
-                        {!isBalanced && !hideUnbalancedButton && (
-                            <div className="mt-3">
-                                <Link href={ROUTES.ADMIN_ACCOUNTING_UNBALANCED}>
-                                    <Button
-                                        size="sm"
-                                        className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl h-8 px-3 shadow-sm inline-flex items-center gap-1.5 cursor-pointer"
-                                    >
-                                        <IconScale size={15} />
-                                        <span>Perbaiki di Entri Tidak Seimbang</span>
-                                        <IconArrowRight size={14} />
-                                    </Button>
-                                </Link>
-                            </div>
-                        )}
                     </div>
                 </div>
 
-                {/* Balance Bar & Metrics */}
-                <div className="w-full lg:w-[420px] shrink-0 space-y-2.5 sm:space-y-3.5">
-                    <div className="flex justify-between items-end">
-                        <div className="space-y-1">
-                            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
-                                {leftLabel || "Total Aset (A)"}
-                            </span>
-                            <span className="text-sm sm:text-base font-extrabold text-emerald-600 dark:text-emerald-450 font-mono">
-                                {formatRupiah(totalAssets)}
-                            </span>
-                        </div>
-                        <div className="text-right space-y-1">
-                            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
-                                {rightLabel || "Kewajiban + Ekuitas (K + E)"}
-                            </span>
-                            <span className={cn(
-                                "text-sm sm:text-base font-extrabold font-mono",
-                                isBalanced ? "text-indigo-600 dark:text-indigo-400" : "text-rose-650 dark:text-rose-450"
-                            )}>
-                                {formatRupiah(totalLiabilitiesAndEquity)}
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* Comparison Progress Bar */}
-                    <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 relative overflow-hidden p-0.5 border border-slate-200/60 dark:border-slate-800 shadow-inner">
-                        {isBalanced ? (
-                            <motion.div
-                                initial={{ width: "0%" }}
-                                animate={{ width: "100%" }}
-                                transition={{ duration: 0.8, ease: "easeOut" }}
-                                className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-600 relative overflow-hidden shadow-md shadow-emerald-500/20"
-                            />
-                        ) : (
-                            <div className="flex h-full rounded-full overflow-hidden w-full">
-                                <motion.div
-                                    initial={{ width: "0%" }}
-                                    animate={{ width: `${(totalAssets / (totalAssets + totalLiabilitiesAndEquity || 1)) * 100}%` }}
-                                    transition={{ duration: 0.6, ease: "easeOut" }}
-                                    className="bg-emerald-500 h-full"
-                                />
-                                <motion.div
-                                    initial={{ width: "0%" }}
-                                    animate={{ width: `${(totalLiabilitiesAndEquity / (totalAssets + totalLiabilitiesAndEquity || 1)) * 100}%` }}
-                                    transition={{ duration: 0.6, ease: "easeOut" }}
-                                    className="bg-rose-500 h-full"
-                                />
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="flex justify-between items-center text-[9px] font-bold text-slate-400 dark:text-slate-500">
-                        <span className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 bg-emerald-500 rounded-full block" />
-                            {leftLegend || "Aset"}
+                {/* Right: Compact Metrics Comparison */}
+                <div className="flex items-center gap-4 sm:gap-6 justify-between lg:justify-end shrink-0 border-t lg:border-t-0 pt-2 lg:pt-0 border-slate-100 dark:border-slate-800">
+                    <div className="text-left lg:text-right space-y-0.5">
+                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+                            {leftLabel || "Total Aset (A)"}
                         </span>
-                        <span className="flex items-center gap-1.5">
-                            <span className={cn("w-2 h-2 rounded-full block", isBalanced ? "bg-indigo-500" : "bg-rose-500")} />
-                            {rightLegend || "Kewajiban & Ekuitas"}
+                        <span className="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono tabular-nums">
+                            {formatRupiah(totalAssets)}
                         </span>
                     </div>
 
-                    {/* Debit/Credit convention — tooltip */}
-                    <div className="flex items-center gap-1.5 pt-1">
-                        <span className="text-[11px] text-slate-400 dark:text-slate-500">Konvensi Debit & Kredit?</span>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <button
-                                    type="button"
-                                    className="text-slate-400 hover:text-slate-650 dark:text-slate-500 dark:hover:text-slate-350 transition-colors"
-                                    aria-label="Konvensi akuntansi"
-                                >
-                                    <IconInfoCircle className="w-3.5 h-3.5" />
-                                </button>
-                            </TooltipTrigger>
-                            <TooltipContent
-                                side="top"
-                                className="text-[11px] leading-relaxed max-w-[270px] bg-slate-950 text-white rounded-xl p-3 shadow-xl border border-slate-800 space-y-1.5"
+                    <div className="w-px h-6 bg-slate-200 dark:bg-slate-800 hidden sm:block" />
+
+                    <div className="text-right space-y-0.5">
+                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+                            {rightLabel || "Liabilitas + Ekuitas"}
+                        </span>
+                        <span
+                            className={cn(
+                                "text-xs sm:text-sm font-black font-mono tabular-nums",
+                                isBalanced
+                                    ? "text-indigo-600 dark:text-indigo-400"
+                                    : "text-rose-600 dark:text-rose-400"
+                            )}
+                        >
+                            {formatRupiah(totalLiabilitiesAndEquity)}
+                        </span>
+                    </div>
+
+                    {!isBalanced && !hideUnbalancedButton && (
+                        <Link href={ROUTES.ADMIN_ACCOUNTING_UNBALANCED}>
+                            <Button
+                                size="sm"
+                                className="bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold rounded-xl h-7 px-2.5 shadow-xs inline-flex items-center gap-1 cursor-pointer"
                             >
-                                <p className="font-bold border-b border-slate-800 pb-1 text-slate-300">Prinsip Akuntansi Neraca:</p>
-                                <p>
-                                    <span className="text-emerald-400 font-semibold">Aset & Beban</span> normalnya bersaldo{" "}
-                                    <span className="text-emerald-400 font-semibold">Debit</span>.
-                                </p>
-                                <p>
-                                    <span className="text-indigo-400 font-semibold">Liabilitas, Ekuitas & Pendapatan</span> bersaldo{" "}
-                                    <span className="text-indigo-400 font-semibold">Kredit</span>.
-                                </p>
-                                <p className="text-slate-400 pt-0.5">
-                                    Neraca Standar:{" "}
-                                    <span className="text-slate-200 font-semibold block">
-                                        Aset = Liabilitas + Ekuitas
-                                    </span>
-                                </p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </div>
+                                <IconScale className="w-3.5 h-3.5" />
+                                <span>Perbaiki</span>
+                                <IconArrowRight className="w-3 h-3" />
+                            </Button>
+                        </Link>
+                    )}
                 </div>
             </div>
         </div>
