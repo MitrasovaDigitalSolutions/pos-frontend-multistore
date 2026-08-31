@@ -1,21 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { DataTable } from "@/components/ui/data-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import {
     IconBuildingWarehouse,
     IconTrendingDown,
     IconCalendar,
-    IconTrash,
     IconFileText,
     IconBuildingBank,
     IconReceipt2,
     IconArrowRight,
     IconCoin,
     IconPlus,
+    IconLoader2,
 } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { useAssetDetail, useDeleteAssetPenyusutan } from "../../api/assets-api";
@@ -29,7 +31,6 @@ interface AssetDetailSheetProps {
     onOpenChange: (open: boolean) => void;
     assetUid: string | null;
     initialMode?: "history" | "form";
-    onAddDepreciation?: (asset: Asset) => void;
 }
 
 export function AssetDetailSheet({
@@ -38,7 +39,7 @@ export function AssetDetailSheet({
     assetUid,
     initialMode = "history",
 }: AssetDetailSheetProps) {
-    const { data: asset, isLoading, refetch } = useAssetDetail(assetUid);
+    const { data: asset, isLoading, isFetching, refetch } = useAssetDetail(assetUid);
     const deletePenyusutan = useDeleteAssetPenyusutan();
 
     const [isFormActive, setIsFormActive] = useState<boolean>(initialMode === "form");
@@ -100,10 +101,75 @@ export function AssetDetailSheet({
         }
     };
 
-    const logs = asset?.penyusutan || [];
+    const logs = useMemo(() => asset?.penyusutan || [], [asset]);
     const maxSusut = asset
         ? Math.max(0, (Number(asset.nilai_buku) || 0) - (Number(asset.nilai_residu) || 0))
         : 0;
+
+    // Columns definition for DataTable
+    const columns: ColumnDef<AssetPenyusutan>[] = useMemo(
+        () => [
+            {
+                accessorKey: "nomor_transaksi",
+                header: "No. Transaksi & Tgl",
+                size: 150,
+                cell: ({ row }) => (
+                    <div>
+                        <div className="font-mono font-bold text-slate-800 dark:text-slate-200 text-xs">
+                            {row.original.nomor_transaksi}
+                        </div>
+                        <span className="text-[10px] text-slate-400">
+                            {formatToReadableDate(row.original.tanggal)}
+                        </span>
+                    </div>
+                ),
+            },
+            {
+                accessorKey: "nominal",
+                header: "Nominal Susut",
+                size: 120,
+                meta: {
+                    headerClassName: "text-right",
+                    cellClassName: "text-right font-extrabold text-amber-600 dark:text-amber-400 text-xs",
+                },
+                cell: ({ row }) => formatRupiah(Number(row.original.nominal) || 0),
+            },
+            {
+                id: "perubahan_nilai_buku",
+                header: "Perubahan Nilai Buku",
+                size: 160,
+                meta: {
+                    headerClassName: "text-center",
+                    cellClassName: "text-center",
+                },
+                cell: ({ row }) => (
+                    <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 text-[10px] font-mono">
+                        <span className="text-slate-500">
+                            {formatRupiah(Number(row.original.nilai_buku_sebelum) || 0)}
+                        </span>
+                        <IconArrowRight className="w-2.5 h-2.5 text-slate-400" />
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                            {formatRupiah(Number(row.original.nilai_buku_sesudah) || 0)}
+                        </span>
+                    </div>
+                ),
+            },
+            {
+                accessorKey: "keterangan",
+                header: "Keterangan",
+                size: 160,
+                cell: ({ row }) => (
+                    <span
+                        className="text-slate-600 dark:text-slate-400 text-[11px] truncate block max-w-[150px]"
+                        title={row.original.keterangan || "-"}
+                    >
+                        {row.original.keterangan || "-"}
+                    </span>
+                ),
+            },
+        ],
+        []
+    );
 
     return (
         <>
@@ -160,6 +226,12 @@ export function AssetDetailSheet({
                                         {asset.nama}
                                     </h3>
                                     {statusBadge(asset.status)}
+                                    {isFetching && (
+                                        <span className="flex items-center gap-1 text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold animate-pulse">
+                                            <IconLoader2 className="w-3 h-3 animate-spin" />
+                                            Memperbarui data...
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-1 flex-wrap">
                                     <span className="font-mono bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 text-[10px] font-bold text-slate-700 dark:text-slate-300">
@@ -181,17 +253,6 @@ export function AssetDetailSheet({
                                     </span>
                                 </div>
                             </div>
-
-                            {asset.status === "aktif" && maxSusut > 0 && !isFormActive && (
-                                <Button
-                                    size="sm"
-                                    onClick={() => setIsFormActive(true)}
-                                    className="h-8 px-3 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-xl shadow-xs shrink-0 cursor-pointer flex items-center gap-1.5 self-start sm:self-auto"
-                                >
-                                    <IconTrendingDown className="w-3.5 h-3.5" />
-                                    <span>Susutkan Aset</span>
-                                </Button>
-                            )}
                         </div>
 
                         {/* 2. Main 2-Column Responsive Layout */}
@@ -320,7 +381,7 @@ export function AssetDetailSheet({
                                 )}
                             </div>
 
-                            {/* Kolom Kanan: Mode Switcher (Riwayat vs Form Input) */}
+                            {/* Kolom Kanan: Mode Switcher (DataTable Riwayat vs Form Input) */}
                             <div className="lg:col-span-7">
                                 {isFormActive ? (
                                     <AssetDetailDepreciationForm
@@ -333,7 +394,7 @@ export function AssetDetailSheet({
                                         onCancel={() => setIsFormActive(false)}
                                     />
                                 ) : (
-                                    <div className="space-y-2 animate-in fade-in slide-in-from-left-4 duration-200">
+                                    <div className="space-y-2.5 animate-in fade-in slide-in-from-left-4 duration-200">
                                         <div className="flex items-center justify-between px-1">
                                             <h4 className="font-extrabold text-xs text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
                                                 <IconTrendingDown className="w-4 h-4 text-amber-500" />
@@ -357,78 +418,23 @@ export function AssetDetailSheet({
                                             )}
                                         </div>
 
-                                        <div className="border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden overflow-x-auto max-h-[50dvh]">
-                                            <table className="w-full text-xs">
-                                                <thead className="bg-slate-100/90 dark:bg-slate-800/90 text-slate-600 dark:text-slate-300 font-bold sticky top-0 z-10 border-b border-slate-200 dark:border-slate-700 backdrop-blur-xs">
-                                                    <tr>
-                                                        <th className="p-2 text-left min-w-[120px]">No. Transaksi & Tgl</th>
-                                                        <th className="p-2 text-right w-24">Nominal</th>
-                                                        <th className="p-2 text-center min-w-[140px]">Nilai Buku</th>
-                                                        <th className="p-2 text-left min-w-[120px]">Keterangan</th>
-                                                        <th className="p-2 text-center w-10">Aksi</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
-                                                    {logs.length === 0 ? (
-                                                        <tr>
-                                                            <td
-                                                                colSpan={5}
-                                                                className="p-8 text-center text-slate-400 text-xs"
-                                                            >
-                                                                Belum ada riwayat transaksi penyusutan pada aset ini.
-                                                            </td>
-                                                        </tr>
-                                                    ) : (
-                                                        logs.map((pys) => (
-                                                            <tr
-                                                                key={pys.uid}
-                                                                className="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors"
-                                                            >
-                                                                <td className="p-2">
-                                                                    <div className="font-mono font-bold text-slate-800 dark:text-slate-200 text-[11px]">
-                                                                        {pys.nomor_transaksi}
-                                                                    </div>
-                                                                    <span className="text-[10px] text-slate-400">
-                                                                        {formatToReadableDate(pys.tanggal)}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="p-2 text-right font-extrabold text-amber-600 dark:text-amber-400">
-                                                                    {formatRupiah(Number(pys.nominal) || 0)}
-                                                                </td>
-                                                                <td className="p-2 text-center">
-                                                                    <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 text-[10px] font-mono">
-                                                                        <span className="text-slate-500">
-                                                                            {formatRupiah(
-                                                                                Number(pys.nilai_buku_sebelum) || 0
-                                                                            )}
-                                                                        </span>
-                                                                        <IconArrowRight className="w-2.5 h-2.5 text-slate-400" />
-                                                                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                                                                            {formatRupiah(
-                                                                                Number(pys.nilai_buku_sesudah) || 0
-                                                                            )}
-                                                                        </span>
-                                                                    </div>
-                                                                </td>
-                                                                <td className="p-2 text-slate-600 dark:text-slate-400 text-[11px] truncate max-w-[140px]" title={pys.keterangan || "-"}>
-                                                                    {pys.keterangan || "-"}
-                                                                </td>
-                                                                <td className="p-2 text-center">
-                                                                    <Button
-                                                                        variant="ghost"
-                                                                        size="icon"
-                                                                        onClick={() => handleVoidClick(pys)}
-                                                                        className="h-6.5 w-6.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg cursor-pointer transition-colors"
-                                                                        title="Batalkan / Void Penyusutan"
-                                                                    >
-                                                                        <IconTrash className="w-3.5 h-3.5" />
-                                                                    </Button>
-                                                                </td>
-                                                            </tr>
-                                                        ))
-                                                    )}
-                                                </tbody>
-                                            </table>
+                                        {/* Reusable DataTable for Depreciation Logs */}
+                                        <div className="overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-800">
+                                            <DataTable
+                                                columns={columns}
+                                                data={logs}
+                                                isLoading={isLoading}
+                                                isFetching={isFetching}
+                                                showViewToggle={false}
+                                                clientPagination={true}
+                                                perPage={5}
+                                                emptyMessage="Belum ada riwayat transaksi penyusutan pada aset ini."
+                                                onDelete={handleVoidClick}
+                                                hideEdit={true}
+                                                hideView={true}
+                                                maxHeight="380px"
+                                                tableClassName="text-xs"
+                                            />
                                         </div>
                                     </div>
                                 )}
