@@ -124,9 +124,9 @@ export function BalanceSheetDashboard({
         return totalRevenue - totalExpense;
     }, [shuData, totalRevenue, totalExpense]);
 
-    // 3. Reorganize Equity: attach historical SHU lalu_detail to mapped COA and append SHU Tahun Berjalan in standard view
+    // 3. Reorganize Equity: attach historical SHU lalu_detail to mapped CoA and append SHU Tahun Berjalan in standard view
     const equityItems = useMemo(() => {
-        // Find and attach details (lalu_detail) to the mapped SHU Tahun Lalu COA account
+        // Find and attach details (lalu_detail) to the mapped SHU Tahun Lalu CoA account
         const items = equity.map((item) => {
             const isShuLalu =
                 (shuPriorYearsMapping?.chart_of_account_uid &&

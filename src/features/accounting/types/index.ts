@@ -103,3 +103,5 @@ export interface GeneralLedgerEntry {
 }
 
 export type GeneralLedgerResponse = PaginatedResponse<GeneralLedgerEntry>;
+
+export * from "./counterpart-mapping";

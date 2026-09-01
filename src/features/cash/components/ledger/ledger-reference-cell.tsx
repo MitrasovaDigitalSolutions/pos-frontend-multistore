@@ -17,6 +17,7 @@ export function LedgerReferenceCell({ movement }: LedgerReferenceCellProps) {
     const sessionUid = movement.cash_drawer_session_uid || drawerSession?.uid || drawerMovement?.cash_drawer_session_uid;
     const stockReceiving = movement.stockReceiving || movement.stock_receiving;
     const memberPayment = movement.memberPayment || movement.member_payment;
+    const coa = movement.chartOfAccount || movement.chart_of_account;
     const kat = (movement.kategori || "").toLowerCase();
 
     if (expense) {
@@ -172,11 +173,36 @@ export function LedgerReferenceCell({ movement }: LedgerReferenceCellProps) {
         );
     }
 
+    if (coa) {
+        return (
+            <div className="flex flex-col gap-0.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-bold text-slate-900 text-xs">
+                        {movement.kategori ? movement.kategori.replace(/_/g, " ") : "Penyesuaian Kas"}
+                    </span>
+                    <span className="text-[10px] bg-sky-50 text-sky-700 font-mono px-1.5 py-0.2 rounded border border-sky-200/60 font-semibold">
+                        {coa.kode_akun ? `${coa.kode_akun} - ` : ""}{coa.nama_akun || "Akun CoA"}
+                    </span>
+                </div>
+                {movement.catatan && (
+                    <span className="text-[10px] italic text-slate-400 max-w-xs truncate">
+                        &quot;{movement.catatan}&quot;
+                    </span>
+                )}
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-col gap-0.5">
             <span className="font-bold text-slate-800 text-xs uppercase tracking-wider">
                 {movement.kategori ? movement.kategori.replace(/_/g, " ") : "Mutasi Kas"}
             </span>
+            {movement.catatan && (
+                <span className="text-[10px] italic text-slate-400 max-w-xs truncate">
+                    &quot;{movement.catatan}&quot;
+                </span>
+            )}
         </div>
     );
 }

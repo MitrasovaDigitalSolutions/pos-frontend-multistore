@@ -5,8 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 
 import { FormDatePicker } from "@/components/forms/form-date-picker";
+import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
-import { DataTableTextActionButton } from "@/components/ui/data-table-actions";
 import { useGeneralLedgerUnbalanced } from "@/features/accounting/api/reports-api";
 import type { GeneralLedgerEntry } from "@/features/accounting/types";
 import { todayStr } from "@/lib/date-utils";
@@ -141,13 +141,14 @@ export function UnbalancedEntriesView() {
                     estimateRowHeight={52}
                     enableSortingRemoval={false}
                     extraActions={(row) => (
-                        <DataTableTextActionButton
-                            variant="emerald"
+                        <Button
+                            size="sm"
                             onClick={() => setSelectedEntry(row)}
-                            icon={<IconScale size={14} />}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-3 rounded-xl font-semibold shadow-sm flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                         >
+                            <IconScale size={14} />
                             Seimbangkan
-                        </DataTableTextActionButton>
+                        </Button>
                     )}
                     sortBy={sortBy}
                     sortOrder={sortOrder}

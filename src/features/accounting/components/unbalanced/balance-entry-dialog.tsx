@@ -15,15 +15,13 @@ import { FormProvider, useFieldArray, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner";
 
 import { FormNominalInput } from "@/components/forms/form-nominal-input";
-import { FormSelect } from "@/components/forms/form-select";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
-import type { CommandOption } from "@/components/ui/command-select";
 import { Scrollable } from "@/components/ui/scrollable";
-import { useFlatChartOfAccounts } from "@/features/accounting/api/coa-api";
 import { useBalanceEntry } from "@/features/accounting/api/ledger-api";
 import type { GeneralLedgerEntry } from "@/features/accounting/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { FormCoaPicker } from "../shared";
 
 interface BalanceAllocationFormItem {
     chartOfAccountUid: string;
@@ -41,18 +39,18 @@ interface BalanceEntryDialogProps {
 }
 
 export function BalanceEntryDialog({ selectedEntry, onClose, onSuccess }: BalanceEntryDialogProps) {
-    const { data: coaData, isLoading: isLoadingCoas } = useFlatChartOfAccounts();
+
     const balanceMutation = useBalanceEntry();
 
     const dialogMethods = useForm<BalanceEntryFormValues>({
         values: {
             allocations: selectedEntry
                 ? [
-                      {
-                          chartOfAccountUid: "",
-                          amount: Math.abs(Number(selectedEntry.debit) - Number(selectedEntry.credit)),
-                      },
-                  ]
+                    {
+                        chartOfAccountUid: "",
+                        amount: Math.abs(Number(selectedEntry.debit) - Number(selectedEntry.credit)),
+                    },
+                ]
                 : [{ chartOfAccountUid: "", amount: 0 }],
         },
     });
@@ -66,17 +64,6 @@ export function BalanceEntryDialog({ selectedEntry, onClose, onSuccess }: Balanc
         control: dialogMethods.control,
         name: "allocations",
     });
-
-    const coaOptions = useMemo<CommandOption[]>(() => {
-        if (!coaData) return [];
-        return coaData
-            .filter((c) => c.is_active)
-            .map((c) => ({
-                value: c.uid,
-                label: `[${c.kode}] ${c.nama}`,
-                description: `${c.tipe.toUpperCase()} — ${c.saldo_normal === "debit" ? "Debit" : "Kredit"}`,
-            }));
-    }, [coaData]);
 
     const selectedDiff = selectedEntry
         ? Math.abs(Number(selectedEntry.debit) - Number(selectedEntry.credit))
@@ -140,7 +127,7 @@ export function BalanceEntryDialog({ selectedEntry, onClose, onSuccess }: Balanc
             title={
                 <div className="flex items-center gap-2 text-slate-800 dark:text-slate-100">
                     <IconScale size={18} className="text-amber-500" />
-                    <span>Pilih Akun Penyeimbang COA</span>
+                    <span>Pilih Akun Penyeimbang CoA</span>
                 </div>
             }
             className="sm:max-w-4xl"
@@ -152,7 +139,7 @@ export function BalanceEntryDialog({ selectedEntry, onClose, onSuccess }: Balanc
                         {/* Scrollable Modal Content Body */}
                         <Scrollable className="flex-1 max-h-[calc(75vh-50px)] min-h-0 pb-4" scrollbarClassName="z-40">
                             <div className="pr-2 space-y-6">
-                                {/* 2-Column Grid: Left (Summary Info) vs Right (Multi-COA List) */}
+                                {/* 2-Column Grid: Left (Summary Info) vs Right (Multi-CoA List) */}
                                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
                                     {/* ── Left Column: Summary & Info ── */}
                                     <div className="md:col-span-5 space-y-4">
@@ -229,17 +216,17 @@ export function BalanceEntryDialog({ selectedEntry, onClose, onSuccess }: Balanc
                                         <div className="p-3 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 text-indigo-900 dark:text-indigo-200 flex items-start gap-2.5 text-xs">
                                             <IconInfoCircle className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
                                             <p className="leading-relaxed text-[11px]">
-                                                Sistem akan membuat jurnal penyeimbang secara otomatis menggunakan akun COA dan alokasi nominal di sebelah kanan untuk menetralkan selisih sebesar <strong>{formatRupiah(selectedDiff)}</strong>.
+                                                Sistem akan membuat jurnal penyeimbang secara otomatis menggunakan akun CoA dan alokasi nominal di sebelah kanan untuk menetralkan selisih sebesar <strong>{formatRupiah(selectedDiff)}</strong>.
                                             </p>
                                         </div>
                                     </div>
 
-                                    {/* ── Right Column: Multi-COA Allocations List ── */}
+                                    {/* ── Right Column: Multi-CoA Allocations List ── */}
                                     <div className="md:col-span-7 space-y-4">
                                         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                                             <div className="flex items-center gap-2">
                                                 <h4 className="text-xs font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider">
-                                                    Daftar Akun COA Penyeimbang
+                                                    Daftar Akun CoA Penyeimbang
                                                 </h4>
                                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
                                                     {fields.length} Akun
@@ -274,7 +261,7 @@ export function BalanceEntryDialog({ selectedEntry, onClose, onSuccess }: Balanc
                                             )}
                                         </div>
 
-                                        {/* Dedicated Scrollable Allocation COA Fields Container */}
+                                        {/* Dedicated Scrollable Allocation CoA Fields Container */}
                                         <Scrollable className="max-h-[300px] sm:max-h-[340px] pr-2.5" scrollbarClassName="z-40">
                                             <div className="space-y-3">
                                                 {fields.map((field, index) => (
@@ -298,15 +285,12 @@ export function BalanceEntryDialog({ selectedEntry, onClose, onSuccess }: Balanc
 
                                                         <div className="grid grid-cols-1 sm:grid-cols-[1fr_180px] gap-3 items-end">
                                                             <div>
-                                                                <FormSelect
+                                                                <FormCoaPicker
                                                                     name={`allocations.${index}.chartOfAccountUid`}
-                                                                    label="Akun COA"
-                                                                    options={coaOptions}
-                                                                    placeholder="Pilih akun COA..."
-                                                                    searchPlaceholder="Cari berdasarkan kode atau nama..."
-                                                                    emptyMessage="Akun COA tidak ditemukan."
-                                                                    isLoading={isLoadingCoas}
-                                                                    className="w-full dark:bg-slate-950"
+                                                                    label="Akun CoA"
+                                                                    placeholder="Pilih akun CoA..."
+                                                                    dialogTitle="Pilih Akun CoA Penyeimbang"
+                                                                    size="md"
                                                                 />
                                                             </div>
 

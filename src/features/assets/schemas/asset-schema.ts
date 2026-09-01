@@ -39,7 +39,7 @@ export const createAssetSchema = z
         if (data.sumber_perolehan === "non_kas" && !data.offset_coa_uid) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: "Akun COA penyeimbang (Modal / Hutang) wajib dipilih",
+                message: "Akun CoA penyeimbang (Modal / Hutang) wajib dipilih",
                 path: ["offset_coa_uid"],
             });
         }

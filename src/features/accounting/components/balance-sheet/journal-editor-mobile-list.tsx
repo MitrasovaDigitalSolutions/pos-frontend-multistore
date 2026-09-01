@@ -2,37 +2,40 @@
 
 import { Controller, type Control, type UseFormSetValue, type FieldErrors, type FieldArrayWithId } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { CommandSelect, type CommandOption } from "@/components/ui/command-select";
+import { CoaPickerTrigger } from "@/features/accounting/components/shared";
 import { NumberInput } from "@/components/ui/number-input";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconAlertCircle, IconCircleCheck, IconPlus, IconTrash } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import type { ChartOfAccount } from "@/features/accounting/types";
 import type { ManualJournalSchemaInput } from "@/features/accounting/schemas/manual-journal-schema";
 
 interface JournalEditorMobileListProps {
     fields: FieldArrayWithId<ManualJournalSchemaInput, "lines", "id">[];
     control: Control<ManualJournalSchemaInput>;
     setValue: UseFormSetValue<ManualJournalSchemaInput>;
-    accountOptions: CommandOption[];
+    flatAccounts?: ChartOfAccount[];
     errors?: FieldErrors<ManualJournalSchemaInput>["lines"];
     totalDebit: number;
     totalCredit: number;
     difference: number;
     isBalanced: boolean;
     onAddLine: () => void;
+    onAccountSelect: (index: number, coaUid: string) => void;
     onRemoveLine: (idx: number) => void;
 }
 
 export function JournalEditorMobileList({
     fields,
     control,
-    accountOptions,
+    flatAccounts = [],
     errors,
     totalDebit,
     totalCredit,
     difference,
     isBalanced,
     onAddLine,
+    onAccountSelect,
     onRemoveLine,
 }: JournalEditorMobileListProps) {
     return (
@@ -65,19 +68,21 @@ export function JournalEditorMobileList({
 
                         <div className="space-y-1">
                             <label className="text-[9px] font-bold text-slate-400 uppercase">
-                                Akun (COA) *
+                                Akun (CoA) *
                             </label>
                             <Controller
                                 control={control}
                                 name={`lines.${idx}.chart_of_account_uid`}
                                 render={({ field: selectField }) => (
-                                    <CommandSelect
-                                        options={accountOptions}
+                                    <CoaPickerTrigger
+                                        accounts={flatAccounts}
                                         value={selectField.value || ""}
-                                        onChange={selectField.onChange}
+                                        onChange={(val) => onAccountSelect(idx, val)}
                                         placeholder="Pilih akun..."
+                                        dialogTitle="Pilih Akun Baris Jurnal"
                                         size="sm"
-                                        className={cn("h-8 text-xs", accountError && "border-rose-400")}
+                                        allowClear
+                                        className={cn("w-full h-8 text-xs", accountError && "border-rose-400")}
                                     />
                                 )}
                             />
@@ -153,7 +158,7 @@ export function JournalEditorMobileList({
                 variant="outline"
                 size="sm"
                 onClick={onAddLine}
-                className="w-full h-8 text-xs font-bold text-indigo-600 border-dashed rounded-xl flex items-center justify-center gap-1.5"
+                className="w-full h-8 text-xs font-bold text-indigo-600 border-dashed rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
             >
                 <IconPlus className="w-3.5 h-3.5" />
                 Tambah Baris Akun

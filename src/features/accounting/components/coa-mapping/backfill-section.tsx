@@ -116,7 +116,7 @@ export function BackfillSection({ borderless = false }: { borderless?: boolean }
                 {/* Compact Info Row */}
                 <div className="flex gap-2.5 text-[10px] text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-900/30 border border-slate-200/50 dark:border-slate-800/40 p-2.5 rounded-xl leading-relaxed">
                     <Info className="h-4 w-4 text-indigo-500 shrink-0 mt-0.5" />
-                    <span>Sinkronisasi memperbarui pembukuan jurnal historis agar sesuai dengan konfigurasi COA yang baru.</span>
+                    <span>Sinkronisasi memperbarui pembukuan jurnal historis agar sesuai dengan konfigurasi CoA yang baru.</span>
                 </div>
 
                 {/* Compact Status Indicator */}
@@ -204,8 +204,8 @@ export function BackfillSection({ borderless = false }: { borderless?: boolean }
                                 Sinkronisasi Data Jurnal Historis
                             </h3>
                             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                                Ketika Anda mengubah pemetaan akun COA, pemetaan tersebut hanya akan berlaku untuk transaksi operasional yang dibuat dari saat ini ke depan. 
-                                Untuk memperbarui data jurnal transaksi lama agar sesuai dengan konfigurasi COA yang baru, Anda dapat menjalankan proses **Backfill**.
+                                Ketika Anda mengubah pemetaan akun CoA, pemetaan tersebut hanya akan berlaku untuk transaksi operasional yang dibuat dari saat ini ke depan.
+                                Untuk memperbarui data jurnal transaksi lama agar sesuai dengan konfigurasi CoA yang baru, Anda dapat menjalankan proses **Backfill**.
                             </p>
                         </div>
                     </div>
@@ -282,7 +282,7 @@ export function BackfillSection({ borderless = false }: { borderless?: boolean }
                                 <span className="font-medium text-slate-500 dark:text-slate-400">Atribut</span>
                                 <span className="font-semibold text-slate-800 dark:text-slate-200">Keterangan</span>
                             </div>
-                            
+
                             <div className="divide-y divide-slate-100 dark:divide-slate-800/60">
                                 {data.queued_at && (
                                     <div className="grid grid-cols-2 p-3">

@@ -112,7 +112,7 @@ export function CashLedgerTable({
                 onReset={handleFilterReset}
             />
 
-            {/* DataTable View using DataTable's built-in onView prop */}
+            {/* DataTable View with Fixed Table Layout & Column Widths */}
             <DataTable
                 columns={columns}
                 data={rawList}

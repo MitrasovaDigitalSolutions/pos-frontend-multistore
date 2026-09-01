@@ -24,7 +24,7 @@ import { useAssetDetail, useDeleteAssetPenyusutan } from "../../api/assets-api";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { formatToReadableDate } from "@/lib/date-utils";
 import { AssetDetailDepreciationForm } from "./form/asset-detail-depreciation-form";
-import type { Asset, AssetPenyusutan } from "../../types";
+import type { AssetPenyusutan } from "../../types";
 
 interface AssetDetailSheetProps {
     open: boolean;
@@ -260,7 +260,7 @@ export function AssetDetailSheet({
 
                         {/* 2. Main 2-Column Responsive Layout (4 cols Left, 8 cols Right) */}
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-                            {/* Kolom Kiri: Finansial, COA, dan Sumber Dana */}
+                            {/* Kolom Kiri: Finansial, CoA, dan Sumber Dana */}
                             <div className="lg:col-span-4 space-y-3">
                                 {/* Metrics 2x2 Grid */}
                                 <div className="grid grid-cols-2 gap-2">
@@ -305,11 +305,11 @@ export function AssetDetailSheet({
                                     </div>
                                 </div>
 
-                                {/* Akun COA & Pembiayaan */}
+                                {/* Akun CoA & Pembiayaan */}
                                 <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-2 text-xs">
                                     <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-800 dark:text-slate-200 pb-1 border-b border-slate-100 dark:border-slate-800">
                                         <IconReceipt2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                                        <span>Konfigurasi Akun COA</span>
+                                        <span>Konfigurasi Akun CoA</span>
                                     </div>
 
                                     <div className="space-y-1.5 text-[11px]">
@@ -362,8 +362,8 @@ export function AssetDetailSheet({
                                                 {asset.sumber_perolehan === "kas"
                                                     ? `Kas (${asset.cashAccount?.nama || "-"})`
                                                     : asset.offsetCoa
-                                                    ? `Non-Kas ([${asset.offsetCoa.kode}] ${asset.offsetCoa.nama})`
-                                                    : "Non-Kas"}
+                                                        ? `Non-Kas ([${asset.offsetCoa.kode}] ${asset.offsetCoa.nama})`
+                                                        : "Non-Kas"}
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between gap-2">

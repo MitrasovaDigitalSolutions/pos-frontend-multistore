@@ -14,6 +14,7 @@ import { FormTextarea } from "@/components/forms/form-textarea";
 import { Switch } from "@/components/ui/switch";
 import { coaSchema, type CoaSchemaInput } from "../../schemas/coa-schema";
 import { useCreateChartOfAccount, useUpdateChartOfAccount, useFlatChartOfAccounts } from "../../api/coa-api";
+import { FormCoaPicker } from "../shared";
 import type { ChartOfAccount } from "../../types";
 
 interface CoaDialogProps {
@@ -32,7 +33,7 @@ export function CoaDialog({
     const isEdit = !!account;
     const createMutation = useCreateChartOfAccount();
     const updateMutation = useUpdateChartOfAccount();
-    const { data: flatAccounts, isLoading: isLoadingAccounts } = useFlatChartOfAccounts();
+    const { data: flatAccounts } = useFlatChartOfAccounts();
 
     const methods = useForm<CoaSchemaInput>({
         resolver: zodResolver(coaSchema) as Resolver<CoaSchemaInput>,
@@ -135,13 +136,7 @@ export function CoaDialog({
         }
     };
 
-    // Filter parents options: can't select self as parent when in edit mode
-    const parentOptions = (flatAccounts || [])
-        .filter((a) => !isEdit || a.uid !== account?.uid)
-        .map((a) => ({
-            value: a.uid,
-            label: `[${a.kode}] ${a.nama}`,
-        }));
+
 
     const typeOptions = [
         { value: "asset", label: "Aset (Asset)" },
@@ -175,13 +170,14 @@ export function CoaDialog({
             <FormProvider {...methods}>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
                     {/* Parent selection */}
-                    <FormSelect<CoaSchemaInput>
+                    <FormCoaPicker
                         name="parent_uid"
                         label="Akun Induk (Parent Account)"
                         placeholder="Pilih Akun Induk (Kosongkan jika akun utama/level 1)"
-                        options={parentOptions}
-                        isLoading={isLoadingAccounts}
-                        emptyMessage="Tidak ada akun induk lain."
+                        dialogTitle="Pilih Akun Induk (Parent CoA)"
+                        excludeUid={account?.uid}
+                        allowClear={true}
+                        size="md"
                         disabled={isSubmitting}
                     />
 

@@ -1,116 +1,82 @@
 "use client";
 
 import { useWatch } from "react-hook-form";
-import { FormSelect } from "@/components/forms/form-select";
-import type { CommandOption } from "@/components/ui/command-select";
+import { FormCoaPicker } from "../shared/form-coa-picker";
 import type { CoaMapping } from "@/features/accounting/api/coa-mapping-api";
 import { AlertTriangle, PenTool } from "lucide-react";
 
 interface CoaMappingRowProps {
     m: CoaMapping;
-    coaOptions: CommandOption[];
     isDirty: boolean;
-    isLoadingCoas: boolean;
+    isLoadingCoas?: boolean;
 }
 
 const SLOT_LABELS: Record<string, string> = {
-    // Penjualan
-    sale_cash: "Kas Tunai — Penjualan",
-    sale_card: "Bank / Kartu — Penjualan",
-    sale_receivable: "Piutang Usaha — Penjualan Tempo",
+    sale_cash: "Kas (Tunai)",
+    sale_card: "Bank (Kartu)",
+    sale_receivable: "Piutang Usaha",
     sale_revenue: "Pendapatan Penjualan",
-    sale_residual: "Diskon & Selisih Pembayaran",
-    sale_vat: "Hutang PPN (Pajak Keluaran)",
-    sale_cogs: "Harga Pokok Penjualan (HPP)",
-    sale_inventory: "Persediaan Keluar — Terjual",
-    // Penerimaan Barang
-    receiving_inventory: "Persediaan Masuk — Pembelian",
-    receiving_ap: "Hutang Usaha — Pembelian Tempo",
-    // Pembayaran Supplier
-    payment_ap: "Hutang Usaha — Pelunasan Supplier",
-    payment_cash: "Kas Tunai — Bayar Supplier",
-    payment_bank: "Bank — Transfer ke Supplier",
-    // Pengeluaran / Biaya
-    expense_account: "Akun Beban Operasional",
-    expense_cash: "Kas Tunai — Bayar Beban",
-    expense_bank: "Bank — Transfer Bayar Beban",
-    // Piutang Member
-    memberpayment_receivable: "Piutang Member — Pelunasan",
-    memberpayment_cash: "Kas Tunai — Terima Cicilan Member",
-    memberpayment_bank: "Bank — Terima Cicilan Member",
-    // Retur Pembelian
-    return_ap: "Hutang Usaha — Retur ke Supplier",
-    return_inventory: "Persediaan Keluar — Retur Supplier",
-    // Kas & Bank Ledger
-    cashledger_cash: "Kas Tunai — Mutasi Manual",
-    cashledger_bank: "Bank — Mutasi / Transfer Dana",
-    cashledger_shortage: "Selisih Kas Kurang (Beban / Loss Kas Laci)",
-    cashledger_overage: "Selisih Kas Lebih (Pendapatan / Surplus Kas Laci)",
-    // Penyesuaian & Mutasi Stok
-    movement_inventory: "Persediaan — Penyesuaian Stok",
-    movement_surplus: "Selisih Lebih Stok (Surplus)",
-    movement_loss: "Selisih Kurang Stok (Loss / Susut)",
-    // Transfer Stok Antar Gudang
-    transfer_inventory_out: "Persediaan Keluar — Gudang Pengirim",
-    transfer_inventory_in: "Persediaan Masuk — Gudang Penerima",
-    transfer_in_transit: "Barang Dalam Perjalanan (In-Transit)",
-    // Ekuitas & Modal
+    sale_residual: "Diskon Penjualan",
+    sale_vat: "Pajak Penjualan (VAT)",
+    sale_cogs: "HPP (COGS)",
+    sale_inventory: "Persediaan",
+    receiving_inventory: "Persediaan",
+    receiving_ap: "Hutang Usaha",
+    payment_ap: "Hutang Usaha",
+    payment_cash: "Kas (Tunai)",
+    payment_bank: "Bank",
+    expense_account: "Beban",
+    expense_cash: "Kas (Tunai)",
+    expense_bank: "Bank",
+    memberpayment_receivable: "Piutang Usaha",
+    return_ap: "Hutang Usaha",
+    return_inventory: "Persediaan",
+    movement_inventory: "Persediaan",
+    movement_surplus: "Pendapatan Selisih Persediaan",
+    movement_loss: "Beban Selisih Persediaan",
+    cashledger_cash: "Kas (Tunai)",
+    cashledger_bank: "Bank",
+    cashledger_shortage: "Beban Kekurangan Kas",
+    cashledger_overage: "Pendapatan Selisih Kas",
     shu_prior_years: "SHU Tahun Lalu (Laba Ditahan / Retained Earnings)",
 };
 
 const SLOT_DESCRIPTIONS: Record<string, string> = {
-    // Penjualan
-    sale_cash: "Menampung penerimaan kas tunai dari transaksi penjualan di kasir.",
-    sale_card: "Menampung penerimaan pembayaran via kartu debit, kartu kredit, atau QRIS.",
-    sale_receivable: "Mencatat piutang pelanggan pada penjualan kredit/tempo yang belum dilunasi.",
-    sale_revenue: "Mencatat nilai pendapatan kotor dari seluruh penjualan produk.",
-    sale_residual: "Menampung selisih pembulatan, diskon penjualan, atau potongan harga pada transaksi.",
-    sale_vat: "Mencatat kewajiban PPN (Pajak Pertambahan Nilai) yang dipungut dari pelanggan.",
-    sale_cogs: "Mencatat Harga Pokok Penjualan (HPP), yaitu biaya perolehan barang yang sudah terjual.",
-    sale_inventory: "Mencatat pengurangan persediaan barang dagang saat barang terjual ke pelanggan.",
-    // Penerimaan Barang
-    receiving_inventory: "Mencatat penambahan persediaan barang dagang saat barang diterima dari supplier.",
-    receiving_ap: "Mencatat hutang usaha yang timbul akibat pembelian barang secara kredit/tempo dari supplier.",
-    // Pembayaran Supplier
-    payment_ap: "Mencatat pengurangan hutang usaha saat melakukan pelunasan pembayaran ke supplier.",
-    payment_cash: "Mencatat pengurangan kas tunai untuk membayar hutang supplier secara langsung.",
-    payment_bank: "Mencatat pengurangan saldo bank saat melakukan transfer pembayaran ke supplier.",
-    // Pengeluaran / Biaya
-    expense_account: "Mencatat beban operasional seperti listrik, air, gaji karyawan, sewa, dan biaya lainnya.",
-    expense_cash: "Mencatat pengurangan kas tunai untuk membayar pengeluaran operasional.",
-    expense_bank: "Mencatat pengurangan saldo bank untuk membayar beban operasional via transfer.",
-    // Piutang Member
-    memberpayment_receivable: "Mencatat pengurangan piutang member saat member mencicil atau melunasi tagihannya.",
-    memberpayment_cash: "Mencatat penerimaan kas tunai dari pembayaran cicilan/pelunasan piutang member.",
-    memberpayment_bank: "Mencatat penerimaan via bank dari pembayaran cicilan/pelunasan piutang member.",
-    // Retur Pembelian
-    return_ap: "Mencatat pengurangan hutang usaha akibat pengembalian barang yang diretur ke supplier.",
-    return_inventory: "Mencatat pengurangan persediaan saat barang diretur dan dikirim kembali ke supplier.",
-    // Kas & Bank Ledger
-    cashledger_cash: "Akun kas tunai yang digunakan untuk mencatat mutasi kas manual (setoran, penarikan, transfer).",
-    cashledger_bank: "Akun bank yang digunakan untuk mencatat mutasi dana manual atau pemindahbukuan antar rekening.",
-    cashledger_shortage: "Mencatat kerugian atau beban akibat selisih kurang pada penutupan kasir / laci kas.",
-    cashledger_overage: "Mencatat pendapatan atau keuntungan akibat selisih lebih pada penutupan kasir / laci kas.",
-    // Penyesuaian & Mutasi Stok
-    movement_inventory: "Akun persediaan barang dagang yang disesuaikan saat dilakukan stock opname atau koreksi stok.",
-    movement_surplus: "Mencatat keuntungan selisih lebih stok (barang lebih banyak dari catatan) saat stock opname.",
-    movement_loss: "Mencatat kerugian selisih kurang stok (barang hilang, rusak, atau susut) saat stock opname.",
-    // Transfer Stok Antar Gudang
-    transfer_inventory_out: "Mencatat pengurangan persediaan di gudang pengirim saat stok ditransfer ke gudang lain.",
-    transfer_inventory_in: "Mencatat penambahan persediaan di gudang penerima saat stok diterima dari gudang lain.",
-    transfer_in_transit: "Akun perantara untuk stok yang sedang dalam perjalanan antar gudang (belum diterima).",
-    // Ekuitas & Modal
+    sale_cash: "Menampung pembayaran tunai dari transaksi penjualan kasir.",
+    sale_card: "Menampung pembayaran kartu debit/kredit/QRIS dari transaksi penjualan.",
+    sale_receivable: "Mencatat piutang pelanggan pada transaksi penjualan non-tunai (tempo).",
+    sale_revenue: "Mencatat nilai pendapatan dari penjualan produk.",
+    sale_residual: "Menampung selisih pembayaran, diskon penjualan, atau pembulatan transaksi penjualan.",
+    sale_vat: "Mencatat kewajiban Pajak Pertambahan Nilai (PPN) yang dipungut dari transaksi penjualan.",
+    sale_cogs: "Harga Pokok Penjualan (HPP) untuk mencatat beban biaya barang yang terjual.",
+    sale_inventory: "Persediaan barang dagang yang berkurang akibat terjual.",
+    receiving_inventory: "Persediaan barang dagang yang bertambah saat barang masuk dari supplier.",
+    receiving_ap: "Hutang usaha yang timbul saat menerima barang tempo dari supplier.",
+    payment_ap: "Hutang usaha yang berkurang saat melakukan pelunasan ke supplier.",
+    payment_cash: "Kas tunai yang berkurang untuk membayar hutang supplier.",
+    payment_bank: "Akun bank yang berkurang untuk membayar hutang supplier via transfer.",
+    expense_account: "Akun beban/biaya saat mencatat pengeluaran operasional (listrik, gaji, air, dsb).",
+    expense_cash: "Kas tunai yang berkurang untuk membayar pengeluaran operasional.",
+    expense_bank: "Akun bank yang berkurang untuk membayar beban operasional via transfer.",
+    memberpayment_receivable: "Piutang usaha yang berkurang saat member mencicil/melunasi piutangnya.",
+    return_ap: "Hutang usaha yang berkurang akibat retur pembelian barang ke supplier.",
+    return_inventory: "Persediaan barang dagang yang berkurang akibat retur barang ke supplier.",
+    movement_inventory: "Menampung nilai persediaan barang dagang yang disesuaikan dalam transaksi penyesuaian stok.",
+    movement_surplus: "Mencatat pendapatan dari selisih lebih persediaan saat dilakukan penyesuaian stok fisik.",
+    movement_loss: "Mencatat beban dari selisih kurang (kerugian) persediaan saat dilakukan penyesuaian stok fisik.",
+    cashledger_cash: "Akun kas tunai untuk mutasi kas masuk/keluar atau pemindahan dana manual.",
+    cashledger_bank: "Akun bank untuk mutasi kas masuk/keluar atau pemindahan dana manual.",
+    cashledger_shortage: "Mencatat beban selisih kurang (kekurangan) kas saat penyesuaian dana kasir.",
+    cashledger_overage: "Mencatat pendapatan selisih lebih (kelebihan) kas saat penyesuaian dana kasir.",
     shu_prior_years: "Menampung akumulasi sisa hasil usaha atau laba ditahan dari tahun-tahun buku sebelumnya.",
 };
 
 export function CoaMappingRow({
     m,
-    coaOptions,
     isDirty,
-    isLoadingCoas,
 }: CoaMappingRowProps) {
     const fieldName = `${m.transaction_type}:${m.slot}`;
-    
+
     // Watch current form value to check if it's unconfigured
     const currentValue = useWatch({ name: fieldName });
     const isUnconfigured = !currentValue;
@@ -128,7 +94,7 @@ export function CoaMappingRow({
                     <code className="text-[10px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded">
                         {m.slot}
                     </code>
-                    
+
                     {/* Visual Status Badges */}
                     {isDirty && (
                         <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 px-2 py-0.5 rounded-full border border-amber-200/50 dark:border-amber-500/20 shadow-sm animate-pulse">
@@ -147,17 +113,14 @@ export function CoaMappingRow({
                     {description}
                 </p>
             </div>
-            
+
             <div className="w-full">
-                <FormSelect
+                <FormCoaPicker
                     name={fieldName}
-                    options={coaOptions}
-                    placeholder="Pilih Akun COA..."
-                    searchPlaceholder="Cari berdasarkan kode atau nama..."
-                    emptyMessage="Akun COA tidak ditemukan."
-                    isLoading={isLoadingCoas}
+                    placeholder="Pilih Akun CoA..."
+                    dialogTitle={`Pilih Akun untuk ${label}`}
                     wrapperClassName="w-full"
-                    className="w-full dark:bg-slate-900"
+                    size="md"
                 />
             </div>
         </div>

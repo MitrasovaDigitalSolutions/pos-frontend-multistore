@@ -53,14 +53,7 @@ export function useAssetForm({
         }));
     }, [categories]);
 
-    const nonKasCoaOptions = useMemo(() => {
-        return flatAccounts
-            .filter((c) => c.tipe === "equity" || c.tipe === "liability")
-            .map((c) => ({
-                value: c.uid,
-                label: `[${c.kode}] ${c.nama} (${c.tipe === "equity" ? "Ekuitas/Modal" : "Kewajiban/Utang"})`,
-            }));
-    }, [flatAccounts]);
+
 
     const createForm = useForm<CreateAssetSchemaInput>({
         resolver: zodResolver(createAssetSchema),
@@ -181,7 +174,7 @@ export function useAssetForm({
         updateForm,
         categoryOptions,
         cashOptions,
-        nonKasCoaOptions,
+        flatAccounts,
         selectedCategory,
         categoryAssetCoa,
         selectedCashAccount,
