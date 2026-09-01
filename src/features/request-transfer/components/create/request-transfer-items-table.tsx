@@ -80,6 +80,7 @@ export function RequestTransferItemsTable({
         <BarcodeInput
           ref={barcodeInputRef}
           refocusOnFound={false}
+          isJasa={false}
           onProductFound={handleProductFoundWrapper}
           placeholder="Scan barcode SKU atau ketik nama produk..."
         />

@@ -176,6 +176,10 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
             toast.error("Produk ini tidak aktif.");
             return;
         }
+        if (product.is_raw_material) {
+            toast.error("Bahan mentah tidak dapat dijual.");
+            return;
+        }
         if (!product.is_jasa && product.stok <= 0) {
             toast.error(`Stok ${product.nama} habis!`);
             return;
@@ -251,8 +255,8 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
         // 2. Fallback to online API lookup if not found in local IndexedDB and online
         if (!found && isOnline) {
             try {
-                const prod = await lookupBarcode(query);
-                if (prod) {
+                const prod = await lookupBarcode(query, { is_raw_material: 0 });
+                if (prod && !prod.is_raw_material) {
                     found = prod;
                 }
             } catch {
@@ -328,7 +332,7 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
             // const receiptText = buildReceipt(data);
             // await QZService.print(printerName, receiptText);
             const receiptText = buildReceipt58(data);
-            await printerService.print(printerName, receiptText)
+            await printerService.print(printerName, receiptText);
         } catch (err) {
             console.error("Gagal mencetak struk:", err);
             toast.error("Gagal mencetak struk. Pastikan Print Service aktif.");
@@ -393,8 +397,8 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
 
             // const receiptText = buildReceipt({ sale, setting });
             // await QZService.print(printerName, receiptText);
-            const receiptText = buildReceipt58({ sale, setting })
-            await printerService.print(printerName, receiptText)
+            const receiptText = buildReceipt58({ sale, setting });
+            await printerService.print(printerName, receiptText);
 
         } catch (err) {
             console.error("Gagal mencetak struk offline:", err);
@@ -440,8 +444,6 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
         clearHoldList();
         toast.error("Semua transaksi hold telah dihapus.");
     }, [clearHoldList]);
-
-
 
     const handleReprint = useCallback((uid?: string) => {
         const targetId = uid || lastTransactionId;

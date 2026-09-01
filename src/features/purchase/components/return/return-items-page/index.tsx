@@ -158,6 +158,7 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: string; retur
                             </div>
 
                             <BarcodeInput
+                                isJasa={false}
                                 onProductFound={handleProductFound}
                                 onError={(msg) => toast.error(msg)}
                                 disabled={isPending || !receivingId}

@@ -165,6 +165,7 @@ export function ProductSearchDialog({
         if (!isInMemory) return dbCategories;
         const unique = new Map<string, string>();
         products.forEach((p) => {
+            if (p.status !== "active" || p.is_raw_material) return;
             if (p.category?.uid && p.category?.nama) {
                 unique.set(p.category.uid, p.category.nama);
             }
@@ -176,6 +177,7 @@ export function ProductSearchDialog({
         if (!isInMemory) return dbBrands;
         const unique = new Map<string, string>();
         products.forEach((p) => {
+            if (p.status !== "active" || p.is_raw_material) return;
             if (p.brand?.uid && p.brand?.nama) {
                 unique.set(p.brand.uid, p.brand.nama);
             } else if (p.merek) {
@@ -207,6 +209,7 @@ export function ProductSearchDialog({
         if (!isInMemory) return localData.items;
         return products.filter((p) => {
             if (p.status !== "active") return false;
+            if (p.is_raw_material) return false;
 
             if (searchQuery.trim()) {
                 const queryWords = searchQuery.toLowerCase().trim().split(/\s+/);

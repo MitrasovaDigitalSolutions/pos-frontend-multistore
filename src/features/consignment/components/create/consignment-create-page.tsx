@@ -331,6 +331,7 @@ export function ConsignmentCreatePage({ initialData }: ConsignmentCreatePageProp
               <BarcodeInput
                 ref={barcodeInputRef}
                 refocusOnFound={false}
+                isJasa={false}
                 onProductFound={(product) => {
                   setNotFoundQuery("");
                   handleProductFound(product);

@@ -56,9 +56,13 @@ export function useBulkCheckout() {
 }
 
 // ─── Barcode Lookup ──────────────────────────────────────────────────────────
-export async function lookupBarcode(barcode: string): Promise<Product> {
+export async function lookupBarcode(
+    barcode: string,
+    params?: { is_raw_material?: boolean | number; is_jasa?: boolean | number }
+): Promise<Product> {
     const res = await apiGet<ApiResponse<Product>>(
         `/v1/products/barcode/${encodeURIComponent(barcode)}`,
+        { params: { is_raw_material: 0, ...params } }
     );
     return res.data;
 }
