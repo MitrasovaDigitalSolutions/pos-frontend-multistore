@@ -19,6 +19,7 @@ interface BarcodeInputProps {
     onProductNotFound?: (query: string) => void;
     onInputChange?: (value: string) => void;
     refocusOnFound?: boolean;
+    isRawMaterial?: boolean;
 }
 
 const EMPTY_PRODUCTS: Product[] = [];
@@ -36,6 +37,7 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
         onProductNotFound,
         onInputChange,
         refocusOnFound = true,
+        isRawMaterial,
     }: BarcodeInputProps, ref) {
         const localRef = useRef<HTMLInputElement>(null);
         const inputRef = (ref || localRef) as React.MutableRefObject<HTMLInputElement | null>;
@@ -111,13 +113,17 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
         }, []);
 
         const isLocalMode = products && products.length > 0;
+        const isRawParam = isRawMaterial !== undefined ? (isRawMaterial ? 1 : 0) : undefined;
 
         // TanStack Query for searching products from API
         const { data: apiProducts, isLoading: isApiLoading } = useQuery({
-            queryKey: ["products", "autocomplete", debouncedValue],
+            queryKey: ["products", "autocomplete", debouncedValue, isRawParam],
             queryFn: async () => {
                 try {
-                    return await lookupProductByBarcode(debouncedValue);
+                    return await lookupProductByBarcode(
+                        debouncedValue,
+                        isRawParam !== undefined ? { is_raw_material: isRawParam } : undefined
+                    );
                 } catch {
                     return [];
                 }
@@ -135,6 +141,9 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                 const queryWords = searchLower.split(/\s+/);
                 return products
                     .filter((p) => {
+                        if (isRawMaterial !== undefined && Boolean(p.is_raw_material) !== isRawMaterial) {
+                            return false;
+                        }
                         const barcodeMatch = p.barcode?.toLowerCase().includes(searchLower) ?? false;
                         const nameWordsMatch = queryWords.every((word) => p.nama.toLowerCase().includes(word));
                         return barcodeMatch || nameWordsMatch;
@@ -142,10 +151,13 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                     .slice(0, 8);
             }
             if (localSuggestions.length > 0) {
+                if (isRawMaterial !== undefined) {
+                    return localSuggestions.filter((p) => Boolean(p.is_raw_material) === isRawMaterial);
+                }
                 return localSuggestions;
             }
             return apiProducts || [];
-        }, [value, isLocalMode, products, localSuggestions, apiProducts]);
+        }, [value, isLocalMode, products, isRawMaterial, localSuggestions, apiProducts]);
 
         // Auto-focus on mount
         useEffect(() => {
@@ -201,14 +213,18 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                 let found: Product | null | undefined = null;
 
                 if (isLocalMode) {
+                    const filteredProducts = isRawMaterial !== undefined
+                        ? products.filter((p) => Boolean(p.is_raw_material) === isRawMaterial)
+                        : products;
+
                     // 1. Try match by barcode
-                    found = products.find(
+                    found = filteredProducts.find(
                         (p) => p.barcode?.toLowerCase() === query.toLowerCase(),
                     );
 
                     // 2. Try match by name (precise)
                     if (!found) {
-                        found = products.find((p) =>
+                        found = filteredProducts.find((p) =>
                             p.nama.toLowerCase().includes(query.toLowerCase()),
                         );
                     }
@@ -216,19 +232,25 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                     // 2b. Try match by split words (fuzzy)
                     if (!found) {
                         const queryWords = query.toLowerCase().trim().split(/\s+/);
-                        found = products.find((p) =>
+                        found = filteredProducts.find((p) =>
                             queryWords.every((word) => p.nama.toLowerCase().includes(word))
                         );
                     }
                 } else {
                     // Search directly from IndexedDB B-tree
                     found = await productLocalRepository.lookupBarcodeLocal(query);
+                    if (found && isRawMaterial !== undefined && Boolean(found.is_raw_material) !== isRawMaterial) {
+                        found = null;
+                    }
                 }
 
                 // 3. Try API barcode lookup if still not found
                 if (!found && !isLocalMode) {
                     try {
-                        const results = await lookupProductByBarcode(query);
+                        const results = await lookupProductByBarcode(
+                            query,
+                            isRawParam !== undefined ? { is_raw_material: isRawParam } : undefined
+                        );
                         if (results && results.length > 0) {
                             found = results[0];
                         }

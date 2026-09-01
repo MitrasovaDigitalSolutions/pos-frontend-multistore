@@ -446,9 +446,13 @@ export function useCancelPurchaseOrder() {
 
 // ─── Barcode Lookup ─────────────────────────────────────────────────────────
 
-export async function lookupProductByBarcode(barcode: string): Promise<Product[]> {
+export async function lookupProductByBarcode(
+    barcode: string,
+    params?: { is_raw_material?: boolean | number }
+): Promise<Product[]> {
     const res = await apiGet<ApiResponse<Product[]>>(
         ENDPOINTS.PRODUCTS.BARCODE(barcode),
+        { params }
     );
     return res.data;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,7 +8,6 @@ import { hasRole } from "@/constants/roles";
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
-import { FormSwitch } from "@/components/forms/form-switch";
 import { useCategories } from "@/features/master/categories/api/categories-api";
 import { useBrands } from "@/features/master/brands/api/brands-api";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
@@ -28,7 +27,7 @@ interface CatalogFilterValues {
     category_uid: string;
     brand_uid: string;
     status: string;
-    is_jasa: boolean;
+    product_type: string;
 }
 
 // ─── Page Component ───────────────────────────────────────────────────────────
@@ -54,6 +53,7 @@ export function ProductCatalog() {
         category_uid?: string;
         brand_uid?: string;
         is_jasa?: string;
+        is_raw_material?: string;
     }>(() => ({
         search: searchParam || undefined,
     }));
@@ -67,7 +67,7 @@ export function ProductCatalog() {
             category_uid: "all",
             brand_uid: "all",
             status: "all",
-            is_jasa: false,
+            product_type: "all",
         },
     });
 
@@ -91,6 +91,7 @@ export function ProductCatalog() {
             brand_uid: null,
             image: null,
             is_jasa: false,
+            is_raw_material: false,
         },
     });
 
@@ -117,6 +118,7 @@ export function ProductCatalog() {
             brand_uid: product.brand_uid ?? null,
             image: null,
             is_jasa: !!product.is_jasa,
+            is_raw_material: !!product.is_raw_material,
         });
         setIsEditDialogOpen(true);
     };
@@ -138,16 +140,21 @@ export function ProductCatalog() {
             brand_uid: null,
             image: null,
             is_jasa: false,
+            is_raw_material: false,
         });
         setIsEditDialogOpen(true);
     };
 
     // Sync URL search param → form
-    useEffect(() => {
+    const [prevSearchParam, setPrevSearchParam] = useState(searchParam);
+    if (searchParam !== prevSearchParam) {
+        setPrevSearchParam(searchParam);
         filterMethods.setValue("search", searchParam);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setAppliedFilters((prev) => ({ ...prev, search: searchParam || undefined }));
-    }, [searchParam, filterMethods]);
+        setAppliedFilters((prev) => ({
+            ...prev,
+            search: searchParam || undefined,
+        }));
+    }
 
     const handleFilterSubmit = (data: CatalogFilterValues) => {
         setAppliedFilters({
@@ -155,7 +162,8 @@ export function ProductCatalog() {
             status: data.status !== "all" ? data.status : undefined,
             category_uid: data.category_uid !== "all" ? data.category_uid : undefined,
             brand_uid: data.brand_uid !== "all" ? data.brand_uid : undefined,
-            is_jasa: data.is_jasa ? "1" : undefined,
+            is_jasa: data.product_type === "jasa" ? "1" : undefined,
+            is_raw_material: data.product_type === "raw_material" ? "1" : (data.product_type === "finished_good" ? "0" : undefined),
         });
         setPage(1);
     };
@@ -166,7 +174,7 @@ export function ProductCatalog() {
             category_uid: "all",
             brand_uid: "all",
             status: "all",
-            is_jasa: false,
+            product_type: "all",
         });
         setAppliedFilters({});
         setPage(1);
@@ -205,6 +213,13 @@ export function ProductCatalog() {
         { value: "all", label: "Semua Status" },
         { value: "active", label: "Aktif" },
         { value: "inactive", label: "Nonaktif" },
+    ];
+
+    const productTypeOptions = [
+        { value: "all", label: "Semua Tipe Produk" },
+        { value: "finished_good", label: "Barang Jadi / Retail" },
+        { value: "raw_material", label: "Bahan Baku Produksi" },
+        { value: "jasa", label: "Jasa / Layanan" },
     ];
 
     // ── Access guard ──────────────────────────────────────────────────────────
@@ -269,14 +284,12 @@ export function ProductCatalog() {
                                 options={statusOptions}
                                 placeholder="Semua Status"
                             />
-                            <div className="col-span-2">
-                                <FormSwitch<CatalogFilterValues>
-                                    name="is_jasa"
-                                    label="Produk Jasa / Layanan"
-                                    description="Aktifkan untuk menampilkan produk jasa saja"
-                                    className="bg-white"
-                                />
-                            </div>
+                            <FormSelect<CatalogFilterValues>
+                                name="product_type"
+                                label="Tipe Produk"
+                                options={productTypeOptions}
+                                placeholder="Semua Tipe Produk"
+                            />
                         </FilterForm>
                     }
                 />

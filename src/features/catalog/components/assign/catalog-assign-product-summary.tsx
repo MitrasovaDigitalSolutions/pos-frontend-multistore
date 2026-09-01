@@ -30,8 +30,13 @@ export function CatalogAssignProductSummary({ product }: CatalogAssignProductSum
                             {product.nama}
                         </span>
                         {product.is_jasa && (
-                            <Badge className="text-[9px] px-1.5 py-0 bg-blue-50 text-blue-700 border-blue-100 font-bold">
+                            <Badge variant="info" className="text-[9px] px-1.5 py-0 font-bold">
                                 Jasa
+                            </Badge>
+                        )}
+                        {product.is_raw_material && (
+                            <Badge variant="warning" className="text-[9px] px-1.5 py-0 font-bold">
+                                Bahan Baku
                             </Badge>
                         )}
                     </div>

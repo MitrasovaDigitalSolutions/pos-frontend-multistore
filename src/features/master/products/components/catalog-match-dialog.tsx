@@ -311,7 +311,7 @@ export function CatalogMatchDialog({
                                                 <span className="font-bold text-xs text-slate-900 truncate">
                                                     {item.nama}
                                                 </span>
-                                                <Badge className="text-[9px] px-1.5 py-0 bg-indigo-50 text-indigo-700 border-indigo-200 font-bold shrink-0">
+                                                <Badge variant="purple" className="text-[9px] px-1.5 py-0 font-bold shrink-0">
                                                     {Math.round(item.similarity * 100)}% Match Katalog
                                                 </Badge>
                                             </div>
@@ -381,7 +381,7 @@ export function CatalogMatchDialog({
                                             <span className="font-bold text-sm text-slate-900 leading-tight truncate">
                                                 {selectedItem.nama}
                                             </span>
-                                            <Badge className="text-[9px] px-2 py-0.5 bg-indigo-100 text-indigo-800 border-indigo-200 font-extrabold">
+                                            <Badge variant="purple" className="text-[9px] px-2 py-0.5 font-extrabold">
                                                 {Math.round(selectedItem.similarity * 100)}% Match Katalog Master
                                             </Badge>
                                         </div>
