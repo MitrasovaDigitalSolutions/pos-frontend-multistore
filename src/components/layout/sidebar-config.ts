@@ -370,46 +370,19 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                     },
                     {
-                        label: "Aset & Inventaris",
-                        path: ROUTES.ADMIN_ASSETS,
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
-                    },
-                    {
                         label: "Buku Besar",
                         path: ROUTES.ADMIN_ACCOUNTING_GENERAL_LEDGER,
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                     },
                     {
-                        label: "Entri Tidak Seimbang",
-                        path: ROUTES.ADMIN_ACCOUNTING_UNBALANCED,
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
-                    },
-                    {
-                        label: "Chart of Accounts (COA)",
+                        label: "Manajemen Akun",
                         path: ROUTES.ADMIN_ACCOUNTING_COA,
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") ||
                             hasPermission(roles, permissions, "view_chart_of_accounts") ||
                             hasPermission(roles, permissions, "manage_chart_of_accounts") ||
                             hasPermission(roles, permissions, "view_reports"),
-                    },
-                    {
-                        label: "Mapping COA",
-                        path: ROUTES.ADMIN_ACCOUNTING_COA_MAPPING,
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") ||
-                            hasPermission(roles, permissions, "view_chart_of_accounts") ||
-                            hasPermission(roles, permissions, "manage_chart_of_accounts") ||
-                            hasPermission(roles, permissions, "view_reports"),
-                    },
-                    {
-                        label: "Mapping Kategori",
-                        path: ROUTES.ADMIN_ACCOUNTING_CATEGORY_MAPPING,
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                     },
                     {
                         label: "Jurnal Manual",
@@ -419,6 +392,34 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasPermission(roles, permissions, "view_manual_journals") ||
                             hasPermission(roles, permissions, "manage_manual_journals") ||
                             hasPermission(roles, permissions, "view_reports"),
+                    },
+                ],
+            },
+            {
+                label: "Aset & Inventaris",
+                icon: IconBuildingWarehouse,
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") ||
+                    hasPermission(roles, permissions, "view_reports") ||
+                    hasPermission(roles, permissions, "manage_settings") ||
+                    hasPermission(roles, permissions, "view_assets") ||
+                    hasPermission(roles, permissions, "manage_assets"),
+                children: [
+                    {
+                        label: "Daftar Aset",
+                        path: ROUTES.ADMIN_ASSETS,
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_reports") ||
+                            hasPermission(roles, permissions, "view_assets"),
+                    },
+                    {
+                        label: "Kategori Aset",
+                        path: ROUTES.ADMIN_ASSET_CATEGORIES,
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_reports") ||
+                            hasPermission(roles, permissions, "view_assets"),
                     },
                 ],
             },
@@ -573,6 +574,16 @@ export function isNavItemActive(
     }
 
     // Disambiguation for specific overlapping routes
+    if (path === ROUTES.ADMIN_ACCOUNTING_COA) {
+        return (
+            pathname === ROUTES.ADMIN_ACCOUNTING_COA ||
+            pathname === ROUTES.ADMIN_ACCOUNTING_COA_MAPPING ||
+            pathname === ROUTES.ADMIN_ACCOUNTING_COUNTERPART_MAPPING ||
+            pathname === ROUTES.ADMIN_ACCOUNTING_CATEGORY_MAPPING ||
+            pathname.startsWith(ROUTES.ADMIN_ACCOUNTING_COA + "/")
+        );
+    }
+
     if (
         path === "/admin/expenses" &&
         (pathname === "/admin/expenses/categories" || pathname.startsWith("/admin/expenses/categories/"))

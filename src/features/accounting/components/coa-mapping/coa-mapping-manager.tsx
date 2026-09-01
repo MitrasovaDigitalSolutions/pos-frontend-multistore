@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFlatChartOfAccounts } from "@/features/accounting/api/coa-api";
 import { type CoaMapping } from "@/features/accounting/api/coa-mapping-api";
-import { type ChartOfAccount } from "@/features/accounting/types";
 import { useLedgerBackfillStatus } from "@/features/accounting/api/ledger-api";
 import {
     AlertTriangle,
@@ -23,7 +22,7 @@ import {
     Users,
     X
 } from "lucide-react";
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 import { BackfillSection } from "./backfill-section";
 import { CoaMappingCard } from "./coa-mapping-card";
@@ -41,7 +40,7 @@ export function CoaMappingManager() {
         mappings,
     } = useCoaMappingForm();
 
-    const { data: coas, isLoading: isLoadingCoas } = useFlatChartOfAccounts();
+    const { isLoading: isLoadingCoas } = useFlatChartOfAccounts();
     const [activeSection, setActiveSection] = useState<string>("sale");
     const [isBackfillOpen, setIsBackfillOpen] = useState<boolean>(false);
 
@@ -52,18 +51,6 @@ export function CoaMappingManager() {
     const backfillStatus = useLedgerBackfillStatus(true);
     const bfState = backfillStatus.data?.status ?? "idle";
     const isBackfilling = bfState === "queued" || bfState === "running";
-
-    // Map accounts to options compatible with FormSelect
-    const coaOptions = useMemo(() => {
-        if (!coas) return [];
-        return coas
-            .filter((c: ChartOfAccount) => c.is_active)
-            .map((c: ChartOfAccount) => ({
-                value: c.uid,
-                label: `[${c.kode}] ${c.nama}`,
-                description: `${c.tipe.toUpperCase()} — ${c.saldo_normal === "debit" ? "Debit" : "Kredit"}`,
-            }));
-    }, [coas]);
 
     // Live watch form values
     const formValues = methods.watch();
@@ -82,7 +69,6 @@ export function CoaMappingManager() {
     const groupsWithStatus = useMemo(() => {
         if (!mappings) return [];
         return [
-            // 1. Siklus Pendapatan
             {
                 id: "sale",
                 label: "Penjualan",
@@ -91,19 +77,25 @@ export function CoaMappingManager() {
                 items: mappings.filter((m: CoaMapping) => m.transaction_type === "sale"),
             },
             {
-                id: "member_payment",
-                label: "Piutang Member",
-                description: "Pemetaan akun pelunasan piutang pelanggan ketika member mencicil tagihan tempo.",
-                icon: <Users className="h-4 w-4" />,
-                items: mappings.filter((m: CoaMapping) => m.transaction_type === "member_payment"),
-            },
-            // 2. Siklus Pembelian
-            {
                 id: "stock_receiving",
                 label: "Penerimaan Barang",
                 description: "Pemetaan akun untuk penambahan persediaan dan hutang usaha dari penerimaan supplier.",
                 icon: <Package className="h-4 w-4" />,
                 items: mappings.filter((m: CoaMapping) => m.transaction_type === "stock_receiving"),
+            },
+            {
+                id: "purchase_return",
+                label: "Retur Pembelian",
+                description: "Pemetaan akun untuk pengurangan hutang usaha dan nilai persediaan dari retur supplier.",
+                icon: <Undo2 className="h-4 w-4" />,
+                items: mappings.filter((m: CoaMapping) => m.transaction_type === "purchase_return"),
+            },
+            {
+                id: "stock_movement",
+                label: "Penyesuaian & Mutasi Stok",
+                description: "Pemetaan akun untuk penyesuaian nilai persediaan fisik dan pencatatan selisih lebih/kurang stok.",
+                icon: <ArrowLeftRight className="h-4 w-4" />,
+                items: mappings.filter((m: CoaMapping) => m.transaction_type === "stock_movement"),
             },
             {
                 id: "supplier_payment",
@@ -113,36 +105,26 @@ export function CoaMappingManager() {
                 items: mappings.filter((m: CoaMapping) => m.transaction_type === "supplier_payment"),
             },
             {
-                id: "purchase_return",
-                label: "Retur Pembelian",
-                description: "Pemetaan akun untuk pengurangan hutang usaha dan nilai persediaan dari retur supplier.",
-                icon: <Undo2 className="h-4 w-4" />,
-                items: mappings.filter((m: CoaMapping) => m.transaction_type === "purchase_return"),
-            },
-            // 3. Inventori & Operasional
-            {
-                id: "stock_movement",
-                label: "Mutasi Stok",
-                description: "Pemetaan akun persediaan, selisih lebih, dan selisih kurang pada mutasi stok manual.",
-                icon: <ArrowLeftRight className="h-4 w-4" />,
-                items: mappings.filter((m: CoaMapping) => m.transaction_type === "stock_movement"),
-            },
-            {
                 id: "expense",
                 label: "Pengeluaran Operasional",
                 description: "Pemetaan akun beban operasional dan pengeluaran biaya langsung.",
                 icon: <Receipt className="h-4 w-4" />,
                 items: mappings.filter((m: CoaMapping) => m.transaction_type === "expense"),
             },
-            // 4. Admin & Kas
+            {
+                id: "member_payment",
+                label: "Piutang Member",
+                description: "Pemetaan akun pelunasan piutang pelanggan ketika member mencicil tagihan tempo.",
+                icon: <Users className="h-4 w-4" />,
+                items: mappings.filter((m: CoaMapping) => m.transaction_type === "member_payment"),
+            },
             {
                 id: "cash_ledger",
                 label: "Cash Ledger (Kas/Bank)",
-                description: "Pemetaan akun kas dan bank utama untuk penyesuaian dana kasir manual.",
+                description: "Pemetaan akun kas, bank, serta selisih kurang/lebih kas untuk penyesuaian dana kasir manual.",
                 icon: <Building2 className="h-4 w-4" />,
                 items: mappings.filter((m: CoaMapping) => m.transaction_type === "cash_ledger"),
             },
-            // 5. Ekuitas & Modal
             {
                 id: "equity",
                 label: "Ekuitas & Modal",
@@ -164,60 +146,80 @@ export function CoaMappingManager() {
         });
     }, [mappings, formValues]);
 
-    // Scroll-Spy Setup with scroll event + getBoundingClientRect
+    // Scroll-Spy Setup with IntersectionObserver
     useEffect(() => {
-        // The admin layout always has a single <main> with overflow-y-auto as the scroll container.
-        // We query it directly instead of traversing the DOM, which is fragile.
-        const scrollContainer = document.querySelector<HTMLElement>("main");
+        const findScrollContainer = (el: HTMLElement | null): HTMLElement | null => {
+            if (!el) return null;
+            const style = window.getComputedStyle(el);
+            if (el.tagName === 'MAIN' || style.overflowY === 'auto' || style.overflowY === 'scroll') {
+                return el;
+            }
+            return findScrollContainer(el.parentElement);
+        };
+
+        const scrollContainer = findScrollContainer(rootRef.current);
         if (!scrollContainer) return;
 
         const sectionIds = [
-            // Revenue cycle
             "sale",
-            "member_payment",
-            // Purchasing cycle
             "stock_receiving",
-            "supplier_payment",
             "purchase_return",
-            // Inventory & operational
             "stock_movement",
+            "supplier_payment",
             "expense",
-            // Admin
+            "member_payment",
             "cash_ledger",
-            // Equity
             "equity",
         ];
 
-        // OFFSET: accounts for the sticky header height (120px) plus a bit of breathing room
-        const SCROLL_OFFSET = 140;
+        // Track which sections are currently intersecting in the active zone
+        const intersectingSections: Record<string, boolean> = {};
 
+        const observerOptions = {
+            root: scrollContainer,
+            // Active zone matches the scroll-margin-top offset (120px) to about 40% from top
+            rootMargin: "-120px 0px -60% 0px",
+            threshold: 0,
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                intersectingSections[entry.target.id] = entry.isIntersecting;
+            });
+
+            if (isProgrammaticScroll.current) return;
+
+            // Find the first intersecting section in list order
+            const active = sectionIds.find((id) => intersectingSections[id]);
+            if (active) {
+                setActiveSection(active);
+            }
+        }, observerOptions);
+
+        sectionIds.forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) observer.observe(el);
+        });
+
+        // Check if scrolled near the bottom of the container (to force-activate the last item if it's too short to scroll fully)
         const handleScroll = () => {
             if (isProgrammaticScroll.current) return;
 
-            // Walk through all sections and find the last one whose top is at or above the offset.
-            // This is always the section the user is currently reading.
-            let currentSection = sectionIds[0];
-            for (const id of sectionIds) {
-                const el = document.getElementById(id);
-                if (el) {
-                    const rect = el.getBoundingClientRect();
-                    const containerRect = scrollContainer.getBoundingClientRect();
-                    const relativeTop = rect.top - containerRect.top;
-                    if (relativeTop <= SCROLL_OFFSET) {
-                        currentSection = id;
-                    }
-                }
-            }
+            const isScrollable = scrollContainer.scrollHeight > scrollContainer.clientHeight;
+            const isAtBottom = isScrollable && (scrollContainer.scrollHeight - scrollContainer.scrollTop <= scrollContainer.clientHeight + 40);
 
-            setActiveSection(currentSection);
+            if (isAtBottom) {
+                setActiveSection(sectionIds[sectionIds.length - 1]);
+            }
         };
 
-        scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
+        scrollContainer.addEventListener("scroll", handleScroll);
 
-        // Run once on mount to set the initial active section
+        // Initial check for bottom scroll
         handleScroll();
 
         return () => {
+            observer.disconnect();
             scrollContainer.removeEventListener("scroll", handleScroll);
             if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
         };
@@ -325,7 +327,6 @@ export function CoaMappingManager() {
                                         description={g.description}
                                         icon={g.icon}
                                         items={g.items}
-                                        coaOptions={coaOptions}
                                         dirtyFields={dirtyFields}
                                         isLoadingCoas={isLoadingCoas}
                                     />

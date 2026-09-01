@@ -133,6 +133,7 @@ export interface CashLedger {
     amount: number;
     tipe: "debit" | "credit" | "inflow" | "outflow" | "transfer" | string;
     kategori: string;
+    catatan?: string | null;
     created_at: string;
     updated_at?: string;
 
@@ -203,6 +204,7 @@ export interface CashAccount {
 
 export interface DebitCreditInput {
     amount: number;
+    chart_of_account_uid?: string | null;
     kategori?: string | null;
     catatan?: string | null;
 }
@@ -286,3 +288,4 @@ export function useAccountCashFlow(uid: string, filters?: CashFlowFilters) {
         enabled: !!uid,
     });
 }
+

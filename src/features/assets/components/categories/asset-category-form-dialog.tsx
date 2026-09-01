@@ -1,30 +1,30 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CommandSelect } from "@/components/ui/command-select";
-import {
-    IconCategory,
-    IconBuildingBank,
-    IconSparkles,
-    IconInfoCircle,
-    IconAdjustmentsHorizontal,
-} from "@tabler/icons-react";
-import { toast } from "sonner";
+import { useFlatChartOfAccounts } from "@/features/accounting/api/coa-api";
+import { CoaPickerTrigger } from "@/features/accounting/components/shared";
 import { cn } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
-    assetCategorySchema,
-    type AssetCategorySchemaInput,
-} from "../../schemas/asset-category-schema";
+    IconAdjustmentsHorizontal,
+    IconBuildingBank,
+    IconCategory,
+    IconInfoCircle,
+    IconSparkles,
+} from "@tabler/icons-react";
+import { useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { toast } from "sonner";
 import {
     useCreateAssetCategory,
     useUpdateAssetCategory,
 } from "../../api/asset-categories-api";
-import { useFlatChartOfAccounts } from "@/features/accounting/api/coa-api";
+import {
+    assetCategorySchema,
+    type AssetCategorySchemaInput,
+} from "../../schemas/asset-category-schema";
 import type { AssetCategory } from "../../types";
 
 interface AssetCategoryFormDialogProps {
@@ -62,7 +62,7 @@ function AssetCategoryFormContent({
         register,
         handleSubmit,
         setValue,
-        watch,
+        control,
         formState: { errors },
     } = useForm<AssetCategorySchemaInput>({
         resolver: zodResolver(assetCategorySchema),
@@ -85,25 +85,7 @@ function AssetCategoryFormContent({
         },
     });
 
-    const assetCoaOptions = useMemo(() => {
-        if (!flatAccounts) return [];
-        return flatAccounts
-            .filter((c) => c.tipe === "asset")
-            .map((c) => ({
-                value: c.uid,
-                label: `[${c.kode}] ${c.nama}`,
-            }));
-    }, [flatAccounts]);
 
-    const expenseCoaOptions = useMemo(() => {
-        if (!flatAccounts) return [];
-        return flatAccounts
-            .filter((c) => c.tipe === "expense")
-            .map((c) => ({
-                value: c.uid,
-                label: `[${c.kode}] ${c.nama}`,
-            }));
-    }, [flatAccounts]);
 
     const isPending = createCategory.isPending || updateCategory.isPending;
 
@@ -159,9 +141,9 @@ function AssetCategoryFormContent({
         }
     };
 
-    const coaAssetVal = watch("coa_asset_uid");
-    const coaAkumulasiVal = watch("coa_akumulasi_penyusutan_uid");
-    const coaBebanVal = watch("coa_beban_penyusutan_uid");
+    const coaAssetVal = useWatch({ name: "coa_asset_uid", control });
+    const coaAkumulasiVal = useWatch({ name: "coa_akumulasi_penyusutan_uid", control });
+    const coaBebanVal = useWatch({ name: "coa_beban_penyusutan_uid", control });
 
     const handleResetToAuto = () => {
         setIsCustomCoa(false);
@@ -252,11 +234,11 @@ function AssetCategoryFormContent({
 
                     {/* RIGHT COLUMN: Pengaturan Akun Akuntansi (Col 7) */}
                     <div className="md:col-span-7 space-y-3 p-3 sm:p-3.5 rounded-2xl bg-indigo-500/[0.03] dark:bg-indigo-950/20 border border-indigo-200/60 dark:border-indigo-900/40">
-                        {/* Header COA */}
+                        {/* Header CoA */}
                         <div className="flex items-center gap-1.5 pb-1 border-b border-indigo-100 dark:border-indigo-900/50">
                             <IconBuildingBank className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
                             <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                                Pengaturan Akun Akuntansi (COA)
+                                Pengaturan Akun Akuntansi (CoA)
                             </span>
                         </div>
 
@@ -286,7 +268,7 @@ function AssetCategoryFormContent({
                                 )}
                             >
                                 <IconAdjustmentsHorizontal className="w-3.5 h-3.5 shrink-0" />
-                                <span className="truncate">Atur Manual (COA)</span>
+                                <span className="truncate">Atur Manual (CoA)</span>
                             </button>
                         </div>
 
@@ -310,7 +292,7 @@ function AssetCategoryFormContent({
                             <div className="space-y-2.5">
                                 <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400">
                                     <IconInfoCircle className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                                    <span>Pilih akun COA yang sudah terdaftar di sistem:</span>
+                                    <span>Pilih akun CoA yang sudah terdaftar di sistem:</span>
                                 </div>
 
                                 {/* 1. Akun Aset Tetap */}
@@ -321,19 +303,18 @@ function AssetCategoryFormContent({
                                         </label>
                                         <span className="text-[9px] text-slate-400 font-mono">Tipe Asset</span>
                                     </div>
-                                    <CommandSelect
-                                        options={assetCoaOptions}
+                                    <CoaPickerTrigger
+                                        accounts={flatAccounts}
+                                        allowedTypes={["asset"]}
                                         value={coaAssetVal || ""}
                                         onChange={(val: string) =>
                                             setValue("coa_asset_uid", val || null)
                                         }
-                                        placeholder={
-                                            isLoadingCoas
-                                                ? "Memuat COA..."
-                                                : "Pilih akun aset tetap..."
-                                        }
+                                        placeholder="Pilih akun aset tetap..."
+                                        dialogTitle="Pilih Akun Aset Tetap"
                                         disabled={isPending || isLoadingCoas}
-                                        className="h-8.5 text-xs rounded-xl bg-white dark:bg-slate-900"
+                                        size="md"
+                                        allowClear
                                     />
                                 </div>
 
@@ -345,19 +326,18 @@ function AssetCategoryFormContent({
                                         </label>
                                         <span className="text-[9px] text-slate-400 font-mono">Kontra Asset</span>
                                     </div>
-                                    <CommandSelect
-                                        options={assetCoaOptions}
+                                    <CoaPickerTrigger
+                                        accounts={flatAccounts}
+                                        allowedTypes={["asset"]}
                                         value={coaAkumulasiVal || ""}
                                         onChange={(val: string) =>
                                             setValue("coa_akumulasi_penyusutan_uid", val || null)
                                         }
-                                        placeholder={
-                                            isLoadingCoas
-                                                ? "Memuat COA..."
-                                                : "Pilih akun akumulasi susut..."
-                                        }
+                                        placeholder="Pilih akun akumulasi susut..."
+                                        dialogTitle="Pilih Akun Akumulasi Penyusutan"
                                         disabled={isPending || isLoadingCoas}
-                                        className="h-8.5 text-xs rounded-xl bg-white dark:bg-slate-900"
+                                        size="md"
+                                        allowClear
                                     />
                                 </div>
 
@@ -369,19 +349,18 @@ function AssetCategoryFormContent({
                                         </label>
                                         <span className="text-[9px] text-slate-400 font-mono">Tipe Expense</span>
                                     </div>
-                                    <CommandSelect
-                                        options={expenseCoaOptions}
+                                    <CoaPickerTrigger
+                                        accounts={flatAccounts}
+                                        allowedTypes={["expense"]}
                                         value={coaBebanVal || ""}
                                         onChange={(val: string) =>
                                             setValue("coa_beban_penyusutan_uid", val || null)
                                         }
-                                        placeholder={
-                                            isLoadingCoas
-                                                ? "Memuat COA..."
-                                                : "Pilih akun beban penyusutan..."
-                                        }
+                                        placeholder="Pilih akun beban penyusutan..."
+                                        dialogTitle="Pilih Akun Beban Penyusutan"
                                         disabled={isPending || isLoadingCoas}
-                                        className="h-8.5 text-xs rounded-xl bg-white dark:bg-slate-900"
+                                        size="md"
+                                        allowClear
                                     />
                                 </div>
                             </div>
@@ -409,8 +388,8 @@ function AssetCategoryFormContent({
                     {isPending
                         ? "Menyimpan..."
                         : isEdit
-                        ? "Simpan Perubahan"
-                        : "Buat Kategori Aset"}
+                            ? "Simpan Perubahan"
+                            : "Buat Kategori Aset"}
                 </Button>
             </div>
         </form>

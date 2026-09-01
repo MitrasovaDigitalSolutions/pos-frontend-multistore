@@ -2,7 +2,6 @@
 
 import { Card } from "@/components/ui/card";
 import { CoaMappingRow } from "./coa-mapping-row";
-import type { CommandOption } from "@/components/ui/command-select";
 import type { CoaMapping } from "@/features/accounting/api/coa-mapping-api";
 import React from "react";
 
@@ -11,9 +10,8 @@ interface CoaMappingCardProps {
     description: string;
     icon: React.ReactNode;
     items: CoaMapping[];
-    coaOptions: CommandOption[];
     dirtyFields: Record<string, boolean | undefined>;
-    isLoadingCoas: boolean;
+    isLoadingCoas?: boolean;
 }
 
 export function CoaMappingCard({
@@ -21,7 +19,6 @@ export function CoaMappingCard({
     description,
     icon,
     items,
-    coaOptions,
     dirtyFields,
     isLoadingCoas,
 }: CoaMappingCardProps) {
@@ -51,7 +48,6 @@ export function CoaMappingCard({
                         <CoaMappingRow
                             key={key}
                             m={m}
-                            coaOptions={coaOptions}
                             isDirty={isDirty}
                             isLoadingCoas={isLoadingCoas}
                         />

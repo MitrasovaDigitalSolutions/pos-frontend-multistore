@@ -4,6 +4,7 @@ import React from "react";
 import { useWatch, type UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { CommandSelect, type CommandOption } from "@/components/ui/command-select";
+import { CoaPickerTrigger } from "@/features/accounting/components/shared";
 import {
     IconReceipt2,
     IconBuildingBank,
@@ -21,7 +22,7 @@ import type { CashAccount } from "@/features/cash/api/cash-api";
 interface AssetFundingFieldsProps {
     form: UseFormReturn<CreateAssetSchemaInput>;
     cashOptions: CommandOption[];
-    nonKasCoaOptions: CommandOption[];
+    flatAccounts?: ChartOfAccount[];
     selectedCashAccount: CashAccount | null;
     selectedOffsetCoa: ChartOfAccount | null;
     categoryAssetCoa: ChartOfAccount | null;
@@ -35,9 +36,8 @@ interface AssetFundingFieldsProps {
 export function AssetFundingFields({
     form,
     cashOptions,
-    nonKasCoaOptions,
+    flatAccounts = [],
     selectedCashAccount,
-    selectedOffsetCoa,
     categoryAssetCoa,
     isCashInsufficient,
     isLoadingCash,
@@ -88,11 +88,10 @@ export function AssetFundingFields({
                         <button
                             type="button"
                             onClick={() => setValue("sumber_perolehan", "kas")}
-                            className={`h-8 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                                watchedSumber === "kas"
+                            className={`h-8 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${watchedSumber === "kas"
                                     ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/60 dark:border-slate-700"
                                     : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-                            }`}
+                                }`}
                         >
                             <IconBuildingBank className="w-3.5 h-3.5" />
                             <span>Kas / Bank</span>
@@ -100,11 +99,10 @@ export function AssetFundingFields({
                         <button
                             type="button"
                             onClick={() => setValue("sumber_perolehan", "non_kas")}
-                            className={`h-8 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                                watchedSumber === "non_kas"
+                            className={`h-8 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${watchedSumber === "non_kas"
                                     ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/60 dark:border-slate-700"
                                     : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-                            }`}
+                                }`}
                         >
                             <IconCoin className="w-3.5 h-3.5" />
                             <span>Non-Kas (Modal/Utang)</span>
@@ -116,19 +114,19 @@ export function AssetFundingFields({
                 {watchedSumber === "kas" && (
                     <div className="space-y-1.5">
                         <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                            Pilih Akun Kas / Bank Pembayar <span className="text-rose-500">*</span>
+                            Pilih Akun Kas / Bank <span className="text-rose-500">*</span>
                         </label>
                         <CommandSelect
                             options={cashOptions}
                             value={watchedCashUid || ""}
                             onChange={(val: string) => setValue("cash_account_uid", val || null)}
-                            placeholder={isLoadingCash ? "Memuat kas..." : "Pilih Kas / Bank..."}
+                            placeholder={isLoadingCash ? "Memuat kas/bank..." : "Pilih Akun Kas/Bank..."}
                             disabled={isPending || isLoadingCash}
                             className="h-8.5 text-xs rounded-xl"
                         />
 
                         {isCashInsufficient && (
-                            <div className="flex items-start gap-2 p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 text-xs font-medium">
+                            <div className="flex items-start gap-1.5 p-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 text-[11px] text-amber-700 dark:text-amber-400">
                                 <IconAlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                                 <span>
                                     Saldo kas tidak mencukupi untuk pembelian ini (Tersedia: {formatRupiah(Number(selectedCashAccount?.saldo) || 0)}).
@@ -138,19 +136,22 @@ export function AssetFundingFields({
                     </div>
                 )}
 
-                {/* Pilihan Non-Kas (Offset COA) */}
+                {/* Pilihan Non-Kas (Offset CoA) */}
                 {watchedSumber === "non_kas" && (
                     <div className="space-y-1.5">
                         <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                            Akun Penyeimbang COA (Ekuitas / Utang) <span className="text-rose-500">*</span>
+                            Akun Penyeimbang CoA (Ekuitas / Utang) <span className="text-rose-500">*</span>
                         </label>
-                        <CommandSelect
-                            options={nonKasCoaOptions}
+                        <CoaPickerTrigger
+                            accounts={flatAccounts}
+                            allowedTypes={["equity", "liability"]}
                             value={watchedOffsetCoaUid || ""}
                             onChange={(val: string) => setValue("offset_coa_uid", val || null)}
-                            placeholder={isLoadingCoa ? "Memuat COA..." : "Pilih Akun Ekuitas / Kewajiban..."}
+                            placeholder={isLoadingCoa ? "Memuat CoA..." : "Pilih Akun Ekuitas / Kewajiban..."}
+                            dialogTitle="Pilih Akun Penyeimbang Non-Kas"
                             disabled={isPending || isLoadingCoa}
-                            className="h-8.5 text-xs rounded-xl"
+                            size="md"
+                            allowClear
                         />
                         <p className="text-[10px] text-slate-500">
                             Pilih akun Modal Pemilik, Hutang Usaha, atau Hibah jika tidak dibayar tunai.
@@ -190,7 +191,7 @@ export function AssetFundingFields({
                                 <span className="text-slate-600 dark:text-slate-300 truncate">
                                     [K] {watchedSumber === "kas"
                                         ? (selectedCashAccount ? selectedCashAccount.nama : "Akun Kas/Bank")
-                                        : (selectedOffsetCoa ? selectedOffsetCoa.nama : "Akun Modal/Utang")}
+                                        : "Akun Ekuitas / Utang Terpilih"}
                                 </span>
                             </div>
                             <span className="font-mono font-bold text-rose-600 dark:text-rose-400 shrink-0">
@@ -201,23 +202,23 @@ export function AssetFundingFields({
                 </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+            {/* Bottom Submit Action */}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <Button
                     type="button"
                     variant="outline"
                     onClick={onCancel}
                     disabled={isPending}
-                    className="h-8.5 px-3.5 text-xs rounded-xl border-slate-200 dark:border-slate-800 cursor-pointer"
+                    className="h-9 px-3 text-xs rounded-xl border-slate-200 dark:border-slate-800 cursor-pointer"
                 >
                     Batal
                 </Button>
                 <Button
                     type="submit"
                     disabled={isPending || isCashInsufficient}
-                    className="h-8.5 px-4 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-xs cursor-pointer disabled:opacity-50"
+                    className="h-9 px-4 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-xs cursor-pointer"
                 >
-                    {isPending ? "Menyimpan..." : "Simpan Perolehan Aset"}
+                    {isPending ? "Menyimpan..." : "Catat Perolehan Aset"}
                 </Button>
             </div>
         </div>

@@ -29,7 +29,7 @@ export function AssetFormDialog({
         updateForm,
         categoryOptions,
         cashOptions,
-        nonKasCoaOptions,
+        flatAccounts,
         categoryAssetCoa,
         selectedCashAccount,
         selectedOffsetCoa,
@@ -91,12 +91,12 @@ export function AssetFormDialog({
                             />
                         </div>
 
-                        {/* Kolom Kanan: Pembiayaan, Kas/COA & Jurnal Otomatis */}
+                        {/* Kolom Kanan: Pembiayaan, Kas/CoA & Jurnal Otomatis */}
                         <div className="lg:col-span-5">
                             <AssetFundingFields
                                 form={createForm}
                                 cashOptions={cashOptions}
-                                nonKasCoaOptions={nonKasCoaOptions}
+                                flatAccounts={flatAccounts}
                                 selectedCashAccount={selectedCashAccount}
                                 selectedOffsetCoa={selectedOffsetCoa}
                                 categoryAssetCoa={categoryAssetCoa}

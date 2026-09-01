@@ -9,6 +9,11 @@ export const debitCreditSchema = z.object({
         },
         z.number({ message: "Nominal wajib berupa angka" }).min(1, "Nominal minimal Rp 1")
     ),
+    chart_of_account_uid: z
+        .string()
+        .optional()
+        .nullable()
+        .transform((v) => v || null),
     kategori: z
         .string()
         .max(50, "Kategori maksimal 50 karakter")

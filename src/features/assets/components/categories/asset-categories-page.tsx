@@ -36,7 +36,7 @@ export function AssetCategoriesPage() {
                             Kategori Aset
                         </h1>
                         <p className="text-xs text-slate-500">
-                            Kelola kelompok aset tetap perusahaan dan pemetaan akun buku besar (COA).
+                            Kelola kelompok aset tetap perusahaan dan pemetaan akun buku besar (CoA).
                         </p>
                     </div>
                 </div>

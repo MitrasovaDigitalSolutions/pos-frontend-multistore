@@ -1,21 +1,19 @@
 "use client";
 
-import { FormDatePicker } from "@/components/forms/form-date-picker";
-import { FormSelect } from "@/components/forms/form-select";
-import { Badge } from "@/components/ui/badge";
-import type { CommandOption } from "@/components/ui/command-select";
-import { DataTable } from "@/components/ui/data-table";
-import { useFlatChartOfAccounts } from "@/features/accounting/api/coa-api";
-import { useGeneralLedger } from "@/features/accounting/api/reports-api";
-import type { GeneralLedgerEntry } from "@/features/accounting/types";
-import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { todayStr } from "@/lib/date-utils";
-import { IconBook } from "@tabler/icons-react";
+import { useEffect, useMemo, useState } from "react";
+import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
-import { useMemo, useState } from "react";
-import { FormProvider, useForm, useWatch } from "react-hook-form";
+import { IconBook } from "@tabler/icons-react";
+import { FormDatePicker } from "@/components/forms/form-date-picker";
+import { DataTable } from "@/components/ui/data-table";
+import { Badge } from "@/components/ui/badge";
+import { todayStr } from "@/lib/date-utils";
+import { useGeneralLedger } from "@/features/accounting/api/reports-api";
+import { FormCoaPicker } from "../shared";
+import type { GeneralLedgerEntry } from "@/features/accounting/types";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
 
 interface BukuBesarFilterValues {
     from: string;
@@ -45,16 +43,10 @@ export function BukuBesarView() {
         name: ["from", "to", "coaUid"],
     });
 
-    // Reset page to 1 whenever filters change (during render)
-    const [prevFilter, setPrevFilter] = useState({ from, to, coaUid });
-    if (
-        prevFilter.from !== from ||
-        prevFilter.to !== to ||
-        prevFilter.coaUid !== coaUid
-    ) {
-        setPrevFilter({ from, to, coaUid });
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setPage(1);
-    }
+    }, [from, to, coaUid]);
 
     const { data, isLoading, isFetching } = useGeneralLedger({
         from: from || undefined,
@@ -66,15 +58,7 @@ export function BukuBesarView() {
         sort_order: sortOrder,
     });
 
-    const { data: coaData } = useFlatChartOfAccounts();
 
-    const coaOptions = useMemo<CommandOption[]>(() => {
-        const list = (coaData ?? []).map((c) => ({
-            value: c.uid,
-            label: `[${c.kode}] ${c.nama}`,
-        }));
-        return [{ value: "", label: "Semua Akun" }, ...list];
-    }, [coaData]);
 
     const columns = useMemo<ColumnDef<GeneralLedgerEntry>[]>(
         () => [
@@ -217,16 +201,15 @@ export function BukuBesarView() {
                         </div>
                     </div>
 
-                    {/* Right Side: Account Selector (COA) */}
+                    {/* Right Side: Account Selector (CoA) */}
                     <div className="flex items-center gap-2 w-full md:w-auto justify-end">
                         <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">Akun:</span>
-                        <div className="w-full sm:w-[220px]">
-                            <FormSelect
+                        <div className="w-full sm:w-[240px]">
+                            <FormCoaPicker
                                 name="coaUid"
-                                options={coaOptions}
                                 placeholder="Semua Akun"
-                                searchPlaceholder="Cari akun..."
-                                emptyMessage="Akun tidak ditemukan."
+                                dialogTitle="Filter Akun Buku Besar"
+                                allowClear={true}
                                 size="sm"
                             />
                         </div>

@@ -207,6 +207,13 @@ export const queryKeys = {
         list: () => [...queryKeys.coaMappings.all, "list"] as const,
     },
 
+    // CoA Counterpart Mappings
+    coaCounterpartMappings: {
+        all: ["coa-counterpart-mappings"] as const,
+        list: () => [...queryKeys.coaCounterpartMappings.all, "list"] as const,
+        detail: (uid: string) => [...queryKeys.coaCounterpartMappings.all, "detail", uid] as const,
+    },
+
     // Supplier Sales (katalog)
     supplierSales: {
         all: ["supplier-sales"] as const,

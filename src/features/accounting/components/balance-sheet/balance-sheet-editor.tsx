@@ -9,6 +9,7 @@ import { JournalEditorHeader } from "./journal-editor-header";
 import { JournalEditorMetadata } from "./journal-editor-metadata";
 import { JournalEditorDesktopTable } from "./journal-editor-desktop-table";
 import { JournalEditorMobileList } from "./journal-editor-mobile-list";
+import { JournalCounterpartPromptDialog } from "./journal-counterpart-prompt-dialog";
 
 interface BalanceSheetEditorProps {
     asOfDate: string;
@@ -33,7 +34,6 @@ export function BalanceSheetEditor({
         control,
         setValue,
         fields,
-        accountOptions,
         totalDebit,
         totalCredit,
         difference,
@@ -43,6 +43,11 @@ export function BalanceSheetEditor({
         isEditMode,
         generalLinesError,
         linesErrors,
+        counterpartPrompt,
+        setCounterpartPrompt,
+        handleAccountSelect,
+        handleSelectOneCounterpart,
+        handleApplyAllCounterparts,
         handleAddLine,
         handleCancel,
         handleSave,
@@ -87,13 +92,14 @@ export function BalanceSheetEditor({
                         fields={fields}
                         control={control}
                         setValue={setValue}
-                        accountOptions={accountOptions}
+                        flatAccounts={flatAccounts}
                         errors={linesErrors}
                         totalDebit={totalDebit}
                         totalCredit={totalCredit}
                         difference={difference}
                         isBalanced={isBalanced}
                         onAddLine={handleAddLine}
+                        onAccountSelect={handleAccountSelect}
                         onRemoveLine={remove}
                     />
 
@@ -102,17 +108,30 @@ export function BalanceSheetEditor({
                         fields={fields}
                         control={control}
                         setValue={setValue}
-                        accountOptions={accountOptions}
+                        flatAccounts={flatAccounts}
                         errors={linesErrors}
                         totalDebit={totalDebit}
                         totalCredit={totalCredit}
                         difference={difference}
                         isBalanced={isBalanced}
                         onAddLine={handleAddLine}
+                        onAccountSelect={handleAccountSelect}
                         onRemoveLine={remove}
                     />
                 </Card>
             </div>
+
+            {/* Multiple Counterpart Prompt Dialog */}
+            <JournalCounterpartPromptDialog
+                open={counterpartPrompt.isOpen}
+                onOpenChange={(open) =>
+                    setCounterpartPrompt((prev) => ({ ...prev, isOpen: open }))
+                }
+                sourceAccount={counterpartPrompt.sourceAccount}
+                counterparts={counterpartPrompt.counterparts}
+                onSelectOne={handleSelectOneCounterpart}
+                onApplyAll={handleApplyAllCounterparts}
+            />
         </FormProvider>
     );
 }

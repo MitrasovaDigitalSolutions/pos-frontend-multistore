@@ -186,6 +186,14 @@ export const ENDPOINTS = {
         UPDATE: "/v1/coa-mappings",
     },
 
+    // CoA Counterpart Mappings (Chart of Account → Balancing Counterpart Account)
+    COA_COUNTERPART_MAPPINGS: {
+        LIST: "/v1/coa-counterpart-mappings",
+        CREATE: "/v1/coa-counterpart-mappings",
+        UPDATE: (uid: string) => `/v1/coa-counterpart-mappings/${uid}`,
+        DELETE: (uid: string) => `/v1/coa-counterpart-mappings/${uid}`,
+    },
+
     // Ledger (admin backfill / rebuild actions)
     LEDGER: {
         BACKFILL: "/v1/ledger/backfill",

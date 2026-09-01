@@ -37,7 +37,7 @@ export function useCreateAssetCategory() {
             ),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.assetCategories.all });
-            // Invalidate COA tree as well because auto-created COA might be generated
+            // Invalidate CoA tree as well because auto-created CoA might be generated
             queryClient.invalidateQueries({ queryKey: queryKeys.chartOfAccounts.all });
         },
     });

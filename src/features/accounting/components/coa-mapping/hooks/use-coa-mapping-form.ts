@@ -58,11 +58,11 @@ export function useCoaMappingForm() {
 
         updateMutation.mutate(payload, {
             onSuccess: () => {
-                toast.success("Mapping COA berhasil disimpan.");
+                toast.success("Mapping CoA berhasil disimpan.");
                 reset(values); // Reset to current values so form is not dirty anymore
             },
             onError: (err) => {
-                toast.error(err.message || "Gagal menyimpan mapping COA.");
+                toast.error(err.message || "Gagal menyimpan mapping CoA.");
             },
         });
     });

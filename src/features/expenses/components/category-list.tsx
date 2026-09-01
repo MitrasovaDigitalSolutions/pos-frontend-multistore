@@ -119,7 +119,7 @@ export function CategoryList({
             },
             {
                 accessorKey: "chart_of_account_uid",
-                header: "Chart of Account (COA)",
+                header: "Chart of Account (CoA)",
                 cell: ({ row }) => {
                     const uid = row.original.chart_of_account_uid;
                     if (!uid) return <span className="text-slate-400 text-xs">-</span>;

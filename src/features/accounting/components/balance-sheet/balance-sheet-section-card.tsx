@@ -313,7 +313,7 @@ export function BalanceSheetSectionCard({
         indigo: "bg-indigo-50/60 dark:bg-indigo-950/20 text-indigo-800 dark:text-indigo-300 border-indigo-100 dark:border-indigo-900/30",
     };
 
-    // If there are no COA items in items array, DO NOT display this card!
+    // If there are no CoA items in items array, DO NOT display this card!
     if (items.length === 0) {
         return null;
     }

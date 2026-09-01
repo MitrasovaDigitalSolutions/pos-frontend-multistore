@@ -2,29 +2,32 @@
 
 import { Controller, type Control, type UseFormSetValue, type FieldErrors } from "react-hook-form";
 import { TableRow, TableCell } from "@/components/ui/table";
-import { CommandSelect, type CommandOption } from "@/components/ui/command-select";
+import { CoaPickerTrigger } from "@/features/accounting/components/shared";
 import { NumberInput } from "@/components/ui/number-input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { IconTrash } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import type { ChartOfAccount } from "@/features/accounting/types";
 import type { ManualJournalSchemaInput } from "@/features/accounting/schemas/manual-journal-schema";
 
 interface JournalEditorTableRowProps {
     index: number;
     control: Control<ManualJournalSchemaInput>;
     setValue: UseFormSetValue<ManualJournalSchemaInput>;
-    accountOptions: CommandOption[];
+    flatAccounts?: ChartOfAccount[];
     errors?: FieldErrors<ManualJournalSchemaInput>["lines"];
     canDelete: boolean;
+    onAccountSelect: (index: number, coaUid: string) => void;
     onRemove: (idx: number) => void;
 }
 
 export function JournalEditorTableRow({
     index,
     control,
-    accountOptions,
+    flatAccounts = [],
     errors,
     canDelete,
+    onAccountSelect,
     onRemove,
 }: JournalEditorTableRowProps) {
     const rowErrors = Array.isArray(errors) ? errors[index] : undefined;
@@ -37,24 +40,27 @@ export function JournalEditorTableRow({
                 {index + 1}
             </TableCell>
 
-            {/* COA Searchable Select */}
+            {/* CoA Searchable Dialog Picker */}
             <TableCell className="py-1.5 px-3">
                 <Controller
                     control={control}
                     name={`lines.${index}.chart_of_account_uid`}
                     render={({ field: selectField }) => (
-                        <CommandSelect
-                            options={accountOptions}
-                            value={selectField.value || ""}
-                            onChange={selectField.onChange}
-                            placeholder="Pilih akun..."
-                            searchPlaceholder="Cari kode/nama akun..."
-                            size="sm"
-                            className={cn(
-                                "h-8 text-xs rounded-lg",
-                                accountError && "border-rose-400 focus:border-rose-500"
-                            )}
-                        />
+                        <div className="w-full">
+                            <CoaPickerTrigger
+                                accounts={flatAccounts}
+                                value={selectField.value || ""}
+                                onChange={(val) => onAccountSelect(index, val)}
+                                placeholder="Pilih akun..."
+                                dialogTitle="Pilih Akun Baris Jurnal"
+                                size="sm"
+                                allowClear
+                                className={cn(
+                                    "w-full h-8 text-xs rounded-lg",
+                                    accountError && "border-rose-400 focus:border-rose-500"
+                                )}
+                            />
+                        </div>
                     )}
                 />
             </TableCell>
@@ -94,7 +100,7 @@ export function JournalEditorTableRow({
                                 className={cn(
                                     "h-8 text-xs text-right font-mono font-bold rounded-lg border-slate-200 dark:border-slate-800 focus-visible:ring-emerald-500",
                                     numVal > 0 &&
-                                        "text-emerald-700 dark:text-emerald-400 bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800/60"
+                                    "text-emerald-700 dark:text-emerald-400 bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800/60"
                                 )}
                             />
                         );
@@ -120,7 +126,7 @@ export function JournalEditorTableRow({
                                 className={cn(
                                     "h-8 text-xs text-right font-mono font-bold rounded-lg border-slate-200 dark:border-slate-800 focus-visible:ring-rose-500",
                                     numVal > 0 &&
-                                        "text-rose-700 dark:text-rose-400 bg-rose-50/40 dark:bg-rose-950/20 border-rose-300 dark:border-rose-800/60"
+                                    "text-rose-700 dark:text-rose-400 bg-rose-50/40 dark:bg-rose-950/20 border-rose-300 dark:border-rose-800/60"
                                 )}
                             />
                         );

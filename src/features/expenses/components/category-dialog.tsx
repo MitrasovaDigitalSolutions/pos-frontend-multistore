@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { FormInput } from "@/components/forms/form-input";
 import { FormNumberInput } from "@/components/forms/form-number-input";
 import { FormSelect } from "@/components/forms/form-select";
@@ -11,7 +10,7 @@ import { IconCategory } from "@tabler/icons-react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { useCreateExpenseCategory, useUpdateExpenseCategory } from "../api/expenses-api";
-import { useFlatChartOfAccounts } from "@/features/accounting/api/coa-api";
+import { FormCoaPicker } from "@/features/accounting/components/shared";
 import type { ExpenseCategoryInput } from "../schemas/expense-schema";
 import type { ExpenseCategory } from "../types";
 
@@ -28,7 +27,6 @@ export function CategoryDialog({
 }: CategoryDialogProps) {
     const createCategory = useCreateExpenseCategory();
     const updateCategory = useUpdateExpenseCategory();
-    const { data: flatAccounts, isLoading: isLoadingCoas } = useFlatChartOfAccounts();
     const isEdit = !!editingCategory;
 
     const { handleSubmit, setValue, control } = useFormContext<ExpenseCategoryInput>();
@@ -39,14 +37,6 @@ export function CategoryDialog({
         control,
         name: "is_recurring",
     });
-
-    const coaOptions = useMemo(() => {
-        if (!flatAccounts) return [];
-        return flatAccounts.map((coa) => ({
-            value: coa.uid,
-            label: `[${coa.kode}] ${coa.nama}`,
-        }));
-    }, [flatAccounts]);
 
     const onSubmit = (data: ExpenseCategoryInput) => {
         const payload = {
@@ -110,13 +100,14 @@ export function CategoryDialog({
                     disabled={isPending}
                 />
 
-                {/* Chart of Account / Akun COA */}
-                <FormSelect<ExpenseCategoryInput>
+                {/* Chart of Account / Akun CoA */}
+                <FormCoaPicker
                     name="chart_of_account_uid"
-                    label="Chart of Account (COA)"
-                    options={coaOptions}
-                    placeholder={isLoadingCoas ? "Memuat akun COA..." : "Pilih Chart of Account..."}
-                    disabled={isPending || isLoadingCoas}
+                    label="Chart of Account (CoA)"
+                    placeholder="Pilih Chart of Account..."
+                    dialogTitle="Pilih Akun CoA Kategori Pengeluaran"
+                    size="md"
+                    disabled={isPending}
                 />
 
                 {/* Apakah Berulang / Recurring */}

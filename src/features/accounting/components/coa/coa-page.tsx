@@ -407,7 +407,7 @@ export function CoaPage() {
                 <div>
                     <h1 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 flex items-center gap-2">
                         <IconNotebook className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
-                        Chart of Accounts (COA)
+                        Chart of Accounts (CoA)
                     </h1>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                         Kelola struktur akun perkiraan standar akuntansi untuk pencatatan transaksi jurnal keuangan toko.

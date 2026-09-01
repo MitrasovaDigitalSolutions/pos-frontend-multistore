@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconAlertCircle, IconCircleCheck, IconPlus } from "@tabler/icons-react";
 import type { Control, UseFormSetValue, FieldErrors, FieldArrayWithId } from "react-hook-form";
-import type { CommandOption } from "@/components/ui/command-select";
+import type { ChartOfAccount } from "@/features/accounting/types";
 import type { ManualJournalSchemaInput } from "@/features/accounting/schemas/manual-journal-schema";
 import { JournalEditorTableRow } from "./journal-editor-table-row";
 
@@ -20,13 +20,14 @@ interface JournalEditorDesktopTableProps {
     fields: FieldArrayWithId<ManualJournalSchemaInput, "lines", "id">[];
     control: Control<ManualJournalSchemaInput>;
     setValue: UseFormSetValue<ManualJournalSchemaInput>;
-    accountOptions: CommandOption[];
+    flatAccounts?: ChartOfAccount[];
     errors?: FieldErrors<ManualJournalSchemaInput>["lines"];
     totalDebit: number;
     totalCredit: number;
     difference: number;
     isBalanced: boolean;
     onAddLine: () => void;
+    onAccountSelect: (index: number, coaUid: string) => void;
     onRemoveLine: (idx: number) => void;
 }
 
@@ -34,13 +35,14 @@ export function JournalEditorDesktopTable({
     fields,
     control,
     setValue,
-    accountOptions,
+    flatAccounts = [],
     errors,
     totalDebit,
     totalCredit,
     difference,
     isBalanced,
     onAddLine,
+    onAccountSelect,
     onRemoveLine,
 }: JournalEditorDesktopTableProps) {
     return (
@@ -49,7 +51,7 @@ export function JournalEditorDesktopTable({
                 <TableHeader>
                     <TableRow className="bg-slate-50/80 dark:bg-slate-950/40 border-b border-slate-100 dark:border-slate-800 text-[10px] font-bold text-slate-500 uppercase tracking-wider select-none">
                         <TableHead className="py-2.5 px-3 text-center w-10">#</TableHead>
-                        <TableHead className="py-2.5 px-3 w-[340px]">Akun (COA) *</TableHead>
+                        <TableHead className="py-2.5 px-3 w-[340px]">Akun (CoA) *</TableHead>
                         <TableHead className="py-2.5 px-3">Keterangan Baris (Opsional)</TableHead>
                         <TableHead className="py-2.5 px-3 text-right w-44">Debit (Rp)</TableHead>
                         <TableHead className="py-2.5 px-3 text-right w-44">Kredit (Rp)</TableHead>
@@ -63,9 +65,10 @@ export function JournalEditorDesktopTable({
                             index={idx}
                             control={control}
                             setValue={setValue}
-                            accountOptions={accountOptions}
+                            flatAccounts={flatAccounts}
                             errors={errors}
                             canDelete={fields.length > 2}
+                            onAccountSelect={onAccountSelect}
                             onRemove={onRemoveLine}
                         />
                     ))}

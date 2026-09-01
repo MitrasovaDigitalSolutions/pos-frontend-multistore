@@ -21,7 +21,7 @@ export function UnbalancedStatusBanner({ isLoading, totalUnbalanced }: Unbalance
                         Ditemukan {totalUnbalanced} Entri Tidak Seimbang
                     </h4>
                     <p className="text-amber-800 dark:text-amber-300 leading-relaxed">
-                        Entri di bawah ini memiliki ketidakseimbangan nilai Debit & Kredit di General Ledger. Klik tombol <strong>&quot;Seimbangkan&quot;</strong> untuk menentukan COA kontra penyeimbang.
+                        Entri di bawah ini memiliki ketidakseimbangan nilai Debit & Kredit di General Ledger. Klik tombol <strong>&quot;Seimbangkan&quot;</strong> untuk menentukan CoA kontra penyeimbang.
                     </p>
                 </div>
             </div>

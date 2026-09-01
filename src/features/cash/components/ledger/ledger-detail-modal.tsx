@@ -24,7 +24,8 @@ export function LedgerDetailModal({ open, onOpenChange, movement }: LedgerDetail
     const drawerMovement = movement.cashDrawerMovement || movement.cash_drawer_movement;
     const drawerSession = movement.cashDrawerSession || movement.cash_drawer_session;
     const sessionUid = movement.cash_drawer_session_uid || drawerSession?.uid || drawerMovement?.cash_drawer_session_uid;
-    const note = movement.expense?.catatan || movement.supplier_payment?.catatan || drawerMovement?.note || drawerSession?.opening_note || drawerSession?.closing_note;
+    const coa = movement.chartOfAccount || movement.chart_of_account;
+    const note = movement.expense?.catatan || movement.supplier_payment?.catatan || movement.catatan || drawerMovement?.note || drawerSession?.opening_note || drawerSession?.closing_note;
 
     return (
         <BaseDialog
@@ -163,6 +164,25 @@ export function LedgerDetailModal({ open, onOpenChange, movement }: LedgerDetail
                             <span className="font-bold text-slate-800 text-[11px] flex items-center gap-1.5">
                                 <IconUser size={13} className="text-slate-400" />
                                 {movement.user.nama || movement.user.name} ({movement.user.email || "No Email"})
+                            </span>
+                        </div>
+                    )}
+
+                    {coa && (
+                        <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1 col-span-2">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+                                Chart of Account (CoA)
+                            </span>
+                            <span className="font-bold text-slate-800 text-[11px] flex items-center gap-1.5 flex-wrap">
+                                {coa.kode_akun && (
+                                    <span className="font-mono text-sky-700 bg-sky-50 px-1.5 py-0.5 rounded border border-sky-200/60 font-semibold text-[10px]">
+                                        {coa.kode_akun}
+                                    </span>
+                                )}
+                                <span>{coa.nama_akun || "Akun CoA"}</span>
+                                {coa.tipe_akun && (
+                                    <span className="text-[10px] text-slate-400 font-normal uppercase">({coa.tipe_akun})</span>
+                                )}
                             </span>
                         </div>
                     )}
