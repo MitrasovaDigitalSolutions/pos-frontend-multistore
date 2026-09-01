@@ -35,6 +35,7 @@ export interface CatalogProduct {
     image_path?: string | null;
     image_url?: string | null;
     is_jasa?: boolean;
+    is_raw_material?: boolean;
     created_by_user?: CreatedByUser | null;
     created_by_toko?: CreatedByToko | null;
     category?: Category | null;

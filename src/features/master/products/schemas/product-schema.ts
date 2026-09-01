@@ -2,47 +2,19 @@ import { z } from "zod";
 
 export const productSchema = z.object({
     nama: z.string().min(1, "Nama produk wajib diisi"),
-    merek: z
-        .string()
-        .nullable()
-        .optional()
-        .transform((val) => val || "Umum"),
-    barcode: z
-        .string()
-        .nullable()
-        .optional()
-        .transform((val) => val || null),
-    harga: z.coerce.number().min(0, "Harga jual tidak boleh kurang dari 0"),
-    harga_grosir: z.preprocess((val) => {
-        if (val === "" || val === null || val === undefined) return null;
-        return Number(val);
-    }, z.number().min(0, "Harga grosir tidak boleh kurang dari 0").nullable().optional()),
-    min_qty_grosir: z.preprocess((val) => {
-        if (val === "" || val === null || val === undefined) return null;
-        return Number(val);
-    }, z.number().min(0, "Minimal qty grosir tidak boleh kurang dari 0").nullable().optional()),
-    harga_grosir_total: z.preprocess((val) => {
-        if (val === "" || val === null || val === undefined) return null;
-        return Number(val);
-    }, z.number().min(0).nullable().optional()),
-    stok: z.coerce.number(),
-    harga_beli: z.preprocess((val) => {
-        if (val === "" || val === null || val === undefined) return null;
-        return Number(val);
-    }, z.number().min(0, "Harga beli tidak boleh kurang dari 0").nullable().optional()),
-    margin: z.preprocess((val) => {
-        if (val === "" || val === null || val === undefined) return null;
-        return Number(val);
-    }, z.number().min(0, "Margin tidak boleh kurang dari 0").nullable().optional()),
-    category_uid: z.preprocess((val) => {
-        if (val === "" || val === null || val === undefined) return null;
-        return String(val);
-    }, z.string().nullable().optional()),
-    brand_uid: z.preprocess((val) => {
-        if (val === "" || val === null || val === undefined) return null;
-        return String(val);
-    }, z.string().nullable().optional()),
+    merek: z.string().nullable().optional(),
+    barcode: z.string().nullable().optional(),
+    harga: z.coerce.number().min(0, "Harga jual tidak boleh kurang dari 0").default(0),
+    harga_grosir: z.coerce.number().min(0, "Harga grosir tidak boleh kurang dari 0").nullable().optional(),
+    min_qty_grosir: z.coerce.number().min(0, "Minimal qty grosir tidak boleh kurang dari 0").nullable().optional(),
+    harga_grosir_total: z.coerce.number().min(0).nullable().optional(),
+    stok: z.coerce.number().min(0, "Stok tidak boleh kurang dari 0").default(0),
+    harga_beli: z.coerce.number().min(0, "Harga beli tidak boleh kurang dari 0").default(0),
+    margin: z.coerce.number().nullable().optional().default(0),
+    category_uid: z.string().nullable().optional(),
+    brand_uid: z.string().nullable().optional(),
     image: z.any().nullable().optional(),
+    product_type: z.enum(["finished_good", "raw_material", "jasa"]).optional().default("finished_good"),
     is_jasa: z.boolean().optional().default(false),
     is_raw_material: z.boolean().optional().default(false),
     is_grosir: z.boolean().optional().default(false),

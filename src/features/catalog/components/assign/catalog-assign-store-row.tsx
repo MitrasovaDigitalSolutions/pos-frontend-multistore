@@ -114,16 +114,16 @@ export function CatalogAssignStoreRow({
                                 {store.nama}
                             </span>
                             {store.is_central && (
-                                <Badge className="text-[9px] px-1.5 py-0 bg-emerald-100 text-emerald-800 border-emerald-200 font-bold shrink-0">
+                                <Badge variant="success" className="text-[9px] px-1.5 py-0 font-bold shrink-0">
                                     {STORE_BADGE_HQ}
                                 </Badge>
                             )}
                             {currentAssignment ? (
-                                <Badge className="text-[9px] px-1.5 py-0 bg-slate-100 text-slate-600 border-slate-200 font-semibold shrink-0">
+                                <Badge variant="secondary" className="text-[9px] px-1.5 py-0 font-semibold shrink-0">
                                     Terdaftar
                                 </Badge>
                             ) : (
-                                <Badge className="text-[9px] px-1.5 py-0 bg-amber-50 text-amber-700 border-amber-200 font-semibold shrink-0">
+                                <Badge variant="warning" className="text-[9px] px-1.5 py-0 font-semibold shrink-0">
                                     Belum Terdaftar
                                 </Badge>
                             )}

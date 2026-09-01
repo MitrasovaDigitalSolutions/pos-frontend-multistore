@@ -218,22 +218,30 @@ export function StoreProductEditDialog({
                                                 <span className="font-bold text-xs text-slate-900 leading-tight truncate">
                                                     {product.nama}
                                                 </span>
-                                                {product.is_jasa ? (
-                                                    <Badge className="text-[9px] px-1.5 py-0 bg-blue-50 text-blue-700 border-blue-100 font-bold">
+                                                {product.is_jasa && (
+                                                    <Badge variant="info" className="text-[9px] px-1.5 py-0 font-bold">
                                                         Jasa
                                                     </Badge>
-                                                ) : product.stok > 10 ? (
-                                                    <Badge className="text-[9px] px-1.5 py-0 bg-emerald-50 text-emerald-700 border-emerald-200 font-bold">
-                                                        Stok: {product.stok} Pcs
+                                                )}
+                                                {product.is_raw_material && (
+                                                    <Badge variant="warning" className="text-[9px] px-1.5 py-0 font-bold">
+                                                        Bahan Baku
                                                     </Badge>
-                                                ) : product.stok > 0 ? (
-                                                    <Badge className="text-[9px] px-1.5 py-0 bg-amber-50 text-amber-700 border-amber-200 font-bold">
-                                                        Stok: {product.stok} Pcs
-                                                    </Badge>
-                                                ) : (
-                                                    <Badge className="text-[9px] px-1.5 py-0 bg-rose-50 text-rose-700 border-rose-200 font-bold">
-                                                        Stok: 0 Pcs
-                                                    </Badge>
+                                                )}
+                                                {!product.is_jasa && (
+                                                    product.stok > 10 ? (
+                                                        <Badge variant="success" className="text-[9px] px-1.5 py-0 font-bold">
+                                                            Stok: {product.stok} Pcs
+                                                        </Badge>
+                                                    ) : product.stok > 0 ? (
+                                                        <Badge variant="warning" className="text-[9px] px-1.5 py-0 font-bold">
+                                                            Stok: {product.stok} Pcs
+                                                        </Badge>
+                                                    ) : (
+                                                        <Badge variant="destructive" className="text-[9px] px-1.5 py-0 font-bold">
+                                                            Stok: 0 Pcs
+                                                        </Badge>
+                                                    )
                                                 )}
                                             </div>
                                             <div className="flex items-center gap-2 flex-wrap text-[11px] text-slate-500">

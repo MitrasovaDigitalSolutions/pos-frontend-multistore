@@ -12,6 +12,7 @@ export interface CatalogParams extends PaginationParams {
     brand_uid?: string;
     status?: string;
     is_jasa?: string;
+    is_raw_material?: string;
     include_assigned?: "1";
     include_archived?: "1";
 }

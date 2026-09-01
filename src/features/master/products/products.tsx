@@ -143,6 +143,8 @@ export function Products() {
       brand_uid: null,
       image: null,
       is_jasa: false,
+      is_raw_material: false,
+      is_grosir: false,
     },
   });
 
@@ -181,6 +183,8 @@ export function Products() {
       brand_uid: null,
       image: null,
       is_jasa: false,
+      is_raw_material: false,
+      is_grosir: false,
     });
     setIsDialogOpen(true);
   };
