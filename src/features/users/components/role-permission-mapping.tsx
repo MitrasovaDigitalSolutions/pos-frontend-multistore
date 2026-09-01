@@ -193,6 +193,22 @@ const PERMISSION_METADATA: Record<string, { label: string; desc: string }> = {
         label: "Lihat Request Transfer",
         desc: "Melihat summary permintaan stok antar cabang dan katalog sales supplier tanpa hak memproses.",
     },
+    manage_production: {
+        label: "Kelola Produksi Harian",
+        desc: "Mencatat pemakaian bahan baku konveksi dan hasil barang jadi serta HPP.",
+    },
+    view_production: {
+        label: "Lihat Produksi Harian",
+        desc: "Melihat riwayat transaksi produksi dan rincian alokasi bahan baku tanpa hak membuat/mengubah.",
+    },
+    manage_assets: {
+        label: "Kelola Aset & Penyusutan",
+        desc: "Menambah, mengubah, menghapus aset tetap serta menjalankan penyusutan bulanan.",
+    },
+    view_assets: {
+        label: "Lihat Aset & Penyusutan",
+        desc: "Melihat daftar aset tetap dan riwayat penyusutan tanpa hak mengubah.",
+    },
 };
 
 const ROLE_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
@@ -248,10 +264,10 @@ const PERMISSION_CATEGORIES: StaticPermissionCategory[] = [
     {
         id: "inventory",
         label: "Stok & Mutasi Inventori",
-        desc: "Stock opname fisik, penyesuaian stok, kartu stok, serta transfer stok antar cabang.",
+        desc: "Stock opname fisik, penyesuaian stok, kartu stok, transfer stok antar cabang, serta produksi harian.",
         icon: IconBox,
         colorClass: "text-amber-600 bg-amber-50 border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/20",
-        permissions: ["manage_inventory", "view_inventory", "manage_stock_transfers", "view_stock_transfers"],
+        permissions: ["manage_inventory", "view_inventory", "manage_stock_transfers", "view_stock_transfers", "manage_production", "view_production"],
     },
     {
         id: "request_transfer",

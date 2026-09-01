@@ -18,7 +18,6 @@ import { useBrands } from "@/features/master/brands/api/brands-api";
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
-import { FormSwitch } from "@/components/forms/form-switch";
 import { useSearchParams } from "next/navigation";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
 
@@ -27,7 +26,7 @@ interface ProductFilterValues {
   category_uid: string;
   brand_uid: string;
   status: string;
-  is_jasa: boolean;
+  product_type: string;
 }
 
 export function Products() {
@@ -52,6 +51,7 @@ export function Products() {
     category_uid?: string;
     brand_uid?: string;
     is_jasa?: string;
+    is_raw_material?: string;
     include_archived?: number;
   }>(() => ({
     search: searchParam || undefined,
@@ -68,7 +68,7 @@ export function Products() {
       category_uid: "all",
       brand_uid: "all",
       status: "active",
-      is_jasa: false,
+      product_type: "all",
     },
   });
 
@@ -89,7 +89,8 @@ export function Products() {
       status: data.status !== "all" ? data.status : undefined,
       category_uid: data.category_uid !== "all" ? data.category_uid : undefined,
       brand_uid: data.brand_uid !== "all" ? data.brand_uid : undefined,
-      is_jasa: data.is_jasa ? "1" : undefined,
+      is_jasa: data.product_type === "jasa" ? "1" : undefined,
+      is_raw_material: data.product_type === "raw_material" ? "1" : (data.product_type === "finished_good" ? "0" : undefined),
       include_archived: data.status === "archived" ? 1 : undefined,
     });
     setPage(1);
@@ -101,7 +102,7 @@ export function Products() {
       category_uid: "all",
       brand_uid: "all",
       status: "active",
-      is_jasa: false,
+      product_type: "all",
     });
     setAppliedFilters({
       status: "active",
@@ -201,6 +202,13 @@ export function Products() {
     { value: "archived", label: "Diarsipkan" },
   ];
 
+  const productTypeOptions = [
+    { value: "all", label: "Semua Tipe Produk" },
+    { value: "finished_good", label: "Barang Jadi / Retail" },
+    { value: "raw_material", label: "Bahan Baku Produksi" },
+    { value: "jasa", label: "Jasa / Layanan" },
+  ];
+
   return (
     <div className="space-y-6">
       <FormProvider {...dialogMethods}>
@@ -255,14 +263,12 @@ export function Products() {
                 options={statusOptions}
                 placeholder="Semua Status"
               />
-              <div className="col-span-2">
-                <FormSwitch<ProductFilterValues>
-                  name="is_jasa"
-                  label="Produk Jasa / Layanan"
-                  description="Aktifkan untuk menampilkan produk jasa / layanan saja"
-                  className="bg-white"
-                />
-              </div>
+              <FormSelect<ProductFilterValues>
+                name="product_type"
+                label="Tipe Produk"
+                options={productTypeOptions}
+                placeholder="Semua Tipe Produk"
+              />
             </FilterForm>
           }
         />

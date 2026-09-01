@@ -55,18 +55,18 @@ export class ProductLocalRepository {
                 .where("barcode")
                 .equalsIgnoreCase(cleanQuery)
                 .first();
-            if (byBarcode && byBarcode.status === "active") return byBarcode;
+            if (byBarcode && byBarcode.status === "active" && !byBarcode.is_raw_material) return byBarcode;
 
             // 2. Exact match Nama
             const byName = await db.products
                 .where("nama")
                 .equalsIgnoreCase(cleanQuery)
                 .first();
-            if (byName && byName.status === "active") return byName;
+            if (byName && byName.status === "active" && !byName.is_raw_material) return byName;
 
             // 3. Substring match Nama jika query pendek
             const byNamePartial = await db.products
-                .filter((p) => p.status === "active" && p.nama.toLowerCase().includes(cleanQuery.toLowerCase()))
+                .filter((p) => p.status === "active" && !p.is_raw_material && p.nama.toLowerCase().includes(cleanQuery.toLowerCase()))
                 .first();
             if (byNamePartial) return byNamePartial;
 
@@ -92,7 +92,7 @@ export class ProductLocalRepository {
             // Iterasi dengan early exit jika sudah mencapai limit
             await db.products
                 .filter((p) => {
-                    if (p.status !== "active") return false;
+                    if (p.status !== "active" || p.is_raw_material) return false;
                     const barcodeMatch = p.barcode?.toLowerCase().includes(cleanQuery) ?? false;
                     const nameMatch = queryWords.every((w) => p.nama.toLowerCase().includes(w));
                     const brandMatch =
@@ -135,8 +135,9 @@ export class ProductLocalRepository {
 
         try {
             const collection = db.products.filter((p) => {
-                // Hanya produk aktif yang bisa dijual (fallback jika status undefined maka tetap dianggap active)
+                // Hanya produk aktif yang bukan bahan baku yang bisa dijual
                 if (p.status && p.status !== "active") return false;
+                if (p.is_raw_material) return false;
 
                 // Filter Kata Kunci (Nama, Barcode, Merek)
                 if (search) {

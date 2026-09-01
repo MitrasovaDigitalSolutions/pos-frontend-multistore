@@ -239,6 +239,14 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasPermission(roles, permissions, "view_inventory") ||
                             hasPermission(roles, permissions, "manage_inventory"),
                     },
+                    {
+                        label: "Produksi Harian",
+                        path: ROUTES.ADMIN_PRODUCTION,
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_production") ||
+                            hasPermission(roles, permissions, "manage_production"),
+                    },
                 ],
             },
         ],
