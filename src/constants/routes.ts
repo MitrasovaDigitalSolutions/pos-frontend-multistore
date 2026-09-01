@@ -60,6 +60,8 @@ export const ROUTES = {
     ADMIN_REQUEST_TRANSFERS_DETAIL: "/admin/request-transfer/detail",
     ADMIN_ASSETS: "/admin/assets",
     ADMIN_ASSET_CATEGORIES: "/admin/assets/categories",
+    ADMIN_PRODUCTION: "/admin/inventory/production",
+    ADMIN_PRODUCTION_CREATE: "/admin/inventory/production/new",
 
 
     // Protected - POS

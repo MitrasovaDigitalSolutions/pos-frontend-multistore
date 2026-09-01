@@ -48,6 +48,7 @@ const defaultProductValues: ProductInput = {
     brand_uid: null,
     image: undefined,
     is_jasa: false,
+    is_raw_material: false,
     is_grosir: false,
 };
 
@@ -103,6 +104,7 @@ export function ProductFormDialog({
                     brand_uid: editingProduct.brand_uid ?? null,
                     image: undefined,
                     is_jasa: !!editingProduct.is_jasa,
+                    is_raw_material: !!editingProduct.is_raw_material,
                     is_grosir: Boolean(editingProduct.is_grosir ?? storeProduct?.is_grosir ?? false),
                 });
             } else {
@@ -126,6 +128,7 @@ export function ProductFormDialog({
     const harga = useWatch({ control, name: "harga" });
     const margin = useWatch({ control, name: "margin" });
     const isJasa = useWatch({ control, name: "is_jasa" });
+    const isRawMaterial = useWatch({ control, name: "is_raw_material" });
     const isGrosir = useWatch({ control, name: "is_grosir" });
     const hargaGrosir = useWatch({ control, name: "harga_grosir" });
     const minQtyGrosir = useWatch({ control, name: "min_qty_grosir" });
@@ -134,8 +137,15 @@ export function ProductFormDialog({
     useEffect(() => {
         if (isJasa) {
             setValue("stok", 0);
+            setValue("is_raw_material", false);
         }
     }, [isJasa, setValue]);
+
+    useEffect(() => {
+        if (isRawMaterial) {
+            setValue("is_jasa", false);
+        }
+    }, [isRawMaterial, setValue]);
 
     // Single consolidated effect for margin and wholesale price calculations
     useEffect(() => {
@@ -235,6 +245,7 @@ export function ProductFormDialog({
         }
 
         formData.append("is_jasa", data.is_jasa ? "1" : "0");
+        formData.append("is_raw_material", data.is_raw_material ? "1" : "0");
 
         if (editingProduct) {
             formData.append("status", editingProduct.status);
@@ -317,7 +328,14 @@ export function ProductFormDialog({
                             name="is_jasa"
                             label="Produk Jasa / Layanan"
                             description="Aktifkan jika produk ini berupa layanan yang tidak memerlukan stok fisik."
-                            disabled={isPending}
+                            disabled={isPending || isRawMaterial}
+                        />
+
+                        <FormSwitch<ProductInput>
+                            name="is_raw_material"
+                            label="Bahan Baku (Khusus Produksi)"
+                            description="Aktifkan jika produk ini adalah bahan baku konveksi/produksi (tidak dijual di kasir POS)."
+                            disabled={isPending || isJasa}
                         />
                     </div>
 

@@ -164,11 +164,18 @@ export function ProductTable({
                             <span className="font-semibold text-slate-800">
                                 {row.original.nama}
                             </span>
-                            {row.original.is_jasa && (
-                                <span className="badge text-[9px] border-none bg-blue-50 text-blue-700 w-fit px-1.5 py-px rounded font-semibold">
-                                    Jasa
-                                </span>
-                            )}
+                            <div className="flex items-center gap-1">
+                                {row.original.is_jasa && (
+                                    <span className="badge text-[9px] border-none bg-blue-50 text-blue-700 w-fit px-1.5 py-px rounded font-semibold">
+                                        Jasa
+                                    </span>
+                                )}
+                                {row.original.is_raw_material && (
+                                    <span className="badge text-[9px] border-none bg-amber-50 text-amber-700 w-fit px-1.5 py-px rounded font-semibold">
+                                        Bahan Baku
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     ),
                     size: 320

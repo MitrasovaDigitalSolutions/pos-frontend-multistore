@@ -269,4 +269,11 @@ export const ENDPOINTS = {
             DELETE: (penyusutanUid: string) => `/v1/assets/penyusutan/${penyusutanUid}`,
         },
     },
+
+    // Productions
+    PRODUCTION: {
+        LIST: "/v1/productions",
+        CREATE: "/v1/productions",
+        DETAIL: (uid: string) => `/v1/productions/${uid}`,
+    },
 } as const;

@@ -233,4 +233,9 @@ export const queryKeys = {
         detail: (uid: string) => [...queryKeys.assets.all, "detail", uid] as const,
         penyusutan: (assetUid: string) => [...queryKeys.assets.all, "penyusutan", assetUid] as const,
     },
+    productions: {
+        all: ["productions"] as const,
+        list: (params?: unknown) => [...queryKeys.productions.all, "list", params] as const,
+        detail: (uid: string) => [...queryKeys.productions.all, "detail", uid] as const,
+    },
 } as const;
