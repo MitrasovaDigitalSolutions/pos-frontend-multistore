@@ -214,13 +214,6 @@ export const queryKeys = {
         detail: (uid: string) => [...queryKeys.coaCounterpartMappings.all, "detail", uid] as const,
     },
 
-    // Parent Categories
-    parentCategories: {
-        all: ["parent-categories"] as const,
-        list: (params?: unknown) => [...queryKeys.parentCategories.all, "list", params] as const,
-        detail: (uid: string) => [...queryKeys.parentCategories.all, "detail", uid] as const,
-    },
-
     // Supplier Sales (katalog)
     supplierSales: {
         all: ["supplier-sales"] as const,
