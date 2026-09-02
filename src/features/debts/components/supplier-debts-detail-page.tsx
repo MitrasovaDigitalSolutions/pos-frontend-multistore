@@ -301,53 +301,62 @@ export function SupplierDebtsDetailPage({ supplierUid, supplierName }: SupplierD
                 </div>
             </div>
 
-            {/* Summary Cards (halaman ini) */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm flex items-center justify-between relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-20 h-20 bg-slate-500/5 rounded-full blur-xl pointer-events-none" />
-                    <div className="space-y-1.5">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
-                            Total Nilai Faktur
-                        </span>
-                        <p className="text-lg font-black text-slate-800 leading-none tabular-nums">
-                            {formatRupiah(totalFaktur)}
-                        </p>
-                        <span className="text-[9px] text-slate-400 block">Halaman saat ini</span>
-                    </div>
-                    <div className="w-10 h-10 rounded-2xl bg-slate-50 text-slate-500 flex items-center justify-center border border-slate-200 shrink-0">
+            {/* Compact Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-2.5 shadow-xs">
+                {/* Card 1: Total Nilai Faktur */}
+                <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-slate-50/50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/50 min-w-0">
+                    <div className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl shrink-0">
                         <IconFileInvoice size={18} className="stroke-[2.5]" />
                     </div>
+                    <div className="min-w-0 flex-1">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block truncate">
+                            Total Nilai Faktur
+                        </span>
+                        <div className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 leading-tight tabular-nums">
+                            {isLoading ? (
+                                <div className="h-5 w-24 bg-slate-200 dark:bg-slate-800 rounded animate-pulse my-0.5" />
+                            ) : (
+                                formatRupiah(totalFaktur)
+                            )}
+                        </div>
+                    </div>
                 </div>
 
-                <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm flex items-center justify-between relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/5 rounded-full blur-xl pointer-events-none" />
-                    <div className="space-y-1.5">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
-                            Total Dibayar
-                        </span>
-                        <p className="text-lg font-black text-emerald-600 leading-none tabular-nums">
-                            {formatRupiah(totalDibayar)}
-                        </p>
-                        <span className="text-[9px] text-slate-400 block">Halaman saat ini</span>
-                    </div>
-                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 shrink-0">
+                {/* Card 2: Total Dibayar */}
+                <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100/60 dark:border-emerald-900/30 min-w-0">
+                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 rounded-xl shrink-0">
                         <IconCash size={18} className="stroke-[2.5]" />
                     </div>
+                    <div className="min-w-0 flex-1">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block truncate">
+                            Total Dibayar
+                        </span>
+                        <div className="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400 leading-tight tabular-nums">
+                            {isLoading ? (
+                                <div className="h-5 w-24 bg-slate-200 dark:bg-slate-800 rounded animate-pulse my-0.5" />
+                            ) : (
+                                formatRupiah(totalDibayar)
+                            )}
+                        </div>
+                    </div>
                 </div>
 
-                <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm flex items-center justify-between relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-20 h-20 bg-rose-500/5 rounded-full blur-xl pointer-events-none" />
-                    <div className="space-y-1.5">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
+                {/* Card 3: Sisa Hutang */}
+                <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100/60 dark:border-rose-900/30 min-w-0">
+                    <div className="p-2 bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-400 rounded-xl shrink-0">
+                        <IconReceipt size={18} className="stroke-[2.5]" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block truncate">
                             Sisa Hutang
                         </span>
-                        <p className="text-lg font-black text-rose-600 leading-none tabular-nums">
-                            {formatRupiah(totalSisaHutang)}
-                        </p>
-                        <span className="text-[9px] text-slate-400 block">Halaman saat ini</span>
-                    </div>
-                    <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-100 shrink-0">
-                        <IconReceipt size={18} className="stroke-[2.5]" />
+                        <div className="text-base sm:text-lg font-black text-rose-600 dark:text-rose-400 leading-tight tabular-nums">
+                            {isLoading ? (
+                                <div className="h-5 w-24 bg-slate-200 dark:bg-slate-800 rounded animate-pulse my-0.5" />
+                            ) : (
+                                formatRupiah(totalSisaHutang)
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
