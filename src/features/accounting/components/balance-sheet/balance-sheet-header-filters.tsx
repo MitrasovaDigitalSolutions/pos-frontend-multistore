@@ -45,7 +45,7 @@ export function BalanceSheetHeaderFilters({
     showDebitCredit,
     onShowDebitCreditChange,
     extraAction,
-    title = "Neraca Keuangan",
+    title = "Jurnal",
     description = "Pencatatan posisi Aset, Kewajiban, dan Ekuitas Modal usaha.",
     badge,
     icon,
@@ -72,11 +72,7 @@ export function BalanceSheetHeaderFilters({
     }, []);
 
     const iconToRender = icon || <IconScale className="w-4 h-4" />;
-    const badgeToRender = badge || (
-        <span className="text-[9px] px-2 py-0.5 rounded-md font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200/60 dark:bg-indigo-950/40 dark:text-indigo-400 dark:border-indigo-900/30 uppercase tracking-wider">
-            Laporan Aktif
-        </span>
-    );
+    const badgeToRender = badge || null;
 
     return (
         <div className="space-y-3">
@@ -135,7 +131,7 @@ export function BalanceSheetHeaderFilters({
                                     {mode === "standard" ? (
                                         <>
                                             <IconLayoutGrid className="w-3.5 h-3.5 shrink-0" />
-                                            <span>Neraca Standar</span>
+                                            <span>Jurnal Standar</span>
                                         </>
                                     ) : (
                                         <>

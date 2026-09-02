@@ -40,6 +40,7 @@ interface UseProductFormDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     editingProduct: Product | null;
+    duplicateProduct?: Product | null;
     onSuccess?: (product: Product) => void;
 }
 
@@ -47,6 +48,7 @@ export function useProductFormDialog({
     open,
     onOpenChange,
     editingProduct,
+    duplicateProduct,
     onSuccess,
 }: UseProductFormDialogProps) {
     const createProduct = useCreateProduct();
@@ -67,7 +69,7 @@ export function useProductFormDialog({
 
     const isPending = createProduct.isPending || updateProduct.isPending;
 
-    // Reset form when dialog opens or editingProduct changes
+    // Reset form when dialog opens or editingProduct/duplicateProduct changes
     useEffect(() => {
         if (open) {
             if (editingProduct) {
@@ -103,20 +105,55 @@ export function useProductFormDialog({
                     is_raw_material: !!editingProduct.is_raw_material,
                     is_grosir: Boolean(editingProduct.is_grosir ?? storeProduct?.is_grosir ?? false),
                 });
+            } else if (duplicateProduct) {
+                const storeProduct = duplicateProduct.product_stores?.[0];
+                const rawHGrosir = duplicateProduct.harga_grosir ?? storeProduct?.harga_grosir ?? null;
+                const rawMinQty = duplicateProduct.min_qty_grosir ?? storeProduct?.min_qty_grosir ?? null;
+                const hGrosir = rawHGrosir !== null && rawHGrosir !== undefined ? Number(rawHGrosir) : null;
+                const minQty = rawMinQty !== null && rawMinQty !== undefined ? Number(rawMinQty) : null;
+                const hGrosirTotal = (hGrosir && minQty) ? Math.round(hGrosir * minQty) : null;
+
+                const initialProductType: ProductType = duplicateProduct.is_jasa
+                    ? "jasa"
+                    : duplicateProduct.is_raw_material
+                        ? "raw_material"
+                        : "finished_good";
+
+                reset({
+                    nama: duplicateProduct.nama,
+                    merek: duplicateProduct.merek || "",
+                    barcode: "", // Barcode dikosongkan untuk produk baru hasil duplikasi
+                    harga: duplicateProduct.harga ?? storeProduct?.harga_jual ?? 0,
+                    harga_grosir: hGrosir,
+                    min_qty_grosir: minQty,
+                    harga_grosir_total: hGrosirTotal,
+                    stok: duplicateProduct.stok ?? storeProduct?.stok ?? 0,
+                    harga_beli: duplicateProduct.harga_beli ?? storeProduct?.harga_beli ?? 0,
+                    margin: duplicateProduct.margin ?? storeProduct?.margin ?? 0,
+                    category_uid: duplicateProduct.category_uid ?? null,
+                    brand_uid: duplicateProduct.brand_uid ?? null,
+                    image: undefined,
+                    product_type: initialProductType,
+                    is_jasa: !!duplicateProduct.is_jasa,
+                    is_raw_material: !!duplicateProduct.is_raw_material,
+                    is_grosir: Boolean(duplicateProduct.is_grosir ?? storeProduct?.is_grosir ?? false),
+                });
             } else {
                 reset(defaultProductValues);
             }
         }
-    }, [open, editingProduct, reset]);
+    }, [open, editingProduct, duplicateProduct, reset]);
+
+    const activeProduct = editingProduct ?? duplicateProduct;
 
     const categorySelectProps = useCategorySelectConfig({
-        targetUid: editingProduct?.category_uid,
-        targetCategory: editingProduct?.category,
+        targetUid: activeProduct?.category_uid,
+        targetCategory: activeProduct?.category,
     });
 
     const brandSelectProps = useBrandSelectConfig({
-        targetUid: editingProduct?.brand_uid,
-        targetBrand: editingProduct?.brand,
+        targetUid: activeProduct?.brand_uid,
+        targetBrand: activeProduct?.brand,
     });
 
     // Form Watches

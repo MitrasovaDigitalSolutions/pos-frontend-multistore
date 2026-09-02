@@ -6,7 +6,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { DataTableActionButton } from "@/components/ui/data-table-actions";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { IconBuildingStore, IconPlus, IconUser } from "@tabler/icons-react";
+import { IconBuildingStore, IconCopy, IconPlus, IconUser } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -35,6 +35,7 @@ interface CatalogTableProps {
     onPerPageChange: (perPage: number) => void;
     onAssign: (product: CatalogProduct) => void;
     onEdit?: (product: CatalogProduct) => void;
+    onCopy?: (product: CatalogProduct) => void;
     onAddClick?: () => void;
     isLoading?: boolean;
     isFetching?: boolean;
@@ -57,6 +58,7 @@ export function CatalogTable({
     onPerPageChange,
     onAssign,
     onEdit,
+    onCopy,
     onAddClick,
     isLoading = false,
     isFetching = false,
@@ -329,13 +331,24 @@ export function CatalogTable({
                 onDelete={isAdmin ? handleRemoveProduct : undefined}
                 extraActions={(item) =>
                     isAdmin ? (
-                        <DataTableActionButton
-                            variant="emerald"
-                            onClick={() => onAssign(item)}
-                            tooltip="Kelola Distribusi Toko"
-                        >
-                            <IconBuildingStore size={16} />
-                        </DataTableActionButton>
+                        <>
+                            {onCopy && (
+                                <DataTableActionButton
+                                    variant="sky"
+                                    onClick={() => onCopy(item)}
+                                    tooltip="Salin / Duplikat Produk"
+                                >
+                                    <IconCopy size={16} />
+                                </DataTableActionButton>
+                            )}
+                            <DataTableActionButton
+                                variant="emerald"
+                                onClick={() => onAssign(item)}
+                                tooltip="Kelola Distribusi Toko"
+                            >
+                                <IconBuildingStore size={16} />
+                            </DataTableActionButton>
+                        </>
                     ) : null
                 }
             />

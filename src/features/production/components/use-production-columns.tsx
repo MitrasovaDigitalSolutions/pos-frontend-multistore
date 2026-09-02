@@ -2,20 +2,12 @@
 
 import { useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { formatToReadableDate } from "@/lib/date-utils";
-import { IconEye } from "@tabler/icons-react";
 import type { Production } from "../types";
 
-interface UseProductionColumnsProps {
-    onViewDetail: (production: Production) => void;
-}
-
-export function useProductionColumns({
-    onViewDetail,
-}: UseProductionColumnsProps): ColumnDef<Production>[] {
+export function useProductionColumns(): ColumnDef<Production>[] {
     return useMemo<ColumnDef<Production>[]>(
         () => [
             {
@@ -95,29 +87,7 @@ export function useProductionColumns({
                 cell: ({ row }) => <StatusBadge status={row.original.status} />,
                 size: 110,
             },
-            {
-                id: "actions",
-                header: "Aksi",
-                meta: {
-                    headerClassName: "text-center",
-                    cellClassName: "text-center",
-                },
-                cell: ({ row }) => (
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onViewDetail(row.original)}
-                        className="h-8 px-2.5 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl cursor-pointer"
-                        title="Lihat Detail Produksi"
-                    >
-                        <IconEye size={16} />
-                        <span className="hidden sm:inline ml-1 font-semibold">Detail</span>
-                    </Button>
-                ),
-                size: 90,
-            },
         ],
-        [onViewDetail]
+        []
     );
 }

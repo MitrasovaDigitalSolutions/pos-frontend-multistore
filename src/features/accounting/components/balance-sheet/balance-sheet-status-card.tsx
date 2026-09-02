@@ -50,7 +50,7 @@ export function BalanceSheetStatusCard({
                     <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100">
-                                {isBalanced ? "Neraca Seimbang (Balanced)" : "Neraca Belum Seimbang"}
+                                {isBalanced ? "Jurnal Seimbang (Balanced)" : "Jurnal Belum Seimbang"}
                             </span>
                             <span
                                 className={cn(

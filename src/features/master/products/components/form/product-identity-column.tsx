@@ -3,17 +3,17 @@
 import { useFormContext } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { FormSelect, type FormSelectProps } from "@/components/forms/form-select";
-import type { CommandOption } from "@/components/ui/command-select";
-import { IconBarcode, IconPackage } from "@tabler/icons-react";
+import { FormRadioChips } from "@/components/forms/form-radio-chips";
+import { IconBarcode, IconBox, IconPackage, IconTools } from "@tabler/icons-react";
 import type { Category } from "@/features/master/categories/types";
 import type { Brand } from "@/features/master/brands/types";
 import type { ProductInput } from "../../schemas/product-schema";
 import type { ProductType } from "../../hooks/use-product-form-dialog";
 
-const PRODUCT_TYPE_OPTIONS: CommandOption[] = [
-    { value: "finished_good", label: "Barang Jadi (Retail)" },
-    { value: "raw_material", label: "Bahan Baku (Produksi)" },
-    { value: "jasa", label: "Jasa / Layanan" },
+const PRODUCT_TYPE_OPTIONS = [
+    { value: "finished_good", label: "Barang Jadi", icon: <IconPackage size={13} /> },
+    { value: "raw_material", label: "Bahan Baku", icon: <IconBox size={13} /> },
+    { value: "jasa", label: "Jasa", icon: <IconTools size={13} /> },
 ];
 
 interface ProductIdentityColumnProps {
@@ -65,39 +65,37 @@ export function ProductIdentityColumn({
                     )}
                 </div>
 
-                {/* Tipe Produk & Barcode */}
-                <div className="grid grid-cols-2 gap-2">
-                    <FormSelect<ProductInput>
-                        name="product_type"
-                        label="Tipe Produk"
-                        options={PRODUCT_TYPE_OPTIONS}
-                        placeholder="Pilih Tipe"
-                        searchPlaceholder="Cari tipe..."
-                        onChange={(val) => onProductTypeChange((val as ProductType) || "finished_good")}
-                        disabled={disabled}
-                        size="sm"
-                    />
+                {/* Tipe Produk (Radio / Chip Select) */}
+                <FormRadioChips<ProductInput>
+                    name="product_type"
+                    label="Tipe Produk"
+                    options={PRODUCT_TYPE_OPTIONS}
+                    variant="segmented"
+                    size="sm"
+                    onChange={(val) => onProductTypeChange((val as ProductType) || "finished_good")}
+                    disabled={disabled}
+                />
 
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            Barcode / SKU
-                        </label>
-                        <div className="relative">
-                            <Input
-                                type="text"
-                                placeholder="Contoh: 8990002004"
-                                className="h-9 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl font-mono pr-7"
-                                disabled={disabled}
-                                {...register("barcode")}
-                            />
-                            <IconBarcode size={15} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                        </div>
-                        {errors.barcode && (
-                            <p className="text-[10px] text-rose-500 font-medium">
-                                {errors.barcode.message}
-                            </p>
-                        )}
+                {/* Barcode / SKU */}
+                <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                        Barcode / SKU
+                    </label>
+                    <div className="relative">
+                        <Input
+                            type="text"
+                            placeholder="Contoh: 8990002004"
+                            className="h-9 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl font-mono pr-7"
+                            disabled={disabled}
+                            {...register("barcode")}
+                        />
+                        <IconBarcode size={15} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                     </div>
+                    {errors.barcode && (
+                        <p className="text-[10px] text-rose-500 font-medium">
+                            {errors.barcode.message}
+                        </p>
+                    )}
                 </div>
 
                 {/* Kategori & Brand */}

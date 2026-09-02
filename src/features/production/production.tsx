@@ -103,9 +103,7 @@ export function ProductionPage() {
         setIsDetailOpen(true);
     };
 
-    const columns = useProductionColumns({
-        onViewDetail: handleViewDetail,
-    });
+    const columns = useProductionColumns();
 
     if (!hasViewPermission) {
         return (
@@ -198,6 +196,7 @@ export function ProductionPage() {
                         setSortOrder(order);
                         setPage(1);
                     }}
+                    onView={handleViewDetail}
                 />
             </section>
 

@@ -67,7 +67,7 @@ export function useManualJournalEditor({
             }));
 
             return {
-                description: journal.description || "Penyesuaian Neraca Keuangan",
+                description: journal.description || "Entri Jurnal Manual",
                 transaction_date: journal.transaction_date
                     ? journal.transaction_date.substring(0, 10)
                     : todayStr(),
@@ -84,7 +84,7 @@ export function useManualJournalEditor({
         }
 
         return {
-            description: "Penyesuaian Neraca Keuangan",
+            description: "Entri Jurnal Manual",
             transaction_date: asOfDate || todayStr(),
             status: "draft" as const,
             lines: [
@@ -364,11 +364,11 @@ export function useManualJournalEditor({
 
         const payload = {
             transaction_date: formatUTC(formData.transaction_date),
-            description: formData.description || "Penyesuaian Neraca Keuangan",
+            description: formData.description || "Entri Jurnal Manual",
             status: targetStatus,
             lines: filteredLines.map((l) => ({
                 chart_of_account_uid: l.chart_of_account_uid,
-                description: l.description || formData.description || "Penyesuaian Neraca Keuangan",
+                description: l.description || formData.description || "Entri Jurnal Manual",
                 debit: Number(l.debit) || 0,
                 credit: Number(l.credit) || 0,
             })),

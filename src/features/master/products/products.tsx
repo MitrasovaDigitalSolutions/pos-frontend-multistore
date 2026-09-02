@@ -18,6 +18,8 @@ import { useBrands } from "@/features/master/brands/api/brands-api";
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
+import { FormRadioChips, type RadioChipOption } from "@/components/forms/form-radio-chips";
+import { IconBox, IconLayoutGrid, IconPackage, IconTools } from "@tabler/icons-react";
 import { useSearchParams } from "next/navigation";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
 
@@ -94,6 +96,14 @@ export function Products() {
       include_archived: data.status === "archived" ? 1 : undefined,
     });
     setPage(1);
+  };
+
+  const handleProductTypeFilterChange = (selectedType: string) => {
+    const currentValues = filterMethods.getValues();
+    handleFilterSubmit({
+      ...currentValues,
+      product_type: selectedType,
+    });
   };
 
   const handleFilterReset = () => {
@@ -206,11 +216,11 @@ export function Products() {
     { value: "archived", label: "Diarsipkan" },
   ];
 
-  const productTypeOptions = [
-    { value: "all", label: "Semua Tipe Produk" },
-    { value: "finished_good", label: "Barang Jadi / Retail" },
-    { value: "raw_material", label: "Bahan Baku Produksi" },
-    { value: "jasa", label: "Jasa / Layanan" },
+  const productTypeRadioOptions: RadioChipOption[] = [
+    { value: "all", label: "Semua Tipe", icon: <IconLayoutGrid size={13} /> },
+    { value: "finished_good", label: "Barang Jadi", icon: <IconPackage size={13} /> },
+    { value: "raw_material", label: "Bahan Baku", icon: <IconBox size={13} /> },
+    { value: "jasa", label: "Jasa", icon: <IconTools size={13} /> },
   ];
 
   return (
@@ -267,11 +277,14 @@ export function Products() {
                 options={statusOptions}
                 placeholder="Semua Status"
               />
-              <FormSelect<ProductFilterValues>
+              <FormRadioChips<ProductFilterValues>
                 name="product_type"
                 label="Tipe Produk"
-                options={productTypeOptions}
-                placeholder="Semua Tipe Produk"
+                options={productTypeRadioOptions}
+                variant="segmented"
+                size="sm"
+                wrapperClassName="col-span-1 xs:col-span-2 md:col-span-2"
+                onChange={handleProductTypeFilterChange}
               />
             </FilterForm>
           }

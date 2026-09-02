@@ -8,6 +8,8 @@ import { hasRole } from "@/constants/roles";
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
+import { FormRadioChips, type RadioChipOption } from "@/components/forms/form-radio-chips";
+import { IconBox, IconLayoutGrid, IconPackage, IconTools } from "@tabler/icons-react";
 import { useCategories } from "@/features/master/categories/api/categories-api";
 import { useBrands } from "@/features/master/brands/api/brands-api";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
@@ -73,6 +75,7 @@ export function ProductCatalog() {
 
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<CatalogProduct | null>(null);
+    const [duplicateProduct, setDuplicateProduct] = useState<CatalogProduct | null>(null);
 
     const dialogMethods = useForm<ProductInput>({
         resolver: zodResolver(productSchema) as Resolver<ProductInput>,
@@ -96,6 +99,7 @@ export function ProductCatalog() {
     });
 
     const handleEdit = (product: CatalogProduct) => {
+        setDuplicateProduct(null);
         setEditingProduct(product);
         const storeProduct = product.product_stores?.[0];
         const rawHGrosir = product.harga_grosir ?? storeProduct?.harga_grosir ?? null;
@@ -123,8 +127,15 @@ export function ProductCatalog() {
         setIsEditDialogOpen(true);
     };
 
+    const handleCopy = (product: CatalogProduct) => {
+        setEditingProduct(null);
+        setDuplicateProduct(product);
+        setIsEditDialogOpen(true);
+    };
+
     const handleCreateNewProduct = () => {
         setEditingProduct(null);
+        setDuplicateProduct(null);
         dialogMethods.reset({
             nama: "",
             merek: "",
@@ -166,6 +177,14 @@ export function ProductCatalog() {
             is_raw_material: data.product_type === "raw_material" ? "1" : (data.product_type === "finished_good" ? "0" : undefined),
         });
         setPage(1);
+    };
+
+    const handleProductTypeFilterChange = (selectedType: string) => {
+        const currentValues = filterMethods.getValues();
+        handleFilterSubmit({
+            ...currentValues,
+            product_type: selectedType,
+        });
     };
 
     const handleFilterReset = () => {
@@ -215,11 +234,11 @@ export function ProductCatalog() {
         { value: "inactive", label: "Nonaktif" },
     ];
 
-    const productTypeOptions = [
-        { value: "all", label: "Semua Tipe Produk" },
-        { value: "finished_good", label: "Barang Jadi / Retail" },
-        { value: "raw_material", label: "Bahan Baku Produksi" },
-        { value: "jasa", label: "Jasa / Layanan" },
+    const productTypeRadioOptions: RadioChipOption[] = [
+        { value: "all", label: "Semua Tipe", icon: <IconLayoutGrid size={13} /> },
+        { value: "finished_good", label: "Barang Jadi", icon: <IconPackage size={13} /> },
+        { value: "raw_material", label: "Bahan Baku", icon: <IconBox size={13} /> },
+        { value: "jasa", label: "Jasa", icon: <IconTools size={13} /> },
     ];
 
     // ── Access guard ──────────────────────────────────────────────────────────
@@ -244,6 +263,7 @@ export function ProductCatalog() {
                     onPerPageChange={setPerPage}
                     onAssign={handleAssign}
                     onEdit={handleEdit}
+                    onCopy={isAdmin ? handleCopy : undefined}
                     onAddClick={handleCreateNewProduct}
                     isLoading={isLoading}
                     isFetching={isFetching}
@@ -284,11 +304,14 @@ export function ProductCatalog() {
                                 options={statusOptions}
                                 placeholder="Semua Status"
                             />
-                            <FormSelect<CatalogFilterValues>
+                            <FormRadioChips<CatalogFilterValues>
                                 name="product_type"
                                 label="Tipe Produk"
-                                options={productTypeOptions}
-                                placeholder="Semua Tipe Produk"
+                                options={productTypeRadioOptions}
+                                variant="segmented"
+                                size="sm"
+                                wrapperClassName="col-span-1 xs:col-span-2 md:col-span-2"
+                                onChange={handleProductTypeFilterChange}
                             />
                         </FilterForm>
                     }
@@ -296,8 +319,14 @@ export function ProductCatalog() {
 
                 <ProductFormDialog
                     open={isEditDialogOpen}
-                    onOpenChange={setIsEditDialogOpen}
-                    editingProduct={editingProduct as Product | null}
+                    onOpenChange={(open) => {
+                        setIsEditDialogOpen(open);
+                        if (!open) {
+                            setDuplicateProduct(null);
+                        }
+                    }}
+                    editingProduct={editingProduct as unknown as Product | null}
+                    duplicateProduct={duplicateProduct as unknown as Product | null}
                 />
             </FormProvider>
 

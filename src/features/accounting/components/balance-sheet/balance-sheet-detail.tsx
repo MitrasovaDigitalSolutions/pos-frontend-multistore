@@ -168,7 +168,7 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
                             </span>
                         </div>
                         <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-snug hidden sm:block">
-                            Menampilkan tinjauan neraca keuangan yang disesuaikan oleh entri jurnal ini.
+                            Menampilkan tinjauan jurnal keuangan yang disesuaikan oleh entri jurnal ini.
                         </p>
                     </div>
                 </div>

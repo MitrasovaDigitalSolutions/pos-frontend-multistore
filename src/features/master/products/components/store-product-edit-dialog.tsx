@@ -291,19 +291,19 @@ export function StoreProductEditDialog({
                                 <FormNominalInput<StoreProductEditFormValues>
                                     name="harga_beli"
                                     label="Harga Beli"
-                                    placeholder="8.000"
+                                    placeholder="0"
                                     disabled={updateProductStore.isPending}
                                 />
                                 <FormNominalInput<StoreProductEditFormValues>
                                     name="harga_jual"
                                     label="Harga Jual"
-                                    placeholder="10.000"
+                                    placeholder="0"
                                     disabled={updateProductStore.isPending}
                                 />
                                 <FormNumberInput<StoreProductEditFormValues>
                                     name="margin"
                                     label="Margin (%)"
-                                    placeholder="20"
+                                    placeholder="0"
                                     disabled={updateProductStore.isPending}
                                 />
                             </div>
@@ -326,19 +326,19 @@ export function StoreProductEditDialog({
                                         <FormNumberInput<StoreProductEditFormValues>
                                             name="min_qty_grosir"
                                             label="Min Qty"
-                                            placeholder="12"
+                                            placeholder="Min Qty"
                                             disabled={updateProductStore.isPending}
                                         />
                                         <FormNominalInput<StoreProductEditFormValues>
                                             name="harga_grosir"
                                             label="Harga Unit"
-                                            placeholder="4.800"
+                                            placeholder="0"
                                             disabled={updateProductStore.isPending}
                                         />
                                         <FormNominalInput<StoreProductEditFormValues>
                                             name="harga_grosir_total"
                                             label="Total Akumulasi"
-                                            placeholder="57.600"
+                                            placeholder="0"
                                             disabled={updateProductStore.isPending}
                                         />
                                     </div>

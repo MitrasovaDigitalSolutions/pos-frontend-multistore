@@ -20,6 +20,7 @@ interface ProductFormDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     editingProduct: Product | null;
+    duplicateProduct?: Product | null;
     onSuccess?: (product: Product) => void;
     infoMessage?: string;
 }
@@ -28,6 +29,7 @@ export function ProductFormDialog({
     open,
     onOpenChange,
     editingProduct,
+    duplicateProduct,
     onSuccess,
     infoMessage,
 }: ProductFormDialogProps) {
@@ -54,6 +56,7 @@ export function ProductFormDialog({
         open,
         onOpenChange,
         editingProduct,
+        duplicateProduct,
         onSuccess,
     });
 
@@ -71,16 +74,29 @@ export function ProductFormDialog({
                     <div>
                         <div className="flex items-center gap-2">
                             <h4 className="text-sm font-bold text-slate-900 leading-tight">
-                                {editingProduct ? "Edit Detail Produk" : "Tambah Produk Baru"}
+                                {editingProduct
+                                    ? "Edit Detail Produk"
+                                    : duplicateProduct
+                                        ? "Duplikat Produk Baru"
+                                        : "Tambah Produk Baru"}
                             </h4>
-                            <Badge variant={editingProduct ? "secondary" : "success"} className="text-[9px] px-1.5 py-0 font-bold">
-                                {editingProduct ? "Edit Mode" : "Katalog Master"}
+                            <Badge
+                                variant={editingProduct ? "secondary" : duplicateProduct ? "warning" : "success"}
+                                className="text-[9px] px-1.5 py-0 font-bold"
+                            >
+                                {editingProduct
+                                    ? "Edit Mode"
+                                    : duplicateProduct
+                                        ? "Salin Data"
+                                        : "Katalog Master"}
                             </Badge>
                         </div>
                         <p className="text-[11px] text-slate-400 font-normal">
                             {editingProduct
                                 ? "Perbarui spesifikasi, penetapan harga, dan stok cabang"
-                                : "Lengkapi spesifikasi produk untuk didistribusikan ke toko"}
+                                : duplicateProduct
+                                    ? "Data disalin dari produk sebelumnya. Masukkan barcode dan sesuaikan spesifikasi bila perlu."
+                                    : "Lengkapi spesifikasi produk untuk didistribusikan ke toko"}
                         </p>
                     </div>
                 </div>
