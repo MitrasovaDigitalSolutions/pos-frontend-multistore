@@ -36,7 +36,7 @@ export function BalanceSheetFooterActions({
     onPost,
     isPending,
     hasDescriptionAndDate,
-    viewType = "standard",
+    viewType = "equation",
     hasChanges = true,
 }: BalanceSheetFooterActionsProps) {
     return (
