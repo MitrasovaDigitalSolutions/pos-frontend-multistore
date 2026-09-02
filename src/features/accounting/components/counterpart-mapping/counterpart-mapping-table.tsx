@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { type ColumnDef, type Row } from "@tanstack/react-table";
 import {
+    IconArrowsExchange,
     IconEdit,
     IconTrash,
 } from "@tabler/icons-react";
@@ -36,16 +37,6 @@ export function CounterpartMappingTable({
 }: CounterpartMappingTableProps) {
     const columns = useMemo<ColumnDef<CoaCounterpartMapping>[]>(() => {
         return [
-            {
-                id: "index",
-                header: "No.",
-                size: 50,
-                cell: ({ row }) => (
-                    <span className="text-xs font-semibold text-slate-400">
-                        {row.index + 1}
-                    </span>
-                ),
-            },
             {
                 accessorKey: "coa",
                 header: "Akun Utama (CoA)",
@@ -98,8 +89,8 @@ export function CounterpartMappingTable({
                 header: "",
                 size: 40,
                 cell: () => (
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 text-[11px]">
-                        ⇄
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 text-xs">
+                        <IconArrowsExchange size={14} />
                     </span>
                 ),
             },
@@ -210,22 +201,22 @@ export function CounterpartMappingTable({
             <div
                 key={m.uid || row.id}
                 className={cn(
-                    "p-2.5 sm:p-3 rounded-xl border transition-all space-y-2 relative bg-white dark:bg-slate-900 shadow-2xs",
+                    "rounded-xl border transition-all overflow-hidden bg-white dark:bg-slate-900 shadow-2xs",
                     isBeingEdited
-                        ? "border-amber-300 dark:border-amber-700 bg-amber-50/30 dark:bg-amber-950/20 ring-1 ring-amber-400/40"
-                        : "border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                        ? "border-amber-400 dark:border-amber-600 bg-amber-50/20 dark:bg-amber-950/20 ring-1 ring-amber-400/40"
+                        : "border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                 )}
             >
-                {/* Header: No. + Badge Sedang Diedit + Action Buttons */}
-                <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-1.5">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 font-mono bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 rounded shrink-0">
+                {/* Header: No. + Status + Actions */}
+                <div className="flex items-center justify-between px-3 py-2 bg-slate-50/80 dark:bg-slate-850/60 border-b border-slate-100 dark:border-slate-800/80">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 font-mono">
                             No. {row.index + 1}
                         </span>
                         {isBeingEdited && (
                             <Badge
                                 variant="outline"
-                                className="text-[9px] px-1.5 py-0 font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700 shrink-0"
+                                className="text-[9px] px-1.5 py-0 font-bold bg-amber-100/80 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700"
                             >
                                 Sedang Diedit
                             </Badge>
@@ -255,12 +246,12 @@ export function CounterpartMappingTable({
                     )}
                 </div>
 
-                {/* Content: Akun Utama & Akun Lawan */}
-                <div className="space-y-1.5">
+                {/* Account Pair Body */}
+                <div className="p-3 space-y-2.5">
                     {/* Akun Utama */}
-                    <div className="p-2 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100/80 dark:border-blue-900/40">
-                        <div className="flex items-center justify-between gap-1 mb-1">
-                            <span className="text-[9px] font-extrabold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                    <div className="space-y-1">
+                        <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium">
+                            <span className="font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider text-[9px]">
                                 Akun Utama (CoA)
                             </span>
                             {mainTypeConfig && (
@@ -277,8 +268,8 @@ export function CounterpartMappingTable({
                                 </Badge>
                             )}
                         </div>
-                        <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="font-mono text-[11px] font-bold text-blue-700 dark:text-blue-300 bg-white dark:bg-slate-900 px-1.5 py-0.2 rounded border border-blue-200/80 dark:border-blue-900/80 shrink-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                            <span className="font-mono text-xs font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 px-1.5 py-0.5 rounded border border-blue-200/80 dark:border-blue-900 shrink-0">
                                 {mainCoa?.kode || "N/A"}
                             </span>
                             <TooltipProvider delayDuration={150}>
@@ -296,17 +287,23 @@ export function CounterpartMappingTable({
                         </div>
                     </div>
 
-                    {/* Divider Arrow */}
-                    <div className="flex items-center justify-center -my-1 relative z-10">
-                        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] shadow-2xs border border-slate-200/60 dark:border-slate-700">
-                            ⇄
-                        </span>
+                    {/* Centered Relation Divider with Arrows */}
+                    <div className="relative flex items-center justify-center my-1 py-1">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-slate-200/80 dark:border-slate-800" />
+                        </div>
+                        <div className="relative flex items-center gap-1.5 bg-white dark:bg-slate-900 px-3 py-0.5 rounded-full border border-slate-200 dark:border-slate-700 shadow-2xs text-slate-600 dark:text-slate-300">
+                            <IconArrowsExchange size={14} className="text-indigo-600 dark:text-indigo-400" />
+                            <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-300 tracking-wide">
+                                Lawan Akun
+                            </span>
+                        </div>
                     </div>
 
                     {/* Akun Lawan */}
-                    <div className="p-2 rounded-lg bg-violet-50/50 dark:bg-violet-950/20 border border-violet-100/80 dark:border-violet-900/40">
-                        <div className="flex items-center justify-between gap-1 mb-1">
-                            <span className="text-[9px] font-extrabold text-violet-600 dark:text-violet-400 uppercase tracking-wider">
+                    <div className="space-y-1">
+                        <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium">
+                            <span className="font-bold text-violet-600 dark:text-violet-400 uppercase tracking-wider text-[9px]">
                                 Akun Lawan (Penyeimbang)
                             </span>
                             {cpTypeConfig && (
@@ -323,8 +320,8 @@ export function CounterpartMappingTable({
                                 </Badge>
                             )}
                         </div>
-                        <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="font-mono text-[11px] font-bold text-violet-700 dark:text-violet-300 bg-white dark:bg-slate-900 px-1.5 py-0.2 rounded border border-violet-200/80 dark:border-violet-900/80 shrink-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                            <span className="font-mono text-xs font-bold text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/70 px-1.5 py-0.5 rounded border border-violet-200/80 dark:border-violet-900 shrink-0">
                                 {counterpartCoa?.kode || "N/A"}
                             </span>
                             <TooltipProvider delayDuration={150}>
@@ -341,19 +338,17 @@ export function CounterpartMappingTable({
                             </TooltipProvider>
                         </div>
                     </div>
-                </div>
 
-                {/* Footer Keterangan */}
-                {m.keterangan && (
-                    <div className="pt-1 border-t border-slate-100 dark:border-slate-800 text-[11px]">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">
-                            Keterangan
-                        </span>
-                        <p className="text-slate-600 dark:text-slate-300 italic text-xs bg-slate-50 dark:bg-slate-950/40 px-2 py-1 rounded-md border border-slate-100 dark:border-slate-850">
-                            {m.keterangan}
-                        </p>
-                    </div>
-                )}
+                    {/* Footer Keterangan if exists */}
+                    {m.keterangan && (
+                        <div className="pt-2 mt-1 border-t border-slate-100 dark:border-slate-800 flex items-start gap-1.5 text-slate-500 dark:text-slate-400">
+                            <span className="text-[10px] font-bold text-slate-400 shrink-0">Ket:</span>
+                            <span className="text-[11px] italic leading-tight">
+                                {m.keterangan}
+                            </span>
+                        </div>
+                    )}
+                </div>
             </div>
         );
     };
