@@ -105,9 +105,22 @@ export function CounterpartMappingPage() {
     const handleConfirmDelete = async () => {
         if (!mappingToDelete) return;
         try {
-            await deleteMutation.mutateAsync(mappingToDelete.uid);
-            toast.success("Mapping lawan akun berhasil dihapus.");
-            if (editingMapping?.uid === mappingToDelete.uid) {
+            const deletePromises = [deleteMutation.mutateAsync(mappingToDelete.uid)];
+
+            const reverseMapping = mappings.find(
+                (m) =>
+                    m.uid !== mappingToDelete.uid &&
+                    m.coa_uid === mappingToDelete.counterpart_coa_uid &&
+                    m.counterpart_coa_uid === mappingToDelete.coa_uid
+            );
+
+            if (reverseMapping) {
+                deletePromises.push(deleteMutation.mutateAsync(reverseMapping.uid));
+            }
+
+            await Promise.all(deletePromises);
+            toast.success("Pasangan mapping lawan akun 2 arah berhasil dihapus.");
+            if (editingMapping?.uid === mappingToDelete.uid || editingMapping?.uid === reverseMapping?.uid) {
                 setEditingMapping(null);
             }
             setDeleteOpen(false);

@@ -21,6 +21,7 @@ interface JournalEditorDesktopTableProps {
     control: Control<ManualJournalSchemaInput>;
     setValue: UseFormSetValue<ManualJournalSchemaInput>;
     flatAccounts?: ChartOfAccount[];
+    watchedLines?: Partial<ManualJournalSchemaInput["lines"][number]>[];
     errors?: FieldErrors<ManualJournalSchemaInput>["lines"];
     totalDebit: number;
     totalCredit: number;
@@ -36,6 +37,7 @@ export function JournalEditorDesktopTable({
     control,
     setValue,
     flatAccounts = [],
+    watchedLines = [],
     errors,
     totalDebit,
     totalCredit,
@@ -59,19 +61,26 @@ export function JournalEditorDesktopTable({
                     </TableRow>
                 </TableHeader>
                 <TableBody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
-                    {fields.map((field, idx) => (
-                        <JournalEditorTableRow
-                            key={field.id}
-                            index={idx}
-                            control={control}
-                            setValue={setValue}
-                            flatAccounts={flatAccounts}
-                            errors={errors}
-                            canDelete={fields.length > 2}
-                            onAccountSelect={onAccountSelect}
-                            onRemove={onRemoveLine}
-                        />
-                    ))}
+                    {fields.map((field, idx) => {
+                        const otherSelectedUids = (watchedLines || [])
+                            .map((l, i) => (i !== idx ? l?.chart_of_account_uid : null))
+                            .filter(Boolean) as string[];
+
+                        return (
+                            <JournalEditorTableRow
+                                key={field.id}
+                                index={idx}
+                                control={control}
+                                setValue={setValue}
+                                flatAccounts={flatAccounts}
+                                errors={errors}
+                                canDelete={fields.length > 2}
+                                excludeUids={otherSelectedUids}
+                                onAccountSelect={onAccountSelect}
+                                onRemove={onRemoveLine}
+                            />
+                        );
+                    })}
                 </TableBody>
                 {/* Table Footer with Totals and Balance Status */}
                 <tfoot>

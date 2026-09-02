@@ -34,6 +34,7 @@ export function BalanceSheetEditor({
         control,
         setValue,
         fields,
+        watchedLines,
         totalDebit,
         totalCredit,
         difference,
@@ -60,6 +61,10 @@ export function BalanceSheetEditor({
         journalUid,
         refetch,
     });
+
+    const selectedCoaUids = (watchedLines || [])
+        .map((l) => l?.chart_of_account_uid)
+        .filter(Boolean) as string[];
 
     return (
         <FormProvider {...methods}>
@@ -93,6 +98,7 @@ export function BalanceSheetEditor({
                         control={control}
                         setValue={setValue}
                         flatAccounts={flatAccounts}
+                        watchedLines={watchedLines}
                         errors={linesErrors}
                         totalDebit={totalDebit}
                         totalCredit={totalCredit}
@@ -109,6 +115,7 @@ export function BalanceSheetEditor({
                         control={control}
                         setValue={setValue}
                         flatAccounts={flatAccounts}
+                        watchedLines={watchedLines}
                         errors={linesErrors}
                         totalDebit={totalDebit}
                         totalCredit={totalCredit}
@@ -129,6 +136,7 @@ export function BalanceSheetEditor({
                 }
                 sourceAccount={counterpartPrompt.sourceAccount}
                 counterparts={counterpartPrompt.counterparts}
+                existingSelectedUids={selectedCoaUids}
                 onSelectOne={handleSelectOneCounterpart}
                 onApplyAll={handleApplyAllCounterparts}
             />

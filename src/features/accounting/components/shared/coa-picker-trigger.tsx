@@ -15,6 +15,7 @@ export interface CoaPickerTriggerProps {
     allowedTypes?: ChartOfAccountType[];
     placeholder?: string;
     excludeUid?: string | null;
+    excludeUids?: string[];
     disabled?: boolean;
     allowClear?: boolean;
     className?: string;
@@ -29,6 +30,7 @@ export function CoaPickerTrigger({
     allowedTypes,
     placeholder = "Pilih Akun (CoA)...",
     excludeUid,
+    excludeUids,
     disabled = false,
     allowClear = false,
     className,
@@ -112,6 +114,7 @@ export function CoaPickerTrigger({
                 accounts={accounts}
                 selectedUid={value}
                 excludeUid={excludeUid}
+                excludeUids={excludeUids}
                 allowedTypes={allowedTypes}
                 title={dialogTitle}
             />
