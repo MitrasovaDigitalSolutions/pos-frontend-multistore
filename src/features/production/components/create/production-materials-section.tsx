@@ -97,6 +97,7 @@ export function ProductionMaterialsSection({
                             ref={barcodeInputRef}
                             refocusOnFound={false}
                             isRawMaterial={true}
+                            isJasa={false}
                             onProductFound={onProductFound}
                             placeholder="Scan barcode SKU / cari nama bahan baku..."
                             disabled={disabled}

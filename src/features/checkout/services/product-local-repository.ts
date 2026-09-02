@@ -261,6 +261,7 @@ export class ProductLocalRepository {
             const brandsMap = new Map<string, string>();
 
             await db.products.where("status").equals("active").each((p) => {
+                if (p.is_raw_material) return;
                 if (p.category?.uid && p.category?.nama) {
                     categoriesMap.set(p.category.uid, p.category.nama);
                 }

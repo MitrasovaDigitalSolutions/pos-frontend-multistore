@@ -448,7 +448,7 @@ export function useCancelPurchaseOrder() {
 
 export async function lookupProductByBarcode(
     barcode: string,
-    params?: { is_raw_material?: boolean | number }
+    params?: { is_raw_material?: boolean | number; is_jasa?: boolean | number }
 ): Promise<Product[]> {
     const res = await apiGet<ApiResponse<Product[]>>(
         ENDPOINTS.PRODUCTS.BARCODE(barcode),

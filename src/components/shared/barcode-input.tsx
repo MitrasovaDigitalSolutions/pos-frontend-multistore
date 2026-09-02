@@ -21,6 +21,7 @@ interface BarcodeInputProps {
     onInputChange?: (value: string) => void;
     refocusOnFound?: boolean;
     isRawMaterial?: boolean;
+    isJasa?: boolean;
 }
 
 const EMPTY_PRODUCTS: Product[] = [];
@@ -39,6 +40,7 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
         onInputChange,
         refocusOnFound = true,
         isRawMaterial,
+        isJasa,
     }: BarcodeInputProps, ref) {
         const localRef = useRef<HTMLInputElement>(null);
         const inputRef = (ref || localRef) as React.MutableRefObject<HTMLInputElement | null>;
@@ -114,16 +116,21 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
         }, []);
 
         const isLocalMode = products && products.length > 0;
+        const effectiveIsJasa = isJasa !== undefined ? isJasa : (mode === "purchase" ? false : undefined);
         const isRawParam = isRawMaterial !== undefined ? (isRawMaterial ? 1 : 0) : undefined;
+        const isJasaParam = effectiveIsJasa !== undefined ? (effectiveIsJasa ? 1 : 0) : undefined;
 
         // TanStack Query for searching products from API
         const { data: apiProducts, isLoading: isApiLoading } = useQuery({
-            queryKey: ["products", "autocomplete", debouncedValue, isRawParam],
+            queryKey: ["products", "autocomplete", debouncedValue, isRawParam, isJasaParam],
             queryFn: async () => {
                 try {
                     return await lookupProductByBarcode(
                         debouncedValue,
-                        isRawParam !== undefined ? { is_raw_material: isRawParam } : undefined
+                        {
+                            ...(isRawParam !== undefined ? { is_raw_material: isRawParam } : {}),
+                            ...(isJasaParam !== undefined ? { is_jasa: isJasaParam } : {}),
+                        }
                     );
                 } catch {
                     return [];
@@ -145,6 +152,9 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                         if (isRawMaterial !== undefined && Boolean(p.is_raw_material) !== isRawMaterial) {
                             return false;
                         }
+                        if (effectiveIsJasa !== undefined && Boolean(p.is_jasa) !== effectiveIsJasa) {
+                            return false;
+                        }
                         const barcodeMatch = p.barcode?.toLowerCase().includes(searchLower) ?? false;
                         const nameWordsMatch = queryWords.every((word) => p.nama.toLowerCase().includes(word));
                         return barcodeMatch || nameWordsMatch;
@@ -152,13 +162,17 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                     .slice(0, 8);
             }
             if (localSuggestions.length > 0) {
+                let filtered = localSuggestions;
                 if (isRawMaterial !== undefined) {
-                    return localSuggestions.filter((p) => Boolean(p.is_raw_material) === isRawMaterial);
+                    filtered = filtered.filter((p) => Boolean(p.is_raw_material) === isRawMaterial);
                 }
-                return localSuggestions;
+                if (effectiveIsJasa !== undefined) {
+                    filtered = filtered.filter((p) => Boolean(p.is_jasa) === effectiveIsJasa);
+                }
+                return filtered;
             }
             return apiProducts || [];
-        }, [value, isLocalMode, products, isRawMaterial, localSuggestions, apiProducts]);
+        }, [value, isLocalMode, products, isRawMaterial, effectiveIsJasa, localSuggestions, apiProducts]);
 
         // Auto-focus on mount
         useEffect(() => {
@@ -214,9 +228,13 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                 let found: Product | null | undefined = null;
 
                 if (isLocalMode) {
-                    const filteredProducts = isRawMaterial !== undefined
-                        ? products.filter((p) => Boolean(p.is_raw_material) === isRawMaterial)
-                        : products;
+                    let filteredProducts = products;
+                    if (isRawMaterial !== undefined) {
+                        filteredProducts = filteredProducts.filter((p) => Boolean(p.is_raw_material) === isRawMaterial);
+                    }
+                    if (effectiveIsJasa !== undefined) {
+                        filteredProducts = filteredProducts.filter((p) => Boolean(p.is_jasa) === effectiveIsJasa);
+                    }
 
                     // 1. Try match by barcode
                     found = filteredProducts.find(
@@ -240,8 +258,12 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                 } else {
                     // Search directly from IndexedDB B-tree
                     found = await productLocalRepository.lookupBarcodeLocal(query);
-                    if (found && isRawMaterial !== undefined && Boolean(found.is_raw_material) !== isRawMaterial) {
-                        found = null;
+                    if (found) {
+                        if (isRawMaterial !== undefined && Boolean(found.is_raw_material) !== isRawMaterial) {
+                            found = null;
+                        } else if (effectiveIsJasa !== undefined && Boolean(found.is_jasa) !== effectiveIsJasa) {
+                            found = null;
+                        }
                     }
                 }
 
@@ -250,7 +272,10 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                     try {
                         const results = await lookupProductByBarcode(
                             query,
-                            isRawParam !== undefined ? { is_raw_material: isRawParam } : undefined
+                            {
+                                ...(isRawParam !== undefined ? { is_raw_material: isRawParam } : {}),
+                                ...(isJasaParam !== undefined ? { is_jasa: isJasaParam } : {}),
+                            }
                         );
                         if (results && results.length > 0) {
                             found = results[0];

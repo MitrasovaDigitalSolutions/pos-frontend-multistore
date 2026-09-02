@@ -105,6 +105,7 @@ export function SupplierSaleItemsDialog({
                             Cari / Scan Produk
                         </label>
                         <BarcodeInput
+                            isJasa={false}
                             onProductFound={handleProductFound}
                             placeholder="Scan barcode SKU atau ketik nama produk..."
                         />

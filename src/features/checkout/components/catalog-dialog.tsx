@@ -23,7 +23,7 @@ export function CatalogDialog({
 
     const filteredProducts = products.filter(
         (p) =>
-            p.status === "active"
+            p.status === "active" && !p.is_raw_material
     );
 
     return (

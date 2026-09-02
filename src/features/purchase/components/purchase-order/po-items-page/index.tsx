@@ -186,6 +186,7 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
                             </div>
 
                             <BarcodeInput
+                                isJasa={false}
                                 onProductFound={(product) => {
                                     setNotFoundQuery("");
                                     handleProductFound(product);

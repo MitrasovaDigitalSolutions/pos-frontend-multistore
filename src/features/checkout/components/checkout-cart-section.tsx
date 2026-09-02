@@ -176,6 +176,7 @@ export function CheckoutCartSection({
                         disabled={isProcessing}
                         placeholder={isMobile ? "Scan Barcode / ketik nama produk..." : "Scan Barcode atau ketik nama produk... (Enter)"}
                         mode="sell"
+                        isRawMaterial={false}
                         products={products}
                         searchLabel="Cari Selengkapnya"
                         onSearchSubmit={handleSearchSubmit}

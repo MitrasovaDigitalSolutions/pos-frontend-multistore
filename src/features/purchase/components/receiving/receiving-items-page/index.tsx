@@ -206,6 +206,7 @@ function ReceivingItemsContainer({
                             </div>
 
                             <BarcodeInput
+                                isJasa={false}
                                 onProductFound={(product) => {
                                     setNotFoundQuery("");
                                     handleProductFound(product);

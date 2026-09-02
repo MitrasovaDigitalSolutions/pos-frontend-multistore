@@ -42,6 +42,7 @@ export function OpnameScannerCard({
       </div>
 
       <BarcodeInput
+        isJasa={false}
         onProductFound={onProductFound}
         onProductNotFound={(query) => {
           if (onScanDirectBarcode) {
