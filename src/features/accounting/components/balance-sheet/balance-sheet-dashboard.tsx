@@ -47,7 +47,7 @@ export function BalanceSheetDashboard({
         );
     }, [coaMappings]);
 
-    const [viewType, setViewType] = useState<"standard" | "equation">("standard");
+    const [viewType, setViewType] = useState<"standard" | "equation">("equation");
     const [showDebitCredit, setShowDebitCredit] = useState<boolean>(true);
     const [isPrintDialogOpen, setIsPrintDialogOpen] = useState<boolean>(false);
 
