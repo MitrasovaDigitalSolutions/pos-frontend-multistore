@@ -17,6 +17,8 @@ interface BalanceSheetStatusCardProps {
     leftLegend?: string;
     rightLegend?: string;
     hideUnbalancedButton?: boolean;
+    title?: string;
+    description?: string;
 }
 
 export function BalanceSheetStatusCard({
@@ -27,7 +29,17 @@ export function BalanceSheetStatusCard({
     leftLabel,
     rightLabel,
     hideUnbalancedButton = false,
+    title,
+    description,
 }: BalanceSheetStatusCardProps) {
+    const displayTitle =
+        title || (isBalanced ? "Neraca Seimbang (Balanced)" : "Neraca Belum Seimbang");
+    const displayDescription =
+        description ||
+        (isBalanced
+            ? "Total nilai Aset telah seimbang dengan Liabilitas dan Ekuitas."
+            : "Terdapat selisih antara nilai Aset dan Liabilitas + Ekuitas.");
+
     return (
         <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-2.5 sm:p-3 shadow-xs">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
@@ -50,7 +62,7 @@ export function BalanceSheetStatusCard({
                     <div className="min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100">
-                                {isBalanced ? "Jurnal Seimbang (Balanced)" : "Jurnal Belum Seimbang"}
+                                {displayTitle}
                             </span>
                             <span
                                 className={cn(
@@ -64,9 +76,7 @@ export function BalanceSheetStatusCard({
                             </span>
                         </div>
                         <p className="text-slate-400 dark:text-slate-500 text-[11px] leading-tight mt-0.5 truncate">
-                            {isBalanced
-                                ? "Total nilai debit dan kredit telah seimbang tanpa selisih."
-                                : "Terdapat selisih saldo antara sisi debit dan kredit yang perlu diperiksa."}
+                            {displayDescription}
                         </p>
                     </div>
                 </div>

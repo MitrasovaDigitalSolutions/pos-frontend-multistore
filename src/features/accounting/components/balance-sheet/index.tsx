@@ -40,7 +40,7 @@ export function BalanceSheetReport() {
     if (isError) {
         return (
             <div className="text-center p-12 text-destructive bg-rose-50/50 border border-rose-100 rounded-2xl">
-                <p className="font-bold">Gagal memuat data jurnal keuangan.</p>
+                <p className="font-bold">Gagal memuat data neraca keuangan.</p>
                 <p className="text-xs mt-1 text-rose-600/80">Silakan periksa koneksi internet Anda dan coba lagi.</p>
             </div>
         );

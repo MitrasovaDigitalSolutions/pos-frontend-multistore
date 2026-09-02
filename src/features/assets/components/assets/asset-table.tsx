@@ -8,7 +8,13 @@ import { IconTrendingDown } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { useDeleteAsset } from "../../api/assets-api";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { formatToReadableDate } from "@/lib/date-utils";
+import { formatDate, formatToReadableDate } from "@/lib/date-utils";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { Asset } from "../../types";
 
 interface AssetTableProps {
@@ -102,11 +108,26 @@ export function AssetTable({
                 accessorKey: "tanggal_perolehan",
                 header: "Tgl Perolehan",
                 size: 110,
-                cell: ({ row }) => (
-                    <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
-                        {formatToReadableDate(row.original.tanggal_perolehan)}
-                    </span>
-                ),
+                cell: ({ row }) => {
+                    const rawDate = row.original.tanggal_perolehan;
+                    const shortDate = rawDate ? formatDate(rawDate, "dd MMM yyyy") : "-";
+                    const fullDate = rawDate ? formatToReadableDate(rawDate) : "-";
+
+                    return (
+                        <TooltipProvider delayDuration={150}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <span className="text-xs text-slate-600 dark:text-slate-400 font-medium whitespace-nowrap truncate block cursor-default">
+                                        {shortDate}
+                                    </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs font-medium">
+                                    {fullDate}
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    );
+                },
             },
             {
                 accessorKey: "harga_perolehan",

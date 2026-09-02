@@ -73,7 +73,10 @@ export function CoaPickerTrigger({
                         <span className="font-mono text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-1.5 py-0.5 rounded shrink-0">
                             {selectedAccount.kode}
                         </span>
-                        <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                        <span
+                            className="font-semibold text-slate-800 dark:text-slate-200 truncate"
+                            title={`${selectedAccount.kode} - ${selectedAccount.nama}`}
+                        >
                             {selectedAccount.nama}
                         </span>
                         {typeConfig && (

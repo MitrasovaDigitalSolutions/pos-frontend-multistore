@@ -8,6 +8,12 @@ import {
 } from "@tabler/icons-react";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, DataTableActionButton } from "@/components/ui/data-table";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { ACCOUNT_TYPE_CONFIG } from "../../constants/counterpart-constants";
 import type { ChartOfAccount, ChartOfAccountType, CoaCounterpartMapping } from "../../types";
@@ -51,13 +57,22 @@ export function CounterpartMappingTable({
                     const typeConfig = mainCoa?.tipe ? ACCOUNT_TYPE_CONFIG[mainCoa.tipe as ChartOfAccountType] : null;
 
                     return (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
                             <span className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-1.5 py-0.5 rounded border border-blue-200/80 dark:border-blue-900 shrink-0">
                                 {mainCoa?.kode || "N/A"}
                             </span>
-                            <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 line-clamp-1">
-                                {mainCoa?.nama || "Akun tidak ditemukan"}
-                            </span>
+                            <TooltipProvider delayDuration={150}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 line-clamp-1 truncate min-w-0 cursor-default">
+                                            {mainCoa?.nama || "Akun tidak ditemukan"}
+                                        </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="text-xs max-w-xs font-medium">
+                                        {mainCoa?.kode ? `[${mainCoa.kode}] ${mainCoa.nama}` : (mainCoa?.nama || "Akun tidak ditemukan")}
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                             {isBeingEdited && (
                                 <Badge
                                     variant="outline"
@@ -98,13 +113,22 @@ export function CounterpartMappingTable({
                     const typeConfig = counterpartCoa?.tipe ? ACCOUNT_TYPE_CONFIG[counterpartCoa.tipe as ChartOfAccountType] : null;
 
                     return (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
                             <span className="font-mono text-xs font-bold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/60 px-1.5 py-0.5 rounded border border-violet-200/80 dark:border-violet-900 shrink-0">
                                 {counterpartCoa?.kode || "N/A"}
                             </span>
-                            <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 line-clamp-1">
-                                {counterpartCoa?.nama || "Akun tidak ditemukan"}
-                            </span>
+                            <TooltipProvider delayDuration={150}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 line-clamp-1 truncate min-w-0 cursor-default">
+                                            {counterpartCoa?.nama || "Akun tidak ditemukan"}
+                                        </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="text-xs max-w-xs font-medium">
+                                        {counterpartCoa?.kode ? `[${counterpartCoa.kode}] ${counterpartCoa.nama}` : (counterpartCoa?.nama || "Akun tidak ditemukan")}
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                             {typeConfig && (
                                 <Badge
                                     variant="outline"
