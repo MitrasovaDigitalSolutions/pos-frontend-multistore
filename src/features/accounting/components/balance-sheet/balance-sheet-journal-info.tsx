@@ -1,129 +1,134 @@
 "use client";
 
-import { useEffect } from "react";
-import { useForm, FormProvider } from "react-hook-form";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { FormSwitch } from "@/components/forms/form-switch";
 import { cn } from "@/lib/utils";
 import { formatToReadableDate } from "@/lib/date-utils";
-import { IconBook } from "@tabler/icons-react";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
+import {
+    IconAlertCircle,
+    IconCalendar,
+    IconCircleCheck,
+    IconFileText,
+    IconUser,
+} from "@tabler/icons-react";
 import type { ManualJournal } from "@/features/accounting/types/manual-journal";
 
 interface BalanceSheetJournalInfoProps {
     journal: ManualJournal;
     showDebitCredit?: boolean;
     onShowDebitCreditChange?: (val: boolean) => void;
+    totalDebit: number;
+    totalCredit: number;
+    isBalanced: boolean;
+    difference: number;
 }
 
 export function BalanceSheetJournalInfo({
     journal,
-    showDebitCredit = true,
-    onShowDebitCreditChange,
+    totalDebit,
+    totalCredit,
+    isBalanced,
+    difference,
 }: BalanceSheetJournalInfoProps) {
     const formattedDate = formatToReadableDate(journal.transaction_date) || "-";
 
-    const methods = useForm({
-        defaultValues: {
-            showDebitCredit,
-        },
-    });
-
-    // eslint-disable-next-line react-hooks/incompatible-library
-    const watchedShowDebitCredit = methods.watch("showDebitCredit");
-
-    useEffect(() => {
-        onShowDebitCreditChange?.(watchedShowDebitCredit);
-    }, [watchedShowDebitCredit, onShowDebitCreditChange]);
-
-    useEffect(() => {
-        methods.setValue("showDebitCredit", showDebitCredit);
-    }, [showDebitCredit, methods]);
-
     return (
-        <Card className="p-3 sm:p-3.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs space-y-2.5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
-                <div className="flex items-center gap-2">
-                    <div className="p-1 rounded-md bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
-                        <IconBook className="w-3.5 h-3.5" />
+        <Card className="p-2 sm:p-2.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+                {/* Left: Metadata Chips (Date, Creator, Note) */}
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0 flex-1">
+                    <div className="inline-flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/60 px-2.5 py-1 rounded-xl border border-slate-100 dark:border-slate-800 text-xs">
+                        <IconCalendar size={13} className="text-slate-400 shrink-0" />
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Tgl:</span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-300 text-[11px]">{formattedDate}</span>
                     </div>
-                    <h3 className="font-extrabold text-slate-800 dark:text-slate-100 text-xs sm:text-sm">
-                        Informasi Jurnal Penyesuaian
-                    </h3>
-                </div>
 
-                {onShowDebitCreditChange && (
-                    <div className="w-auto shrink-0">
-                        <FormProvider {...methods}>
-                            <FormSwitch<{ showDebitCredit: boolean }>
-                                name="showDebitCredit"
-                                label="Detail D/K"
-                                description="Tampilkan kolom Debit/Kredit"
-                                className="!p-0 !bg-transparent !border-0 shadow-none dark:bg-transparent dark:border-0 text-xs"
-                            />
-                        </FormProvider>
+                    <div className="inline-flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/60 px-2.5 py-1 rounded-xl border border-slate-100 dark:border-slate-800 text-xs">
+                        <IconUser size={13} className="text-slate-400 shrink-0" />
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Pembuat:</span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[140px]">
+                            {journal.creator?.name || journal.creator?.username || "-"}
+                        </span>
                     </div>
-                )}
-            </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                <div>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
-                        No. Referensi
-                    </span>
-                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200 text-[11px]">
-                        {journal.reference_number || "-"}
-                    </span>
+                    {journal.description ? (
+                        <div className="inline-flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/60 px-2.5 py-1 rounded-xl border border-slate-100 dark:border-slate-800 text-xs min-w-0 max-w-full sm:max-w-[340px]">
+                            <IconFileText size={13} className="text-slate-400 shrink-0" />
+                            <span className="text-slate-700 dark:text-slate-300 text-[11px] italic truncate" title={journal.description}>
+                                {journal.description}
+                            </span>
+                        </div>
+                    ) : (
+                        <div className="inline-flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/60 px-2.5 py-1 rounded-xl border border-slate-100 dark:border-slate-800 text-xs">
+                            <IconFileText size={13} className="text-slate-400 shrink-0" />
+                            <span className="text-slate-400 text-[11px] italic">Tanpa catatan</span>
+                        </div>
+                    )}
                 </div>
-                <div>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
-                        Tanggal Transaksi
-                    </span>
-                    <span className="font-semibold text-slate-700 dark:text-slate-300 text-[11px]">
-                        {formattedDate}
-                    </span>
-                </div>
-                <div>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
-                        Pembuat
-                    </span>
-                    <span className="font-semibold text-slate-700 dark:text-slate-300 text-[11px] truncate block">
-                        {journal.creator?.name || journal.creator?.username || "-"}
-                    </span>
-                </div>
-                <div>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block mb-0.5">
-                        Status
-                    </span>
-                    <Badge
-                        className={cn(
-                            "px-2 py-0 text-[10px] font-semibold",
-                            journal.status === "draft" &&
-                                "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-850 dark:text-slate-300 dark:border-slate-800",
-                            journal.status === "posted" &&
-                                "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30",
-                            journal.status === "voided" &&
-                                "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/30"
-                        )}
-                        variant="outline"
-                    >
-                        {journal.status === "draft" && "Draft"}
-                        {journal.status === "posted" && "Posted"}
-                        {journal.status === "voided" && "Voided (Batal)"}
-                    </Badge>
+
+                {/* Right: Balance Status & Debit/Credit Metrics */}
+                <div className="flex items-center gap-3 sm:gap-4 justify-between lg:justify-end shrink-0 border-t lg:border-t-0 pt-1.5 lg:pt-0 border-slate-100 dark:border-slate-800">
+                    {/* Status Badge */}
+                    <div className="flex items-center gap-1.5">
+                        <div
+                            className={cn(
+                                "w-6 h-6 rounded-lg flex items-center justify-center shrink-0",
+                                isBalanced
+                                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400"
+                                    : "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400"
+                            )}
+                        >
+                            {isBalanced ? (
+                                <IconCircleCheck className="w-3.5 h-3.5" />
+                            ) : (
+                                <IconAlertCircle className="w-3.5 h-3.5 animate-pulse" />
+                            )}
+                        </div>
+                        <span
+                            className={cn(
+                                "text-[10px] px-1.5 py-0.5 rounded-md font-extrabold uppercase tracking-wider border",
+                                isBalanced
+                                    ? "bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40"
+                                    : "bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/40"
+                            )}
+                        >
+                            {isBalanced ? "Seimbang" : `Selisih: ${formatRupiah(difference)}`}
+                        </span>
+                    </div>
+
+                    <div className="w-px h-5 bg-slate-200 dark:bg-slate-800 hidden sm:block" />
+
+                    {/* Debit & Credit Metrics */}
+                    <div className="flex items-center gap-3">
+                        <div className="text-right">
+                            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block leading-none">
+                                Total Debit
+                            </span>
+                            <span className="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono tabular-nums leading-tight">
+                                {formatRupiah(totalDebit)}
+                            </span>
+                        </div>
+
+                        <div className="w-px h-5 bg-slate-200 dark:bg-slate-800" />
+
+                        <div className="text-right">
+                            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block leading-none">
+                                Total Kredit
+                            </span>
+                            <span
+                                className={cn(
+                                    "text-xs sm:text-sm font-black font-mono tabular-nums leading-tight",
+                                    isBalanced
+                                        ? "text-indigo-600 dark:text-indigo-400"
+                                        : "text-rose-600 dark:text-rose-400"
+                                )}
+                            >
+                                {formatRupiah(totalCredit)}
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            {journal.description && (
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px]">
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block mb-0.5">
-                        Keterangan
-                    </span>
-                    <p className="text-slate-700 dark:text-slate-300 font-medium bg-slate-50/70 dark:bg-slate-950/50 p-2 rounded-lg border border-slate-100 dark:border-slate-850">
-                        {journal.description}
-                    </p>
-                </div>
-            )}
         </Card>
     );
 }
