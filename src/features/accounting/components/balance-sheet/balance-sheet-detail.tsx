@@ -3,21 +3,23 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import type { ChartOfAccount } from "@/features/accounting/types";
+import type { BalanceSheetDetailCategory, ChartOfAccount } from "@/features/accounting/types";
 import type { ManualJournal, ManualJournalLine } from "@/features/accounting/types/manual-journal";
 import { cn } from "@/lib/utils";
 import {
     IconArrowLeft,
+    IconBook,
     IconCoin,
     IconEdit,
     IconTrendingUp,
     IconWallet,
 } from "@tabler/icons-react";
 
+import { useCoaMappings } from "@/features/accounting/api/coa-mapping-api";
+
 import { BalanceSheetJournalInfo } from "./balance-sheet-journal-info";
 import { BalanceSheetSectionCard } from "./balance-sheet-section-card";
+import { BalanceSheetStatusCard } from "./balance-sheet-status-card";
 
 interface BalanceSheetDetailItem {
     uid: string;
@@ -26,6 +28,8 @@ interface BalanceSheetDetailItem {
     debit: number;
     credit: number;
     amount: number;
+    detail?: BalanceSheetDetailCategory[];
+    isShuLalu?: boolean;
 }
 
 interface BalanceSheetDetailProps {
@@ -37,6 +41,13 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
     const router = useRouter();
     const [showDebitCredit, setShowDebitCredit] = useState<boolean>(true);
 
+    const { data: coaMappings } = useCoaMappings();
+    const shuPriorYearsMapping = useMemo(() => {
+        return coaMappings?.find(
+            (m) => m.transaction_type === "equity" && m.slot === "shu_prior_years"
+        );
+    }, [coaMappings]);
+
     const sectionsData = useMemo(() => {
         const assets: BalanceSheetDetailItem[] = [];
         const liabilities: BalanceSheetDetailItem[] = [];
@@ -44,22 +55,15 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
         const revenue: BalanceSheetDetailItem[] = [];
         const expense: BalanceSheetDetailItem[] = [];
 
-        let sumDebit = 0;
-        let sumCredit = 0;
-
         (journal.lines || []).forEach((line: ManualJournalLine) => {
-            const debitVal = Number(line.debit) || 0;
-            const creditVal = Number(line.credit) || 0;
-
-            sumDebit += debitVal;
-            sumCredit += creditVal;
-
             const matchedCoa = flatAccounts.find(
                 (coa) => coa.uid === line.chart_of_account_uid || coa.kode === line.account?.kode
             );
             if (!matchedCoa) return;
 
             const tipe = matchedCoa.tipe;
+            const debitVal = Number(line.debit) || 0;
+            const creditVal = Number(line.credit) || 0;
 
             let amount = 0;
             if (tipe === "asset" || tipe === "expense") {
@@ -101,8 +105,6 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
             totalEquity,
             totalRevenue,
             totalExpense,
-            totalDebit: sumDebit,
-            totalCredit: sumCredit,
         };
     }, [journal, flatAccounts]);
 
@@ -117,69 +119,101 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
         totalEquity,
         totalRevenue,
         totalExpense,
-        totalDebit,
-        totalCredit,
     } = sectionsData;
 
-    const { isBalanced, difference } = useMemo(() => {
-        const diff = Math.abs(totalDebit - totalCredit);
+    const netIncome = useMemo(() => {
+        return totalRevenue - totalExpense;
+    }, [totalRevenue, totalExpense]);
+
+    const equityItems = useMemo(() => {
+        // Map and identify SHU Tahun Lalu based on configuration setting
+        const mappedEquity = equity.map((item) => {
+            const isShuLalu =
+                (shuPriorYearsMapping?.chart_of_account_uid &&
+                    item.uid === shuPriorYearsMapping.chart_of_account_uid) ||
+                (shuPriorYearsMapping?.kode && item.kode === shuPriorYearsMapping.kode) ||
+                (!shuPriorYearsMapping &&
+                    (item.kode === "3-1200" ||
+                        item.nama.toLowerCase().includes("shu tahun lalu") ||
+                        item.nama.toLowerCase().includes("sisa hasil usaha tahun lalu") ||
+                        item.nama.toLowerCase().includes("laba ditahan")));
+
+            return {
+                ...item,
+                isShuLalu: !!isShuLalu,
+            };
+        });
+
+        const regularEquity = mappedEquity.filter((item) => !item.isShuLalu);
+        const shuLaluItems = mappedEquity.filter((item) => item.isShuLalu);
+
+        const shuBerjalanItem: BalanceSheetDetailItem = {
+            uid: "synthetic-shu-berjalan",
+            kode: null,
+            nama: "SHU Tahun Berjalan",
+            amount: netIncome,
+            debit: totalExpense,
+            credit: totalRevenue,
+        };
+
+        // Posisi SHU Tahun Lalu berada di atas SHU Tahun Berjalan
+        return [...regularEquity, ...shuLaluItems, shuBerjalanItem];
+    }, [equity, shuPriorYearsMapping, netIncome, totalExpense, totalRevenue]);
+
+    const finalEquityTotal = totalEquity + netIncome;
+
+    const { totalLeftVal, totalRightVal, isBalanced, difference } = useMemo(() => {
+        const leftVal = totalAssets;
+        const rightVal = totalLiabilities + finalEquityTotal;
+        const diff = Math.abs(leftVal - rightVal);
         return {
-            isBalanced: diff < 0.01 && totalDebit > 0,
+            totalLeftVal: leftVal,
+            totalRightVal: rightVal,
+            isBalanced: diff < 0.1,
             difference: diff,
         };
-    }, [totalDebit, totalCredit]);
+    }, [totalAssets, totalLiabilities, finalEquityTotal]);
 
     return (
         <div className="space-y-2.5">
-            {/* Top Bar: Title, Reference Number, Status Badge, Detail D/K Toggle, and Actions */}
+            {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="flex items-center gap-2 flex-wrap min-w-0">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => router.push("/admin/accounting/journals")}
-                        className="h-8 w-8 p-0 rounded-xl border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 text-slate-600 dark:text-slate-300 shadow-xs flex items-center justify-center shrink-0 cursor-pointer"
-                        title="Kembali"
-                    >
-                        <IconArrowLeft className="w-4 h-4" />
-                    </Button>
+                <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-indigo-600 text-white rounded-xl shadow-xs shrink-0">
+                        <IconBook className="w-4 h-4" />
+                    </div>
 
-                    <div className="flex items-center gap-2 flex-wrap min-w-0">
-                        <h2 className="text-base sm:text-lg font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">
-                            Detail Jurnal Penyesuaian
-                        </h2>
-                        <span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md border border-indigo-200/80 dark:border-indigo-900/60">
-                            {journal.reference_number || "-"}
-                        </span>
-                        <Badge
-                            className={cn(
-                                "px-1.5 py-0 text-[10px] font-bold uppercase tracking-wider",
-                                journal.status === "draft" &&
-                                    "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/40",
-                                journal.status === "posted" &&
-                                    "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/40",
-                                journal.status === "voided" &&
-                                    "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-900/40"
-                            )}
-                            variant="outline"
-                        >
-                            {journal.status === "draft" && "Draft"}
-                            {journal.status === "posted" && "Posted"}
-                            {journal.status === "voided" && "Voided"}
-                        </Badge>
+                    <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <h2 className="text-base sm:text-lg font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-tight">
+                                Detail Jurnal Penyesuaian
+                            </h2>
+                            <span
+                                className={cn(
+                                    "text-[9px] px-2 py-0.5 rounded-md font-extrabold uppercase tracking-wider border",
+                                    journal.status === "draft"
+                                        ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30"
+                                        : "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-450 dark:border-emerald-900/30"
+                                )}
+                            >
+                                {journal.status === "draft"
+                                    ? `Draft: ${journal.reference_number || "-"}`
+                                    : `Posted: ${journal.reference_number || "-"}`}
+                            </span>
+                        </div>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                    <label className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 cursor-pointer select-none bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 px-2.5 py-1 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-xs transition-colors">
-                        <span className="text-[11px] font-semibold hidden sm:inline">Detail D/K</span>
-                        <Switch
-                            size="sm"
-                            checked={showDebitCredit}
-                            onCheckedChange={setShowDebitCredit}
-                        />
-                    </label>
-
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push("/admin/accounting/journals")}
+                        className="h-8 px-3 text-xs font-bold rounded-xl border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 text-slate-700 dark:text-slate-300 shadow-xs flex items-center gap-1 cursor-pointer"
+                    >
+                        <IconArrowLeft className="w-3.5 h-3.5 text-slate-400" />
+                        Kembali
+                    </Button>
                     {journal.status === "draft" && (
                         <Button
                             size="sm"
@@ -189,44 +223,53 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
                             className="h-8 px-3 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs flex items-center gap-1 cursor-pointer"
                         >
                             <IconEdit className="w-3.5 h-3.5" />
-                            <span>Edit Jurnal</span>
+                            Edit Jurnal
                         </Button>
                     )}
                 </div>
             </div>
 
-            {/* Ultra-Compact Unified Header Strip (Metadata + Live Balance Status + Debit/Credit Totals) */}
+            {/* Read-Only Journal Metadata Display */}
             <BalanceSheetJournalInfo
                 journal={journal}
                 showDebitCredit={showDebitCredit}
                 onShowDebitCreditChange={setShowDebitCredit}
-                totalDebit={totalDebit}
-                totalCredit={totalCredit}
-                isBalanced={isBalanced}
-                difference={difference}
             />
 
-            {/* Two-Column / Full-Width Section Cards Grid */}
-            <div className={cn("grid gap-2.5 sm:gap-3", showDebitCredit ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
-                <div className="space-y-2.5 sm:space-y-3">
-                    {assets.length > 0 && (
-                        <BalanceSheetSectionCard
-                            title="Aset"
-                            items={assets}
-                            total={totalAssets}
-                            accentColor="emerald"
-                            totalLabel="Total Aset"
-                            icon={<IconWallet className="w-3.5 h-3.5 text-emerald-500" />}
-                            isEditing={false}
-                            showDebitCredit={showDebitCredit}
-                            sectionKey="assets"
-                            coaList={flatAccounts}
-                        />
-                    )}
+            {/* Balance Status Visual Card */}
+            <BalanceSheetStatusCard
+                isBalanced={isBalanced}
+                totalAssets={totalLeftVal}
+                totalLiabilitiesAndEquity={totalRightVal}
+                difference={difference}
+                leftLabel="Total Aset (A)"
+                rightLabel="Liabilitas + Ekuitas (L + E)"
+                leftLegend="Aset"
+                rightLegend="Kewajiban & Ekuitas"
+                hideUnbalancedButton={true}
+            />
+
+            {/* Two-Column Grid */}
+            <div className={cn("grid gap-2.5", showDebitCredit ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
+                <div className="space-y-2.5">
+                    <BalanceSheetSectionCard
+                        title="Aset"
+                        description="Harta kekayaan perusahaan termasuk kas, rekening bank, piutang, dan persediaan."
+                        items={assets}
+                        total={totalAssets}
+                        accentColor="emerald"
+                        totalLabel="Total Aset"
+                        icon={<IconWallet className="w-3.5 h-3.5 text-emerald-500" />}
+                        isEditing={false}
+                        showDebitCredit={showDebitCredit}
+                        sectionKey="assets"
+                        coaList={flatAccounts}
+                    />
 
                     {revenue.length > 0 && (
                         <BalanceSheetSectionCard
                             title="Pendapatan (Revenues)"
+                            description="Penerimaan dari omset hasil penjualan barang, pendapatan jasa, maupun penerimaan non-operasional."
                             items={revenue}
                             total={totalRevenue}
                             accentColor="indigo"
@@ -240,40 +283,39 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
                     )}
                 </div>
 
-                <div className="space-y-2.5 sm:space-y-3">
-                    {liabilities.length > 0 && (
-                        <BalanceSheetSectionCard
-                            title="Kewajiban (Liabilitas)"
-                            items={liabilities}
-                            total={totalLiabilities}
-                            accentColor="amber"
-                            totalLabel="Total Kewajiban"
-                            icon={<IconCoin className="w-3.5 h-3.5 text-amber-500" />}
-                            isEditing={false}
-                            showDebitCredit={showDebitCredit}
-                            sectionKey="liabilities"
-                            coaList={flatAccounts}
-                        />
-                    )}
+                <div className="space-y-2.5">
+                    <BalanceSheetSectionCard
+                        title="Kewajiban (Liabilitas)"
+                        description="Kewajiban finansial jangka pendek dan jangka panjang perusahaan kepada pihak lain."
+                        items={liabilities}
+                        total={totalLiabilities}
+                        accentColor="amber"
+                        totalLabel="Total Kewajiban"
+                        icon={<IconCoin className="w-3.5 h-3.5 text-amber-500" />}
+                        isEditing={false}
+                        showDebitCredit={showDebitCredit}
+                        sectionKey="liabilities"
+                        coaList={flatAccounts}
+                    />
 
-                    {equity.length > 0 && (
-                        <BalanceSheetSectionCard
-                            title="Ekuitas"
-                            items={equity}
-                            total={totalEquity}
-                            accentColor="indigo"
-                            totalLabel="Total Ekuitas"
-                            icon={<IconTrendingUp className="w-3.5 h-3.5 text-indigo-500" />}
-                            isEditing={false}
-                            showDebitCredit={showDebitCredit}
-                            sectionKey="equity"
-                            coaList={flatAccounts}
-                        />
-                    )}
+                    <BalanceSheetSectionCard
+                        title="Ekuitas"
+                        description="Modal pemilik perusahaan beserta laba ditahan dan laba berjalan hasil operasional."
+                        items={equityItems}
+                        total={finalEquityTotal}
+                        accentColor="indigo"
+                        totalLabel="Total Ekuitas"
+                        icon={<IconTrendingUp className="w-3.5 h-3.5 text-indigo-500" />}
+                        isEditing={false}
+                        showDebitCredit={showDebitCredit}
+                        sectionKey="equity"
+                        coaList={flatAccounts}
+                    />
 
                     {expense.length > 0 && (
                         <BalanceSheetSectionCard
                             title="Beban (Expenses)"
+                            description="Biaya-biaya operasional, pengeluaran administratif, beban pembelian, serta penyusutan aset."
                             items={expense}
                             total={totalExpense}
                             accentColor="amber"

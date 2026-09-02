@@ -74,7 +74,7 @@ function BalanceSheetItemDetailTable({
     }, [detail]);
 
     return (
-        <div className="bg-slate-50/90 dark:bg-slate-950/60 rounded-xl border border-slate-200/80 dark:border-slate-800 p-2 sm:p-2.5 space-y-1.5 my-1 shadow-xs">
+        <div className="bg-slate-50/90 dark:bg-slate-950/60 rounded-xl border border-slate-200/80 dark:border-slate-800 p-1.5 sm:p-2 space-y-1 my-1 shadow-xs">
             {/* Header info & Search bar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-1 border-b border-slate-200/60 dark:border-slate-800">
                 <div className="flex items-center gap-1.5">
@@ -92,14 +92,14 @@ function BalanceSheetItemDetailTable({
                 </div>
 
                 {detail.length > 4 && (
-                    <div className="relative w-full sm:w-40">
+                    <div className="relative w-full sm:w-36">
                         <IconSearch className="w-3 h-3 absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Cari kategori..."
-                            className="w-full text-[10px] pl-6 pr-2 py-0.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 placeholder:text-slate-400 text-slate-700 dark:text-slate-200"
+                            placeholder="Cari..."
+                            className="w-full text-[10px] pl-5 pr-2 py-0.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 placeholder:text-slate-400 text-slate-700 dark:text-slate-200"
                         />
                     </div>
                 )}
@@ -107,10 +107,10 @@ function BalanceSheetItemDetailTable({
 
             {/* Mobile: Card list — Desktop: Table */}
             {isMobile ? (
-                <div className="space-y-1 max-h-52 overflow-y-auto">
+                <div className="space-y-1 max-h-48 overflow-y-auto">
                     {filteredDetail.length === 0 ? (
-                        <p className="py-2 text-center text-slate-400 dark:text-slate-500 italic text-[10px]">
-                            Tidak ada kategori yang cocok.
+                        <p className="py-1.5 text-center text-slate-400 dark:text-slate-500 italic text-[10px]">
+                            Tidak ada kategori.
                         </p>
                     ) : (
                         filteredDetail.map((d, dIdx) => {
@@ -164,7 +164,7 @@ function BalanceSheetItemDetailTable({
                 </div>
             ) : (
                 /* Desktop: Table */
-                <div className="max-h-52 overflow-y-auto rounded-lg border border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-900 shadow-xs">
+                <div className="max-h-48 overflow-y-auto rounded-lg border border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-900 shadow-xs">
                     <table className="w-full text-left text-[10px] border-collapse">
                         <thead className="sticky top-0 bg-slate-100/90 dark:bg-slate-900/90 backdrop-blur-xs text-[8px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 select-none z-10">
                             <tr>
@@ -176,7 +176,7 @@ function BalanceSheetItemDetailTable({
                                     </>
                                 )}
                                 <th className="py-1 px-2.5 text-right">Saldo Bersih</th>
-                                <th className="py-1 px-2.5 text-right w-16">Porsi</th>
+                                <th className="py-1 px-2.5 text-right w-14">Porsi</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40 font-medium">
@@ -184,9 +184,9 @@ function BalanceSheetItemDetailTable({
                                 <tr>
                                     <td
                                         colSpan={showDebitCredit ? 5 : 3}
-                                        className="py-2.5 text-center text-slate-400 dark:text-slate-500 italic text-[10px]"
+                                        className="py-2 text-center text-slate-400 dark:text-slate-500 italic text-[10px]"
                                     >
-                                        Tidak ada kategori yang cocok.
+                                        Tidak ada kategori.
                                     </td>
                                 </tr>
                             ) : (
@@ -331,18 +331,18 @@ export function BalanceSheetSectionCard({
             )}
         >
             {/* Ultra-Compact Card Header */}
-            <div className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2 bg-slate-50/60 dark:bg-slate-950/30">
+            <div className="px-2.5 py-1.5 sm:px-3 sm:py-1.5 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2 bg-slate-50/60 dark:bg-slate-950/30">
                 <div className="flex items-center gap-1.5 min-w-0">
                     {icon}
-                    <span className="text-xs font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider truncate">
+                    <span className="text-[11px] font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider truncate">
                         {title}
                     </span>
-                    <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 bg-slate-200/70 dark:bg-slate-800 px-1.5 py-0.2 rounded-full shrink-0">
+                    <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 bg-slate-200/60 dark:bg-slate-800 px-1.5 py-0.2 rounded-full shrink-0">
                         {items.length}
                     </span>
                 </div>
                 {!showDebitCredit && (
-                    <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200 tabular-nums shrink-0">
+                    <span className="font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200 tabular-nums shrink-0">
                         {formatRupiah(total)}
                     </span>
                 )}
@@ -366,17 +366,22 @@ export function BalanceSheetSectionCard({
                             <Fragment key={itemKey}>
                                 <div className="rounded-lg border border-slate-100 dark:border-slate-800/60 bg-slate-50/40 dark:bg-slate-950/30 overflow-hidden">
                                     <div className="px-2 pt-1.5 pb-1">
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="text-[9px] font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-1 py-0.2 rounded shrink-0">
-                                                {item.kode ?? "-"}
-                                            </span>
-                                            {getAccountIcon(item.nama)}
-                                            <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate">
-                                                {item.nama}
-                                            </span>
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="min-w-0 flex-1">
+                                                <span className="text-[9px] font-mono text-slate-400 dark:text-slate-500 block">
+                                                    {item.kode ?? "-"}
+                                                </span>
+                                                <div className="flex items-center gap-1 mt-0.5">
+                                                    {getAccountIcon(item.nama)}
+                                                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate">
+                                                        {item.nama}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
+                                    {/* View mode: Saldo display */}
                                     <div className="px-2 pb-1.5 flex items-center justify-between gap-2">
                                         <div className="flex items-center gap-1.5">
                                             {hasDetail && (
@@ -460,16 +465,15 @@ export function BalanceSheetSectionCard({
                 <div className="hidden md:block overflow-x-auto w-full">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="border-b border-slate-100 dark:border-slate-800/80 text-[9px] font-bold uppercase tracking-wider text-slate-400 select-none bg-slate-50/40 dark:bg-slate-950/20">
-                                <th className="py-1.5 px-3 sm:px-3.5 w-[100px] text-left">Kode Akun</th>
-                                <th className="py-1.5 px-3 sm:px-3.5 text-left">Nama Akun</th>
+                            <tr className="border-b border-slate-100 dark:border-slate-800/80 text-[8px] font-bold uppercase tracking-wider text-slate-400 select-none bg-slate-50/30 dark:bg-slate-950/20">
+                                <th className="py-1.5 px-3 sm:px-3.5 text-left">Akun</th>
                                 {showDebitCredit && (
                                     <>
-                                        <th className="py-1.5 px-3 text-right w-[120px]">Debit</th>
-                                        <th className="py-1.5 px-3 text-right w-[120px]">Kredit</th>
+                                        <th className="py-1.5 px-3 text-right w-[110px]">Debit</th>
+                                        <th className="py-1.5 px-3 text-right w-[110px]">Kredit</th>
                                     </>
                                 )}
-                                <th className="py-1.5 px-3 sm:px-3.5 text-right w-[135px]">Saldo Bersih</th>
+                                <th className="py-1.5 px-3 sm:px-3.5 text-right w-[130px]">Saldo Bersih</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100/60 dark:divide-slate-800/40">
@@ -488,13 +492,11 @@ export function BalanceSheetSectionCard({
                                     <Fragment key={itemKey}>
                                         <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-950/20 transition-colors">
                                             <td className="py-1.5 px-3 sm:px-3.5 text-left">
-                                                <span className="text-[10px] font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-1.5 py-0.5 rounded border border-blue-100 dark:border-blue-900/60 shrink-0 inline-block">
-                                                    {item.kode ?? "-"}
-                                                </span>
-                                            </td>
-                                            <td className="py-1.5 px-3 sm:px-3.5 text-left">
                                                 <div className="flex items-center justify-between gap-2">
                                                     <div className="flex items-center gap-1.5 min-w-0">
+                                                        <span className="text-[10px] font-mono font-bold text-slate-400 dark:text-slate-500 shrink-0 w-11">
+                                                            {item.kode ?? "-"}
+                                                        </span>
                                                         {getAccountIcon(item.nama)}
                                                         <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
                                                             {item.nama}
@@ -555,8 +557,8 @@ export function BalanceSheetSectionCard({
                                         {isExpanded && hasDetail && (
                                             <tr className="bg-transparent">
                                                 <td
-                                                    colSpan={showDebitCredit ? 5 : 3}
-                                                    className="p-1 sm:px-3.5 sm:py-1.5"
+                                                    colSpan={showDebitCredit ? 4 : 2}
+                                                    className="p-1 sm:px-3 sm:py-1"
                                                 >
                                                     <BalanceSheetItemDetailTable
                                                         detail={item.detail!}
@@ -578,20 +580,20 @@ export function BalanceSheetSectionCard({
                                     bgTotals[accentColor]
                                 )}
                             >
-                                <td colSpan={2} className="py-2 px-3 sm:px-3.5 text-left text-[9px] font-extrabold uppercase tracking-wider">
+                                <td className="py-1.5 px-3 sm:px-3.5 text-left text-[8px] font-extrabold uppercase tracking-wider">
                                     {totalLabel}
                                 </td>
                                 {showDebitCredit && (
                                     <>
-                                        <td className="py-2 px-3 text-right text-xs font-extrabold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                                        <td className="py-1.5 px-3 text-right text-xs font-extrabold text-emerald-600 dark:text-emerald-400 tabular-nums">
                                             {fmtLedger(totalDebit)}
                                         </td>
-                                        <td className="py-2 px-3 text-right text-xs font-extrabold text-rose-600 dark:text-rose-400 tabular-nums">
+                                        <td className="py-1.5 px-3 text-right text-xs font-extrabold text-rose-600 dark:text-rose-400 tabular-nums">
                                             {fmtLedger(totalCredit)}
                                         </td>
                                     </>
                                 )}
-                                <td className="py-2 px-3 sm:px-3.5 text-right text-xs font-extrabold text-slate-800 dark:text-slate-100 tabular-nums">
+                                <td className="py-1.5 px-3 sm:px-3.5 text-right text-xs font-extrabold text-slate-800 dark:text-slate-100 tabular-nums">
                                     {formatRupiah(total)}
                                 </td>
                             </tr>

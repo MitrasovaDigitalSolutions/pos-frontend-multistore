@@ -54,7 +54,7 @@ export function BalanceSheetStatusCard({
                             </span>
                             <span
                                 className={cn(
-                                    "text-[9px] px-1.5 py-0.2 rounded-md font-bold uppercase tracking-wider border",
+                                    "text-[9px] px-1.5 py-0.2 rounded-md font-extrabold uppercase tracking-wider border",
                                     isBalanced
                                         ? "bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40"
                                         : "bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/40"
@@ -63,34 +63,29 @@ export function BalanceSheetStatusCard({
                                 {isBalanced ? "Sinkron" : `Selisih: ${formatRupiah(difference)}`}
                             </span>
                         </div>
-                        <p className="text-slate-400 dark:text-slate-500 text-[10px] truncate leading-tight">
-                            {isBalanced
-                                ? "Sisi Debit dan Kredit seimbang."
-                                : "Terdapat perbedaan saldo antara sisi Debit dan Kredit."}
-                        </p>
                     </div>
                 </div>
 
                 {/* Right: Compact Metrics Comparison */}
-                <div className="flex items-center gap-3 sm:gap-5 justify-between lg:justify-end shrink-0 border-t lg:border-t-0 pt-1.5 lg:pt-0 border-slate-100 dark:border-slate-800">
-                    <div className="text-left lg:text-right space-y-0.2">
-                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
-                            {leftLabel || "Total Debit"}
+                <div className="flex items-center gap-3 sm:gap-4 justify-between lg:justify-end shrink-0 border-t lg:border-t-0 pt-1.5 lg:pt-0 border-slate-100 dark:border-slate-800">
+                    <div className="text-left lg:text-right">
+                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block leading-none mb-0.5">
+                            {leftLabel || "Total Aset (A)"}
                         </span>
-                        <span className="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono tabular-nums">
+                        <span className="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono tabular-nums leading-tight">
                             {formatRupiah(totalAssets)}
                         </span>
                     </div>
 
                     <div className="w-px h-5 bg-slate-200 dark:bg-slate-800 hidden sm:block" />
 
-                    <div className="text-right space-y-0.2">
-                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
-                            {rightLabel || "Total Kredit"}
+                    <div className="text-right">
+                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block leading-none mb-0.5">
+                            {rightLabel || "Liabilitas + Ekuitas"}
                         </span>
                         <span
                             className={cn(
-                                "text-xs sm:text-sm font-black font-mono tabular-nums",
+                                "text-xs sm:text-sm font-black font-mono tabular-nums leading-tight",
                                 isBalanced
                                     ? "text-indigo-600 dark:text-indigo-400"
                                     : "text-rose-600 dark:text-rose-400"
