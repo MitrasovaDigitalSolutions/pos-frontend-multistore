@@ -31,7 +31,7 @@ export function BalanceSheetStatusCard({
     return (
         <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-2.5 sm:p-3 shadow-xs">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
-                {/* Left: Compact Status Indicator */}
+                {/* Left: Status Indicator & Short Natural Copy */}
                 <div className="flex items-center gap-2 min-w-0">
                     <div
                         className={cn(
@@ -63,6 +63,11 @@ export function BalanceSheetStatusCard({
                                 {isBalanced ? "Sinkron" : `Selisih: ${formatRupiah(difference)}`}
                             </span>
                         </div>
+                        <p className="text-slate-400 dark:text-slate-500 text-[11px] leading-tight mt-0.5 truncate">
+                            {isBalanced
+                                ? "Total nilai debit dan kredit telah seimbang tanpa selisih."
+                                : "Terdapat selisih saldo antara sisi debit dan kredit yang perlu diperiksa."}
+                        </p>
                     </div>
                 </div>
 
