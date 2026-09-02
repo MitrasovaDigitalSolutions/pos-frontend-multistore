@@ -15,6 +15,7 @@ interface JournalEditorMobileListProps {
     control: Control<ManualJournalSchemaInput>;
     setValue: UseFormSetValue<ManualJournalSchemaInput>;
     flatAccounts?: ChartOfAccount[];
+    watchedLines?: Partial<ManualJournalSchemaInput["lines"][number]>[];
     errors?: FieldErrors<ManualJournalSchemaInput>["lines"];
     totalDebit: number;
     totalCredit: number;
@@ -29,6 +30,7 @@ export function JournalEditorMobileList({
     fields,
     control,
     flatAccounts = [],
+    watchedLines = [],
     errors,
     totalDebit,
     totalCredit,
@@ -43,6 +45,9 @@ export function JournalEditorMobileList({
             {fields.map((field, idx) => {
                 const rowErrors = Array.isArray(errors) ? errors[idx] : undefined;
                 const accountError = rowErrors?.chart_of_account_uid?.message;
+                const otherSelectedUids = (watchedLines || [])
+                    .map((l, i) => (i !== idx ? l?.chart_of_account_uid : null))
+                    .filter(Boolean) as string[];
 
                 return (
                     <div
@@ -78,6 +83,7 @@ export function JournalEditorMobileList({
                                         accounts={flatAccounts}
                                         value={selectField.value || ""}
                                         onChange={(val) => onAccountSelect(idx, val)}
+                                        excludeUids={otherSelectedUids}
                                         placeholder="Pilih akun..."
                                         dialogTitle="Pilih Akun Baris Jurnal"
                                         size="sm"

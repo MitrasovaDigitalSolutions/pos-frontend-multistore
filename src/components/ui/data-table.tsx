@@ -313,13 +313,68 @@ export function DataTable<TData, TValue>({
         const hasActions = !!(onEdit || onDelete || onView || onCheck || extraActions);
         if (!hasActions) return baseCols;
 
-        const actionColWidthClass = actionColumnWidth || "w-28";
+        // Dynamically compute the max action buttons per row in current data
+        let maxButtons = 0;
+        const itemsToInspect = (paginatedData && paginatedData.length > 0) ? paginatedData : (data || []);
+
+        if (itemsToInspect.length === 0) {
+            let defaultCount = 0;
+            if (onView) defaultCount++;
+            if (onEdit) defaultCount++;
+            if (onCheck) defaultCount++;
+            if (onDelete) defaultCount++;
+            if (extraActions) defaultCount++;
+            maxButtons = Math.max(1, defaultCount);
+        } else {
+            for (const item of itemsToInspect) {
+                let count = 0;
+                const isViewHidden = typeof hideView === "function" ? hideView(item) : !!hideView;
+                const isEditHidden = typeof hideEdit === "function" ? hideEdit(item) : !!hideEdit;
+                const isCheckHidden = typeof hideCheck === "function" ? hideCheck(item) : !!hideCheck;
+                const isDeleteHidden = typeof hideDelete === "function" ? hideDelete(item) : !!hideDelete;
+
+                if (onView && !isViewHidden) count++;
+                if (onEdit && !isEditHidden) count++;
+                if (onCheck && !isCheckHidden) count++;
+                if (onDelete && !isDeleteHidden) count++;
+
+                if (extraActions) {
+                    const extra = extraActions(item);
+                    if (extra) {
+                        if (React.isValidElement(extra)) {
+                            const extraProps = extra.props as { children?: React.ReactNode } | undefined;
+                            if (extra.type === React.Fragment && extraProps?.children) {
+                                const childrenCount = React.Children.toArray(extraProps.children).filter(Boolean).length;
+                                count += childrenCount;
+                            } else if (extraProps?.children) {
+                                const childrenCount = React.Children.toArray(extraProps.children).filter(Boolean).length;
+                                count += Math.max(1, childrenCount);
+                            } else {
+                                count += 1;
+                            }
+                        } else {
+                            count += 1;
+                        }
+                    }
+                }
+
+                if (count > maxButtons) {
+                    maxButtons = count;
+                }
+            }
+        }
+
+        // Auto-calculated width: each button ~36px (30px button + 6px gap) + 24px cell horizontal padding
+        const autoActionWidth = Math.max(72, maxButtons * 36 + 24);
+        const dynamicActionSize = actionColumnSize || (actionColumnWidth ? (typeof actionColumnWidth === "number" ? actionColumnWidth : (parseInt(actionColumnWidth) || 120)) : autoActionWidth);
+
+        const actionColWidthClass = actionColumnWidth && typeof actionColumnWidth === "string" && isNaN(Number(actionColumnWidth)) ? actionColumnWidth : "";
 
         const actionColumn: ColumnDef<TData, unknown> = {
             id: "actions",
             header: "Aksi",
             enableSorting: false,
-            size: actionColumnSize || (actionColumnWidth ? 180 : 120),
+            size: dynamicActionSize,
             meta: {
                 headerClassName: `text-center ${actionColWidthClass} sticky right-0 top-0 bg-slate-50 z-30 shadow-[-1px_0_0_0_rgba(241,245,249,1)] border-l border-slate-100`,
                 cellClassName: "text-center sticky right-0 bg-white dark:bg-slate-900 [.animate-liquid-fast-row_&]:bg-inherit group-hover:bg-slate-50 [.animate-liquid-fast-row_&]:group-hover:bg-black/[0.03] z-10 shadow-[-1px_0_0_0_rgba(241,245,249,1)] border-l border-slate-100 transition-colors",
@@ -389,6 +444,8 @@ export function DataTable<TData, TValue>({
         columns,
         currentPageVal,
         perPageVal,
+        data,
+        paginatedData,
         onEdit,
         onDelete,
         onView,

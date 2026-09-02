@@ -67,7 +67,7 @@ export function useManualJournalEditor({
             }));
 
             return {
-                description: journal.description || "Penyesuaian Neraca Keuangan",
+                description: journal.description || "Entri Jurnal Manual",
                 transaction_date: journal.transaction_date
                     ? journal.transaction_date.substring(0, 10)
                     : todayStr(),
@@ -84,7 +84,7 @@ export function useManualJournalEditor({
         }
 
         return {
-            description: "Penyesuaian Neraca Keuangan",
+            description: "Entri Jurnal Manual",
             transaction_date: asOfDate || todayStr(),
             status: "draft" as const,
             lines: [
@@ -211,6 +211,15 @@ export function useManualJournalEditor({
 
         if (counterparts.length === 1) {
             const cp = counterparts[0];
+            const isCpAlreadyInLines = currentLines.some(
+                (l, i) => i !== index && l?.chart_of_account_uid === cp.uid
+            );
+
+            if (isCpAlreadyInLines) {
+                toast.info(`Akun lawan [${cp.kode}] ${cp.nama} sudah ada di dalam list baris jurnal.`);
+                return;
+            }
+
             const srcDebit = Number(currentLines[index]?.debit) || 0;
             const srcCredit = Number(currentLines[index]?.credit) || 0;
 
@@ -272,6 +281,16 @@ export function useManualJournalEditor({
         if (!cp || sourceIndex < 0) return;
 
         const currentLines = getValues("lines") || [];
+        const isCpAlreadyInLines = currentLines.some(
+            (l, i) => i !== sourceIndex && l?.chart_of_account_uid === cp.uid
+        );
+
+        if (isCpAlreadyInLines) {
+            toast.info(`Akun lawan [${cp.kode}] ${cp.nama} sudah ada di dalam list baris jurnal.`);
+            setCounterpartPrompt((prev) => ({ ...prev, isOpen: false }));
+            return;
+        }
+
         const targetIndex = sourceIndex + 1;
         const srcDebit = Number(currentLines[sourceIndex]?.debit) || 0;
         const srcCredit = Number(currentLines[sourceIndex]?.credit) || 0;
@@ -320,7 +339,18 @@ export function useManualJournalEditor({
         const currentLines = getValues("lines") || [];
         const targetIndex = sourceIndex + 1;
 
-        counterparts.forEach((cp, i) => {
+        // Filter only counterparts that are not yet in current lines
+        const unaddedCounterparts = counterparts.filter(
+            (cp) => !currentLines.some((l, i) => i !== sourceIndex && l?.chart_of_account_uid === cp.uid)
+        );
+
+        if (unaddedCounterparts.length === 0) {
+            toast.info("Semua akun lawan sudah ada di dalam list baris jurnal.");
+            setCounterpartPrompt((prev) => ({ ...prev, isOpen: false }));
+            return;
+        }
+
+        unaddedCounterparts.forEach((cp, i) => {
             if (i === 0 && targetIndex < currentLines.length && !currentLines[targetIndex]?.chart_of_account_uid) {
                 setValue(`lines.${targetIndex}.chart_of_account_uid`, cp.uid, {
                     shouldDirty: true,
@@ -337,7 +367,7 @@ export function useManualJournalEditor({
         });
 
         setCounterpartPrompt((prev) => ({ ...prev, isOpen: false }));
-        toast.success(`Berhasil menambahkan ${counterparts.length} baris lawan akun untuk jurnal majemuk.`);
+        toast.success(`Berhasil menambahkan ${unaddedCounterparts.length} baris lawan akun untuk jurnal majemuk.`);
     };
 
     const handleSave = async (targetStatus: "draft" | "posted") => {
@@ -364,11 +394,11 @@ export function useManualJournalEditor({
 
         const payload = {
             transaction_date: formatUTC(formData.transaction_date),
-            description: formData.description || "Penyesuaian Neraca Keuangan",
+            description: formData.description || "Entri Jurnal Manual",
             status: targetStatus,
             lines: filteredLines.map((l) => ({
                 chart_of_account_uid: l.chart_of_account_uid,
-                description: l.description || formData.description || "Penyesuaian Neraca Keuangan",
+                description: l.description || formData.description || "Entri Jurnal Manual",
                 debit: Number(l.debit) || 0,
                 credit: Number(l.credit) || 0,
             })),
@@ -412,6 +442,7 @@ export function useManualJournalEditor({
         setValue,
         fields,
         flatAccounts,
+        watchedLines,
         totalDebit,
         totalCredit,
         difference,

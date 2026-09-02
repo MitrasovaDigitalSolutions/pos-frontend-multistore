@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
-import { useForm, FormProvider } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { FormSwitch } from "@/components/forms/form-switch";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { formatToReadableDate } from "@/lib/date-utils";
 import { IconBook } from "@tabler/icons-react";
@@ -23,27 +21,10 @@ export function BalanceSheetJournalInfo({
 }: BalanceSheetJournalInfoProps) {
     const formattedDate = formatToReadableDate(journal.transaction_date) || "-";
 
-    const methods = useForm({
-        defaultValues: {
-            showDebitCredit,
-        },
-    });
-
-    // eslint-disable-next-line react-hooks/incompatible-library
-    const watchedShowDebitCredit = methods.watch("showDebitCredit");
-
-    useEffect(() => {
-        onShowDebitCreditChange?.(watchedShowDebitCredit);
-    }, [watchedShowDebitCredit, onShowDebitCreditChange]);
-
-    useEffect(() => {
-        methods.setValue("showDebitCredit", showDebitCredit);
-    }, [showDebitCredit, methods]);
-
     return (
-        <Card className="p-3 sm:p-3.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs space-y-2.5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
-                <div className="flex items-center gap-2">
+        <Card className="p-2.5 sm:p-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl shadow-xs space-y-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 border-b border-slate-100 dark:border-slate-800 pb-1.5">
+                <div className="flex items-center gap-1.5">
                     <div className="p-1 rounded-md bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
                         <IconBook className="w-3.5 h-3.5" />
                     </div>
@@ -53,22 +34,20 @@ export function BalanceSheetJournalInfo({
                 </div>
 
                 {onShowDebitCreditChange && (
-                    <div className="w-auto shrink-0">
-                        <FormProvider {...methods}>
-                            <FormSwitch<{ showDebitCredit: boolean }>
-                                name="showDebitCredit"
-                                label="Detail D/K"
-                                description="Tampilkan kolom Debit/Kredit"
-                                className="!p-0 !bg-transparent !border-0 shadow-none dark:bg-transparent dark:border-0 text-xs"
-                            />
-                        </FormProvider>
-                    </div>
+                    <label className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 cursor-pointer select-none">
+                        <span className="text-[11px] font-semibold">Detail D/K</span>
+                        <Switch
+                            size="sm"
+                            checked={showDebitCredit}
+                            onCheckedChange={onShowDebitCreditChange}
+                        />
+                    </label>
                 )}
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
                 <div>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
+                    <span className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
                         No. Referensi
                     </span>
                     <span className="font-mono font-bold text-slate-800 dark:text-slate-200 text-[11px]">
@@ -76,7 +55,7 @@ export function BalanceSheetJournalInfo({
                     </span>
                 </div>
                 <div>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
+                    <span className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
                         Tanggal Transaksi
                     </span>
                     <span className="font-semibold text-slate-700 dark:text-slate-300 text-[11px]">
@@ -84,7 +63,7 @@ export function BalanceSheetJournalInfo({
                     </span>
                 </div>
                 <div>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
+                    <span className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">
                         Pembuat
                     </span>
                     <span className="font-semibold text-slate-700 dark:text-slate-300 text-[11px] truncate block">
@@ -92,7 +71,7 @@ export function BalanceSheetJournalInfo({
                     </span>
                 </div>
                 <div>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block mb-0.5">
+                    <span className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block mb-0.5">
                         Status
                     </span>
                     <Badge
@@ -115,11 +94,11 @@ export function BalanceSheetJournalInfo({
             </div>
 
             {journal.description && (
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px]">
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block mb-0.5">
+                <div className="pt-1.5 border-t border-slate-100 dark:border-slate-800 text-[11px]">
+                    <span className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block mb-0.5">
                         Keterangan
                     </span>
-                    <p className="text-slate-700 dark:text-slate-300 font-medium bg-slate-50/70 dark:bg-slate-950/50 p-2 rounded-lg border border-slate-100 dark:border-slate-850">
+                    <p className="text-slate-700 dark:text-slate-300 font-medium bg-slate-50/70 dark:bg-slate-950/50 px-2 py-1 rounded-lg border border-slate-100 dark:border-slate-850 text-xs">
                         {journal.description}
                     </p>
                 </div>

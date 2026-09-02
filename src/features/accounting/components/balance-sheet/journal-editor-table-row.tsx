@@ -17,6 +17,7 @@ interface JournalEditorTableRowProps {
     flatAccounts?: ChartOfAccount[];
     errors?: FieldErrors<ManualJournalSchemaInput>["lines"];
     canDelete: boolean;
+    excludeUids?: string[];
     onAccountSelect: (index: number, coaUid: string) => void;
     onRemove: (idx: number) => void;
 }
@@ -27,6 +28,7 @@ export function JournalEditorTableRow({
     flatAccounts = [],
     errors,
     canDelete,
+    excludeUids,
     onAccountSelect,
     onRemove,
 }: JournalEditorTableRowProps) {
@@ -51,6 +53,7 @@ export function JournalEditorTableRow({
                                 accounts={flatAccounts}
                                 value={selectField.value || ""}
                                 onChange={(val) => onAccountSelect(index, val)}
+                                excludeUids={excludeUids}
                                 placeholder="Pilih akun..."
                                 dialogTitle="Pilih Akun Baris Jurnal"
                                 size="sm"

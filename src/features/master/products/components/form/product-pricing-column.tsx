@@ -98,21 +98,21 @@ export function ProductPricingColumn({
                                     <FormNumberInput<ProductInput>
                                         name="min_qty_grosir"
                                         label="Min. Qty"
-                                        placeholder="12"
+                                        placeholder="Min Qty"
                                         disabled={disabled}
                                         onValueChange={onMinQtyGrosirChange}
                                     />
                                     <FormNominalInput<ProductInput>
                                         name="harga_grosir"
                                         label="Harga Satuan"
-                                        placeholder="45.000"
+                                        placeholder="0"
                                         disabled={disabled}
                                         onValueChange={onHargaGrosirChange}
                                     />
                                     <FormNominalInput<ProductInput>
                                         name="harga_grosir_total"
                                         label="Total"
-                                        placeholder="540.000"
+                                        placeholder="0"
                                         disabled={disabled}
                                         onValueChange={onHargaGrosirTotalChange}
                                     />

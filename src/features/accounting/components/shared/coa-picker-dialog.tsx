@@ -22,6 +22,7 @@ export interface CoaPickerDialogProps {
     accounts?: ChartOfAccount[];
     selectedUid?: string | null;
     excludeUid?: string | null;
+    excludeUids?: string[];
     allowedTypes?: ChartOfAccountType[];
     title?: string;
 }
@@ -33,11 +34,23 @@ export function CoaPickerDialog({
     accounts = [],
     selectedUid,
     excludeUid,
+    excludeUids,
     allowedTypes,
     title = "Pilih Akun Chart of Accounts (CoA)",
 }: CoaPickerDialogProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTab, setActiveTab] = useState<string>("all");
+
+    const excludedUidSet = useMemo(() => {
+        const set = new Set<string>();
+        if (excludeUid) set.add(excludeUid);
+        if (excludeUids && Array.isArray(excludeUids)) {
+            excludeUids.forEach((uid) => {
+                if (uid) set.add(uid);
+            });
+        }
+        return set;
+    }, [excludeUid, excludeUids]);
 
     const activeAccounts = useMemo(() => {
         return accounts
@@ -78,7 +91,7 @@ export function CoaPickerDialog({
     }, [allowedTypes]);
 
     const handlePick = (acc: ChartOfAccount) => {
-        if (acc.uid === excludeUid) return;
+        if (excludedUidSet.has(acc.uid)) return;
         onSelect(acc);
         onOpenChange(false);
     };
@@ -140,12 +153,12 @@ export function CoaPickerDialog({
                 cell: ({ row }) => {
                     const acc = row.original;
                     const isSelected = selectedUid === acc.uid;
-                    const isExcluded = excludeUid === acc.uid;
+                    const isExcluded = excludedUidSet.has(acc.uid);
 
                     if (isExcluded) {
                         return (
-                            <span className="text-[10px] text-rose-500 font-semibold italic">
-                                Digunakan
+                            <span className="text-[10px] text-rose-500 dark:text-rose-400 font-semibold italic bg-rose-50 dark:bg-rose-950/50 px-1.5 py-0.5 rounded border border-rose-200 dark:border-rose-900">
+                                Sudah Terpakai
                             </span>
                         );
                     }
@@ -173,7 +186,7 @@ export function CoaPickerDialog({
             },
         ];
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedUid, excludeUid]);
+    }, [selectedUid, excludedUidSet]);
 
     return (
         <BaseDialog

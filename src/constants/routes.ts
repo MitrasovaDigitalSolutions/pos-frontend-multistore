@@ -46,6 +46,7 @@ export const ROUTES = {
     ADMIN_DEBTS_MEMBER_PAYMENTS: "/admin/debts/member-payments",
     ADMIN_DEBTS_SALES: "/admin/debts/sales",
     ADMIN_ACCOUNTING_BALANCESHEET: "/admin/accounting/balance-sheet",
+    ADMIN_ACCOUNTING_MANUAL_JOURNAL: "/admin/accounting/manual-journal",
     ADMIN_ACCOUNTING_COA: "/admin/accounting/coa",
     ADMIN_ACCOUNTING_COA_MAPPING: "/admin/accounting/coa-mapping",
     ADMIN_ACCOUNTING_COUNTERPART_MAPPING: "/admin/accounting/counterpart-mapping",

@@ -52,11 +52,53 @@ export function CounterpartQuickAdd({
 
     const isPending = createMutation.isPending || updateMutation.isPending;
 
+    // Accounts that are already paired with the chosen coaUid (cannot be paired again)
+    const alreadyMappedCounterpartUids = useMemo(() => {
+        if (!coaUid) return [];
+        const uids = new Set<string>();
+        uids.add(coaUid); // cannot pair with itself
+
+        existingMappings.forEach((m) => {
+            // In edit mode, do not exclude the mapping being edited
+            if (isEditMode && m.uid === editingMapping?.uid) return;
+            if (
+                isEditMode &&
+                editingMapping &&
+                m.coa_uid === editingMapping.counterpart_coa_uid &&
+                m.counterpart_coa_uid === editingMapping.coa_uid
+            ) {
+                return;
+            }
+
+            // Direct mapping: coaUid -> counterpart
+            if (m.coa_uid === coaUid && m.counterpart_coa_uid) {
+                uids.add(m.counterpart_coa_uid);
+            }
+            // Reverse mapping: counterpart -> coaUid
+            if (m.counterpart_coa_uid === coaUid && m.coa_uid) {
+                uids.add(m.coa_uid);
+            }
+        });
+
+        return Array.from(uids);
+    }, [coaUid, existingMappings, isEditMode, editingMapping]);
+
     const isDuplicate = useMemo(() => {
         if (!coaUid || !counterpartCoaUid) return false;
         return existingMappings.some((m) => {
             if (isEditMode && m.uid === editingMapping?.uid) return false;
-            return m.coa_uid === coaUid && m.counterpart_coa_uid === counterpartCoaUid;
+            if (
+                isEditMode &&
+                editingMapping &&
+                m.coa_uid === editingMapping.counterpart_coa_uid &&
+                m.counterpart_coa_uid === editingMapping.coa_uid
+            ) {
+                return false;
+            }
+
+            const isDirect = m.coa_uid === coaUid && m.counterpart_coa_uid === counterpartCoaUid;
+            const isReverse = m.coa_uid === counterpartCoaUid && m.counterpart_coa_uid === coaUid;
+            return isDirect || isReverse;
         });
     }, [coaUid, counterpartCoaUid, existingMappings, isEditMode, editingMapping]);
 
@@ -68,6 +110,7 @@ export function CounterpartQuickAdd({
 
         try {
             if (isEditMode && editingMapping) {
+                // 1. Update the primary mapping
                 await updateMutation.mutateAsync({
                     uid: editingMapping.uid,
                     data: {
@@ -76,15 +119,66 @@ export function CounterpartQuickAdd({
                         keterangan: keterangan.trim() || null,
                     },
                 });
-                toast.success("Mapping lawan akun berhasil diperbarui.");
+
+                // 2. Synchronize the 2-way reverse mapping
+                const prevReverse = existingMappings.find(
+                    (m) =>
+                        m.uid !== editingMapping.uid &&
+                        m.coa_uid === editingMapping.counterpart_coa_uid &&
+                        m.counterpart_coa_uid === editingMapping.coa_uid
+                );
+
+                if (prevReverse) {
+                    await updateMutation.mutateAsync({
+                        uid: prevReverse.uid,
+                        data: {
+                            coa_uid: counterpartCoaUid,
+                            counterpart_coa_uid: coaUid,
+                            keterangan: keterangan.trim() || null,
+                        },
+                    });
+                } else {
+                    const reverseExists = existingMappings.some(
+                        (m) => m.coa_uid === counterpartCoaUid && m.counterpart_coa_uid === coaUid
+                    );
+                    if (!reverseExists) {
+                        await createMutation.mutateAsync({
+                            coa_uid: counterpartCoaUid,
+                            counterpart_coa_uid: coaUid,
+                            keterangan: keterangan.trim() || null,
+                        });
+                    }
+                }
+
+                toast.success("Mapping lawan akun 2 arah berhasil diperbarui.");
                 onCancelEdit();
             } else {
-                await createMutation.mutateAsync({
-                    coa_uid: coaUid,
-                    counterpart_coa_uid: counterpartCoaUid,
-                    keterangan: keterangan.trim() || null,
-                });
-                toast.success("Mapping lawan akun berhasil ditambahkan.");
+                // 1. Create primary mapping: coaUid -> counterpartCoaUid
+                const createPromises = [
+                    createMutation.mutateAsync({
+                        coa_uid: coaUid,
+                        counterpart_coa_uid: counterpartCoaUid,
+                        keterangan: keterangan.trim() || null,
+                    }),
+                ];
+
+                // 2. Automatically create 2-way reverse mapping: counterpartCoaUid -> coaUid
+                const reverseAlreadyExists = existingMappings.some(
+                    (m) => m.coa_uid === counterpartCoaUid && m.counterpart_coa_uid === coaUid
+                );
+
+                if (!reverseAlreadyExists) {
+                    createPromises.push(
+                        createMutation.mutateAsync({
+                            coa_uid: counterpartCoaUid,
+                            counterpart_coa_uid: coaUid,
+                            keterangan: keterangan.trim() || null,
+                        })
+                    );
+                }
+
+                await Promise.all(createPromises);
+                toast.success("Mapping lawan akun 2 arah berhasil ditambahkan.");
                 setCoaUid("");
                 setCounterpartCoaUid("");
                 setKeterangan("");
@@ -132,7 +226,7 @@ export function CounterpartQuickAdd({
                         {isEditMode ? <IconEdit size={14} /> : <IconPlus size={14} />}
                     </div>
                     <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
-                        {isEditMode ? "Ubah Mapping Lawan Akun" : "Tambah Mapping Lawan Akun"}
+                        {isEditMode ? "Ubah Mapping Lawan Akun (2 Arah)" : "Tambah Mapping Lawan Akun (2 Arah)"}
                     </span>
                     {isEditMode && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
@@ -144,7 +238,7 @@ export function CounterpartQuickAdd({
                 <div className="flex items-center gap-2">
                     {isDuplicate && (
                         <span className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-900">
-                            Pasangan ini sudah ada!
+                            Pasangan akun ini sudah terdaftar!
                         </span>
                     )}
                     <button
@@ -169,6 +263,7 @@ export function CounterpartQuickAdd({
                             value={coaUid}
                             onChange={(val) => {
                                 setCoaUid(val);
+                                // If current counterpart is invalid for the new coaUid, reset it
                                 if (val === counterpartCoaUid) {
                                     setCounterpartCoaUid("");
                                 }
@@ -188,6 +283,7 @@ export function CounterpartQuickAdd({
                                     ? "border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400"
                                     : "border-slate-200 dark:border-slate-700 text-blue-600 dark:text-blue-400"
                             }`}
+                            title="Otomatis berlaku 2 arah (saling berlawanan)"
                         >
                             <IconArrowsExchange size={14} />
                         </div>
@@ -196,7 +292,7 @@ export function CounterpartQuickAdd({
                     {/* Arrow Connector Indicator - Mobile */}
                     <div className="flex md:hidden items-center justify-center gap-1.5 py-0.5 text-xs font-semibold text-blue-600 dark:text-blue-400">
                         <IconArrowsExchange size={14} />
-                        <span className="text-[11px]">Diseimbangkan dengan</span>
+                        <span className="text-[11px]">Saling berpasangan (2 Arah)</span>
                     </div>
 
                     {/* Akun Lawan */}
@@ -208,9 +304,9 @@ export function CounterpartQuickAdd({
                             value={counterpartCoaUid}
                             onChange={setCounterpartCoaUid}
                             accounts={accounts}
-                            excludeUid={coaUid}
+                            excludeUids={alreadyMappedCounterpartUids}
                             disabled={!coaUid}
-                            placeholder="Pilih Akun Lawan..."
+                            placeholder={!coaUid ? "Pilih Akun Utama dulu..." : "Pilih Akun Lawan..."}
                             dialogTitle="Pilih Akun Lawan (Penyeimbang)"
                             size="md"
                         />
