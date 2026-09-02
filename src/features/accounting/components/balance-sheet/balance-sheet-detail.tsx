@@ -187,7 +187,7 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
                         <Button
                             size="sm"
                             onClick={() =>
-                                router.push(`/admin/accounting/balance-sheet?action=edit&uid=${journal.uid}`)
+                                router.push(`/admin/accounting/manual-journal?action=edit&uid=${journal.uid}`)
                             }
                             className="h-8 px-3 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs flex items-center gap-1 cursor-pointer"
                         >

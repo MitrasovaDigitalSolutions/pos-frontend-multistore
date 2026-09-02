@@ -364,10 +364,22 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                 children: [
                     {
-                        label: "Neraca",
-                        path: ROUTES.ADMIN_ACCOUNTING_BALANCESHEET,
+                        label: "Jurnal Manual",
+                        path: ROUTES.ADMIN_ACCOUNTING_MANUAL_JOURNAL,
                         permission: (roles, permissions) =>
-                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "manage_manual_journals") ||
+                            hasPermission(roles, permissions, "view_manual_journals") ||
+                            hasPermission(roles, permissions, "view_reports"),
+                    },
+                    {
+                        label: "List Jurnal Manual",
+                        path: ROUTES.ADMIN_ACCOUNTING_JOURNALS,
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_manual_journals") ||
+                            hasPermission(roles, permissions, "manage_manual_journals") ||
+                            hasPermission(roles, permissions, "view_reports"),
                     },
                     {
                         label: "Buku Besar",
@@ -385,13 +397,10 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasPermission(roles, permissions, "view_reports"),
                     },
                     {
-                        label: "Jurnal Manual",
-                        path: ROUTES.ADMIN_ACCOUNTING_JOURNALS,
+                        label: "Jurnal",
+                        path: ROUTES.ADMIN_ACCOUNTING_BALANCESHEET,
                         permission: (roles, permissions) =>
-                            hasRole(roles, "admin") ||
-                            hasPermission(roles, permissions, "view_manual_journals") ||
-                            hasPermission(roles, permissions, "manage_manual_journals") ||
-                            hasPermission(roles, permissions, "view_reports"),
+                            hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                     },
                 ],
             },

@@ -3,22 +3,18 @@
 import { Button } from "@/components/ui/button";
 import type { BalanceSheetData, BalanceSheetDetailCategory, ChartOfAccount } from "@/features/accounting/types";
 import { cn } from "@/lib/utils";
-import { useBalanceSheetStore } from "@/stores/balance-sheet-store";
 import {
     IconCoin,
-    IconEdit,
     IconPrinter,
     IconTrendingUp,
     IconWallet
 } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { PrintConfirmDialog } from "@/features/reports/components/print-confirm-dialog";
 
 import { useCoaMappings } from "@/features/accounting/api/coa-mapping-api";
 
-import { BalanceSheetDraftBanner } from "./balance-sheet-draft-banner";
 import { BalanceSheetHeaderFilters } from "./balance-sheet-header-filters";
 import { BalanceSheetSectionCard } from "./balance-sheet-section-card";
 import { BalanceSheetStatusCard } from "./balance-sheet-status-card";
@@ -44,8 +40,6 @@ export function BalanceSheetDashboard({
     data,
     flatAccounts,
 }: BalanceSheetDashboardProps) {
-    const router = useRouter();
-
     const { data: coaMappings } = useCoaMappings();
     const shuPriorYearsMapping = useMemo(() => {
         return coaMappings?.find(
@@ -67,23 +61,6 @@ export function BalanceSheetDashboard({
 
         const url = `/api/proxy/v1/reports/print/balance-sheet?${params.toString()}`;
         window.open(url, "_blank");
-    };
-
-    const {
-        lines,
-        initializeNew,
-        reset: resetStore,
-    } = useBalanceSheetStore();
-
-    const hasDraft =
-        lines.length > 0 &&
-        lines.some((l) => l.chart_of_account_uid || l.debit > 0 || l.credit > 0);
-
-    const handleStartEditing = () => {
-        if (!hasDraft) {
-            initializeNew();
-        }
-        router.push("/admin/accounting/balance-sheet?action=new");
     };
 
     // 1. Calculate section values (Assets, Liabilities, Equity, Revenue, Expense)
@@ -222,30 +199,9 @@ export function BalanceSheetDashboard({
                             <IconPrinter className="w-3.5 h-3.5" />
                             <span>Cetak PDF</span>
                         </Button>
-
-                        {data && flatAccounts && (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={handleStartEditing}
-                                className="h-8 px-3 text-xs font-bold rounded-xl border-indigo-200 hover:border-indigo-300 dark:border-indigo-900/60 dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50/20 dark:hover:bg-indigo-950/10 shadow-xs cursor-pointer flex items-center gap-1.5 transition-all"
-                            >
-                                <IconEdit className="w-3.5 h-3.5" />
-                                {hasDraft ? "Lanjutkan Draf Neraca" : "Edit Neraca"}
-                            </Button>
-                        )}
                     </div>
                 }
             />
-
-            {/* Warning draft banner */}
-            {hasDraft && (
-                <BalanceSheetDraftBanner
-                    onDiscard={() => resetStore()}
-                    onEdit={() => router.push("/admin/accounting/balance-sheet?action=new")}
-                />
-            )}
 
             {/* Balance Status Visual Card */}
             <BalanceSheetStatusCard

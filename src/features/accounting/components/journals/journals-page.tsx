@@ -73,15 +73,15 @@ export function JournalsPage() {
     }
 
     const handleEdit = (journal: ManualJournal) => {
-        router.push(`/admin/accounting/balance-sheet?action=edit&uid=${journal.uid}`);
+        router.push(`/admin/accounting/manual-journal?action=edit&uid=${journal.uid}`);
     };
 
     const handleView = (journal: ManualJournal) => {
-        router.push(`/admin/accounting/balance-sheet?action=detail&uid=${journal.uid}`);
+        router.push(`/admin/accounting/manual-journal?action=detail&uid=${journal.uid}`);
     };
 
     const handleAddClick = () => {
-        router.push(`/admin/accounting/balance-sheet?action=new`);
+        router.push(`/admin/accounting/manual-journal`);
     };
 
     const statusFilterOptions = [
