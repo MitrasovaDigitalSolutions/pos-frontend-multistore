@@ -45,8 +45,8 @@ export function BalanceSheetHeaderFilters({
     showDebitCredit,
     onShowDebitCreditChange,
     extraAction,
-    title = "Jurnal",
-    description = "Pencatatan posisi Aset, Kewajiban, dan Ekuitas Modal usaha.",
+    title = "Neraca",
+    description = "Laporan posisi keuangan yang mencakup Aset, Kewajiban, dan Ekuitas.",
     badge,
     icon,
 }: BalanceSheetHeaderFiltersProps) {
@@ -131,7 +131,7 @@ export function BalanceSheetHeaderFilters({
                                     {mode === "standard" ? (
                                         <>
                                             <IconLayoutGrid className="w-3.5 h-3.5 shrink-0" />
-                                            <span>Jurnal Standar</span>
+                                            <span>Neraca Standar</span>
                                         </>
                                     ) : (
                                         <>

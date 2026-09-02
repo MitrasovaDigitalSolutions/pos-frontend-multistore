@@ -397,7 +397,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasPermission(roles, permissions, "view_reports"),
                     },
                     {
-                        label: "Jurnal",
+                        label: "Neraca",
                         path: ROUTES.ADMIN_ACCOUNTING_BALANCESHEET,
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),

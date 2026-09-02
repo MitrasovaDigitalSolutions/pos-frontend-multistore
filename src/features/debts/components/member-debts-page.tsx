@@ -185,31 +185,46 @@ export function MemberDebtsPage() {
 
     return (
         <div className="space-y-6">
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Summary Card 1 */}
-                <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm flex items-center justify-between relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/5 rounded-full blur-xl pointer-events-none" />
-                    <div className="space-y-2">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Total Member Berhutang</span>
-                        <h3 className="text-2xl font-black text-slate-800 leading-none">{summary.total_members_with_debt}</h3>
-                        <span className="text-[9px] text-slate-400 block mt-0.5">Pelanggan aktif dengan sisa hutang &gt; 0</span>
+            {/* Compact Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-2.5 shadow-xs">
+                {/* Summary Card 1: Member Berhutang */}
+                <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100/60 dark:border-rose-900/30 min-w-0">
+                    <div className="p-2 bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-400 rounded-xl shrink-0">
+                        <IconUsers size={18} className="stroke-[2.5]" />
                     </div>
-                    <div className="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-100 shrink-0 shadow-sm shadow-rose-100/5">
-                        <IconUsers size={20} className="stroke-[2.5]" />
+                    <div className="min-w-0 flex-1">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block truncate">
+                            Member Berhutang
+                        </span>
+                        <div className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 leading-tight">
+                            {isLoading ? (
+                                <div className="h-5 w-16 bg-slate-200 dark:bg-slate-800 rounded animate-pulse my-0.5" />
+                            ) : (
+                                <span>
+                                    {summary.total_members_with_debt}{" "}
+                                    <span className="text-[11px] font-medium text-slate-400 font-normal">Orang</span>
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                {/* Summary Card 2 */}
-                <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm flex items-center justify-between relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl pointer-events-none" />
-                    <div className="space-y-2">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Total Akumulasi Piutang</span>
-                        <h3 className="text-2xl font-black text-indigo-600 leading-none tabular-nums">{formatRupiah(summary.total_hutang)}</h3>
-                        <span className="text-[9px] text-slate-400 block mt-0.5">Akumulasi seluruh sisa saldo hutang member</span>
+                {/* Summary Card 2: Total Akumulasi Piutang */}
+                <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100/60 dark:border-indigo-900/30 min-w-0">
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 rounded-xl shrink-0">
+                        <IconCash size={18} className="stroke-[2.5]" />
                     </div>
-                    <div className="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100 shrink-0 shadow-sm shadow-indigo-100/5">
-                        <IconCash size={20} className="stroke-[2.5]" />
+                    <div className="min-w-0 flex-1">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block truncate">
+                            Total Akumulasi Piutang
+                        </span>
+                        <div className="text-base sm:text-lg font-black text-indigo-600 dark:text-indigo-400 tabular-nums leading-tight">
+                            {isLoading ? (
+                                <div className="h-5 w-28 bg-slate-200 dark:bg-slate-800 rounded animate-pulse my-0.5" />
+                            ) : (
+                                formatRupiah(summary.total_hutang)
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

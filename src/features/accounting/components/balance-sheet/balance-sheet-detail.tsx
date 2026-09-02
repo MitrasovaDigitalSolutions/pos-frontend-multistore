@@ -247,6 +247,12 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
                 leftLegend="Aset"
                 rightLegend="Kewajiban & Ekuitas"
                 hideUnbalancedButton={true}
+                title={isBalanced ? "Jurnal Seimbang (Balanced)" : "Jurnal Belum Seimbang"}
+                description={
+                    isBalanced
+                        ? "Total nilai debit dan kredit telah seimbang tanpa selisih."
+                        : "Terdapat selisih saldo antara sisi debit dan kredit yang perlu diperiksa."
+                }
             />
 
             {/* Two-Column Grid */}
