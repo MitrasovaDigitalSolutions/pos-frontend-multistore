@@ -61,28 +61,46 @@ export function RolePermissionItemCard({
     const actionBadgeConfig = {
         view: {
             text: "LIHAT",
-            className: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-900/30",
+            className:
+                "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-900/30",
         },
         manage: {
             text: "KELOLA",
-            className: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900/30",
+            className:
+                "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900/30",
         },
         auth: {
             text: "AKSI KASIR",
-            className: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-900/30",
+            className:
+                "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-900/30",
         },
     }[actionType];
 
+    const handleClick = () => {
+        if (!isDisabled && !isPending) {
+            onToggle();
+        }
+    };
+
     return (
         <div
+            role="button"
+            tabIndex={0}
+            onClick={handleClick}
+            onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleClick();
+                }
+            }}
             className={cn(
-                "p-3 rounded-xl border transition-all duration-150 flex items-start justify-between gap-2.5",
+                "group relative p-3 rounded-xl border transition-all duration-150 flex items-start justify-between gap-3 cursor-pointer select-none outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
                 isAssigned
-                    ? "bg-white dark:bg-slate-900 border-emerald-300/80 shadow-2xs dark:border-emerald-800/60"
-                    : "bg-white/70 dark:bg-slate-900/50 border-slate-200/70 hover:border-slate-300 dark:border-slate-800/80"
+                    ? "bg-emerald-50/30 border-emerald-300/80 shadow-2xs hover:border-emerald-400 dark:bg-emerald-950/15 dark:border-emerald-800/60"
+                    : "bg-white hover:bg-slate-50/70 border-slate-200/80 hover:border-slate-300 dark:bg-slate-900/50 dark:border-slate-800/80 dark:hover:border-slate-700"
             )}
         >
-            <div className="space-y-1 min-w-0 flex-1 pr-1">
+            <div className="space-y-1.5 min-w-0 flex-1 pr-1">
                 {/* Header: Action Badge + Code + Status */}
                 <div className="flex items-center gap-1.5 flex-wrap">
                     <span
@@ -107,7 +125,7 @@ export function RolePermissionItemCard({
                 </div>
 
                 {/* Title */}
-                <h5 className="text-xs font-bold text-slate-900 dark:text-slate-100 leading-snug">
+                <h5 className="text-xs font-bold text-slate-900 dark:text-slate-100 leading-snug group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
                     <HighlightText text={label} highlight={searchQuery} />
                 </h5>
 
@@ -118,7 +136,7 @@ export function RolePermissionItemCard({
             </div>
 
             {/* Switch & Spinner */}
-            <div className="flex items-center gap-2 shrink-0 pt-0.5">
+            <div className="flex items-center gap-2 shrink-0 pt-0.5 pointer-events-none">
                 {isPending && (
                     <IconLoader
                         size={14}
@@ -127,9 +145,8 @@ export function RolePermissionItemCard({
                 )}
                 <Switch
                     checked={isAssigned}
-                    onCheckedChange={onToggle}
                     disabled={isDisabled || isPending}
-                    className="cursor-pointer"
+                    tabIndex={-1}
                 />
             </div>
         </div>

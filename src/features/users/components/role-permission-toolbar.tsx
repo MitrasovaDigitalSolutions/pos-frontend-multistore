@@ -2,6 +2,7 @@
 
 import { AppButton } from "@/components/shared/app-button";
 import { Input } from "@/components/ui/input";
+import { Scrollable } from "@/components/ui/scrollable";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import {
@@ -60,7 +61,7 @@ export function RolePermissionToolbar({
                         <button
                             type="button"
                             onClick={() => onSearchChange("")}
-                            className="absolute inset-y-0 right-2.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                            className="absolute inset-y-0 right-2.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                         >
                             <IconX size={14} />
                         </button>
@@ -106,54 +107,62 @@ export function RolePermissionToolbar({
                 </div>
             </div>
 
-            {/* Bottom Row: Category Filter Chips Strip */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 pt-1 scrollbar-thin">
-                <button
-                    type="button"
-                    onClick={() => onSelectCategory("all")}
-                    className={cn(
-                        "px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-colors cursor-pointer shrink-0 border",
-                        selectedCategoryId === "all"
-                            ? "bg-slate-900 text-white border-slate-900 dark:bg-emerald-600 dark:border-emerald-600"
-                            : "bg-slate-100/70 text-slate-600 hover:bg-slate-200/70 border-slate-200/60 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
-                    )}
+            {/* Bottom Row: Category Filter Chips Strip using custom Scrollable component */}
+            <div className="flex items-center gap-2 pt-0.5">
+                <Scrollable
+                    orientation="horizontal"
+                    className="flex-1 min-w-0"
+                    scrollbarClassName="h-1.5"
                 >
-                    Semua Modul ({totalCount})
-                </button>
-
-                {categories.map((cat) => {
-                    const isSelected = selectedCategoryId === cat.id;
-                    const count = cat.items.length;
-
-                    return (
+                    <div className="flex items-center gap-1.5 pb-1 w-max">
                         <button
-                            key={cat.id}
                             type="button"
-                            onClick={() => onSelectCategory(cat.id)}
+                            onClick={() => onSelectCategory("all")}
                             className={cn(
-                                "px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-colors cursor-pointer shrink-0 border flex items-center gap-1.5",
-                                isSelected
-                                    ? "bg-emerald-600 text-white border-emerald-600 shadow-2xs"
+                                "px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-colors cursor-pointer shrink-0 border",
+                                selectedCategoryId === "all"
+                                    ? "bg-slate-900 text-white border-slate-900 dark:bg-emerald-600 dark:border-emerald-600"
                                     : "bg-slate-100/70 text-slate-600 hover:bg-slate-200/70 border-slate-200/60 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
                             )}
                         >
-                            <span>{cat.shortLabel || cat.label}</span>
-                            <span
-                                className={cn(
-                                    "text-[9.5px] px-1.5 py-0.2 rounded-md font-mono",
-                                    isSelected
-                                        ? "bg-emerald-700 text-white"
-                                        : "bg-slate-200/70 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
-                                )}
-                            >
-                                {count}
-                            </span>
+                            Semua Modul ({totalCount})
                         </button>
-                    );
-                })}
+
+                        {categories.map((cat) => {
+                            const isSelected = selectedCategoryId === cat.id;
+                            const count = cat.items.length;
+
+                            return (
+                                <button
+                                    key={cat.id}
+                                    type="button"
+                                    onClick={() => onSelectCategory(cat.id)}
+                                    className={cn(
+                                        "px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-colors cursor-pointer shrink-0 border flex items-center gap-1.5",
+                                        isSelected
+                                            ? "bg-emerald-600 text-white border-emerald-600 shadow-2xs"
+                                            : "bg-slate-100/70 text-slate-600 hover:bg-slate-200/70 border-slate-200/60 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                                    )}
+                                >
+                                    <span>{cat.shortLabel || cat.label}</span>
+                                    <span
+                                        className={cn(
+                                            "text-[9.5px] px-1.5 py-0.2 rounded-md font-mono",
+                                            isSelected
+                                                ? "bg-emerald-700 text-white"
+                                                : "bg-slate-200/70 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
+                                        )}
+                                    >
+                                        {count}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </Scrollable>
 
                 {/* Visible Count Indicator */}
-                <div className="ml-auto shrink-0 pl-2 text-[10px] text-slate-400 font-medium">
+                <div className="shrink-0 pl-2 text-[10.5px] text-slate-400 font-medium whitespace-nowrap hidden sm:block">
                     {visibleCount} ditampilkan
                 </div>
             </div>

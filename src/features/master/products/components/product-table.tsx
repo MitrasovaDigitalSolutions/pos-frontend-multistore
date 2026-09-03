@@ -57,7 +57,7 @@ export function ProductTable({
     onPageChange,
     onPerPageChange,
     onEdit,
-    onManageStores,
+    onManageStores: _onManageStores,
     onAddClick,
     isLoading = false,
     isFetching = false,
@@ -72,11 +72,6 @@ export function ProductTable({
     const hasManageProducts =
         hasRole(userRoles, "admin") ||
         hasPermission(userRoles, userPermissions, "manage_products");
-
-    const hasManageStores =
-        hasRole(userRoles, "admin") ||
-        hasPermission(userRoles, userPermissions, "view_stores") ||
-        hasPermission(userRoles, userPermissions, "manage_stores");
 
     const activeStoreUid = useActiveStoreStore((s) => s.activeStoreUid);
     const userStores = session?.user?.stores || [];
@@ -349,6 +344,7 @@ export function ProductTable({
 
             return baseColumns;
         },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         [hasManageProducts],
     );
 

@@ -64,7 +64,7 @@ export function RolePermissionCategory({
                 >
                     <div
                         className={cn(
-                            "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border mt-0.5",
+                            "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border mt-0.5 shadow-2xs",
                             category.colorClass
                         )}
                     >
@@ -82,8 +82,8 @@ export function RolePermissionCategory({
                                     isAllActive
                                         ? "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800"
                                         : activeCount > 0
-                                            ? "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800"
-                                            : "bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
+                                          ? "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800"
+                                          : "bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
                                 )}
                             >
                                 {activeCount} / {totalCount} Aktif
@@ -110,7 +110,7 @@ export function RolePermissionCategory({
                                     variant="ghost"
                                     size="xs"
                                     onClick={() => onBulkAction("assign")}
-                                    className="h-6.5 text-[10px] font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border border-emerald-200/60 px-2 rounded-md dark:border-emerald-900/60 dark:hover:bg-emerald-950/40"
+                                    className="h-7 text-[11px] font-bold text-emerald-700 hover:text-emerald-800 hover:bg-emerald-100/70 border border-emerald-200/80 px-2.5 rounded-lg dark:text-emerald-400 dark:border-emerald-900/60 dark:hover:bg-emerald-950/40"
                                 >
                                     Pilih Semua
                                 </AppButton>
@@ -121,7 +121,7 @@ export function RolePermissionCategory({
                                     variant="ghost"
                                     size="xs"
                                     onClick={() => onBulkAction("revoke")}
-                                    className="h-6.5 text-[10px] font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200/60 px-2 rounded-md dark:border-rose-900/60 dark:hover:bg-rose-950/40"
+                                    className="h-7 text-[11px] font-bold text-rose-700 hover:text-rose-800 hover:bg-rose-100/70 border border-rose-200/80 px-2.5 rounded-lg dark:text-rose-400 dark:border-rose-900/60 dark:hover:bg-rose-950/40"
                                 >
                                     Cabut Semua
                                 </AppButton>
@@ -143,7 +143,7 @@ export function RolePermissionCategory({
 
             {/* Collapsible Content: 2-Column Grid */}
             {isExpanded && (
-                <div className="p-3 sm:p-4 bg-slate-50/30 dark:bg-slate-900/20 border-t border-slate-100 dark:border-slate-800">
+                <div className="p-3 sm:p-4 bg-slate-50/40 dark:bg-slate-900/20 border-t border-slate-100 dark:border-slate-800">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                         {category.items.map((perm) => {
                             const meta = PERMISSION_METADATA[perm.name] || {

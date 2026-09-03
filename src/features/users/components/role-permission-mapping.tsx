@@ -12,9 +12,9 @@ import {
 } from "@tabler/icons-react";
 import { ROLE_METADATA } from "../constants/role-permission-constants";
 import { useRolePermissions } from "../hooks/use-role-permissions";
+import { RoleListPanel } from "./role-list-panel";
 import { RolePermissionCategory } from "./role-permission-category";
 import { RolePermissionToolbar } from "./role-permission-toolbar";
-import { RoleSelectorBar } from "./role-selector-bar";
 
 export function RolePermissionMapping() {
     const {
@@ -50,22 +50,22 @@ export function RolePermissionMapping() {
 
     if (isLoading) {
         return (
-            <div className="space-y-4 pb-28 sm:pb-8">
-                {/* Role bar skeleton */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                        <Skeleton key={i} className="h-24 w-full rounded-xl" />
-                    ))}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start pb-28 sm:pb-8">
+                {/* Left Column Skeleton */}
+                <div className="lg:col-span-4 xl:col-span-4 space-y-4">
+                    <Skeleton className="h-80 w-full rounded-2xl" />
+                    <Skeleton className="h-28 w-full rounded-xl" />
                 </div>
 
-                {/* Toolbar skeleton */}
-                <Skeleton className="h-20 w-full rounded-xl" />
-
-                {/* Categories skeleton */}
-                <div className="space-y-3">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                        <Skeleton key={i} className="h-32 w-full rounded-2xl" />
-                    ))}
+                {/* Right Column Skeleton */}
+                <div className="lg:col-span-8 xl:col-span-8 space-y-4">
+                    <Skeleton className="h-24 w-full rounded-2xl" />
+                    <Skeleton className="h-20 w-full rounded-xl" />
+                    <div className="space-y-3">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <Skeleton key={i} className="h-32 w-full rounded-2xl" />
+                        ))}
+                    </div>
                 </div>
             </div>
         );
@@ -112,119 +112,127 @@ export function RolePermissionMapping() {
         : null;
 
     return (
-        <div className="space-y-4 pb-28 sm:pb-8">
-            {/* 1. Compact Role Selector Bar */}
-            <RoleSelectorBar
-                roles={roles}
-                activeRoleName={activeRoleName}
-                onSelectRole={setSelectedRoleName}
-            />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start pb-28 sm:pb-8">
+            {/* Left Column: Roles Panel (Sticky on Desktop) */}
+            <div className="lg:col-span-4 xl:col-span-4 lg:sticky lg:top-4 self-start space-y-4">
+                <RoleListPanel
+                    roles={roles}
+                    activeRoleName={activeRoleName}
+                    onSelectRole={setSelectedRoleName}
+                />
+            </div>
 
-            {/* 2. Active Role Summary Card */}
-            {selectedRole && currentRoleMeta && (
-                <div className="bg-gradient-to-r from-emerald-50/70 via-white to-slate-50 border border-emerald-200/80 dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900 dark:border-emerald-800/40 rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                            <IconKey size={18} />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                                    Konfigurasi Hak Akses:{" "}
-                                    <span className="text-emerald-700 dark:text-emerald-400">
-                                        {currentRoleMeta.label}
-                                    </span>
-                                </h3>
-                                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800 flex items-center gap-1">
-                                    <IconCheck size={11} strokeWidth={3} />
-                                    {selectedRoleStats.assigned} dari {selectedRoleStats.total} Aktif ({selectedRoleStats.percentage}%)
-                                </span>
+            {/* Right Column: Role Permissions Workspace */}
+            <div className="lg:col-span-8 xl:col-span-8 space-y-4">
+                {/* 1. Active Role Summary Banner */}
+                {selectedRole && currentRoleMeta && (
+                    <div className="bg-gradient-to-r from-emerald-50/80 via-white to-slate-50 border border-emerald-200/80 dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900 dark:border-emerald-800/40 rounded-2xl p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3.5">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                                <IconKey size={20} />
                             </div>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-                                {currentRoleMeta.desc}
-                            </p>
+                            <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
+                                        Konfigurasi Hak Akses:{" "}
+                                        <span className="text-emerald-700 dark:text-emerald-400 capitalize">
+                                            {currentRoleMeta.label}
+                                        </span>
+                                    </h3>
+                                    <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800 flex items-center gap-1">
+                                        <IconCheck size={11} strokeWidth={3} />
+                                        {selectedRoleStats.assigned} dari {selectedRoleStats.total} Aktif ({selectedRoleStats.percentage}%)
+                                    </span>
+                                </div>
+                                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                    {currentRoleMeta.desc}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium shrink-0 bg-white/80 dark:bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-200/70 dark:border-slate-700 shadow-2xs">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <span>Tersimpan Otomatis</span>
                         </div>
                     </div>
+                )}
 
-                    <div className="flex items-center gap-2 text-[11px] text-slate-400 font-medium self-end sm:self-center">
-                        <span>Perubahan otomatis tersimpan</span>
-                    </div>
-                </div>
-            )}
+                {/* 2. Unified Search & Category Filter Toolbar */}
+                <RolePermissionToolbar
+                    searchQuery={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    categories={categories}
+                    selectedCategoryId={selectedCategoryId}
+                    onSelectCategory={setSelectedCategoryId}
+                    onlyAssigned={onlyAssigned}
+                    onToggleOnlyAssigned={setOnlyAssigned}
+                    visibleCount={visiblePermissionsCount}
+                    totalCount={totalPermissionsCount}
+                    onExpandAll={handleExpandAll}
+                    onCollapseAll={handleCollapseAll}
+                />
 
-            {/* 3. Compact Search & Category Filter Toolbar */}
-            <RolePermissionToolbar
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-                categories={categories}
-                selectedCategoryId={selectedCategoryId}
-                onSelectCategory={setSelectedCategoryId}
-                onlyAssigned={onlyAssigned}
-                onToggleOnlyAssigned={setOnlyAssigned}
-                visibleCount={visiblePermissionsCount}
-                totalCount={totalPermissionsCount}
-                onExpandAll={handleExpandAll}
-                onCollapseAll={handleCollapseAll}
-            />
+                {/* 3. Permissions Categories Accordion Card */}
+                <Card className="border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-2xs bg-white dark:bg-slate-900 overflow-hidden py-0">
+                    <CardContent className="p-0 divide-y divide-slate-100 dark:divide-slate-800">
+                        {filteredCategories.length > 0 ? (
+                            filteredCategories.map((cat) => {
+                                const isExpanded = isCategoryExpanded(cat.id);
+                                const isBulkLoading = bulkLoadingCategories[cat.id] || false;
 
-            {/* 4. Permissions Categories Accordion Card */}
-            <Card className="border-slate-200/80 dark:border-slate-800 rounded-xl shadow-2xs bg-white dark:bg-slate-900 overflow-hidden py-0">
-                <CardContent className="p-0 divide-y divide-slate-100 dark:divide-slate-800">
-                    {filteredCategories.length > 0 ? (
-                        filteredCategories.map((cat) => {
-                            const isExpanded = isCategoryExpanded(cat.id);
-                            const isBulkLoading = bulkLoadingCategories[cat.id] || false;
-
-                            return (
-                                <RolePermissionCategory
-                                    key={cat.id}
-                                    category={cat}
-                                    selectedRole={selectedRole}
-                                    searchQuery={searchQuery}
-                                    isExpanded={isExpanded}
-                                    isBulkLoading={isBulkLoading}
-                                    pendingToggles={pendingToggles}
-                                    isMutating={isMutating}
-                                    onToggleCategory={() => toggleCategory(cat.id)}
-                                    onTogglePermission={handleTogglePermission}
-                                    onBulkAction={(action) =>
-                                        handleBulkCategoryAction(cat.id, cat.items, action)
-                                    }
-                                />
-                            );
-                        })
-                    ) : (
-                        <div className="p-10 text-center text-slate-400 flex flex-col items-center justify-center gap-2.5">
-                            <IconAlertCircle size={32} className="text-slate-300 dark:text-slate-600" />
-                            <div>
-                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                    Tidak ada hak akses yang sesuai filter
-                                </p>
-                                {searchQuery && (
-                                    <p className="text-[11px] text-slate-400 mt-0.5">
-                                        Pencarian &ldquo;{searchQuery}&rdquo; tidak cocok dengan nama atau kode izin apapun.
+                                return (
+                                    <RolePermissionCategory
+                                        key={cat.id}
+                                        category={cat}
+                                        selectedRole={selectedRole}
+                                        searchQuery={searchQuery}
+                                        isExpanded={isExpanded}
+                                        isBulkLoading={isBulkLoading}
+                                        pendingToggles={pendingToggles}
+                                        isMutating={isMutating}
+                                        onToggleCategory={() => toggleCategory(cat.id)}
+                                        onTogglePermission={handleTogglePermission}
+                                        onBulkAction={(action) =>
+                                            handleBulkCategoryAction(cat.id, cat.items, action)
+                                        }
+                                    />
+                                );
+                            })
+                        ) : (
+                            <div className="p-10 sm:p-12 text-center text-slate-400 flex flex-col items-center justify-center gap-3">
+                                <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                                    <IconAlertCircle size={24} />
+                                </div>
+                                <div className="max-w-sm">
+                                    <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300">
+                                        Tidak ada hak akses yang sesuai
                                     </p>
+                                    <p className="text-[11px] text-slate-400 mt-1">
+                                        {searchQuery
+                                            ? `Pencarian "${searchQuery}" tidak cocok dengan nama atau kode izin apapun.`
+                                            : "Tidak ada izin aktif yang cocok dengan filter yang Anda tentukan."}
+                                    </p>
+                                </div>
+                                {(searchQuery || selectedCategoryId !== "all" || onlyAssigned) && (
+                                    <AppButton
+                                        type="button"
+                                        variant="outline"
+                                        size="xs"
+                                        onClick={() => {
+                                            setSearchQuery("");
+                                            setSelectedCategoryId("all");
+                                            setOnlyAssigned(false);
+                                        }}
+                                        className="text-xs mt-1"
+                                    >
+                                        Reset Semua Filter
+                                    </AppButton>
                                 )}
                             </div>
-                            {(searchQuery || selectedCategoryId !== "all" || onlyAssigned) && (
-                                <AppButton
-                                    type="button"
-                                    variant="outline"
-                                    size="xs"
-                                    onClick={() => {
-                                        setSearchQuery("");
-                                        setSelectedCategoryId("all");
-                                        setOnlyAssigned(false);
-                                    }}
-                                    className="text-xs mt-1"
-                                >
-                                    Reset Semua Filter
-                                </AppButton>
-                            )}
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 }
