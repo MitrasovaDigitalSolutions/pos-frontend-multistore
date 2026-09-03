@@ -1,9 +1,10 @@
 "use client";
 
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { FormSelect, type FormSelectProps } from "@/components/forms/form-select";
 import { FormRadioChips } from "@/components/forms/form-radio-chips";
+import { FormSwitch } from "@/components/forms/form-switch";
 import { IconBarcode, IconBox, IconPackage, IconTools } from "@tabler/icons-react";
 import type { Category } from "@/features/master/categories/types";
 import type { Brand } from "@/features/master/brands/types";
@@ -33,6 +34,8 @@ export function ProductIdentityColumn({
         register,
         formState: { errors },
     } = useFormContext<ProductInput>();
+
+    const isActive = useWatch<ProductInput>({ name: "is_active" });
 
     return (
         <div className="bg-white border border-slate-200/80 rounded-2xl p-3.5 shadow-2xs space-y-2.5 flex flex-col justify-between">
@@ -118,6 +121,20 @@ export function ProductIdentityColumn({
                         searchPlaceholder="Cari brand..."
                         disabled={disabled}
                         size="sm"
+                    />
+                </div>
+
+                {/* Status Aktif / Nonaktif Switch */}
+                <div className="pt-1">
+                    <FormSwitch<ProductInput>
+                        name="is_active"
+                        label={isActive !== false ? "Status Produk: Aktif" : "Status Produk: Nonaktif"}
+                        description={
+                            isActive !== false
+                                ? "Produk aktif dan dapat diperjualbelikan serta didistribusikan."
+                                : "Produk dinonaktifkan sementara dari katalog dan transaksi kasir."
+                        }
+                        disabled={disabled}
                     />
                 </div>
             </div>

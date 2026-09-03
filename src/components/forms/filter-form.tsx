@@ -46,6 +46,7 @@ function formatFilterValue(val: string): string {
         closed: "Ditutup",
         active: "Aktif",
         inactive: "Non-Aktif",
+        archived: "Diarsipkan",
         true: "Ya",
         false: "Tidak",
     };

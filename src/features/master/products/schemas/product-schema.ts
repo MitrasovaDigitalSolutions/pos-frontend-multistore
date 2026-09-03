@@ -18,6 +18,8 @@ export const productSchema = z.object({
     is_jasa: z.boolean().optional().default(false),
     is_raw_material: z.boolean().optional().default(false),
     is_grosir: z.boolean().optional().default(false),
+    is_active: z.boolean().optional().default(true),
+    status: z.enum(["active", "inactive", "archived"]).optional().default("active"),
 });
 
 export type ProductInput = z.infer<typeof productSchema>;

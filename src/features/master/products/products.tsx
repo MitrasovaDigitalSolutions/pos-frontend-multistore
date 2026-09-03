@@ -86,14 +86,27 @@ export function Products() {
   }
 
   const handleFilterSubmit = (data: ProductFilterValues) => {
+    let status: string | undefined = undefined;
+    let include_archived: number | undefined = undefined;
+
+    if (data.status === "archived") {
+      status = "archived";
+      include_archived = 1;
+    } else if (data.status === "all") {
+      status = undefined;
+      include_archived = 1;
+    } else {
+      status = data.status;
+    }
+
     setAppliedFilters({
       search: data.search || undefined,
-      status: data.status !== "all" ? data.status : undefined,
+      status,
       category_uid: data.category_uid !== "all" ? data.category_uid : undefined,
       brand_uid: data.brand_uid !== "all" ? data.brand_uid : undefined,
       is_jasa: data.product_type === "jasa" ? "1" : undefined,
       is_raw_material: data.product_type === "raw_material" ? "1" : (data.product_type === "finished_good" ? "0" : undefined),
-      include_archived: data.status === "archived" ? 1 : undefined,
+      include_archived,
     });
     setPage(1);
   };
@@ -155,6 +168,7 @@ export function Products() {
       is_jasa: false,
       is_raw_material: false,
       is_grosir: false,
+      is_active: true,
     },
   });
 
@@ -213,7 +227,7 @@ export function Products() {
     { value: "all", label: "Semua Status" },
     { value: "active", label: "Aktif" },
     { value: "inactive", label: "Nonaktif" },
-    { value: "archived", label: "Diarsipkan" },
+    { value: "archived", label: "Dihapus / Diarsipkan" },
   ];
 
   const productTypeRadioOptions: RadioChipOption[] = [

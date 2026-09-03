@@ -56,8 +56,10 @@ export function ProductCatalog() {
         brand_uid?: string;
         is_jasa?: string;
         is_raw_material?: string;
+        include_archived?: "1";
     }>(() => ({
         search: searchParam || undefined,
+        status: "active",
     }));
 
     const { data: categoriesRes } = useCategories({ per_page: 1000 });
@@ -68,7 +70,7 @@ export function ProductCatalog() {
             search: searchParam,
             category_uid: "all",
             brand_uid: "all",
-            status: "all",
+            status: "active",
             product_type: "all",
         },
     });
@@ -95,6 +97,7 @@ export function ProductCatalog() {
             image: null,
             is_jasa: false,
             is_raw_material: false,
+            is_active: true,
         },
     });
 
@@ -123,6 +126,7 @@ export function ProductCatalog() {
             image: null,
             is_jasa: !!product.is_jasa,
             is_raw_material: !!product.is_raw_material,
+            is_active: product.status !== "inactive",
         });
         setIsEditDialogOpen(true);
     };
@@ -152,6 +156,7 @@ export function ProductCatalog() {
             image: null,
             is_jasa: false,
             is_raw_material: false,
+            is_active: true,
         });
         setIsEditDialogOpen(true);
     };
@@ -168,13 +173,27 @@ export function ProductCatalog() {
     }
 
     const handleFilterSubmit = (data: CatalogFilterValues) => {
+        let status: string | undefined = undefined;
+        let include_archived: "1" | undefined = undefined;
+
+        if (data.status === "archived") {
+            status = "archived";
+            include_archived = "1";
+        } else if (data.status === "all") {
+            status = undefined;
+            include_archived = "1";
+        } else {
+            status = data.status;
+        }
+
         setAppliedFilters({
             search: data.search || undefined,
-            status: data.status !== "all" ? data.status : undefined,
+            status,
             category_uid: data.category_uid !== "all" ? data.category_uid : undefined,
             brand_uid: data.brand_uid !== "all" ? data.brand_uid : undefined,
             is_jasa: data.product_type === "jasa" ? "1" : undefined,
             is_raw_material: data.product_type === "raw_material" ? "1" : (data.product_type === "finished_good" ? "0" : undefined),
+            include_archived,
         });
         setPage(1);
     };
@@ -192,10 +211,12 @@ export function ProductCatalog() {
             search: "",
             category_uid: "all",
             brand_uid: "all",
-            status: "all",
+            status: "active",
             product_type: "all",
         });
-        setAppliedFilters({});
+        setAppliedFilters({
+            status: "active",
+        });
         setPage(1);
     };
 
@@ -232,6 +253,7 @@ export function ProductCatalog() {
         { value: "all", label: "Semua Status" },
         { value: "active", label: "Aktif" },
         { value: "inactive", label: "Nonaktif" },
+        { value: "archived", label: "Dihapus / Diarsipkan" },
     ];
 
     const productTypeRadioOptions: RadioChipOption[] = [
