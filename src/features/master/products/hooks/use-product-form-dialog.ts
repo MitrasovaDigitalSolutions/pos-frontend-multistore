@@ -9,7 +9,7 @@ import { queryKeys } from "@/lib/query-keys";
 import { getImageUrl } from "@/lib/utils";
 import { useCategorySelectConfig } from "@/features/master/categories/hooks/use-category-select";
 import { useBrandSelectConfig } from "@/features/master/brands/hooks/use-brand-select";
-import type { Brand } from "@/features/master/brands/types";
+import { apiPatch } from "@/shared/api/api-client";
 import { useCreateProduct, useUpdateProduct } from "../api/products-api";
 import { productSchema, type ProductInput } from "../schemas/product-schema";
 import type { Product } from "../types";
@@ -34,6 +34,8 @@ export const defaultProductValues: ProductInput = {
     is_jasa: false,
     is_raw_material: false,
     is_grosir: false,
+    is_active: true,
+    status: "active",
 };
 
 interface UseProductFormDialogProps {
@@ -104,6 +106,8 @@ export function useProductFormDialog({
                     is_jasa: !!editingProduct.is_jasa,
                     is_raw_material: !!editingProduct.is_raw_material,
                     is_grosir: Boolean(editingProduct.is_grosir ?? storeProduct?.is_grosir ?? false),
+                    is_active: editingProduct.status !== "inactive",
+                    status: editingProduct.status,
                 });
             } else if (duplicateProduct) {
                 const storeProduct = duplicateProduct.product_stores?.[0];
@@ -137,6 +141,8 @@ export function useProductFormDialog({
                     is_jasa: !!duplicateProduct.is_jasa,
                     is_raw_material: !!duplicateProduct.is_raw_material,
                     is_grosir: Boolean(duplicateProduct.is_grosir ?? storeProduct?.is_grosir ?? false),
+                    is_active: true,
+                    status: "active",
                 });
             } else {
                 reset(defaultProductValues);
@@ -329,12 +335,21 @@ export function useProductFormDialog({
         formData.append("is_jasa", data.is_jasa ? "1" : "0");
         formData.append("is_raw_material", data.is_raw_material ? "1" : "0");
 
+        const targetStatus: "active" | "inactive" = data.is_active !== false ? "active" : "inactive";
+
         if (editingProduct) {
-            formData.append("status", editingProduct.status);
+            formData.append("status", targetStatus);
             updateProduct.mutate(
                 { uid: editingProduct.uid, data: formData },
                 {
-                    onSuccess: (res) => {
+                    onSuccess: async (res) => {
+                        if (editingProduct.status !== targetStatus && editingProduct.status !== "archived") {
+                            try {
+                                await apiPatch(`/v1/products/${editingProduct.uid}/status`, { status: targetStatus });
+                            } catch {
+                                // Handled by formData or silent fallback
+                            }
+                        }
                         toast.success(res.message || "Produk berhasil diperbarui!");
                         onOpenChange(false);
                     },
@@ -344,6 +359,7 @@ export function useProductFormDialog({
                 },
             );
         } else {
+            formData.append("status", targetStatus);
             createProduct.mutate(formData, {
                 onSuccess: (res) => {
                     toast.success(res.message || "Produk berhasil ditambahkan!");

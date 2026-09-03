@@ -9,11 +9,12 @@ import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
 import { getImageUrl } from "@/lib/utils";
 import { useActiveStoreStore } from "@/stores/active-store-store";
-import { IconCheck, IconInfoCircle, IconLoader2, IconPackage, IconTag, IconTrendingUp } from "@tabler/icons-react";
+import { IconBarcode, IconCheck, IconInfoCircle, IconLoader2, IconPackage, IconTag, IconTrendingUp } from "@tabler/icons-react";
 import { useEffect } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { useUpdateProductStore } from "../api/product-store-api";
+import { useToggleProductStatus } from "../api/products-api";
 import type { Product } from "../types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 
@@ -32,6 +33,7 @@ interface StoreProductEditFormValues {
     is_grosir?: boolean;
     margin: number | null;
     stok: number;
+    is_active?: boolean;
 }
 
 export function StoreProductEditDialog({
@@ -52,8 +54,11 @@ export function StoreProductEditDialog({
             is_grosir: false,
             margin: null,
             stok: 0,
+            is_active: true,
         },
     });
+
+    const toggleStatus = useToggleProductStatus();
 
     const { handleSubmit, reset, control, setValue } = methods;
 
@@ -76,6 +81,7 @@ export function StoreProductEditDialog({
                 is_grosir: Boolean(isGrosirFlag),
                 margin: product.margin ?? activeStore?.margin ?? null,
                 stok: product.stok ?? activeStore?.stok ?? 0,
+                is_active: product.status !== "inactive",
             });
         }
     }, [open, product, activeStoreUid, reset]);
@@ -88,6 +94,7 @@ export function StoreProductEditDialog({
     const watchHargaGrosir = useWatch({ control, name: "harga_grosir" });
     const watchMinQtyGrosir = useWatch({ control, name: "min_qty_grosir" });
     const watchHargaGrosirTotal = useWatch({ control, name: "harga_grosir_total" });
+    const watchIsActive = useWatch({ control, name: "is_active" });
 
     useEffect(() => {
         const activeId = document.activeElement?.id;
@@ -148,6 +155,8 @@ export function StoreProductEditDialog({
         }
 
         const isGrosir = Boolean(data.is_grosir);
+        const targetStatus: "active" | "inactive" = data.is_active !== false ? "active" : "inactive";
+        const statusChanged = product.status !== targetStatus;
 
         updateProductStore.mutate(
             {
@@ -161,8 +170,15 @@ export function StoreProductEditDialog({
                 margin: data.margin ?? undefined,
             },
             {
-                onSuccess: () => {
-                    toast.success(`Harga "${product.nama}" berhasil diperbarui!`);
+                onSuccess: async () => {
+                    if (statusChanged && product.status !== "archived") {
+                        try {
+                            await toggleStatus.mutateAsync({ uid: product.uid, status: targetStatus });
+                        } catch {
+                            // Handled by toggleStatus or fallback
+                        }
+                    }
+                    toast.success(`Produk "${product.nama}" berhasil diperbarui!`);
                     onOpenChange(false);
                 },
                 onError: (err) => {
@@ -213,57 +229,81 @@ export function StoreProductEditDialog({
                                                 <IconPackage size={22} />
                                             </div>
                                         )}
-                                        <div className="flex-1 min-w-0 space-y-1">
+                                        <div className="flex-1 min-w-0 space-y-1.5">
+                                            {/* Baris 1: Tipe Produk + Barcode + Stok (Presisi & Pas di Tengah) */}
                                             <div className="flex items-center gap-1.5 flex-wrap">
-                                                <span className="font-bold text-xs text-slate-900 leading-tight truncate">
-                                                    {product.nama}
-                                                </span>
                                                 {product.is_jasa && (
-                                                    <Badge variant="info" className="text-[9px] px-1.5 py-0 font-bold">
-                                                        Jasa
+                                                    <Badge variant="info" className="h-5 px-2.5 py-0 text-[10px] font-bold leading-none inline-flex items-center justify-center">
+                                                        <span className="translate-y-px">Jasa</span>
                                                     </Badge>
                                                 )}
                                                 {product.is_raw_material && (
-                                                    <Badge variant="warning" className="text-[9px] px-1.5 py-0 font-bold">
-                                                        Bahan Baku
+                                                    <Badge variant="warning" className="h-5 px-2.5 py-0 text-[10px] font-bold leading-none inline-flex items-center justify-center">
+                                                        <span className="translate-y-px">Bahan Baku</span>
                                                     </Badge>
                                                 )}
+                                                {!product.is_jasa && !product.is_raw_material && (
+                                                    <Badge variant="secondary" className="h-5 px-2.5 py-0 text-[10px] font-bold leading-none inline-flex items-center justify-center">
+                                                        <span className="translate-y-px">Barang Jadi</span>
+                                                    </Badge>
+                                                )}
+
+                                                {product.barcode && (
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="h-5 px-2.5 py-0 bg-white border-slate-200 text-slate-700 font-mono font-bold text-[10px] gap-1.5 shadow-2xs leading-none inline-flex items-center justify-center"
+                                                    >
+                                                        <IconBarcode size={12} className="text-slate-400 shrink-0" />
+                                                        <span className="translate-y-px">{product.barcode}</span>
+                                                    </Badge>
+                                                )}
+
                                                 {!product.is_jasa && (
                                                     product.stok > 10 ? (
-                                                        <Badge variant="success" className="text-[9px] px-1.5 py-0 font-bold">
-                                                            Stok: {product.stok} Pcs
+                                                        <Badge variant="success" className="h-5 px-2.5 py-0 text-[10px] font-bold leading-none inline-flex items-center justify-center">
+                                                            <span className="translate-y-px">Stok: {product.stok} Pcs</span>
                                                         </Badge>
                                                     ) : product.stok > 0 ? (
-                                                        <Badge variant="warning" className="text-[9px] px-1.5 py-0 font-bold">
-                                                            Stok: {product.stok} Pcs
+                                                        <Badge variant="warning" className="h-5 px-2.5 py-0 text-[10px] font-bold leading-none inline-flex items-center justify-center">
+                                                            <span className="translate-y-px">Stok: {product.stok} Pcs</span>
                                                         </Badge>
                                                     ) : (
-                                                        <Badge variant="destructive" className="text-[9px] px-1.5 py-0 font-bold">
-                                                            Stok: 0 Pcs
+                                                        <Badge variant="destructive" className="h-5 px-2.5 py-0 text-[10px] font-bold leading-none inline-flex items-center justify-center">
+                                                            <span className="translate-y-px">Stok: 0 Pcs</span>
                                                         </Badge>
                                                     )
                                                 )}
                                             </div>
-                                            <div className="flex items-center gap-2 flex-wrap text-[11px] text-slate-500">
-                                                {product.barcode && (
-                                                    <span className="font-mono bg-white border border-slate-200 px-1.5 py-0.5 rounded text-[10px] font-semibold text-slate-700">
-                                                        {product.barcode}
-                                                    </span>
-                                                )}
+
+                                            {/* Baris 2: Nama Produk */}
+                                            <span className="font-bold text-xs text-slate-900 leading-tight block truncate">
+                                                {product.nama}
+                                            </span>
+
+                                            {/* Baris 3 & 4: Kategori dan Brand (2 Baris) */}
+                                            <div className="space-y-0.5 text-[11px] text-slate-500 pt-0.5">
                                                 {product.category && (
-                                                    <span>Kat: <strong className="text-slate-700">{product.category.nama}</strong></span>
+                                                    <div className="truncate">
+                                                        <span>Kategori: </span>
+                                                        <strong className="text-slate-700 font-semibold">{product.category.nama}</strong>
+                                                    </div>
                                                 )}
-                                                {product.brand && (
-                                                    <span>Brand: <strong className="text-slate-700">{product.brand.nama}</strong></span>
+                                                {(product.brand || product.merek) && (
+                                                    <div className="truncate">
+                                                        <span>Brand: </span>
+                                                        <strong className="text-slate-700 font-semibold">{product.brand?.nama || product.merek}</strong>
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Info Banner on Stock Management */}
-                                    <div className="p-2 bg-white border border-slate-200/70 rounded-lg text-[10px] text-slate-500 flex items-start gap-1.5">
-                                        <IconInfoCircle size={14} className="text-slate-400 shrink-0 mt-0.5" />
-                                        <span>Stok fisik diubah via <strong>Penerimaan / Opname Stok</strong>.</span>
+                                    {/* Info Banner on Stock Management (Rata Kiri, Icon & Teks Sejajar Presisi) */}
+                                    <div className="px-2.5 py-1.5 bg-white border border-slate-200/70 rounded-lg text-[10px] text-slate-500 flex items-center gap-1.5">
+                                        <IconInfoCircle size={13} className="text-slate-400 shrink-0" />
+                                        <span className="leading-none translate-y-[1px]">
+                                            Stok fisik diubah via <strong className="font-semibold text-slate-700">Penerimaan / Opname Stok</strong>.
+                                        </span>
                                     </div>
                                 </div>
                             )}
@@ -307,6 +347,18 @@ export function StoreProductEditDialog({
                                     disabled={updateProductStore.isPending}
                                 />
                             </div>
+
+                            {/* Status Produk Switch (Aktif / Nonaktif) */}
+                            <FormSwitch<StoreProductEditFormValues>
+                                name="is_active"
+                                label={watchIsActive !== false ? "Status Produk: Aktif" : "Status Produk: Nonaktif"}
+                                description={
+                                    watchIsActive !== false
+                                        ? "Produk aktif dan dapat diperjualbelikan di kasir."
+                                        : "Produk dinonaktifkan sementara dari kasir cabang."
+                                }
+                                disabled={updateProductStore.isPending || toggleStatus.isPending}
+                            />
 
                             {/* Fitur Grosir */}
                             <FormSwitch<StoreProductEditFormValues>

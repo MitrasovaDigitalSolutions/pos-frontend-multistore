@@ -6,7 +6,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { DataTableActionButton } from "@/components/ui/data-table-actions";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { IconBuildingStore, IconCopy, IconPlus, IconUser } from "@tabler/icons-react";
+import { IconArchiveOff, IconBuildingStore, IconCopy, IconPlus, IconUser } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -14,6 +14,9 @@ import { useDeleteCatalogProduct } from "../api/catalog-api";
 import type { CatalogProduct } from "../types";
 import { STORE_BADGE_HQ } from "@/constants/store";
 import { Show } from "@/components/ui/show";
+import { UnarchiveProductDialog } from "@/features/master/products/components/unarchive-product-dialog";
+import { CatalogProductDetailDialog } from "./catalog-product-detail-dialog";
+import type { Product } from "@/features/master/products/types";
 import {
     Tooltip,
     TooltipContent,
@@ -71,6 +74,10 @@ export function CatalogTable({
     const deleteCatalogProduct = useDeleteCatalogProduct();
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [productToDelete, setProductToDelete] = useState<CatalogProduct | null>(null);
+    const [isUnarchiveOpen, setIsUnarchiveOpen] = useState(false);
+    const [productToUnarchive, setProductToUnarchive] = useState<CatalogProduct | null>(null);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [productToView, setProductToView] = useState<CatalogProduct | null>(null);
 
     const handleRemoveProduct = (p: CatalogProduct) => {
         setProductToDelete(p);
@@ -327,28 +334,47 @@ export function CatalogTable({
                 onSortChange={onSortChange}
                 virtualize={true}
                 estimateRowHeight={44}
+                onView={(item) => {
+                    setProductToView(item);
+                    setIsDetailOpen(true);
+                }}
                 onEdit={isAdmin ? onEdit : undefined}
                 onDelete={isAdmin ? handleRemoveProduct : undefined}
+                hideDelete={(row: CatalogProduct) => row.status === "archived"}
+                hideEdit={(row: CatalogProduct) => row.status === "archived"}
                 extraActions={(item) =>
                     isAdmin ? (
-                        <>
-                            {onCopy && (
-                                <DataTableActionButton
-                                    variant="sky"
-                                    onClick={() => onCopy(item)}
-                                    tooltip="Salin / Duplikat Produk"
-                                >
-                                    <IconCopy size={16} />
-                                </DataTableActionButton>
-                            )}
+                        item.status === "archived" ? (
                             <DataTableActionButton
                                 variant="emerald"
-                                onClick={() => onAssign(item)}
-                                tooltip="Kelola Distribusi Toko"
+                                onClick={() => {
+                                    setProductToUnarchive(item);
+                                    setIsUnarchiveOpen(true);
+                                }}
+                                tooltip="Batalkan Hapus (Unarchive)"
                             >
-                                <IconBuildingStore size={16} />
+                                <IconArchiveOff size={16} />
                             </DataTableActionButton>
-                        </>
+                        ) : (
+                            <>
+                                {onCopy && (
+                                    <DataTableActionButton
+                                        variant="sky"
+                                        onClick={() => onCopy(item)}
+                                        tooltip="Salin / Duplikat Produk"
+                                    >
+                                        <IconCopy size={16} />
+                                    </DataTableActionButton>
+                                )}
+                                <DataTableActionButton
+                                    variant="emerald"
+                                    onClick={() => onAssign(item)}
+                                    tooltip="Kelola Distribusi Toko"
+                                >
+                                    <IconBuildingStore size={16} />
+                                </DataTableActionButton>
+                            </>
+                        )
                     ) : null
                 }
             />
@@ -375,6 +401,22 @@ export function CatalogTable({
                 onConfirm={handleConfirmDelete}
                 isLoading={deleteCatalogProduct.isPending}
                 variant="danger"
+            />
+
+            <UnarchiveProductDialog
+                open={isUnarchiveOpen}
+                onOpenChange={setIsUnarchiveOpen}
+                product={productToUnarchive as unknown as Product | null}
+            />
+
+            <CatalogProductDetailDialog
+                open={isDetailOpen}
+                onOpenChange={setIsDetailOpen}
+                product={productToView}
+                onUnarchiveClick={(p) => {
+                    setProductToUnarchive(p);
+                    setIsUnarchiveOpen(true);
+                }}
             />
         </section>
     );

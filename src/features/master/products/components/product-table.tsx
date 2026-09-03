@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
+import { DataTableActionButton } from "@/components/ui/data-table-actions";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
@@ -65,7 +66,6 @@ export function ProductTable({
     sortOrder,
     onSortChange,
 }: ProductTableProps) {
-    // const queryClient = useQueryClient();
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
@@ -77,10 +77,6 @@ export function ProductTable({
         hasRole(userRoles, "admin") ||
         hasPermission(userRoles, userPermissions, "view_stores") ||
         hasPermission(userRoles, userPermissions, "manage_stores");
-
-    // const handleImportSuccess = () => {
-    //     queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
-    // };
 
     const activeStoreUid = useActiveStoreStore((s) => s.activeStoreUid);
     const userStores = session?.user?.stores || [];
@@ -351,34 +347,9 @@ export function ProductTable({
                 },
             ];
 
-            // if (hasManageStores && onManageStores) {
-            //     baseColumns.push({
-            //         id: "stores",
-            //         header: "Toko",
-            //         enableSorting: false,
-            //         meta: {
-            //             headerClassName: "text-center",
-            //             cellClassName: "text-center",
-            //         },
-            //         size: 80,
-            //         cell: ({ row }) => (
-            //             <Button
-            //                 variant="ghost"
-            //                 size="sm"
-            //                 className="h-8 w-8 p-0"
-            //                 onClick={() => onManageStores(row.original)}
-            //                 title="Kelola Toko"
-            //             >
-            //                 <IconBuildingStore className="h-4 w-4 text-slate-500" />
-            //             </Button>
-            //         ),
-            //     });
-            // }
-
             return baseColumns;
         },
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [hasManageProducts, hasManageStores, onManageStores],
+        [hasManageProducts],
     );
 
     return (
@@ -419,34 +390,27 @@ export function ProductTable({
                 sortBy={sortBy}
                 sortOrder={sortOrder}
                 onSortChange={onSortChange}
-                // extraToolbarActions={
-                //     hasManageProducts ? (
-                //         <ProductImportExport onImportSuccess={handleImportSuccess} />
-                //     ) : null
-                // }
                 virtualize={true}
                 estimateRowHeight={44}
                 onEdit={hasManageProducts ? onEdit : undefined}
                 onDelete={hasManageProducts ? handleRemoveProduct : undefined}
                 hideDelete={(row: Product) => row.status === "archived"}
+                hideEdit={(row: Product) => row.status === "archived"}
                 extraActions={
                     hasManageProducts
                         ? (row: Product) => {
                             if (row.status === "archived") {
                                 return (
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
+                                    <DataTableActionButton
+                                        variant="emerald"
                                         onClick={() => {
                                             setProductToUnarchive(row);
                                             setIsUnarchiveOpen(true);
                                         }}
-                                        className="h-8 px-2 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg flex items-center gap-1 cursor-pointer"
-                                        title="Aktifkan Kembali Produk"
+                                        tooltip="Batalkan Hapus (Unarchive)"
                                     >
-                                        <IconArchiveOff className="w-3.5 h-3.5" />
-                                        <span className="hidden sm:inline">Aktifkan</span>
-                                    </Button>
+                                        <IconArchiveOff size={16} />
+                                    </DataTableActionButton>
                                 );
                             }
                             return null;
