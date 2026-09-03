@@ -9,6 +9,7 @@ import { queryKeys } from "@/lib/query-keys";
 import { getImageUrl } from "@/lib/utils";
 import { useCategorySelectConfig } from "@/features/master/categories/hooks/use-category-select";
 import { useBrandSelectConfig } from "@/features/master/brands/hooks/use-brand-select";
+import type { Brand } from "@/features/master/brands/types";
 import { apiPatch } from "@/shared/api/api-client";
 import { useCreateProduct, useUpdateProduct } from "../api/products-api";
 import { productSchema, type ProductInput } from "../schemas/product-schema";
