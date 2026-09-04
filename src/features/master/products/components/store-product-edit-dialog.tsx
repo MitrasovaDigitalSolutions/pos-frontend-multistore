@@ -7,10 +7,11 @@ import { Show } from "@/components/ui/show";
 import { Badge } from "@/components/ui/badge";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
+import { ProductBarcodeDialog } from "@/components/shared/product-barcode-dialog";
 import { getImageUrl } from "@/lib/utils";
 import { useActiveStoreStore } from "@/stores/active-store-store";
 import { IconBarcode, IconCheck, IconInfoCircle, IconLoader2, IconPackage, IconTag, IconTrendingUp } from "@tabler/icons-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { useUpdateProductStore } from "../api/product-store-api";
@@ -43,6 +44,7 @@ export function StoreProductEditDialog({
 }: StoreProductEditDialogProps) {
     const activeStoreUid = useActiveStoreStore((s) => s.activeStoreUid);
     const updateProductStore = useUpdateProductStore();
+    const [barcodeModalOpen, setBarcodeModalOpen] = useState(false);
 
     const methods = useForm<StoreProductEditFormValues>({
         defaultValues: {
@@ -206,6 +208,21 @@ export function StoreProductEditDialog({
                     </div>
                 </div>
             }
+            headerRight={
+                product?.barcode ? (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="xs"
+                        onClick={() => setBarcodeModalOpen(true)}
+                        className="h-7 px-2.5 text-xs font-semibold rounded-lg border-emerald-200 bg-emerald-50/70 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 gap-1.5 cursor-pointer shadow-2xs mr-1"
+                        title="Lihat & Unduh Barcode Produk"
+                    >
+                        <IconBarcode size={14} />
+                        <span>Barcode</span>
+                    </Button>
+                ) : undefined
+            }
             className="sm:max-w-4xl"
         >
             <FormProvider {...methods}>
@@ -251,7 +268,9 @@ export function StoreProductEditDialog({
                                                 {product.barcode && (
                                                     <Badge
                                                         variant="outline"
-                                                        className="h-5 px-2.5 py-0 bg-white border-slate-200 text-slate-700 font-mono font-bold text-[10px] gap-1.5 shadow-2xs leading-none inline-flex items-center justify-center"
+                                                        onClick={() => setBarcodeModalOpen(true)}
+                                                        className="h-5 px-2.5 py-0 bg-white border-slate-200 text-slate-700 font-mono font-bold text-[10px] gap-1.5 shadow-2xs leading-none inline-flex items-center justify-center hover:border-emerald-500 hover:text-emerald-700 cursor-pointer transition-colors"
+                                                        title="Klik untuk pratinjau & unduh barcode"
                                                     >
                                                         <IconBarcode size={12} className="text-slate-400 shrink-0" />
                                                         <span className="translate-y-px">{product.barcode}</span>
@@ -431,6 +450,18 @@ export function StoreProductEditDialog({
                     </div>
                 </form>
             </FormProvider>
+
+            {/* Product Barcode Preview & Download Dialog */}
+            {product?.barcode && (
+                <ProductBarcodeDialog
+                    open={barcodeModalOpen}
+                    onOpenChange={setBarcodeModalOpen}
+                    barcode={product.barcode}
+                    productName={product.nama}
+                    price={Number(watchHargaJual) || product.harga}
+                    categoryName={product.category?.nama}
+                />
+            )}
         </BaseDialog>
     );
 }

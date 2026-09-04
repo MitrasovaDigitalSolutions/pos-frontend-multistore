@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ProductBarcodeDialog } from "@/components/shared/product-barcode-dialog";
 import {
+    IconBarcode,
     IconCheck,
     IconInfoCircle,
     IconLoader2,
@@ -33,6 +36,8 @@ export function ProductFormDialog({
     onSuccess,
     infoMessage,
 }: ProductFormDialogProps) {
+    const [barcodeModalOpen, setBarcodeModalOpen] = useState(false);
+
     const {
         methods,
         isPending,
@@ -60,132 +65,165 @@ export function ProductFormDialog({
         onSuccess,
     });
 
-    const { handleSubmit } = methods;
+    const { handleSubmit, watch } = methods;
+
+    const activeBarcode = editingProduct?.barcode || watch("barcode");
+    const activeProductName = editingProduct?.nama || watch("nama");
+    const activePrice = editingProduct?.harga_jual ?? editingProduct?.harga ?? watch("harga");
 
     return (
-        <BaseDialog
-            open={open}
-            onOpenChange={onOpenChange}
-            title={
-                <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-sm shadow-emerald-500/20 shrink-0">
-                        <IconPackage size={18} />
-                    </div>
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-bold text-slate-900 leading-tight">
+        <>
+            <BaseDialog
+                open={open}
+                onOpenChange={onOpenChange}
+                title={
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-sm shadow-emerald-500/20 shrink-0">
+                            <IconPackage size={18} />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h4 className="text-sm font-bold text-slate-900 leading-tight">
+                                    {editingProduct
+                                        ? "Edit Detail Produk"
+                                        : duplicateProduct
+                                            ? "Duplikat Produk Baru"
+                                            : "Tambah Produk Baru"}
+                                </h4>
+                                <Badge
+                                    variant={editingProduct ? "secondary" : duplicateProduct ? "warning" : "success"}
+                                    className="text-[9px] px-1.5 py-0 font-bold"
+                                >
+                                    {editingProduct
+                                        ? "Edit Mode"
+                                        : duplicateProduct
+                                            ? "Salin Data"
+                                            : "Katalog Master"}
+                                </Badge>
+                            </div>
+                            <p className="text-[11px] text-slate-400 font-normal">
                                 {editingProduct
-                                    ? "Edit Detail Produk"
+                                    ? "Perbarui spesifikasi, penetapan harga, dan stok cabang"
                                     : duplicateProduct
-                                        ? "Duplikat Produk Baru"
-                                        : "Tambah Produk Baru"}
-                            </h4>
-                            <Badge
-                                variant={editingProduct ? "secondary" : duplicateProduct ? "warning" : "success"}
-                                className="text-[9px] px-1.5 py-0 font-bold"
-                            >
-                                {editingProduct
-                                    ? "Edit Mode"
-                                    : duplicateProduct
-                                        ? "Salin Data"
-                                        : "Katalog Master"}
-                            </Badge>
-                        </div>
-                        <p className="text-[11px] text-slate-400 font-normal">
-                            {editingProduct
-                                ? "Perbarui spesifikasi, penetapan harga, dan stok cabang"
-                                : duplicateProduct
-                                    ? "Data disalin dari produk sebelumnya. Masukkan barcode dan sesuaikan spesifikasi bila perlu."
-                                    : "Lengkapi spesifikasi produk untuk didistribusikan ke toko"}
-                        </p>
-                    </div>
-                </div>
-            }
-            className="sm:max-w-5xl"
-            scrollable={true}
-        >
-            <FormProvider {...methods}>
-                <form
-                    onSubmit={handleSubmit(onSubmit, onError)}
-                    className="space-y-3 pt-1"
-                >
-                    {infoMessage && (
-                        <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-medium flex items-center gap-2">
-                            <IconInfoCircle size={15} className="text-amber-600 shrink-0" />
-                            <span><strong>Info:</strong> {infoMessage}</span>
-                        </div>
-                    )}
-
-                    {/* ── 3-Column 3-5-4 Harmonic Bento Grid Layout ── */}
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-stretch">
-                        {/* Kolom 1: Foto Produk & Live Preview (Compact - 3 cols) */}
-                        <div className="md:col-span-3">
-                            <ProductMediaColumn
-                                productType={productType}
-                                disabled={isPending}
-                                initialImageUrl={initialImageUrl}
-                                profitPerUnit={profitPerUnit}
-                                margin={margin}
-                            />
-                        </div>
-
-                        {/* Kolom 2: Identitas, FormSelect Tipe Produk, & Klasifikasi (Ekstra Luas - 5 cols) */}
-                        <div className="md:col-span-5">
-                            <ProductIdentityColumn
-                                onProductTypeChange={handleProductTypeChange}
-                                disabled={isPending}
-                                categorySelectProps={categorySelectProps}
-                                brandSelectProps={brandSelectProps}
-                            />
-                        </div>
-
-                        {/* Kolom 3: Harga, Stok Qty, & Grosir (Nyaman & Pas - 4 cols) */}
-                        <div className="md:col-span-4">
-                            <ProductPricingColumn
-                                productType={productType}
-                                isGrosir={isGrosir}
-                                disabled={isPending}
-                                onHargaBeliChange={handleHargaBeliChange}
-                                onHargaChange={handleHargaChange}
-                                onMarginChange={handleMarginChange}
-                                onHargaGrosirChange={handleHargaGrosirChange}
-                                onMinQtyGrosirChange={handleMinQtyGrosirChange}
-                                onHargaGrosirTotalChange={handleHargaGrosirTotalChange}
-                            />
+                                        ? "Data disalin dari produk sebelumnya. Masukkan barcode dan sesuaikan spesifikasi bila perlu."
+                                        : "Lengkapi spesifikasi produk untuk didistribusikan ke toko"}
+                            </p>
                         </div>
                     </div>
-
-                    {/* ── Dialog Footer Actions (Always in immediate view) ── */}
-                    <div className="pt-2.5 flex items-center justify-end gap-2 border-t border-slate-100">
+                }
+                headerRight={
+                    activeBarcode ? (
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => onOpenChange(false)}
-                            disabled={isPending}
-                            className="h-9 px-4 text-xs font-bold rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer"
+                            size="xs"
+                            onClick={() => setBarcodeModalOpen(true)}
+                            className="h-7 px-2.5 text-xs font-semibold rounded-lg border-emerald-200 bg-emerald-50/70 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 gap-1.5 cursor-pointer shadow-2xs mr-1"
+                            title="Lihat & Unduh Barcode Produk"
                         >
-                            Batal
+                            <IconBarcode size={14} />
+                            <span>Barcode</span>
                         </Button>
-                        <Button
-                            type="submit"
-                            disabled={isPending}
-                            className="h-9 px-5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 cursor-pointer shadow-md shadow-emerald-600/20"
-                        >
-                            {isPending ? (
-                                <>
-                                    <IconLoader2 size={15} className="animate-spin" />
-                                    <span>Menyimpan...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <IconCheck size={15} />
-                                    <span>{editingProduct ? "Simpan Perubahan" : "Simpan Produk"}</span>
-                                </>
-                            )}
-                        </Button>
-                    </div>
-                </form>
-            </FormProvider>
-        </BaseDialog>
+                    ) : undefined
+                }
+                className="sm:max-w-5xl"
+                scrollable={true}
+            >
+                <FormProvider {...methods}>
+                    <form
+                        onSubmit={handleSubmit(onSubmit, onError)}
+                        className="space-y-3 pt-1"
+                    >
+                        {infoMessage && (
+                            <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-medium flex items-center gap-2">
+                                <IconInfoCircle size={15} className="text-amber-600 shrink-0" />
+                                <span><strong>Info:</strong> {infoMessage}</span>
+                            </div>
+                        )}
+
+                        {/* ── 3-Column 3-5-4 Harmonic Bento Grid Layout ── */}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-stretch">
+                            {/* Kolom 1: Foto Produk & Live Preview (Compact - 3 cols) */}
+                            <div className="md:col-span-3">
+                                <ProductMediaColumn
+                                    productType={productType}
+                                    disabled={isPending}
+                                    initialImageUrl={initialImageUrl}
+                                    profitPerUnit={profitPerUnit}
+                                    margin={margin}
+                                />
+                            </div>
+
+                            {/* Kolom 2: Identitas, FormSelect Tipe Produk, & Klasifikasi (Ekstra Luas - 5 cols) */}
+                            <div className="md:col-span-5">
+                                <ProductIdentityColumn
+                                    onProductTypeChange={handleProductTypeChange}
+                                    disabled={isPending}
+                                    categorySelectProps={categorySelectProps}
+                                    brandSelectProps={brandSelectProps}
+                                />
+                            </div>
+
+                            {/* Kolom 3: Harga, Stok Qty, & Grosir (Nyaman & Pas - 4 cols) */}
+                            <div className="md:col-span-4">
+                                <ProductPricingColumn
+                                    productType={productType}
+                                    isGrosir={isGrosir}
+                                    disabled={isPending}
+                                    onHargaBeliChange={handleHargaBeliChange}
+                                    onHargaChange={handleHargaChange}
+                                    onMarginChange={handleMarginChange}
+                                    onHargaGrosirChange={handleHargaGrosirChange}
+                                    onMinQtyGrosirChange={handleMinQtyGrosirChange}
+                                    onHargaGrosirTotalChange={handleHargaGrosirTotalChange}
+                                />
+                            </div>
+                        </div>
+
+                        {/* ── Dialog Footer Actions ── */}
+                        <div className="pt-2.5 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => onOpenChange(false)}
+                                disabled={isPending}
+                                className="h-9 px-4 text-xs font-bold rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer"
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={isPending}
+                                className="h-9 px-5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 cursor-pointer shadow-md shadow-emerald-600/20"
+                            >
+                                    {isPending ? (
+                                        <>
+                                            <IconLoader2 size={15} className="animate-spin" />
+                                            <span>Menyimpan...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <IconCheck size={15} />
+                                            <span>{editingProduct ? "Simpan Perubahan" : "Simpan Produk"}</span>
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                    </form>
+                </FormProvider>
+            </BaseDialog>
+
+            {/* Barcode Preview & Download Dialog */}
+            {activeBarcode && (
+                <ProductBarcodeDialog
+                    open={barcodeModalOpen}
+                    onOpenChange={setBarcodeModalOpen}
+                    barcode={activeBarcode}
+                    productName={activeProductName || "Produk"}
+                    price={activePrice}
+                    categoryName={editingProduct?.category?.nama}
+                />
+            )}
+        </>
     );
 }

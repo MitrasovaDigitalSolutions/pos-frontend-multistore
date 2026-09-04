@@ -137,6 +137,8 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 icon: IconBuildingWarehouse,
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") ||
+                    hasPermission(roles, permissions, "view_consignment") ||
+                    hasPermission(roles, permissions, "manage_consignment") ||
                     hasPermission(roles, permissions, "view_purchase") ||
                     hasPermission(roles, permissions, "manage_purchase"),
                 children: [
@@ -145,6 +147,8 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                         path: ROUTES.ADMIN_CONSIGNMENT,
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_consignment") ||
+                            hasPermission(roles, permissions, "manage_consignment") ||
                             hasPermission(roles, permissions, "view_purchase") ||
                             hasPermission(roles, permissions, "manage_purchase"),
                     },
@@ -153,6 +157,8 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                         path: ROUTES.ADMIN_CONSIGNMENT_PAYMENT,
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_consignment") ||
+                            hasPermission(roles, permissions, "manage_consignment") ||
                             hasPermission(roles, permissions, "view_purchase") ||
                             hasPermission(roles, permissions, "manage_purchase"),
                     },
