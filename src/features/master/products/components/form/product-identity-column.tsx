@@ -5,7 +5,15 @@ import { Input } from "@/components/ui/input";
 import { FormSelect, type FormSelectProps } from "@/components/forms/form-select";
 import { FormRadioChips } from "@/components/forms/form-radio-chips";
 import { FormSwitch } from "@/components/forms/form-switch";
-import { IconBarcode, IconBox, IconPackage, IconTools } from "@tabler/icons-react";
+import { generateEan13Barcode } from "@/lib/barcode-utils";
+import { toast } from "sonner";
+import {
+    IconBarcode,
+    IconBox,
+    IconPackage,
+    IconSparkles,
+    IconTools,
+} from "@tabler/icons-react";
 import type { Category } from "@/features/master/categories/types";
 import type { Brand } from "@/features/master/brands/types";
 import type { ProductInput } from "../../schemas/product-schema";
@@ -32,10 +40,18 @@ export function ProductIdentityColumn({
 }: ProductIdentityColumnProps) {
     const {
         register,
+        setValue,
         formState: { errors },
     } = useFormContext<ProductInput>();
 
     const isActive = useWatch<ProductInput>({ name: "is_active" });
+    const currentBarcode = useWatch<ProductInput>({ name: "barcode" });
+
+    const handleAutoGenerateBarcode = () => {
+        const newBarcode = generateEan13Barcode();
+        setValue("barcode", newBarcode, { shouldDirty: true, shouldValidate: true });
+        toast.success(`Barcode otomatis dibuat: ${newBarcode}`);
+    };
 
     return (
         <div className="bg-white border border-slate-200/80 rounded-2xl p-3.5 shadow-2xs space-y-2.5 flex flex-col justify-between">
@@ -79,20 +95,36 @@ export function ProductIdentityColumn({
                     disabled={disabled}
                 />
 
-                {/* Barcode / SKU */}
+                {/* Barcode / SKU with Generate Action only */}
                 <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                        Barcode / SKU
-                    </label>
+                    <div className="flex items-center justify-between">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                            Barcode / SKU
+                        </label>
+                        {!currentBarcode && (
+                            <button
+                                type="button"
+                                onClick={handleAutoGenerateBarcode}
+                                disabled={disabled}
+                                className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 flex items-center gap-1 cursor-pointer transition-colors"
+                            >
+                                <IconSparkles size={11} />
+                                <span>Buat Barcode</span>
+                            </button>
+                        )}
+                    </div>
                     <div className="relative">
                         <Input
                             type="text"
                             placeholder="Contoh: 8990002004"
-                            className="h-9 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl font-mono pr-7"
+                            className="h-9 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl font-mono pr-8"
                             disabled={disabled}
                             {...register("barcode")}
                         />
-                        <IconBarcode size={15} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        <IconBarcode
+                            size={16}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                        />
                     </div>
                     {errors.barcode && (
                         <p className="text-[10px] text-rose-500 font-medium">

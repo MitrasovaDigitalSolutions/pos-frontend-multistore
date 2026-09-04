@@ -342,6 +342,7 @@ export function CatalogTable({
                 onDelete={isAdmin ? handleRemoveProduct : undefined}
                 hideDelete={(row: CatalogProduct) => row.status === "archived"}
                 hideEdit={(row: CatalogProduct) => row.status === "archived"}
+                hideView={(row: CatalogProduct) => row.status !== "archived"}
                 extraActions={(item) =>
                     isAdmin ? (
                         item.status === "archived" ? (
