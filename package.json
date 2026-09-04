@@ -63,11 +63,9 @@
     "tailwindcss": "^4",
     "typescript": "^5"
   },
-  "lavamoat": {
-    "allowScripts": {
-      "msw": true,
-      "sharp": true,
-      "unrs-resolver": true
-    }
+  "allowScripts": {
+    "msw": true,
+    "sharp": true,
+    "unrs-resolver": true
   }
 }
