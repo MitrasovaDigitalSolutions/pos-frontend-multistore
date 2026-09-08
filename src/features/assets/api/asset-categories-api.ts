@@ -9,11 +9,13 @@ import type {
     UpdateAssetCategoryPayload,
 } from "../types";
 
+const GLOBAL_HEADER = { headers: { "X-Store-UID": "none" } };
+
 // 1. Get List of Asset Categories
 export function useAssetCategories() {
     return useQuery<AssetCategory[]>({
         queryKey: queryKeys.assetCategories.list(),
-        queryFn: () => apiGetData<AssetCategory[]>(ENDPOINTS.ASSETS.CATEGORIES.LIST),
+        queryFn: () => apiGetData<AssetCategory[]>(ENDPOINTS.ASSETS.CATEGORIES.LIST, GLOBAL_HEADER),
     });
 }
 
@@ -21,7 +23,7 @@ export function useAssetCategories() {
 export function useAssetCategoryDetail(uid: string | null) {
     return useQuery<AssetCategory>({
         queryKey: queryKeys.assetCategories.detail(uid || ""),
-        queryFn: () => apiGetData<AssetCategory>(ENDPOINTS.ASSETS.CATEGORIES.DETAIL(uid || "")),
+        queryFn: () => apiGetData<AssetCategory>(ENDPOINTS.ASSETS.CATEGORIES.DETAIL(uid || ""), GLOBAL_HEADER),
         enabled: !!uid,
     });
 }
@@ -33,7 +35,8 @@ export function useCreateAssetCategory() {
         mutationFn: (data) =>
             apiPost<ApiResponse<AssetCategory>, CreateAssetCategoryPayload>(
                 ENDPOINTS.ASSETS.CATEGORIES.CREATE,
-                data
+                data,
+                GLOBAL_HEADER
             ),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.assetCategories.all });
@@ -54,7 +57,8 @@ export function useUpdateAssetCategory() {
         mutationFn: ({ uid, data }) =>
             apiPut<ApiResponse<AssetCategory>, UpdateAssetCategoryPayload>(
                 ENDPOINTS.ASSETS.CATEGORIES.UPDATE(uid),
-                data
+                data,
+                GLOBAL_HEADER
             ),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.assetCategories.all });
@@ -68,7 +72,7 @@ export function useDeleteAssetCategory() {
     const queryClient = useQueryClient();
     return useMutation<ApiResponse<void>, Error, string>({
         mutationFn: (uid) =>
-            apiDelete<ApiResponse<void>>(ENDPOINTS.ASSETS.CATEGORIES.DELETE(uid)),
+            apiDelete<ApiResponse<void>>(ENDPOINTS.ASSETS.CATEGORIES.DELETE(uid), GLOBAL_HEADER),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.assetCategories.all });
         },

@@ -21,6 +21,18 @@ const apiClient = axios.create({
     timeout: 30000,
 });
 
+// Endpoints that are global / system-wide across all stores and must NEVER include X-Store-UID
+const GLOBAL_API_PATTERNS = [
+    "/v1/chart-of-accounts",
+    "/v1/coa-mappings",
+    "/v1/coa-counterpart-mappings",
+    "/v1/parent-categories",
+    "/v1/asset-categories",
+    "/v1/users",
+    "/v1/stores",
+    "/v1/settings/app_",
+];
+
 // ─── Request Interceptor ────────────────────────────────────────────────────
 
 apiClient.interceptors.request.use(
@@ -39,9 +51,12 @@ apiClient.interceptors.request.use(
 
         const activeStoreUid = useActiveStoreStore.getState().activeStoreUid;
         const isAuthRequest = config.url?.includes("/auth/") || config.url?.includes("/login");
+        const isGlobalEndpoint = config.url
+            ? GLOBAL_API_PATTERNS.some((pattern) => config.url?.includes(pattern))
+            : false;
         const storeUidHeader = config.headers.get("X-Store-UID");
 
-        if (storeUidHeader === "none" || storeUidHeader === "") {
+        if (storeUidHeader === "none" || storeUidHeader === "" || isGlobalEndpoint) {
             config.headers.delete("X-Store-UID");
         } else if (activeStoreUid && !isAuthRequest && !config.headers.has("X-Store-UID")) {
             config.headers.set("X-Store-UID", activeStoreUid);
