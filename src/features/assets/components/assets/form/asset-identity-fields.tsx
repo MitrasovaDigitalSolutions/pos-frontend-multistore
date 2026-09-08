@@ -36,79 +36,81 @@ export function AssetIdentityFields({
     });
 
     return (
-        <div className="space-y-3.5">
-            <div className="flex items-center gap-2 pb-1 border-b border-slate-100 dark:border-slate-800">
-                <IconFileDescription className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                    Informasi & Nilai Kapitalisasi
+        <div className="space-y-2.5">
+            <div className="flex items-center gap-1.5 pb-1 border-b border-slate-100 dark:border-slate-800">
+                <IconFileDescription className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Informasi & Kapitalisasi
                 </h4>
             </div>
 
-            {/* Nama Aset */}
-            <div className="space-y-1">
-                <label htmlFor="nama" className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                    Nama Aset <span className="text-rose-500">*</span>
-                </label>
-                <Input
-                    id="nama"
-                    placeholder="Contoh: Laptop MacBook Pro M3, Mobil Suzuki Carry 2024"
-                    {...register("nama")}
-                    disabled={isPending}
-                    className="h-8.5 text-xs rounded-xl"
-                />
-                {errors.nama && (
-                    <p className="text-[11px] text-rose-500 font-medium">
-                        {errors.nama.message}
-                    </p>
-                )}
-            </div>
-
-            {/* Kategori & Kode */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                        Kategori Aset <span className="text-rose-500">*</span>
+            {/* Row 1: Nama Aset & Kode / Serial No. */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="sm:col-span-2 space-y-1">
+                    <label htmlFor="nama" className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
+                        Nama Aset <span className="text-rose-500">*</span>
                     </label>
-                    <CommandSelect
-                        options={categoryOptions}
-                        value={watchedCategoryUid || ""}
-                        onChange={(val: string) => setValue("asset_category_uid", val)}
-                        placeholder="Pilih Kategori..."
+                    <Input
+                        id="nama"
+                        placeholder="Contoh: Laptop MacBook Pro M3, Mobil Carry"
+                        {...register("nama")}
                         disabled={isPending}
-                        className="h-8.5 text-xs rounded-xl"
+                        className="h-8 text-xs rounded-lg"
                     />
-                    {categoryAssetCoa && (
-                        <p
-                            className="text-[10px] text-slate-500 truncate"
-                            title={`Akun: [${categoryAssetCoa.kode}] ${categoryAssetCoa.nama}`}
-                        >
-                            Akun:{" "}
-                            <span className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
-                                [{categoryAssetCoa.kode}]
-                            </span>{" "}
-                            {categoryAssetCoa.nama}
+                    {errors.nama && (
+                        <p className="text-[10px] text-rose-500 font-medium">
+                            {errors.nama.message}
                         </p>
                     )}
                 </div>
 
                 <div className="space-y-1">
-                    <label htmlFor="kode_aset" className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                        Kode / Serial No. <span className="text-slate-400 font-normal">(Opsional)</span>
+                    <label htmlFor="kode_aset" className="text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate block">
+                        SN <span className="text-slate-400 font-normal">(Opsional)</span>
                     </label>
                     <Input
                         id="kode_aset"
-                        placeholder="Contoh: AST-001 / SN-2024"
+                        placeholder="AST-001"
                         {...register("kode_aset")}
                         disabled={isPending}
-                        className="h-8.5 text-xs rounded-xl"
+                        className="h-8 text-xs rounded-lg"
                     />
                 </div>
             </div>
 
-            {/* Tanggal, Harga & Residu */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Row 2: Kategori Aset & Indikator Akun CoA */}
+            <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
+                        Kategori Aset <span className="text-rose-500">*</span>
+                    </label>
+                    {categoryAssetCoa && (
+                        <span
+                            className="text-[10px] text-slate-500 truncate max-w-[240px]"
+                            title={`Akun: [${categoryAssetCoa.kode}] ${categoryAssetCoa.nama}`}
+                        >
+                            Akun:{" "}
+                            <strong className="font-mono text-emerald-600 dark:text-emerald-400">
+                                [{categoryAssetCoa.kode}]
+                            </strong>{" "}
+                            {categoryAssetCoa.nama}
+                        </span>
+                    )}
+                </div>
+                <CommandSelect
+                    options={categoryOptions}
+                    value={watchedCategoryUid || ""}
+                    onChange={(val: string) => setValue("asset_category_uid", val)}
+                    placeholder="Pilih Kategori Aset..."
+                    disabled={isPending}
+                    className="h-8 text-xs rounded-lg"
+                />
+            </div>
+
+            {/* Row 3: Tanggal, Harga & Residu */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                    <label className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
                         Tgl Perolehan <span className="text-rose-500">*</span>
                     </label>
                     <Controller
@@ -127,7 +129,7 @@ export function AssetIdentityFields({
                 </div>
 
                 <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                    <label className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
                         Harga Perolehan <span className="text-rose-500">*</span>
                     </label>
                     <Controller
@@ -140,14 +142,14 @@ export function AssetIdentityFields({
                                 disabled={isPending}
                                 placeholder="Rp 0"
                                 min={0}
-                                className="h-8.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 rounded-xl"
+                                className="h-8 text-xs font-bold text-emerald-600 dark:text-emerald-400 rounded-lg"
                             />
                         )}
                     />
                 </div>
 
                 <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                    <label className="text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate block">
                         Nilai Residu <span className="text-slate-400 font-normal">(Sisa)</span>
                     </label>
                     <Controller
@@ -160,25 +162,24 @@ export function AssetIdentityFields({
                                 disabled={isPending}
                                 placeholder="Rp 0"
                                 min={0}
-                                className="h-8.5 text-xs rounded-xl"
+                                className="h-8 text-xs rounded-lg"
                             />
                         )}
                     />
                 </div>
             </div>
 
-            {/* Catatan */}
+            {/* Row 4: Catatan Tambahan (Compact Input) */}
             <div className="space-y-1">
-                <label htmlFor="catatan" className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                <label htmlFor="catatan" className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
                     Catatan Tambahan <span className="text-slate-400 font-normal">(Opsional)</span>
                 </label>
-                <textarea
+                <Input
                     id="catatan"
-                    rows={2}
-                    placeholder="Keterangan vendor pembelian, lokasi penempatan, kondisi..."
+                    placeholder="Vendor pembelian, nomor faktur, lokasi penempatan..."
                     {...register("catatan")}
                     disabled={isPending}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 resize-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    className="h-8 text-xs rounded-lg"
                 />
             </div>
         </div>

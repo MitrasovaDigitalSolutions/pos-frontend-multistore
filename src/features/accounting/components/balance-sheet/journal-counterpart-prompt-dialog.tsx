@@ -3,7 +3,7 @@
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { IconLayersLinked, IconArrowRight, IconCheck, IconPlus } from "@tabler/icons-react";
+import { IconLayersLinked, IconArrowRight, IconCheck, IconPlus, IconBan } from "@tabler/icons-react";
 import type { ChartOfAccount } from "@/features/accounting/types";
 
 interface JournalCounterpartPromptDialogProps {
@@ -14,6 +14,7 @@ interface JournalCounterpartPromptDialogProps {
     existingSelectedUids?: string[];
     onSelectOne: (counterpartUid: string) => void;
     onApplyAll: () => void;
+    onSkip?: () => void;
 }
 
 export function JournalCounterpartPromptDialog({
@@ -24,6 +25,7 @@ export function JournalCounterpartPromptDialog({
     existingSelectedUids = [],
     onSelectOne,
     onApplyAll,
+    onSkip,
 }: JournalCounterpartPromptDialogProps) {
     if (!sourceAccount) return null;
 
@@ -137,22 +139,38 @@ export function JournalCounterpartPromptDialog({
                     </div>
                 </div>
 
-                {/* Compound Journal Option (Jurnal Majemuk) */}
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <p className="text-[11px] text-slate-500 leading-relaxed text-center sm:text-left">
-                        Ingin memecah transaksi ke seluruh lawan akun di atas?
-                    </p>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={!hasUnaddedCounterparts}
-                        onClick={onApplyAll}
-                        className="w-full sm:w-auto h-8 px-3.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800/60 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                        <IconPlus className="w-3.5 h-3.5" />
-                        <span>Terapkan Semua (Jurnal Majemuk)</span>
-                    </Button>
+                {/* Compound Journal Option (Jurnal Majemuk) & Skip Button */}
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                    <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-2.5">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                                if (onSkip) {
+                                    onSkip();
+                                } else {
+                                    onOpenChange(false);
+                                }
+                            }}
+                            className="w-full sm:w-auto h-8 px-3 text-xs font-semibold text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                            <IconBan className="w-3.5 h-3.5" />
+                            <span>Tidak Pilih Lawan Akun (Lewati)</span>
+                        </Button>
+
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={!hasUnaddedCounterparts}
+                            onClick={onApplyAll}
+                            className="w-full sm:w-auto h-8 px-3.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800/60 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            <IconPlus className="w-3.5 h-3.5" />
+                            <span>Terapkan Semua (Jurnal Majemuk)</span>
+                        </Button>
+                    </div>
                 </div>
             </div>
         </BaseDialog>

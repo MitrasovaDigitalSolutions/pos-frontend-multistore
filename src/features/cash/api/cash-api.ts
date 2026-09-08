@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiGetData, apiPost, apiGetList } from "@/shared/api/api-client";
+import { apiGetData, apiPost, apiGetList, apiPut, apiDelete } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
 import { ENDPOINTS } from "@/shared/api/endpoints";
 import type { ApiResponse, PaginatedResponse, PaginationParams } from "@/types/api";
@@ -195,11 +195,29 @@ export interface CashFlowFilters extends PaginationParams {
 export interface CashAccount {
     uid: string;
     nama: string;
-    tipe: string;
+    tipe: "cash" | "bank" | "register" | string;
     nomor_rekening?: string | null;
+    deskripsi?: string | null;
     saldo: number;
+    is_active?: boolean;
     created_at?: string;
     updated_at?: string;
+}
+
+export interface CreateCashAccountInput {
+    nama: string;
+    tipe: "cash" | "bank" | "register";
+    nomor_rekening?: string | null;
+    deskripsi?: string | null;
+    saldo_awal?: number;
+}
+
+export interface UpdateCashAccountInput {
+    nama?: string;
+    tipe?: "cash" | "bank" | "register";
+    nomor_rekening?: string | null;
+    deskripsi?: string | null;
+    is_active?: boolean;
 }
 
 export interface DebitCreditInput {
@@ -225,6 +243,57 @@ export function useCashAccounts() {
     return useQuery<CashAccount[]>({
         queryKey: queryKeys.cashAccounts.all,
         queryFn: () => apiGetData<CashAccount[]>(ENDPOINTS.CASH_ACCOUNTS),
+    });
+}
+
+export function useCashAccountDetail(uid: string) {
+    return useQuery<CashAccount>({
+        queryKey: queryKeys.cashAccounts.detail(uid),
+        queryFn: () => apiGetData<CashAccount>(`${ENDPOINTS.CASH_ACCOUNTS}/${uid}`),
+        enabled: !!uid,
+    });
+}
+
+export function useCreateCashAccount() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<CashAccount>, Error, CreateCashAccountInput>({
+        mutationFn: (data) =>
+            apiPost<ApiResponse<CashAccount>, CreateCashAccountInput>(
+                ENDPOINTS.CASH_ACCOUNTS,
+                data,
+            ),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.cashAccounts.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.activityLogs.all });
+        },
+    });
+}
+
+export function useUpdateCashAccount() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<CashAccount>, Error, { uid: string; data: UpdateCashAccountInput }>({
+        mutationFn: ({ uid, data }) =>
+            apiPut<ApiResponse<CashAccount>, UpdateCashAccountInput>(
+                `${ENDPOINTS.CASH_ACCOUNTS}/${uid}`,
+                data,
+            ),
+        onSuccess: (_res, variables) => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.cashAccounts.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.cashAccounts.detail(variables.uid) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.activityLogs.all });
+        },
+    });
+}
+
+export function useDeleteCashAccount() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<null>, Error, string>({
+        mutationFn: (uid) =>
+            apiDelete<ApiResponse<null>>(`${ENDPOINTS.CASH_ACCOUNTS}/${uid}`),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.cashAccounts.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.activityLogs.all });
+        },
     });
 }
 

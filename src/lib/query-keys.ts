@@ -153,6 +153,7 @@ export const queryKeys = {
 
     cashAccounts: {
         all: ["cash-accounts"] as const,
+        detail: (uid: string) => ["cash-accounts", "detail", uid] as const,
         cashFlow: (filters?: unknown) => ["cash-accounts", "cash-flow", filters] as const,
         accountCashFlow: (uid: string, filters?: unknown) => ["cash-accounts", uid, "cash-flow", filters] as const,
     },
@@ -189,7 +190,7 @@ export const queryKeys = {
     chartOfAccounts: {
         all: ["chart-of-accounts"] as const,
         tree: () => [...queryKeys.chartOfAccounts.all, "tree"] as const,
-        flat: () => [...queryKeys.chartOfAccounts.all, "flat"] as const,
+        flat: (params?: unknown) => [...queryKeys.chartOfAccounts.all, "flat", params] as const,
         byType: (type: string) => [...queryKeys.chartOfAccounts.all, "type", type] as const,
         detail: (uid: string) => [...queryKeys.chartOfAccounts.all, "detail", uid] as const,
     },
@@ -244,5 +245,12 @@ export const queryKeys = {
         all: ["productions"] as const,
         list: (params?: unknown) => [...queryKeys.productions.all, "list", params] as const,
         detail: (uid: string) => [...queryKeys.productions.all, "detail", uid] as const,
+    },
+
+    // Settings
+    settings: {
+        all: ["settings"] as const,
+        list: () => [...queryKeys.settings.all, "list"] as const,
+        detail: (key: string) => [...queryKeys.settings.all, "detail", key] as const,
     },
 } as const;

@@ -370,6 +370,14 @@ export function useManualJournalEditor({
         toast.success(`Berhasil menambahkan ${unaddedCounterparts.length} baris lawan akun untuk jurnal majemuk.`);
     };
 
+    /**
+     * Skip choosing any counterpart
+     */
+    const handleSkipCounterpart = () => {
+        setCounterpartPrompt((prev) => ({ ...prev, isOpen: false }));
+        toast.info("Pemilihan lawan akun dilewati. Anda dapat memilih akun baris secara manual.");
+    };
+
     const handleSave = async (targetStatus: "draft" | "posted") => {
         setValue("status", targetStatus);
 
@@ -457,6 +465,7 @@ export function useManualJournalEditor({
         handleAccountSelect,
         handleSelectOneCounterpart,
         handleApplyAllCounterparts,
+        handleSkipCounterpart,
         handleAddLine,
         handleCancel,
         handleSave,

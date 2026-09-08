@@ -37,7 +37,7 @@ export function CategoryList({
         hasPermission(userRoles, userPermissions, "manage_expenses");
 
     const deleteCategory = useDeleteExpenseCategory();
-    const { data: flatAccounts } = useFlatChartOfAccounts();
+    const { data: flatAccounts } = useFlatChartOfAccounts({ is_postable: true });
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [categoryToDelete, setCategoryToDelete] = useState<ExpenseCategory | null>(null);
 

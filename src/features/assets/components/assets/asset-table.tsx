@@ -40,6 +40,10 @@ export function AssetTable({
     const [assetToDelete, setAssetToDelete] = useState<Asset | null>(null);
 
     const handleDelete = (asset: Asset) => {
+        if (asset.can_delete === false) {
+            toast.error("Aset ini tidak dapat dihapus.");
+            return;
+        }
         setAssetToDelete(asset);
         setIsConfirmOpen(true);
     };
@@ -64,21 +68,41 @@ export function AssetTable({
                 accessorKey: "nomor_aset",
                 header: "No. Aset",
                 size: 130,
-                cell: ({ row }) => (
-                    <div className="space-y-0.5 max-w-[120px]">
-                        <span className="font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200/60 dark:border-slate-700/60 block w-fit truncate max-w-[110px]">
-                            {row.original.nomor_aset}
-                        </span>
-                        {row.original.kode_aset && (
-                            <span
-                                className="text-[10px] text-slate-400 font-mono block truncate"
-                                title={`SN: ${row.original.kode_aset}`}
-                            >
-                                SN: {row.original.kode_aset}
-                            </span>
-                        )}
-                    </div>
-                ),
+                cell: ({ row }) => {
+                    const nomorAset = row.original.nomor_aset;
+                    const kodeAset = row.original.kode_aset;
+
+                    return (
+                        <div className="space-y-0.5 max-w-[120px]">
+                            <TooltipProvider delayDuration={150}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <span className="font-mono text-xs font-bold text-slate-900 dark:text-slate-100 block truncate cursor-default">
+                                            {nomorAset}
+                                        </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="text-xs">
+                                        <p className="font-mono font-bold">{nomorAset}</p>
+                                        {kodeAset && (
+                                            <p className="text-[11px] text-slate-300 font-normal">
+                                                SN: {kodeAset}
+                                            </p>
+                                        )}
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+
+                            {kodeAset && (
+                                <span
+                                    className="text-[10px] text-slate-400 font-mono block truncate"
+                                    title={`SN: ${kodeAset}`}
+                                >
+                                    SN: {kodeAset}
+                                </span>
+                            )}
+                        </div>
+                    );
+                },
             },
             {
                 accessorKey: "nama",
@@ -98,7 +122,11 @@ export function AssetTable({
                             </span>
                             <span>•</span>
                             <span className="capitalize shrink-0">
-                                {row.original.sumber_perolehan === "kas" ? "Kas/Bank" : "Non-Kas"}
+                                {row.original.sumber_perolehan === "kas"
+                                    ? "Kas/Bank"
+                                    : row.original.sumber_perolehan === "existing"
+                                        ? "Jurnal Lama"
+                                        : "Non-Kas"}
                             </span>
                         </div>
                     </div>
@@ -207,7 +235,12 @@ export function AssetTable({
                 onView={onDetail}
                 onEdit={onEdit}
                 onDelete={handleDelete}
-                disableDelete={(a) => (Number(a.total_penyusutan) || 0) > 0}
+                disableDelete={(a) => {
+                    if (typeof a.can_delete === "boolean") {
+                        return !a.can_delete;
+                    }
+                    return (Number(a.total_penyusutan) || 0) > 0;
+                }}
                 extraActions={(a) => {
                     const maxSusut =
                         (Number(a.nilai_buku) || 0) - (Number(a.nilai_residu) || 0);

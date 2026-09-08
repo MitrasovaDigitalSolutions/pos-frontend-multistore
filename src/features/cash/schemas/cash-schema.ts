@@ -69,3 +69,37 @@ export const transferSchema = z
     });
 
 export type TransferSchemaInput = z.infer<typeof transferSchema>;
+
+export const cashAccountSchema = z.object({
+    nama: z
+        .string()
+        .min(1, "Nama akun kas wajib diisi")
+        .max(100, "Nama akun kas maksimal 100 karakter"),
+    tipe: z.enum(["cash", "bank", "register"], {
+        message: "Tipe akun kas wajib dipilih",
+    }),
+    nomor_rekening: z
+        .string()
+        .max(50, "Nomor rekening maksimal 50 karakter")
+        .optional()
+        .nullable()
+        .transform((v) => v || null),
+    deskripsi: z
+        .string()
+        .max(500, "Deskripsi maksimal 500 karakter")
+        .optional()
+        .nullable()
+        .transform((v) => v || null),
+    saldo_awal: z
+        .preprocess((val) => {
+            if (val === "" || val === undefined || val === null) return 0;
+            const num = Number(val);
+            return isNaN(num) ? 0 : num;
+        }, z.number().min(0, "Saldo awal minimal Rp 0"))
+        .optional()
+        .default(0),
+    is_active: z.boolean().optional().default(true),
+});
+
+export type CashAccountFormValues = z.infer<typeof cashAccountSchema>;
+

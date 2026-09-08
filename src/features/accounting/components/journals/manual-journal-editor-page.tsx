@@ -30,7 +30,7 @@ export function ManualJournalEditorPage() {
     // Default to "new" mode when accessing the direct manual journal menu without query params
     const action = actionParam || (journalUid ? "edit" : "new");
 
-    const { data: flatAccounts, isLoading: isLoadingCoas } = useFlatChartOfAccounts();
+    const { data: flatAccounts, isLoading: isLoadingCoas } = useFlatChartOfAccounts({ is_postable: true });
 
     const isJournalNeeded = (action === "edit" || action === "detail") && !!journalUid;
 

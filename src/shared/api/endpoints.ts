@@ -284,4 +284,11 @@ export const ENDPOINTS = {
         CREATE: "/v1/productions",
         DETAIL: (uid: string) => `/v1/productions/${uid}`,
     },
+
+    // Settings
+    SETTINGS: {
+        LIST: "/v1/settings",
+        DETAIL: (key: string) => `/v1/settings/${key}`,
+        UPDATE: (key: string) => `/v1/settings/${key}`,
+    },
 } as const;

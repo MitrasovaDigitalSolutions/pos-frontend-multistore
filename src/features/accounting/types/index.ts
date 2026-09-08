@@ -11,10 +11,12 @@ export interface ChartOfAccount {
     saldo_normal: NormalBalance | null;
     parent_uid: string | null;
     is_active: boolean;
+    is_postable?: boolean;
     keterangan: string | null;
     created_at?: string;
     updated_at?: string;
     children?: ChartOfAccount[];
+    children_recursive?: ChartOfAccount[];
     parent?: ChartOfAccount | null;
 }
 
@@ -34,6 +36,11 @@ export interface BalanceSheetItem {
     debit: number;
     credit: number;
     amount: number;
+    level?: number;
+    is_parent?: boolean;
+    parent_kode?: string | null;
+    children?: BalanceSheetItem[];
+    children_recursive?: BalanceSheetItem[];
     detail?: BalanceSheetDetailCategory[];
 }
 
@@ -86,6 +93,8 @@ export interface BalanceSheetData {
 }
 
 export type BalanceSheetReport = BalanceSheetData;
+
+export type AccountingReportMode = "neraca" | "laba_rugi" | "equation";
 
 export interface GeneralLedgerEntry {
     uid: string;

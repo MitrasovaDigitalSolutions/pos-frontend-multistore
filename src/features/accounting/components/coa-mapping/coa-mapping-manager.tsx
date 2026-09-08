@@ -40,7 +40,7 @@ export function CoaMappingManager() {
         mappings,
     } = useCoaMappingForm();
 
-    const { isLoading: isLoadingCoas } = useFlatChartOfAccounts();
+    const { isLoading: isLoadingCoas } = useFlatChartOfAccounts({ is_postable: true });
     const [activeSection, setActiveSection] = useState<string>("sale");
     const [isBackfillOpen, setIsBackfillOpen] = useState<boolean>(false);
 

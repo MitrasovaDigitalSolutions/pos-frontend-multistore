@@ -20,6 +20,7 @@ export interface CoaPickerDialogProps {
     onOpenChange: (open: boolean) => void;
     onSelect: (account: ChartOfAccount) => void;
     accounts?: ChartOfAccount[];
+    isPostable?: boolean;
     selectedUid?: string | null;
     excludeUid?: string | null;
     excludeUids?: string[];
@@ -32,6 +33,7 @@ export function CoaPickerDialog({
     onOpenChange,
     onSelect,
     accounts = [],
+    isPostable,
     selectedUid,
     excludeUid,
     excludeUids,
@@ -55,9 +57,10 @@ export function CoaPickerDialog({
     const activeAccounts = useMemo(() => {
         return accounts
             .filter((a) => a.is_active)
+            .filter((a) => isPostable === undefined || (isPostable ? a.is_postable !== false : a.is_postable === false))
             .filter((a) => !allowedTypes || allowedTypes.includes(a.tipe as ChartOfAccountType))
             .sort((a, b) => (a.kode || "").localeCompare(b.kode || ""));
-    }, [accounts, allowedTypes]);
+    }, [accounts, allowedTypes, isPostable]);
 
     const filteredAccounts = useMemo(() => {
         const query = searchQuery.toLowerCase().trim();

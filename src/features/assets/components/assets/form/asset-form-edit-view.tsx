@@ -32,9 +32,9 @@ export function AssetFormEditView({
     } = form;
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 pt-1">
             {/* Readonly Overview Card */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800">
                 <div className="space-y-0.5">
                     <span className="text-[10px] uppercase font-bold text-slate-400">No. Aset</span>
                     <div className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200">
@@ -54,16 +54,16 @@ export function AssetFormEditView({
                     </div>
                 </div>
                 <div className="space-y-0.5">
-                    <span className="text-[10px] uppercase font-bold text-slate-400">Nilai Buku Saat Ini</span>
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Nilai Buku</span>
                     <div className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
                         {formatRupiah(Number(asset.nilai_buku) || 0)}
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div className="space-y-1.5 sm:col-span-2">
-                    <label htmlFor="edit_nama" className="text-xs font-bold text-slate-700 dark:text-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div className="space-y-1 sm:col-span-2">
+                    <label htmlFor="edit_nama" className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
                         Nama Aset <span className="text-rose-500">*</span>
                     </label>
                     <Input
@@ -71,31 +71,31 @@ export function AssetFormEditView({
                         placeholder="Nama aset..."
                         {...register("nama")}
                         disabled={isPending}
-                        className="h-8.5 text-xs rounded-xl"
+                        className="h-8 text-xs rounded-lg"
                     />
                     {errors.nama && (
-                        <p className="text-[11px] text-rose-500 font-medium">
+                        <p className="text-[10px] text-rose-500 font-medium">
                             {errors.nama.message}
                         </p>
                     )}
                 </div>
 
-                <div className="space-y-1.5">
-                    <label htmlFor="edit_kode" className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                        Kode / No. Seri <span className="text-slate-400 font-normal">(Opsional)</span>
+                <div className="space-y-1">
+                    <label htmlFor="edit_kode" className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
+                        SN <span className="text-slate-400 font-normal">(Opsional)</span>
                     </label>
                     <Input
                         id="edit_kode"
-                        placeholder="Contoh: SN: C02X1234"
+                        placeholder="SN: C02X1234"
                         {...register("kode_aset")}
                         disabled={isPending}
-                        className="h-8.5 text-xs rounded-xl"
+                        className="h-8 text-xs rounded-lg"
                     />
                 </div>
 
-                <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                        Nilai Residu <span className="text-slate-400 font-normal">(Sisa Minimum)</span>
+                <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate block">
+                        Nilai Residu <span className="text-slate-400 font-normal">(Sisa)</span>
                     </label>
                     <Controller
                         control={control}
@@ -107,23 +107,22 @@ export function AssetFormEditView({
                                 disabled={isPending}
                                 placeholder="Rp 0"
                                 min={0}
-                                className="h-8.5 text-xs rounded-xl"
+                                className="h-8 text-xs rounded-lg"
                             />
                         )}
                     />
                 </div>
 
-                <div className="space-y-1.5 sm:col-span-2">
-                    <label htmlFor="edit_catatan" className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                <div className="space-y-1 sm:col-span-2">
+                    <label htmlFor="edit_catatan" className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
                         Catatan <span className="text-slate-400 font-normal">(Opsional)</span>
                     </label>
-                    <textarea
+                    <Input
                         id="edit_catatan"
-                        rows={2}
                         placeholder="Catatan kondisi aset, lokasi penempatan, vendor..."
                         {...register("catatan")}
                         disabled={isPending}
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 resize-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                        className="h-8 text-xs rounded-lg"
                     />
                 </div>
             </div>
@@ -134,14 +133,14 @@ export function AssetFormEditView({
                     variant="outline"
                     onClick={onCancel}
                     disabled={isPending}
-                    className="h-8.5 px-3.5 text-xs rounded-xl border-slate-200 dark:border-slate-800 cursor-pointer"
+                    className="h-8 px-3 text-xs rounded-lg border-slate-200 dark:border-slate-800 cursor-pointer"
                 >
                     Batal
                 </Button>
                 <Button
                     type="submit"
                     disabled={isPending}
-                    className="h-8.5 px-4 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-xs cursor-pointer"
+                    className="h-8 px-3.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-xs cursor-pointer"
                 >
                     {isPending ? "Menyimpan..." : "Simpan Perubahan"}
                 </Button>
