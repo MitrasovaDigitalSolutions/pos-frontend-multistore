@@ -54,8 +54,11 @@ export async function apiGetData<T>(
     url: string,
     config?: AxiosRequestConfig,
 ): Promise<T> {
-    const response = await apiGet<ApiResponse<T>>(url, config);
-    return response.data;
+    const response = await apiGet<ApiResponse<T> | T>(url, config);
+    if (response && typeof response === "object" && "data" in response) {
+        return (response as ApiResponse<T>).data;
+    }
+    return response as T;
 }
 
 export async function apiPostData<T, D = unknown>(
@@ -63,8 +66,11 @@ export async function apiPostData<T, D = unknown>(
     payload?: D,
     config?: AxiosRequestConfig,
 ): Promise<T> {
-    const response = await apiPost<ApiResponse<T>, D>(url, payload, config);
-    return response.data;
+    const response = await apiPost<ApiResponse<T> | T, D>(url, payload, config);
+    if (response && typeof response === "object" && "data" in response) {
+        return (response as ApiResponse<T>).data;
+    }
+    return response as T;
 }
 
 export async function apiPutData<T, D = unknown>(
@@ -72,8 +78,11 @@ export async function apiPutData<T, D = unknown>(
     payload?: D,
     config?: AxiosRequestConfig,
 ): Promise<T> {
-    const response = await apiPut<ApiResponse<T>, D>(url, payload, config);
-    return response.data;
+    const response = await apiPut<ApiResponse<T> | T, D>(url, payload, config);
+    if (response && typeof response === "object" && "data" in response) {
+        return (response as ApiResponse<T>).data;
+    }
+    return response as T;
 }
 
 export async function apiGetList<T>(
@@ -81,6 +90,18 @@ export async function apiGetList<T>(
     params?: PaginationParams,
     config?: AxiosRequestConfig,
 ): Promise<PaginatedResponse<T>> {
-    return apiGet<PaginatedResponse<T>>(url, { params, ...config });
+    const response = await apiGet<PaginatedResponse<T> | T[]>(url, { params, ...config });
+    if (Array.isArray(response)) {
+        return {
+            data: response,
+            meta: {
+                current_page: 1,
+                last_page: 1,
+                per_page: response.length,
+                total: response.length,
+            },
+        };
+    }
+    return response;
 }
 

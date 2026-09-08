@@ -258,11 +258,11 @@ export const ENDPOINTS = {
     // Assets Management
     ASSETS: {
         CATEGORIES: {
-            LIST: "/v1/assets/categories",
-            CREATE: "/v1/assets/categories",
-            DETAIL: (uid: string) => `/v1/assets/categories/${uid}`,
-            UPDATE: (uid: string) => `/v1/assets/categories/${uid}`,
-            DELETE: (uid: string) => `/v1/assets/categories/${uid}`,
+            LIST: "/v1/asset-categories",
+            CREATE: "/v1/asset-categories",
+            DETAIL: (uid: string) => `/v1/asset-categories/${uid}`,
+            UPDATE: (uid: string) => `/v1/asset-categories/${uid}`,
+            DELETE: (uid: string) => `/v1/asset-categories/${uid}`,
         },
         LIST: "/v1/assets",
         SUMMARY: "/v1/assets/summary",
@@ -273,7 +273,7 @@ export const ENDPOINTS = {
         PENYUSUTAN: {
             LIST: (assetUid: string) => `/v1/assets/${assetUid}/penyusutan`,
             CREATE: (assetUid: string) => `/v1/assets/${assetUid}/penyusutan`,
-            BULK: "/v1/assets/penyusutan-bulk",
+            BULK: "/v1/assets/penyusutan/bulk",
             DELETE: (penyusutanUid: string) => `/v1/assets/penyusutan/${penyusutanUid}`,
         },
     },
