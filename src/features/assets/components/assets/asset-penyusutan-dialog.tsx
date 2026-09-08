@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
@@ -45,7 +45,6 @@ export function AssetPenyusutanDialog({
         handleSubmit,
         control,
         setValue,
-        watch,
         formState: { errors },
     } = useForm<AssetPenyusutanSchemaInput>({
         resolver: zodResolver(assetPenyusutanSchema),
@@ -56,7 +55,7 @@ export function AssetPenyusutanDialog({
         },
     });
 
-    const watchedNominal = watch("nominal") || 0;
+    const watchedNominal = (useWatch({ control, name: "nominal" }) || 0) as number;
     const isExceedingMax = watchedNominal > maxSusut;
 
     const nilaiBukuSebelum = asset ? Number(asset.nilai_buku) || 0 : 0;

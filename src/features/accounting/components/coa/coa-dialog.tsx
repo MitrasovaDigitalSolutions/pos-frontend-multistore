@@ -14,6 +14,10 @@ import { FormTextarea } from "@/components/forms/form-textarea";
 import { Switch } from "@/components/ui/switch";
 import { coaSchema, type CoaSchemaInput } from "../../schemas/coa-schema";
 import { useCreateChartOfAccount, useUpdateChartOfAccount, useFlatChartOfAccounts } from "../../api/coa-api";
+import {
+    COA_TYPE_OPTIONS,
+    getNormalBalanceByType
+} from "../../constants/coa-constants";
 import { FormCoaPicker } from "../shared";
 import type { ChartOfAccount } from "../../types";
 
@@ -52,7 +56,6 @@ export function CoaDialog({
         handleSubmit,
         reset,
         setValue,
-        getValues,
         control,
         formState: { isSubmitting },
     } = methods;
@@ -74,17 +77,18 @@ export function CoaDialog({
                     kode: account.kode,
                     nama: account.nama,
                     tipe: account.tipe,
-                    saldo_normal: account.saldo_normal || "",
+                    saldo_normal: getNormalBalanceByType(account.tipe),
                     parent_uid: account.parent_uid || "",
                     is_active: account.is_active,
                     keterangan: account.keterangan || "",
                 });
             } else {
+                const initialType = parentAccount ? parentAccount.tipe : "asset";
                 reset({
                     kode: "",
                     nama: "",
-                    tipe: parentAccount ? parentAccount.tipe : "asset",
-                    saldo_normal: parentAccount ? (parentAccount.saldo_normal || "") : "debit",
+                    tipe: initialType,
+                    saldo_normal: getNormalBalanceByType(initialType),
                     parent_uid: parentAccount ? parentAccount.uid : "",
                     is_active: true,
                     keterangan: "",
@@ -99,6 +103,7 @@ export function CoaDialog({
             const parent = flatAccounts.find((a) => a.uid === watchedParentUid);
             if (parent) {
                 setValue("tipe", parent.tipe);
+                setValue("saldo_normal", getNormalBalanceByType(parent.tipe));
             }
         }
     }, [watchedParentUid, flatAccounts, setValue]);
@@ -106,28 +111,26 @@ export function CoaDialog({
     // Auto-set default Debit / Kredit when Tipe changes
     useEffect(() => {
         if (watchedTipe) {
-            const currentSaldo = getValues("saldo_normal");
-            if (!currentSaldo) {
-                if (watchedTipe === "asset" || watchedTipe === "expense") {
-                    setValue("saldo_normal", "debit");
-                } else {
-                    setValue("saldo_normal", "kredit");
-                }
-            }
+            setValue("saldo_normal", getNormalBalanceByType(watchedTipe));
         }
-    }, [watchedTipe, setValue, getValues]);
+    }, [watchedTipe, setValue]);
 
     const onSubmit = async (data: CoaSchemaInput) => {
         try {
+            const payload: CoaSchemaInput = {
+                ...data,
+                saldo_normal: getNormalBalanceByType(data.tipe),
+            };
+
             if (isEdit && account) {
                 await updateMutation.mutateAsync({
                     uid: account.uid,
-                    data,
+                    data: payload,
                 });
-                toast.success(`Akun ${data.kode} - ${data.nama} berhasil diperbarui.`);
+                toast.success(`Akun ${payload.kode} - ${payload.nama} berhasil diperbarui.`);
             } else {
-                await createMutation.mutateAsync(data);
-                toast.success(`Akun ${data.kode} - ${data.nama} berhasil dibuat.`);
+                await createMutation.mutateAsync(payload);
+                toast.success(`Akun ${payload.kode} - ${payload.nama} berhasil dibuat.`);
             }
             onOpenChange(false);
         } catch (err: unknown) {
@@ -136,20 +139,6 @@ export function CoaDialog({
         }
     };
 
-
-
-    const typeOptions = [
-        { value: "asset", label: "Aset (Asset)" },
-        { value: "liability", label: "Kewajiban / Liabilitas (Liability)" },
-        { value: "equity", label: "Ekuitas / Modal (Equity)" },
-        { value: "revenue", label: "Pendapatan / Omset (Revenue)" },
-        { value: "expense", label: "Beban / Pengeluaran (Expense)" },
-    ];
-
-    const normalBalanceOptions = [
-        { value: "debit", label: "Debit" },
-        { value: "kredit", label: "Kredit" },
-    ];
 
     const dialogTitle = (
         <div className="flex items-center gap-2">
@@ -175,6 +164,8 @@ export function CoaDialog({
                         label="Akun Induk (Parent Account)"
                         placeholder="Pilih Akun Induk (Kosongkan jika akun utama/level 1)"
                         dialogTitle="Pilih Akun Induk (Parent CoA)"
+                        accounts={flatAccounts}
+                        isPostable={undefined}
                         excludeUid={account?.uid}
                         allowClear={true}
                         size="md"
@@ -199,25 +190,14 @@ export function CoaDialog({
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                        {/* Tipe Akun */}
-                        <FormSelect<CoaSchemaInput>
-                            name="tipe"
-                            label="Tipe Akun *"
-                            placeholder="Pilih Tipe Akun"
-                            options={typeOptions}
-                            disabled={isSubmitting || !!watchedParentUid}
-                        />
-
-                        {/* Debit / Kredit */}
-                        <FormSelect<CoaSchemaInput>
-                            name="saldo_normal"
-                            label="Debit / Kredit (Default)"
-                            placeholder="Pilih Debit / Kredit"
-                            options={normalBalanceOptions}
-                            disabled={isSubmitting}
-                        />
-                    </div>
+                    {/* Tipe Akun */}
+                    <FormSelect<CoaSchemaInput>
+                        name="tipe"
+                        label="Tipe Akun *"
+                        placeholder="Pilih Tipe Akun"
+                        options={COA_TYPE_OPTIONS}
+                        disabled={isSubmitting || !!watchedParentUid}
+                    />
 
                     {/* Status Aktif */}
                     <div className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
@@ -247,7 +227,7 @@ export function CoaDialog({
                         name="keterangan"
                         label="Keterangan / Deskripsi"
                         placeholder="Masukkan deskripsi mengenai penggunaan akun ini (opsional)..."
-                        className="min-h-[80px]"
+                        className="min-h-10"
                         disabled={isSubmitting}
                     />
 

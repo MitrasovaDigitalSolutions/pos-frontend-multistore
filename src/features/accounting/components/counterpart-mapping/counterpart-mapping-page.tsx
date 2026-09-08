@@ -50,7 +50,7 @@ export function CounterpartMappingPage() {
         data: accounts = [],
         isLoading: isLoadingAccounts,
         refetch: refetchAccounts,
-    } = useFlatChartOfAccounts();
+    } = useFlatChartOfAccounts({ is_postable: true });
 
     // Mutations
     const deleteMutation = useDeleteCoaCounterpartMapping();

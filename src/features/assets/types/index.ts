@@ -2,6 +2,11 @@ import type { ChartOfAccount } from "@/features/accounting/types";
 
 // ─── Asset Category Types ───────────────────────────────────────────────────
 
+export interface AssetCategoryQuota {
+    harga_perolehan_tersedia: number;
+    akumulasi_penyusutan_tersedia: number;
+}
+
 export interface AssetCategory {
     uid: string;
     kode: string;
@@ -11,6 +16,7 @@ export interface AssetCategory {
     coa_beban_penyusutan_uid?: string | null;
     keterangan?: string | null;
     assets_count?: number;
+    quota?: AssetCategoryQuota;
     coa_asset?: ChartOfAccount | null;
     coa_akumulasi_penyusutan?: ChartOfAccount | null;
     coa_beban_penyusutan?: ChartOfAccount | null;
@@ -25,7 +31,7 @@ export interface AssetCategory {
 // ─── Asset Types ────────────────────────────────────────────────────────────
 
 export type AssetStatus = "aktif" | "habis_susut" | "dihapus" | "dijual";
-export type AssetSumberPerolehan = "kas" | "non_kas";
+export type AssetSumberPerolehan = "kas" | "non_kas" | "existing";
 
 export interface Asset {
     uid: string;
@@ -36,6 +42,7 @@ export interface Asset {
     tanggal_perolehan: string;
     harga_perolehan: number;
     nilai_residu: number;
+    akumulasi_penyusutan_awal?: number | null;
     total_penyusutan: number;
     nilai_buku: number;
     sumber_perolehan: AssetSumberPerolehan;
@@ -43,6 +50,8 @@ export interface Asset {
     offset_coa_uid?: string | null;
     status: AssetStatus;
     catatan?: string | null;
+    can_delete?: boolean;
+    penyusutan_count?: number;
     category?: AssetCategory | null;
     cashAccount?: {
         uid: string;
@@ -130,6 +139,7 @@ export interface CreateAssetPayload {
     tanggal_perolehan: string;
     harga_perolehan: number;
     nilai_residu?: number | null;
+    akumulasi_penyusutan_awal?: number | null;
     sumber_perolehan: AssetSumberPerolehan;
     cash_account_uid?: string | null;
     offset_coa_uid?: string | null;

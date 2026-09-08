@@ -1,7 +1,12 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import type { BalanceSheetData, BalanceSheetDetailCategory, ChartOfAccount } from "@/features/accounting/types";
+import type {
+    AccountingReportMode,
+    BalanceSheetData,
+    BalanceSheetDetailCategory,
+    ChartOfAccount,
+} from "@/features/accounting/types";
 import { cn } from "@/lib/utils";
 import {
     IconCoin,
@@ -18,6 +23,7 @@ import { useCoaMappings } from "@/features/accounting/api/coa-mapping-api";
 import { BalanceSheetHeaderFilters } from "./balance-sheet-header-filters";
 import { BalanceSheetSectionCard } from "./balance-sheet-section-card";
 import { BalanceSheetStatusCard } from "./balance-sheet-status-card";
+import { ProfitLossStatusCard } from "./profit-loss-status-card";
 
 interface BalanceSheetPrintFilterValues {
     paperSize: string;
@@ -47,7 +53,7 @@ export function BalanceSheetDashboard({
         );
     }, [coaMappings]);
 
-    const [viewType, setViewType] = useState<"standard" | "equation">("equation");
+    const [viewType, setViewType] = useState<AccountingReportMode>("neraca");
     const [showDebitCredit, setShowDebitCredit] = useState<boolean>(true);
     const [isPrintDialogOpen, setIsPrintDialogOpen] = useState<boolean>(false);
 
@@ -101,41 +107,49 @@ export function BalanceSheetDashboard({
         return totalRevenue - totalExpense;
     }, [shuData, totalRevenue, totalExpense]);
 
-    // 3. Reorganize Equity: attach historical SHU lalu_detail to mapped CoA and append SHU Tahun Berjalan in standard view
+    // 3. Reorganize Equity: attach historical SHU lalu_detail to mapped CoA and append SHU Tahun Berjalan in Neraca view
     const equityItems = useMemo(() => {
-        // Find and attach details (lalu_detail) to the mapped SHU Tahun Lalu CoA account
-        const items = equity.map((item) => {
-            const isShuLalu =
-                (shuPriorYearsMapping?.chart_of_account_uid &&
-                    item.uid === shuPriorYearsMapping.chart_of_account_uid) ||
-                (shuPriorYearsMapping?.kode && item.kode === shuPriorYearsMapping.kode) ||
-                (!shuPriorYearsMapping &&
-                    (item.kode === "3-1200" ||
-                        item.nama.toLowerCase().includes("shu tahun lalu") ||
-                        item.nama.toLowerCase().includes("sisa hasil usaha tahun lalu") ||
-                        item.nama.toLowerCase().includes("laba ditahan")));
+        // Recursively find and attach details (lalu_detail) to the mapped SHU Tahun Lalu CoA account
+        const attachLaluDetail = (list: typeof equity): typeof equity => {
+            return list.map((item) => {
+                const updatedItem = { ...item };
+                const isShuLalu =
+                    (shuPriorYearsMapping?.chart_of_account_uid &&
+                        item.uid === shuPriorYearsMapping.chart_of_account_uid) ||
+                    (shuPriorYearsMapping?.kode && item.kode === shuPriorYearsMapping.kode) ||
+                    (!shuPriorYearsMapping &&
+                        (item.kode === "3-1200" ||
+                            item.nama.toLowerCase().includes("shu tahun lalu") ||
+                            item.nama.toLowerCase().includes("sisa hasil usaha tahun lalu") ||
+                            item.nama.toLowerCase().includes("laba ditahan")));
 
-            if (
-                isShuLalu &&
-                shuData?.lalu_detail &&
-                shuData.lalu_detail.length > 0 &&
-                (!item.detail || item.detail.length === 0)
-            ) {
-                const detailCategories: BalanceSheetDetailCategory[] = shuData.lalu_detail.map((d) => ({
-                    kategori: `SHU Tahun ${d.tahun}`,
-                    amount: d.amount,
-                    debit: d.amount < 0 ? Math.abs(d.amount) : 0,
-                    credit: d.amount > 0 ? d.amount : 0,
-                }));
-                return {
-                    ...item,
-                    detail: detailCategories,
-                };
-            }
-            return item;
-        });
+                if (
+                    isShuLalu &&
+                    shuData?.lalu_detail &&
+                    shuData.lalu_detail.length > 0 &&
+                    (!item.detail || item.detail.length === 0)
+                ) {
+                    const detailCategories: BalanceSheetDetailCategory[] = shuData.lalu_detail.map((d) => ({
+                        kategori: `SHU Tahun ${d.tahun}`,
+                        amount: d.amount,
+                        debit: d.amount < 0 ? Math.abs(d.amount) : 0,
+                        credit: d.amount > 0 ? d.amount : 0,
+                    }));
+                    updatedItem.detail = detailCategories;
+                }
 
-        if (viewType === "standard") {
+                const kids = item.children || item.children_recursive;
+                if (kids && kids.length > 0) {
+                    updatedItem.children = attachLaluDetail(kids);
+                }
+
+                return updatedItem;
+            });
+        };
+
+        const items = attachLaluDetail(equity);
+
+        if (viewType === "neraca") {
             items.push({
                 uid: "synthetic-shu-berjalan",
                 kode: null,
@@ -143,19 +157,20 @@ export function BalanceSheetDashboard({
                 amount: shuData?.berjalan !== undefined ? shuData.berjalan : netIncome,
                 debit: totalExpense,
                 credit: totalRevenue,
+                children: [],
             });
         }
         return items;
     }, [equity, viewType, shuData, shuPriorYearsMapping, netIncome, totalExpense, totalRevenue]);
 
     const finalEquityTotal =
-        viewType === "standard"
+        viewType === "neraca"
             ? totalEquity + (shuData?.berjalan !== undefined ? shuData.berjalan : netIncome)
             : totalEquity;
 
     // 4. Compute balance metrics
     const { totalLeftVal, totalRightVal, isBalanced, difference } = useMemo(() => {
-        if (viewType === "standard") {
+        if (viewType === "neraca") {
             const leftVal = totalAssets;
             const rightVal = totalLiabilities + finalEquityTotal;
             const diff = Math.abs(leftVal - rightVal);
@@ -163,6 +178,14 @@ export function BalanceSheetDashboard({
                 totalLeftVal: leftVal,
                 totalRightVal: rightVal,
                 isBalanced: data?.is_balanced ?? (diff < 0.1),
+                difference: diff,
+            };
+        } else if (viewType === "laba_rugi") {
+            const diff = Math.abs(totalRevenue - totalExpense);
+            return {
+                totalLeftVal: totalRevenue,
+                totalRightVal: totalExpense,
+                isBalanced: true,
                 difference: diff,
             };
         } else {
@@ -203,37 +226,137 @@ export function BalanceSheetDashboard({
                 }
             />
 
-            {/* Balance Status Visual Card */}
-            <BalanceSheetStatusCard
-                isBalanced={isBalanced}
-                totalAssets={totalLeftVal}
-                totalLiabilitiesAndEquity={totalRightVal}
-                difference={difference}
-                leftLabel={viewType === "standard" ? "Total Aset (A)" : "Total Aset + Beban (A + B)"}
-                rightLabel={viewType === "standard" ? "Liabilitas + Ekuitas (L + E)" : "Liabilitas + Ekuitas + Pendapatan (L + E + P)"}
-                leftLegend={viewType === "standard" ? "Aset" : "Aset & Beban"}
-                rightLegend={viewType === "standard" ? "Kewajiban & Ekuitas" : "Liabilitas, Ekuitas & Pendapatan"}
-            />
+            {/* Status Visual Card (Neraca vs Laba Rugi vs Equation) */}
+            {viewType === "laba_rugi" ? (
+                <ProfitLossStatusCard
+                    totalRevenue={totalRevenue}
+                    totalExpense={totalExpense}
+                    netIncome={netIncome}
+                />
+            ) : (
+                <BalanceSheetStatusCard
+                    isBalanced={isBalanced}
+                    totalAssets={totalLeftVal}
+                    totalLiabilitiesAndEquity={totalRightVal}
+                    difference={difference}
+                    leftLabel={viewType === "neraca" ? "Total Aset (A)" : "Total Aset + Beban (A + B)"}
+                    rightLabel={viewType === "neraca" ? "Liabilitas + Ekuitas (L + E)" : "Liabilitas + Ekuitas + Pendapatan (L + E + P)"}
+                    leftLegend={viewType === "neraca" ? "Aset" : "Aset & Beban"}
+                    rightLegend={viewType === "neraca" ? "Kewajiban & Ekuitas" : "Liabilitas, Ekuitas & Pendapatan"}
+                />
+            )}
 
-            {/* Two-Column Assets vs Liabilities and Equity Grid */}
-            <div className={cn("grid gap-3.5", showDebitCredit ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
-                {/* Left Side: Debit Column Assets & Expenses */}
-                <div className="space-y-3.5">
-                    <BalanceSheetSectionCard
-                        title="Aset"
-                        description="Harta kekayaan perusahaan termasuk kas, rekening bank, piutang, dan stok persediaan barang dagang."
-                        items={assets}
-                        total={totalAssets}
-                        accentColor="emerald"
-                        totalLabel="Total Aset"
-                        icon={<IconWallet className="w-4.5 h-4.5 text-emerald-500" />}
-                        isEditing={false}
-                        showDebitCredit={showDebitCredit}
-                        sectionKey="assets"
-                        coaList={flatAccounts || []}
-                    />
+            {/* Mode: NERACA (Aset, Liabilitas, Ekuitas) */}
+            {viewType === "neraca" && (
+                <div className={cn("grid gap-3.5", showDebitCredit ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
+                    {/* Left Column: Aset */}
+                    <div className="space-y-3.5">
+                        <BalanceSheetSectionCard
+                            title="Aset"
+                            description="Harta kekayaan perusahaan termasuk kas, rekening bank, piutang, dan stok persediaan barang dagang."
+                            items={assets}
+                            total={totalAssets}
+                            accentColor="emerald"
+                            totalLabel="Total Aset"
+                            icon={<IconWallet className="w-4.5 h-4.5 text-emerald-500" />}
+                            isEditing={false}
+                            showDebitCredit={showDebitCredit}
+                            sectionKey="assets"
+                            coaList={flatAccounts || []}
+                        />
+                    </div>
 
-                    {viewType === "equation" && (
+                    {/* Right Column: Liabilitas & Ekuitas */}
+                    <div className="space-y-3.5">
+                        <BalanceSheetSectionCard
+                            title="Kewajiban (Liabilitas)"
+                            description="Kewajiban finansial jangka pendek dan jangka panjang perusahaan kepada pihak lain."
+                            items={liabilities}
+                            total={totalLiabilities}
+                            accentColor="amber"
+                            totalLabel="Total Kewajiban"
+                            icon={<IconCoin className="w-4.5 h-4.5 text-amber-500" />}
+                            isEditing={false}
+                            showDebitCredit={showDebitCredit}
+                            sectionKey="liabilities"
+                            coaList={flatAccounts || []}
+                        />
+
+                        <BalanceSheetSectionCard
+                            title="Ekuitas"
+                            description="Modal pemilik perusahaan beserta laba ditahan dan laba berjalan hasil operasional."
+                            items={equityItems}
+                            total={finalEquityTotal}
+                            accentColor="indigo"
+                            totalLabel="Total Ekuitas"
+                            icon={<IconTrendingUp className="w-4.5 h-4.5 text-indigo-500" />}
+                            isEditing={false}
+                            showDebitCredit={showDebitCredit}
+                            sectionKey="equity"
+                            coaList={flatAccounts || []}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Mode: LABA RUGI (Pendapatan & Beban) */}
+            {viewType === "laba_rugi" && (
+                <div className={cn("grid gap-3.5", showDebitCredit ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
+                    {/* Left Column: Pendapatan */}
+                    <div className="space-y-3.5">
+                        <BalanceSheetSectionCard
+                            title="Pendapatan (Revenues)"
+                            description="Penerimaan dari omset hasil penjualan barang, pendapatan jasa, maupun penerimaan non-operasional."
+                            items={revenue}
+                            total={totalRevenue}
+                            accentColor="emerald"
+                            totalLabel="Total Pendapatan"
+                            icon={<IconCoin className="w-4.5 h-4.5 text-emerald-500" />}
+                            isEditing={false}
+                            showDebitCredit={showDebitCredit}
+                            sectionKey="revenue"
+                            coaList={flatAccounts || []}
+                        />
+                    </div>
+
+                    {/* Right Column: Beban & HPP */}
+                    <div className="space-y-3.5">
+                        <BalanceSheetSectionCard
+                            title="Beban & HPP (Expenses)"
+                            description="Harga Pokok Penjualan (HPP), biaya gaji tenaga kerja, pengeluaran operasional umum, dan biaya penyusutan."
+                            items={expense}
+                            total={totalExpense}
+                            accentColor="amber"
+                            totalLabel="Total Beban & HPP"
+                            icon={<IconTrendingUp className="w-4.5 h-4.5 text-amber-500" />}
+                            isEditing={false}
+                            showDebitCredit={showDebitCredit}
+                            sectionKey="expense"
+                            coaList={flatAccounts || []}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Mode: PERSAMAAN AKUNTANSI (All-In-One Equation) */}
+            {viewType === "equation" && (
+                <div className={cn("grid gap-3.5", showDebitCredit ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
+                    {/* Left Column: Aset & Beban */}
+                    <div className="space-y-3.5">
+                        <BalanceSheetSectionCard
+                            title="Aset"
+                            description="Harta kekayaan perusahaan termasuk kas, rekening bank, piutang, dan stok persediaan barang dagang."
+                            items={assets}
+                            total={totalAssets}
+                            accentColor="emerald"
+                            totalLabel="Total Aset"
+                            icon={<IconWallet className="w-4.5 h-4.5 text-emerald-500" />}
+                            isEditing={false}
+                            showDebitCredit={showDebitCredit}
+                            sectionKey="assets"
+                            coaList={flatAccounts || []}
+                        />
+
                         <BalanceSheetSectionCard
                             title="Beban (Expenses)"
                             description="Biaya-biaya operasional, pengeluaran administratif, beban pembelian, serta penyusutan aset."
@@ -247,40 +370,38 @@ export function BalanceSheetDashboard({
                             sectionKey="expense"
                             coaList={flatAccounts || []}
                         />
-                    )}
-                </div>
+                    </div>
 
-                {/* Right Side: Credit Column Liabilities, Equity & Revenues */}
-                <div className="space-y-3.5">
-                    <BalanceSheetSectionCard
-                        title="Kewajiban (Liabilitas)"
-                        description="Kewajiban finansial jangka pendek dan jangka panjang perusahaan kepada pihak lain."
-                        items={liabilities}
-                        total={totalLiabilities}
-                        accentColor="amber"
-                        totalLabel="Total Kewajiban"
-                        icon={<IconCoin className="w-4.5 h-4.5 text-amber-500" />}
-                        isEditing={false}
-                        showDebitCredit={showDebitCredit}
-                        sectionKey="liabilities"
-                        coaList={flatAccounts || []}
-                    />
+                    {/* Right Column: Liabilitas, Ekuitas & Pendapatan */}
+                    <div className="space-y-3.5">
+                        <BalanceSheetSectionCard
+                            title="Kewajiban (Liabilitas)"
+                            description="Kewajiban finansial jangka pendek dan jangka panjang perusahaan kepada pihak lain."
+                            items={liabilities}
+                            total={totalLiabilities}
+                            accentColor="amber"
+                            totalLabel="Total Kewajiban"
+                            icon={<IconCoin className="w-4.5 h-4.5 text-amber-500" />}
+                            isEditing={false}
+                            showDebitCredit={showDebitCredit}
+                            sectionKey="liabilities"
+                            coaList={flatAccounts || []}
+                        />
 
-                    <BalanceSheetSectionCard
-                        title="Ekuitas"
-                        description="Modal pemilik perusahaan beserta laba ditahan dan laba berjalan hasil operasional."
-                        items={equityItems}
-                        total={finalEquityTotal}
-                        accentColor="indigo"
-                        totalLabel="Total Ekuitas"
-                        icon={<IconTrendingUp className="w-4.5 h-4.5 text-indigo-500" />}
-                        isEditing={false}
-                        showDebitCredit={showDebitCredit}
-                        sectionKey="equity"
-                        coaList={flatAccounts || []}
-                    />
+                        <BalanceSheetSectionCard
+                            title="Ekuitas"
+                            description="Modal pemilik perusahaan beserta laba ditahan dan laba berjalan hasil operasional."
+                            items={equityItems}
+                            total={finalEquityTotal}
+                            accentColor="indigo"
+                            totalLabel="Total Ekuitas"
+                            icon={<IconTrendingUp className="w-4.5 h-4.5 text-indigo-500" />}
+                            isEditing={false}
+                            showDebitCredit={showDebitCredit}
+                            sectionKey="equity"
+                            coaList={flatAccounts || []}
+                        />
 
-                    {viewType === "equation" && (
                         <BalanceSheetSectionCard
                             title="Pendapatan (Revenues)"
                             description="Penerimaan dari omset hasil penjualan barang, pendapatan jasa, maupun penerimaan non-operasional."
@@ -294,9 +415,9 @@ export function BalanceSheetDashboard({
                             sectionKey="revenue"
                             coaList={flatAccounts || []}
                         />
-                    )}
+                    </div>
                 </div>
-            </div>
+            )}
 
             <PrintConfirmDialog<BalanceSheetPrintFilterValues>
                 open={isPrintDialogOpen}

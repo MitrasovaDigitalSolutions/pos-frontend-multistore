@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
     IconNotebook,
     IconPlus,
@@ -8,7 +8,6 @@ import {
     IconTrash,
     IconSearch,
     IconChevronDown,
-    IconChevronRight,
     IconList,
     IconHierarchy,
     IconFolderPlus,
@@ -26,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 import { useChartOfAccounts, useFlatChartOfAccounts, useDeleteChartOfAccount } from "../../api/coa-api";
+import { getNormalBalanceByType, NORMAL_BALANCE_CONFIG } from "../../constants/coa-constants";
 import { CoaDialog } from "./coa-dialog";
 import type { ChartOfAccount, ChartOfAccountType } from "../../types";
 
@@ -41,8 +41,9 @@ function filterTree(nodes: ChartOfAccount[], query: string, typeFilter: string):
                 node.kode.toLowerCase().includes(lowerQuery) ||
                 node.nama.toLowerCase().includes(lowerQuery);
 
-            const filteredChildren = node.children
-                ? filterTree(node.children, query, typeFilter)
+            const rawChildren = node.children_recursive ?? node.children ?? [];
+            const filteredChildren = rawChildren.length > 0
+                ? filterTree(rawChildren, query, typeFilter)
                 : [];
 
             const hasChildrenMatch = filteredChildren.length > 0;
@@ -51,6 +52,7 @@ function filterTree(nodes: ChartOfAccount[], query: string, typeFilter: string):
                 return {
                     ...node,
                     children: filteredChildren,
+                    children_recursive: filteredChildren,
                 };
             }
 
@@ -64,7 +66,7 @@ export function CoaPage() {
     const [viewMode, setViewMode] = useState<"tree" | "flat">("tree");
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTab, setActiveTab] = useState<string>("all");
-    const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
+    const [collapsedNodes, setCollapsedNodes] = useState<Record<string, boolean>>({});
 
     // Dialog States
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -100,58 +102,55 @@ export function CoaPage() {
         refetchFlat();
     };
 
-    // ─── Expand / Collapse Helpers ─────────────────────────────────────────────
+    // ─── Expand / Collapse Helpers (Default: Semua Terbuka / Expanded) ──────────
     const toggleExpand = (uid: string) => {
-        setExpandedNodes((prev) => ({
+        setCollapsedNodes((prev) => ({
             ...prev,
             [uid]: !prev[uid],
         }));
     };
 
     const expandAll = () => {
-        if (!treeAccounts) return;
-        const expanded: Record<string, boolean> = {};
-
-        const traverse = (nodes: ChartOfAccount[]) => {
-            nodes.forEach((acc) => {
-                if (acc.children && acc.children.length > 0) {
-                    expanded[acc.uid] = true;
-                    traverse(acc.children);
-                }
-            });
-        };
-
-        traverse(treeAccounts);
-        setExpandedNodes(expanded);
+        setCollapsedNodes({});
     };
 
     const collapseAll = () => {
-        setExpandedNodes({});
+        if (!treeAccounts) return;
+        const collapsed: Record<string, boolean> = {};
+        const traverse = (nodes: ChartOfAccount[]) => {
+            nodes.forEach((acc) => {
+                const kids = acc.children_recursive ?? acc.children;
+                if (kids && kids.length > 0) {
+                    collapsed[acc.uid] = true;
+                    traverse(kids);
+                }
+            });
+        };
+        traverse(treeAccounts);
+        setCollapsedNodes(collapsed);
     };
-
-    const isInitialized = useRef(false);
 
     // Auto-expand nodes when searching so matched children are visible
     useEffect(() => {
-        if (searchQuery.trim() && flatAccounts) {
-            const expanded: Record<string, boolean> = {};
+        if (searchQuery.trim() && treeAccounts) {
+            const matchedParentUids: string[] = [];
             const query = searchQuery.toLowerCase();
 
-            // Find matching nodes and expand their ancestors
-            const findAndExpandParent = (nodes: ChartOfAccount[], searchTarget: string): boolean => {
+            const findAndExpandParent = (nodes: ChartOfAccount[]): boolean => {
                 let hasMatch = false;
                 for (const node of nodes) {
                     const selfMatch =
-                        node.kode.toLowerCase().includes(searchTarget) ||
-                        node.nama.toLowerCase().includes(searchTarget);
+                        node.kode.toLowerCase().includes(query) ||
+                        node.nama.toLowerCase().includes(query);
 
-                    const childrenMatch = node.children
-                        ? findAndExpandParent(node.children, searchTarget)
+                    const kids = node.children_recursive ?? node.children;
+                    const childrenMatch = kids && kids.length > 0
+                        ? findAndExpandParent(kids)
                         : false;
 
                     if (selfMatch || childrenMatch) {
-                        if (node.children && node.children.length > 0) {
-                            expanded[node.uid] = true;
+                        if (kids && kids.length > 0) {
+                            matchedParentUids.push(node.uid);
                         }
                         hasMatch = true;
                     }
@@ -159,32 +158,21 @@ export function CoaPage() {
                 return hasMatch;
             };
 
-            if (treeAccounts) {
-                findAndExpandParent(treeAccounts, query);
+            findAndExpandParent(treeAccounts);
+            if (matchedParentUids.length > 0) {
+                const timer = setTimeout(() => {
+                    setCollapsedNodes((prev) => {
+                        const next = { ...prev };
+                        matchedParentUids.forEach((id) => {
+                            delete next[id];
+                        });
+                        return next;
+                    });
+                }, 0);
+                return () => clearTimeout(timer);
             }
-            const timer = setTimeout(() => {
-                setExpandedNodes((prev) => ({ ...prev, ...expanded }));
-            }, 0);
-            return () => clearTimeout(timer);
         }
-    }, [searchQuery, flatAccounts, treeAccounts]);
-
-    // Expand top-level accounts with children by default on first load
-    useEffect(() => {
-        if (treeAccounts && !isInitialized.current && !searchQuery) {
-            isInitialized.current = true;
-            const expanded: Record<string, boolean> = {};
-            treeAccounts.forEach((acc) => {
-                if (acc.children && acc.children.length > 0) {
-                    expanded[acc.uid] = true;
-                }
-            });
-            const timer = setTimeout(() => {
-                setExpandedNodes(expanded);
-            }, 0);
-            return () => clearTimeout(timer);
-        }
-    }, [treeAccounts, searchQuery]);
+    }, [searchQuery, treeAccounts]);
 
     // ─── Mappings ──────────────────────────────────────────────────────────────
     const typeLabelMap: Record<ChartOfAccountType, string> = {
@@ -274,11 +262,14 @@ export function CoaPage() {
     // ─── Render Tree Row (Recursive) ──────────────────────────────────────────
     const renderTreeRows = (nodes: ChartOfAccount[], depth = 0): React.ReactNode => {
         return nodes.map((node) => {
-            const hasChildren = node.children && node.children.length > 0;
-            const isExpanded = !!expandedNodes[node.uid];
+            const kids = node.children_recursive ?? node.children ?? [];
+            const hasChildren = kids.length > 0;
+            const isExpanded = !collapsedNodes[node.uid];
             const displayType = typeLabelMap[node.tipe] || node.tipe;
             const badgeClass = typeBadgeStyles[node.tipe] || "";
             const leftBorder = typeBorderStyles[node.tipe] || "";
+            const normalBalance = node.saldo_normal || getNormalBalanceByType(node.tipe);
+            const normalConfig = NORMAL_BALANCE_CONFIG[normalBalance];
 
             return (
                 <div key={node.uid} className="flex flex-col">
@@ -290,34 +281,49 @@ export function CoaPage() {
                             !node.is_active && "opacity-50"
                         )}
                     >
-                        {/* Kode & Nama (Indented) */}
-                        <div
-                            className="col-span-5 flex items-center gap-1 min-w-0"
-                            style={{ paddingLeft: `${depth * 1.5}rem` }}
-                        >
-                            {hasChildren ? (
-                                <button
-                                    onClick={() => toggleExpand(node.uid)}
-                                    className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md text-slate-500 transition-colors"
-                                >
-                                    {isExpanded ? (
-                                        <IconChevronDown size={14} className="stroke-[3]" />
-                                    ) : (
-                                        <IconChevronRight size={14} className="stroke-[3]" />
-                                    )}
-                                </button>
-                            ) : (
-                                <div className="w-6" /> // spacer
-                            )}
-                            <span className="font-extrabold text-slate-800 dark:text-slate-200 tracking-wide font-mono mr-2">
+                        {/* Kode & Nama (Compact & Aligned) */}
+                        <div className="col-span-5 flex items-center gap-1.5 min-w-0">
+                            {/* 1. Tombol Expand di paling kiri */}
+                            <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                                {hasChildren && (
+                                    <button
+                                        onClick={() => toggleExpand(node.uid)}
+                                        className="p-0.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-colors cursor-pointer"
+                                        title={isExpanded ? "Ciutkan sub-akun" : "Bentangkan sub-akun"}
+                                    >
+                                        <IconChevronDown
+                                            size={14}
+                                            className={cn(
+                                                "stroke-[3] transition-transform duration-200",
+                                                !isExpanded && "-rotate-90"
+                                            )}
+                                        />
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* 2. Kode Akun: Selalu sejajar di kolom tetap */}
+                            <span className="font-extrabold text-slate-800 dark:text-slate-200 tracking-wide font-mono shrink-0 w-16">
                                 {node.kode}
                             </span>
-                            <span className={cn(
-                                "truncate text-slate-700 dark:text-slate-300",
-                                depth === 0 ? "font-bold text-slate-900 dark:text-white text-[13px]" : "font-medium"
-                            )}>
-                                {node.nama}
-                            </span>
+
+                            {/* 3. Nama Akun: Dekat dengan kode, anak tetap menjorok */}
+                            <div
+                                className="flex items-center gap-1 min-w-0 flex-1"
+                                style={{ paddingLeft: `${depth === 0 ? 0 : 14 + (depth - 1) * 14}px` }}
+                            >
+                                <span className={cn(
+                                    "truncate text-slate-700 dark:text-slate-300",
+                                    depth === 0 ? "font-bold text-slate-900 dark:text-white text-[13px]" : "font-medium"
+                                )}>
+                                    {node.nama}
+                                </span>
+                                {hasChildren && (
+                                    <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800/60 px-1 py-0.2 rounded shrink-0">
+                                        {kids.length} sub
+                                    </span>
+                                )}
+                            </div>
                         </div>
 
                         {/* Tipe Akun */}
@@ -328,8 +334,15 @@ export function CoaPage() {
                         </div>
 
                         {/* Debit / Kredit */}
-                        <div className="col-span-1 font-bold text-slate-600 dark:text-slate-400 capitalize">
-                            {node.saldo_normal || "-"}
+                        <div className="col-span-1">
+                            <span className={cn(
+                                "inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase tracking-wider border shadow-2xs",
+                                normalConfig.bg,
+                                normalConfig.text,
+                                normalConfig.border
+                            )}>
+                                {normalConfig.label}
+                            </span>
                         </div>
 
                         {/* Status */}
@@ -392,7 +405,7 @@ export function CoaPage() {
                     {/* Children rows (Recursive) */}
                     {hasChildren && isExpanded && (
                         <div className="flex flex-col bg-slate-50/20 dark:bg-slate-900/10">
-                            {renderTreeRows(node.children || [], depth + 1)}
+                            {renderTreeRows(kids, depth + 1)}
                         </div>
                     )}
                 </div>
@@ -531,129 +544,145 @@ export function CoaPage() {
 
             {/* Accounts List Table Card */}
             <Card className="border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden bg-white dark:bg-slate-900 rounded-2xl">
-                <CardContent className="p-0">
-                    {/* Table Headers */}
-                    <div className="grid grid-cols-12 items-center py-3 px-4 text-[10px] font-extrabold uppercase text-slate-500 bg-slate-50/50 dark:bg-slate-950/20 border-b border-slate-100 dark:border-slate-800 tracking-wider">
-                        <div className="col-span-5">Kode & Nama Akun</div>
-                        <div className="col-span-2">Tipe</div>
-                        <div className="col-span-1">Debit / Kredit</div>
-                        <div className="col-span-1">Status</div>
-                        <div className="col-span-2">Keterangan</div>
-                        <div className="col-span-1 text-right">Aksi</div>
-                    </div>
-
-                    {/* Data Render Body */}
-                    {isLoading ? (
-                        <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400 dark:text-slate-600">
-                            <div className="w-8 h-8 rounded-full border-2 border-slate-200 border-t-indigo-600 dark:border-slate-800 dark:border-t-indigo-400 animate-spin" />
-                            <span className="text-xs font-semibold">Memuat data akun perkiraan...</span>
+                <CardContent className="p-0 overflow-x-auto">
+                    <div className="min-w-[760px]">
+                        {/* Table Headers */}
+                        <div className="grid grid-cols-12 items-center py-3 px-4 text-[10px] font-extrabold uppercase text-slate-500 bg-slate-50/50 dark:bg-slate-950/20 border-b border-slate-100 dark:border-slate-800 tracking-wider">
+                            <div className="col-span-5 flex items-center gap-1.5">
+                                <span className="w-4 shrink-0" />
+                                <span className="w-16 shrink-0 font-mono">Kode</span>
+                                <span>Nama Akun</span>
+                            </div>
+                            <div className="col-span-2">Tipe</div>
+                            <div className="col-span-1">Debit / Kredit</div>
+                            <div className="col-span-1">Status</div>
+                            <div className="col-span-2">Keterangan</div>
+                            <div className="col-span-1 text-right">Aksi</div>
                         </div>
-                    ) : viewMode === "tree" ? (
-                        filteredTreeData.length > 0 ? (
-                            <div className="flex flex-col divide-y divide-slate-100 dark:divide-slate-800/40">
-                                {renderTreeRows(filteredTreeData)}
+
+                        {/* Data Render Body */}
+                        {isLoading ? (
+                            <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400 dark:text-slate-600">
+                                <div className="w-8 h-8 rounded-full border-2 border-slate-200 border-t-indigo-600 dark:border-slate-800 dark:border-t-indigo-400 animate-spin" />
+                                <span className="text-xs font-semibold">Memuat data akun perkiraan...</span>
                             </div>
+                        ) : viewMode === "tree" ? (
+                            filteredTreeData.length > 0 ? (
+                                <div className="flex flex-col divide-y divide-slate-100 dark:divide-slate-800/40">
+                                    {renderTreeRows(filteredTreeData)}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-16 text-slate-400 text-xs gap-2">
+                                    <IconAlertCircle size={28} className="text-slate-300 dark:text-slate-700" />
+                                    <span className="font-bold">Tidak ada akun perkiraan ditemukan</span>
+                                    <span className="text-[10px] text-slate-400 dark:text-slate-500">Coba ubah kata kunci pencarian atau filter tipe.</span>
+                                </div>
+                            )
                         ) : (
-                            <div className="flex flex-col items-center justify-center py-16 text-slate-400 text-xs gap-2">
-                                <IconAlertCircle size={28} className="text-slate-300 dark:text-slate-700" />
-                                <span className="font-bold">Tidak ada akun perkiraan ditemukan</span>
-                                <span className="text-[10px] text-slate-400 dark:text-slate-500">Coba ubah kata kunci pencarian atau filter tipe.</span>
-                            </div>
-                        )
-                    ) : (
-                        // Flat View List Rows
-                        filteredFlatData.length > 0 ? (
-                            <div className="flex flex-col divide-y divide-slate-100 dark:divide-slate-800/40">
-                                {filteredFlatData.map((node) => {
-                                    const displayType = typeLabelMap[node.tipe] || node.tipe;
-                                    const badgeClass = typeBadgeStyles[node.tipe] || "";
-                                    const leftBorder = typeBorderStyles[node.tipe] || "";
+                            // Flat View List Rows
+                            filteredFlatData.length > 0 ? (
+                                <div className="flex flex-col divide-y divide-slate-100 dark:divide-slate-800/40">
+                                    {filteredFlatData.map((node) => {
+                                        const displayType = typeLabelMap[node.tipe] || node.tipe;
+                                        const badgeClass = typeBadgeStyles[node.tipe] || "";
+                                        const leftBorder = typeBorderStyles[node.tipe] || "";
+                                        const normalBalance = node.saldo_normal || getNormalBalanceByType(node.tipe);
+                                        const normalConfig = NORMAL_BALANCE_CONFIG[normalBalance];
 
-                                    return (
-                                        <div
-                                            key={node.uid}
-                                            className={cn(
-                                                "grid grid-cols-12 items-center py-2.5 px-4 text-xs hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors border-l-2",
-                                                leftBorder,
-                                                !node.is_active && "opacity-50"
-                                            )}
-                                        >
-                                            {/* Kode & Nama */}
-                                            <div className="col-span-5 flex items-center min-w-0 pr-4 pl-1">
-                                                <span className="font-extrabold text-slate-800 dark:text-slate-200 tracking-wide font-mono mr-3">
-                                                    {node.kode}
-                                                </span>
-                                                <span className="font-bold text-slate-900 dark:text-white truncate">
-                                                    {node.nama}
-                                                </span>
-                                            </div>
-
-                                            {/* Tipe Akun */}
-                                            <div className="col-span-2">
-                                                <Badge variant="outline" className={cn("px-2 py-0.5 rounded-md text-[10px] uppercase font-bold", badgeClass)}>
-                                                    {displayType}
-                                                </Badge>
-                                            </div>
-
-                                            {/* Debit / Kredit */}
-                                            <div className="col-span-1 font-bold text-slate-600 dark:text-slate-400 capitalize">
-                                                {node.saldo_normal || "-"}
-                                            </div>
-
-                                            {/* Status */}
-                                            <div className="col-span-1">
-                                                {node.is_active ? (
-                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 uppercase tracking-wider">
-                                                        Aktif
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-slate-100 text-slate-600 dark:bg-slate-800/40 dark:text-slate-400 border border-slate-200 dark:border-slate-700 uppercase tracking-wider">
-                                                        Nonaktif
-                                                    </span>
+                                        return (
+                                            <div
+                                                key={node.uid}
+                                                className={cn(
+                                                    "grid grid-cols-12 items-center py-2.5 px-4 text-xs hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors border-l-2",
+                                                    leftBorder,
+                                                    !node.is_active && "opacity-50"
                                                 )}
-                                            </div>
+                                            >
+                                                {/* Kode & Nama */}
+                                                <div className="col-span-5 flex items-center min-w-0 pr-4 pl-1 gap-1.5">
+                                                    <span className="w-4 shrink-0" />
+                                                    <span className="font-extrabold text-slate-800 dark:text-slate-200 tracking-wide font-mono shrink-0 w-16">
+                                                        {node.kode}
+                                                    </span>
+                                                    <span className="font-bold text-slate-900 dark:text-white truncate">
+                                                        {node.nama}
+                                                    </span>
+                                                </div>
 
-                                            {/* Keterangan */}
-                                            <div className="col-span-2 truncate text-slate-500 dark:text-slate-400 pr-2">
-                                                {node.keterangan || "-"}
-                                            </div>
+                                                {/* Tipe Akun */}
+                                                <div className="col-span-2">
+                                                    <Badge variant="outline" className={cn("px-2 py-0.5 rounded-md text-[10px] uppercase font-bold", badgeClass)}>
+                                                        {displayType}
+                                                    </Badge>
+                                                </div>
 
-                                            {/* Actions */}
-                                            <div className="col-span-1 flex items-center justify-end gap-1">
-                                                {/* Edit */}
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => handleEditClick(node)}
-                                                    className="h-7 w-7 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-lg"
-                                                    title="Ubah Akun"
-                                                >
-                                                    <IconEdit size={14} />
-                                                </Button>
+                                                {/* Debit / Kredit */}
+                                                <div className="col-span-1">
+                                                    <span className={cn(
+                                                        "inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase tracking-wider border shadow-2xs",
+                                                        normalConfig.bg,
+                                                        normalConfig.text,
+                                                        normalConfig.border
+                                                    )}>
+                                                        {normalConfig.label}
+                                                    </span>
+                                                </div>
 
-                                                {/* Delete */}
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => handleDeleteClick(node)}
-                                                    className="h-7 w-7 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg"
-                                                    title="Hapus Akun"
-                                                >
-                                                    <IconTrash size={14} />
-                                                </Button>
+                                                {/* Status */}
+                                                <div className="col-span-1">
+                                                    {node.is_active ? (
+                                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 uppercase tracking-wider">
+                                                            Aktif
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-slate-100 text-slate-600 dark:bg-slate-800/40 dark:text-slate-400 border border-slate-200 dark:border-slate-700 uppercase tracking-wider">
+                                                            Nonaktif
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                {/* Keterangan */}
+                                                <div className="col-span-2 truncate text-slate-500 dark:text-slate-400 pr-2">
+                                                    {node.keterangan || "-"}
+                                                </div>
+
+                                                {/* Actions */}
+                                                <div className="col-span-1 flex items-center justify-end gap-1">
+                                                    {/* Edit */}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleEditClick(node)}
+                                                        className="h-7 w-7 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-lg"
+                                                        title="Ubah Akun"
+                                                    >
+                                                        <IconEdit size={14} />
+                                                    </Button>
+
+                                                    {/* Delete */}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleDeleteClick(node)}
+                                                        className="h-7 w-7 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg"
+                                                        title="Hapus Akun"
+                                                    >
+                                                        <IconTrash size={14} />
+                                                    </Button>
+                                                </div>
                                             </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center py-16 text-slate-400 text-xs gap-2">
-                                <IconAlertCircle size={28} className="text-slate-300 dark:text-slate-700" />
-                                <span className="font-bold">Tidak ada akun perkiraan ditemukan</span>
-                                <span className="text-[10px] text-slate-400 dark:text-slate-500">Coba ubah kata kunci pencarian atau filter tipe.</span>
-                            </div>
-                        )
-                    )}
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-16 text-slate-400 text-xs gap-2">
+                                    <IconAlertCircle size={28} className="text-slate-300 dark:text-slate-700" />
+                                    <span className="font-bold">Tidak ada akun perkiraan ditemukan</span>
+                                    <span className="text-[10px] text-slate-400 dark:text-slate-500">Coba ubah kata kunci pencarian atau filter tipe.</span>
+                                </div>
+                            )
+                        )}
+                    </div>
                 </CardContent>
             </Card>
 

@@ -5,20 +5,57 @@ import { ENDPOINTS } from "@/shared/api/endpoints";
 import type { ApiResponse } from "@/types/api";
 import type { ChartOfAccount, ChartOfAccountType } from "../types";
 import type { CoaSchemaInput } from "../schemas/coa-schema";
+import { normalizeCoaTree, normalizeCoaNode, flattenCoaTree } from "../constants/coa-constants";
 
 // 1. Get Hierarchical Tree View
 export function useChartOfAccounts() {
     return useQuery<ChartOfAccount[]>({
         queryKey: queryKeys.chartOfAccounts.tree(),
-        queryFn: () => apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.LIST),
+        queryFn: async () => {
+            const data = await apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.LIST);
+            return normalizeCoaTree(data);
+        },
     });
 }
 
+export interface FlatChartOfAccountsParams {
+    is_postable?: boolean;
+}
+
 // 2. Get Flat List of Accounts
-export function useFlatChartOfAccounts() {
+export function useFlatChartOfAccounts(params?: FlatChartOfAccountsParams) {
     return useQuery<ChartOfAccount[]>({
-        queryKey: queryKeys.chartOfAccounts.flat(),
-        queryFn: () => apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.FLAT),
+        queryKey: queryKeys.chartOfAccounts.flat(params),
+        queryFn: async () => {
+            try {
+                const queryParams: Record<string, unknown> = {};
+                if (params?.is_postable !== undefined) {
+                    queryParams.is_postable = params.is_postable;
+                }
+                const data = await apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.FLAT, {
+                    params: Object.keys(queryParams).length > 0 ? queryParams : undefined,
+                });
+                if (Array.isArray(data) && data.length > 0) {
+                    const normalized = data.map(normalizeCoaNode);
+                    if (params?.is_postable !== undefined) {
+                        return normalized.filter((a) =>
+                            params.is_postable ? a.is_postable !== false : a.is_postable === false
+                        );
+                    }
+                    return normalized;
+                }
+            } catch {
+                // If backend does not support /flat, fallback to flattening the tree response
+            }
+            const treeData = await apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.LIST);
+            const flatList = flattenCoaTree(normalizeCoaTree(treeData));
+            if (params?.is_postable !== undefined) {
+                return flatList.filter((a) =>
+                    params.is_postable ? a.is_postable !== false : a.is_postable === false
+                );
+            }
+            return flatList;
+        },
     });
 }
 
@@ -26,7 +63,10 @@ export function useFlatChartOfAccounts() {
 export function useChartOfAccountsByType(type: ChartOfAccountType) {
     return useQuery<ChartOfAccount[]>({
         queryKey: queryKeys.chartOfAccounts.byType(type),
-        queryFn: () => apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.BY_TYPE(type)),
+        queryFn: async () => {
+            const data = await apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.BY_TYPE(type));
+            return normalizeCoaTree(data);
+        },
     });
 }
 
@@ -34,7 +74,10 @@ export function useChartOfAccountsByType(type: ChartOfAccountType) {
 export function useChartOfAccountDetail(uid: string | null) {
     return useQuery<ChartOfAccount>({
         queryKey: queryKeys.chartOfAccounts.detail(uid || ""),
-        queryFn: () => apiGetData<ChartOfAccount>(ENDPOINTS.CHART_OF_ACCOUNTS.DETAIL(uid || "")),
+        queryFn: async () => {
+            const data = await apiGetData<ChartOfAccount>(ENDPOINTS.CHART_OF_ACCOUNTS.DETAIL(uid || ""));
+            return normalizeCoaNode(data);
+        },
         enabled: !!uid,
     });
 }

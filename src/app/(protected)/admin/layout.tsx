@@ -14,7 +14,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <div className="grow flex-1 flex flex-col h-full h-[100dvh] max-h-[100dvh] min-h-0 min-w-0 overflow-hidden">
                 <AdminHeader />
 
-                <main className="grow flex-1 min-h-0 min-w-0 pt-2 px-3 sm:px-6 md:px-8 pb-28 sm:pb-8 overflow-y-auto overscroll-y-contain">
+                <main className="grow flex-1 min-h-0 min-w-0 pt-2 px-3 sm:px-6 md:px-8 pb-28 sm:pb-8 overflow-y-auto overscroll-y-contain [scrollbar-gutter:stable]">
                     {children}
                 </main>
             </div>

@@ -20,7 +20,7 @@ export function BalanceSheetReport() {
     const journalUid = searchParams.get("uid");
 
     const { data, isLoading, isError, refetch } = useBalanceSheet(asOfDate);
-    const { data: flatAccounts, isLoading: isLoadingCoas } = useFlatChartOfAccounts();
+    const { data: flatAccounts, isLoading: isLoadingCoas } = useFlatChartOfAccounts({ is_postable: true });
 
     const isJournalNeeded = (action === "edit" || action === "detail") && !!journalUid;
 

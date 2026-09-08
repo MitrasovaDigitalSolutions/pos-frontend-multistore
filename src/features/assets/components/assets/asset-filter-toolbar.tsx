@@ -37,9 +37,10 @@ export function AssetFilterToolbar({
     ], []);
 
     const sumberOptions = useMemo(() => [
-        { value: "all", label: "Semua Sumber Dana" },
-        { value: "kas", label: "Kas / Bank" },
-        { value: "non_kas", label: "Non-Kas / Modal / Utang" },
+        { value: "all", label: "Semua Sumber Perolehan" },
+        { value: "kas", label: "Pembelian Kas / Bank" },
+        { value: "existing", label: "Jurnal Lama" },
+        { value: "non_kas", label: "Non-Kas (Lainnya)" },
     ], []);
 
     return (

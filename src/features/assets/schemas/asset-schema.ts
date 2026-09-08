@@ -23,7 +23,11 @@ export const createAssetSchema = z
             .number({ error: "Nilai residu harus berupa angka" })
             .min(0, "Nilai residu minimal Rp 0")
             .nullish(),
-        sumber_perolehan: z.enum(["kas", "non_kas"] as const),
+        akumulasi_penyusutan_awal: z
+            .number({ error: "Akumulasi penyusutan awal harus berupa angka" })
+            .min(0, "Akumulasi penyusutan awal minimal Rp 0")
+            .nullish(),
+        sumber_perolehan: z.enum(["kas", "non_kas", "existing"] as const),
         cash_account_uid: z.string().nullish(),
         offset_coa_uid: z.string().nullish(),
         catatan: z.string().nullish(),
@@ -42,6 +46,26 @@ export const createAssetSchema = z
                 message: "Akun CoA penyeimbang (Modal / Hutang) wajib dipilih",
                 path: ["offset_coa_uid"],
             });
+        }
+        if (data.sumber_perolehan === "existing") {
+            const harga = data.harga_perolehan || 0;
+            const residu = data.nilai_residu || 0;
+            const susutAwal = data.akumulasi_penyusutan_awal || 0;
+            const maxSusut = Math.max(0, harga - residu);
+
+            if (susutAwal > harga) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: "Nominal akumulasi penyusutan awal tidak boleh melebihi harga perolehan aset",
+                    path: ["akumulasi_penyusutan_awal"],
+                });
+            } else if (residu > 0 && susutAwal > maxSusut) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: "Akumulasi penyusutan awal tidak boleh melebihi harga perolehan dikurangi nilai residu",
+                    path: ["akumulasi_penyusutan_awal"],
+                });
+            }
         }
         if (data.nilai_residu && data.nilai_residu >= data.harga_perolehan) {
             ctx.addIssue({

@@ -15,6 +15,7 @@ export interface FormCoaPickerProps {
     allowedTypes?: ChartOfAccountType[];
     excludeUid?: string | null;
     accounts?: ChartOfAccount[];
+    isPostable?: boolean;
     disabled?: boolean;
     allowClear?: boolean;
     required?: boolean;
@@ -32,6 +33,7 @@ export function FormCoaPicker({
     allowedTypes,
     excludeUid,
     accounts: passedAccounts,
+    isPostable = true,
     disabled = false,
     allowClear = true,
     required = false,
@@ -40,7 +42,9 @@ export function FormCoaPicker({
     wrapperClassName,
 }: FormCoaPickerProps) {
     const { control } = useFormContext();
-    const { data: fetchedAccounts = [], isLoading } = useFlatChartOfAccounts();
+    const { data: fetchedAccounts = [], isLoading } = useFlatChartOfAccounts(
+        passedAccounts ? undefined : { is_postable: isPostable }
+    );
 
     const accounts = passedAccounts || fetchedAccounts;
 
@@ -62,6 +66,7 @@ export function FormCoaPicker({
                         value={field.value || ""}
                         onChange={(val) => field.onChange(val || null)}
                         accounts={accounts}
+                        isPostable={isPostable}
                         allowedTypes={allowedTypes}
                         excludeUid={excludeUid}
                         placeholder={isLoading ? "Memuat akun..." : placeholder}

@@ -49,6 +49,7 @@ export function BalanceSheetEditor({
         handleAccountSelect,
         handleSelectOneCounterpart,
         handleApplyAllCounterparts,
+        handleSkipCounterpart,
         handleAddLine,
         handleCancel,
         handleSave,
@@ -139,6 +140,7 @@ export function BalanceSheetEditor({
                 existingSelectedUids={selectedCoaUids}
                 onSelectOne={handleSelectOneCounterpart}
                 onApplyAll={handleApplyAllCounterparts}
+                onSkip={handleSkipCounterpart}
             />
         </FormProvider>
     );

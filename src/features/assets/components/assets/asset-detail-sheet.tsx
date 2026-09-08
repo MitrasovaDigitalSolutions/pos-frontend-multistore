@@ -16,6 +16,7 @@ import {
     IconReceipt2,
     IconArrowRight,
     IconCoin,
+    IconHistory,
     IconPlus,
     IconLoader2,
 } from "@tabler/icons-react";
@@ -353,6 +354,8 @@ export function AssetDetailSheet({
                                             <span className="text-slate-500 flex items-center gap-1">
                                                 {asset.sumber_perolehan === "kas" ? (
                                                     <IconBuildingBank className="w-3 h-3 text-indigo-500" />
+                                                ) : asset.sumber_perolehan === "existing" ? (
+                                                    <IconHistory className="w-3 h-3 text-violet-500" />
                                                 ) : (
                                                     <IconCoin className="w-3 h-3 text-amber-500" />
                                                 )}
@@ -361,9 +364,11 @@ export function AssetDetailSheet({
                                             <span className="font-medium text-slate-800 dark:text-slate-200">
                                                 {asset.sumber_perolehan === "kas"
                                                     ? `Kas (${asset.cashAccount?.nama || "-"})`
-                                                    : asset.offsetCoa
-                                                        ? `Non-Kas ([${asset.offsetCoa.kode}] ${asset.offsetCoa.nama})`
-                                                        : "Non-Kas"}
+                                                    : asset.sumber_perolehan === "existing"
+                                                        ? "Jurnal Lama"
+                                                        : asset.offsetCoa
+                                                            ? `Non-Kas ([${asset.offsetCoa.kode}] ${asset.offsetCoa.nama})`
+                                                            : "Non-Kas"}
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between gap-2">

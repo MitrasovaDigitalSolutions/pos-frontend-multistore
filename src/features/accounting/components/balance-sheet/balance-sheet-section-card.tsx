@@ -2,42 +2,16 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import type { BalanceSheetDetailCategory, ChartOfAccount } from "@/features/accounting/types";
+import type { BalanceSheetDetailCategory, BalanceSheetItem, ChartOfAccount } from "@/features/accounting/types";
 import { useDeviceResponsive } from "@/hooks/use-device";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { cn } from "@/lib/utils";
 import {
-    IconBuildingBank,
     IconChevronDown,
-    IconCoin,
     IconListDetails,
-    IconReceipt,
-    IconReportMoney,
     IconSearch,
-    IconWallet,
 } from "@tabler/icons-react";
 import { Fragment, useMemo, useState } from "react";
-
-// Reusable Helper to map account icons
-const getAccountIcon = (nama: string) => {
-    const lowerName = nama.toLowerCase();
-    if (lowerName.includes("kas") || lowerName.includes("tunai") || lowerName.includes("cash")) {
-        return <IconWallet className="w-3.5 h-3.5 text-emerald-500 shrink-0" />;
-    }
-    if (lowerName.includes("bank") || lowerName.includes("giro")) {
-        return <IconBuildingBank className="w-3.5 h-3.5 text-blue-500 shrink-0" />;
-    }
-    if (lowerName.includes("piutang") || lowerName.includes("receivable")) {
-        return <IconReceipt className="w-3.5 h-3.5 text-sky-500 shrink-0" />;
-    }
-    if (lowerName.includes("persediaan") || lowerName.includes("stok") || lowerName.includes("inventory")) {
-        return <IconReportMoney className="w-3.5 h-3.5 text-indigo-500 shrink-0" />;
-    }
-    if (lowerName.includes("utang") || lowerName.includes("hutang") || lowerName.includes("payable")) {
-        return <IconCoin className="w-3.5 h-3.5 text-amber-500 shrink-0" />;
-    }
-    return <IconReportMoney className="w-3.5 h-3.5 text-slate-400 shrink-0" />;
-};
 
 interface BalanceSheetItemDetailTableProps {
     detail: BalanceSheetDetailCategory[];
@@ -259,18 +233,87 @@ function BalanceSheetItemDetailTable({
     );
 }
 
+// Helper: Calculate all leaf items (for footer totalDebit and totalCredit summing)
+function getAllLeafItems(items: BalanceSheetItem[]): BalanceSheetItem[] {
+    const leaves: BalanceSheetItem[] = [];
+    const traverse = (list: BalanceSheetItem[]) => {
+        for (const item of list) {
+            const kids = item.children || item.children_recursive;
+            if (kids && kids.length > 0) {
+                traverse(kids);
+            } else {
+                leaves.push(item);
+            }
+        }
+    };
+    traverse(items);
+    return leaves;
+}
+
+// Helper: Calculate total count of all accounts
+function countAllAccounts(items: BalanceSheetItem[]): number {
+    let count = 0;
+    const traverse = (list: BalanceSheetItem[]) => {
+        for (const item of list) {
+            count++;
+            const kids = item.children || item.children_recursive;
+            if (kids && kids.length > 0) {
+                traverse(kids);
+            }
+        }
+    };
+    traverse(items);
+    return count;
+}
+
+// Helper: Calculate subtotal for parent accounts
+function getItemSubtotal(item: BalanceSheetItem): { debit: number; credit: number; amount: number } {
+    const kids = item.children || item.children_recursive;
+    if (!kids || kids.length === 0) {
+        return {
+            debit: item.debit || 0,
+            credit: item.credit || 0,
+            amount: item.amount || 0,
+        };
+    }
+    let d = item.debit || 0;
+    let c = item.credit || 0;
+    let a = item.amount || 0;
+    for (const kid of kids) {
+        const sub = getItemSubtotal(kid);
+        d += sub.debit;
+        c += sub.credit;
+        a += sub.amount;
+    }
+    return { debit: d, credit: c, amount: a };
+}
+
+// Helper: Tentukan Level CoA (1 = Induk Utama, 2 = Sub-Induk/Kategori, 3 = Detail/Transaksi/Riil)
+export function getCoaLevel(item: BalanceSheetItem, depth: number): number {
+    if (typeof item.level === "number" && item.level > 0) {
+        return item.level;
+    }
+    const kids = item.children || item.children_recursive;
+    const hasKids = Array.isArray(kids) && kids.length > 0;
+    if (item.kode) {
+        const clean = item.kode.trim();
+        if (/^[1-9]-?0000$/.test(clean)) return 1;
+        if (/^[1-9]-?[1-9]000$/.test(clean) && (hasKids || item.is_parent)) return 2;
+        return 3;
+    }
+    // Synthetic leaf accounts (e.g. SHU Tahun Berjalan)
+    if (!item.kode) return 3;
+    return depth + 1;
+}
+
+export function isLevel3Account(item: BalanceSheetItem, depth: number): boolean {
+    return getCoaLevel(item, depth) >= 3;
+}
+
 interface BalanceSheetSectionCardProps {
     title: string;
     description?: string;
-    items: {
-        uid?: string;
-        kode: string | null;
-        nama: string;
-        amount: number;
-        debit?: number;
-        credit?: number;
-        detail?: BalanceSheetDetailCategory[];
-    }[];
+    items?: BalanceSheetItem[];
     total: number;
     accentColor: "emerald" | "amber" | "indigo";
     totalLabel: string;
@@ -291,10 +334,20 @@ export function BalanceSheetSectionCard({
     icon,
     showDebitCredit = true,
 }: BalanceSheetSectionCardProps) {
-    const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+    // Collapsed state for parent items (default is expanded / open)
+    const [collapsedParents, setCollapsedParents] = useState<Record<string, boolean>>({});
+    // Expanded state for detail table rows (default is closed)
+    const [expandedDetailRows, setExpandedDetailRows] = useState<Record<string, boolean>>({});
 
-    const toggleRow = (key: string) => {
-        setExpandedRows((prev) => ({
+    const toggleParent = (key: string) => {
+        setCollapsedParents((prev) => ({
+            ...prev,
+            [key]: !prev[key],
+        }));
+    };
+
+    const toggleDetailRow = (key: string) => {
+        setExpandedDetailRows((prev) => ({
             ...prev,
             [key]: !prev[key],
         }));
@@ -313,15 +366,371 @@ export function BalanceSheetSectionCard({
         indigo: "bg-indigo-50/60 dark:bg-indigo-950/20 text-indigo-800 dark:text-indigo-300 border-indigo-100 dark:border-indigo-900/30",
     };
 
-    // If there are no CoA items in items array, DO NOT display this card!
+    const allLeaves = useMemo(() => getAllLeafItems(items), [items]);
+    const totalDebit = useMemo(() => allLeaves.reduce((sum, item) => sum + (item.debit || 0), 0), [allLeaves]);
+    const totalCredit = useMemo(() => allLeaves.reduce((sum, item) => sum + (item.credit || 0), 0), [allLeaves]);
+    const totalAccounts = useMemo(() => countAllAccounts(items), [items]);
+
+    // If there are no items, do not render
     if (items.length === 0) {
         return null;
     }
 
-    const totalDebit = items.reduce((sum, item) => sum + (item.debit || 0), 0);
-    const totalCredit = items.reduce((sum, item) => sum + (item.credit || 0), 0);
-
     const fmtLedger = (n: number) => (n ? formatRupiah(n) : "Rp 0");
+
+    // Recursive Desktop Rows Renderer
+    const renderDesktopRows = (itemList: BalanceSheetItem[], depth = 0): React.ReactNode => {
+        return itemList.map((item, idx) => {
+            const kids = item.children || item.children_recursive;
+            const hasKids = Array.isArray(kids) && kids.length > 0;
+            const itemKey = `${item.uid || item.kode || item.nama}-${depth}-${idx}`;
+            const isParentExpanded = !collapsedParents[itemKey];
+            const isDetailExpanded = !!expandedDetailRows[itemKey];
+            const hasDetail = Array.isArray(item.detail) && item.detail.length > 0;
+            const isParent = item.is_parent || hasKids;
+            const isLevel3 = isLevel3Account(item, depth);
+
+            const subtotal = getItemSubtotal(item);
+            const displayAmount = (hasKids && item.amount === 0) ? subtotal.amount : item.amount;
+            const displayDebit = (hasKids && (item.debit || 0) === 0 && subtotal.debit !== 0) ? subtotal.debit : (item.debit || 0);
+            const displayCredit = (hasKids && (item.credit || 0) === 0 && subtotal.credit !== 0) ? subtotal.credit : (item.credit || 0);
+
+            const percentVal = total > 0 ? (displayAmount / total) * 100 : 0;
+            const formattedPercent =
+                percentVal > 0 && percentVal < 0.1
+                    ? "< 0.1%"
+                    : `${percentVal.toFixed(percentVal % 1 === 0 ? 0 : 1)}%`;
+
+            return (
+                <Fragment key={itemKey}>
+                    <tr className={cn(
+                        "hover:bg-slate-50/70 dark:hover:bg-slate-950/30 transition-colors",
+                        isParent && depth === 0 && "bg-slate-50/40 dark:bg-slate-950/20",
+                        isParent && depth > 0 && "bg-slate-50/20 dark:bg-slate-950/10"
+                    )}>
+                        <td className="py-1.5 px-3 sm:px-3.5 text-left">
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                    {/* 1. Tombol Expand di paling kiri */}
+                                    <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                                        {hasKids && (
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleParent(itemKey)}
+                                                className="p-0.5 rounded hover:bg-slate-200/70 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors cursor-pointer"
+                                                title={isParentExpanded ? "Ciutkan sub-akun" : "Bentangkan sub-akun"}
+                                            >
+                                                <IconChevronDown
+                                                    className={cn(
+                                                        "w-3.5 h-3.5 transition-transform duration-200",
+                                                        !isParentExpanded && "-rotate-90"
+                                                    )}
+                                                />
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* 2. KODE COA: Selalu sejajar di kiri */}
+                                    <span className="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 shrink-0 w-13 sm:w-14">
+                                        {item.kode ?? "-"}
+                                    </span>
+
+                                    {/* 3. NAMA COA: Dekat dengan kode, anak tetap menjorok */}
+                                    <div
+                                        className="flex items-center gap-1 min-w-0 flex-1"
+                                        style={{ paddingLeft: `${depth === 0 ? 0 : 14 + (depth - 1) * 14}px` }}
+                                    >
+                                        <span className={cn(
+                                            "truncate",
+                                            isParent
+                                                ? "font-extrabold text-slate-900 dark:text-slate-100 text-[11.5px]"
+                                                : "font-medium text-slate-700 dark:text-slate-200 text-xs"
+                                        )}>
+                                            {item.nama}
+                                        </span>
+                                        {hasKids && (
+                                            <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800/60 px-1 py-0.2 rounded shrink-0">
+                                                {kids!.length} sub
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {hasDetail && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => toggleDetailRow(itemKey)}
+                                        className={cn(
+                                            "h-4.5 px-1.5 text-[9px] font-bold rounded-md flex items-center gap-0.5 shrink-0 border transition-all cursor-pointer select-none",
+                                            isDetailExpanded
+                                                ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
+                                                : "bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 dark:text-indigo-300 border-indigo-200/60 dark:border-indigo-800/40"
+                                        )}
+                                    >
+                                        <span>
+                                            {isDetailExpanded ? "Tutup" : `Detail (${item.detail!.length})`}
+                                        </span>
+                                        <IconChevronDown
+                                            className={cn(
+                                                "w-2.5 h-2.5 transition-transform duration-200",
+                                                isDetailExpanded && "rotate-180"
+                                            )}
+                                        />
+                                    </Button>
+                                )}
+                            </div>
+                        </td>
+
+                        {showDebitCredit && (
+                            <>
+                                <td className={cn(
+                                    "py-1.5 px-3 text-right text-xs font-semibold tabular-nums",
+                                    isParent ? "text-emerald-700 dark:text-emerald-300 font-bold" : "text-emerald-600 dark:text-emerald-400"
+                                )}>
+                                    {isLevel3 ? fmtLedger(displayDebit) : <span className="text-slate-300 dark:text-slate-600 font-normal">-</span>}
+                                </td>
+                                <td className={cn(
+                                    "py-1.5 px-3 text-right text-xs font-semibold tabular-nums",
+                                    isParent ? "text-rose-700 dark:text-rose-300 font-bold" : "text-rose-600 dark:text-rose-400"
+                                )}>
+                                    {isLevel3 ? fmtLedger(displayCredit) : <span className="text-slate-300 dark:text-slate-600 font-normal">-</span>}
+                                </td>
+                            </>
+                        )}
+
+                        <td className={cn(
+                            "py-1.5 px-3 sm:px-3.5 text-right text-xs tabular-nums",
+                            isParent ? "font-extrabold text-slate-900 dark:text-white" : "font-bold text-slate-800 dark:text-slate-100"
+                        )}>
+                            {isLevel3 ? (
+                                <div className="flex items-center justify-end gap-1.5">
+                                    <span>{formatRupiah(displayAmount)}</span>
+                                    {!showDebitCredit && percentVal > 0 && (
+                                        <span className="text-[9px] text-slate-400 dark:text-slate-500 font-semibold">
+                                            ({formattedPercent})
+                                        </span>
+                                    )}
+                                </div>
+                            ) : (
+                                <span className="text-slate-300 dark:text-slate-600 font-normal">-</span>
+                            )}
+                        </td>
+                    </tr>
+
+                    {/* Category Detail Breakdown */}
+                    {isDetailExpanded && hasDetail && (
+                        <tr className="bg-transparent">
+                            <td
+                                colSpan={showDebitCredit ? 4 : 2}
+                                className="p-1 sm:px-3 sm:py-1"
+                            >
+                                <BalanceSheetItemDetailTable
+                                    detail={item.detail!}
+                                    parentAmount={displayAmount}
+                                    parentName={item.nama}
+                                    showDebitCredit={showDebitCredit}
+                                />
+                            </td>
+                        </tr>
+                    )}
+
+                    {/* Recursive Children Rows */}
+                    {hasKids && isParentExpanded && (
+                        renderDesktopRows(kids!, depth + 1)
+                    )}
+                </Fragment>
+            );
+        });
+    };
+
+    // Recursive Mobile Cards Renderer
+    const renderMobileCards = (itemList: BalanceSheetItem[], depth = 0): React.ReactNode => {
+        return itemList.map((item, idx) => {
+            const kids = item.children || item.children_recursive;
+            const hasKids = Array.isArray(kids) && kids.length > 0;
+            const itemKey = `${item.uid || item.kode || item.nama}-${depth}-${idx}`;
+            const isParentExpanded = !collapsedParents[itemKey];
+            const isDetailExpanded = !!expandedDetailRows[itemKey];
+            const hasDetail = Array.isArray(item.detail) && item.detail.length > 0;
+            const isParent = item.is_parent || hasKids;
+            const isLevel3 = isLevel3Account(item, depth);
+
+            const subtotal = getItemSubtotal(item);
+            const displayAmount = (hasKids && item.amount === 0) ? subtotal.amount : item.amount;
+            const displayDebit = (hasKids && (item.debit || 0) === 0 && subtotal.debit !== 0) ? subtotal.debit : (item.debit || 0);
+            const displayCredit = (hasKids && (item.credit || 0) === 0 && subtotal.credit !== 0) ? subtotal.credit : (item.credit || 0);
+
+            const percentVal = total > 0 ? (displayAmount / total) * 100 : 0;
+            const formattedPercent =
+                percentVal > 0 && percentVal < 0.1
+                    ? "< 0.1%"
+                    : `${percentVal.toFixed(percentVal % 1 === 0 ? 0 : 1)}%`;
+
+            return (
+                <Fragment key={itemKey}>
+                    <div
+                        className={cn(
+                            "rounded-lg border border-slate-100 dark:border-slate-800/60 bg-slate-50/40 dark:bg-slate-950/30 overflow-hidden",
+                            depth > 0 && "border-l-2 border-l-indigo-400/60 dark:border-l-indigo-600/60"
+                        )}
+                    >
+                        <div className="px-2 pt-1.5 pb-1">
+                            <div className="flex items-start justify-between gap-2">
+                                <div className="flex items-start gap-1.5 min-w-0 flex-1">
+                                    {/* Tombol expand di paling kiri */}
+                                    <div className="w-4 h-4 flex items-center justify-center shrink-0 pt-0.5">
+                                        {hasKids && (
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleParent(itemKey)}
+                                                className="p-0.5 rounded hover:bg-slate-200/70 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 shrink-0 cursor-pointer"
+                                            >
+                                                <IconChevronDown
+                                                    className={cn(
+                                                        "w-3.5 h-3.5 transition-transform duration-200",
+                                                        !isParentExpanded && "-rotate-90"
+                                                    )}
+                                                />
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Kode CoA */}
+                                    <span className="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 shrink-0 w-13 pt-0.5">
+                                        {item.kode ?? "-"}
+                                    </span>
+
+                                    {/* Nama Akun */}
+                                    <div
+                                        className="min-w-0 flex-1"
+                                        style={{ paddingLeft: `${depth === 0 ? 0 : 10 + (depth - 1) * 10}px` }}
+                                    >
+                                        <div className="flex items-center gap-1">
+                                            <span className={cn(
+                                                "truncate",
+                                                isParent
+                                                    ? "text-[11.5px] font-extrabold text-slate-900 dark:text-slate-100"
+                                                    : "text-[11px] font-bold text-slate-700 dark:text-slate-200"
+                                            )}>
+                                                {item.nama}
+                                            </span>
+
+                                            {hasKids && (
+                                                <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800/60 px-1 py-0.2 rounded shrink-0">
+                                                    {kids!.length} sub
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Saldo display - hanya tampil untuk akun Level 3 */}
+                        {isLevel3 ? (
+                            <div className="px-2 pb-1.5 flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-1.5">
+                                    {hasDetail && (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => toggleDetailRow(itemKey)}
+                                            className={cn(
+                                                "h-4.5 px-1.5 text-[9px] font-bold rounded-md flex items-center gap-0.5 shrink-0 border transition-all cursor-pointer select-none",
+                                                isDetailExpanded
+                                                    ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
+                                                    : "bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 dark:text-indigo-300 border-indigo-200/60 dark:border-indigo-800/40"
+                                            )}
+                                        >
+                                            <span>
+                                                {isDetailExpanded ? "Tutup" : `Detail (${item.detail!.length})`}
+                                            </span>
+                                            <IconChevronDown
+                                                className={cn(
+                                                    "w-2.5 h-2.5 transition-transform duration-200",
+                                                    isDetailExpanded && "rotate-180"
+                                                )}
+                                            />
+                                        </Button>
+                                    )}
+                                    {showDebitCredit && (
+                                        <div className="flex items-center gap-1.5 text-[9px]">
+                                            <span className="text-emerald-600 dark:text-emerald-400 tabular-nums">
+                                                D: {fmtLedger(displayDebit)}
+                                            </span>
+                                            <span className="text-rose-600 dark:text-rose-400 tabular-nums">
+                                                K: {fmtLedger(displayCredit)}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="text-right shrink-0">
+                                    <span className={cn(
+                                        "text-[11px] tabular-nums block",
+                                        isParent ? "font-extrabold text-slate-900 dark:text-white" : "font-bold text-slate-800 dark:text-slate-100"
+                                    )}>
+                                        {formatRupiah(displayAmount)}
+                                    </span>
+                                    {!showDebitCredit && percentVal > 0 && (
+                                        <span className="text-[8px] text-slate-400 dark:text-slate-500 font-semibold">
+                                            ({formattedPercent})
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            hasDetail && (
+                                <div className="px-2 pb-1.5 flex items-center justify-start">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => toggleDetailRow(itemKey)}
+                                        className={cn(
+                                            "h-4.5 px-1.5 text-[9px] font-bold rounded-md flex items-center gap-0.5 shrink-0 border transition-all cursor-pointer select-none",
+                                            isDetailExpanded
+                                                ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
+                                                : "bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 dark:text-indigo-300 border-indigo-200/60 dark:border-indigo-800/40"
+                                        )}
+                                    >
+                                        <span>
+                                            {isDetailExpanded ? "Tutup" : `Detail (${item.detail!.length})`}
+                                        </span>
+                                        <IconChevronDown
+                                            className={cn(
+                                                "w-2.5 h-2.5 transition-transform duration-200",
+                                                isDetailExpanded && "rotate-180"
+                                            )}
+                                        />
+                                    </Button>
+                                </div>
+                            )
+                        )}
+                    </div>
+
+                    {/* Category Detail Breakdown */}
+                    {isDetailExpanded && hasDetail && (
+                        <div className="pl-1">
+                            <BalanceSheetItemDetailTable
+                                detail={item.detail!}
+                                parentAmount={displayAmount}
+                                parentName={item.nama}
+                                showDebitCredit={showDebitCredit}
+                            />
+                        </div>
+                    )}
+
+                    {/* Recursive Children Cards */}
+                    {hasKids && isParentExpanded && (
+                        renderMobileCards(kids!, depth + 1)
+                    )}
+                </Fragment>
+            );
+        });
+    };
 
     return (
         <Card
@@ -338,7 +747,7 @@ export function BalanceSheetSectionCard({
                         {title}
                     </span>
                     <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 bg-slate-200/60 dark:bg-slate-800 px-1.5 py-0.2 rounded-full shrink-0">
-                        {items.length}
+                        {totalAccounts} akun
                     </span>
                 </div>
                 {!showDebitCredit && (
@@ -351,106 +760,12 @@ export function BalanceSheetSectionCard({
             <CardContent className="p-0">
                 {/* MOBILE LAYOUT */}
                 <div className="block md:hidden p-2 space-y-1">
-                    {items.map((item, idx) => {
-                        const percentVal = total > 0 ? (item.amount / total) * 100 : 0;
-                        const formattedPercent =
-                            percentVal > 0 && percentVal < 0.1
-                                ? "< 0.1%"
-                                : `${percentVal.toFixed(percentVal % 1 === 0 ? 0 : 1)}%`;
-
-                        const itemKey = `${item.uid || item.kode || item.nama}-${idx}`;
-                        const isExpanded = !!expandedRows[itemKey];
-                        const hasDetail = Array.isArray(item.detail) && item.detail.length > 0;
-
-                        return (
-                            <Fragment key={itemKey}>
-                                <div className="rounded-lg border border-slate-100 dark:border-slate-800/60 bg-slate-50/40 dark:bg-slate-950/30 overflow-hidden">
-                                    <div className="px-2 pt-1.5 pb-1">
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div className="min-w-0 flex-1">
-                                                <span className="text-[9px] font-mono text-slate-400 dark:text-slate-500 block">
-                                                    {item.kode ?? "-"}
-                                                </span>
-                                                <div className="flex items-center gap-1 mt-0.5">
-                                                    {getAccountIcon(item.nama)}
-                                                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate">
-                                                        {item.nama}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* View mode: Saldo display */}
-                                    <div className="px-2 pb-1.5 flex items-center justify-between gap-2">
-                                        <div className="flex items-center gap-1.5">
-                                            {hasDetail && (
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => toggleRow(itemKey)}
-                                                    className={cn(
-                                                        "h-4.5 px-1.5 text-[9px] font-bold rounded-md flex items-center gap-0.5 shrink-0 border transition-all cursor-pointer select-none",
-                                                        isExpanded
-                                                            ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
-                                                            : "bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 border-indigo-200/60 dark:border-indigo-800/40"
-                                                    )}
-                                                >
-                                                    <span>
-                                                        {isExpanded ? "Tutup" : `Detail (${item.detail!.length})`}
-                                                    </span>
-                                                    <IconChevronDown
-                                                        className={cn(
-                                                            "w-2.5 h-2.5 transition-transform duration-200",
-                                                            isExpanded && "rotate-180"
-                                                        )}
-                                                    />
-                                                </Button>
-                                            )}
-                                            {showDebitCredit && (
-                                                <div className="flex items-center gap-1.5 text-[9px]">
-                                                    <span className="text-emerald-600 dark:text-emerald-400 tabular-nums">
-                                                        D: {fmtLedger(item.debit || 0)}
-                                                    </span>
-                                                    <span className="text-rose-600 dark:text-rose-400 tabular-nums">
-                                                        K: {fmtLedger(item.credit || 0)}
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="text-right shrink-0">
-                                            <span className="text-[11px] font-bold text-slate-800 dark:text-slate-100 tabular-nums block">
-                                                {formatRupiah(item.amount)}
-                                            </span>
-                                            {!showDebitCredit && percentVal > 0 && (
-                                                <span className="text-[8px] text-slate-400 dark:text-slate-500 font-semibold">
-                                                    {formattedPercent}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Expanded detail (mobile) */}
-                                {isExpanded && hasDetail && (
-                                    <div className="pl-1">
-                                        <BalanceSheetItemDetailTable
-                                            detail={item.detail!}
-                                            parentAmount={item.amount}
-                                            parentName={item.nama}
-                                            showDebitCredit={showDebitCredit}
-                                        />
-                                    </div>
-                                )}
-                            </Fragment>
-                        );
-                    })}
+                    {renderMobileCards(items)}
 
                     {/* Mobile total footer */}
                     <div
                         className={cn(
-                            "rounded-lg px-2 py-1.5 border font-extrabold text-[10px] flex items-center justify-between select-none",
+                            "rounded-lg px-2 py-1.5 border font-extrabold text-[10px] flex items-center justify-between select-none mt-2",
                             bgTotals[accentColor]
                         )}
                     >
@@ -466,7 +781,13 @@ export function BalanceSheetSectionCard({
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b border-slate-100 dark:border-slate-800/80 text-[8px] font-bold uppercase tracking-wider text-slate-400 select-none bg-slate-50/30 dark:bg-slate-950/20">
-                                <th className="py-1.5 px-3 sm:px-3.5 text-left">Akun</th>
+                                <th className="py-1.5 px-3 sm:px-3.5 text-left">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="w-4 shrink-0" />
+                                        <span className="w-13 sm:w-14 shrink-0 font-mono">Kode</span>
+                                        <span>Nama Akun</span>
+                                    </div>
+                                </th>
                                 {showDebitCredit && (
                                     <>
                                         <th className="py-1.5 px-3 text-right w-[110px]">Debit</th>
@@ -477,101 +798,7 @@ export function BalanceSheetSectionCard({
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100/60 dark:divide-slate-800/40">
-                            {items.map((item, idx) => {
-                                const percentVal = total > 0 ? (item.amount / total) * 100 : 0;
-                                const formattedPercent =
-                                    percentVal > 0 && percentVal < 0.1
-                                        ? "< 0.1%"
-                                        : `${percentVal.toFixed(percentVal % 1 === 0 ? 0 : 1)}%`;
-
-                                const itemKey = `${item.uid || item.kode || item.nama}-${idx}`;
-                                const isExpanded = !!expandedRows[itemKey];
-                                const hasDetail = Array.isArray(item.detail) && item.detail.length > 0;
-
-                                return (
-                                    <Fragment key={itemKey}>
-                                        <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-950/20 transition-colors">
-                                            <td className="py-1.5 px-3 sm:px-3.5 text-left">
-                                                <div className="flex items-center justify-between gap-2">
-                                                    <div className="flex items-center gap-1.5 min-w-0">
-                                                        <span className="text-[10px] font-mono font-bold text-slate-400 dark:text-slate-500 shrink-0 w-11">
-                                                            {item.kode ?? "-"}
-                                                        </span>
-                                                        {getAccountIcon(item.nama)}
-                                                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
-                                                            {item.nama}
-                                                        </span>
-                                                    </div>
-
-                                                    {hasDetail && (
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => toggleRow(itemKey)}
-                                                            className={cn(
-                                                                "h-4.5 px-1.5 text-[9px] font-bold rounded-md flex items-center gap-0.5 shrink-0 border transition-all cursor-pointer select-none",
-                                                                isExpanded
-                                                                    ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
-                                                                    : "bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 dark:text-indigo-300 border-indigo-200/60 dark:border-indigo-800/40"
-                                                            )}
-                                                        >
-                                                            <span>
-                                                                {isExpanded
-                                                                    ? "Tutup"
-                                                                    : `Detail (${item.detail!.length})`}
-                                                            </span>
-                                                            <IconChevronDown
-                                                                className={cn(
-                                                                    "w-2.5 h-2.5 transition-transform duration-200",
-                                                                    isExpanded && "rotate-180"
-                                                                )}
-                                                            />
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            </td>
-
-                                            {showDebitCredit && (
-                                                <>
-                                                    <td className="py-1.5 px-3 text-right text-xs font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
-                                                        {fmtLedger(item.debit || 0)}
-                                                    </td>
-                                                    <td className="py-1.5 px-3 text-right text-xs font-semibold text-rose-600 dark:text-rose-400 tabular-nums">
-                                                        {fmtLedger(item.credit || 0)}
-                                                    </td>
-                                                </>
-                                            )}
-                                            <td className="py-1.5 px-3 sm:px-3.5 text-right text-xs font-bold text-slate-800 dark:text-slate-100 tabular-nums">
-                                                <div className="flex items-center justify-end gap-1.5">
-                                                    <span>{formatRupiah(item.amount)}</span>
-                                                    {!showDebitCredit && percentVal > 0 && (
-                                                        <span className="text-[9px] text-slate-400 dark:text-slate-500 font-semibold">
-                                                            ({formattedPercent})
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-
-                                        {isExpanded && hasDetail && (
-                                            <tr className="bg-transparent">
-                                                <td
-                                                    colSpan={showDebitCredit ? 4 : 2}
-                                                    className="p-1 sm:px-3 sm:py-1"
-                                                >
-                                                    <BalanceSheetItemDetailTable
-                                                        detail={item.detail!}
-                                                        parentAmount={item.amount}
-                                                        parentName={item.nama}
-                                                        showDebitCredit={showDebitCredit}
-                                                    />
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </Fragment>
-                                );
-                            })}
+                            {renderDesktopRows(items)}
                         </tbody>
                         <tfoot>
                             <tr

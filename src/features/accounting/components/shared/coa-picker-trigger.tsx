@@ -5,6 +5,7 @@ import { IconSearch, IconChevronDown, IconX } from "@tabler/icons-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ACCOUNT_TYPE_CONFIG } from "../../constants/counterpart-constants";
+import { useFlatChartOfAccounts } from "../../api/coa-api";
 import { CoaPickerDialog } from "./coa-picker-dialog";
 import type { ChartOfAccount, ChartOfAccountType } from "../../types";
 
@@ -12,6 +13,7 @@ export interface CoaPickerTriggerProps {
     value?: string | null;
     onChange: (uid: string, account?: ChartOfAccount | null) => void;
     accounts?: ChartOfAccount[];
+    isPostable?: boolean;
     allowedTypes?: ChartOfAccountType[];
     placeholder?: string;
     excludeUid?: string | null;
@@ -26,7 +28,8 @@ export interface CoaPickerTriggerProps {
 export function CoaPickerTrigger({
     value,
     onChange,
-    accounts = [],
+    accounts: passedAccounts,
+    isPostable = true,
     allowedTypes,
     placeholder = "Pilih Akun (CoA)...",
     excludeUid,
@@ -38,6 +41,10 @@ export function CoaPickerTrigger({
     size = "sm",
 }: CoaPickerTriggerProps) {
     const [open, setOpen] = useState(false);
+    const { data: fetchedAccounts = [] } = useFlatChartOfAccounts(
+        passedAccounts ? undefined : { is_postable: isPostable }
+    );
+    const accounts = passedAccounts || fetchedAccounts;
 
     const selectedAccount = accounts.find((a) => a.uid === value);
     const typeConfig = selectedAccount?.tipe
@@ -115,6 +122,7 @@ export function CoaPickerTrigger({
                 onOpenChange={setOpen}
                 onSelect={handleSelect}
                 accounts={accounts}
+                isPostable={isPostable}
                 selectedUid={value}
                 excludeUid={excludeUid}
                 excludeUids={excludeUids}

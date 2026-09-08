@@ -14,9 +14,10 @@ import {
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import type { AccountingReportMode } from "@/features/accounting/types";
 import {
     IconScale,
-    IconLayoutGrid,
+    IconTrendingUp,
     IconMathSymbols,
     IconCalendar,
     IconChevronDown,
@@ -26,8 +27,8 @@ import {
 interface BalanceSheetHeaderFiltersProps {
     asOfDate: string;
     onAsOfDateChange: (val: string) => void;
-    viewType: "standard" | "equation";
-    onViewTypeChange: (val: "standard" | "equation") => void;
+    viewType: AccountingReportMode;
+    onViewTypeChange: (val: AccountingReportMode) => void;
     showDebitCredit: boolean;
     onShowDebitCreditChange: (val: boolean) => void;
     extraAction?: React.ReactNode;
@@ -45,8 +46,8 @@ export function BalanceSheetHeaderFilters({
     showDebitCredit,
     onShowDebitCreditChange,
     extraAction,
-    title = "Neraca",
-    description = "Laporan posisi keuangan yang mencakup Aset, Kewajiban, dan Ekuitas.",
+    title,
+    description,
     badge,
     icon,
 }: BalanceSheetHeaderFiltersProps) {
@@ -71,26 +72,59 @@ export function BalanceSheetHeaderFilters({
         ];
     }, []);
 
-    const iconToRender = icon || <IconScale className="w-4 h-4" />;
+    // Dynamic Title, Description & Icon based on Active Mode
+    const defaultMeta = useMemo(() => {
+        switch (viewType) {
+            case "laba_rugi":
+                return {
+                    title: "Laporan Laba Rugi",
+                    description: "Laporan kinerja operasional yang mencakup seluruh Pendapatan dan Beban usaha.",
+                    icon: <IconTrendingUp className="w-4 h-4" />,
+                };
+            case "equation":
+                return {
+                    title: "Persamaan Dasar Akuntansi",
+                    description: "Audit pembukuan komprehensif: Aset + Beban = Liabilitas + Ekuitas + Pendapatan.",
+                    icon: <IconMathSymbols className="w-4 h-4" />,
+                };
+            case "neraca":
+            default:
+                return {
+                    title: "Neraca Keuangan",
+                    description: "Laporan posisi keuangan yang mencakup Aset, Liabilitas, dan Ekuitas perusahaan.",
+                    icon: <IconScale className="w-4 h-4" />,
+                };
+        }
+    }, [viewType]);
+
+    const titleToRender = title || defaultMeta.title;
+    const descriptionToRender = description || defaultMeta.description;
+    const iconToRender = icon || defaultMeta.icon;
     const badgeToRender = badge || null;
+
+    const reportModes: { mode: AccountingReportMode; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+        { mode: "neraca", label: "Neraca", icon: IconScale },
+        { mode: "laba_rugi", label: "Laba Rugi", icon: IconTrendingUp },
+        { mode: "equation", label: "Persamaan Akuntansi", icon: IconMathSymbols },
+    ];
 
     return (
         <div className="space-y-3">
             {/* 1. Compact Header Title & Action Buttons */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                <div className="flex items-center gap-2.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 min-w-0">
+                <div className="flex items-center gap-2.5 min-w-0">
                     <div className="p-2 bg-indigo-600 text-white rounded-xl shadow-xs shrink-0">
                         {iconToRender}
                     </div>
-                    <div>
+                    <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                            <h2 className="text-base sm:text-lg font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-tight">
-                                {title}
+                            <h2 className="text-base sm:text-lg font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-tight truncate">
+                                {titleToRender}
                             </h2>
                             {badgeToRender}
                         </div>
-                        <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-snug hidden sm:block">
-                            {description}
+                        <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-snug hidden sm:block truncate">
+                            {descriptionToRender}
                         </p>
                     </div>
                 </div>
@@ -103,11 +137,11 @@ export function BalanceSheetHeaderFilters({
             </div>
 
             {/* 2. Compact Filter Toolbar */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs rounded-2xl p-2.5 sm:px-3.5 sm:py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs rounded-2xl p-2.5 sm:px-3.5 sm:py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-2.5 min-w-0">
                 {/* Left Side: View Mode Selector */}
-                <div className="flex items-center gap-2 w-full md:w-auto">
+                <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
                     <div className="relative flex bg-slate-100 dark:bg-slate-950 p-0.5 rounded-xl border border-slate-200/60 dark:border-slate-800 w-full sm:w-fit">
-                        {(["standard", "equation"] as const).map((mode) => {
+                        {reportModes.map(({ mode, label, icon: ModeIcon }) => {
                             const isActive = viewType === mode;
                             return (
                                 <button
@@ -115,9 +149,9 @@ export function BalanceSheetHeaderFilters({
                                     type="button"
                                     onClick={() => onViewTypeChange(mode)}
                                     className={cn(
-                                        "relative z-10 px-2.5 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 select-none flex-1 sm:flex-none justify-center",
+                                        "relative z-10 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 select-none flex-1 sm:flex-none justify-center",
                                         isActive
-                                            ? "text-indigo-950 dark:text-indigo-50 font-extrabold"
+                                            ? "text-indigo-950 dark:text-indigo-50"
                                             : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
                                     )}
                                 >
@@ -128,17 +162,8 @@ export function BalanceSheetHeaderFilters({
                                             transition={{ type: "spring", stiffness: 380, damping: 30 }}
                                         />
                                     )}
-                                    {mode === "standard" ? (
-                                        <>
-                                            <IconLayoutGrid className="w-3.5 h-3.5 shrink-0" />
-                                            <span>Neraca Standar</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <IconMathSymbols className="w-3.5 h-3.5 shrink-0" />
-                                            <span>Persamaan Akuntansi</span>
-                                        </>
-                                    )}
+                                    <ModeIcon className="w-3.5 h-3.5 shrink-0" />
+                                    <span>{label}</span>
                                 </button>
                             );
                         })}

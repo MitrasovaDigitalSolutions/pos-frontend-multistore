@@ -257,6 +257,7 @@ export function StoreProfile() {
                 await Promise.all(updateTasks);
                 await fetchSettings();
                 await queryClient.invalidateQueries({ queryKey: queryKeys.stores.all });
+                await queryClient.invalidateQueries({ queryKey: queryKeys.settings.all });
                 if (updateSession) {
                     await updateSession();
                 }

@@ -45,7 +45,7 @@ function AssetCategoryFormContent({
     const isEdit = !!editingCategory;
     const createCategory = useCreateAssetCategory();
     const updateCategory = useUpdateAssetCategory();
-    const { data: flatAccounts, isLoading: isLoadingCoas } = useFlatChartOfAccounts();
+    const { data: flatAccounts, isLoading: isLoadingCoas } = useFlatChartOfAccounts({ is_postable: true });
 
     const [isCustomCoa, setIsCustomCoa] = useState<boolean>(() => {
         return !!(
