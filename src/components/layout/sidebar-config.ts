@@ -394,15 +394,6 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                     },
                     {
-                        label: "Manajemen Akun",
-                        path: ROUTES.ADMIN_ACCOUNTING_COA,
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") ||
-                            hasPermission(roles, permissions, "view_chart_of_accounts") ||
-                            hasPermission(roles, permissions, "manage_chart_of_accounts") ||
-                            hasPermission(roles, permissions, "view_reports"),
-                    },
-                    {
                         label: "Neraca",
                         path: ROUTES.ADMIN_ACCOUNTING_BALANCESHEET,
                         permission: (roles, permissions) =>
@@ -411,7 +402,8 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 ],
             },
             {
-                label: "Aset & Inventaris",
+                label: "Aset",
+                path: ROUTES.ADMIN_ASSETS,
                 icon: IconBuildingWarehouse,
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") ||
@@ -419,24 +411,6 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     hasPermission(roles, permissions, "manage_settings") ||
                     hasPermission(roles, permissions, "view_assets") ||
                     hasPermission(roles, permissions, "manage_assets"),
-                children: [
-                    {
-                        label: "Daftar Aset",
-                        path: ROUTES.ADMIN_ASSETS,
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") ||
-                            hasPermission(roles, permissions, "view_reports") ||
-                            hasPermission(roles, permissions, "view_assets"),
-                    },
-                    {
-                        label: "Kategori Aset",
-                        path: ROUTES.ADMIN_ASSET_CATEGORIES,
-                        permission: (roles, permissions) =>
-                            hasRole(roles, "admin") ||
-                            hasPermission(roles, permissions, "view_reports") ||
-                            hasPermission(roles, permissions, "view_assets"),
-                    },
-                ],
             },
         ],
     },
@@ -510,12 +484,6 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 permission: (roles) => hasRole(roles, "admin"),
             },
             {
-                label: "Kelola Toko",
-                path: ROUTES.ADMIN_STORES,
-                icon: IconBuildingStore,
-                permission: (roles) => hasRole(roles, "admin"),
-            },
-            {
                 label: "Katalog",
                 icon: IconBuildingWarehouse,
                 permission: (roles) => hasRole(roles, "admin"),
@@ -551,9 +519,32 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 ],
             },
             {
+                label: "Keuangan & Aset",
+                icon: IconBuildingBank,
+                permission: (roles) => hasRole(roles, "admin"),
+                children: [
+                    {
+                        label: "Bagan Akun (CoA)",
+                        path: ROUTES.ADMIN_ACCOUNTING_COA,
+                        permission: (roles) => hasRole(roles, "admin"),
+                    },
+                    {
+                        label: "Kategori Aset",
+                        path: ROUTES.ADMIN_ASSET_CATEGORIES,
+                        permission: (roles) => hasRole(roles, "admin"),
+                    },
+                ],
+            },
+            {
                 label: "Kelola User",
                 path: ROUTES.ADMIN_USERS,
                 icon: IconUsers,
+                permission: (roles) => hasRole(roles, "admin"),
+            },
+            {
+                label: "Kelola Toko",
+                path: ROUTES.ADMIN_STORES,
+                icon: IconBuildingStore,
                 permission: (roles) => hasRole(roles, "admin"),
             },
         ],

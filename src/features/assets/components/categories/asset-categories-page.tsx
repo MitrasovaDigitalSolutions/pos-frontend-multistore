@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { hasRole } from "@/constants/roles";
+import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { Button } from "@/components/ui/button";
 import { IconCategory, IconPlus, IconRefresh } from "@tabler/icons-react";
 import { useAssetCategories } from "../../api/asset-categories-api";
@@ -9,9 +12,21 @@ import { AssetCategoryFormDialog } from "./asset-category-form-dialog";
 import type { AssetCategory } from "../../types";
 
 export function AssetCategoriesPage() {
+    const { data: session } = useSession();
+    const userRoles = session?.user?.roles ?? [];
+
     const { data: categories = [], isLoading, isFetching, refetch } = useAssetCategories();
     const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
     const [editingCategory, setEditingCategory] = useState<AssetCategory | null>(null);
+
+    if (!hasRole(userRoles, "admin")) {
+        return (
+            <AccessDeniedState
+                description="Kategori Aset bersifat global dan hanya dapat dikelola oleh Administrator."
+                requiredPermission="admin"
+            />
+        );
+    }
 
     const handleCreateClick = () => {
         setEditingCategory(null);

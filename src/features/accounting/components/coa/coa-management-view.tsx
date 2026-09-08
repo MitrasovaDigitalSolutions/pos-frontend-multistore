@@ -2,6 +2,9 @@
 
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useCallback, useTransition } from "react";
+import { useSession } from "next-auth/react";
+import { hasRole } from "@/constants/roles";
+import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import {
     IconArrowsExchange,
     IconCategory,
@@ -53,6 +56,9 @@ interface CoaManagementViewProps {
 }
 
 export function CoaManagementView({ defaultTab = "coa" }: CoaManagementViewProps) {
+    const { data: session } = useSession();
+    const userRoles = session?.user?.roles ?? [];
+
     const searchParams = useSearchParams();
     const router = useRouter();
     const pathname = usePathname();
@@ -77,6 +83,15 @@ export function CoaManagementView({ defaultTab = "coa" }: CoaManagementViewProps
         },
         [searchParams, pathname, router]
     );
+
+    if (!hasRole(userRoles, "admin")) {
+        return (
+            <AccessDeniedState
+                description="Bagan Akun (CoA) bersifat global dan hanya dapat dikelola oleh Administrator."
+                requiredPermission="admin"
+            />
+        );
+    }
 
     return (
         <div className="space-y-4 pb-28 sm:pb-8 max-w-7xl mx-auto">

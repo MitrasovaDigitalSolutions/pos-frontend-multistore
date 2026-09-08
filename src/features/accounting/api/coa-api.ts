@@ -7,12 +7,14 @@ import type { ChartOfAccount, ChartOfAccountType } from "../types";
 import type { CoaSchemaInput } from "../schemas/coa-schema";
 import { normalizeCoaTree, normalizeCoaNode, flattenCoaTree } from "../constants/coa-constants";
 
+const GLOBAL_HEADER = { headers: { "X-Store-UID": "none" } };
+
 // 1. Get Hierarchical Tree View
 export function useChartOfAccounts() {
     return useQuery<ChartOfAccount[]>({
         queryKey: queryKeys.chartOfAccounts.tree(),
         queryFn: async () => {
-            const data = await apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.LIST);
+            const data = await apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.LIST, GLOBAL_HEADER);
             return normalizeCoaTree(data);
         },
     });
@@ -33,6 +35,7 @@ export function useFlatChartOfAccounts(params?: FlatChartOfAccountsParams) {
                     queryParams.is_postable = params.is_postable;
                 }
                 const data = await apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.FLAT, {
+                    ...GLOBAL_HEADER,
                     params: Object.keys(queryParams).length > 0 ? queryParams : undefined,
                 });
                 if (Array.isArray(data) && data.length > 0) {
@@ -47,7 +50,7 @@ export function useFlatChartOfAccounts(params?: FlatChartOfAccountsParams) {
             } catch {
                 // If backend does not support /flat, fallback to flattening the tree response
             }
-            const treeData = await apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.LIST);
+            const treeData = await apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.LIST, GLOBAL_HEADER);
             const flatList = flattenCoaTree(normalizeCoaTree(treeData));
             if (params?.is_postable !== undefined) {
                 return flatList.filter((a) =>
@@ -64,7 +67,7 @@ export function useChartOfAccountsByType(type: ChartOfAccountType) {
     return useQuery<ChartOfAccount[]>({
         queryKey: queryKeys.chartOfAccounts.byType(type),
         queryFn: async () => {
-            const data = await apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.BY_TYPE(type));
+            const data = await apiGetData<ChartOfAccount[]>(ENDPOINTS.CHART_OF_ACCOUNTS.BY_TYPE(type), GLOBAL_HEADER);
             return normalizeCoaTree(data);
         },
     });
@@ -75,7 +78,7 @@ export function useChartOfAccountDetail(uid: string | null) {
     return useQuery<ChartOfAccount>({
         queryKey: queryKeys.chartOfAccounts.detail(uid || ""),
         queryFn: async () => {
-            const data = await apiGetData<ChartOfAccount>(ENDPOINTS.CHART_OF_ACCOUNTS.DETAIL(uid || ""));
+            const data = await apiGetData<ChartOfAccount>(ENDPOINTS.CHART_OF_ACCOUNTS.DETAIL(uid || ""), GLOBAL_HEADER);
             return normalizeCoaNode(data);
         },
         enabled: !!uid,
@@ -87,7 +90,7 @@ export function useCreateChartOfAccount() {
     const queryClient = useQueryClient();
     return useMutation<ApiResponse<ChartOfAccount>, Error, CoaSchemaInput>({
         mutationFn: (data) =>
-            apiPost<ApiResponse<ChartOfAccount>, CoaSchemaInput>(ENDPOINTS.CHART_OF_ACCOUNTS.CREATE, data),
+            apiPost<ApiResponse<ChartOfAccount>, CoaSchemaInput>(ENDPOINTS.CHART_OF_ACCOUNTS.CREATE, data, GLOBAL_HEADER),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.chartOfAccounts.all });
         },
@@ -99,7 +102,7 @@ export function useUpdateChartOfAccount() {
     const queryClient = useQueryClient();
     return useMutation<ApiResponse<ChartOfAccount>, Error, { uid: string; data: CoaSchemaInput }>({
         mutationFn: ({ uid, data }) =>
-            apiPut<ApiResponse<ChartOfAccount>, CoaSchemaInput>(ENDPOINTS.CHART_OF_ACCOUNTS.UPDATE(uid), data),
+            apiPut<ApiResponse<ChartOfAccount>, CoaSchemaInput>(ENDPOINTS.CHART_OF_ACCOUNTS.UPDATE(uid), data, GLOBAL_HEADER),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.chartOfAccounts.all });
         },
@@ -110,7 +113,7 @@ export function useUpdateChartOfAccount() {
 export function useDeleteChartOfAccount() {
     const queryClient = useQueryClient();
     return useMutation<ApiResponse<void>, Error, string>({
-        mutationFn: (uid) => apiDelete<ApiResponse<void>>(ENDPOINTS.CHART_OF_ACCOUNTS.DELETE(uid)),
+        mutationFn: (uid) => apiDelete<ApiResponse<void>>(ENDPOINTS.CHART_OF_ACCOUNTS.DELETE(uid), GLOBAL_HEADER),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.chartOfAccounts.all });
         },
