@@ -1,14 +1,12 @@
 "use client";
 
-import { AppButton } from "@/components/shared/app-button";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
+import { IconDeviceFloppy } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { FormNumberInput } from "@/components/forms/form-number-input";
-import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import type { PurchaseItemLocal } from "../../types";
 import { PurchaseItemMobileCard } from "./purchase-item-mobile-card";
+import { PurchaseItemTableRow } from "./purchase-item-table-row";
 
 interface ItemsTableProps {
   items: PurchaseItemLocal[];
@@ -20,6 +18,7 @@ interface ItemsTableProps {
   priceLabel?: string;
   disabled?: boolean;
   isPriceReadOnly?: boolean;
+  allowSubtotalInput?: boolean;
 }
 
 export function ItemsTable({
@@ -29,6 +28,7 @@ export function ItemsTable({
   priceLabel = "Harga Estimasi",
   disabled = false,
   isPriceReadOnly = false,
+  allowSubtotalInput = false,
 }: ItemsTableProps) {
   const methods = useForm({
     values: {
@@ -100,6 +100,7 @@ export function ItemsTable({
               disabled={disabled}
               isPriceReadOnly={isPriceReadOnly}
               isFlashing={flashId === item.temp_uid}
+              allowSubtotalInput={allowSubtotalInput}
               onUpdateItem={onUpdateItem}
               onRemoveItem={onRemoveItem}
             />
@@ -116,91 +117,26 @@ export function ItemsTable({
                 <th className="p-3">Nama Produk</th>
                 <th className="p-3 text-center w-24">Qty</th>
                 <th className="p-3 text-right w-36">{priceLabel}</th>
-                <th className="p-3 text-right w-32">Subtotal</th>
+                <th className={`p-3 text-right ${allowSubtotalInput ? "w-44" : "w-32"}`}>
+                  {allowSubtotalInput ? "Total Item" : "Subtotal"}
+                </th>
                 <th className="p-3 w-12"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {items.map((item, idx) => {
-                const subtotal = item.kuantitas * item.harga_estimasi;
-                const isFlashing = flashId === item.temp_uid;
-
-                return (
-                  <tr
-                    key={item.temp_uid}
-                    id={`purchase-item-row-${item.temp_uid}`}
-                    className={`transition-all duration-300 hover:bg-slate-50/50 ${
-                      isFlashing
-                        ? "bg-emerald-50 ring-1 ring-inset ring-emerald-200"
-                        : ""
-                    }`}
-                  >
-                    <td className="p-3 text-slate-400 font-mono font-bold">
-                      {idx + 1}
-                    </td>
-                    <td className="p-3">
-                      <span className="font-mono text-slate-500 text-[11px]">
-                        {item.barcode || "—"}
-                      </span>
-                    </td>
-                    <td className="p-3">
-                      <span className="font-semibold text-slate-800">
-                        {item.nama}
-                      </span>
-                      {isFlashing && (
-                        <span className="ml-2 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
-                          ⚡ Baru
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-3">
-                      <FormNumberInput
-                        name={`items.${idx}.kuantitas`}
-                        onValueChange={(val) => {
-                          onUpdateItem(item.temp_uid, { kuantitas: val ?? 0 });
-                        }}
-                        disabled={disabled}
-                        allowDecimal={true}
-                        className="w-full h-8 text-center text-xs font-bold text-slate-800 rounded-lg border-slate-200 focus-visible:ring-emerald-400/20 focus-visible:border-emerald-400"
-                      />
-                    </td>
-                    <td className="p-3">
-                      {isPriceReadOnly ? (
-                        <div className="text-right pr-2">
-                          <span className="font-mono font-bold text-slate-500 text-xs whitespace-nowrap">
-                            {formatRupiah(item.harga_estimasi)}
-                          </span>
-                        </div>
-                      ) : (
-                        <FormNominalInput
-                          name={`items.${idx}.harga_estimasi`}
-                          onValueChange={(val) => {
-                            onUpdateItem(item.temp_uid, { harga_estimasi: val ?? 0 });
-                          }}
-                          disabled={disabled}
-                          className="w-full h-8 text-right text-xs font-bold text-slate-800 font-mono rounded-lg border-slate-200 focus-visible:ring-emerald-400/20 focus-visible:border-emerald-400"
-                        />
-                      )}
-                    </td>
-                    <td className="p-3 text-right font-bold text-slate-900 font-mono">
-                      {formatRupiah(subtotal)}
-                    </td>
-                    <td className="p-3">
-                      <AppButton
-                        type="button"
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => onRemoveItem(item.temp_uid)}
-                        disabled={disabled}
-                        className="text-rose-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
-                        title="Hapus item"
-                      >
-                        <IconTrash size={16} />
-                      </AppButton>
-                    </td>
-                  </tr>
-                );
-              })}
+              {items.map((item, idx) => (
+                <PurchaseItemTableRow
+                  key={item.temp_uid}
+                  item={item}
+                  index={idx}
+                  disabled={disabled}
+                  isPriceReadOnly={isPriceReadOnly}
+                  isFlashing={flashId === item.temp_uid}
+                  allowSubtotalInput={allowSubtotalInput}
+                  onUpdateItem={onUpdateItem}
+                  onRemoveItem={onRemoveItem}
+                />
+              ))}
             </tbody>
           </table>
         </div>

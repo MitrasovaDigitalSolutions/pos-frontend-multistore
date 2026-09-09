@@ -262,6 +262,7 @@ function ReceivingItemsContainer({
                                 onUpdateItem={handleUpdateItem}
                                 onRemoveItem={removeItem}
                                 disabled={isSubmitting}
+                                allowSubtotalInput={true}
                             />
                         </div>
                     </div>

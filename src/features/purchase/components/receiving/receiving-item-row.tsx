@@ -10,7 +10,8 @@ import type { Product } from "@/features/master/products/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { cn } from "@/lib/utils";
 import { IconX, IconAlertCircle } from "@tabler/icons-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { NominalInput } from "@/components/ui/nominal-input";
 import { useFormContext, type FieldPath } from "react-hook-form";
 import type { ReceivingInput } from "../../schemas/receiving-schema";
 
@@ -35,10 +36,30 @@ export function ReceivingItemRow({
 
     // Watch fields locally inside this component for precise, optimal re-rendering
     const productId = watch(`items.${idx}.product_uid`);
+    const kuantitas = watch(`items.${idx}.kuantitas`) || 0;
     const hargaBeliBaru = watch(`items.${idx}.harga_beli`) || 0;
     const updateHargaJual = watch(`items.${idx}.update_harga_jual`);
     const hargaJualBaru = watch(`items.${idx}.harga_jual_baru`);
     const marginBaru = watch(`items.${idx}.margin_baru`);
+
+    const calculatedTotal = Math.round(Number(kuantitas) * Number(hargaBeliBaru));
+    const [totalInput, setTotalInput] = useState<number | null>(null);
+    const [isTotalFocused, setIsTotalFocused] = useState(false);
+
+    const currentDisplayTotal = isTotalFocused ? totalInput : calculatedTotal;
+
+    const handleTotalChange = (val: number | null) => {
+        setTotalInput(val);
+        const total = val ?? 0;
+        const currentQty = Number(getValues(`items.${idx}.kuantitas` as FieldPath<ReceivingInput>)) || 0;
+        if (currentQty <= 0) {
+            setValue(`items.${idx}.kuantitas` as FieldPath<ReceivingInput>, 1);
+            setValue(`items.${idx}.harga_beli` as FieldPath<ReceivingInput>, total);
+        } else {
+            const newHarga = Math.round(total / currentQty);
+            setValue(`items.${idx}.harga_beli` as FieldPath<ReceivingInput>, newHarga);
+        }
+    };
 
     const selectedProduct = products.find((p) => p.uid === productId);
 
@@ -86,7 +107,7 @@ export function ReceivingItemRow({
             {/* Input Grid */}
             <div className="grid grid-cols-12 gap-3 items-end">
                 {/* Product Select */}
-                <div className="col-span-12 sm:col-span-4">
+                <div className="col-span-12 sm:col-span-3">
                     <FormSelect<ReceivingInput>
                         name={`items.${idx}.product_uid` as FieldPath<ReceivingInput>}
                         options={productOptions}
@@ -133,17 +154,48 @@ export function ReceivingItemRow({
                 </div>
 
                 {/* Harga Beli */}
-                <div className="col-span-8 sm:col-span-3">
+                <div className="col-span-8 sm:col-span-2">
                     <FormNominalInput<ReceivingInput>
                         name={`items.${idx}.harga_beli` as FieldPath<ReceivingInput>}
                         placeholder="Rp 0"
                         disabled={isPending}
-                        label="Harga Beli Satuan"
+                        label="Harga Satuan"
                     />
                 </div>
 
+                {/* Total Item */}
+                <div className="col-span-6 sm:col-span-3">
+                    <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                Total Item
+                            </label>
+                            {isTotalFocused && Number(kuantitas) > 1 && (
+                                <span className="text-[10px] font-semibold text-emerald-600">
+                                    ÷ {kuantitas} = {formatRupiah(Math.round((currentDisplayTotal || 0) / Number(kuantitas)))} /pcs
+                                </span>
+                            )}
+                        </div>
+                        <NominalInput
+                            value={currentDisplayTotal}
+                            onValueChange={handleTotalChange}
+                            onFocus={() => {
+                                setIsTotalFocused(true);
+                                setTotalInput(calculatedTotal);
+                            }}
+                            onBlur={() => {
+                                setIsTotalFocused(false);
+                                setTotalInput(null);
+                            }}
+                            placeholder="Rp 0"
+                            disabled={isPending}
+                            className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl font-mono font-bold text-emerald-700 bg-emerald-50/20 focus:bg-white"
+                        />
+                    </div>
+                </div>
+
                 {/* Harga Jual Saat Ini */}
-                <div className="col-span-8 sm:col-span-3">
+                <div className="col-span-6 sm:col-span-2">
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             Harga Jual Saat Ini
@@ -158,7 +210,7 @@ export function ReceivingItemRow({
                 </div>
 
                 {/* Delete button */}
-                <div className="col-span-4 sm:col-span-1 flex justify-end">
+                <div className="col-span-12 sm:col-span-1 flex justify-end">
                     {showDelete && (
                         <Button
                             type="button"
