@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray, useForm, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -9,7 +9,7 @@ import { hasPermission, hasRole } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
 import { useAppRouter } from "@/hooks/use-app-router";
 import type { Product } from "@/features/master/products/types";
-import { useCreateProduction } from "../api/production-api";
+import { useCreateProduction, useProductionDetail, useUpdateProduction } from "../api/production-api";
 import {
     productionCreateSchema,
     type ProductionCreateInput,
@@ -17,7 +17,11 @@ import {
     type ProductionOutputInput,
 } from "../schemas/production-schema";
 
-export function useProductionCreate() {
+interface UseProductionCreateProps {
+    productionUid?: string;
+}
+
+export function useProductionCreate({ productionUid }: UseProductionCreateProps = {}) {
     const router = useAppRouter();
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
@@ -27,7 +31,12 @@ export function useProductionCreate() {
         hasRole(userRoles, "admin") ||
         hasPermission(userRoles, userPermissions, "manage_production");
 
+    const isEdit = Boolean(productionUid);
+    const { data: detailRes, isLoading: isDetailLoading } = useProductionDetail(productionUid);
+    const existingProduction = detailRes?.data;
+
     const createMutation = useCreateProduction();
+    const updateMutation = useUpdateProduction();
 
     // Cache of products scanned/added via BarcodeInput on demand
     const [scannedProductsMap, setScannedProductsMap] = useState<Record<string, Product>>({});
@@ -37,14 +46,64 @@ export function useProductionCreate() {
     const methods = useForm<ProductionCreateInput>({
         resolver: zodResolver(productionCreateSchema) as Resolver<ProductionCreateInput>,
         defaultValues: {
+            tanggal_mulai: todayDate,
+            tanggal_selesai: null,
             tanggal: todayDate,
+            status: "draft",
             catatan: "",
             materials: [],
             outputs: [],
         },
     });
 
-    const { control, handleSubmit, setValue } = methods;
+    const { control, handleSubmit, setValue, reset } = methods;
+
+    // Populate form if editing existing production draft
+    const hasInitializedRef = useRef(false);
+    useEffect(() => {
+        if (existingProduction && !hasInitializedRef.current) {
+            hasInitializedRef.current = true;
+
+            const newProductsMap: Record<string, Product> = {};
+
+            const materials: ProductionMaterialInput[] = (existingProduction.materials || []).map((m) => {
+                if (m.product) {
+                    newProductsMap[m.product_uid] = m.product;
+                }
+                return {
+                    product_uid: m.product_uid,
+                    kuantitas: Number(m.kuantitas) || 1,
+                    harga_satuan: m.harga_satuan ?? 0,
+                };
+            });
+
+            const outputs: ProductionOutputInput[] = (existingProduction.outputs || []).map((o) => {
+                if (o.product) {
+                    newProductsMap[o.product_uid] = o.product;
+                }
+                return {
+                    product_uid: o.product_uid,
+                    kuantitas: Number(o.kuantitas) || 1,
+                    hpp_satuan: o.hpp_satuan ?? 0,
+                    update_harga_jual: o.update_harga_jual ?? false,
+                    harga_jual_baru: o.harga_jual_baru ?? null,
+                    margin_baru: o.margin_baru ?? null,
+                };
+            });
+
+            setScannedProductsMap((prev) => ({ ...prev, ...newProductsMap }));
+
+            reset({
+                tanggal_mulai: existingProduction.tanggal_mulai || existingProduction.tanggal || todayDate,
+                tanggal_selesai: existingProduction.tanggal_selesai || null,
+                tanggal: existingProduction.tanggal || todayDate,
+                status: existingProduction.status === "completed" ? "completed" : "draft",
+                catatan: existingProduction.catatan || "",
+                materials,
+                outputs,
+            });
+        }
+    }, [existingProduction, reset, todayDate]);
 
     const materialsArray = useFieldArray({
         control,
@@ -152,7 +211,10 @@ export function useProductionCreate() {
         setLastScannedOutputUid(product.uid);
     };
 
-    const onSubmit = (data: ProductionCreateInput) => {
+    const submitWithStatus = (
+        data: ProductionCreateInput,
+        targetStatus: "draft" | "completed"
+    ) => {
         if (data.materials.length === 0) {
             toast.error("Minimal 1 bahan baku harus dimasukkan ke dalam daftar produksi.");
             return;
@@ -163,33 +225,79 @@ export function useProductionCreate() {
             return;
         }
 
-        // Validation: Physical stock check for raw materials
-        for (const mat of data.materials) {
-            const prod = scannedProductsMap[mat.product_uid];
-            if (prod && Number(mat.kuantitas) > (prod.stok ?? 0)) {
-                toast.error(
-                    `Stok bahan baku "${prod.nama}" tidak mencukupi (Tersedia: ${prod.stok} unit, Diminta: ${mat.kuantitas}).`
-                );
-                return;
+        const payload: ProductionCreateInput = {
+            ...data,
+            status: targetStatus,
+            tanggal: data.tanggal_mulai || data.tanggal || todayDate,
+            tanggal_mulai: data.tanggal_mulai || todayDate,
+            tanggal_selesai:
+                targetStatus === "completed"
+                    ? data.tanggal_selesai || data.tanggal_mulai || todayDate
+                    : data.tanggal_selesai || null,
+        };
+
+        // Stock validation when completing/finalizing
+        if (targetStatus === "completed") {
+            for (const mat of payload.materials) {
+                const prod = scannedProductsMap[mat.product_uid];
+                if (prod && Number(mat.kuantitas) > (prod.stok ?? 0)) {
+                    toast.error(
+                        `Stok bahan baku "${prod.nama}" tidak mencukupi (Tersedia: ${prod.stok} unit, Diminta: ${mat.kuantitas}).`
+                    );
+                    return;
+                }
             }
         }
 
-        createMutation.mutate(data, {
-            onSuccess: (res) => {
-                toast.success(res.message || "Transaksi produksi berhasil disimpan!");
-                router.push(ROUTES.ADMIN_PRODUCTION);
-            },
-            onError: (err) => {
-                toast.error(err.message || "Gagal menyimpan transaksi produksi.");
-            },
-        });
+        if (isEdit && productionUid) {
+            updateMutation.mutate(
+                { uid: productionUid, data: payload },
+                {
+                    onSuccess: (res) => {
+                        toast.success(
+                            res.message ||
+                                (targetStatus === "draft"
+                                    ? "Draft produksi berhasil diperbarui!"
+                                    : "Produksi berhasil diselesaikan!")
+                        );
+                        router.push(ROUTES.ADMIN_PRODUCTION);
+                    },
+                    onError: (err) => {
+                        toast.error(err.message || "Gagal memperbarui transaksi produksi.");
+                    },
+                }
+            );
+        } else {
+            createMutation.mutate(payload, {
+                onSuccess: (res) => {
+                    toast.success(
+                        res.message ||
+                            (targetStatus === "draft"
+                                ? "Draft produksi berhasil disimpan!"
+                                : "Transaksi produksi berhasil diselesaikan!")
+                    );
+                    router.push(ROUTES.ADMIN_PRODUCTION);
+                },
+                onError: (err) => {
+                    toast.error(err.message || "Gagal menyimpan transaksi produksi.");
+                },
+            });
+        }
     };
 
     const onError = () => {
         toast.error("Harap periksa kelengkapan formulir produksi sebelum menyimpan.");
     };
 
-    const isPending = createMutation.isPending;
+    const handleSaveDraft = () => {
+        handleSubmit((data) => submitWithStatus(data, "draft"), onError)();
+    };
+
+    const handleComplete = () => {
+        handleSubmit((data) => submitWithStatus(data, "completed"), onError)();
+    };
+
+    const isPending = createMutation.isPending || updateMutation.isPending || isDetailLoading;
 
     return {
         methods,
@@ -207,10 +315,12 @@ export function useProductionCreate() {
         setLastScannedOutputUid,
         handleMaterialProductFound,
         handleOutputProductFound,
-        onSubmit,
-        onError,
-        handleSubmit,
+        handleSaveDraft,
+        handleComplete,
         isPending,
+        isEdit,
+        existingProduction,
+        isDetailLoading,
         hasManagePermission,
         router,
     };

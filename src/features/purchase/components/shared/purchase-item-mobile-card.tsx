@@ -156,11 +156,6 @@ export function PurchaseItemMobileCard({
             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
               Total Item
             </label>
-            {isSubtotalFocused && item.kuantitas > 1 && (
-              <span className="text-[10px] font-semibold text-emerald-600 animate-fade-in">
-                ÷ {item.kuantitas} = {formatRupiah(Math.round((currentDisplaySubtotal || 0) / item.kuantitas))} /pcs
-              </span>
-            )}
           </div>
           <NominalInput
             value={currentDisplaySubtotal}

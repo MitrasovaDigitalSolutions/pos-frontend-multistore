@@ -22,13 +22,28 @@ export function useProductionColumns(): ColumnDef<Production>[] {
             },
             {
                 accessorKey: "tanggal",
-                header: "Tanggal",
-                cell: ({ row }) => (
-                    <span className="text-xs text-slate-600">
-                        {formatToReadableDate(row.original.tanggal)}
-                    </span>
-                ),
-                size: 130,
+                header: "Tanggal / Periode",
+                cell: ({ row }) => {
+                    const tglMulai = row.original.tanggal_mulai || row.original.tanggal;
+                    const tglSelesai = row.original.tanggal_selesai;
+                    return (
+                        <div className="flex flex-col gap-0.5">
+                            <span className="text-xs text-slate-700 font-medium">
+                                {formatToReadableDate(tglMulai)}
+                            </span>
+                            {tglSelesai ? (
+                                <span className="text-[10px] text-slate-400">
+                                    Selesai: {formatToReadableDate(tglSelesai)}
+                                </span>
+                            ) : row.original.status === "draft" ? (
+                                <span className="text-[10px] text-amber-600 font-medium">
+                                    Draft (Belum Selesai)
+                                </span>
+                            ) : null}
+                        </div>
+                    );
+                },
+                size: 150,
             },
             {
                 id: "materials_summary",

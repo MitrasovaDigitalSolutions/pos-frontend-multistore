@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import {
     IconCheck,
+    IconDeviceFloppy,
     IconLoader2,
     IconScale,
 } from "@tabler/icons-react";
@@ -16,7 +17,9 @@ interface ProductionSummaryCardProps {
     materialsCount: number;
     outputsCount: number;
     isPending: boolean;
-    onSubmit?: () => void;
+    isEdit?: boolean;
+    onSaveDraft?: () => void;
+    onComplete?: () => void;
 }
 
 export function ProductionSummaryCard({
@@ -26,7 +29,9 @@ export function ProductionSummaryCard({
     materialsCount,
     outputsCount,
     isPending,
-    onSubmit,
+    isEdit = false,
+    onSaveDraft,
+    onComplete,
 }: ProductionSummaryCardProps) {
     const isBalanced = totalBiayaBahan > 0 && totalBiayaBahan === totalAlokasiHpp;
     const diff = Math.abs(totalBiayaBahan - totalAlokasiHpp);
@@ -83,13 +88,30 @@ export function ProductionSummaryCard({
                 </Badge>
             </div>
 
-            {/* Right Action Button */}
+            {/* Right Action Buttons */}
             <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+                {/* Save Draft Button */}
                 <Button
                     type="button"
-                    onClick={onSubmit}
+                    variant="outline"
+                    onClick={onSaveDraft}
                     disabled={isPending || materialsCount === 0 || outputsCount === 0}
-                    className="w-full sm:w-auto h-9 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-emerald-600/20"
+                    className="flex-1 sm:flex-none h-9 px-4 border-slate-200 text-slate-700 hover:bg-slate-100 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                    {isPending ? (
+                        <IconLoader2 size={15} className="animate-spin" />
+                    ) : (
+                        <IconDeviceFloppy size={15} className="text-slate-500" />
+                    )}
+                    <span>{isEdit ? "Update Draft" : "Simpan Draft"}</span>
+                </Button>
+
+                {/* Complete / Finalize Button */}
+                <Button
+                    type="button"
+                    onClick={onComplete}
+                    disabled={isPending || materialsCount === 0 || outputsCount === 0}
+                    className="flex-1 sm:flex-none h-9 px-5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-emerald-600/20"
                 >
                     {isPending ? (
                         <>

@@ -3,6 +3,7 @@
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import React, { useLayoutEffect, useRef, useState } from "react";
+import { NominalCalculator } from "./nominal-calculator";
 
 export interface NominalInputProps
     extends Omit<React.ComponentProps<typeof Input>, "value" | "onChange"> {
@@ -10,6 +11,7 @@ export interface NominalInputProps
     onValueChange?: (val: number | null) => void;
     inputRef?: React.Ref<HTMLInputElement>;
     isError?: boolean;
+    showCalculator?: boolean;
 }
 
 function setRef<T>(ref: React.Ref<T> | undefined, value: T | null) {
@@ -35,6 +37,7 @@ export function NominalInput({
     isError,
     className,
     disabled,
+    showCalculator = true,
     ...props
 }: NominalInputProps) {
     const inputRef = useRef<HTMLInputElement | null>(null);
@@ -90,7 +93,7 @@ export function NominalInput({
         setCursorPosition(newSelectionStart);
     };
 
-    return (
+    const inputElement = (
         <Input
             ref={(node) => {
                 inputRef.current = node;
@@ -103,11 +106,31 @@ export function NominalInput({
             disabled={disabled}
             className={cn(
                 "h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl",
+                showCalculator && "pr-7.5",
                 isError && "border-rose-400 focus-visible:ring-rose-500",
                 className,
             )}
             aria-invalid={!!isError}
             {...props}
         />
+    );
+
+    if (!showCalculator) {
+        return inputElement;
+    }
+
+    return (
+        <div className="relative flex items-center w-full">
+            {inputElement}
+            <div className="absolute right-1 top-1/2 -translate-y-1/2 z-10">
+                <NominalCalculator
+                    value={value}
+                    disabled={disabled}
+                    onApply={(newVal) => {
+                        onValueChange?.(newVal);
+                    }}
+                />
+            </div>
+        </div>
     );
 }

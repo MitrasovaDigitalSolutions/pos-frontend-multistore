@@ -21,15 +21,23 @@ export function ProductionGeneralSection({ disabled = false }: ProductionGeneral
                 </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
-                <div className="sm:col-span-4">
+                <div className="sm:col-span-3">
                     <FormDatePicker<ProductionCreateInput>
-                        name="tanggal"
-                        label="Tanggal Produksi *"
-                        placeholder="Pilih tanggal"
+                        name="tanggal_mulai"
+                        label="Tanggal Mulai *"
+                        placeholder="Pilih tanggal mulai"
                         disabled={disabled}
                     />
                 </div>
-                <div className="sm:col-span-8">
+                <div className="sm:col-span-3">
+                    <FormDatePicker<ProductionCreateInput>
+                        name="tanggal_selesai"
+                        label="Tanggal Selesai (Opsional)"
+                        placeholder="Pilih tanggal selesai"
+                        disabled={disabled}
+                    />
+                </div>
+                <div className="sm:col-span-6">
                     <FormInput<ProductionCreateInput>
                         name="catatan"
                         label="Catatan / No. Batch (Opsional)"

@@ -16,12 +16,20 @@ export const productionOutputSchema = z.object({
 });
 
 export const productionCreateSchema = z.object({
-    tanggal: z.string().min(1, "Tanggal produksi wajib diisi"),
-    catatan: z.string().optional().nullable(),
+    tanggal_mulai: z.string().min(1, "Tanggal mulai produksi wajib diisi"),
+    tanggal_selesai: z.string().nullable().optional(),
+    tanggal: z.string().optional(),
+    status: z.enum(["draft", "completed"]).default("draft"),
+    catatan: z.string().nullable().optional(),
     materials: z.array(productionMaterialSchema).min(1, "Minimal 1 bahan baku harus dimasukkan"),
     outputs: z.array(productionOutputSchema).min(1, "Minimal 1 hasil barang jadi harus dimasukkan"),
+});
+
+export const productionFinalizeSchema = z.object({
+    tanggal_selesai: z.string().nullable().optional(),
 });
 
 export type ProductionMaterialInput = z.infer<typeof productionMaterialSchema>;
 export type ProductionOutputInput = z.infer<typeof productionOutputSchema>;
 export type ProductionCreateInput = z.infer<typeof productionCreateSchema>;
+export type ProductionFinalizeSchemaInput = z.infer<typeof productionFinalizeSchema>;

@@ -64,6 +64,7 @@ export const ROUTES = {
     ADMIN_ASSET_CATEGORIES: "/admin/assets/categories",
     ADMIN_PRODUCTION: "/admin/inventory/production",
     ADMIN_PRODUCTION_CREATE: "/admin/inventory/production/new",
+    ADMIN_PRODUCTION_EDIT: (uid: string) => `/admin/inventory/production/${uid}/edit`,
 
 
     // Protected - POS

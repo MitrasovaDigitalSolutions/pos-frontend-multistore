@@ -102,42 +102,28 @@ export function PurchaseItemTableRow({
                         </span>
                     </div>
                 ) : (
-                    <div className="space-y-0.5">
-                        <FormNominalInput
-                            name={`items.${index}.harga_estimasi`}
-                            onValueChange={(val) => {
-                                onUpdateItem(item.temp_uid, { harga_estimasi: val ?? 0 });
-                            }}
-                            disabled={disabled}
-                            placeholder="Rp 0"
-                            className="w-full h-8 text-right text-xs font-bold text-slate-800 font-mono rounded-lg border-slate-200 focus-visible:ring-emerald-400/20 focus-visible:border-emerald-400"
-                        />
-                        {allowSubtotalInput && (
-                            <span className="block text-[9px] text-slate-400 text-right font-medium pr-1">
-                                per pcs
-                            </span>
-                        )}
-                    </div>
+                    <FormNominalInput
+                        name={`items.${index}.harga_estimasi`}
+                        onValueChange={(val) => {
+                            onUpdateItem(item.temp_uid, { harga_estimasi: val ?? 0 });
+                        }}
+                        disabled={disabled}
+                        placeholder="Rp 0"
+                        className="w-full h-8 text-right text-xs font-bold text-slate-800 font-mono rounded-lg border-slate-200 focus-visible:ring-emerald-400/20 focus-visible:border-emerald-400"
+                    />
                 )}
             </td>
             <td className="p-3">
                 {allowSubtotalInput ? (
-                    <div className="space-y-0.5">
-                        <NominalInput
-                            value={currentDisplaySubtotal}
-                            onValueChange={handleSubtotalChange}
-                            onFocus={handleSubtotalFocus}
-                            onBlur={handleSubtotalBlur}
-                            disabled={disabled}
-                            placeholder="Rp 0"
-                            className="w-full h-8 text-right text-xs font-bold text-emerald-700 font-mono rounded-lg border-slate-200 bg-emerald-50/20 focus-visible:ring-emerald-400/20 focus-visible:border-emerald-400 focus:bg-white"
-                        />
-                        {isSubtotalFocused && item.kuantitas > 1 && (
-                            <span className="block text-[9px] text-emerald-600 text-right font-medium pr-1 animate-fade-in">
-                                ÷ {item.kuantitas} = {formatRupiah(Math.round((currentDisplaySubtotal || 0) / item.kuantitas))} /pcs
-                            </span>
-                        )}
-                    </div>
+                    <NominalInput
+                        value={currentDisplaySubtotal}
+                        onValueChange={handleSubtotalChange}
+                        onFocus={handleSubtotalFocus}
+                        onBlur={handleSubtotalBlur}
+                        disabled={disabled}
+                        placeholder="Rp 0"
+                        className="w-full h-8 text-right text-xs font-bold text-emerald-700 font-mono rounded-lg border-slate-200 bg-emerald-50/20 focus-visible:ring-emerald-400/20 focus-visible:border-emerald-400 focus:bg-white"
+                    />
                 ) : (
                     <div className="text-right font-bold text-slate-900 font-mono pr-2">
                         {formatRupiah(calculatedSubtotal)}

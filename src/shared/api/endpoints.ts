@@ -283,6 +283,10 @@ export const ENDPOINTS = {
         LIST: "/v1/productions",
         CREATE: "/v1/productions",
         DETAIL: (uid: string) => `/v1/productions/${uid}`,
+        UPDATE: (uid: string) => `/v1/productions/${uid}`,
+        DELETE: (uid: string) => `/v1/productions/${uid}`,
+        FINALIZE: (uid: string) => `/v1/productions/${uid}/finalize`,
+        VOID: (uid: string) => `/v1/productions/${uid}/void`,
     },
 
     // Settings
