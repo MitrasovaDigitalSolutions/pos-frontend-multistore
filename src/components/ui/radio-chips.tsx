@@ -2,7 +2,14 @@
 
 import * as React from "react";
 import { Check } from "lucide-react";
+import { IconInfoCircle } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export interface RadioChipOption {
     value: string;
@@ -11,6 +18,7 @@ export interface RadioChipOption {
     description?: string;
     badge?: string;
     disabled?: boolean;
+    tooltip?: string;
 }
 
 export interface RadioChipsProps {
@@ -21,7 +29,7 @@ export interface RadioChipsProps {
     className?: string;
     wrapperClassName?: string;
     disabled?: boolean;
-    variant?: "chips" | "segmented" | "cards";
+    variant?: "chips" | "segmented" | "cards" | "radio";
     size?: "xs" | "sm" | "md" | "lg";
     columns?: number;
 }
@@ -206,6 +214,92 @@ export function RadioChips({
                                 )}
                             </button>
                         );
+                    })}
+                </div>
+            )}
+
+            {variant === "radio" && (
+                <div
+                    className={cn(
+                        "flex items-center gap-4 flex-wrap",
+                        columns && `grid grid-cols-${columns}`,
+                        className
+                    )}
+                >
+                    {options.map((option) => {
+                        const isSelected = value === option.value;
+                        const isOptionDisabled = disabled || option.disabled;
+
+                        const optionElement = (
+                            <button
+                                key={option.value}
+                                type="button"
+                                disabled={isOptionDisabled}
+                                onClick={() => handleSelect(option.value)}
+                                className={cn(
+                                    "flex items-center gap-2 cursor-pointer select-none text-xs font-semibold py-1 transition-colors text-left group",
+                                    isSelected
+                                        ? "text-slate-900"
+                                        : "text-slate-600 hover:text-slate-900",
+                                    isOptionDisabled && "opacity-50 cursor-not-allowed pointer-events-none"
+                                )}
+                            >
+                                <div
+                                    className={cn(
+                                        "w-4 h-4 rounded-full border flex items-center justify-center transition-all shrink-0",
+                                        isSelected
+                                            ? "border-emerald-600 bg-emerald-600 shadow-xs"
+                                            : "border-slate-300 bg-white group-hover:border-slate-400"
+                                    )}
+                                >
+                                    {isSelected && (
+                                        <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    {option.icon && <span>{option.icon}</span>}
+                                    <span>{option.label}</span>
+                                    {option.badge && (
+                                        <span
+                                            className={cn(
+                                                "text-[9px] px-1.5 py-0.2 rounded-full font-bold transition-colors",
+                                                isSelected
+                                                    ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                                                    : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                                            )}
+                                        >
+                                            {option.badge}
+                                        </span>
+                                    )}
+                                </div>
+                            </button>
+                        );
+
+                        if (option.tooltip) {
+                            return (
+                                <TooltipProvider key={option.value} delayDuration={150}>
+                                    <Tooltip>
+                                        <div className="flex items-center gap-1">
+                                            {optionElement}
+                                            <TooltipTrigger asChild>
+                                                <button
+                                                    type="button"
+                                                    className="text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer transition-colors"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <IconInfoCircle size={13} />
+                                                </button>
+                                            </TooltipTrigger>
+                                        </div>
+                                        <TooltipContent side="top" className="z-[100] max-w-xs text-[11px] leading-relaxed bg-slate-900 text-slate-50 p-2 rounded-lg shadow-lg">
+                                            {option.tooltip}
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            );
+                        }
+
+                        return optionElement;
                     })}
                 </div>
             )}

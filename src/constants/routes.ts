@@ -62,8 +62,12 @@ export const ROUTES = {
     ADMIN_REQUEST_TRANSFERS_DETAIL: "/admin/request-transfer/detail",
     ADMIN_ASSETS: "/admin/assets",
     ADMIN_ASSET_CATEGORIES: "/admin/assets/categories",
-    ADMIN_PRODUCTION: "/admin/inventory/production",
-    ADMIN_PRODUCTION_CREATE: "/admin/inventory/production/new",
+    ADMIN_PRODUCTION: "/admin/manufacturing/production",
+    ADMIN_PRODUCTION_CREATE: "/admin/manufacturing/production/new",
+    ADMIN_PRODUCTION_EDIT: (uid: string) => `/admin/manufacturing/production/${uid}/edit`,
+    ADMIN_PRODUCT_BOM: "/admin/manufacturing/product-bom",
+    ADMIN_BOM_COMPONENT_TYPES: "/admin/manufacturing/bom-component-types",
+    ADMIN_UNITS: "/admin/units",
 
 
     // Protected - POS

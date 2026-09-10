@@ -38,6 +38,9 @@ export interface Product {
     image_url?: string | null;
     is_jasa?: boolean;
     is_raw_material?: boolean;
+    satuan?: string | null;
+    unit_uid?: string | null;
+    unit?: { uid: string; nama: string; simbol: string; tipe?: string } | null;
     created_by_user?: CreatedByUser | null;
     created_by_toko?: CreatedByToko | null;
     category?: Category | null;

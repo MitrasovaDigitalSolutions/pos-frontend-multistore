@@ -5,45 +5,72 @@ import { Badge } from "@/components/ui/badge";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import {
     IconCheck,
+    IconDeviceFloppy,
     IconLoader2,
     IconScale,
 } from "@tabler/icons-react";
 
 interface ProductionSummaryCardProps {
     totalBiayaBahan: number;
+    totalBiayaTambahan: number;
+    totalBersih: number;
     totalOutputQty: number;
     totalAlokasiHpp: number;
     materialsCount: number;
     outputsCount: number;
     isPending: boolean;
-    onSubmit?: () => void;
+    isEdit?: boolean;
+    onSaveDraft?: () => void;
+    onComplete?: () => void;
 }
 
 export function ProductionSummaryCard({
     totalBiayaBahan,
+    totalBiayaTambahan,
+    totalBersih,
     totalOutputQty,
     totalAlokasiHpp,
     materialsCount,
     outputsCount,
     isPending,
-    onSubmit,
+    isEdit = false,
+    onSaveDraft,
+    onComplete,
 }: ProductionSummaryCardProps) {
-    const isBalanced = totalBiayaBahan > 0 && totalBiayaBahan === totalAlokasiHpp;
-    const diff = Math.abs(totalBiayaBahan - totalAlokasiHpp);
+    const isBalanced = totalBersih > 0 && Math.abs(totalBersih - totalAlokasiHpp) === 0;
+    const diff = Math.abs(totalBersih - totalAlokasiHpp);
 
     return (
         <div className="sticky bottom-3 z-20 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-3 px-4 shadow-xl flex flex-col md:flex-row items-center justify-between gap-3">
             {/* Left KPI Chips */}
-            <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 text-xs w-full md:w-auto">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 text-xs w-full md:w-auto">
                 {/* 1. Biaya Bahan Baku */}
                 <div className="flex items-center gap-1.5 bg-amber-50/80 border border-amber-200/70 px-2.5 py-1 rounded-xl">
-                    <span className="text-[10px] text-amber-700 font-bold uppercase">Biaya Bahan:</span>
+                    <span className="text-[10px] text-amber-700 font-bold uppercase">Bahan:</span>
                     <span className="font-extrabold text-amber-900 font-mono text-xs">
                         {formatRupiah(totalBiayaBahan)}
                     </span>
                 </div>
 
-                {/* 2. Total Hasil Jadi */}
+                {/* 2. Biaya Tambahan Langsung */}
+                {totalBiayaTambahan > 0 && (
+                    <div className="flex items-center gap-1.5 bg-blue-50/80 border border-blue-200/70 px-2.5 py-1 rounded-xl">
+                        <span className="text-[10px] text-blue-700 font-bold uppercase">Biaya Tambahan:</span>
+                        <span className="font-extrabold text-blue-900 font-mono text-xs">
+                            {formatRupiah(totalBiayaTambahan)}
+                        </span>
+                    </div>
+                )}
+
+                {/* 3. Total Bersih (Modal Produksi) */}
+                <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-300/80 px-2.5 py-1 rounded-xl">
+                    <span className="text-[10px] text-slate-600 font-bold uppercase">Total Bersih:</span>
+                    <span className="font-extrabold text-slate-950 font-mono text-xs">
+                        {formatRupiah(totalBersih)}
+                    </span>
+                </div>
+
+                {/* 4. Total Hasil Jadi */}
                 <div className="flex items-center gap-1.5 bg-emerald-50/80 border border-emerald-200/70 px-2.5 py-1 rounded-xl">
                     <span className="text-[10px] text-emerald-700 font-bold uppercase">Hasil Jadi:</span>
                     <span className="font-extrabold text-emerald-900 font-mono text-xs">
@@ -51,17 +78,7 @@ export function ProductionSummaryCard({
                     </span>
                 </div>
 
-                {/* 3. Total HPP Output */}
-                <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-xl">
-                    <span className="text-[10px] text-slate-500 font-bold uppercase">
-                        Total HPP Output:
-                    </span>
-                    <span className="font-extrabold text-slate-800 font-mono text-xs">
-                        {formatRupiah(totalAlokasiHpp)}
-                    </span>
-                </div>
-
-                {/* 4. Status Alokasi Biaya */}
+                {/* 5. Status Alokasi Biaya */}
                 <Badge
                     variant="outline"
                     className={`text-[10px] px-2.5 py-0.5 font-bold flex items-center gap-1 ${
@@ -75,21 +92,38 @@ export function ProductionSummaryCard({
                     <IconScale size={11} />
                     <span>
                         {isBalanced
-                            ? "Alokasi Seimbang 100%"
+                            ? "● Seimbang 100% (Selisih Rp 0)"
                             : totalAlokasiHpp === 0
-                                ? "Belum Diisi"
+                                ? "HPP Belum Dialokasikan"
                                 : `Selisih Alokasi: ${formatRupiah(diff)}`}
                     </span>
                 </Badge>
             </div>
 
-            {/* Right Action Button */}
+            {/* Right Action Buttons */}
             <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+                {/* Save Draft Button */}
                 <Button
                     type="button"
-                    onClick={onSubmit}
+                    variant="outline"
+                    onClick={onSaveDraft}
                     disabled={isPending || materialsCount === 0 || outputsCount === 0}
-                    className="w-full sm:w-auto h-9 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-emerald-600/20"
+                    className="flex-1 sm:flex-none h-9 px-4 border-slate-200 text-slate-700 hover:bg-slate-100 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                    {isPending ? (
+                        <IconLoader2 size={15} className="animate-spin" />
+                    ) : (
+                        <IconDeviceFloppy size={15} className="text-slate-500" />
+                    )}
+                    <span>{isEdit ? "Update Draft" : "Simpan Draft"}</span>
+                </Button>
+
+                {/* Complete / Finalize Button */}
+                <Button
+                    type="button"
+                    onClick={onComplete}
+                    disabled={isPending || materialsCount === 0 || outputsCount === 0}
+                    className="flex-1 sm:flex-none h-9 px-5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-emerald-600/20"
                 >
                     {isPending ? (
                         <>

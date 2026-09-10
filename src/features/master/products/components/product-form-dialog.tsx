@@ -45,6 +45,7 @@ export function ProductFormDialog({
         handleProductTypeChange,
         categorySelectProps,
         brandSelectProps,
+        unitSelectProps,
         onSubmit,
         onError,
         initialImageUrl,
@@ -161,6 +162,7 @@ export function ProductFormDialog({
                                     disabled={isPending}
                                     categorySelectProps={categorySelectProps}
                                     brandSelectProps={brandSelectProps}
+                                    unitSelectProps={unitSelectProps}
                                 />
                             </div>
 

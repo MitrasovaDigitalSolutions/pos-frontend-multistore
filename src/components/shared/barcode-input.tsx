@@ -22,6 +22,7 @@ interface BarcodeInputProps {
     refocusOnFound?: boolean;
     isRawMaterial?: boolean;
     isJasa?: boolean;
+    hasBom?: boolean;
 }
 
 const EMPTY_PRODUCTS: Product[] = [];
@@ -41,6 +42,7 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
         refocusOnFound = true,
         isRawMaterial,
         isJasa,
+        hasBom,
     }: BarcodeInputProps, ref) {
         const localRef = useRef<HTMLInputElement>(null);
         const inputRef = (ref || localRef) as React.MutableRefObject<HTMLInputElement | null>;
@@ -119,10 +121,11 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
         const effectiveIsJasa = isJasa !== undefined ? isJasa : (mode === "purchase" ? false : undefined);
         const isRawParam = isRawMaterial !== undefined ? (isRawMaterial ? 1 : 0) : undefined;
         const isJasaParam = effectiveIsJasa !== undefined ? (effectiveIsJasa ? 1 : 0) : undefined;
+        const hasBomParam = hasBom !== undefined ? (hasBom ? 1 : 0) : undefined;
 
         // TanStack Query for searching products from API
         const { data: apiProducts, isLoading: isApiLoading } = useQuery({
-            queryKey: ["products", "autocomplete", debouncedValue, isRawParam, isJasaParam],
+            queryKey: ["products", "autocomplete", debouncedValue, isRawParam, isJasaParam, hasBomParam],
             queryFn: async () => {
                 try {
                     return await lookupProductByBarcode(
@@ -130,6 +133,7 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                         {
                             ...(isRawParam !== undefined ? { is_raw_material: isRawParam } : {}),
                             ...(isJasaParam !== undefined ? { is_jasa: isJasaParam } : {}),
+                            ...(hasBomParam !== undefined ? { has_bom: hasBomParam } : {}),
                         }
                     );
                 } catch {
@@ -155,6 +159,9 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                         if (effectiveIsJasa !== undefined && Boolean(p.is_jasa) !== effectiveIsJasa) {
                             return false;
                         }
+                        if (hasBom !== undefined && (p as { has_bom?: boolean | number }).has_bom !== undefined && Boolean((p as { has_bom?: boolean | number }).has_bom) !== hasBom) {
+                            return false;
+                        }
                         const barcodeMatch = p.barcode?.toLowerCase().includes(searchLower) ?? false;
                         const nameWordsMatch = queryWords.every((word) => p.nama.toLowerCase().includes(word));
                         return barcodeMatch || nameWordsMatch;
@@ -169,10 +176,16 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                 if (effectiveIsJasa !== undefined) {
                     filtered = filtered.filter((p) => Boolean(p.is_jasa) === effectiveIsJasa);
                 }
+                if (hasBom !== undefined) {
+                    filtered = filtered.filter((p) => {
+                        const hb = (p as { has_bom?: boolean | number }).has_bom;
+                        return hb === undefined || Boolean(hb) === hasBom;
+                    });
+                }
                 return filtered;
             }
             return apiProducts || [];
-        }, [value, isLocalMode, products, isRawMaterial, effectiveIsJasa, localSuggestions, apiProducts]);
+        }, [value, isLocalMode, products, isRawMaterial, effectiveIsJasa, hasBom, localSuggestions, apiProducts]);
 
         // Auto-focus on mount
         useEffect(() => {
@@ -263,6 +276,8 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                             found = null;
                         } else if (effectiveIsJasa !== undefined && Boolean(found.is_jasa) !== effectiveIsJasa) {
                             found = null;
+                        } else if (hasBom !== undefined && (found as { has_bom?: boolean | number }).has_bom !== undefined && Boolean((found as { has_bom?: boolean | number }).has_bom) !== hasBom) {
+                            found = null;
                         }
                     }
                 }
@@ -275,6 +290,7 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                             {
                                 ...(isRawParam !== undefined ? { is_raw_material: isRawParam } : {}),
                                 ...(isJasaParam !== undefined ? { is_jasa: isJasaParam } : {}),
+                                ...(hasBomParam !== undefined ? { has_bom: hasBomParam } : {}),
                             }
                         );
                         if (results && results.length > 0) {

@@ -1,25 +1,38 @@
 "use client";
 
+import { useState } from "react";
 import { FormProvider } from "react-hook-form";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { ROUTES } from "@/constants/routes";
-import { IconArrowLeft, IconAssembly } from "@tabler/icons-react";
+import { IconAlertTriangle, IconArrowLeft, IconAssembly } from "@tabler/icons-react";
 import { useProductionCreate } from "../../hooks/use-production-create";
 import { ProductionGeneralSection } from "./production-general-section";
 import { ProductionMaterialsSection } from "./production-materials-section";
 import { ProductionOutputsSection } from "./production-outputs-section";
 import { ProductionSummaryCard } from "./production-summary-card";
 
-export function ProductionCreatePage() {
+interface ProductionCreatePageProps {
+    productionUid?: string;
+}
+
+export function ProductionCreatePage({ productionUid }: ProductionCreatePageProps = {}) {
+    const [isConfirmCompleteOpen, setIsConfirmCompleteOpen] = useState(false);
+
     const {
         methods,
         materialsArray,
+        additionalCostsArray,
         outputsArray,
         scannedProductsMap,
         watchedMaterials,
+        watchedAdditionalCosts,
         watchedOutputs,
         totalBiayaBahan,
+        totalBiayaTambahan,
+        totalBersih,
         totalOutputQty,
         totalAlokasiHpp,
         lastScannedMaterialUid,
@@ -28,13 +41,23 @@ export function ProductionCreatePage() {
         setLastScannedOutputUid,
         handleMaterialProductFound,
         handleOutputProductFound,
-        onSubmit,
-        onError,
-        handleSubmit,
+        handleRemoveOutputItem,
+        handleUpdateOutputQty,
+        handleCalculateBom,
+        isCalculatingBom,
+        handleCalculatePreview,
+        isCalculatingPreview,
+        hppPreviewOutputs,
+        handleAddAdditionalCost,
+        handleRemoveAdditionalCost,
+        handleSaveDraft,
+        handleComplete,
         isPending,
+        isEdit,
+        isDetailLoading,
         hasManagePermission,
         router,
-    } = useProductionCreate();
+    } = useProductionCreate({ productionUid });
 
     if (!hasManagePermission) {
         return (
@@ -45,6 +68,15 @@ export function ProductionCreatePage() {
             />
         );
     }
+
+    const handleRequestComplete = async () => {
+        const isValid = await methods.trigger();
+        if (isValid) {
+            setIsConfirmCompleteOpen(true);
+        } else {
+            toast.error("Harap periksa kelengkapan formulir produksi sebelum menyelesaikan.");
+        }
+    };
 
     return (
         <FormProvider {...methods}>
@@ -65,57 +97,103 @@ export function ProductionCreatePage() {
                         <div>
                             <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-1.5 leading-tight">
                                 <IconAssembly size={17} className="text-emerald-600" />
-                                <span>Pencatatan Produksi Harian</span>
+                                <span>{isEdit ? "Edit Draft Produksi" : "Pencatatan Produksi Harian (BoM Hybrid)"}</span>
                             </h2>
                             <p className="text-[11px] text-slate-400 font-normal">
-                                Scan barcode bahan baku &amp; barang jadi untuk pencatatan produksi dan alokasi HPP.
+                                {isEdit
+                                    ? "Perbarui rincian barang jadi, bahan baku, biaya tambahan, dan alokasi HPP pada draft produksi ini."
+                                    : "Pilih barang jadi di kolom kiri; kebutuhan bahan baku akan otomatis terisi dari resep BoM."}
                             </p>
                         </div>
                     </div>
                 </div>
 
                 {/* 1. Informasi Umum Dokumen */}
-                <ProductionGeneralSection disabled={isPending} />
+                <ProductionGeneralSection disabled={isPending || isDetailLoading} />
 
-                {/* 2. Side-by-Side 2-Column Split: Bahan Baku (Kiri) & Barang Jadi (Kanan) */}
+                {/* 2. Side-by-Side 2-Column Split: Barang Jadi (Kiri) & Bahan Baku & Biaya (Kanan) */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 items-stretch">
-                    {/* Kolom Kiri: Bahan Baku Terpakai */}
+                    {/* Kolom Kiri: Hasil Barang Jadi & Alokasi HPP */}
+                    <ProductionOutputsSection
+                        productsMap={scannedProductsMap}
+                        fields={outputsArray.fields}
+                        watchedOutputs={watchedOutputs}
+                        onProductFound={handleOutputProductFound}
+                        onRemoveItem={handleRemoveOutputItem}
+                        onUpdateQty={handleUpdateOutputQty}
+                        disabled={isPending || isDetailLoading}
+                        totalOutputQty={totalOutputQty}
+                        totalAlokasiHpp={totalAlokasiHpp}
+                        lastScannedUid={lastScannedOutputUid}
+                        onClearScannedUid={() => setLastScannedOutputUid(null)}
+                        onCalculatePreview={handleCalculatePreview}
+                        isCalculatingPreview={isCalculatingPreview}
+                        hppPreviewOutputs={hppPreviewOutputs}
+                    />
+
+                    {/* Kolom Kanan: Bahan Baku Terpakai & Biaya Tambahan Langsung */}
                     <ProductionMaterialsSection
                         productsMap={scannedProductsMap}
                         fields={materialsArray.fields}
                         watchedMaterials={watchedMaterials}
                         onProductFound={handleMaterialProductFound}
                         onRemoveItem={(idx) => materialsArray.remove(idx)}
-                        disabled={isPending}
+                        disabled={isPending || isDetailLoading}
                         totalBiayaBahan={totalBiayaBahan}
                         lastScannedUid={lastScannedMaterialUid}
                         onClearScannedUid={() => setLastScannedMaterialUid(null)}
-                    />
-
-                    {/* Kolom Kanan: Hasil Barang Jadi & Alokasi HPP */}
-                    <ProductionOutputsSection
-                        productsMap={scannedProductsMap}
-                        fields={outputsArray.fields}
-                        watchedOutputs={watchedOutputs}
-                        onProductFound={handleOutputProductFound}
-                        onRemoveItem={(idx) => outputsArray.remove(idx)}
-                        disabled={isPending}
-                        totalOutputQty={totalOutputQty}
-                        totalAlokasiHpp={totalAlokasiHpp}
-                        lastScannedUid={lastScannedOutputUid}
-                        onClearScannedUid={() => setLastScannedOutputUid(null)}
+                        onCalculateBom={handleCalculateBom}
+                        isCalculatingBom={isCalculatingBom}
+                        additionalCostsFields={additionalCostsArray.fields}
+                        watchedAdditionalCosts={watchedAdditionalCosts}
+                        onAddAdditionalCost={handleAddAdditionalCost}
+                        onRemoveAdditionalCost={handleRemoveAdditionalCost}
+                        totalBiayaTambahan={totalBiayaTambahan}
+                        totalBersih={totalBersih}
                     />
                 </div>
 
                 {/* 3. Sticky Bottom Summary Bar & Action Button */}
                 <ProductionSummaryCard
                     totalBiayaBahan={totalBiayaBahan}
+                    totalBiayaTambahan={totalBiayaTambahan}
+                    totalBersih={totalBersih}
                     totalOutputQty={totalOutputQty}
                     totalAlokasiHpp={totalAlokasiHpp}
                     materialsCount={materialsArray.fields.length}
                     outputsCount={outputsArray.fields.length}
-                    isPending={isPending}
-                    onSubmit={handleSubmit(onSubmit, onError)}
+                    isPending={isPending || isDetailLoading}
+                    isEdit={isEdit}
+                    onSaveDraft={handleSaveDraft}
+                    onComplete={handleRequestComplete}
+                />
+
+                {/* Warning Confirmation Dialog for Completing Production */}
+                <ConfirmDialog
+                    open={isConfirmCompleteOpen}
+                    onOpenChange={setIsConfirmCompleteOpen}
+                    title="Selesaikan Transaksi Produksi?"
+                    variant="warning"
+                    description={
+                        <div className="space-y-2 text-left">
+                            <p>
+                                Apakah Anda yakin ingin menyelesaikan transaksi produksi ini?
+                            </p>
+                            <div className="flex items-start gap-1.5 p-2.5 bg-amber-50 border border-amber-200/70 rounded-xl text-amber-900 text-[11px] leading-relaxed">
+                                <IconAlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                                <span>
+                                    Tindakan ini akan <strong>memotong stok bahan baku</strong>, <strong>menambah stok barang jadi</strong>, menghitung HPP aktual, dan <strong>mencatat jurnal transaksi</strong> ke sistem akuntansi. Transaksi yang telah selesai tidak dapat diedit kembali sebagai draft.
+                                </span>
+                            </div>
+                        </div>
+                    }
+                    confirmText="Ya, Selesaikan Produksi"
+                    cancelText="Periksa Kembali"
+                    isLoading={isPending}
+                    onConfirm={async () => {
+                        setIsConfirmCompleteOpen(false);
+                        handleComplete();
+                    }}
                 />
             </div>
         </FormProvider>

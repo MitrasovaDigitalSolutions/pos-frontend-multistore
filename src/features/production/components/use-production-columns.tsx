@@ -22,26 +22,46 @@ export function useProductionColumns(): ColumnDef<Production>[] {
             },
             {
                 accessorKey: "tanggal",
-                header: "Tanggal",
-                cell: ({ row }) => (
-                    <span className="text-xs text-slate-600">
-                        {formatToReadableDate(row.original.tanggal)}
-                    </span>
-                ),
-                size: 130,
+                header: "Tanggal / Periode",
+                cell: ({ row }) => {
+                    const tglMulai = row.original.tanggal_mulai || row.original.tanggal;
+                    const tglSelesai = row.original.tanggal_selesai;
+                    return (
+                        <div className="flex flex-col gap-0.5">
+                            <span className="text-xs text-slate-700 font-medium">
+                                {formatToReadableDate(tglMulai)}
+                            </span>
+                            {tglSelesai ? (
+                                <span className="text-[10px] text-slate-400">
+                                    Selesai: {formatToReadableDate(tglSelesai)}
+                                </span>
+                            ) : row.original.status === "draft" ? (
+                                <span className="text-[10px] text-amber-600 font-medium">
+                                    Draft (Belum Selesai)
+                                </span>
+                            ) : null}
+                        </div>
+                    );
+                },
+                size: 150,
             },
             {
                 id: "materials_summary",
-                header: "Bahan Terpakai",
+                header: "Bahan & Biaya",
                 cell: ({ row }) => {
                     const materials = row.original.materials || [];
+                    const additionalCosts = row.original.additional_costs || row.original.additionalCosts || [];
+                    const totalBersih =
+                        row.original.total_biaya_bersih ??
+                        (row.original.total_biaya_bahan + (row.original.total_biaya_tambahan || 0));
                     return (
                         <div className="flex flex-col gap-0.5">
                             <span className="font-medium text-slate-800 text-xs">
-                                {materials.length} Jenis Bahan
+                                {materials.length} Bahan
+                                {additionalCosts.length > 0 ? ` + ${additionalCosts.length} Biaya` : ""}
                             </span>
-                            <span className="text-[10px] text-slate-400">
-                                Biaya: {formatRupiah(row.original.total_biaya_bahan)}
+                            <span className="text-[10px] text-slate-500 font-mono font-semibold">
+                                Total: {formatRupiah(totalBersih)}
                             </span>
                         </div>
                     );

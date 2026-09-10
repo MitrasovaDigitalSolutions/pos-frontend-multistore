@@ -283,6 +283,38 @@ export const ENDPOINTS = {
         LIST: "/v1/productions",
         CREATE: "/v1/productions",
         DETAIL: (uid: string) => `/v1/productions/${uid}`,
+        UPDATE: (uid: string) => `/v1/productions/${uid}`,
+        DELETE: (uid: string) => `/v1/productions/${uid}`,
+        FINALIZE: (uid: string) => `/v1/productions/${uid}/finalize`,
+        VOID: (uid: string) => `/v1/productions/${uid}/void`,
+        CALCULATE_BOM: "/v1/productions/calculate-bom",
+        CALCULATE_PREVIEW: "/v1/productions/calculate-preview",
+    },
+
+    // Units (Master Satuan)
+    UNITS: {
+        LIST: "/v1/units",
+        CREATE: "/v1/units",
+        DETAIL: (uid: string) => `/v1/units/${uid}`,
+        UPDATE: (uid: string) => `/v1/units/${uid}`,
+        DELETE: (uid: string) => `/v1/units/${uid}`,
+    },
+
+    // BOM Component Types
+    BOM_COMPONENT_TYPES: {
+        LIST: "/v1/bom-component-types",
+        CREATE: "/v1/bom-component-types",
+        DETAIL: (uid: string) => `/v1/bom-component-types/${uid}`,
+        UPDATE: (uid: string) => `/v1/bom-component-types/${uid}`,
+        DELETE: (uid: string) => `/v1/bom-component-types/${uid}`,
+    },
+
+    // Product BOMs
+    PRODUCT_BOMS: {
+        LIST: (productUid: string) => `/v1/products/${productUid}/boms`,
+        CREATE: (productUid: string) => `/v1/products/${productUid}/boms`,
+        COPY: (productUid: string) => `/v1/products/${productUid}/boms/copy`,
+        DELETE: (productUid: string, bomUid: string) => `/v1/products/${productUid}/boms/${bomUid}`,
     },
 
     // Settings

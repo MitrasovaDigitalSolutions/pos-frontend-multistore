@@ -3,8 +3,10 @@
 import { AppButton } from "@/components/shared/app-button";
 import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { FormNumberInput } from "@/components/forms/form-number-input";
+import { NominalInput } from "@/components/ui/nominal-input";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconBarcode, IconTrash } from "@tabler/icons-react";
+import { useState } from "react";
 import type { PurchaseItemLocal } from "../../types";
 
 interface PurchaseItemMobileCardProps {
@@ -14,6 +16,7 @@ interface PurchaseItemMobileCardProps {
   disabled?: boolean;
   isPriceReadOnly?: boolean;
   isFlashing?: boolean;
+  allowSubtotalInput?: boolean;
   onUpdateItem: (
     temp_uid: string,
     data: Partial<Pick<PurchaseItemLocal, "kuantitas" | "harga_estimasi">>
@@ -28,10 +31,37 @@ export function PurchaseItemMobileCard({
   disabled = false,
   isPriceReadOnly = false,
   isFlashing = false,
+  allowSubtotalInput = false,
   onUpdateItem,
   onRemoveItem,
 }: PurchaseItemMobileCardProps) {
-  const subtotal = item.kuantitas * item.harga_estimasi;
+  const calculatedSubtotal = Math.round(item.kuantitas * item.harga_estimasi);
+  const [subtotalInput, setSubtotalInput] = useState<number | null>(null);
+  const [isSubtotalFocused, setIsSubtotalFocused] = useState(false);
+
+  const currentDisplaySubtotal = isSubtotalFocused ? subtotalInput : calculatedSubtotal;
+
+  const handleSubtotalChange = (val: number | null) => {
+    setSubtotalInput(val);
+    const total = val ?? 0;
+
+    if (item.kuantitas <= 0) {
+      onUpdateItem(item.temp_uid, { kuantitas: 1, harga_estimasi: total });
+    } else {
+      const newUnitPrice = Math.round(total / item.kuantitas);
+      onUpdateItem(item.temp_uid, { harga_estimasi: newUnitPrice });
+    }
+  };
+
+  const handleSubtotalFocus = () => {
+    setIsSubtotalFocused(true);
+    setSubtotalInput(calculatedSubtotal);
+  };
+
+  const handleSubtotalBlur = () => {
+    setIsSubtotalFocused(false);
+    setSubtotalInput(null);
+  };
 
   return (
     <div
@@ -119,15 +149,34 @@ export function PurchaseItemMobileCard({
         </div>
       </div>
 
-      {/* ── Footer: Subtotal ── */}
-      <div className="flex items-center justify-between pt-2 border-t border-slate-50 text-xs">
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-          Subtotal
-        </span>
-        <span className="font-extrabold text-emerald-600 font-mono text-xs">
-          {formatRupiah(subtotal)}
-        </span>
-      </div>
+      {/* ── Footer: Subtotal / Total Item ── */}
+      {allowSubtotalInput ? (
+        <div className="pt-2 border-t border-slate-50 space-y-1">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Total Item
+            </label>
+          </div>
+          <NominalInput
+            value={currentDisplaySubtotal}
+            onValueChange={handleSubtotalChange}
+            onFocus={handleSubtotalFocus}
+            onBlur={handleSubtotalBlur}
+            disabled={disabled}
+            placeholder="Rp 0"
+            className="h-9 text-right text-xs font-bold text-emerald-700 font-mono rounded-xl border-slate-200 bg-emerald-50/20 focus-visible:ring-emerald-400/20 focus-visible:border-emerald-400 focus:bg-white"
+          />
+        </div>
+      ) : (
+        <div className="flex items-center justify-between pt-2 border-t border-slate-50 text-xs">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            Subtotal
+          </span>
+          <span className="font-extrabold text-emerald-600 font-mono text-xs">
+            {formatRupiah(calculatedSubtotal)}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

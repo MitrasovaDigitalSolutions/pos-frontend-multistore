@@ -55,7 +55,8 @@ export function FormRadioChips<T extends FieldValues>({
                         options={options}
                         value={field.value !== undefined && field.value !== null ? String(field.value) : ""}
                         onChange={(val) => {
-                            field.onChange(val);
+                            const parsed = typeof field.value === "boolean" ? val === "true" : val;
+                            field.onChange(parsed);
                             if (onChange) {
                                 onChange(val);
                             }
