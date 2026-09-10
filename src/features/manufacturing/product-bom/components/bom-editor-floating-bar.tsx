@@ -6,7 +6,7 @@ import {
     IconCheck,
     IconDeviceFloppy,
     IconLoader2,
-    IconRotateCcw,
+    IconRotateClockwise,
 } from "@tabler/icons-react";
 
 interface BomEditorFloatingBarProps {
@@ -87,7 +87,7 @@ export function BomEditorFloatingBar({
                                 className="h-10 px-4 text-xs font-semibold rounded-xl text-slate-600 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 dark:text-slate-300 dark:border-slate-800 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-slate-600 disabled:hover:bg-transparent flex-1 sm:flex-initial transition-colors"
                                 title="Batalkan semua perubahan dan kembalikan ke kondisi terakhir disimpan"
                             >
-                                <IconRotateCcw size={15} className="mr-1.5" />
+                                <IconRotateClockwise size={15} className="mr-1.5" />
                                 <span>Batal</span>
                             </Button>
                         )}
