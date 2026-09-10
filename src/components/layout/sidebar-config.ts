@@ -4,6 +4,7 @@ import {
     IconArrowsLeftRight,
     IconBox,
     IconBuildingBank,
+    IconBuildingFactory2,
     IconBuildingStore,
     IconBuildingWarehouse,
     IconChartBar,
@@ -16,7 +17,7 @@ import {
     IconShieldLock,
     IconShoppingCart,
     IconUsers,
-    IconWallet,
+    IconWallet
 } from "@tabler/icons-react";
 
 export type PermissionChecker = (roles: string[], permissions: string[]) => boolean;
@@ -245,11 +246,41 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasPermission(roles, permissions, "view_inventory") ||
                             hasPermission(roles, permissions, "manage_inventory"),
                     },
+                ],
+            },
+            {
+                label: "Manufaktur",
+                icon: IconBuildingFactory2,
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") ||
+                    hasPermission(roles, permissions, "view_production") ||
+                    hasPermission(roles, permissions, "manage_production") ||
+                    hasPermission(roles, permissions, "view_inventory") ||
+                    hasPermission(roles, permissions, "manage_inventory"),
+                children: [
                     {
-                        label: "Produksi Harian",
+                        label: "Produksi",
                         path: ROUTES.ADMIN_PRODUCTION,
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_production") ||
+                            hasPermission(roles, permissions, "manage_production"),
+                    },
+                    {
+                        label: "Produk BOM",
+                        path: ROUTES.ADMIN_PRODUCT_BOM,
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "manage_products") ||
+                            hasPermission(roles, permissions, "view_production") ||
+                            hasPermission(roles, permissions, "manage_production"),
+                    },
+                    {
+                        label: "Tipe Komponen BOM",
+                        path: ROUTES.ADMIN_BOM_COMPONENT_TYPES,
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "manage_products") ||
                             hasPermission(roles, permissions, "view_production") ||
                             hasPermission(roles, permissions, "manage_production"),
                     },
@@ -501,6 +532,11 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     {
                         label: "Brand",
                         path: ROUTES.ADMIN_BRANDS,
+                        permission: (roles) => hasRole(roles, "admin"),
+                    },
+                    {
+                        label: "Satuan",
+                        path: ROUTES.ADMIN_UNITS,
                         permission: (roles) => hasRole(roles, "admin"),
                     },
                     {

@@ -54,6 +54,7 @@ export function useProducts(params?: PaginationParams & {
     is_jasa?: string;
     is_raw_material?: string;
     include_archived?: boolean | number | string;
+    has_bom?: boolean | number | string;
 }) {
     return useQuery<PaginatedResponse<Product>>({
         queryKey: [...queryKeys.products.list(), params],

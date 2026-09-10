@@ -199,7 +199,7 @@ export const PERMISSION_METADATA: Record<string, PermissionMeta> = {
     },
     manage_production: {
         label: "Kelola Produksi Harian",
-        desc: "Mencatat formula BOM, alokasi konsumsi bahan baku, dan penghitungan HPP barang jadi.",
+        desc: "Mencatat formula BoM, alokasi konsumsi bahan baku, dan penghitungan HPP barang jadi.",
         actionType: "manage",
         categoryId: "inventory",
     },

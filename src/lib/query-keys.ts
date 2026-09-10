@@ -247,6 +247,23 @@ export const queryKeys = {
         detail: (uid: string) => [...queryKeys.productions.all, "detail", uid] as const,
     },
 
+    units: {
+        all: ["units"] as const,
+        list: (params?: unknown) => [...queryKeys.units.all, "list", params] as const,
+        detail: (uid: string) => [...queryKeys.units.all, "detail", uid] as const,
+    },
+
+    bomComponentTypes: {
+        all: ["bom-component-types"] as const,
+        list: (params?: unknown) => [...queryKeys.bomComponentTypes.all, "list", params] as const,
+        detail: (uid: string) => [...queryKeys.bomComponentTypes.all, "detail", uid] as const,
+    },
+
+    productBoms: {
+        all: ["product-boms"] as const,
+        detail: (productUid: string) => [...queryKeys.productBoms.all, "detail", productUid] as const,
+    },
+
     // Settings
     settings: {
         all: ["settings"] as const,

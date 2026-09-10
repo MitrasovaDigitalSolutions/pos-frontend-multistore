@@ -15,13 +15,20 @@ export const productionOutputSchema = z.object({
     margin_baru: z.coerce.number().min(0).optional().nullable(),
 });
 
+export const productionAdditionalCostSchema = z.object({
+    nama_biaya: z.string().min(1, "Nama biaya wajib diisi"),
+    nominal: z.coerce.number().min(0, "Nominal tidak boleh negatif"),
+});
+
 export const productionCreateSchema = z.object({
     tanggal_mulai: z.string().min(1, "Tanggal mulai produksi wajib diisi"),
     tanggal_selesai: z.string().nullable().optional(),
     tanggal: z.string().optional(),
     status: z.enum(["draft", "completed"]).default("draft"),
+    metode_alokasi: z.enum(["actual_hybrid", "flat_average", "standard"]).default("actual_hybrid").optional(),
     catatan: z.string().nullable().optional(),
     materials: z.array(productionMaterialSchema).min(1, "Minimal 1 bahan baku harus dimasukkan"),
+    additional_costs: z.array(productionAdditionalCostSchema).optional().default([]),
     outputs: z.array(productionOutputSchema).min(1, "Minimal 1 hasil barang jadi harus dimasukkan"),
 });
 
@@ -30,6 +37,7 @@ export const productionFinalizeSchema = z.object({
 });
 
 export type ProductionMaterialInput = z.infer<typeof productionMaterialSchema>;
+export type ProductionAdditionalCostInput = z.infer<typeof productionAdditionalCostSchema>;
 export type ProductionOutputInput = z.infer<typeof productionOutputSchema>;
 export type ProductionCreateInput = z.infer<typeof productionCreateSchema>;
 export type ProductionFinalizeSchemaInput = z.infer<typeof productionFinalizeSchema>;

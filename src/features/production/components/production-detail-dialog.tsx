@@ -20,6 +20,7 @@ import {
     IconBox,
     IconCalendar,
     IconCheck,
+    IconCoins,
     IconEdit,
     IconNotes,
     IconPackage,
@@ -73,6 +74,14 @@ export function ProductionDetailDialog({
         (sum: number, m: ProductionMaterial) => sum + Number(m.kuantitas || 0),
         0
     );
+
+    const additionalCosts = production?.additional_costs || production?.additionalCosts || [];
+    const totalBiayaTambahan =
+        production?.total_biaya_tambahan ??
+        additionalCosts.reduce((acc, c) => acc + (Number(c.nominal) || 0), 0);
+    const totalBiayaBahan = Number(production?.total_biaya_bahan || 0);
+    const totalBersih =
+        production?.total_biaya_bersih ?? (totalBiayaBahan + totalBiayaTambahan);
 
     const handleDelete = async () => {
         if (!productionUid) return;
@@ -349,6 +358,50 @@ export function ProductionDetailDialog({
                                         </tfoot>
                                     </table>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Optional Section: Biaya Tambahan Langsung */}
+                        {additionalCosts.length > 0 && (
+                            <div className="border border-slate-200/80 rounded-xl overflow-hidden shadow-2xs bg-white">
+                                <div className="bg-blue-50/70 border-b border-blue-100/80 px-3 py-2 flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                        <IconCoins size={15} className="text-blue-600 shrink-0" />
+                                        <h4 className="text-xs font-bold text-blue-950 uppercase tracking-wide truncate">
+                                            Biaya Tambahan Langsung
+                                        </h4>
+                                        <span className="text-[10px] text-blue-700/80 font-medium">
+                                            ({additionalCosts.length})
+                                        </span>
+                                    </div>
+                                    <span className="text-[11px] font-extrabold text-blue-900 bg-blue-100/80 border border-blue-200 px-2 py-0.5 rounded-md font-mono shrink-0">
+                                        {formatRupiah(totalBiayaTambahan)}
+                                    </span>
+                                </div>
+                                <div className="divide-y divide-slate-100 text-xs">
+                                    {additionalCosts.map((c, idx) => (
+                                        <div key={idx} className="flex items-center justify-between py-1.5 px-3 hover:bg-slate-50/60">
+                                            <span className="font-semibold text-slate-800">{c.nama_biaya}</span>
+                                            <span className="font-mono font-bold text-slate-900">{formatRupiah(c.nominal)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Summary Cost Banner */}
+                        <div className="p-2.5 px-3 bg-slate-100/80 border border-slate-200/80 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs">
+                            <div className="flex items-center gap-3 text-slate-600">
+                                <span>Bahan: <strong className="text-slate-800 font-mono">{formatRupiah(totalBiayaBahan)}</strong></span>
+                                {totalBiayaTambahan > 0 && (
+                                    <span>+ Biaya Tambahan: <strong className="text-blue-800 font-mono">{formatRupiah(totalBiayaTambahan)}</strong></span>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-1.5 font-bold text-slate-900">
+                                <span>Total Bersih:</span>
+                                <span className="text-sm font-extrabold font-mono text-slate-950 bg-white px-2 py-0.5 rounded border border-slate-200">
+                                    {formatRupiah(totalBersih)}
+                                </span>
                             </div>
                         </div>
 

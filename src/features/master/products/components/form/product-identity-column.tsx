@@ -16,6 +16,7 @@ import {
 } from "@tabler/icons-react";
 import type { Category } from "@/features/master/categories/types";
 import type { Brand } from "@/features/master/brands/types";
+import type { Unit } from "@/features/master/units/types";
 import type { ProductInput } from "../../schemas/product-schema";
 import type { ProductType } from "../../hooks/use-product-form-dialog";
 
@@ -30,6 +31,7 @@ interface ProductIdentityColumnProps {
     disabled?: boolean;
     categorySelectProps: Omit<FormSelectProps<ProductInput, Category>, "name">;
     brandSelectProps: Omit<FormSelectProps<ProductInput, Brand>, "name">;
+    unitSelectProps: Omit<FormSelectProps<ProductInput, Unit>, "name">;
 }
 
 export function ProductIdentityColumn({
@@ -37,6 +39,7 @@ export function ProductIdentityColumn({
     disabled = false,
     categorySelectProps,
     brandSelectProps,
+    unitSelectProps,
 }: ProductIdentityColumnProps) {
     const {
         register,
@@ -151,6 +154,19 @@ export function ProductIdentityColumn({
                         {...brandSelectProps}
                         placeholder="Pilih Brand"
                         searchPlaceholder="Cari brand..."
+                        disabled={disabled}
+                        size="sm"
+                    />
+                </div>
+
+                {/* Satuan Unit Pengukuran */}
+                <div className="space-y-1">
+                    <FormSelect<ProductInput, Unit>
+                        name="unit_uid"
+                        label="Satuan Standar"
+                        {...unitSelectProps}
+                        placeholder="Pilih Satuan (Pcs, Kg, Meter, dll)"
+                        searchPlaceholder="Cari satuan..."
                         disabled={disabled}
                         size="sm"
                     />

@@ -193,6 +193,11 @@ export function ProductTable({
                                         Bahan Baku
                                     </span>
                                 )}
+                                {(row.original.unit?.simbol || row.original.satuan) && (
+                                    <span className="badge text-[9px] border-none bg-emerald-50 text-emerald-700 w-fit px-1.5 py-px rounded font-semibold">
+                                        {row.original.unit?.simbol || row.original.satuan}
+                                    </span>
+                                )}
                             </div>
                         </div>
                     ),
@@ -305,6 +310,7 @@ export function ProductTable({
                     size: 80,
                     cell: ({ row }) => {
                         const p = row.original;
+                        const unitLabel = p.unit?.simbol || p.satuan || "";
                         return (
                             <span
                                 className={`font-bold ${p.stok <= 10
@@ -312,7 +318,7 @@ export function ProductTable({
                                     : "text-slate-800"
                                     }`}
                             >
-                                {p.stok} pcs
+                                {p.stok}{unitLabel ? ` ${unitLabel}` : ""}
                             </span>
                         );
                     },

@@ -12,10 +12,12 @@ import { BarcodeInput } from "@/components/shared/barcode-input";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { Product } from "@/features/master/products/types";
 import {
+    IconLoader2,
     IconMinus,
     IconPackage,
     IconPlus,
     IconScan,
+    IconSparkles,
     IconTrash,
 } from "@tabler/icons-react";
 import type {
@@ -29,11 +31,16 @@ interface ProductionOutputsSectionProps {
     watchedOutputs: ProductionOutputInput[];
     onProductFound: (product: Product) => void;
     onRemoveItem: (index: number) => void;
+    onUpdateQty?: (index: number, newQty: number) => void;
     disabled?: boolean;
     totalOutputQty: number;
     totalAlokasiHpp: number;
     lastScannedUid: string | null;
     onClearScannedUid: () => void;
+    // Hybrid costing simulation
+    onCalculatePreview?: () => void;
+    isCalculatingPreview?: boolean;
+    hppPreviewOutputs?: Record<string, number>;
 }
 
 export function ProductionOutputsSection({
@@ -42,11 +49,15 @@ export function ProductionOutputsSection({
     watchedOutputs,
     onProductFound,
     onRemoveItem,
+    onUpdateQty,
     disabled = false,
     totalOutputQty,
     totalAlokasiHpp,
     lastScannedUid,
     onClearScannedUid,
+    onCalculatePreview,
+    isCalculatingPreview = false,
+    hppPreviewOutputs = {},
 }: ProductionOutputsSectionProps) {
     const { setValue } = useFormContext<ProductionCreateInput>();
     const barcodeInputRef = useRef<HTMLInputElement>(null);
@@ -70,25 +81,45 @@ export function ProductionOutputsSection({
 
     return (
         <div className="bg-white border border-slate-200/80 rounded-2xl shadow-2xs flex flex-col justify-between h-full relative">
-            <div>
-                {/* Header */}
-                <div className="p-3 px-3.5 bg-emerald-50/70 border-b border-emerald-200/50 rounded-t-2xl flex items-center justify-between">
+            <div className="space-y-4">
+                {/* ── 1. Header Barang Jadi & Tombol Simulasi HPP ── */}
+                <div className="p-3 px-3.5 bg-emerald-50/70 border-b border-emerald-200/50 rounded-t-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5">
                         <div className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center">
                             <IconPackage size={13} />
                         </div>
                         <span className="text-xs font-bold text-slate-900">
-                            Hasil Barang Jadi &amp; HPP
+                            1. Hasil Barang Jadi &amp; Alokasi HPP
                         </span>
+                        {fields.length > 0 && (
+                            <Badge variant="outline" className="bg-emerald-100/70 text-emerald-800 border-emerald-200 text-[10px] px-2 py-0 font-bold ml-1">
+                                {totalOutputQty} Pcs
+                            </Badge>
+                        )}
                     </div>
-                    {fields.length > 0 && (
-                        <Badge variant="outline" className="bg-emerald-100/70 text-emerald-800 border-emerald-200 text-[10px] px-2 py-0 font-bold">
-                            {totalOutputQty} Pcs
-                        </Badge>
+
+                    {/* Tombol Simulasi HPP */}
+                    {onCalculatePreview && (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={onCalculatePreview}
+                            disabled={disabled || isCalculatingPreview || fields.length === 0}
+                            className="h-7 px-2.5 bg-white hover:bg-emerald-100/80 border-emerald-300 text-emerald-900 font-bold text-[11px] rounded-lg shadow-2xs flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
+                            title="Hitung simulasi alokasi HPP actual hybrid sebelum disimpan"
+                        >
+                            {isCalculatingPreview ? (
+                                <IconLoader2 size={13} className="animate-spin text-emerald-600" />
+                            ) : (
+                                <IconSparkles size={13} className="text-emerald-600" />
+                            )}
+                            <span>Simulasi / Live HPP</span>
+                        </Button>
                     )}
                 </div>
 
-                <div className="p-3 space-y-2.5">
+                <div className="p-3 pt-0 space-y-3">
                     {/* Compact Barcode Scanner Box */}
                     <div className="space-y-1">
                         <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase">
@@ -102,8 +133,9 @@ export function ProductionOutputsSection({
                             refocusOnFound={false}
                             isRawMaterial={false}
                             isJasa={false}
+                            hasBom={true}
                             onProductFound={onProductFound}
-                            placeholder="Scan barcode SKU / cari nama barang jadi..."
+                            placeholder="Scan barcode SKU / cari nama barang jadi ber-BoM..."
                             disabled={disabled}
                         />
                     </div>
@@ -116,12 +148,12 @@ export function ProductionOutputsSection({
                             </div>
                             <p className="text-xs font-bold text-slate-700">Belum ada barang jadi</p>
                             <p className="text-[10px] text-slate-400 max-w-xs mx-auto">
-                                Scan barcode produk jadi untuk menerima hasil produksi.
+                                Scan barcode produk jadi untuk menerima hasil produksi dan menghitung HPP otomatis.
                             </p>
                         </div>
                     ) : (
-                        /* ── 2-Tier Structured Bento Row List (Spacious & Clean) ── */
-                        <div className="space-y-2.5">
+                        /* ── 2-Tier Structured Bento Row List ── */
+                        <div className="space-y-2.5 max-h-[480px] overflow-y-auto pr-0.5">
                             {fields.map((field, idx) => {
                                 const item = watchedOutputs[idx];
                                 const productUid = item?.product_uid;
@@ -130,6 +162,7 @@ export function ProductionOutputsSection({
                                 const hppSatuan = Number(item?.hpp_satuan) || 0;
                                 const subtotalHpp = qty * hppSatuan;
                                 const isUpdateHarga = Boolean(item?.update_harga_jual);
+                                const previewHpp = productUid ? hppPreviewOutputs[productUid] : undefined;
 
                                 return (
                                     <div
@@ -173,7 +206,7 @@ export function ProductionOutputsSection({
                                             </div>
                                         </div>
 
-                                        {/* ── Baris 2: Input Kuantitas Jadi & HPP Satuan Manual ── */}
+                                        {/* ── Baris 2: Input Kuantitas Jadi & HPP Satuan ── */}
                                         <div className="grid grid-cols-12 gap-2.5 items-center">
                                             {/* Qty Hasil Jadi */}
                                             <div className="col-span-5 sm:col-span-5">
@@ -191,6 +224,7 @@ export function ProductionOutputsSection({
                                                                 shouldValidate: true,
                                                                 shouldDirty: true,
                                                             });
+                                                            onUpdateQty?.(idx, newQty);
                                                         }}
                                                         disabled={disabled || qty <= 1}
                                                         className="h-7.5 w-7.5 p-0 rounded-lg border-slate-200"
@@ -202,6 +236,9 @@ export function ProductionOutputsSection({
                                                         placeholder="1"
                                                         disabled={disabled}
                                                         allowDecimal={true}
+                                                        onValueChange={(val) => {
+                                                            onUpdateQty?.(idx, Number(val) || 0);
+                                                        }}
                                                         inputRef={(el) => {
                                                             if (el && productUid) {
                                                                 qtyInputRefs.current.set(productUid, el);
@@ -214,10 +251,12 @@ export function ProductionOutputsSection({
                                                         variant="outline"
                                                         size="sm"
                                                         onClick={() => {
-                                                            setValue(`outputs.${idx}.kuantitas`, qty + 1, {
+                                                            const newQty = qty + 1;
+                                                            setValue(`outputs.${idx}.kuantitas`, newQty, {
                                                                 shouldValidate: true,
                                                                 shouldDirty: true,
                                                             });
+                                                            onUpdateQty?.(idx, newQty);
                                                         }}
                                                         disabled={disabled}
                                                         className="h-7.5 w-7.5 p-0 rounded-lg border-slate-200"
@@ -227,17 +266,26 @@ export function ProductionOutputsSection({
                                                 </div>
                                             </div>
 
-                                            {/* HPP Satuan (Manual) */}
+                                            {/* HPP Satuan (Auto / Override) */}
                                             <div className="col-span-7 sm:col-span-4">
-                                                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
-                                                    HPP Satuan (Rp) *
-                                                </label>
-                                                <FormNominalInput<ProductionCreateInput>
-                                                    name={`outputs.${idx}.hpp_satuan` as FieldPath<ProductionCreateInput>}
-                                                    placeholder="0"
-                                                    disabled={disabled}
-                                                    className="h-7.5 text-xs text-right font-mono font-semibold"
-                                                />
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+                                                        HPP Satuan (Rp)
+                                                    </label>
+                                                    {previewHpp !== undefined && (
+                                                        <span className="text-[9px] text-emerald-700 font-semibold bg-emerald-100/70 px-1 rounded">
+                                                            Auto
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="relative">
+                                                    <FormNominalInput<ProductionCreateInput>
+                                                        name={`outputs.${idx}.hpp_satuan` as FieldPath<ProductionCreateInput>}
+                                                        placeholder="Auto"
+                                                        disabled={disabled}
+                                                        className="h-7.5 text-xs text-right font-mono font-semibold"
+                                                    />
+                                                </div>
                                             </div>
 
                                             {/* Toggle Update Jual */}
@@ -287,7 +335,12 @@ export function ProductionOutputsSection({
 
             {/* Section Footer */}
             <div className="p-2.5 px-3.5 bg-slate-50 border-t border-slate-200/80 rounded-b-2xl flex items-center justify-between text-xs font-semibold text-slate-700">
-                <span className="text-[11px] text-slate-500">Total Alokasi HPP:</span>
+                <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-slate-500">Total Alokasi HPP:</span>
+                    <span className="text-[10px] text-slate-400 font-normal">
+                        ({totalOutputQty} Pcs)
+                    </span>
+                </div>
                 <span className="font-extrabold text-sm text-emerald-800 font-mono">
                     {formatRupiah(totalAlokasiHpp)}
                 </span>

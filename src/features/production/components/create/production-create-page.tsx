@@ -24,11 +24,15 @@ export function ProductionCreatePage({ productionUid }: ProductionCreatePageProp
     const {
         methods,
         materialsArray,
+        additionalCostsArray,
         outputsArray,
         scannedProductsMap,
         watchedMaterials,
+        watchedAdditionalCosts,
         watchedOutputs,
         totalBiayaBahan,
+        totalBiayaTambahan,
+        totalBersih,
         totalOutputQty,
         totalAlokasiHpp,
         lastScannedMaterialUid,
@@ -37,6 +41,15 @@ export function ProductionCreatePage({ productionUid }: ProductionCreatePageProp
         setLastScannedOutputUid,
         handleMaterialProductFound,
         handleOutputProductFound,
+        handleRemoveOutputItem,
+        handleUpdateOutputQty,
+        handleCalculateBom,
+        isCalculatingBom,
+        handleCalculatePreview,
+        isCalculatingPreview,
+        hppPreviewOutputs,
+        handleAddAdditionalCost,
+        handleRemoveAdditionalCost,
         handleSaveDraft,
         handleComplete,
         isPending,
@@ -84,12 +97,12 @@ export function ProductionCreatePage({ productionUid }: ProductionCreatePageProp
                         <div>
                             <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-1.5 leading-tight">
                                 <IconAssembly size={17} className="text-emerald-600" />
-                                <span>{isEdit ? "Edit Draft Produksi" : "Pencatatan Produksi Harian"}</span>
+                                <span>{isEdit ? "Edit Draft Produksi" : "Pencatatan Produksi Harian (BoM Hybrid)"}</span>
                             </h2>
                             <p className="text-[11px] text-slate-400 font-normal">
                                 {isEdit
-                                    ? "Perbarui rincian bahan baku dan alokasi HPP pada draft produksi ini."
-                                    : "Scan barcode bahan baku & barang jadi untuk pencatatan produksi dan alokasi HPP."}
+                                    ? "Perbarui rincian barang jadi, bahan baku, biaya tambahan, dan alokasi HPP pada draft produksi ini."
+                                    : "Pilih barang jadi di kolom kiri; kebutuhan bahan baku akan otomatis terisi dari resep BoM."}
                             </p>
                         </div>
                     </div>
@@ -98,9 +111,27 @@ export function ProductionCreatePage({ productionUid }: ProductionCreatePageProp
                 {/* 1. Informasi Umum Dokumen */}
                 <ProductionGeneralSection disabled={isPending || isDetailLoading} />
 
-                {/* 2. Side-by-Side 2-Column Split: Bahan Baku (Kiri) & Barang Jadi (Kanan) */}
+                {/* 2. Side-by-Side 2-Column Split: Barang Jadi (Kiri) & Bahan Baku & Biaya (Kanan) */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 items-stretch">
-                    {/* Kolom Kiri: Bahan Baku Terpakai */}
+                    {/* Kolom Kiri: Hasil Barang Jadi & Alokasi HPP */}
+                    <ProductionOutputsSection
+                        productsMap={scannedProductsMap}
+                        fields={outputsArray.fields}
+                        watchedOutputs={watchedOutputs}
+                        onProductFound={handleOutputProductFound}
+                        onRemoveItem={handleRemoveOutputItem}
+                        onUpdateQty={handleUpdateOutputQty}
+                        disabled={isPending || isDetailLoading}
+                        totalOutputQty={totalOutputQty}
+                        totalAlokasiHpp={totalAlokasiHpp}
+                        lastScannedUid={lastScannedOutputUid}
+                        onClearScannedUid={() => setLastScannedOutputUid(null)}
+                        onCalculatePreview={handleCalculatePreview}
+                        isCalculatingPreview={isCalculatingPreview}
+                        hppPreviewOutputs={hppPreviewOutputs}
+                    />
+
+                    {/* Kolom Kanan: Bahan Baku Terpakai & Biaya Tambahan Langsung */}
                     <ProductionMaterialsSection
                         productsMap={scannedProductsMap}
                         fields={materialsArray.fields}
@@ -111,26 +142,22 @@ export function ProductionCreatePage({ productionUid }: ProductionCreatePageProp
                         totalBiayaBahan={totalBiayaBahan}
                         lastScannedUid={lastScannedMaterialUid}
                         onClearScannedUid={() => setLastScannedMaterialUid(null)}
-                    />
-
-                    {/* Kolom Kanan: Hasil Barang Jadi & Alokasi HPP */}
-                    <ProductionOutputsSection
-                        productsMap={scannedProductsMap}
-                        fields={outputsArray.fields}
-                        watchedOutputs={watchedOutputs}
-                        onProductFound={handleOutputProductFound}
-                        onRemoveItem={(idx) => outputsArray.remove(idx)}
-                        disabled={isPending || isDetailLoading}
-                        totalOutputQty={totalOutputQty}
-                        totalAlokasiHpp={totalAlokasiHpp}
-                        lastScannedUid={lastScannedOutputUid}
-                        onClearScannedUid={() => setLastScannedOutputUid(null)}
+                        onCalculateBom={handleCalculateBom}
+                        isCalculatingBom={isCalculatingBom}
+                        additionalCostsFields={additionalCostsArray.fields}
+                        watchedAdditionalCosts={watchedAdditionalCosts}
+                        onAddAdditionalCost={handleAddAdditionalCost}
+                        onRemoveAdditionalCost={handleRemoveAdditionalCost}
+                        totalBiayaTambahan={totalBiayaTambahan}
+                        totalBersih={totalBersih}
                     />
                 </div>
 
                 {/* 3. Sticky Bottom Summary Bar & Action Button */}
                 <ProductionSummaryCard
                     totalBiayaBahan={totalBiayaBahan}
+                    totalBiayaTambahan={totalBiayaTambahan}
+                    totalBersih={totalBersih}
                     totalOutputQty={totalOutputQty}
                     totalAlokasiHpp={totalAlokasiHpp}
                     materialsCount={materialsArray.fields.length}

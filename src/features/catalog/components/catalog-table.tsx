@@ -150,6 +150,11 @@ export function CatalogTable({
                                     Bahan Baku
                                 </span>
                             )}
+                            {(row.original.unit?.simbol || row.original.satuan) && (
+                                <span className="badge text-[9px] border-none bg-emerald-50 text-emerald-700 w-fit px-1.5 py-px rounded font-semibold">
+                                    {row.original.unit?.simbol || row.original.satuan}
+                                </span>
+                            )}
                         </div>
                     </div>
                 ),

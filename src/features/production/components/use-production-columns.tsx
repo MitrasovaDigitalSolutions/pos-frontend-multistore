@@ -47,16 +47,21 @@ export function useProductionColumns(): ColumnDef<Production>[] {
             },
             {
                 id: "materials_summary",
-                header: "Bahan Terpakai",
+                header: "Bahan & Biaya",
                 cell: ({ row }) => {
                     const materials = row.original.materials || [];
+                    const additionalCosts = row.original.additional_costs || row.original.additionalCosts || [];
+                    const totalBersih =
+                        row.original.total_biaya_bersih ??
+                        (row.original.total_biaya_bahan + (row.original.total_biaya_tambahan || 0));
                     return (
                         <div className="flex flex-col gap-0.5">
                             <span className="font-medium text-slate-800 text-xs">
-                                {materials.length} Jenis Bahan
+                                {materials.length} Bahan
+                                {additionalCosts.length > 0 ? ` + ${additionalCosts.length} Biaya` : ""}
                             </span>
-                            <span className="text-[10px] text-slate-400">
-                                Biaya: {formatRupiah(row.original.total_biaya_bahan)}
+                            <span className="text-[10px] text-slate-500 font-mono font-semibold">
+                                Total: {formatRupiah(totalBersih)}
                             </span>
                         </div>
                     );

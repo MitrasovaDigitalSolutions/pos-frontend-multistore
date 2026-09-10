@@ -13,6 +13,8 @@ export const productSchema = z.object({
     margin: z.coerce.number().nullable().optional().default(0),
     category_uid: z.string().nullable().optional(),
     brand_uid: z.string().nullable().optional(),
+    unit_uid: z.string().nullable().optional(),
+    satuan: z.string().max(20).nullable().optional(),
     image: z.any().nullable().optional(),
     product_type: z.enum(["finished_good", "raw_material", "jasa"]).optional().default("finished_good"),
     is_jasa: z.boolean().optional().default(false),

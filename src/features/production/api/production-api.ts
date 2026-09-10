@@ -3,7 +3,14 @@ import { apiDelete, apiGet, apiGetList, apiPost, apiPut } from "@/shared/api/api
 import { ENDPOINTS } from "@/shared/api/endpoints";
 import { queryKeys } from "@/lib/query-keys";
 import type { ApiResponse, PaginatedResponse } from "@/types/api";
-import type { Production, ProductionFinalizeInput, ProductionListParams } from "../types";
+import type {
+    BomCalculateRequest,
+    BomCalculateResponse,
+    HppPreviewResponse,
+    Production,
+    ProductionFinalizeInput,
+    ProductionListParams,
+} from "../types";
 import type { ProductionCreateInput } from "../schemas/production-schema";
 
 export function useProductions(params?: ProductionListParams) {
@@ -119,6 +126,28 @@ export function useVoidProduction() {
             queryClient.invalidateQueries({ queryKey: queryKeys.productions.detail(uid) });
             queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
             queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all });
+        },
+    });
+}
+
+export function useCalculateBom() {
+    return useMutation<ApiResponse<BomCalculateResponse>, Error, BomCalculateRequest>({
+        mutationFn: async (data: BomCalculateRequest) => {
+            return apiPost<ApiResponse<BomCalculateResponse>, BomCalculateRequest>(
+                ENDPOINTS.PRODUCTION.CALCULATE_BOM,
+                data
+            );
+        },
+    });
+}
+
+export function useCalculateHppPreview() {
+    return useMutation<ApiResponse<HppPreviewResponse>, Error, ProductionCreateInput>({
+        mutationFn: async (data: ProductionCreateInput) => {
+            return apiPost<ApiResponse<HppPreviewResponse>, ProductionCreateInput>(
+                ENDPOINTS.PRODUCTION.CALCULATE_PREVIEW,
+                data
+            );
         },
     });
 }

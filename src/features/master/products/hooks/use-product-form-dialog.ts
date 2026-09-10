@@ -9,7 +9,10 @@ import { queryKeys } from "@/lib/query-keys";
 import { getImageUrl } from "@/lib/utils";
 import { useCategorySelectConfig } from "@/features/master/categories/hooks/use-category-select";
 import { useBrandSelectConfig } from "@/features/master/brands/hooks/use-brand-select";
+import { useUnitSelectConfig } from "@/features/master/units/hooks/use-unit-select";
 import type { Brand } from "@/features/master/brands/types";
+import type { Unit } from "@/features/master/units/types";
+import type { PaginatedResponse } from "@/types/api";
 import { apiPatch } from "@/shared/api/api-client";
 import { useCreateProduct, useUpdateProduct } from "../api/products-api";
 import { productSchema, type ProductInput } from "../schemas/product-schema";
@@ -30,6 +33,8 @@ export const defaultProductValues: ProductInput = {
     margin: 0,
     category_uid: null,
     brand_uid: null,
+    unit_uid: null,
+    satuan: null,
     image: undefined,
     product_type: "finished_good",
     is_jasa: false,
@@ -102,6 +107,8 @@ export function useProductFormDialog({
                     margin: editingProduct.margin ?? storeProduct?.margin ?? 0,
                     category_uid: editingProduct.category_uid ?? null,
                     brand_uid: editingProduct.brand_uid ?? null,
+                    unit_uid: editingProduct.unit_uid ?? null,
+                    satuan: editingProduct.satuan ?? editingProduct.unit?.simbol ?? null,
                     image: undefined,
                     product_type: initialProductType,
                     is_jasa: !!editingProduct.is_jasa,
@@ -137,6 +144,8 @@ export function useProductFormDialog({
                     margin: duplicateProduct.margin ?? storeProduct?.margin ?? 0,
                     category_uid: duplicateProduct.category_uid ?? null,
                     brand_uid: duplicateProduct.brand_uid ?? null,
+                    unit_uid: duplicateProduct.unit_uid ?? null,
+                    satuan: duplicateProduct.satuan ?? duplicateProduct.unit?.simbol ?? null,
                     image: undefined,
                     product_type: initialProductType,
                     is_jasa: !!duplicateProduct.is_jasa,
@@ -161,6 +170,11 @@ export function useProductFormDialog({
     const brandSelectProps = useBrandSelectConfig({
         targetUid: activeProduct?.brand_uid,
         targetBrand: activeProduct?.brand,
+    });
+
+    const unitSelectProps = useUnitSelectConfig({
+        targetUid: activeProduct?.unit_uid,
+        targetUnit: activeProduct?.unit,
     });
 
     // Form Watches
@@ -328,6 +342,43 @@ export function useProductFormDialog({
 
         formData.append("category_uid", data.category_uid ? String(data.category_uid) : "");
         formData.append("brand_uid", data.brand_uid ? String(data.brand_uid) : "");
+        formData.append("unit_uid", data.unit_uid ? String(data.unit_uid) : "");
+
+        const unitUid = data.unit_uid;
+        let unitSymbol = data.satuan || "";
+        if (unitUid) {
+            if (activeProduct?.unit_uid === unitUid && activeProduct.unit?.simbol) {
+                unitSymbol = activeProduct.unit.simbol;
+            } else {
+                const unitQueries = queryClient.getQueriesData<PaginatedResponse<Unit>>({
+                    queryKey: queryKeys.units.all,
+                });
+                for (const [, cache] of unitQueries) {
+                    if ((cache as unknown as { pages?: PaginatedResponse<Unit>[] })?.pages) {
+                        const pages = (cache as unknown as { pages: PaginatedResponse<Unit>[] }).pages;
+                        const found = pages
+                            .flatMap((p) => p?.data || [])
+                            .find((u) => String(u?.uid) === String(unitUid));
+                        if (found?.simbol) {
+                            unitSymbol = found.simbol;
+                            break;
+                        }
+                    } else if (Array.isArray(cache?.data)) {
+                        const found = cache.data.find(
+                            (u) => String(u?.uid) === String(unitUid)
+                        );
+                        if (found?.simbol) {
+                            unitSymbol = found.simbol;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (unitSymbol) {
+            formData.append("satuan", unitSymbol);
+        }
 
         if (data.image instanceof File) {
             formData.append("image", data.image);
@@ -395,6 +446,7 @@ export function useProductFormDialog({
         handleProductTypeChange,
         categorySelectProps,
         brandSelectProps,
+        unitSelectProps,
         onSubmit,
         onError,
         initialImageUrl,

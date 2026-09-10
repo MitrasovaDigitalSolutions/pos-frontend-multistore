@@ -277,21 +277,24 @@ export function StoreProductEditDialog({
                                                     </Badge>
                                                 )}
 
-                                                {!product.is_jasa && (
-                                                    product.stok > 10 ? (
+                                                {!product.is_jasa && (() => {
+                                                    const unitLabel = product.unit?.simbol || product.satuan || "";
+                                                    const stockText = `Stok: ${product.stok}${unitLabel ? ` ${unitLabel}` : ""}`;
+                                                    const zeroStockText = `Stok: 0${unitLabel ? ` ${unitLabel}` : ""}`;
+                                                    return product.stok > 10 ? (
                                                         <Badge variant="success" className="h-5 px-2.5 py-0 text-[10px] font-bold leading-none inline-flex items-center justify-center">
-                                                            <span className="translate-y-px">Stok: {product.stok} Pcs</span>
+                                                            <span className="translate-y-px">{stockText}</span>
                                                         </Badge>
                                                     ) : product.stok > 0 ? (
                                                         <Badge variant="warning" className="h-5 px-2.5 py-0 text-[10px] font-bold leading-none inline-flex items-center justify-center">
-                                                            <span className="translate-y-px">Stok: {product.stok} Pcs</span>
+                                                            <span className="translate-y-px">{stockText}</span>
                                                         </Badge>
                                                     ) : (
                                                         <Badge variant="destructive" className="h-5 px-2.5 py-0 text-[10px] font-bold leading-none inline-flex items-center justify-center">
-                                                            <span className="translate-y-px">Stok: 0 Pcs</span>
+                                                            <span className="translate-y-px">{zeroStockText}</span>
                                                         </Badge>
-                                                    )
-                                                )}
+                                                    );
+                                                })()}
                                             </div>
 
                                             {/* Baris 2: Nama Produk */}
