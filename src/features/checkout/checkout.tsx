@@ -27,6 +27,8 @@ import type { CashDrawerSession } from "@/features/checkout/types";
 import { db } from "@/lib/db";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { Show } from "@/components/ui/show";
+import { CheckoutTutorialController } from "@/features/tutorial/components/checkout-tutorial-controller";
+import { useTutorialStore } from "@/stores/tutorial-store";
 
 export function Checkout() {
     const isOnline = useNetworkStatus();
@@ -189,6 +191,7 @@ export function Checkout() {
                 }}
                 onLogout={handleLogout}
                 onDashboardClick={() => state.router.push("/admin")}
+                onTutorialClick={() => useTutorialStore.getState().setMenuOpen(true)}
                 isOnline={syncEngine.isOnline}
                 pendingCount={syncEngine.pendingCount}
                 isSyncing={syncEngine.isSyncing}
@@ -285,8 +288,8 @@ export function Checkout() {
             </div>
 
             {/* Shortcuts Bar (Flex child footer - never overlaps content) */}
-            <div className="hidden md:flex bg-slate-900 border-t border-slate-800 text-slate-400 items-center px-6 text-[10px] justify-between font-semibold select-none shrink-0 h-8 z-10">
-                <div className="flex gap-6 items-center">
+            <div id="checkout-shortcuts-bar" className="flex bg-slate-900 border-t border-slate-800 text-slate-400 items-center px-3 sm:px-6 text-[10px] justify-between font-semibold select-none shrink-0 h-8 z-10">
+                <div className="hidden md:flex gap-6 items-center">
                     <div className="flex gap-1.5 items-center">
                         <kbd className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold shadow border border-slate-700">F1</kbd> Bayar
                     </div>
@@ -302,6 +305,11 @@ export function Checkout() {
                     <div className="flex gap-1.5 items-center">
                         <kbd className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold shadow border border-slate-700">Esc</kbd> Tutup
                     </div>
+                </div>
+
+                <div className="flex md:hidden items-center gap-2 text-[10px] text-slate-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span>Terminal Siap Transaksi</span>
                 </div>
 
                 <button
@@ -458,6 +466,29 @@ export function Checkout() {
                     onOpenChange={state.setIsSettingsOpen}
                 />
             </Show.When>
+
+            {/* Interactive Demo Tutorial System */}
+            <CheckoutTutorialController
+                openDialog={(dialog) => {
+                    if (dialog === "pay") state.setIsPayModalOpen(true);
+                    if (dialog === "hold_list") state.setIsHoldListOpen(true);
+                    if (dialog === "cash_drawer") {
+                        if (activeDrawerSession) setIsInfoSesiOpen(true);
+                        else setIsBukaShiftOpen(true);
+                    }
+                    if (dialog === "reprint") setIsPastTransactionsOpen(true);
+                }}
+                closeDialog={(dialog) => {
+                    if (dialog === "pay") state.setIsPayModalOpen(false);
+                    if (dialog === "hold_list") state.setIsHoldListOpen(false);
+                    if (dialog === "cash_drawer") {
+                        setIsInfoSesiOpen(false);
+                        setIsBukaShiftOpen(false);
+                    }
+                    if (dialog === "reprint") setIsPastTransactionsOpen(false);
+                }}
+                setActiveMobileTab={setActiveMobileTab}
+            />
 
             {/* Hidden Print Receipt container */}
             <PrintReceiptLayout

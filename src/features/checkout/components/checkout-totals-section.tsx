@@ -224,7 +224,7 @@ export function CheckoutTotalsSection({
                 </div>
 
                 {/* High-Visibility Hero Total Display Card */}
-                <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white rounded-2xl p-4 shadow-lg shadow-emerald-600/20 relative overflow-hidden border border-emerald-500/30">
+                <div id="grand-total-display" className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white rounded-2xl p-4 shadow-lg shadow-emerald-600/20 relative overflow-hidden border border-emerald-500/30">
                     <div className="absolute -right-6 -bottom-6 w-28 h-28 bg-white/10 rounded-full blur-xl pointer-events-none" />
                     <div className="flex items-center justify-between relative z-10">
                         <span className="text-[10px] font-black uppercase tracking-widest text-emerald-100 flex items-center gap-1.5">
@@ -263,7 +263,7 @@ export function CheckoutTotalsSection({
                 </div>
 
                 {/* Member Selection Card */}
-                <div className="bg-white border border-slate-200/80 rounded-xl p-3 shadow-xs space-y-2">
+                <div id="member-selection-card" className="bg-white border border-slate-200/80 rounded-xl p-3 shadow-xs space-y-2">
                     <div className="flex justify-between items-center text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
                         <span>Pelanggan / Member</span>
                         <div>
@@ -312,7 +312,7 @@ export function CheckoutTotalsSection({
                             </div>
 
                             {activeMember && (activeMember.hutang || 0) > 0 && (
-                                <div className="bg-rose-50 border border-rose-200 p-2.5 rounded-xl flex items-center justify-between gap-2 shadow-xs">
+                                <div id="member-debt-info" className="bg-rose-50 border border-rose-200 p-2.5 rounded-xl flex items-center justify-between gap-2 shadow-xs">
                                     <div>
                                         <span className="text-[9px] font-black text-rose-500 uppercase tracking-wider block">
                                             Tunggakan Hutang
@@ -354,7 +354,7 @@ export function CheckoutTotalsSection({
                 </div>
 
                 {/* Cart Status & Diskon Transaksi Card */}
-                <div className="bg-white border border-slate-200/80 rounded-xl p-3 shadow-xs space-y-2.5">
+                <div id="discount-section" className="bg-white border border-slate-200/80 rounded-xl p-3 shadow-xs space-y-2.5">
                     <div className="flex justify-between items-center text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
                         <span>Diskon Transaksi</span>
                     </div>
@@ -445,6 +445,7 @@ export function CheckoutTotalsSection({
                 {/* Quick Actions Bar (Hold, Recall, Void, Reprint) */}
                 <div className="grid grid-cols-4 gap-1.5">
                     <AppButton
+                        id="btn-hold"
                         type="button"
                         variant="outline"
                         onClick={onHold}
@@ -456,6 +457,7 @@ export function CheckoutTotalsSection({
                         <span>Hold (F5)</span>
                     </AppButton>
                     <AppButton
+                        id="btn-recall"
                         type="button"
                         variant="outline"
                         onClick={onRecallOpen}
@@ -466,6 +468,7 @@ export function CheckoutTotalsSection({
                         <span>Recall (F6)</span>
                     </AppButton>
                     <AppButton
+                        id="btn-void"
                         type="button"
                         variant="outline"
                         onClick={onVoid}
@@ -477,6 +480,7 @@ export function CheckoutTotalsSection({
                         <span>Void (F10)</span>
                     </AppButton>
                     <AppButton
+                        id="btn-reprint"
                         type="button"
                         variant="outline"
                         onClick={onReprint}
@@ -518,6 +522,7 @@ export function CheckoutTotalsSection({
 
                 <div className="pt-1.5 border-t border-slate-100">
                     <AppButton
+                        id="btn-bayar-sekarang"
                         type="button"
                         onClick={onPayOpen}
                         disabled={cartLength === 0}

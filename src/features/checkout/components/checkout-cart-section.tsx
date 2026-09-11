@@ -168,7 +168,7 @@ export function CheckoutCartSection({
         <div className="bg-white border-r border-slate-200 flex flex-col h-full overflow-hidden min-h-0">
             {/* Scanner / Search */}
             <div className="p-3 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row gap-2.5 sm:items-start shrink-0">
-                <div className="grow w-full">
+                <div id="barcode-input" className="grow w-full">
                     <BarcodeInput
                         ref={barcodeInputRef}
                         onProductFound={onAddProduct}
@@ -185,7 +185,7 @@ export function CheckoutCartSection({
             </div>
 
             {/* Cart Items (Table on Desktop, Cards on Mobile) */}
-            <div className="grow overflow-y-auto p-3 min-h-0">
+            <div id="checkout-cart-table" className="grow overflow-y-auto p-3 min-h-0">
                 {cart.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-slate-400 p-6 text-center">
                         <IconScan size={40} className="text-slate-200 mb-2" />
