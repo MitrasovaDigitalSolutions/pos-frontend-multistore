@@ -42,7 +42,7 @@ export function ConfirmDialog({
     isLoading = false,
     variant = "warning",
     confirmBtnId,
-    contentId,
+    contentId = "confirm-delete-dialog-content",
 }: ConfirmDialogProps) {
     const [isInternalLoading, setIsInternalLoading] = React.useState(false);
     const showLoading = isLoading || isInternalLoading;
@@ -93,6 +93,7 @@ export function ConfirmDialog({
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
+                id={contentId}
                 onKeyDown={(e) => {
                     if (e.key === "Enter") {
                         e.preventDefault();
@@ -101,7 +102,6 @@ export function ConfirmDialog({
                 }}
                 className="max-w-sm bg-white dark:bg-slate-900 rounded-2xl p-6 gap-0 border-slate-100 dark:border-slate-800 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100"
                 showCloseButton={false}
-                id={contentId}
             >
                 <div className="flex flex-col items-center text-center">
                     {/* Icon Container */}

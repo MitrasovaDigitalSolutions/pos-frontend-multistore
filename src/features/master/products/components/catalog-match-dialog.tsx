@@ -29,6 +29,7 @@ import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { useAssignProductStore } from "../api/product-store-api";
 import { useCatalogMatch, type CatalogMatchItem } from "../api/products-api";
+import { useProductsTutorialStore } from "@/stores/products-tutorial-store";
 
 interface CatalogMatchDialogProps {
     open: boolean;
@@ -207,6 +208,12 @@ export function CatalogMatchDialog({
     const handleProceedToCreateManual = () => {
         onOpenChange(false);
         onSelectNewProduct(namaInput.trim());
+        if (
+            useProductsTutorialStore.getState().isRunning &&
+            useProductsTutorialStore.getState().activeTutorial === "tambah_produk"
+        ) {
+            useProductsTutorialStore.getState().setStepIndex(3);
+        }
     };
 
     const profitPerUnit = (Number(watchHargaJual) || 0) - (Number(watchHargaBeli) || 0);
@@ -254,7 +261,7 @@ export function CatalogMatchDialog({
                         <label className="text-xs font-bold text-slate-700">
                             Nama Produk yang Ingin Ditambahkan
                         </label>
-                        <div className="relative">
+                        <div className="relative" id="catalog-match-search-input">
                             <Input
                                 type="text"
                                 value={namaInput}
@@ -352,6 +359,7 @@ export function CatalogMatchDialog({
                                 Tidak ada saran yang sesuai?
                             </span>
                             <Button
+                                id="catalog-match-btn-new-product"
                                 type="button"
                                 variant="outline"
                                 onClick={handleProceedToCreateManual}

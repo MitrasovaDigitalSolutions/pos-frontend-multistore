@@ -353,7 +353,7 @@ export function CommandSelect({
             align="start"
             side="bottom"
             sideOffset={4}
-            className="isolate z-50"
+            className="isolate z-[100000]"
           >
             <PopoverPrimitive.Popup
               className={cn(

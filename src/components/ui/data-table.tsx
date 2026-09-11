@@ -409,6 +409,8 @@ export function DataTable<TData, TValue>({
                                 onClick={() => onEdit(item)}
                                 disabled={isEditDisabled}
                                 tooltip="Ubah"
+                                data-action="edit"
+                                className="table-action-edit"
                             >
                                 <IconEdit size={16} />
                             </DataTableActionButton>
@@ -419,6 +421,8 @@ export function DataTable<TData, TValue>({
                                 onClick={() => onCheck(item)}
                                 disabled={isCheckDisabled}
                                 tooltip="Finalisasi"
+                                data-action="check"
+                                className="table-action-check"
                             >
                                 <IconCheck size={16} />
                             </DataTableActionButton>
@@ -429,6 +433,8 @@ export function DataTable<TData, TValue>({
                                 onClick={() => onDelete(item)}
                                 disabled={isDeleteDisabled}
                                 tooltip="Hapus"
+                                data-action="delete"
+                                className="table-action-delete"
                             >
                                 <IconTrash size={16} />
                             </DataTableActionButton>

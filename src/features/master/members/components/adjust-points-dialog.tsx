@@ -103,6 +103,7 @@ export function AdjustPointsDialog({ open, onOpenChange, member }: AdjustPointsD
 
             <FormProvider {...methods}>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
+                    <div id="adjust-points-type">
                     <FormSelect<AdjustPointsInput>
                         name="type"
                         label="Tipe Penyesuaian"
@@ -110,7 +111,9 @@ export function AdjustPointsDialog({ open, onOpenChange, member }: AdjustPointsD
                         placeholder="Pilih tipe..."
                         disabled={isSubmitting}
                     />
+                    </div>
 
+                    <div id="adjust-points-amount">
                     <FormInput<AdjustPointsInput>
                         name="points"
                         label="Jumlah Poin"
@@ -122,15 +125,19 @@ export function AdjustPointsDialog({ open, onOpenChange, member }: AdjustPointsD
                             return val === "" ? 0 : Number(val);
                         }}
                     />
+                    </div>
 
+                    <div id="adjust-points-note">
                     <FormInput<AdjustPointsInput>
                         name="note"
                         label="Catatan / Keterangan"
                         placeholder="Contoh: Bonus pembelian, Refund..."
                         disabled={isSubmitting}
                     />
+                    </div>
 
                     <Button
+                        id="btn-submit-adjust-points"
                         type="submit"
                         className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4 border-none shadow-md"
                         disabled={isSubmitting}

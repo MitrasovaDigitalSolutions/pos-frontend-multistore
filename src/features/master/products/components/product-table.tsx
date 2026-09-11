@@ -7,7 +7,7 @@ import { DataTableActionButton } from "@/components/ui/data-table-actions";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { IconArchiveOff, IconPlus } from "@tabler/icons-react";
+import { IconArchiveOff, IconHelp, IconPlus } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
 import { useMemo, useState } from "react";
@@ -47,25 +47,34 @@ interface ProductTableProps {
     sortBy?: string;
     sortOrder?: "asc" | "desc";
     onSortChange?: (sortBy: string | undefined, sortOrder: "asc" | "desc" | undefined) => void;
+    isConfirmOpen?: boolean;
+    onConfirmOpenChange?: (open: boolean) => void;
+    productToDelete?: Product | null;
+    onProductToDeleteChange?: (product: Product | null) => void;
+    isUnarchiveOpen?: boolean;
+    onUnarchiveOpenChange?: (open: boolean) => void;
+    productToUnarchive?: Product | null;
+    onProductToUnarchiveChange?: (product: Product | null) => void;
 }
 
-export function ProductTable({
-    products,
-    meta,
-    page,
-    perPage,
-    onPageChange,
-    onPerPageChange,
-    onEdit,
-    onManageStores: _onManageStores,
-    onAddClick,
-    isLoading = false,
-    isFetching = false,
-    filterElement,
-    sortBy,
-    sortOrder,
-    onSortChange,
-}: ProductTableProps) {
+export function ProductTable(props: ProductTableProps) {
+    const {
+        products,
+        meta,
+        page,
+        perPage,
+        onPageChange,
+        onPerPageChange,
+        onEdit,
+        onManageStores: _onManageStores,
+        onAddClick,
+        isLoading = false,
+        isFetching = false,
+        filterElement,
+        sortBy,
+        sortOrder,
+        onSortChange,
+    } = props;
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
@@ -85,10 +94,20 @@ export function ProductTable({
     const detachStoreProduct = useDetachProductStore();
     const toggleStatus = useToggleProductStatus();
 
-    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-    const [productToDelete, setProductToDelete] = useState<Product | null>(null);
-    const [isUnarchiveOpen, setIsUnarchiveOpen] = useState(false);
-    const [productToUnarchive, setProductToUnarchive] = useState<Product | null>(null);
+    const [localConfirmOpen, setLocalConfirmOpen] = useState(false);
+    const [localProductToDelete, setLocalProductToDelete] = useState<Product | null>(null);
+    const [localUnarchiveOpen, setLocalUnarchiveOpen] = useState(false);
+    const [localProductToUnarchive, setLocalProductToUnarchive] = useState<Product | null>(null);
+
+    const isConfirmOpen = props.isConfirmOpen !== undefined ? props.isConfirmOpen : localConfirmOpen;
+    const setIsConfirmOpen = props.onConfirmOpenChange || setLocalConfirmOpen;
+    const productToDelete = props.productToDelete !== undefined ? props.productToDelete : localProductToDelete;
+    const setProductToDelete = props.onProductToDeleteChange || setLocalProductToDelete;
+
+    const isUnarchiveOpen = props.isUnarchiveOpen !== undefined ? props.isUnarchiveOpen : localUnarchiveOpen;
+    const setIsUnarchiveOpen = props.onUnarchiveOpenChange || setLocalUnarchiveOpen;
+    const productToUnarchive = props.productToUnarchive !== undefined ? props.productToUnarchive : localProductToUnarchive;
+    const setProductToUnarchive = props.onProductToUnarchiveChange || setLocalProductToUnarchive;
 
     const handleToggleStatus = (p: Product) => {
         if (p.status === "archived") {
@@ -365,17 +384,22 @@ export function ProductTable({
                         Manajemen inventori produk aktif dan SKU.
                     </p>
                 </div>
-                <Show.When isTrue={Boolean(hasManageProducts && canCreateProduct)}>
-                    <Button
-                        onClick={onAddClick}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
-                    >
-                        <IconPlus size={16} /> Tambah Produk
-                    </Button>
-                </Show.When>
+                <div className="flex items-center gap-2">
+                    <Show.When isTrue={Boolean(hasManageProducts && canCreateProduct)}>
+                        <Button
+                            id="btn-tambah-produk-master"
+                            onClick={onAddClick}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
+                        >
+                            <IconPlus size={16} /> Tambah Produk
+                        </Button>
+                    </Show.When>
+                </div>
             </div>
 
-            {filterElement}
+            <div id="product-table-filters">
+                {filterElement}
+            </div>
 
             <DataTable
                 columns={columns}
@@ -410,6 +434,8 @@ export function ProductTable({
                                             setIsUnarchiveOpen(true);
                                         }}
                                         tooltip="Batalkan Hapus (Unarchive)"
+                                        data-action="unarchive"
+                                        className="table-action-unarchive"
                                     >
                                         <IconArchiveOff size={16} />
                                     </DataTableActionButton>

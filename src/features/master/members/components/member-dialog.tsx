@@ -95,33 +95,40 @@ export function MemberDialog({
         >
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 {/* Nama */}
+                <div id="form-member-nama">
                 <FormInput<MemberInput>
                     name="nama"
                     label="Nama Member *"
                     placeholder="Masukkan nama lengkap member..."
                     disabled={isPending}
                 />
+                </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4" id="form-member-contact-row">
                     {/* Email */}
+                    <div id="form-member-email">
                     <FormInput<MemberInput>
                         name="email"
                         label="Email"
                         placeholder="nama@email.com..."
                         disabled={isPending}
                     />
+                    </div>
 
                     {/* Nomor Telepon */}
+                    <div id="form-member-telepon">
                     <FormInput<MemberInput>
                         name="nomor_telepon"
                         label="No. Telepon"
                         placeholder="081234567890..."
                         disabled={isPending}
                     />
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4" id="form-member-demografi-row">
                     {/* Jenis Kelamin */}
+                    <div id="form-member-gender">
                     <FormSelect<MemberInput>
                         name="jenis_kelamin"
                         label="Jenis Kelamin"
@@ -129,19 +136,23 @@ export function MemberDialog({
                         placeholder="Pilih jenis kelamin..."
                         disabled={isPending}
                     />
+                    </div>
 
                     {/* Tanggal Lahir */}
+                    <div id="form-member-tgl-lahir">
                     <FormDatePicker<MemberInput>
                         name="tanggal_lahir"
                         label="Tanggal Lahir"
                         placeholder="Pilih tanggal lahir..."
                         disabled={isPending}
                     />
+                    </div>
                 </div>
 
-                <div className={pointSystemEnabled ? "grid grid-cols-2 gap-4" : "grid grid-cols-1 gap-4"}>
+                <div className={pointSystemEnabled ? "grid grid-cols-2 gap-4" : "grid grid-cols-1 gap-4"} id="form-member-poin-status-row">
                     {/* Poin */}
                     {pointSystemEnabled && (
+                        <div id="form-member-poin">
                         <FormInput<MemberInput>
                             name="poin"
                             label="Poin Awal"
@@ -154,9 +165,11 @@ export function MemberDialog({
                                 return val === "" ? 0 : Number(val);
                             }}
                         />
+                        </div>
                     )}
 
                     {/* Status */}
+                    <div id="form-member-status">
                     <FormSelect<MemberInput>
                         name="status"
                         label="Status"
@@ -164,17 +177,21 @@ export function MemberDialog({
                         placeholder="Pilih status..."
                         disabled={isPending}
                     />
+                    </div>
                 </div>
 
                 {/* Alamat */}
+                <div id="form-member-alamat">
                 <FormTextarea<MemberInput>
                     name="alamat"
                     label="Alamat Lengkap"
                     placeholder="Masukkan alamat tinggal member..."
                     disabled={isPending}
                 />
+                </div>
 
                 <Button
+                    id="btn-submit-member"
                     type="submit"
                     className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4 border-none"
                     disabled={isPending}

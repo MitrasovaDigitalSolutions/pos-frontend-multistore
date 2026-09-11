@@ -82,7 +82,7 @@ export function UnarchiveProductDialog({
             }
             className="sm:max-w-md"
         >
-            <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+            <form id="unarchive-product-form" onSubmit={handleSubmit} className="space-y-4 pt-1">
                 {/* Product info summary box */}
                 <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 space-y-1.5">
                     <div className="flex items-start justify-between gap-2">

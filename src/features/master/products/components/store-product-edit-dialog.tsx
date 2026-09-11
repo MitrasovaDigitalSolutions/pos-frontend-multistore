@@ -349,7 +349,7 @@ export function StoreProductEditDialog({
 
                         {/* Column 2: Financial & Wholesale Inputs */}
                         <div className="space-y-3">
-                            <div className="grid grid-cols-3 gap-2">
+                            <div id="store-edit-pricing-grid" className="grid grid-cols-3 gap-2">
                                 <FormNominalInput<StoreProductEditFormValues>
                                     name="harga_beli"
                                     label="Harga Beli"
@@ -383,12 +383,14 @@ export function StoreProductEditDialog({
                             />
 
                             {/* Fitur Grosir */}
-                            <FormSwitch<StoreProductEditFormValues>
-                                name="is_grosir"
-                                label="Harga Grosir Toko"
-                                description="Aktifkan penentuan harga grosir khusus untuk toko ini."
-                                disabled={updateProductStore.isPending}
-                            />
+                            <div id="store-edit-grosir-switch">
+                                <FormSwitch<StoreProductEditFormValues>
+                                    name="is_grosir"
+                                    label="Harga Grosir Toko"
+                                    description="Aktifkan penentuan harga grosir khusus untuk toko ini."
+                                    disabled={updateProductStore.isPending}
+                                />
+                            </div>
 
                             <Show.When isTrue={Boolean(watchIsGrosir)}>
                                 <div className="p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl space-y-2 animate-in fade-in-50 duration-200">
@@ -434,6 +436,7 @@ export function StoreProductEditDialog({
                             Batal
                         </Button>
                         <Button
+                            id="btn-submit-store-edit"
                             type="submit"
                             disabled={updateProductStore.isPending}
                             className="h-9 px-4 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 cursor-pointer"

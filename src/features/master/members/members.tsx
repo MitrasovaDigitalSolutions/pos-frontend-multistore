@@ -16,6 +16,9 @@ import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
 import { formatToISO } from "@/lib/date-utils";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
+import { MembersTutorialController } from "./tutorial/components/members-tutorial-controller";
+import { MOCK_MEMBERS } from "./tutorial/constants/members-tutorial-constants";
+import { useMembersTutorialStore } from "@/stores/members-tutorial-store";
 
 interface MemberFilterValues {
     search: string;
@@ -80,6 +83,14 @@ export function Members() {
     const [editingMember, setEditingMember] = useState<Member | null>(null);
     const [isAdjustPointsOpen, setIsAdjustPointsOpen] = useState(false);
     const [selectedMemberForPoints, setSelectedMemberForPoints] = useState<Member | null>(null);
+    const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+    const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
+
+    // Tutorial: mock fallback when table is empty
+    const isTutorialRunning = useMembersTutorialStore((state) => state.isRunning);
+    const serverMembers = membersData?.data || [];
+    const displayMembers = isTutorialRunning && serverMembers.length === 0 ? MOCK_MEMBERS : serverMembers;
+    const sampleMember = displayMembers[0] || null;
 
     const handleAdjustPoints = (member: Member) => {
         setSelectedMemberForPoints(member);
@@ -152,7 +163,7 @@ export function Members() {
         <div className="space-y-6">
             <FormProvider {...dialogMethods}>
                 <MemberList
-                    members={membersData?.data || []}
+                    members={displayMembers}
                     meta={membersData?.meta}
                     page={page}
                     perPage={perPage}
@@ -170,7 +181,11 @@ export function Members() {
                         setSortOrder(order);
                         setPage(1);
                     }}
+                    externalConfirmOpen={isConfirmDeleteOpen}
+                    onExternalConfirmChange={setIsConfirmDeleteOpen}
+                    externalMemberToDelete={memberToDelete}
                     filterElement={
+                        <div id="member-table-filters">
                         <FilterForm
                             methods={filterMethods}
                             onSubmit={handleFilterSubmit}
@@ -188,6 +203,7 @@ export function Members() {
                                 placeholder="Semua Status"
                             />
                         </FilterForm>
+                        </div>
                     }
                 />
 
@@ -201,6 +217,17 @@ export function Members() {
                     open={isAdjustPointsOpen}
                     onOpenChange={setIsAdjustPointsOpen}
                     member={selectedMemberForPoints}
+                />
+
+                {/* Tutorial Controller for Master Member */}
+                <MembersTutorialController
+                    setIsDialogOpen={setIsDialogOpen}
+                    setEditingMember={setEditingMember}
+                    setIsAdjustPointsOpen={setIsAdjustPointsOpen}
+                    setSelectedMemberForPoints={setSelectedMemberForPoints}
+                    setIsConfirmOpen={setIsConfirmDeleteOpen}
+                    setMemberToDelete={setMemberToDelete}
+                    sampleMember={sampleMember}
                 />
             </FormProvider>
         </div>
