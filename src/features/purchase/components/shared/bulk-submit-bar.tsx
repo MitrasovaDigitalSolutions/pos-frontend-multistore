@@ -21,6 +21,7 @@ interface BulkSubmitBarProps {
     secondarySubmitIcon?: React.ReactNode;
     secondarySubmitLoadingText?: string;
     className?: string;
+    id?: string;
 }
 
 export function BulkSubmitBar({
@@ -40,12 +41,13 @@ export function BulkSubmitBar({
     secondarySubmitIcon,
     secondarySubmitLoadingText,
     className,
+    id,
 }: BulkSubmitBarProps) {
     const hasItems = itemCount > 0;
     const isAnySubmitting = isSubmitting || isSecondarySubmitting;
 
     return (
-        <div className={cn("sticky bottom-2 sm:bottom-0 z-30 mt-4", className)}>
+        <div id={id || "bulk-submit-bar"} className={cn("sticky bottom-2 sm:bottom-0 z-30 mt-4", className)}>
             <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xl shadow-slate-900/10 p-3 sm:p-4 transition-all">
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
                     {/* Left: Stats */}
@@ -89,6 +91,7 @@ export function BulkSubmitBar({
                     <div className="grid grid-cols-12 gap-2 w-full sm:w-auto sm:flex sm:items-center sm:gap-3">
                         {/* Reset */}
                         <AppButton
+                            id="btn-po-reset"
                             type="button"
                             variant="outline"
                             onClick={onReset}
@@ -106,6 +109,7 @@ export function BulkSubmitBar({
                         {/* Secondary Submit (Simpan Penerimaan/PO/Retur) */}
                         {onSecondarySubmit && (
                             <AppButton
+                                id="btn-po-save-draft"
                                 type="button"
                                 variant="outline"
                                 onClick={onSecondarySubmit}
@@ -121,6 +125,7 @@ export function BulkSubmitBar({
 
                         {/* Main Submit (Proses Penerimaan/PO/Retur) */}
                         <AppButton
+                            id="btn-po-process"
                             type="button"
                             onClick={onSubmit}
                             disabled={!hasItems || isAnySubmitting || disabled}

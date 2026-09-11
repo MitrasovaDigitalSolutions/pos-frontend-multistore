@@ -16,6 +16,7 @@ import { getNavTitle } from "./sidebar-config";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { formatToReadableDate } from "@/lib/date-utils";
 import { StoreSwitcher } from "./store-switcher";
+import { AdminTutorialButton } from "./admin-tutorial-button";
 
 export function AdminHeader() {
   const { toggleMobile } = useSidebarStore();
@@ -69,6 +70,9 @@ export function AdminHeader() {
             <IconCalendar size={15} />
             <span>Hari Ini: {formattedDate}</span>
           </div>
+
+          {/* Feature Tutorial Hub Button */}
+          <AdminTutorialButton />
 
           <div className="hidden lg:block h-5 w-px bg-slate-200 shrink-0" />
 

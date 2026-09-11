@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
-import { IconArrowLeft, IconBarcode, IconCheck, IconInfoCircle, IconX } from "@tabler/icons-react";
+import { IconArrowLeft, IconBarcode, IconCheck, IconInfoCircle, IconSparkles, IconX } from "@tabler/icons-react";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
@@ -20,6 +20,8 @@ import { usePoFlow } from "@/features/purchase/hooks/use-po-flow";
 import { POHeaderCard } from "./po-header-card";
 import { POInstructionPanel } from "./po-instruction-panel";
 import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
+import { usePurchaseTutorialStore } from "@/stores/purchase-tutorial-store";
+import { MOCK_PO_ITEMS } from "@/features/purchase/tutorial/constants/purchase-tutorial-constants";
 
 interface POItemsPageProps {
     poId: string;
@@ -68,6 +70,7 @@ export function POItemsPage({ poId }: POItemsPageProps) {
 
 function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder }) {
     const router = useAppRouter();
+    const isPurchaseTutorialRunning = usePurchaseTutorialStore((state) => state.isRunning);
     const [activeId, setActiveId] = useState(poId);
     const [activeOrder, setActiveOrder] = useState<PurchaseOrder | undefined>(order);
 
@@ -177,15 +180,38 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     <div className="lg:col-span-8 space-y-6">
                         {/* Barcode scanner box */}
-                        <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
-                            <div className="flex items-center gap-2 pb-3 border-b border-slate-50">
-                                <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg border border-emerald-100/30">
-                                    <IconBarcode size={18} />
+                        <div id="po-barcode-box" className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
+                            <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-50">
+                                <div className="flex items-center gap-2">
+                                    <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg border border-emerald-100/30">
+                                        <IconBarcode size={18} />
+                                    </div>
+                                    <h3 className="text-xs font-bold text-slate-900">Scan Barcode / Cari Produk</h3>
                                 </div>
-                                <h3 className="text-xs font-bold text-slate-900">Scan Barcode / Cari Produk</h3>
+
+                                {isPurchaseTutorialRunning && (
+                                    <button
+                                        type="button"
+                                        id="btn-po-seeder"
+                                        onClick={() => {
+                                            const poStore = getPurchaseItemsStore("new", "po");
+                                            poStore.setState({
+                                                items: [...MOCK_PO_ITEMS],
+                                                lastUpdated: Date.now(),
+                                            });
+                                            toast.success("Seeder produk simulasi berhasil ditambahkan ke daftar PO!");
+                                        }}
+                                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-[11px] font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                                        title="Klik untuk mengisi data seeder contoh pesanan"
+                                    >
+                                        <IconSparkles size={13} className="text-emerald-600 animate-pulse" />
+                                        <span>Seeder Demo PO</span>
+                                    </button>
+                                )}
                             </div>
 
                             <BarcodeInput
+                                id="po-barcode-input"
                                 isJasa={false}
                                 onProductFound={(product) => {
                                     setNotFoundQuery("");
@@ -235,7 +261,7 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
                         </div>
 
                         {/* Table of items */}
-                        <div className="space-y-4">
+                        <div id="po-items-table" className="space-y-4">
                             <ItemsTable
                                 items={items}
                                 onUpdateItem={updateItem}
@@ -261,6 +287,7 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
 
                 {/* Sticky Bottom Submit Bar */}
                 <BulkSubmitBar
+                    id="po-submit-bar"
                     onSubmit={onProcessClick}
                     onSecondarySubmit={handleSaveClick}
                     onReset={handleReset}

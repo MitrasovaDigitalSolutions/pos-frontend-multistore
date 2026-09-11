@@ -261,6 +261,7 @@ export function POListPage() {
                     </div>
                     {hasManagePurchase && (
                         <Button
+                            id="btn-create-po"
                             onClick={() => router.push("/admin/purchase/order/new")}
                             className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
                         >

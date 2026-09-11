@@ -23,6 +23,7 @@ interface BarcodeInputProps {
     isRawMaterial?: boolean;
     isJasa?: boolean;
     hasBom?: boolean;
+    id?: string;
 }
 
 const EMPTY_PRODUCTS: Product[] = [];
@@ -43,6 +44,7 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
         isRawMaterial,
         isJasa,
         hasBom,
+        id,
     }: BarcodeInputProps, ref) {
         const localRef = useRef<HTMLInputElement>(null);
         const inputRef = (ref || localRef) as React.MutableRefObject<HTMLInputElement | null>;
@@ -389,6 +391,7 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                         )}
 
                         <input
+                            id={id}
                             ref={inputRef}
                             type="text"
                             value={value}

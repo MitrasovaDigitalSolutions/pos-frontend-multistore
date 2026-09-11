@@ -48,7 +48,7 @@ export function POHeaderCard({
 
                 <div className="grid grid-cols-1 gap-4">
                     {/* Supplier Selector */}
-                    <div className="space-y-1.5">
+                    <div id="po-supplier-field" className="space-y-1.5">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             Supplier *
                         </label>
@@ -72,7 +72,7 @@ export function POHeaderCard({
                     </div>
 
                     {/* Tanggal PO */}
-                    <div className="space-y-1.5">
+                    <div id="po-date-field" className="space-y-1.5">
                         <FormDatePicker<PurchaseOrderHeaderInput>
                             name="tanggal_po"
                             label="Tanggal PO *"
@@ -83,11 +83,12 @@ export function POHeaderCard({
                 </div>
 
                 {/* Catatan */}
-                <div className="space-y-1.5">
+                <div id="po-notes-field" className="space-y-1.5">
                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                         Catatan PO
                     </label>
                     <Input
+                        id="po-notes-input"
                         type="text"
                         placeholder="Catatan tambahan untuk PO..."
                         className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"

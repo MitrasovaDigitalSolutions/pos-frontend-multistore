@@ -1,5 +1,6 @@
 import { AdminHeader } from "@/components/layout/admin-header";
 import { AdminSidebar } from "@/components/layout/admin-sidebar";
+import { PurchaseTutorialController } from "@/features/purchase/tutorial/components/purchase-tutorial-controller";
 import type { ReactNode } from "react";
 
 interface AdminLayoutProps {
@@ -18,6 +19,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     {children}
                 </main>
             </div>
+
+            {/* Purchase Feature Interactive Tutorial Controller */}
+            <PurchaseTutorialController />
         </div>
     );
 }
+
