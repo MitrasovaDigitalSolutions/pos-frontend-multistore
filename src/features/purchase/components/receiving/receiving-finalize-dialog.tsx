@@ -166,7 +166,7 @@ export function ReceivingFinalizeDialog({
                     className="flex flex-col flex-1 overflow-hidden min-h-0"
                 >
                     <Scrollable className="flex-1 min-h-0 pr-1">
-                        <div className="space-y-4 py-1">
+                        <div id="receiving-finalize-dialog-content" className="space-y-4 py-1">
 
                             {/* ── Section 1: Compact Summary Card Header ── */}
                             <div className="bg-slate-50/90 rounded-xl p-3 border border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
@@ -235,7 +235,7 @@ export function ReceivingFinalizeDialog({
                                     </div>
 
                                     {/* Metode Transaksi & Pembayaran */}
-                                    <div className="space-y-2.5 p-3 bg-slate-50/80 border border-slate-200/80 rounded-xl">
+                                    <div id="finalize-payment-method-toggle" className="space-y-2.5 p-3 bg-slate-50/80 border border-slate-200/80 rounded-xl">
                                         <div className="flex items-center justify-between">
                                             <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
                                                 Metode Transaksi Pembelian <span className="text-rose-500">*</span>
@@ -324,12 +324,15 @@ export function ReceivingFinalizeDialog({
                                 </div>
 
                                 {/* Right Column: Reconciliation Panel (5 cols) */}
-                                <div className={cn(
-                                    "lg:col-span-5 rounded-2xl border p-3.5 space-y-3 transition-colors duration-200 flex flex-col justify-between h-full min-h-[220px]",
-                                    hasMismatch
-                                        ? "bg-amber-50/40 border-amber-200 shadow-xs"
-                                        : "bg-slate-50/50 border-slate-100"
-                                )}>
+                                <div
+                                    id="finalize-reconciliation-panel"
+                                    className={cn(
+                                        "lg:col-span-5 rounded-2xl border p-3.5 space-y-3 transition-colors duration-200 flex flex-col justify-between h-full min-h-[220px]",
+                                        hasMismatch
+                                            ? "bg-amber-50/40 border-amber-200 shadow-xs"
+                                            : "bg-slate-50/50 border-slate-100"
+                                    )}
+                                >
                                     <div className="space-y-3 flex-1">
                                         <div className="flex items-center justify-between text-xs pb-2 border-b border-slate-100">
                                             <span className="font-bold text-slate-700 uppercase tracking-wider text-[10px]">

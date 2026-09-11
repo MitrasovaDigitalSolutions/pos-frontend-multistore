@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import type { PurchaseItemLocal, Receiving } from "@/features/purchase/types";
 import { getPurchaseItemsStore, clearPurchaseItemsStore, selectItemCount, selectTotal } from "@/stores/purchase-items-store";
+import { usePurchaseTutorialStore } from "@/stores/purchase-tutorial-store";
 
 import { useReceivingFinalizer } from "./use-receiving-finalizer";
 import { useReceivingHeaderForm } from "./use-receiving-header-form";
@@ -51,7 +52,9 @@ export function useReceivingFlow({
     useEffect(() => {
         if (isCurrentNew && isInitialMountRef.current) {
             isInitialMountRef.current = false;
-            clearPurchaseItemsStore("new", "receiving");
+            if (!usePurchaseTutorialStore.getState().isRunning) {
+                clearPurchaseItemsStore("new", "receiving");
+            }
         }
     }, [isCurrentNew]);
 

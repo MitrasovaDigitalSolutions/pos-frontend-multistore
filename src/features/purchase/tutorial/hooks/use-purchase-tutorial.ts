@@ -16,7 +16,7 @@ import {
     type Step,
 } from "react-joyride";
 import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
-import { isMockPurchaseItem, MOCK_PO_ITEMS } from "../constants/purchase-tutorial-constants";
+import { isMockPurchaseItem, MOCK_PO_ITEMS, MOCK_RECEIVING_ITEMS } from "../constants/purchase-tutorial-constants";
 import { useAppRouter } from "@/hooks/use-app-router";
 
 async function waitForElement(selector: string, timeout = 2500): Promise<Element | null> {
@@ -35,11 +35,12 @@ async function runPurchaseAction(
     action: PurchaseTutorialAction,
     routerPush: (url: string) => void
 ): Promise<void> {
-    const store = getPurchaseItemsStore("new", "po");
+    const poStore = getPurchaseItemsStore("new", "po");
+    const recStore = getPurchaseItemsStore("new", "receiving");
 
     switch (action.type) {
         case "inject_po_items": {
-            store.setState({
+            poStore.setState({
                 items: [...action.items],
                 lastUpdated: Date.now(),
             });
@@ -47,7 +48,32 @@ async function runPurchaseAction(
         }
 
         case "clear_po_items": {
-            store.getState().clearAll();
+            poStore.getState().clearAll();
+            break;
+        }
+
+        case "inject_receiving_items": {
+            recStore.setState({
+                items: [...action.items],
+                lastUpdated: Date.now(),
+            });
+            break;
+        }
+
+        case "clear_receiving_items": {
+            recStore.getState().clearAll();
+            break;
+        }
+
+        case "open_dialog": {
+            usePurchaseTutorialStore.getState().setActiveDialog(action.dialog);
+            await new Promise((r) => setTimeout(r, 150));
+            break;
+        }
+
+        case "close_dialog": {
+            usePurchaseTutorialStore.getState().setActiveDialog(null);
+            await new Promise((r) => setTimeout(r, 150));
             break;
         }
 
@@ -167,8 +193,10 @@ export function usePurchaseTutorial() {
 
     // Cleanup & Restore Snapshot
     const cleanupAndRestore = useCallback(() => {
+        const activeTut = usePurchaseTutorialStore.getState().activeTutorial;
+        const scope = activeTut === "receiving_create" ? "receiving" : "po";
         const snap = usePurchaseTutorialStore.getState().preSnapshot;
-        const store = getPurchaseItemsStore("new", "po");
+        const store = getPurchaseItemsStore("new", scope);
 
         if (snap) {
             const cleanItems = snap.items.filter((i) => !isMockPurchaseItem(i));
@@ -188,10 +216,16 @@ export function usePurchaseTutorial() {
 
         // Clean up DOM input fields
         if (typeof document !== "undefined") {
-            const notesInput = document.querySelector("#po-notes-input") as HTMLInputElement | null;
-            if (notesInput) {
-                setInputValueWithEvents(notesInput, "");
-                notesInput.blur();
+            const poNotesInput = document.querySelector("#po-notes-input") as HTMLInputElement | null;
+            if (poNotesInput) {
+                setInputValueWithEvents(poNotesInput, "");
+                poNotesInput.blur();
+            }
+
+            const recBarcodeInput = document.querySelector("#rec-barcode-input") as HTMLInputElement | null;
+            if (recBarcodeInput) {
+                setInputValueWithEvents(recBarcodeInput, "");
+                recBarcodeInput.blur();
             }
 
             // Remove any lingering Joyride portal
@@ -202,6 +236,7 @@ export function usePurchaseTutorial() {
             }
         }
 
+        usePurchaseTutorialStore.getState().setActiveDialog(null);
         updateCursor({ visible: false, clicking: false, label: undefined });
     }, [clearSnapshot, updateCursor]);
 
@@ -253,7 +288,6 @@ export function usePurchaseTutorial() {
         [router]
     );
 
-
     // Handle Joyride events
     const handleJoyrideEvent = useCallback(
         async (data: EventData) => {
@@ -270,12 +304,26 @@ export function usePurchaseTutorial() {
                             await executeAction(nextStep.action);
                         }
 
-                        // Pre-inject mock state if next step needs conditional items
+                        // Pre-inject mock state or handle dialogs if next step needs them
                         if (
                             nextStep.action &&
-                            ["inject_po_items", "clear_po_items"].includes(nextStep.action.type)
+                            [
+                                "inject_po_items",
+                                "clear_po_items",
+                                "inject_receiving_items",
+                                "clear_receiving_items",
+                                "open_dialog",
+                                "close_dialog",
+                            ].includes(nextStep.action.type)
                         ) {
                             await executeAction(nextStep.action);
+                        } else if (
+                            usePurchaseTutorialStore.getState().activeDialog &&
+                            !nextStep.target.includes("dialog") &&
+                            !nextStep.target.includes("finalize") &&
+                            !nextStep.target.includes("price-alert")
+                        ) {
+                            usePurchaseTutorialStore.getState().setActiveDialog(null);
                         }
 
                         ensureElementVisible(nextStep.target);
@@ -289,11 +337,25 @@ export function usePurchaseTutorial() {
                     const prevIndex = index - 1;
                     if (prevIndex >= 0) {
                         const prevStep = tutorialSteps[prevIndex];
+
+                        if (prevStep.action?.type === "open_dialog") {
+                            await executeAction(prevStep.action);
+                        } else if (
+                            usePurchaseTutorialStore.getState().activeDialog &&
+                            !prevStep.target.includes("dialog") &&
+                            !prevStep.target.includes("finalize") &&
+                            !prevStep.target.includes("price-alert")
+                        ) {
+                            usePurchaseTutorialStore.getState().setActiveDialog(null);
+                        }
+
                         if (prevIndex < tutorialSteps.length - 1) {
-                            const store = getPurchaseItemsStore("new", "po");
+                            const activeTut = usePurchaseTutorialStore.getState().activeTutorial;
+                            const scope = activeTut === "receiving_create" ? "receiving" : "po";
+                            const store = getPurchaseItemsStore("new", scope);
                             if (store.getState().items.length === 0) {
                                 store.setState({
-                                    items: [...MOCK_PO_ITEMS],
+                                    items: scope === "receiving" ? [...MOCK_RECEIVING_ITEMS] : [...MOCK_PO_ITEMS],
                                     lastUpdated: Date.now(),
                                 });
                             }
@@ -315,7 +377,7 @@ export function usePurchaseTutorial() {
                     // Execute step action (sequence, seeder typing, notes, etc.)
                     if (
                         step.action &&
-                        !["clear_po_items", "navigate"].includes(step.action.type)
+                        !["clear_po_items", "clear_receiving_items", "navigate"].includes(step.action.type)
                     ) {
                         await executeAction(step.action);
                         setTimeout(() => {

@@ -50,6 +50,15 @@ export function PurchaseTutorialMenuDialog() {
             }
 
             startTutorial("po_create");
+        } else if (id === "receiving_create") {
+            setMenuOpen(false);
+
+            if (typeof window !== "undefined" && window.location.pathname !== "/admin/purchase/receiving/new") {
+                router.push("/admin/purchase/receiving/new");
+                await waitForElement("#rec-barcode-box", 3500);
+            }
+
+            startTutorial("receiving_create");
         }
     };
 

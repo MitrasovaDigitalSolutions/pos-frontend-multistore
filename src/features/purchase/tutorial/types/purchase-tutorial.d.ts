@@ -12,6 +12,10 @@ export type PurchaseSubmenu = "order" | "receiving" | "payment" | "return";
 export type PurchaseTutorialAction =
     | { type: "inject_po_items"; items: PurchaseItemLocal[] }
     | { type: "clear_po_items" }
+    | { type: "inject_receiving_items"; items: PurchaseItemLocal[] }
+    | { type: "clear_receiving_items" }
+    | { type: "open_dialog"; dialog: "price_alert" | "finalize" }
+    | { type: "close_dialog" }
     | { type: "set_po_supplier"; supplier_uid: string; supplier_nama?: string }
     | { type: "set_po_date"; date: string }
     | { type: "set_po_notes"; notes: string }

@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
-import { IconArrowLeft, IconBarcode, IconCheck, IconInfoCircle, IconUpload, IconX } from "@tabler/icons-react";
+import { IconArrowLeft, IconBarcode, IconCheck, IconInfoCircle, IconSparkles, IconUpload, IconX } from "@tabler/icons-react";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useState } from "react";
 import { FormProvider } from "react-hook-form";
@@ -24,6 +24,9 @@ import { ReceivingInstructionPanel } from "./receiving-instruction-panel";
 import { ReceivingHeaderCard } from "./receiving-header-card";
 import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
 import { useReceivingFlow } from "@/features/purchase/hooks/use-receiving-flow";
+import { usePurchaseTutorialStore } from "@/stores/purchase-tutorial-store";
+import { MOCK_PRICE_ALERTS, MOCK_RECEIVING_ITEMS } from "@/features/purchase/tutorial/constants/purchase-tutorial-constants";
+import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
 
 interface ReceivingItemsPageProps {
     receivingId: string;
@@ -146,6 +149,15 @@ function ReceivingItemsContainer({
         onSaveSuccess,
     });
 
+    const isPurchaseTutorialRunning = usePurchaseTutorialStore((state) => state.isRunning);
+    const activeTutorial = usePurchaseTutorialStore((state) => state.activeTutorial);
+    const isReceivingTutorial = isPurchaseTutorialRunning && activeTutorial === "receiving_create";
+    const tutorialDialog = usePurchaseTutorialStore((state) => state.activeDialog);
+
+    const effectiveAlertOpen = isReceivingTutorial ? tutorialDialog === "price_alert" : isAlertOpen;
+    const effectiveFinalizeOpen = isReceivingTutorial ? tutorialDialog === "finalize" : isFinalizeOpen;
+    const effectivePriceAlerts = isReceivingTutorial && tutorialDialog === "price_alert" ? MOCK_PRICE_ALERTS : priceAlerts;
+
     return (
         <FormProvider {...productForm}>
             <div className="space-y-6 pb-28 sm:pb-8">
@@ -197,15 +209,38 @@ function ReceivingItemsContainer({
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     <div className="lg:col-span-8 space-y-6">
                         {/* Barcode scanner box */}
-                        <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
-                            <div className="flex items-center gap-2 pb-3 border-b border-slate-50">
-                                <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg">
-                                    <IconBarcode size={18} />
+                        <div id="rec-barcode-box" className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
+                            <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-50">
+                                <div className="flex items-center gap-2">
+                                    <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg">
+                                        <IconBarcode size={18} />
+                                    </div>
+                                    <h3 className="text-xs font-bold text-slate-900">Scan Barcode Penerimaan</h3>
                                 </div>
-                                <h3 className="text-xs font-bold text-slate-900">Scan Barcode Penerimaan</h3>
+
+                                {isPurchaseTutorialRunning && (
+                                    <button
+                                        type="button"
+                                        id="btn-rec-seeder"
+                                        onClick={() => {
+                                            const recStore = getPurchaseItemsStore("new", "receiving");
+                                            recStore.setState({
+                                                items: [...MOCK_RECEIVING_ITEMS],
+                                                lastUpdated: Date.now(),
+                                            });
+                                            toast.success("Seeder produk simulasi berhasil ditambahkan ke daftar Penerimaan!");
+                                        }}
+                                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-[11px] font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                                        title="Klik untuk mengisi data seeder contoh penerimaan"
+                                    >
+                                        <IconSparkles size={13} className="text-emerald-600 animate-pulse" />
+                                        <span>Seeder Demo Penerimaan</span>
+                                    </button>
+                                )}
                             </div>
 
                             <BarcodeInput
+                                id="rec-barcode-input"
                                 isJasa={false}
                                 onProductFound={(product) => {
                                     setNotFoundQuery("");
@@ -255,7 +290,7 @@ function ReceivingItemsContainer({
                         </div>
 
                         {/* Table of items */}
-                        <div className="space-y-4">
+                        <div id="rec-items-table" className="space-y-4">
                             <ItemsTable
                                 items={items}
                                 priceLabel="Harga Beli"
@@ -282,30 +317,38 @@ function ReceivingItemsContainer({
                 </div>
 
                 {/* Sticky Bottom Submit Bar */}
-                <BulkSubmitBar
-                    onSubmit={onProcessClick}
-                    onSecondarySubmit={handleSaveClick}
-                    onReset={handleReset}
-                    isSubmitting={isSubmitting}
-                    itemCount={itemCount}
-                    total={totalValue}
-                    productCount={uniqueProductCount}
-                    submitLabel="Proses Penerimaan"
-                    submitIcon={<IconCheck size={16} />}
-                    secondarySubmitLabel="Simpan Penerimaan"
-                    secondarySubmitIcon={<IconUpload size={16} />}
-                />
+                <div id="rec-submit-bar">
+                    <BulkSubmitBar
+                        onSubmit={onProcessClick}
+                        onSecondarySubmit={handleSaveClick}
+                        onReset={handleReset}
+                        isSubmitting={isSubmitting}
+                        itemCount={itemCount}
+                        total={totalValue}
+                        productCount={uniqueProductCount}
+                        submitLabel="Proses Penerimaan"
+                        submitIcon={<IconCheck size={16} />}
+                        secondarySubmitLabel="Simpan Penerimaan"
+                        secondarySubmitIcon={<IconUpload size={16} />}
+                    />
+                </div>
 
                 {/* Finalize Dialog */}
-                {(currentReceiving || (isCurrentNew && isFinalizeOpen)) && (
+                {(currentReceiving || (isCurrentNew && (isFinalizeOpen || effectiveFinalizeOpen))) && (
                     <ReceivingFinalizeDialog
-                        open={isFinalizeOpen}
-                        onOpenChange={handleFinalizeClose}
+                        open={effectiveFinalizeOpen}
+                        onOpenChange={(val) => {
+                            if (isReceivingTutorial) {
+                                usePurchaseTutorialStore.getState().setActiveDialog(val ? "finalize" : null);
+                            } else {
+                                handleFinalizeClose(val);
+                            }
+                        }}
                         receiving={currentReceiving || ({
-                            nomor_penerimaan: "Akan Dibuat Otomatis",
-                            supplier: suppliers.find(s => s.uid === (headerForm.watch("supplier_uid") || receiving?.supplier_uid))?.nama || "—",
-                            purchase_order_uid: headerForm.watch("purchase_order_uid") || receiving?.purchase_order_uid || null,
-                            nomor_faktur: headerForm.watch("nomor_faktur") || "",
+                            nomor_penerimaan: isReceivingTutorial ? "RCV-2024-001 (Simulasi)" : "Akan Dibuat Otomatis",
+                            supplier: isReceivingTutorial ? "PT Sumber Makmur Distributor" : (suppliers.find(s => s.uid === (headerForm.watch("supplier_uid") || receiving?.supplier_uid))?.nama || "—"),
+                            purchase_order_uid: isReceivingTutorial ? "PO-2024-001" : (headerForm.watch("purchase_order_uid") || receiving?.purchase_order_uid || null),
+                            nomor_faktur: headerForm.watch("nomor_faktur") || (isReceivingTutorial ? "INV-2024-089" : ""),
                             nilai_faktur: (headerForm.watch("nilai_faktur") != null && Number(headerForm.watch("nilai_faktur")) !== 0)
                                 ? Number(headerForm.watch("nilai_faktur"))
                                 : totalValue,
@@ -313,18 +356,24 @@ function ReceivingItemsContainer({
                         } as unknown as Receiving)}
                         items={items}
                         isPending={isSubmitting}
-                        onConfirm={handleFinalizeConfirm}
+                        onConfirm={isReceivingTutorial ? () => { } : handleFinalizeConfirm}
                     />
                 )}
 
                 {/* Price comparison alert dialog */}
                 <PriceAlertDialog
-                    open={isAlertOpen}
-                    onOpenChange={handleAlertClose}
-                    priceAlerts={priceAlerts}
+                    open={effectiveAlertOpen}
+                    onOpenChange={(val) => {
+                        if (isReceivingTutorial) {
+                            usePurchaseTutorialStore.getState().setActiveDialog(val ? "price_alert" : null);
+                        } else {
+                            handleAlertClose(val);
+                        }
+                    }}
+                    priceAlerts={effectivePriceAlerts}
                     isFinalizing={isFinalizing}
-                    onCompleteWithoutPrices={handleCompleteWithoutPrices}
-                    onCompleteWithPrices={handleCompleteWithPrices}
+                    onCompleteWithoutPrices={isReceivingTutorial ? () => { } : handleCompleteWithoutPrices}
+                    onCompleteWithPrices={isReceivingTutorial ? () => { } : handleCompleteWithPrices}
                 />
 
                 <ProductFormDialog

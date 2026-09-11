@@ -32,6 +32,7 @@ export function PurchaseTutorialController() {
                         zIndex: 99999,
                         overlayColor: "rgba(15, 23, 42, 0.6)",
                         skipBeacon: true,
+                        spotlightPadding: 6,
                     }}
                 />
             )}

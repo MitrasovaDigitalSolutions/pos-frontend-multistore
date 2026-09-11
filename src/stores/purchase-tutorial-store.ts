@@ -7,6 +7,7 @@ import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
 import {
     isMockPurchaseItem,
     MOCK_PO_ITEMS,
+    MOCK_RECEIVING_ITEMS,
 } from "@/features/purchase/tutorial/constants/purchase-tutorial-constants";
 
 interface CursorState {
@@ -22,6 +23,7 @@ interface PurchaseTutorialStoreState {
     stepIndex: number;
     isRunning: boolean;
     isMenuOpen: boolean;
+    activeDialog: "price_alert" | "finalize" | null;
     preSnapshot: PurchaseTutorialPreSnapshot | null;
     cursor: CursorState;
 
@@ -32,6 +34,7 @@ interface PurchaseTutorialStoreState {
     nextStep: () => void;
     prevStep: () => void;
     setMenuOpen: (open: boolean) => void;
+    setActiveDialog: (dialog: "price_alert" | "finalize" | null) => void;
     saveSnapshot: (snapshot: PurchaseTutorialPreSnapshot) => void;
     clearSnapshot: () => void;
     updateCursor: (cursor: Partial<CursorState>) => void;
@@ -43,6 +46,7 @@ export const usePurchaseTutorialStore = create<PurchaseTutorialStoreState>((set)
     stepIndex: 0,
     isRunning: false,
     isMenuOpen: false,
+    activeDialog: null,
     preSnapshot: null,
     cursor: {
         x: 0,
@@ -52,8 +56,8 @@ export const usePurchaseTutorialStore = create<PurchaseTutorialStoreState>((set)
     },
 
     startTutorial: (id) => {
-        // Snapshot existing items in purchase-items-store for PO
-        const store = getPurchaseItemsStore("new", "po");
+        const scope = id === "receiving_create" ? "receiving" : "po";
+        const store = getPurchaseItemsStore("new", scope);
         const currentItems = store.getState().items;
         const currentHeader = store.getState().headerData;
 
@@ -69,6 +73,11 @@ export const usePurchaseTutorialStore = create<PurchaseTutorialStoreState>((set)
                 items: [...MOCK_PO_ITEMS],
                 lastUpdated: Date.now(),
             });
+        } else if (id === "receiving_create") {
+            store.setState({
+                items: [...MOCK_RECEIVING_ITEMS],
+                lastUpdated: Date.now(),
+            });
         }
 
         set({
@@ -76,6 +85,7 @@ export const usePurchaseTutorialStore = create<PurchaseTutorialStoreState>((set)
             stepIndex: 0,
             isRunning: true,
             isMenuOpen: false,
+            activeDialog: null,
             preSnapshot: snapshot,
         });
     },
@@ -85,6 +95,7 @@ export const usePurchaseTutorialStore = create<PurchaseTutorialStoreState>((set)
             activeTutorial: null,
             stepIndex: 0,
             isRunning: false,
+            activeDialog: null,
             cursor: { ...state.cursor, visible: false, clicking: false },
         })),
 
@@ -98,6 +109,8 @@ export const usePurchaseTutorialStore = create<PurchaseTutorialStoreState>((set)
         })),
 
     setMenuOpen: (open) => set({ isMenuOpen: open }),
+
+    setActiveDialog: (dialog) => set({ activeDialog: dialog }),
 
     saveSnapshot: (snapshot) => set({ preSnapshot: snapshot }),
 

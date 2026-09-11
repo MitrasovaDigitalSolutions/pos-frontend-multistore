@@ -13,6 +13,7 @@ import type { usePOSelectConfig } from "../../../hooks/use-po-select";
 import type { Supplier } from "@/features/master/suppliers/types";
 import type { PurchaseOrder } from "../../../types";
 import { useSupplierCreateModal } from "@/features/master/suppliers/hooks/use-supplier-create-modal";
+import { usePurchaseTutorialStore } from "@/stores/purchase-tutorial-store";
 
 interface ReceivingHeaderCardProps {
     form: UseFormReturn<ReceivingHeaderInput>;
@@ -36,6 +37,9 @@ export function ReceivingHeaderCard({
     isPending,
 }: ReceivingHeaderCardProps) {
     const [isExpanded, setIsExpanded] = useState(false);
+    const isTutorialRunning = usePurchaseTutorialStore((state) => state.isRunning);
+    const activeTutorial = usePurchaseTutorialStore((state) => state.activeTutorial);
+    const isDetailsVisible = isExpanded || (isTutorialRunning && activeTutorial === "receiving_create");
 
     const { openSupplierModal, SupplierModal } = useSupplierCreateModal({
         onSupplierCreated: (supplier) => {
@@ -53,7 +57,7 @@ export function ReceivingHeaderCard({
     return (
         <FormProvider {...form}>
             <form
-                id="receiving-header-form"
+                id="rec-header-card"
                 onSubmit={(e) => e.preventDefault()}
                 className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4"
             >
@@ -73,7 +77,7 @@ export function ReceivingHeaderCard({
 
                 <div className="space-y-3.5">
                     {/* Supplier */}
-                    <div className="space-y-1">
+                    <div id="rec-supplier-field" className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             Supplier {!purchaseOrderId && " *"}
                         </label>
@@ -97,20 +101,23 @@ export function ReceivingHeaderCard({
                     </div>
 
                     {/* Tanggal Penerimaan */}
-                    <FormDatePicker<ReceivingHeaderInput>
-                        name="tanggal_terima"
-                        label="Tanggal Penerimaan *"
-                        disabled={isPending}
-                    />
+                    <div id="rec-date-field">
+                        <FormDatePicker<ReceivingHeaderInput>
+                            name="tanggal_terima"
+                            label="Tanggal Penerimaan *"
+                            disabled={isPending}
+                        />
+                    </div>
 
                     {/* Collapsible toggle button */}
                     <div className="pt-1">
                         <button
                             type="button"
+                            id="rec-expand-details-btn"
                             onClick={() => setIsExpanded(!isExpanded)}
                             className="text-[11px] font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 transition-colors duration-150 cursor-pointer border-none bg-transparent"
                         >
-                            {isExpanded ? (
+                            {isDetailsVisible ? (
                                 <>
                                     <IconChevronUp size={14} className="text-slate-400" /> Sembunyikan Detail Tambahan
                                 </>
@@ -123,10 +130,10 @@ export function ReceivingHeaderCard({
                     </div>
 
                     {/* Collapsible content */}
-                    {isExpanded && (
+                    {isDetailsVisible && (
                         <div className="space-y-3.5 pt-2 border-t border-slate-50">
                             {/* Purchase Order */}
-                            <div className="space-y-1">
+                            <div id="rec-po-select-field" className="space-y-1">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                     Referensi Purchase Order (PO)
                                 </label>
@@ -148,11 +155,12 @@ export function ReceivingHeaderCard({
                             </div>
 
                             {/* Nomor Faktur Supplier */}
-                            <div className="space-y-1">
+                            <div id="rec-invoice-number-field" className="space-y-1">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                     Nomor Faktur / Nota Supplier
                                 </label>
                                 <Input
+                                    id="rec-invoice-number-input"
                                     type="text"
                                     placeholder="Misal: INV-2024-001..."
                                     className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
@@ -167,19 +175,22 @@ export function ReceivingHeaderCard({
                             </div>
 
                             {/* Nilai Faktur / Tagihan */}
-                            <FormNominalInput<ReceivingHeaderInput>
-                                name="nilai_faktur"
-                                label="Nilai Tagihan / Faktur Supplier (Rp)"
-                                placeholder="Total tagihan dari supplier..."
-                                disabled={isPending}
-                            />
+                            <div id="rec-invoice-amount-field">
+                                <FormNominalInput<ReceivingHeaderInput>
+                                    name="nilai_faktur"
+                                    label="Nilai Tagihan / Faktur Supplier (Rp)"
+                                    placeholder="Total tagihan dari supplier..."
+                                    disabled={isPending}
+                                />
+                            </div>
 
                             {/* Catatan / Keterangan */}
-                            <div className="space-y-1">
+                            <div id="rec-notes-field" className="space-y-1">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                     Catatan Penerimaan
                                 </label>
                                 <Input
+                                    id="rec-notes-input"
                                     type="text"
                                     placeholder="Catatan tambahan untuk penerimaan..."
                                     className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
