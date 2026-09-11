@@ -106,13 +106,14 @@ export function useCheckoutTutorial(controls: TutorialContextControls) {
         updateCursor({ visible: false, label: undefined });
     }, [clearSnapshot, updateCursor]);
 
-    // Joyride Steps format with fixed viewport strategy and pre-step hooks
+    // Joyride Steps format with fixed viewport strategy, no beacon, and pre-step hooks
     const joyrideSteps: Step[] = useMemo(() => {
         return tutorialSteps.map((s) => ({
             target: s.target,
             title: s.title,
             content: s.content,
             placement: s.placement || "bottom",
+            skipBeacon: true,
             disableBeacon: true,
             spotlightClicks: false,
             floatingOptions: {
@@ -178,8 +179,8 @@ export function useCheckoutTutorial(controls: TutorialContextControls) {
                 const step = tutorialSteps[index];
                 if (step) {
                     positionCursorAt(step.target);
-                    // Run typing or interactive animation actions
-                    if (step.action && step.action.type === "type_text") {
+                    // Run step action (typing simulation, live demo animation, etc.)
+                    if (step.action) {
                         await executeTutorialAction(step.action, controlsRef.current);
                     }
                 }
