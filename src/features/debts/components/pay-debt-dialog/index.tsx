@@ -19,6 +19,7 @@ import { useNetworkStatus } from "@/hooks/use-network-status";
 import { NetworkError } from "@/shared/errors/api-error";
 import { format } from "date-fns";
 import { useSession } from "next-auth/react";
+import { useTutorialStore } from "@/stores/tutorial-store";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -174,6 +175,12 @@ export function PayDebtDialog({ open, onOpenChange, member, onSuccess }: PayDebt
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!isValid) return;
+
+        if (useTutorialStore.getState().isRunning) {
+            toast.success("Pembayaran hutang berhasil diproses (Simulasi Tutorial)!");
+            onOpenChange(false);
+            return;
+        }
 
         if (!session?.cashDrawerSessionId) {
             toast.warning("Silakan buka shift laci kasir terlebih dahulu untuk melakukan pembayaran hutang.");
@@ -342,6 +349,7 @@ export function PayDebtDialog({ open, onOpenChange, member, onSuccess }: PayDebt
                         Batal
                     </Button>
                     <Button
+                        id="pay-debt-submit-btn"
                         type="submit"
                         disabled={!isValid || isPending}
                         className="h-9 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 border-none cursor-pointer shadow-sm shadow-emerald-600/20 disabled:opacity-50"

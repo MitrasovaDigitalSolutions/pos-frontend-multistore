@@ -1,15 +1,30 @@
 import { useCheckoutStore } from "@/stores/checkout-store";
 import { useTutorialStore } from "@/stores/tutorial-store";
-import type { TutorialAction } from "../types/tutorial";
+import type { TutorialAction, TutorialDialogType } from "../types/tutorial";
 import { TYPING_SPEED } from "../constants/tutorial-constants";
 
 export interface TutorialContextControls {
-    openDialog: (dialog: "pay" | "hold_list" | "cash_drawer" | "reprint") => void;
-    closeDialog: (dialog: "pay" | "hold_list" | "cash_drawer" | "reprint") => void;
+    openDialog: (dialog: TutorialDialogType) => void;
+    closeDialog: (dialog: TutorialDialogType) => void;
     setActiveMobileTab?: (tab: "cart" | "totals") => void;
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+export function setInputValueWithEvents(inputEl: HTMLInputElement, value: string) {
+    if (typeof window === "undefined") return;
+    const nativeSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        "value"
+    )?.set;
+    if (nativeSetter) {
+        nativeSetter.call(inputEl, value);
+    } else {
+        inputEl.value = value;
+    }
+    inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+    inputEl.dispatchEvent(new Event("change", { bubbles: true }));
+}
 
 export async function simulateTyping(
     inputEl: HTMLInputElement,
@@ -17,13 +32,11 @@ export async function simulateTyping(
     onProgress?: (val: string) => void
 ) {
     inputEl.focus();
-    inputEl.value = "";
-    inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+    setInputValueWithEvents(inputEl, "");
 
     for (let i = 0; i < text.length; i++) {
         await sleep(TYPING_SPEED);
-        inputEl.value = text.slice(0, i + 1);
-        inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+        setInputValueWithEvents(inputEl, text.slice(0, i + 1));
         onProgress?.(inputEl.value);
     }
 }
@@ -66,9 +79,27 @@ export async function executeTutorialAction(
             break;
         }
 
+        case "clear_input": {
+            const container = document.querySelector(action.target);
+            const el = (container instanceof HTMLInputElement
+                ? container
+                : container?.querySelector("input")) as HTMLInputElement | null;
+            if (el) {
+                setInputValueWithEvents(el, "");
+                el.blur();
+            }
+            break;
+        }
+
         case "inject_hold": {
             store.addHoldTransaction(action.hold);
             store.clearCart();
+            store.setNamaTransaksi("");
+            break;
+        }
+
+        case "clear_hold": {
+            store.clearHoldList();
             break;
         }
 

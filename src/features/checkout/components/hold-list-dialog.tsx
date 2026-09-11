@@ -48,15 +48,16 @@ export function HoldListDialog({
                     </button>
                 )}
 
-                <div className="space-y-2 max-h-87.5 overflow-y-auto mt-8">
+                <div id="hold-list-container" className="space-y-2 max-h-87.5 overflow-y-auto mt-8">
                     {holdList.length === 0 ? (
                         <div className="text-center py-8 text-slate-400 text-xs">
                             Tidak ada transaksi yang di-hold.
                         </div>
                     ) : (
-                        holdList.map((h) => (
+                        holdList.map((h, idx) => (
                             <div
                                 key={h.uid}
+                                id={idx === 0 ? "hold-item-first" : undefined}
                                 className="flex items-center justify-between border border-slate-100 rounded-xl p-4 bg-slate-50/50"
                             >
                                 <div>
@@ -74,6 +75,7 @@ export function HoldListDialog({
                                     </div>
                                 </div>
                                 <Button
+                                    id={idx === 0 ? "btn-recall-first" : undefined}
                                     onClick={() => onRecall(h.uid)}
                                     disabled={isProcessing}
                                     className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold h-8 rounded-lg px-3 cursor-pointer border-none"

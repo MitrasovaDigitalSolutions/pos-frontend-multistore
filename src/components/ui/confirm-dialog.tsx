@@ -27,6 +27,8 @@ export interface ConfirmDialogProps {
     onConfirm: () => void | Promise<void>;
     isLoading?: boolean;
     variant?: "danger" | "warning" | "info" | "success" | "primary";
+    confirmBtnId?: string;
+    contentId?: string;
 }
 
 export function ConfirmDialog({
@@ -39,6 +41,8 @@ export function ConfirmDialog({
     onConfirm,
     isLoading = false,
     variant = "warning",
+    confirmBtnId,
+    contentId,
 }: ConfirmDialogProps) {
     const [isInternalLoading, setIsInternalLoading] = React.useState(false);
     const showLoading = isLoading || isInternalLoading;
@@ -97,6 +101,7 @@ export function ConfirmDialog({
                 }}
                 className="max-w-sm bg-white dark:bg-slate-900 rounded-2xl p-6 gap-0 border-slate-100 dark:border-slate-800 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100"
                 showCloseButton={false}
+                id={contentId}
             >
                 <div className="flex flex-col items-center text-center">
                     {/* Icon Container */}
@@ -129,6 +134,7 @@ export function ConfirmDialog({
                         {cancelText}
                     </Button>
                     <Button
+                        id={confirmBtnId}
                         type="button"
                         className={cn(
                             "w-full sm:w-auto flex-1 h-11 sm:h-10 p-2 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer order-1 sm:order-2",

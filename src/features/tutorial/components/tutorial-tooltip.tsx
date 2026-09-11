@@ -3,6 +3,7 @@
 import React from "react";
 import type { TooltipRenderProps } from "react-joyride";
 import { IconX, IconArrowRight, IconArrowLeft, IconCheck, IconSparkles } from "@tabler/icons-react";
+import { useTutorialStore } from "@/stores/tutorial-store";
 
 export function TutorialTooltip({
     continuous,
@@ -16,6 +17,7 @@ export function TutorialTooltip({
     skipProps,
 }: TooltipRenderProps) {
     const progressPercent = Math.round(((index + 1) / size) * 100);
+    const stopTutorial = useTutorialStore((state) => state.stopTutorial);
 
     return (
         <div className="w-[340px] sm:w-[380px] max-w-[90vw] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] overflow-hidden font-sans text-slate-800 dark:text-slate-100 animate-in fade-in zoom-in-95 duration-200">
@@ -39,7 +41,11 @@ export function TutorialTooltip({
 
                     <button
                         {...closeProps}
-                        className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        onClick={(e) => {
+                            closeProps.onClick(e);
+                            stopTutorial();
+                        }}
+                        className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                         title="Tutup Panduan"
                         aria-label="Tutup"
                     >
@@ -66,7 +72,11 @@ export function TutorialTooltip({
                     {!isLastStep && (
                         <button
                             {...skipProps}
-                            className="text-xs font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:underline transition-colors px-1 py-1"
+                            onClick={(e) => {
+                                skipProps.onClick(e);
+                                stopTutorial();
+                            }}
+                            className="text-xs font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:underline transition-colors px-1 py-1 cursor-pointer"
                         >
                             Lewati
                         </button>
@@ -77,7 +87,7 @@ export function TutorialTooltip({
                     {index > 0 && (
                         <button
                             {...backProps}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition-all"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition-all cursor-pointer"
                         >
                             <IconArrowLeft size={14} />
                             <span>Kembali</span>
@@ -87,7 +97,13 @@ export function TutorialTooltip({
                     {continuous && (
                         <button
                             {...primaryProps}
-                            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-md shadow-emerald-600/20 active:scale-95 transition-all"
+                            onClick={(e) => {
+                                primaryProps.onClick(e);
+                                if (isLastStep) {
+                                    stopTutorial();
+                                }
+                            }}
+                            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-md shadow-emerald-600/20 active:scale-95 transition-all cursor-pointer"
                         >
                             {isLastStep ? (
                                 <>

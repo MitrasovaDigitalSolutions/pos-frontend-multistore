@@ -5,8 +5,9 @@ import { useTutorialStore } from "@/stores/tutorial-store";
 
 export function AnimatedCursor() {
     const cursor = useTutorialStore((state) => state.cursor);
+    const isRunning = useTutorialStore((state) => state.isRunning);
 
-    if (!cursor.visible) return null;
+    if (!isRunning || !cursor.visible) return null;
 
     return (
         <div

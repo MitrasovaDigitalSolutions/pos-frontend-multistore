@@ -14,6 +14,7 @@ export function CheckoutTutorialController(props: CheckoutTutorialControllerProp
     const {
         activeTutorial,
         isRunning,
+        stepIndex,
         joyrideSteps,
         handleJoyrideEvent,
     } = useCheckoutTutorial(props);
@@ -26,6 +27,7 @@ export function CheckoutTutorialController(props: CheckoutTutorialControllerProp
                     key={activeTutorial || "checkout-tutorial"}
                     steps={joyrideSteps}
                     run={isRunning}
+                    stepIndex={stepIndex}
                     continuous
                     onEvent={handleJoyrideEvent}
                     tooltipComponent={TutorialTooltip}

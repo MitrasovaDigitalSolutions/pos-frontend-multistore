@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useMemo, useEffect, useDeferredValue } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
@@ -18,6 +17,8 @@ import { id } from "date-fns/locale";
 import {
     IconPrinter,
     IconInfoCircle,
+    IconFilter,
+    IconRotate,
 } from "@tabler/icons-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DataTable } from "@/components/ui/data-table";
@@ -349,65 +350,93 @@ export function PastTransactionsDialog({
         >
             <div className="space-y-3 pt-3 flex-1 flex flex-col min-h-0">
                 {/* Header Top Quick Actions & FilterForm */}
-                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 space-y-3 shrink-0">
-                    <div className="flex items-center justify-between border-b border-slate-200/60 pb-2 flex-wrap gap-2">
-                        <span className="text-xs font-bold text-slate-800">Filter & Pencarian Transaksi</span>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                                refetch();
-                                if (lastTransactionId) onReprint(lastTransactionId);
-                            }}
-                            className="h-8 px-3 rounded-xl border-slate-200 text-slate-700 hover:bg-white font-bold text-xs shrink-0 flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                        >
-                            <IconPrinter size={15} className="text-emerald-600" />
-                            <span>Cetak Terakhir</span>
-                        </Button>
+                <div
+                    id="past-transactions-filter-container"
+                    className="bg-slate-50/90 border border-slate-200/80 rounded-xl p-2.5 sm:p-3 space-y-2 shrink-0 shadow-2xs"
+                >
+                    <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-slate-200/60">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                            <IconFilter size={15} className="text-slate-600" />
+                            <span>Filter & Pencarian Transaksi</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleFilterReset}
+                                className="h-7 px-2 text-slate-500 hover:text-slate-800 text-[11px] font-semibold flex items-center gap-1 cursor-pointer"
+                            >
+                                <IconRotate size={12} />
+                                <span>Reset</span>
+                            </Button>
+                            <Button
+                                type="button"
+                                size="sm"
+                                onClick={filterMethods.handleSubmit(handleFilterSubmit)}
+                                className="h-7 px-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-bold text-[11px] flex items-center gap-1 cursor-pointer shadow-2xs border-none"
+                            >
+                                <IconFilter size={12} />
+                                <span>Terapkan</span>
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                    refetch();
+                                    if (lastTransactionId) onReprint(lastTransactionId);
+                                }}
+                                className="h-7 px-2.5 rounded-lg border-slate-200 text-slate-700 hover:bg-white font-bold text-[11px] shrink-0 flex items-center gap-1 cursor-pointer shadow-2xs"
+                            >
+                                <IconPrinter size={13} className="text-emerald-600" />
+                                <span>Cetak Terakhir</span>
+                            </Button>
+                        </div>
                     </div>
 
-                    <FilterForm
-                        methods={filterMethods}
-                        onSubmit={handleFilterSubmit}
-                        onReset={handleFilterReset}
-                    >
-                        <FormInput<TransactionFilterValues>
-                            name="search"
-                            label="Cari Transaksi"
-                            placeholder="Cari nomor transaksi..."
-                        />
+                    <FormProvider {...filterMethods}>
+                        <form
+                            onSubmit={filterMethods.handleSubmit(handleFilterSubmit)}
+                            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 items-end"
+                        >
+                            <FormInput<TransactionFilterValues>
+                                name="search"
+                                label="Cari Transaksi"
+                                placeholder="Nomor nota / nama..."
+                            />
 
-                        <FormDatePicker<TransactionFilterValues>
-                            name="from"
-                            label="Tanggal Awal"
-                            placeholder="Dari Tanggal"
-                        />
+                            <FormDatePicker<TransactionFilterValues>
+                                name="from"
+                                label="Tanggal Awal"
+                                placeholder="Dari Tanggal"
+                            />
 
-                        <FormDatePicker<TransactionFilterValues>
-                            name="to"
-                            label="Tanggal Akhir"
-                            placeholder="Sampai Tanggal"
-                        />
+                            <FormDatePicker<TransactionFilterValues>
+                                name="to"
+                                label="Tanggal Akhir"
+                                placeholder="Sampai Tanggal"
+                            />
 
-                        <FormSelect<TransactionFilterValues>
-                            name="status"
-                            label="Status"
-                            options={statusOptions}
-                            placeholder="Semua Status"
-                        />
+                            <FormSelect<TransactionFilterValues>
+                                name="status"
+                                label="Status"
+                                options={statusOptions}
+                                placeholder="Semua Status"
+                            />
 
-                        <FormSelect<TransactionFilterValues>
-                            name="payment_method"
-                            label="Pembayaran"
-                            options={paymentMethodOptions}
-                            placeholder="Semua Pembayaran"
-                        />
-                    </FilterForm>
+                            <FormSelect<TransactionFilterValues>
+                                name="payment_method"
+                                label="Pembayaran"
+                                options={paymentMethodOptions}
+                                placeholder="Semua Pembayaran"
+                            />
+                        </form>
+                    </FormProvider>
                 </div>
 
                 {/* Data Table */}
-                <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+                <div id="past-transactions-table-wrap" className="flex-1 min-h-0 overflow-hidden flex flex-col">
                     <DataTable
                         columns={columns}
                         data={transactions}
@@ -419,6 +448,7 @@ export function PastTransactionsDialog({
                         meta={transactionsData?.meta}
                         extraActions={(row: PastTransactionDisplayItem) => (
                             <DataTableTextActionButton
+                                id="btn-reprint-action-first"
                                 variant="emerald"
                                 onClick={() => onReprint(row.uid)}
                                 icon={<IconPrinter size={13} />}

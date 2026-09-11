@@ -1,6 +1,6 @@
 import type { CartItem, HoldTransaction } from "@/features/checkout/types";
 import type { Member } from "@/features/master/members/types";
-import type { TutorialId, TutorialMeta } from "../types/tutorial";
+import type { TutorialId, TutorialMeta, TutorialPreSnapshot } from "../types/tutorial";
 
 export const TUTORIAL_IDS: Record<string, TutorialId> = {
     SESI_KASIR: "sesi_kasir",
@@ -33,14 +33,14 @@ export const TUTORIAL_LIST: TutorialMeta[] = [
         title: "Pembayaran Hutang Member",
         description: "Cara mengecek info tunggakan dan menerima cicilan atau pelunasan hutang member.",
         category: "Pelanggan",
-        stepCount: 4,
+        stepCount: 7,
     },
     {
         id: "hold_recall_void",
         title: "Hold, Recall & Void Transaksi",
         description: "Simpan sementara belanjaan antrean (F5), panggil kembali (F6), dan batalkan keranjang (F10).",
         category: "Antrean & Kasir",
-        stepCount: 6,
+        stepCount: 8,
         badge: "Penting Cepat",
     },
     {
@@ -48,14 +48,14 @@ export const TUTORIAL_LIST: TutorialMeta[] = [
         title: "Mode Transaksi Offline",
         description: "Memahami indikator jaringan, sinkronisasi otomatis, dan keamanan transaksi saat internet mati.",
         category: "Konektivitas",
-        stepCount: 4,
+        stepCount: 5,
     },
     {
         id: "cetak_ulang_struk",
         title: "Cetak Ulang Struk",
         description: "Buka riwayat struk sebelumnya dan cetak kembali receipt belanjaan pelanggan.",
         category: "Riwayat & Struk",
-        stepCount: 4,
+        stepCount: 5,
     },
 ];
 
@@ -120,7 +120,7 @@ export const MOCK_MEMBER_WITH_DEBT: Member = {
 
 export const MOCK_HOLD_TRANSACTION: HoldTransaction = {
     uid: "tutorial-mock-hold-1",
-    nama_transaksi: "Meja 4 - Pak Agus",
+    nama_transaksi: "Pelanggan A (Pending)",
     items_count: 2,
     subtotal: 43000,
     created_at: new Date().toISOString(),
@@ -147,8 +147,88 @@ export const MOCK_HOLD_TRANSACTION: HoldTransaction = {
     member: null,
 };
 
+export const MOCK_OFFLINE_TRANSACTION = {
+    uid: "tutorial-mock-offline-1",
+    payload: {
+        nomor_transaksi: "TRX-OFF-0042",
+        total: 68000,
+        metode_pembayaran: "cash",
+        customer_name: "Pak Bambang",
+    },
+    receiptData: {
+        transaction_id: "TRX-OFF-0042",
+        date: new Date().toISOString(),
+        customer_name: "Pak Bambang",
+        items: [
+            {
+                name: "Kopi Susu Gula Aren",
+                qty: 2,
+                price: 25000,
+                subtotal: 50000,
+            },
+            {
+                name: "Roti Bakar Coklat Keju",
+                qty: 1,
+                price: 18000,
+                subtotal: 18000,
+            },
+        ],
+        subtotal: 68000,
+        tax: 0,
+        discount: 0,
+        total: 68000,
+        payment_method: "cash",
+        cash_amount: 100000,
+        change_amount: 32000,
+    },
+    status: "pending" as const,
+    timestamp: new Date().toISOString(),
+};
+
 // Timing configurations
 export const CURSOR_MOVE_DURATION = 550; // ms for smooth glide
 export const CLICK_RIPPLE_DURATION = 350; // ms for ripple pulse
 export const TYPING_SPEED = 60; // ms per simulated character
 export const ACTION_WAIT_AFTER_CLICK = 300; // ms
+
+// ─── Tutorial Mock Data Detection & Filter Utilities ─────────────────────────
+export function isMockProductId(id: string): boolean {
+    return typeof id === "string" && id.startsWith("tutorial-mock-");
+}
+
+export function isMockCartItem(item: CartItem): boolean {
+    return isMockProductId(item.product_uid);
+}
+
+export function isMockMember(member: Member | null): boolean {
+    return Boolean(member && typeof member.uid === "string" && member.uid.startsWith("tutorial-mock-"));
+}
+
+export function isMockHold(hold: HoldTransaction): boolean {
+    return typeof hold.uid === "string" && hold.uid.startsWith("tutorial-mock-");
+}
+
+export function isMockNamaTransaksi(name: string): boolean {
+    if (!name) return false;
+    const trimmed = name.trim();
+    return (
+        trimmed === "Meja 5 - Budi" ||
+        trimmed === "Meja 4 - Pak Agus" ||
+        trimmed === "Pesanan Meja 12" ||
+        trimmed === "Pelanggan A (Pending)" ||
+        trimmed === "Pelanggan B" ||
+        trimmed.startsWith("Meja 5 - Budi")
+    );
+}
+
+export function filterOutMockData(snapshot: TutorialPreSnapshot): TutorialPreSnapshot {
+    return {
+        cart: snapshot.cart.filter((item) => !isMockCartItem(item)),
+        selectedMember: isMockMember(snapshot.selectedMember) ? null : snapshot.selectedMember,
+        discountType: snapshot.discountType || "nominal",
+        discountValue: snapshot.discountValue || 0,
+        namaTransaksi: isMockNamaTransaksi(snapshot.namaTransaksi) ? "" : (snapshot.namaTransaksi || ""),
+        holdList: snapshot.holdList.filter((h) => !isMockHold(h)),
+    };
+}
+

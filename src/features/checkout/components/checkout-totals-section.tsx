@@ -45,6 +45,8 @@ interface CheckoutTotalsSectionProps {
     namaTransaksi: string;
     onNamaTransaksiChange: (name: string) => void;
     validateCanPay?: () => boolean;
+    isPayDebtOpen?: boolean;
+    onPayDebtOpenChange?: (open: boolean) => void;
 }
 
 export function CheckoutTotalsSection({
@@ -71,11 +73,15 @@ export function CheckoutTotalsSection({
     namaTransaksi,
     onNamaTransaksiChange,
     validateCanPay,
+    isPayDebtOpen: externalPayDebtOpen,
+    onPayDebtOpenChange,
 }: CheckoutTotalsSectionProps) {
     const [localMembers, setLocalMembers] = useState<Member[]>([]);
     const [isMembersLoading, setIsMembersLoading] = useState(false);
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
-    const [isPayDebtOpen, setIsPayDebtOpen] = useState(false);
+    const [internalPayDebtOpen, setInternalPayDebtOpen] = useState(false);
+    const isPayDebtOpen = externalPayDebtOpen !== undefined ? externalPayDebtOpen : internalPayDebtOpen;
+    const setIsPayDebtOpen = onPayDebtOpenChange || setInternalPayDebtOpen;
     const getTaxRate = useSettingsStore((state) => state.getTaxRate);
     const ppnRate = getTaxRate();
     const getSetting = useSettingsStore((state) => state.getSetting);
@@ -322,6 +328,7 @@ export function CheckoutTotalsSection({
                                         </span>
                                     </div>
                                     <button
+                                        id="btn-pay-debt-action"
                                         type="button"
                                         onClick={() => {
                                             if (validateCanPay && !validateCanPay()) {

@@ -63,7 +63,7 @@ export function CashInput({
             : "bg-slate-50 border-slate-100 text-slate-500";
 
     return (
-        <div className="space-y-2">
+        <div id="pay-debt-cash-input" className="space-y-2">
             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
                 Uang Diterima dari Member
             </label>

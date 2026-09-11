@@ -17,6 +17,7 @@ import { useAppRouter } from "@/hooks/use-app-router";
 import { canAccessAdmin } from "@/constants/roles";
 import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useTutorialStore } from "@/stores/tutorial-store";
 
 interface BukaShiftModalProps {
     open: boolean;
@@ -64,7 +65,15 @@ export function BukaShiftModal({
         }
     }, [open, reset]);
 
+    const isTutorialRunning = useTutorialStore((state) => state.isRunning);
+
     const onSubmit = async (data: OpenCashDrawerInput) => {
+        if (isTutorialRunning) {
+            toast.success("Shift kasir berhasil dibuka (Demo Tutorial)!");
+            onOpenChange?.(false);
+            return;
+        }
+
         try {
             const res = await openMutation.mutateAsync({
                 payload: {
@@ -87,7 +96,7 @@ export function BukaShiftModal({
         }
     };
 
-    const isFormDisabled = openMutation.isPending || isSubmitting || isLoading || !isOnline;
+    const isFormDisabled = !isTutorialRunning && (openMutation.isPending || isSubmitting || isLoading || !isOnline);
 
     return (
         <>
@@ -124,12 +133,14 @@ export function BukaShiftModal({
                                 Koneksi internet terputus. Anda harus online untuk dapat membuka shift laci kasir baru. Silakan hubungkan komputer ke jaringan internet.
                             </div>
                         )}
-                        <FormNominalInput<OpenCashDrawerInput>
-                            name="opening_balance"
-                            label="Saldo Awal (Rp)"
-                            placeholder="0"
-                            disabled={isFormDisabled}
-                        />
+                        <div id="cash-drawer-opening-balance">
+                            <FormNominalInput<OpenCashDrawerInput>
+                                name="opening_balance"
+                                label="Saldo Awal (Rp)"
+                                placeholder="0"
+                                disabled={isFormDisabled}
+                            />
+                        </div>
 
                         <FormInput<OpenCashDrawerInput>
                             name="opening_note"
@@ -141,6 +152,7 @@ export function BukaShiftModal({
 
                         <div className="space-y-3 pt-2">
                             <Button
+                                id="cash-drawer-start-shift-btn"
                                 type="submit"
                                 disabled={isFormDisabled}
                                 className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-emerald-600/10 active:scale-[0.99] transition-all disabled:opacity-50 border-none"

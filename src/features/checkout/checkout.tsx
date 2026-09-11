@@ -44,6 +44,7 @@ export function Checkout() {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [isOfflineTransactionsOpen, setIsOfflineTransactionsOpen] = useState(false);
     const [isPastTransactionsOpen, setIsPastTransactionsOpen] = useState(false);
+    const [isPayDebtOpen, setIsPayDebtOpen] = useState(false);
     const [activeMobileTab, setActiveMobileTab] = useState<"cart" | "totals">("cart");
 
     const [localDrawerSession, setLocalDrawerSession] = useState<CashDrawerSession | null>(null);
@@ -61,6 +62,9 @@ export function Checkout() {
     const activeDrawerSession = isOnline ? currentDrawerData?.data : localDrawerSession;
 
     const validateCanPay = useCallback(() => {
+        if (useTutorialStore.getState().isRunning) {
+            return true;
+        }
         if (!activeDrawerSession || !session?.cashDrawerSessionId) {
             toast.warning("Silakan buka shift laci kasir terlebih dahulu untuk melakukan transaksi.");
             setIsBukaShiftOpen(true);
@@ -283,6 +287,8 @@ export function Checkout() {
                         namaTransaksi={state.namaTransaksi}
                         onNamaTransaksiChange={state.setNamaTransaksi}
                         validateCanPay={validateCanPay}
+                        isPayDebtOpen={isPayDebtOpen}
+                        onPayDebtOpenChange={setIsPayDebtOpen}
                     />
                 </div>
             </div>
@@ -339,6 +345,8 @@ export function Checkout() {
                 title="Batal Transaksi"
                 description="Apakah Anda yakin ingin membatalkan seluruh transaksi ini? Keranjang belanja akan dikosongkan."
                 confirmText="Ya, Batalkan"
+                confirmBtnId="btn-confirm-void"
+                contentId="void-confirm-dialog"
                 cancelText="Kembali"
                 variant="danger"
                 onConfirm={state.handleConfirmVoid}
@@ -473,10 +481,12 @@ export function Checkout() {
                     if (dialog === "pay") state.setIsPayModalOpen(true);
                     if (dialog === "hold_list") state.setIsHoldListOpen(true);
                     if (dialog === "cash_drawer") {
-                        if (activeDrawerSession) setIsInfoSesiOpen(true);
-                        else setIsBukaShiftOpen(true);
+                        setIsBukaShiftOpen(true);
                     }
                     if (dialog === "reprint") setIsPastTransactionsOpen(true);
+                    if (dialog === "offline") setIsOfflineTransactionsOpen(true);
+                    if (dialog === "pay_debt") setIsPayDebtOpen(true);
+                    if (dialog === "void_confirm") state.setIsVoidConfirmOpen(true);
                 }}
                 closeDialog={(dialog) => {
                     if (dialog === "pay") state.setIsPayModalOpen(false);
@@ -486,6 +496,9 @@ export function Checkout() {
                         setIsBukaShiftOpen(false);
                     }
                     if (dialog === "reprint") setIsPastTransactionsOpen(false);
+                    if (dialog === "offline") setIsOfflineTransactionsOpen(false);
+                    if (dialog === "pay_debt") setIsPayDebtOpen(false);
+                    if (dialog === "void_confirm") state.setIsVoidConfirmOpen(false);
                 }}
                 setActiveMobileTab={setActiveMobileTab}
             />

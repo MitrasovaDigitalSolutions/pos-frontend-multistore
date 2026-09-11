@@ -9,6 +9,15 @@ export type TutorialId =
     | "transaksi_offline"
     | "cetak_ulang_struk";
 
+export type TutorialDialogType =
+    | "pay"
+    | "hold_list"
+    | "cash_drawer"
+    | "reprint"
+    | "offline"
+    | "pay_debt"
+    | "void_confirm";
+
 export type TutorialAction =
     | { type: "inject_cart"; items: CartItem[] }
     | { type: "inject_member"; member: Member }
@@ -17,11 +26,13 @@ export type TutorialAction =
     | { type: "set_nama"; nama: string }
     | { type: "click"; target: string }
     | { type: "type_text"; target: string; text: string }
-    | { type: "open_dialog"; dialog: "pay" | "hold_list" | "cash_drawer" | "reprint" }
-    | { type: "close_dialog"; dialog: "pay" | "hold_list" | "cash_drawer" | "reprint" }
+    | { type: "open_dialog"; dialog: TutorialDialogType }
+    | { type: "close_dialog"; dialog: TutorialDialogType }
     | { type: "wait"; ms: number }
     | { type: "clear_cart" }
+    | { type: "clear_input"; target: string }
     | { type: "inject_hold"; hold: HoldTransaction }
+    | { type: "clear_hold" }
     | { type: "sequence"; actions: TutorialAction[] };
 
 export interface TutorialStep {
