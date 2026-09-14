@@ -114,16 +114,19 @@ class PrinterService {
                         "Flutter printer bridge tidak tersedia"
                     )
                 );
+    
                 return;
             }
-
+    
             const requestId = crypto.randomUUID();
-
+    
             this.pendingRequests.set(requestId, {
-                resolve,
+                resolve: (data: unknown) => {
+                    resolve(data as T);
+                },
                 reject,
             });
-
+    
             window.FlutterBridge!.postMessage(
                 JSON.stringify({
                     action,
