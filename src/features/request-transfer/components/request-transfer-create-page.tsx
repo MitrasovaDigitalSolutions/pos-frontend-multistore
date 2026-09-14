@@ -7,6 +7,10 @@ import { useStores } from "@/features/stores/api/stores-api";
 import { useAllSupplierSales } from "@/features/supplier-sales/api/supplier-sales-api";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useActiveStoreStore } from "@/stores/active-store-store";
+import { useTransferTutorialStore } from "@/stores/transfer-tutorial-store";
+import { MOCK_REQUEST_STORE } from "@/features/stock-transfer/tutorial/constants/transfer-tutorial-constants";
+import type { TransferTutorialPreSnapshot } from "@/features/stock-transfer/tutorial/types/transfer-tutorial";
+import type { Store } from "@/features/stores/types";
 import { useSearchParams } from "next/navigation";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { toast } from "sonner";
@@ -27,6 +31,7 @@ export function RequestTransferCreatePage() {
 
     const createRequest = useCreateRequestTransfer();
     const activeStoreUid = useActiveStoreStore((state) => state.activeStoreUid);
+    const isTutorialRunning = useTransferTutorialStore((state) => state.isRunning);
 
     const { data: storesRes, isLoading: isLoadingStores } = useStores({ per_page: 1000 });
     const { data: suppliers, isLoading: isLoadingSuppliers } = useAllSuppliers();
@@ -34,14 +39,83 @@ export function RequestTransferCreatePage() {
 
     // Filter out current active store so user only requests from other stores
     const stores = useMemo(() => {
-        return (storesRes?.data || []).filter((s) => !activeStoreUid || s.uid !== activeStoreUid);
-    }, [storesRes?.data, activeStoreUid]);
+        const filtered = (storesRes?.data || []).filter((s) => !activeStoreUid || s.uid !== activeStoreUid);
+        if (isTutorialRunning && !filtered.some((s) => s.uid === MOCK_REQUEST_STORE.uid)) {
+            return [MOCK_REQUEST_STORE as unknown as Store, ...filtered];
+        }
+        return filtered;
+    }, [storesRes?.data, activeStoreUid, isTutorialRunning]);
 
     const [requestTo, setRequestTo] = useState("");
     const [supplierUid, setSupplierUid] = useState("");
     const [supplierSalesUid, setSupplierSalesUid] = useState<string | null>(null);
     const [catatan, setCatatan] = useState("");
     const [items, setItems] = useState<RequestLineItem[]>([]);
+
+    // Listen to custom events from transfer tutorial
+    useEffect(() => {
+        const handleSetField = (e: Event) => {
+            const customEvent = e as CustomEvent<{ field: string; value: unknown }>;
+            if (customEvent.detail) {
+                const { field, value } = customEvent.detail;
+                if (field === "request_to") setRequestTo(String(value || ""));
+                if (field === "supplier_uid") setSupplierUid(String(value || ""));
+                if (field === "supplier_sales_uid") setSupplierSalesUid(value ? String(value) : null);
+                if (field === "catatan") setCatatan(String(value || ""));
+            }
+        };
+
+        const handleInjectItems = (e: Event) => {
+            const customEvent = e as CustomEvent<{ items: RequestLineItem[] }>;
+            if (customEvent.detail?.items) {
+                setItems(customEvent.detail.items);
+            }
+        };
+
+        const handleClearItems = () => {
+            setItems([]);
+        };
+
+        const handleRestoreSnapshot = (e: Event) => {
+            const customEvent = e as CustomEvent<TransferTutorialPreSnapshot>;
+            if (customEvent.detail) {
+                const snap = customEvent.detail;
+                setRequestTo(snap.requestTo);
+                setSupplierUid(snap.supplierUid);
+                setSupplierSalesUid(snap.supplierSalesUid);
+                setCatatan(snap.catatan);
+                setItems(snap.items);
+            }
+        };
+
+        window.addEventListener("transfer-tutorial-set-field", handleSetField);
+        window.addEventListener("transfer-tutorial-inject-items", handleInjectItems);
+        window.addEventListener("transfer-tutorial-clear-items", handleClearItems);
+        window.addEventListener("transfer-tutorial-restore-snapshot", handleRestoreSnapshot);
+
+        return () => {
+            window.removeEventListener("transfer-tutorial-set-field", handleSetField);
+            window.removeEventListener("transfer-tutorial-inject-items", handleInjectItems);
+            window.removeEventListener("transfer-tutorial-clear-items", handleClearItems);
+            window.removeEventListener("transfer-tutorial-restore-snapshot", handleRestoreSnapshot);
+        };
+    }, []);
+
+    // Save pre-snapshot on tutorial start
+    useEffect(() => {
+        if (isTutorialRunning) {
+            const currentSnapshot = useTransferTutorialStore.getState().preSnapshot;
+            if (!currentSnapshot) {
+                useTransferTutorialStore.getState().saveSnapshot({
+                    requestTo,
+                    supplierUid,
+                    supplierSalesUid,
+                    catatan,
+                    items,
+                });
+            }
+        }
+    }, [isTutorialRunning, requestTo, supplierUid, supplierSalesUid, catatan, items]);
 
     const isInitializedRef = useRef(false);
 
@@ -177,6 +251,12 @@ export function RequestTransferCreatePage() {
         }
         if (!hasValidItems) {
             toast.error("Minimal 1 item dengan kuantitas lebih dari 0.");
+            return;
+        }
+
+        if (isTutorialRunning || items.some((it) => it.product_uid.startsWith("mock-"))) {
+            toast.success("[Demo Simulasi] Request transfer berhasil dikirim.");
+            router.push(ROUTES.ADMIN_REQUEST_TRANSFERS);
             return;
         }
 

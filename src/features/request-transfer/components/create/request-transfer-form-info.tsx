@@ -67,7 +67,7 @@ export function RequestTransferFormInfo({
       {/* Selectors Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {/* Target Store (request_to) Selector */}
-        <div className="space-y-1">
+        <div id="req-target-store" className="space-y-1">
           <div className="flex items-center justify-between">
             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
               Request Ke <span className="text-rose-500">*</span>
@@ -88,48 +88,51 @@ export function RequestTransferFormInfo({
           />
         </div>
 
-        {/* Supplier Selector */}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-              Supplier
-            </label>
-            <span className="text-[10px] text-slate-400 font-normal">(opsional)</span>
+        {/* Supplier & Catalog Box */}
+        <div id="req-supplier-catalog-box" className="col-span-1 sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          {/* Supplier Selector */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                Supplier
+              </label>
+              <span className="text-[10px] text-slate-400 font-normal">(opsional)</span>
+            </div>
+            <CommandSelect
+              value={supplierUid}
+              onChange={onSupplierChange}
+              options={(suppliers || []).map((s) => ({ value: s.uid, label: s.nama }))}
+              placeholder="Pilih supplier (opsional)..."
+              searchPlaceholder="Cari nama supplier..."
+              isLoading={isLoadingSuppliers}
+              disabled={disabled}
+            />
           </div>
-          <CommandSelect
-            value={supplierUid}
-            onChange={onSupplierChange}
-            options={(suppliers || []).map((s) => ({ value: s.uid, label: s.nama }))}
-            placeholder="Pilih supplier (opsional)..."
-            searchPlaceholder="Cari nama supplier..."
-            isLoading={isLoadingSuppliers}
-            disabled={disabled}
-          />
-        </div>
 
-        {/* Catalog Selector */}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-              Katalog Sales
-            </label>
-            <span className="text-[10px] text-slate-400 font-normal">(opsional)</span>
+          {/* Catalog Selector */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                Katalog Sales
+              </label>
+              <span className="text-[10px] text-slate-400 font-normal">(opsional)</span>
+            </div>
+            <CommandSelect
+              value={supplierSalesUid ?? ""}
+              onChange={onCatalogChange}
+              options={salesOptions}
+              placeholder="Pilih katalog sales..."
+              searchPlaceholder="Cari katalog sales..."
+              isLoading={isLoadingSales}
+              disabled={disabled}
+              emptyMessage="Tidak ada katalog sales"
+            />
           </div>
-          <CommandSelect
-            value={supplierSalesUid ?? ""}
-            onChange={onCatalogChange}
-            options={salesOptions}
-            placeholder="Pilih katalog sales..."
-            searchPlaceholder="Cari katalog sales..."
-            isLoading={isLoadingSales}
-            disabled={disabled}
-            emptyMessage="Tidak ada katalog sales"
-          />
         </div>
       </div>
 
       {/* Catatan Field */}
-      <div className="space-y-1 pt-1">
+      <div id="req-notes-box" className="space-y-1 pt-1">
         <div className="flex items-center justify-between">
           <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
             <IconNotes size={14} className="text-slate-400" />
@@ -139,6 +142,7 @@ export function RequestTransferFormInfo({
           <span className="text-[10px] text-slate-400">{catatan.length}/300</span>
         </div>
         <textarea
+          id="req-notes-input"
           value={catatan}
           onChange={(e) => onCatatanChange(e.target.value)}
           disabled={disabled}
