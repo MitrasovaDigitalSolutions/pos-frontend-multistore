@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
-import { IconArrowLeft, IconBarcode, IconCheck, IconUpload } from "@tabler/icons-react";
+import { IconArrowLeft, IconBarcode, IconCheck, IconSparkles, IconUpload } from "@tabler/icons-react";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useState } from "react";
 import { FormProvider } from "react-hook-form";
@@ -20,6 +20,9 @@ import { ReturnItemsTable } from "./return-items-table";
 import { ReturnInstructionPanel } from "./return-instruction-panel";
 import { useReturnFlow } from "@/features/purchase/hooks/use-return-flow";
 import { ReturnHeaderCard } from "./return-header-card";
+import { usePurchaseTutorialStore } from "@/stores/purchase-tutorial-store";
+import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
+import { MOCK_RETURN_HEADER_INPUT, MOCK_RETURN_ITEMS } from "@/features/purchase/tutorial/constants/purchase-tutorial-constants";
 
 interface ReturnItemsPageProps {
     returnId: string;
@@ -72,6 +75,11 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: string; retur
     const [activeReturn, setActiveReturn] = useState<PurchaseReturn | undefined>(returnObj);
     const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
 
+    const isPurchaseTutorialRunning = usePurchaseTutorialStore((state) => state.isRunning);
+    const activeTutorial = usePurchaseTutorialStore((state) => state.activeTutorial);
+    const isReturnTutorial = isPurchaseTutorialRunning && activeTutorial === "return_create";
+    const tutorialDialog = usePurchaseTutorialStore((state) => state.activeDialog);
+
     const handleSaveSuccess = (uid: string, responseData?: PurchaseReturn) => {
         window.history.replaceState(null, "", `/admin/purchase/return/${uid}/items`);
         setActiveId(uid);
@@ -104,6 +112,8 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: string; retur
         returnObj: activeReturn,
         onSaveSuccess: handleSaveSuccess,
     });
+
+    const effectiveFinalizeOpen = isReturnTutorial ? tutorialDialog === "return_finalize" : isFinalizeOpen;
 
     const reasons = [
         { value: "damaged", label: "Rusak / Cacat" },
@@ -149,12 +159,44 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: string; retur
                     {/* Scanner and Items Table */}
                     <div className="lg:col-span-8 space-y-6">
                         {/* Barcode scanner box */}
-                        <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
-                            <div className="flex items-center gap-2 pb-3 border-b border-slate-50">
-                                <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg border border-emerald-100/30">
-                                    <IconBarcode size={18} />
+                        <div id="ret-barcode-box" className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
+                            <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-50">
+                                <div className="flex items-center gap-2">
+                                    <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg border border-emerald-100/30">
+                                        <IconBarcode size={18} />
+                                    </div>
+                                    <h3 className="text-xs font-bold text-slate-900 font-sans">Scan Barcode Retur</h3>
                                 </div>
-                                <h3 className="text-xs font-bold text-slate-900 font-sans">Scan Barcode Retur</h3>
+
+                                {isPurchaseTutorialRunning && (
+                                    <button
+                                        type="button"
+                                        id="btn-ret-seeder"
+                                        onClick={() => {
+                                            const retStore = getPurchaseItemsStore("new", "return");
+                                            retStore.setState({
+                                                items: [...MOCK_RETURN_ITEMS],
+                                                headerData: {
+                                                    purchase_order_uid: MOCK_RETURN_HEADER_INPUT.receiving_uid,
+                                                    supplier_uid: MOCK_RETURN_HEADER_INPUT.supplier_uid,
+                                                    tanggal_terima: MOCK_RETURN_HEADER_INPUT.tanggal_retur,
+                                                    catatan: MOCK_RETURN_HEADER_INPUT.catatan,
+                                                },
+                                                lastUpdated: Date.now(),
+                                            });
+                                            headerForm.setValue("receiving_uid", MOCK_RETURN_HEADER_INPUT.receiving_uid, { shouldValidate: true });
+                                            headerForm.setValue("supplier_uid", MOCK_RETURN_HEADER_INPUT.supplier_uid, { shouldValidate: true });
+                                            headerForm.setValue("tanggal_retur", MOCK_RETURN_HEADER_INPUT.tanggal_retur, { shouldValidate: true });
+                                            headerForm.setValue("catatan", MOCK_RETURN_HEADER_INPUT.catatan, { shouldValidate: true });
+                                            toast.success("Seeder barang demo retur berhasil ditambahkan!");
+                                        }}
+                                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-[11px] font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                                        title="Klik untuk mengisi data seeder contoh retur"
+                                    >
+                                        <IconSparkles size={13} className="text-emerald-600 animate-pulse" />
+                                        <span>Seeder Demo Retur</span>
+                                    </button>
+                                )}
                             </div>
 
                             <BarcodeInput
@@ -194,25 +236,32 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: string; retur
                 </div>
 
                 {/* Sticky Bottom Bar */}
-                <BulkSubmitBar
-                    itemCount={activeItems.reduce((acc, i) => acc + i.kuantitas, 0)}
-                    productCount={activeItems.length}
-                    total={activeTotalValue}
-                    onSubmit={handleFinalizeClick}
-                    onSecondarySubmit={handleSaveClick}
-                    onReset={handleResetClick}
-                    isSubmitting={isPending}
-                    submitLabel="Proses Retur"
-                    submitIcon={<IconCheck size={16} />}
-                    secondarySubmitLabel="Simpan Retur"
-                    secondarySubmitIcon={<IconUpload size={16} />}
-                />
+                <div id="ret-submit-bar">
+                    <BulkSubmitBar
+                        itemCount={activeItems.reduce((acc, i) => acc + i.kuantitas, 0)}
+                        productCount={activeItems.length}
+                        total={activeTotalValue}
+                        onSubmit={handleFinalizeClick}
+                        onSecondarySubmit={handleSaveClick}
+                        onReset={handleResetClick}
+                        isSubmitting={isPending}
+                        submitLabel="Proses Retur"
+                        submitIcon={<IconCheck size={16} />}
+                        secondarySubmitLabel="Simpan Retur"
+                        secondarySubmitIcon={<IconUpload size={16} />}
+                    />
+                </div>
 
                 {/* Return Finalize Dialog */}
-                {(activeReturn || (isCurrentNew && isFinalizeOpen)) && (
+                {(activeReturn || (isCurrentNew && effectiveFinalizeOpen)) && (
                     <ReturnFinalizeDialog
-                        open={isFinalizeOpen}
-                        onOpenChange={setIsFinalizeOpen}
+                        open={effectiveFinalizeOpen}
+                        onOpenChange={(val) => {
+                            setIsFinalizeOpen(val);
+                            if (isReturnTutorial) {
+                                usePurchaseTutorialStore.getState().setActiveDialog(val ? "return_finalize" : null);
+                            }
+                        }}
                         returnObj={activeReturn || ({
                             nomor_retur: "Akan Dibuat Otomatis",
                             total_nominal: activeTotalValue,

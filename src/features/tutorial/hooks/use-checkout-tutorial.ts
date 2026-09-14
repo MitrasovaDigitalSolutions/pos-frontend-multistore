@@ -297,6 +297,7 @@ export function useCheckoutTutorial(controls: TutorialContextControls) {
         return tutorialSteps.map((s, idx) => {
             const isLastStep = idx === tutorialSteps.length - 1;
             const isCentered = isLastStep || s.placement === "center" || s.target === "body";
+            const isOverlayNav = Boolean(s.overlayNav || s.variant === "overlay_nav" || s.variant === "banner");
 
             return {
                 target: isCentered ? "body" : s.target,
@@ -313,6 +314,10 @@ export function useCheckoutTutorial(controls: TutorialContextControls) {
                 spotlightClicks: false,
                 floatingOptions: {
                     strategy: "fixed",
+                },
+                data: {
+                    overlayNav: isOverlayNav,
+                    variant: s.variant || (isOverlayNav ? "overlay_nav" : "tooltip"),
                 },
             };
         });

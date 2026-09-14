@@ -16,19 +16,46 @@ import {
     type Step,
 } from "react-joyride";
 import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
-import { isMockPurchaseItem, MOCK_PO_ITEMS, MOCK_RECEIVING_ITEMS } from "../constants/purchase-tutorial-constants";
+import {
+    isMockPurchaseItem,
+    MOCK_PO_ITEMS,
+    MOCK_RECEIVING_ITEMS,
+    MOCK_RETURN_ITEMS,
+} from "../constants/purchase-tutorial-constants";
 import { useAppRouter } from "@/hooks/use-app-router";
+
+function getVisibleElement(selector: string): Element | null {
+    if (typeof document === "undefined") return null;
+    if (!selector || selector === "body") return document.body;
+
+    const elements = document.querySelectorAll(selector);
+    if (elements.length === 0) return null;
+
+    // Prioritize element with visible bounding rect (> 0)
+    for (let i = 0; i < elements.length; i++) {
+        const el = elements[i];
+        const rect = el.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+            return el;
+        }
+    }
+
+    return elements[0] || null;
+}
 
 async function waitForElement(selector: string, timeout = 2500): Promise<Element | null> {
     if (typeof document === "undefined") return null;
     if (selector === "body") return document.body;
     const start = Date.now();
     while (Date.now() - start < timeout) {
-        const el = document.querySelector(selector);
-        if (el) return el;
+        const el = getVisibleElement(selector);
+        if (el) {
+            const rect = el.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0) return el;
+        }
         await new Promise((r) => setTimeout(r, 50));
     }
-    return document.querySelector(selector);
+    return getVisibleElement(selector);
 }
 
 async function runPurchaseAction(
@@ -37,6 +64,7 @@ async function runPurchaseAction(
 ): Promise<void> {
     const poStore = getPurchaseItemsStore("new", "po");
     const recStore = getPurchaseItemsStore("new", "receiving");
+    const retStore = getPurchaseItemsStore("new", "return");
 
     switch (action.type) {
         case "inject_po_items": {
@@ -65,6 +93,31 @@ async function runPurchaseAction(
             break;
         }
 
+        case "inject_return_items": {
+            retStore.setState({
+                items: action.items && action.items.length > 0 ? [...action.items] : [...MOCK_RETURN_ITEMS],
+                lastUpdated: Date.now(),
+            });
+            break;
+        }
+
+        case "clear_return_items": {
+            retStore.getState().clearAll();
+            break;
+        }
+
+        case "set_return_field": {
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(
+                    new CustomEvent("purchase-tutorial-set-return-field", {
+                        detail: { field: action.field, value: action.value },
+                    })
+                );
+            }
+            await new Promise((r) => setTimeout(r, 150));
+            break;
+        }
+
         case "open_dialog": {
             usePurchaseTutorialStore.getState().setActiveDialog(action.dialog);
             await new Promise((r) => setTimeout(r, 150));
@@ -73,6 +126,38 @@ async function runPurchaseAction(
 
         case "close_dialog": {
             usePurchaseTutorialStore.getState().setActiveDialog(null);
+            await new Promise((r) => setTimeout(r, 150));
+            break;
+        }
+
+        case "set_payment_field": {
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(
+                    new CustomEvent("purchase-tutorial-set-payment-field", {
+                        detail: { field: action.field, value: action.value },
+                    })
+                );
+            }
+            await new Promise((r) => setTimeout(r, 150));
+            break;
+        }
+
+        case "inject_payment_data": {
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(
+                    new CustomEvent("purchase-tutorial-inject-payment-data", {
+                        detail: action.data,
+                    })
+                );
+            }
+            await new Promise((r) => setTimeout(r, 150));
+            break;
+        }
+
+        case "clear_payment_data": {
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(new CustomEvent("purchase-tutorial-clear-payment-data"));
+            }
             await new Promise((r) => setTimeout(r, 150));
             break;
         }
@@ -169,7 +254,7 @@ export function usePurchaseTutorial() {
             updateCursor({ visible: false });
             return;
         }
-        const el = document.querySelector(targetSelector);
+        const el = getVisibleElement(targetSelector);
         if (el) {
             const rect = el.getBoundingClientRect();
             updateCursor({
@@ -185,7 +270,7 @@ export function usePurchaseTutorial() {
     // Ensure target element is scrolled into view immediately
     const ensureElementVisible = useCallback((targetSelector: string) => {
         if (typeof document === "undefined" || !targetSelector || targetSelector === "body") return;
-        const el = document.querySelector(targetSelector);
+        const el = getVisibleElement(targetSelector);
         if (el) {
             el.scrollIntoView({ behavior: "auto", block: "center", inline: "center" });
             window.dispatchEvent(new Event("resize"));
@@ -195,24 +280,40 @@ export function usePurchaseTutorial() {
     // Cleanup & Restore Snapshot
     const cleanupAndRestore = useCallback(() => {
         const activeTut = usePurchaseTutorialStore.getState().activeTutorial;
-        const scope = activeTut === "receiving_create" ? "receiving" : "po";
-        const snap = usePurchaseTutorialStore.getState().preSnapshot;
-        const store = getPurchaseItemsStore("new", scope);
 
-        if (snap) {
-            const cleanItems = snap.items.filter((i) => !isMockPurchaseItem(i));
-            store.setState({
-                items: cleanItems,
-                headerData: snap.headerData,
-                lastUpdated: Date.now(),
-            });
+        if (activeTut === "po_create" || activeTut === "receiving_create" || activeTut === "return_create") {
+            const scope = activeTut === "receiving_create" ? "receiving" : activeTut === "return_create" ? "return" : "po";
+            const snap = usePurchaseTutorialStore.getState().preSnapshot;
+            const store = getPurchaseItemsStore("new", scope);
+
+            if (snap) {
+                const cleanItems = snap.items.filter((i) => !isMockPurchaseItem(i));
+                store.setState({
+                    items: cleanItems,
+                    headerData: snap.headerData,
+                    lastUpdated: Date.now(),
+                });
+                clearSnapshot();
+            } else {
+                const cleanItems = store.getState().items.filter((i) => !isMockPurchaseItem(i));
+                store.setState({
+                    items: cleanItems,
+                    lastUpdated: Date.now(),
+                });
+            }
+        }
+
+        if (activeTut === "payment_create") {
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(new CustomEvent("purchase-tutorial-clear-payment-data"));
+            }
             clearSnapshot();
-        } else {
-            const cleanItems = store.getState().items.filter((i) => !isMockPurchaseItem(i));
-            store.setState({
-                items: cleanItems,
-                lastUpdated: Date.now(),
-            });
+        }
+
+        if (activeTut === "return_create") {
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(new CustomEvent("purchase-tutorial-clear-return-data"));
+            }
         }
 
         // Clean up DOM input fields
@@ -227,6 +328,24 @@ export function usePurchaseTutorial() {
             if (recBarcodeInput) {
                 setInputValueWithEvents(recBarcodeInput, "");
                 recBarcodeInput.blur();
+            }
+
+            const payRefInput = document.querySelector("#pay-ref-input") as HTMLInputElement | null;
+            if (payRefInput) {
+                setInputValueWithEvents(payRefInput, "");
+                payRefInput.blur();
+            }
+
+            const payNotesInput = document.querySelector("#pay-notes-input") as HTMLInputElement | null;
+            if (payNotesInput) {
+                setInputValueWithEvents(payNotesInput, "");
+                payNotesInput.blur();
+            }
+
+            const retNotesInput = document.querySelector("#ret-notes-input") as HTMLInputElement | null;
+            if (retNotesInput) {
+                setInputValueWithEvents(retNotesInput, "");
+                retNotesInput.blur();
             }
 
             // Remove any lingering Joyride portal
@@ -267,6 +386,7 @@ export function usePurchaseTutorial() {
         return tutorialSteps.map((s, idx) => {
             const isLastStep = idx === tutorialSteps.length - 1;
             const isCentered = isLastStep || s.placement === "center" || s.target === "body";
+            const isOverlayNav = Boolean(s.overlayNav || s.variant === "overlay_nav" || s.variant === "banner");
 
             return {
                 target: isCentered ? "body" : s.target,
@@ -283,6 +403,10 @@ export function usePurchaseTutorial() {
                 spotlightClicks: false,
                 floatingOptions: {
                     strategy: "fixed",
+                },
+                data: {
+                    overlayNav: isOverlayNav,
+                    variant: s.variant || (isOverlayNav ? "overlay_nav" : "tooltip"),
                 },
             };
         });
@@ -332,6 +456,12 @@ export function usePurchaseTutorial() {
                                 "clear_po_items",
                                 "inject_receiving_items",
                                 "clear_receiving_items",
+                                "inject_return_items",
+                                "clear_return_items",
+                                "set_payment_field",
+                                "inject_payment_data",
+                                "clear_payment_data",
+                                "set_return_field",
                                 "open_dialog",
                                 "close_dialog",
                             ].includes(nextStep.action.type)
@@ -371,11 +501,11 @@ export function usePurchaseTutorial() {
 
                         if (prevIndex < tutorialSteps.length - 1) {
                             const activeTut = usePurchaseTutorialStore.getState().activeTutorial;
-                            const scope = activeTut === "receiving_create" ? "receiving" : "po";
+                            const scope = activeTut === "receiving_create" ? "receiving" : activeTut === "return_create" ? "return" : "po";
                             const store = getPurchaseItemsStore("new", scope);
                             if (store.getState().items.length === 0) {
                                 store.setState({
-                                    items: scope === "receiving" ? [...MOCK_RECEIVING_ITEMS] : [...MOCK_PO_ITEMS],
+                                    items: scope === "receiving" ? [...MOCK_RECEIVING_ITEMS] : scope === "return" ? [...MOCK_RETURN_ITEMS] : [...MOCK_PO_ITEMS],
                                     lastUpdated: Date.now(),
                                 });
                             }
@@ -397,7 +527,7 @@ export function usePurchaseTutorial() {
                     // Execute step action (sequence, seeder typing, notes, etc.)
                     if (
                         step.action &&
-                        !["clear_po_items", "clear_receiving_items", "navigate"].includes(step.action.type)
+                        !["clear_po_items", "clear_receiving_items", "clear_return_items", "clear_payment_data", "navigate"].includes(step.action.type)
                     ) {
                         await executeAction(step.action);
                         setTimeout(() => {

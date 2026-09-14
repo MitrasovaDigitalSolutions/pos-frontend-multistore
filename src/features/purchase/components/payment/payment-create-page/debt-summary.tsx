@@ -52,7 +52,7 @@ export function DebtSummary({
     if (!summary) return null;
 
     return (
-        <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm space-y-5">
+        <div id="pay-debt-summary-card" className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm space-y-5">
             <div className="flex items-center gap-2 pb-3 border-b border-slate-50">
                 <div className="bg-amber-50 text-amber-600 p-1.5 rounded-lg border border-amber-100/30">
                     <IconCoins size={16} />
@@ -61,7 +61,7 @@ export function DebtSummary({
             </div>
 
             {/* Large Sisa Hutang Card */}
-            <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-4 text-center space-y-1">
+            <div id="pay-remaining-debt-box" className="bg-slate-50/50 border border-slate-100 rounded-xl p-4 text-center space-y-1">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                     {isEdit ? "Sisa Hutang Tanpa Pembayaran Ini" : "Sisa Hutang Saat Ini"}
                 </span>
@@ -114,7 +114,7 @@ export function DebtSummary({
 
             {/* Riwayat Pembayaran Sebelumnya */}
             {summary.payments && summary.payments.length > 0 && (
-                <div className="space-y-2 pt-3 border-t border-slate-50">
+                <div id="pay-history-list" className="space-y-2 pt-3 border-t border-slate-50">
                     <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                         <IconReceipt2 size={12} />
                         <span>Riwayat Pembayaran</span>

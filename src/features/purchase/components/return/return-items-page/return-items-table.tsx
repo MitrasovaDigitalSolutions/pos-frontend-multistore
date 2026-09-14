@@ -5,6 +5,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { FormNumberInput } from "@/components/forms/form-number-input";
 import { FormSelect } from "@/components/forms/form-select";
 import { ReturnItemMobileCard } from "./return-item-mobile-card";
+import { useDeviceResponsive } from "@/hooks/use-device";
 
 interface ReturnItemsTableProps {
     items: PurchaseItemLocal[];
@@ -25,6 +26,8 @@ export function ReturnItemsTable({
     activeItems,
     activeTotalValue,
 }: ReturnItemsTableProps) {
+    const { isMobile } = useDeviceResponsive();
+
     const methods = useForm({
         values: {
             items: items.map((item) => ({
@@ -36,7 +39,7 @@ export function ReturnItemsTable({
 
     if (items.length === 0) {
         return (
-            <div className="border border-dashed border-slate-200 rounded-2xl p-8 text-center m-6 bg-white/50">
+            <div id="ret-items-table" className="border border-dashed border-slate-200 rounded-2xl p-8 text-center m-6 bg-white/50">
                 <div className="w-16 h-16 mx-auto mb-4 bg-slate-50 rounded-2xl flex items-center justify-center">
                     <IconDeviceFloppy size={28} className="text-slate-300" />
                 </div>
@@ -50,7 +53,7 @@ export function ReturnItemsTable({
 
     return (
         <FormProvider {...methods}>
-            <div className="space-y-3">
+            <div id="ret-items-table" className="space-y-3">
                 {/* ── Mobile Card List View (< 768px) ── */}
                 <div className="block md:hidden space-y-2.5">
                     {items.map((item, idx) => {
@@ -59,6 +62,7 @@ export function ReturnItemsTable({
                         return (
                             <ReturnItemMobileCard
                                 key={`${item.temp_uid || item.product_uid}-${idx}`}
+                                id={isMobile && idx === 0 ? "ret-item-row-0" : undefined}
                                 item={item}
                                 index={idx}
                                 isPending={isPending}
@@ -94,7 +98,11 @@ export function ReturnItemsTable({
                                     const subtotal = item.kuantitas * item.harga_estimasi;
 
                                     return (
-                                        <tr key={`${item.temp_uid || item.product_uid}-${idx}`} className="hover:bg-slate-50/50 transition-colors">
+                                        <tr
+                                            key={`${item.temp_uid || item.product_uid}-${idx}`}
+                                            id={!isMobile && idx === 0 ? "ret-item-row-0" : undefined}
+                                            className="hover:bg-slate-50/50 transition-colors"
+                                        >
                                             <td className="p-3 text-slate-400 font-mono font-bold">{idx + 1}</td>
                                             <td className="p-3">
                                                 <span className="font-mono text-slate-500 text-[11px]">

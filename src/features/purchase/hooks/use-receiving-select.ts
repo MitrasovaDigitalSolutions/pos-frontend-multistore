@@ -6,6 +6,7 @@ import { RECEIVING_STATUS } from "@/constants/purchase";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { Receiving } from "../types";
 import type { CommandOption } from "@/components/ui/command-select";
+import { MOCK_OUTSTANDING_RECEIVING } from "../tutorial/constants/purchase-tutorial-constants";
 
 /**
  * Maps a Receiving entity into a CommandOption structure for FormSelect.
@@ -43,6 +44,9 @@ export function useReceivingSelectConfig(options?: UseReceivingSelectConfigOptio
         queryHook: useCompletedReceivingsQueryHook,
         mapOption: mapReceivingToOption,
         getExtraOption: (uid: string) => {
+            if (uid === MOCK_OUTSTANDING_RECEIVING.uid) {
+                return mapReceivingToOption(MOCK_OUTSTANDING_RECEIVING);
+            }
             if (targetUid === uid && targetReceiving) {
                 return {
                     value: uid,
