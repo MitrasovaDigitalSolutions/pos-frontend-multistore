@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,6 +22,9 @@ import { FormRadioChips, type RadioChipOption } from "@/components/forms/form-ra
 import { IconBox, IconLayoutGrid, IconPackage, IconTools } from "@tabler/icons-react";
 import { useSearchParams } from "next/navigation";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
+import { ProductsTutorialController } from "./tutorial/components/products-tutorial-controller";
+import { useProductsTutorialStore } from "@/stores/products-tutorial-store";
+import { MOCK_MASTER_PRODUCTS } from "./tutorial/constants/products-tutorial-constants";
 
 interface ProductFilterValues {
   search: string;
@@ -146,6 +149,11 @@ export function Products() {
   const [isStoreEditOpen, setIsStoreEditOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [isUnarchiveOpen, setIsUnarchiveOpen] = useState(false);
+  const [productToUnarchive, setProductToUnarchive] = useState<Product | null>(null);
+
   const [isStoreDialogOpen, setIsStoreDialogOpen] = useState(false);
   const [managingProduct, setManagingProduct] = useState<Product | null>(null);
 
@@ -171,6 +179,16 @@ export function Products() {
       is_active: true,
     },
   });
+
+  const isTutorialRunning = useProductsTutorialStore((state) => state.isRunning);
+
+  // In-memory fallback mock product for tutorial when database/store is empty
+  const displayProducts = useMemo(() => {
+    if (isTutorialRunning && (!productsData?.data || productsData.data.length === 0)) {
+      return MOCK_MASTER_PRODUCTS;
+    }
+    return productsData?.data || [];
+  }, [isTutorialRunning, productsData?.data]);
 
   if (!hasViewProducts) {
     return (
@@ -241,7 +259,7 @@ export function Products() {
     <div className="space-y-6">
       <FormProvider {...dialogMethods}>
         <ProductTable
-          products={productsData?.data || []}
+          products={displayProducts}
           meta={productsData?.meta}
           page={page}
           perPage={perPage}
@@ -262,6 +280,14 @@ export function Products() {
             setSortOrder(order);
             setPage(1);
           }}
+          isConfirmOpen={isConfirmOpen}
+          onConfirmOpenChange={setIsConfirmOpen}
+          productToDelete={productToDelete}
+          onProductToDeleteChange={setProductToDelete}
+          isUnarchiveOpen={isUnarchiveOpen}
+          onUnarchiveOpenChange={setIsUnarchiveOpen}
+          productToUnarchive={productToUnarchive}
+          onProductToUnarchiveChange={setProductToUnarchive}
           filterElement={
             <FilterForm
               methods={filterMethods}
@@ -285,12 +311,14 @@ export function Products() {
                 options={brandOptions}
                 placeholder="Semua Brand"
               />
-              <FormSelect<ProductFilterValues>
-                name="status"
-                label="Status"
-                options={statusOptions}
-                placeholder="Semua Status"
-              />
+              <div id="filter-status-select">
+                <FormSelect<ProductFilterValues>
+                  name="status"
+                  label="Status"
+                  options={statusOptions}
+                  placeholder="Semua Status"
+                />
+              </div>
               <FormRadioChips<ProductFilterValues>
                 name="product_type"
                 label="Tipe Produk"
@@ -327,6 +355,19 @@ export function Products() {
         open={isStoreDialogOpen}
         onOpenChange={setIsStoreDialogOpen}
         product={managingProduct}
+      />
+
+      {/* Tutorial Controller for Master Produk */}
+      <ProductsTutorialController
+        setIsCatalogMatchOpen={setIsCatalogMatchOpen}
+        setIsProductFormOpen={setIsDialogOpen}
+        setIsStoreEditOpen={setIsStoreEditOpen}
+        setEditingProduct={setEditingProduct}
+        setIsConfirmOpen={setIsConfirmOpen}
+        setProductToDelete={setProductToDelete}
+        setIsUnarchiveOpen={setIsUnarchiveOpen}
+        setProductToUnarchive={setProductToUnarchive}
+        sampleProduct={productsData?.data?.[0] || MOCK_MASTER_PRODUCTS[0]}
       />
     </div>
   );

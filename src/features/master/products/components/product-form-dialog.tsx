@@ -194,6 +194,7 @@ export function ProductFormDialog({
                                 Batal
                             </Button>
                             <Button
+                                id="btn-submit-product-form"
                                 type="submit"
                                 disabled={isPending}
                                 className="h-9 px-5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 cursor-pointer shadow-md shadow-emerald-600/20"

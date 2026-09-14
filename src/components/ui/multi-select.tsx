@@ -135,7 +135,7 @@ export function MultiSelect({
               align="start"
               side="bottom"
               sideOffset={4}
-              className="isolate z-50"
+              className="isolate z-[100000]"
             >
               <PopoverPrimitive.Popup
                 className="w-(--anchor-width) min-w-[200px] max-h-[320px] origin-(--transform-origin) animate-in fade-in-0 zoom-in-95 duration-100 outline-none overflow-hidden rounded-xl bg-white border border-slate-100 shadow-lg text-slate-950 flex flex-col"

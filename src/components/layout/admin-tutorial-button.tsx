@@ -4,6 +4,8 @@ import React from "react";
 import { usePathname } from "next/navigation";
 import { IconSparkles } from "@tabler/icons-react";
 import { usePurchaseTutorialStore } from "@/stores/purchase-tutorial-store";
+import { useProductsTutorialStore } from "@/stores/products-tutorial-store";
+import { useMembersTutorialStore } from "@/stores/members-tutorial-store";
 import { useTutorialStore } from "@/stores/tutorial-store";
 import { toast } from "sonner";
 
@@ -24,6 +26,16 @@ export function AdminTutorialButton({ className = "", onCustomOpen }: AdminTutor
         // Feature-specific routing for tutorial dialogs
         if (pathname.startsWith("/admin/purchase")) {
             usePurchaseTutorialStore.getState().setMenuOpen(true);
+            return;
+        }
+
+        if (pathname.startsWith("/admin/products")) {
+            useProductsTutorialStore.getState().setMenuOpen(true);
+            return;
+        }
+
+        if (pathname.startsWith("/admin/members")) {
+            useMembersTutorialStore.getState().setMenuOpen(true);
             return;
         }
 

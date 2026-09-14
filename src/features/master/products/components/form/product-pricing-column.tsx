@@ -32,7 +32,7 @@ export function ProductPricingColumn({
     onHargaGrosirTotalChange,
 }: ProductPricingColumnProps) {
     return (
-        <div className="bg-slate-50/80 border border-slate-200/80 rounded-2xl p-3.5 shadow-2xs space-y-2.5 flex flex-col justify-between h-full">
+        <div id="form-product-pricing-col" className="bg-slate-50/80 border border-slate-200/80 rounded-2xl p-3.5 shadow-2xs space-y-2.5 flex flex-col justify-between h-full">
             <div className="space-y-2.5">
                 <div className="flex items-center gap-1.5 pb-1 border-b border-slate-200/60">
                     <div className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center">
@@ -51,29 +51,35 @@ export function ProductPricingColumn({
                 {productType === "finished_good" && (
                     <div className="space-y-2">
                         <div className="grid grid-cols-2 gap-2">
-                            <FormNominalInput<ProductInput>
-                                name="harga_beli"
-                                label="Harga Modal"
-                                placeholder="0"
-                                disabled={disabled}
-                                onValueChange={onHargaBeliChange}
-                            />
-                            <FormNumberInput<ProductInput>
-                                name="margin"
-                                label="Margin (%)"
-                                placeholder="0"
-                                disabled={disabled}
-                                onValueChange={onMarginChange}
-                            />
+                            <div id="form-product-harga-beli-box">
+                                <FormNominalInput<ProductInput>
+                                    name="harga_beli"
+                                    label="Harga Modal"
+                                    placeholder="0"
+                                    disabled={disabled}
+                                    onValueChange={onHargaBeliChange}
+                                />
+                            </div>
+                            <div id="form-product-margin-box">
+                                <FormNumberInput<ProductInput>
+                                    name="margin"
+                                    label="Margin (%)"
+                                    placeholder="0"
+                                    disabled={disabled}
+                                    onValueChange={onMarginChange}
+                                />
+                            </div>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                            <FormNominalInput<ProductInput>
-                                name="harga"
-                                label="Harga Jual *"
-                                placeholder="0"
-                                disabled={disabled}
-                                onValueChange={onHargaChange}
-                            />
+                            <div id="form-product-harga-jual-box">
+                                <FormNominalInput<ProductInput>
+                                    name="harga"
+                                    label="Harga Jual *"
+                                    placeholder="0"
+                                    disabled={disabled}
+                                    onValueChange={onHargaChange}
+                                />
+                            </div>
                             <FormNumberInput<ProductInput>
                                 name="stok"
                                 label="Stok Awal"
@@ -83,7 +89,7 @@ export function ProductPricingColumn({
                         </div>
 
                         {/* Grosir Toggle */}
-                        <div className="pt-2 border-t border-slate-200/60 space-y-1.5">
+                        <div id="form-product-grosir-section" className="pt-2 border-t border-slate-200/60 space-y-1.5">
                             <div className="flex items-center justify-between">
                                 <span className="text-[11px] font-bold text-slate-700">Harga Grosir (Opsional)</span>
                                 <FormSwitch<ProductInput>

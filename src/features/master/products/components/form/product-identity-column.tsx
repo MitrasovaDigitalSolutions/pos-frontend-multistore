@@ -69,7 +69,7 @@ export function ProductIdentityColumn({
                 </div>
 
                 {/* Nama Produk */}
-                <div className="space-y-1">
+                <div className="space-y-1" id="form-product-name-input">
                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                         Nama Produk <span className="text-rose-500">*</span>
                     </label>
@@ -88,24 +88,27 @@ export function ProductIdentityColumn({
                 </div>
 
                 {/* Tipe Produk (Radio / Chip Select) */}
-                <FormRadioChips<ProductInput>
-                    name="product_type"
-                    label="Tipe Produk"
-                    options={PRODUCT_TYPE_OPTIONS}
-                    variant="segmented"
-                    size="sm"
-                    onChange={(val) => onProductTypeChange((val as ProductType) || "finished_good")}
-                    disabled={disabled}
-                />
+                <div id="form-product-type-select">
+                    <FormRadioChips<ProductInput>
+                        name="product_type"
+                        label="Tipe Produk"
+                        options={PRODUCT_TYPE_OPTIONS}
+                        variant="segmented"
+                        size="sm"
+                        onChange={(val) => onProductTypeChange((val as ProductType) || "finished_good")}
+                        disabled={disabled}
+                    />
+                </div>
 
                 {/* Barcode / SKU with Generate Action only */}
-                <div className="space-y-1">
+                <div className="space-y-1" id="form-product-barcode-container">
                     <div className="flex items-center justify-between">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             Barcode / SKU
                         </label>
                         {!currentBarcode && (
                             <button
+                                id="btn-generate-barcode-addon"
                                 type="button"
                                 onClick={handleAutoGenerateBarcode}
                                 disabled={disabled}
@@ -137,7 +140,7 @@ export function ProductIdentityColumn({
                 </div>
 
                 {/* Kategori & Brand */}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2" id="form-product-category-brand">
                     <FormSelect<ProductInput, Category>
                         name="category_uid"
                         label="Kategori"
@@ -160,7 +163,7 @@ export function ProductIdentityColumn({
                 </div>
 
                 {/* Satuan Unit Pengukuran */}
-                <div className="space-y-1">
+                <div className="space-y-1" id="form-product-unit-select">
                     <FormSelect<ProductInput, Unit>
                         name="unit_uid"
                         label="Satuan Standar"
