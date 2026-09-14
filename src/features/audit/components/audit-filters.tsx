@@ -33,19 +33,23 @@ export function AuditFilters({
             onSubmit={onSubmit}
             onReset={onReset}
             submitLabel="Cari & Filter"
+            actionsId="filter-audit-actions"
             cols={1}
         >
             <FormInput<AuditFilterValues>
                 name="search"
+                id="filter-audit-search"
                 label="Cari Log Aktivitas"
                 placeholder="Masukkan kata kunci pencarian (contoh: nomor transaksi, tindakan, deskripsi)..."
                 className="w-full"
             />
-            <FormChipsSelect<AuditFilterValues>
-                name="modules"
-                label="Filter Modul"
-                options={moduleOptions}
-            />
+            <div id="filter-audit-modules">
+                <FormChipsSelect<AuditFilterValues>
+                    name="modules"
+                    label="Filter Modul"
+                    options={moduleOptions}
+                />
+            </div>
         </FilterForm>
     );
 }

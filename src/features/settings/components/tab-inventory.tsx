@@ -71,7 +71,10 @@ export function TabInventory({ isSaving }: TabInventoryProps) {
                             {/* Inputs Column */}
                             <div className="lg:col-span-7 space-y-5">
                                 {/* HPP Method Card */}
-                                <div className="flex flex-col border border-slate-100 dark:border-slate-800 rounded-2xl p-4 bg-slate-50/40 dark:bg-slate-900/40 space-y-2">
+                                <div
+                                    id="form-settings-hpp-select"
+                                    className="flex flex-col border border-slate-100 dark:border-slate-800 rounded-2xl p-4 bg-slate-50/40 dark:bg-slate-900/40 space-y-2"
+                                >
                                     <LabelWithTooltip
                                         label={hppMeta?.label || "Metode Penyesuaian HPP"}
                                         tooltip={hppMeta?.description || "Basis harga beli untuk saran harga jual saat penerimaan barang: latest (harga faktur) atau average (harga rata-rata)."}
@@ -95,7 +98,10 @@ export function TabInventory({ isSaving }: TabInventoryProps) {
                                 </div>
 
                                 {/* Branch Can Create Product Toggle */}
-                                <div className="flex items-center justify-between border border-slate-100 dark:border-slate-800 rounded-2xl p-4 bg-slate-50/40 dark:bg-slate-900/40">
+                                <div
+                                    id="form-settings-branch-toggle"
+                                    className="flex items-center justify-between border border-slate-100 dark:border-slate-800 rounded-2xl p-4 bg-slate-50/40 dark:bg-slate-900/40"
+                                >
                                     <div className="space-y-0.5 max-w-md pr-2">
                                         <LabelWithTooltip
                                             label={branchCreateMeta?.label || "Pembuatan Barang di Toko Cabang"}

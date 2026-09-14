@@ -29,6 +29,7 @@ export function CheckoutTutorialController(props: CheckoutTutorialControllerProp
                     run={isRunning}
                     stepIndex={stepIndex}
                     continuous
+                    scrollToFirstStep={false}
                     onEvent={handleJoyrideEvent}
                     tooltipComponent={TutorialTooltip}
                     options={{

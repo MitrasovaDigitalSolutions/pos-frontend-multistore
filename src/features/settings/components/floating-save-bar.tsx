@@ -65,6 +65,7 @@ export function FloatingSaveBar({ isSaving }: FloatingSaveBarProps) {
                         Batal
                     </AppButton>
                     <AppButton
+                        id="btn-simpan-pengaturan"
                         type="submit"
                         size="sm"
                         isLoading={isSaving}

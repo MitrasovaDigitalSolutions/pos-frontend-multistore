@@ -148,13 +148,18 @@ export function useProductsTutorial(controls: ProductsTutorialControls) {
 
     // Joyride Steps format with fixed viewport strategy and native scroll-into-view
     const joyrideSteps: Step[] = useMemo(() => {
+        const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+
         return tutorialSteps.map((s, idx) => ({
             target: s.target,
             title: s.title,
             content: s.content,
-            placement: s.placement || "bottom",
+            placement: isMobile && (s.placement === "left" || s.placement === "right")
+                ? "auto"
+                : (s.placement || "bottom"),
             disableBeacon: true,
             skipBeacon: true,
+            skipScroll: true,
             spotlightClicks: s.spotlightClicks ?? true,
             spotlightPadding:
                 s.target.includes("category") || s.target.includes("unit") || s.target.includes("select")
@@ -173,14 +178,27 @@ export function useProductsTutorial(controls: ProductsTutorialControls) {
                     await waitForElement(s.target, 1500);
                     const el = document.querySelector(s.target);
                     if (el) {
-                        el.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+                        el.scrollIntoView({ behavior: "auto", block: "center", inline: "center" });
+                        window.dispatchEvent(new Event("resize"));
                     }
                 }
 
-                await new Promise((res) => setTimeout(res, 120));
+                await new Promise((res) => setTimeout(res, 80));
             },
         }));
     }, [tutorialSteps, activeTutorial, syncModalForStep]);
+
+    // Keep Joyride spotlight in sync with mobile/tablet scroll in <main> and inner containers
+    useEffect(() => {
+        if (!isRunning) return;
+        const handleScroll = () => {
+            window.dispatchEvent(new Event("resize"));
+        };
+        window.addEventListener("scroll", handleScroll, { capture: true, passive: true });
+        return () => {
+            window.removeEventListener("scroll", handleScroll, { capture: true });
+        };
+    }, [isRunning]);
 
     // Joyride Event Handler
     const handleJoyrideEvent = useCallback(
@@ -198,7 +216,8 @@ export function useProductsTutorial(controls: ProductsTutorialControls) {
                             await waitForElement(nextTarget, 1500);
                             const el = document.querySelector(nextTarget);
                             if (el) {
-                                el.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+                                el.scrollIntoView({ behavior: "auto", block: "center", inline: "center" });
+                                window.dispatchEvent(new Event("resize"));
                             }
                         }
                         setStepIndex(nextIndex);
@@ -215,7 +234,8 @@ export function useProductsTutorial(controls: ProductsTutorialControls) {
                             await waitForElement(prevTarget, 1500);
                             const el = document.querySelector(prevTarget);
                             if (el) {
-                                el.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+                                el.scrollIntoView({ behavior: "auto", block: "center", inline: "center" });
+                                window.dispatchEvent(new Event("resize"));
                             }
                         }
                         setStepIndex(prevIndex);
@@ -232,8 +252,9 @@ export function useProductsTutorial(controls: ProductsTutorialControls) {
                         const el = document.querySelector(step.target);
                         if (el) {
                             const rect = el.getBoundingClientRect();
-                            if (rect.top < 80 || rect.bottom > window.innerHeight - 80) {
-                                el.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+                            if (rect.top < 80 || rect.bottom > window.innerHeight - 80 || rect.left < 10 || rect.right > window.innerWidth - 10) {
+                                el.scrollIntoView({ behavior: "auto", block: "center", inline: "center" });
+                                window.dispatchEvent(new Event("resize"));
                             }
                         }
                     }

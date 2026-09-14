@@ -26,6 +26,8 @@ interface BaseDialogProps {
     showCloseButton?: boolean;
     /** Enable scrollable content inside the dialog body */
     scrollable?: boolean;
+    contentId?: string;
+    closeBtnId?: string;
 }
 
 export function BaseDialog({
@@ -37,11 +39,14 @@ export function BaseDialog({
     children,
     showCloseButton = true,
     scrollable = true,
+    contentId,
+    closeBtnId,
 }: BaseDialogProps) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             {/* Always hide the default absolute-positioned close button */}
             <DialogContent
+                id={contentId}
                 className={cn(
                     "bg-white rounded-2xl border-slate-100 p-4 sm:p-6 shadow-2xl flex flex-col max-h-[90vh]",
                     className,
@@ -58,7 +63,10 @@ export function BaseDialog({
                         <div className="flex items-center gap-2">
                             {headerRight}
                             {showCloseButton && (
-                                <DialogClose className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer border-none bg-transparent shrink-0">
+                                <DialogClose
+                                    id={closeBtnId}
+                                    className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer border-none bg-transparent shrink-0"
+                                >
                                     <IconX size={16} />
                                     <span className="sr-only">Tutup</span>
                                 </DialogClose>

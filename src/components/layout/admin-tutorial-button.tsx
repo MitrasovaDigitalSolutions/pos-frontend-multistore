@@ -6,6 +6,9 @@ import { IconSparkles } from "@tabler/icons-react";
 import { usePurchaseTutorialStore } from "@/stores/purchase-tutorial-store";
 import { useProductsTutorialStore } from "@/stores/products-tutorial-store";
 import { useMembersTutorialStore } from "@/stores/members-tutorial-store";
+import { useSettingsTutorialStore } from "@/stores/settings-tutorial-store";
+import { useUsersTutorialStore } from "@/stores/users-tutorial-store";
+import { useAuditTutorialStore } from "@/stores/audit-tutorial-store";
 import { useTutorialStore } from "@/stores/tutorial-store";
 import { toast } from "sonner";
 
@@ -36,6 +39,21 @@ export function AdminTutorialButton({ className = "", onCustomOpen }: AdminTutor
 
         if (pathname.startsWith("/admin/members")) {
             useMembersTutorialStore.getState().setMenuOpen(true);
+            return;
+        }
+
+        if (pathname.startsWith("/admin/settings")) {
+            useSettingsTutorialStore.getState().setMenuOpen(true);
+            return;
+        }
+
+        if (pathname.startsWith("/admin/employees")) {
+            useUsersTutorialStore.getState().setMenuOpen(true);
+            return;
+        }
+
+        if (pathname.startsWith("/admin/audit")) {
+            useAuditTutorialStore.getState().setMenuOpen(true);
             return;
         }
 

@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Coins, Percent, Info } from "lucide-react";
 import { AppButton } from "@/components/shared/app-button";
 import { useSettingsStore } from "@/stores/settings-store";
+import { useSettingsTutorialStore } from "@/stores/settings-tutorial-store";
 
 interface TabFinanceProps {
     isSaving: boolean;
@@ -44,7 +45,11 @@ function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }
 export function TabFinance({ isSaving }: TabFinanceProps) {
     const { control, watch } = useFormContext<StoreSettingsInput>();
     const { getSettingMeta } = useSettingsStore();
+    const isTutorialRunning = useSettingsTutorialStore((state) => state.isRunning);
+    const activeTutorial = useSettingsTutorialStore((state) => state.activeTutorial);
     const pointSystemEnable = watch("point_system_enabled") === "true";
+    // ponytail: show point_rate input during tutorial so interactive step target is mounted in DOM
+    const showPointRateInput = pointSystemEnable || (isTutorialRunning && activeTutorial === "atur_ppn_poin");
 
     const taxMeta = getSettingMeta("tax_rate_ppn");
     const pointSysMeta = getSettingMeta("point_system_enabled");
@@ -90,7 +95,10 @@ export function TabFinance({ isSaving }: TabFinanceProps) {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between border border-slate-100/80 rounded-xl p-4 bg-slate-50/30">
+                                <div
+                                    id="form-settings-point-toggle"
+                                    className="flex items-center justify-between border border-slate-100/80 rounded-xl p-4 bg-slate-50/30"
+                                >
                                     <div className="space-y-0.5">
                                         <LabelWithTooltip
                                             label={pointSysMeta?.label || "Sistem Poin Aktif"}
@@ -113,7 +121,7 @@ export function TabFinance({ isSaving }: TabFinanceProps) {
                                     />
                                 </div>
 
-                                {pointSystemEnable && (
+                                {showPointRateInput && (
                                     <div className="flex flex-col animate-in fade-in duration-200">
                                         <LabelWithTooltip
                                             label={pointRateMeta?.label || "Point Rate (Rp per Poin)"}

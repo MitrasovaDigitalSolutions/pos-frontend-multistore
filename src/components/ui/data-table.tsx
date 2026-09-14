@@ -399,6 +399,8 @@ export function DataTable<TData, TValue>({
                                 onClick={() => onView(item)}
                                 disabled={isViewDisabled}
                                 tooltip="Lihat Detail"
+                                data-action="view"
+                                className="table-action-view"
                             >
                                 <InfoIcon size={16} />
                             </DataTableActionButton>

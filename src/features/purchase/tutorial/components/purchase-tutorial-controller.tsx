@@ -26,6 +26,7 @@ export function PurchaseTutorialController() {
                     run={isRunning}
                     stepIndex={stepIndex}
                     continuous
+                    scrollToFirstStep={false}
                     onEvent={handleJoyrideEvent}
                     tooltipComponent={PurchaseTutorialTooltip}
                     options={{
