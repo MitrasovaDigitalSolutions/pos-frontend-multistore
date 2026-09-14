@@ -59,6 +59,24 @@ export function PurchaseTutorialMenuDialog() {
             }
 
             startTutorial("receiving_create");
+        } else if (id === "payment_create") {
+            setMenuOpen(false);
+
+            if (typeof window !== "undefined" && window.location.pathname !== "/admin/purchase/payment/new") {
+                router.push("/admin/purchase/payment/new");
+                await waitForElement("#pay-receiving-field", 3500);
+            }
+
+            startTutorial("payment_create");
+        } else if (id === "return_create") {
+            setMenuOpen(false);
+
+            if (typeof window !== "undefined" && window.location.pathname !== "/admin/purchase/return/new") {
+                router.push("/admin/purchase/return/new");
+                await waitForElement("#ret-receiving-field", 3500);
+            }
+
+            startTutorial("return_create");
         }
     };
 

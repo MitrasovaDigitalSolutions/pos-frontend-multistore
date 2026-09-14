@@ -8,6 +8,8 @@ import {
     isMockPurchaseItem,
     MOCK_PO_ITEMS,
     MOCK_RECEIVING_ITEMS,
+    MOCK_RETURN_ITEMS,
+    MOCK_RETURN_HEADER_INPUT,
 } from "@/features/purchase/tutorial/constants/purchase-tutorial-constants";
 
 interface CursorState {
@@ -23,7 +25,7 @@ interface PurchaseTutorialStoreState {
     stepIndex: number;
     isRunning: boolean;
     isMenuOpen: boolean;
-    activeDialog: "price_alert" | "finalize" | null;
+    activeDialog: "price_alert" | "finalize" | "return_finalize" | null;
     preSnapshot: PurchaseTutorialPreSnapshot | null;
     cursor: CursorState;
 
@@ -34,7 +36,7 @@ interface PurchaseTutorialStoreState {
     nextStep: () => void;
     prevStep: () => void;
     setMenuOpen: (open: boolean) => void;
-    setActiveDialog: (dialog: "price_alert" | "finalize" | null) => void;
+    setActiveDialog: (dialog: "price_alert" | "finalize" | "return_finalize" | null) => void;
     saveSnapshot: (snapshot: PurchaseTutorialPreSnapshot) => void;
     clearSnapshot: () => void;
     updateCursor: (cursor: Partial<CursorState>) => void;
@@ -56,28 +58,43 @@ export const usePurchaseTutorialStore = create<PurchaseTutorialStoreState>((set)
     },
 
     startTutorial: (id) => {
-        const scope = id === "receiving_create" ? "receiving" : "po";
-        const store = getPurchaseItemsStore("new", scope);
-        const currentItems = store.getState().items;
-        const currentHeader = store.getState().headerData;
+        let snapshot: PurchaseTutorialPreSnapshot | null = null;
 
-        const cleanItems = currentItems.filter((i) => !isMockPurchaseItem(i));
+        if (id === "po_create" || id === "receiving_create" || id === "return_create") {
+            const scope = id === "receiving_create" ? "receiving" : id === "return_create" ? "return" : "po";
+            const store = getPurchaseItemsStore("new", scope);
+            const currentItems = store.getState().items;
+            const currentHeader = store.getState().headerData;
 
-        const snapshot: PurchaseTutorialPreSnapshot = {
-            items: cleanItems,
-            headerData: currentHeader,
-        };
+            const cleanItems = currentItems.filter((i) => !isMockPurchaseItem(i));
 
-        if (id === "po_create") {
-            store.setState({
-                items: [...MOCK_PO_ITEMS],
-                lastUpdated: Date.now(),
-            });
-        } else if (id === "receiving_create") {
-            store.setState({
-                items: [...MOCK_RECEIVING_ITEMS],
-                lastUpdated: Date.now(),
-            });
+            snapshot = {
+                items: cleanItems,
+                headerData: currentHeader,
+            };
+
+            if (id === "po_create") {
+                store.setState({
+                    items: [...MOCK_PO_ITEMS],
+                    lastUpdated: Date.now(),
+                });
+            } else if (id === "receiving_create") {
+                store.setState({
+                    items: [...MOCK_RECEIVING_ITEMS],
+                    lastUpdated: Date.now(),
+                });
+            } else if (id === "return_create") {
+                store.setState({
+                    items: [...MOCK_RETURN_ITEMS],
+                    headerData: {
+                        purchase_order_uid: MOCK_RETURN_HEADER_INPUT.receiving_uid,
+                        supplier_uid: MOCK_RETURN_HEADER_INPUT.supplier_uid,
+                        tanggal_terima: MOCK_RETURN_HEADER_INPUT.tanggal_retur,
+                        catatan: MOCK_RETURN_HEADER_INPUT.catatan,
+                    },
+                    lastUpdated: Date.now(),
+                });
+            }
         }
 
         set({

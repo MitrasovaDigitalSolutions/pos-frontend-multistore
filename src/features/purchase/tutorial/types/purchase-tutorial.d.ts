@@ -14,11 +14,17 @@ export type PurchaseTutorialAction =
     | { type: "clear_po_items" }
     | { type: "inject_receiving_items"; items: PurchaseItemLocal[] }
     | { type: "clear_receiving_items" }
-    | { type: "open_dialog"; dialog: "price_alert" | "finalize" }
+    | { type: "open_dialog"; dialog: "price_alert" | "finalize" | "return_finalize" }
     | { type: "close_dialog" }
     | { type: "set_po_supplier"; supplier_uid: string; supplier_nama?: string }
     | { type: "set_po_date"; date: string }
     | { type: "set_po_notes"; notes: string }
+    | { type: "inject_payment_data"; data?: Record<string, unknown> }
+    | { type: "clear_payment_data" }
+    | { type: "set_payment_field"; field: string; value: unknown }
+    | { type: "inject_return_items"; items?: PurchaseItemLocal[] }
+    | { type: "clear_return_items" }
+    | { type: "set_return_field"; field: string; value: unknown }
     | { type: "type_text"; target: string; text: string }
     | { type: "clear_input"; target: string }
     | { type: "click"; target: string }
@@ -34,6 +40,8 @@ export interface PurchaseTutorialStep {
     action?: PurchaseTutorialAction;
     disableBeacon?: boolean;
     spotlightClicks?: boolean;
+    variant?: "tooltip" | "overlay_nav" | "banner";
+    overlayNav?: boolean;
 }
 
 export interface PurchaseTutorialPreSnapshot {

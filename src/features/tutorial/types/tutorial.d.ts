@@ -43,6 +43,8 @@ export interface TutorialStep {
     action?: TutorialAction;
     disableBeacon?: boolean;
     spotlightClicks?: boolean;
+    variant?: "tooltip" | "overlay_nav" | "banner";
+    overlayNav?: boolean;
 }
 
 export interface TutorialMeta {

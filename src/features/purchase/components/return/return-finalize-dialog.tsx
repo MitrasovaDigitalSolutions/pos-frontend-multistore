@@ -21,6 +21,7 @@ import {
 import type { PurchaseReturn } from "../../types";
 import { PAYMENT_STATUS } from "@/constants/purchase";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { MOCK_OUTSTANDING_RECEIVING } from "../../tutorial/constants/purchase-tutorial-constants";
 
 interface ReturnFinalizeDialogProps {
     open: boolean;
@@ -87,8 +88,9 @@ export function ReturnFinalizeDialog({
     const [pendingData, setPendingData] = useState<ReturnFinalizeInput | null>(null);
 
     const receivingUid = returnObj?.stock_receiving_uid || (returnObj as unknown as { receiving_uid?: string })?.receiving_uid || null;
-    const { data: fetchedReceiving } = useReceivingDetail(receivingUid);
-    const receiving = returnObj?.stock_receiving || fetchedReceiving;
+    const isMockReceiving = receivingUid === MOCK_OUTSTANDING_RECEIVING.uid || Boolean(receivingUid?.startsWith("mock-"));
+    const { data: fetchedReceiving } = useReceivingDetail(isMockReceiving ? null : receivingUid);
+    const receiving = isMockReceiving ? MOCK_OUTSTANDING_RECEIVING : (returnObj?.stock_receiving || fetchedReceiving);
 
     const isPaid = Boolean(
         receiving &&
@@ -241,9 +243,9 @@ export function ReturnFinalizeDialog({
                 </div>
 
                 <FormProvider {...methods}>
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
+                    <form id="ret-finalize-dialog-content" onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
                         {/* Resolution Type Selector */}
-                        <div className="space-y-1.5">
+                        <div id="ret-finalize-resolution-field" className="space-y-1.5">
                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                 Solusi / Metode Penyelesaian Retur
                             </label>
@@ -261,7 +263,7 @@ export function ReturnFinalizeDialog({
 
                         {/* Stock Receiving Auto Card if Credit */}
                         {resolutionType === "credit" && (
-                            <div className="space-y-1.5 font-sans">
+                            <div id="ret-finalize-reconciliation-card" className="space-y-1.5 font-sans">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                     Faktur Pembelian / Penerimaan Barang yang Dipotong Utangnya
                                 </label>
@@ -368,6 +370,7 @@ export function ReturnFinalizeDialog({
                                 Batal
                             </Button>
                             <Button
+                                id="ret-finalize-submit-btn"
                                 type="submit"
                                 className="h-10 text-xs font-bold px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
                                 disabled={isLoading}
