@@ -17,12 +17,18 @@ export interface ReceiptData {
 
 const WIDTH = 32;
 
-const money = (value: number | string) =>
+const money = (
+    value: number | string,
+): string =>
     new Intl.NumberFormat("id-ID", {
         style: "currency",
         currency: "IDR",
         minimumFractionDigits: 0,
-    }).format(Number(value || 0));
+    })
+        .format(Number(value || 0))
+        // Intl currency bisa menghasilkan NBSP.
+        // Printer thermal lebih aman menggunakan spasi biasa.
+        .replace(/\u00A0/g, " ");
 
 const formatDate = (
     value?: string | Date | null,
@@ -44,15 +50,22 @@ const center = (
     text: string,
     width = WIDTH,
 ): string => {
-    if (text.length >= width) {
-        return text.substring(0, width);
+    const value = String(text)
+        .replace(/\u00A0/g, " ")
+        .trim();
+
+    if (value.length >= width) {
+        return value.substring(0, width);
     }
 
     const left = Math.floor(
-        (width - text.length) / 2,
+        (width - value.length) / 2,
     );
 
-    return " ".repeat(left) + text;
+    return (
+        " ".repeat(left) +
+        value
+    );
 };
 
 const leftRight = (
@@ -60,24 +73,37 @@ const leftRight = (
     right: string,
     width = WIDTH,
 ): string => {
+    const leftText = String(left)
+        .replace(/\u00A0/g, " ");
+
+    const rightText = String(right)
+        .replace(/\u00A0/g, " ");
+
     const available =
-        width - left.length - right.length;
+        width -
+        leftText.length -
+        rightText.length;
 
     if (available < 1) {
         return (
-            left.substring(
+            leftText.substring(
                 0,
-                Math.max(0, width - right.length - 1),
+                Math.max(
+                    0,
+                    width -
+                        rightText.length -
+                        1,
+                ),
             ) +
             " " +
-            right
+            rightText
         ).substring(0, width);
     }
 
     return (
-        left +
+        leftText +
         " ".repeat(available) +
-        right
+        rightText
     );
 };
 
@@ -85,7 +111,9 @@ const wrapText = (
     text: string,
     width = WIDTH,
 ): string[] => {
-    const words = String(text || "").split(/\s+/);
+    const words = String(text || "")
+        .replace(/\u00A0/g, " ")
+        .split(/\s+/);
 
     const lines: string[] = [];
     let current = "";
@@ -99,7 +127,9 @@ const wrapText = (
         }
 
         if (
-            current.length + 1 + word.length <=
+            current.length +
+                1 +
+                word.length <=
             width
         ) {
             current += ` ${word}`;
@@ -118,15 +148,20 @@ const wrapText = (
 
 const divider = (
     char = "-",
-): string => char.repeat(WIDTH);
+): string =>
+    char.repeat(WIDTH);
 
 export function buildReceiptMobileApp58(
     data: ReceiptData,
 ): string {
-    const { sale, setting: app } = data;
+    const {
+        sale,
+        setting: app,
+    } = data;
 
     const isDebt =
-        sale.metode_pembayaran === "debt";
+        sale.metode_pembayaran ===
+        "debt";
 
     const isOffline =
         String(sale.uid).startsWith(
@@ -138,7 +173,9 @@ export function buildReceiptMobileApp58(
         (sale.card_amount ?? 0) > 0;
 
     const items =
-        ((sale.items as ReceiptRawItem[]) || []);
+        ((
+            sale.items as ReceiptRawItem[]
+        ) || []);
 
     const lines: string[] = [];
 
@@ -159,7 +196,9 @@ export function buildReceiptMobileApp58(
         lines.push(
             ...wrapText(
                 String(app.app_address),
-            ).map(center),
+            ).map((line) =>
+                center(line),
+            ),
         );
     }
 
@@ -171,7 +210,9 @@ export function buildReceiptMobileApp58(
         );
     }
 
-    lines.push(divider());
+    lines.push(
+        divider(),
+    );
 
     // =========================
     // OFFLINE
@@ -190,7 +231,9 @@ export function buildReceiptMobileApp58(
             ),
         );
 
-        lines.push(divider());
+        lines.push(
+            divider(),
+        );
     }
 
     // =========================
@@ -199,7 +242,9 @@ export function buildReceiptMobileApp58(
 
     lines.push(
         leftRight(
-            `Kasir: ${sale.user?.name ?? "-"}`,
+            `Kasir: ${
+                sale.user?.name ?? "-"
+            }`,
             "POS-01",
         ),
     );
@@ -238,7 +283,9 @@ export function buildReceiptMobileApp58(
         }
     }
 
-    lines.push(divider());
+    lines.push(
+        divider(),
+    );
 
     // =========================
     // ITEMS
@@ -257,6 +304,9 @@ export function buildReceiptMobileApp58(
             String(
                 item.nama_produk ??
                     "-",
+            ).replace(
+                /\u00A0/g,
+                " ",
             );
 
         lines.push(
@@ -289,7 +339,9 @@ export function buildReceiptMobileApp58(
         lines.push("");
     }
 
-    lines.push(divider());
+    lines.push(
+        divider(),
+    );
 
     // =========================
     // TOTAL
@@ -298,7 +350,9 @@ export function buildReceiptMobileApp58(
     lines.push(
         leftRight(
             "Subtotal:",
-            money(sale.subtotal ?? 0),
+            money(
+                sale.subtotal ?? 0,
+            ),
         ),
     );
 
@@ -314,7 +368,8 @@ export function buildReceiptMobileApp58(
     }
 
     if (
-        (sale.diskon_grosir ?? 0) > 0
+        (sale.diskon_grosir ?? 0) >
+        0
     ) {
         lines.push(
             leftRight(
@@ -330,7 +385,9 @@ export function buildReceiptMobileApp58(
         lines.push(
             leftRight(
                 "Pajak:",
-                money(sale.pajak),
+                money(
+                    sale.pajak,
+                ),
             ),
         );
     }
@@ -338,11 +395,15 @@ export function buildReceiptMobileApp58(
     lines.push(
         leftRight(
             "TOTAL:",
-            money(sale.total ?? 0),
+            money(
+                sale.total ?? 0,
+            ),
         ),
     );
 
-    lines.push(divider());
+    lines.push(
+        divider(),
+    );
 
     // =========================
     // PAYMENT
@@ -395,7 +456,8 @@ export function buildReceiptMobileApp58(
             leftRight(
                 "Hutang Baru:",
                 money(
-                    sale.debt_amount ?? 0,
+                    sale.debt_amount ??
+                        0,
                 ),
             ),
         );
@@ -417,7 +479,8 @@ export function buildReceiptMobileApp58(
             leftRight(
                 "Kembali:",
                 money(
-                    sale.kembalian ?? 0,
+                    sale.kembalian ??
+                        0,
                 ),
             ),
         );
@@ -425,7 +488,8 @@ export function buildReceiptMobileApp58(
         lines.push(
             leftRight(
                 `Kartu ${
-                    sale.jenis_kartu ?? ""
+                    sale.jenis_kartu ??
+                    ""
                 }:`,
                 `**** ${
                     sale.nomor_kartu_akhir ??
@@ -435,7 +499,9 @@ export function buildReceiptMobileApp58(
         );
     }
 
-    lines.push(divider());
+    lines.push(
+        divider(),
+    );
 
     // =========================
     // FOOTER
