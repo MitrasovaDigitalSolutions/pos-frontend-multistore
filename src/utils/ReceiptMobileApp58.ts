@@ -184,11 +184,12 @@ export function buildReceiptMobileApp58(
     // =========================
 
     lines.push(
-        center(
-            String(
-                app.app_name ??
-                    "Mitrasova POS",
-            ).toUpperCase(),
+        ...wrapText(
+            String(app.app_name ??
+                "Mitrasova POS",
+        ),
+        ).map((line) =>
+            center(line),
         ),
     );
 
