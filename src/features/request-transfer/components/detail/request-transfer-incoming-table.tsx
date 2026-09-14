@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
     IconSearch,
     IconBuildingStore,
@@ -26,6 +26,13 @@ export function RequestTransferIncomingTable({
 }: RequestTransferIncomingTableProps) {
     const [viewMode, setViewMode] = useState<"matrix" | "documents">("matrix");
     const [searchQuery, setSearchQuery] = useState("");
+
+    // Tutorial helper: ensure matrix view is visible during tutorial step
+    useEffect(() => {
+        const handleSetMatrix = () => setViewMode("matrix");
+        window.addEventListener("transfer-tutorial-set-matrix-view", handleSetMatrix);
+        return () => window.removeEventListener("transfer-tutorial-set-matrix-view", handleSetMatrix);
+    }, []);
 
     // Extract unique requesting stores for dynamic columns
     const storeColumns = useMemo(() => {
@@ -103,11 +110,11 @@ export function RequestTransferIncomingTable({
     }, [matrixRows]);
 
     return (
-        <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden">
+        <div id="req-incoming-matrix-table" className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden">
             {/* Toolbar */}
             <div className="p-3 sm:px-3.5 sm:py-2.5 border-b border-slate-100 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                 {/* View Toggle */}
-                <div className="grid grid-cols-2 sm:flex items-center gap-1.5 p-1 bg-slate-200/70 rounded-xl sm:rounded-lg w-full sm:w-auto">
+                <div id="req-incoming-view-toggle" className="grid grid-cols-2 sm:flex items-center gap-1.5 p-1 bg-slate-200/70 rounded-xl sm:rounded-lg w-full sm:w-auto">
                     <button
                         type="button"
                         onClick={() => setViewMode("matrix")}
@@ -139,6 +146,7 @@ export function RequestTransferIncomingTable({
                         className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
                     />
                     <input
+                        id="req-incoming-search-product"
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -176,9 +184,10 @@ export function RequestTransferIncomingTable({
 
                         <tbody className="divide-y divide-slate-100 bg-white">
                             {filteredMatrixRows.length > 0 ? (
-                                filteredMatrixRows.map((row) => (
+                                filteredMatrixRows.map((row, index) => (
                                     <tr
                                         key={row.productUid}
+                                        id={index === 0 ? "req-incoming-matrix-row-0" : undefined}
                                         className="hover:bg-slate-50/80 transition-colors"
                                     >
                                         {/* Product Name */}
@@ -247,7 +256,7 @@ export function RequestTransferIncomingTable({
                                     </tr>
                                 ))
                             ) : (
-                                <tr>
+                                <tr id="req-incoming-matrix-row-0">
                                     <td
                                         colSpan={storeColumns.length + 4}
                                         className="px-3 py-6 text-center text-slate-400 text-xs"

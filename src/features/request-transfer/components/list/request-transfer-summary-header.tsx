@@ -24,7 +24,10 @@ export function RequestTransferSummaryHeader({ canManage, mode = "outgoing" }: R
 
     return (
         <>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div
+                id={isIncoming ? "req-incoming-list-header" : "req-outgoing-list-header"}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4"
+            >
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">{title}</h3>
                     <p className="text-[11px] text-slate-400 mt-0.5">
@@ -35,6 +38,7 @@ export function RequestTransferSummaryHeader({ canManage, mode = "outgoing" }: R
                 <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
                     {isIncoming && canManage && (
                         <Button
+                            id="req-incoming-btn-generate-link"
                             onClick={() => setIsGenerateOpen(true)}
                             className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer w-full sm:w-auto shrink-0 shadow-2xs"
                         >

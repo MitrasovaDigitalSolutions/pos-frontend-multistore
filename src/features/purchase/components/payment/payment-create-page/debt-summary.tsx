@@ -24,7 +24,7 @@ export function DebtSummary({
 }: DebtSummaryProps) {
     if (!selectedReceivingId) {
         return (
-            <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm text-center py-10 space-y-3">
+            <div id="pay-summary-card" className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm text-center py-10 space-y-3">
                 <div className="bg-slate-50 text-slate-400 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto">
                     <IconInfoCircle size={24} />
                 </div>
@@ -40,7 +40,7 @@ export function DebtSummary({
 
     if (summaryLoading) {
         return (
-            <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm space-y-4">
+            <div id="pay-summary-card" className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm space-y-4">
                 <Skeleton className="h-4 w-28 rounded" />
                 <Skeleton className="h-10 w-full rounded" />
                 <Skeleton className="h-6 w-20 rounded" />
@@ -52,7 +52,7 @@ export function DebtSummary({
     if (!summary) return null;
 
     return (
-        <div id="pay-debt-summary-card" className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm space-y-5">
+        <div id="pay-summary-card" className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm space-y-5">
             <div className="flex items-center gap-2 pb-3 border-b border-slate-50">
                 <div className="bg-amber-50 text-amber-600 p-1.5 rounded-lg border border-amber-100/30">
                     <IconCoins size={16} />

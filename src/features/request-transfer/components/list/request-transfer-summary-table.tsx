@@ -7,6 +7,8 @@ import { DataTable } from "@/components/ui/data-table";
 import { formatToReadableDate } from "@/lib/date-utils";
 import { ROUTES } from "@/constants/routes";
 import type { RequestTransferSummary } from "../../types";
+import { useTransferTutorialStore } from "@/stores/transfer-tutorial-store";
+import { MOCK_INCOMING_SUMMARY } from "@/features/stock-transfer/tutorial/constants/transfer-tutorial-constants";
 
 interface RequestTransferSummaryTableProps {
     summaries: RequestTransferSummary[];
@@ -37,7 +39,19 @@ export function RequestTransferSummaryTable({
     mode = "outgoing",
 }: RequestTransferSummaryTableProps) {
     const router = useAppRouter();
+    const isTutorialActive = useTransferTutorialStore(
+        (state) => state.isRunning && state.activeTutorial === "request_transfer_incoming"
+    );
 
+    const displaySummaries = useMemo(() => {
+        if (mode === "incoming" && (isTutorialActive || summaries.length === 0)) {
+            const hasMock = summaries.some((s) => s.summary_uid === MOCK_INCOMING_SUMMARY.summary_uid);
+            if (!hasMock) {
+                return [MOCK_INCOMING_SUMMARY, ...summaries];
+            }
+        }
+        return summaries;
+    }, [mode, isTutorialActive, summaries]);
 
     const openSummary = (s: RequestTransferSummary) => {
         const detailRoute =
@@ -47,16 +61,17 @@ export function RequestTransferSummaryTable({
         router.push(`${detailRoute}?summary_uid=${s.summary_uid}`);
     };
 
-
     const columns = useMemo<ColumnDef<RequestTransferSummary>[]>(
         () => [
             {
                 accessorKey: "request_to_nama",
                 header: "Tujuan Request",
                 cell: ({ row }) => (
-                    <span className="font-bold text-slate-900 text-xs">
-                        {row.original.request_to_nama || "Pusat"}
-                    </span>
+                    <div id={row.index === 0 ? "req-incoming-row-0" : undefined}>
+                        <span className="font-bold text-slate-900 text-xs">
+                            {row.original.request_to_nama || "Pusat"}
+                        </span>
+                    </div>
                 ),
                 size: 160,
             },
@@ -114,21 +129,23 @@ export function RequestTransferSummaryTable({
 
 
     return (
-        <DataTable
-            columns={columns}
-            data={summaries}
-            isLoading={isLoading}
-            isFetching={isFetching}
-            emptyMessage="Tidak ada summary request transfer pending."
-            page={page}
-            perPage={perPage}
-            onPageChange={onPageChange}
-            onPerPageChange={onPerPageChange}
-            meta={meta}
-            entityName="summary"
-            virtualize={true}
-            estimateRowHeight={44}
-            onView={openSummary}
-        />
+        <div id="req-incoming-summary-table" className="relative">
+            <DataTable
+                columns={columns}
+                data={displaySummaries}
+                isLoading={isLoading}
+                isFetching={isFetching}
+                emptyMessage="Tidak ada summary request transfer pending."
+                page={page}
+                perPage={perPage}
+                onPageChange={onPageChange}
+                onPerPageChange={onPerPageChange}
+                meta={meta}
+                entityName="summary"
+                virtualize={true}
+                estimateRowHeight={44}
+                onView={openSummary}
+            />
+        </div>
     );
 }

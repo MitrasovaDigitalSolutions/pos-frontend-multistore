@@ -1,6 +1,8 @@
 import { AdminHeader } from "@/components/layout/admin-header";
 import { AdminSidebar } from "@/components/layout/admin-sidebar";
 import { PurchaseTutorialController } from "@/features/purchase/tutorial/components/purchase-tutorial-controller";
+import { ConsignmentTutorialController } from "@/features/consignment/tutorial/components/consignment-tutorial-controller";
+import { TransferTutorialController } from "@/features/stock-transfer/tutorial/components/transfer-tutorial-controller";
 import type { ReactNode } from "react";
 
 interface AdminLayoutProps {
@@ -20,8 +22,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 </main>
             </div>
 
-            {/* Purchase Feature Interactive Tutorial Controller */}
+            {/* Feature Interactive Tutorial Controllers */}
             <PurchaseTutorialController />
+            <ConsignmentTutorialController />
+            <TransferTutorialController />
         </div>
     );
 }

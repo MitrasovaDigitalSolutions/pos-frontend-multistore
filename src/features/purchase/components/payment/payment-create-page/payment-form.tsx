@@ -169,7 +169,7 @@ export function PaymentForm({
                     </Button>
                     <Button
                         type="submit"
-                        id="pay-submit-button"
+                        id="pay-submit-btn"
                         className="px-6 h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
                         disabled={isPending}
                     >
