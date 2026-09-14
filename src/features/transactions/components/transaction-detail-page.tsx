@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import PrinterService from "@/services/printer.service";
 import axios from "axios";
 import { buildReceipt58 } from "@/utils/ReceiptFormatter58";
+import { buildReceiptMobileApp58 } from "@/utils/ReceiptMobileApp58";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
@@ -133,7 +134,8 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
             const { data } = await axios.get(`/api/proxy/v1/transactions-print/${transaction.uid}`);
 
             // const receipt = buildReceipt(data);
-            const receipt = buildReceipt58(data);
+            const isFlutter = typeof window !== "undefined" && typeof window.FlutterBridge?.postMessage === "function";
+            const receipt = isFlutter ? buildReceiptMobileApp58(data) : buildReceipt58(data);
             const printerName = getSetting("printer_id") || "EPSON LX-310 ESC/P";
             await PrinterService.print(printerName, receipt);
 
