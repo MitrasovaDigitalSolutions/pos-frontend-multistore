@@ -138,25 +138,29 @@ export function useAuditTutorial(controls: AuditTutorialControls) {
     const joyrideSteps: Step[] = useMemo(() => {
         const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
-        return tutorialSteps.map((s, idx) => ({
-            target: s.target,
-            title: s.title,
-            content: s.content,
-            placement: isMobile && (s.placement === "left" || s.placement === "right")
-                ? "auto"
-                : (s.placement || "bottom"),
-            disableBeacon: true,
-            skipBeacon: true,
-            skipScroll: true,
-            spotlightClicks: s.spotlightClicks ?? true,
-            spotlightPadding: 6,
-            data: {
-                autoFill: s.autoFill,
-            },
-            floatingOptions: {
-                strategy: "fixed",
-            },
-            before: async () => {
+        return tutorialSteps.map((s, idx) => {
+            const isOverlayNav = Boolean(s.overlayNav || s.variant === "overlay_nav" || s.variant === "banner");
+            return {
+                target: s.target,
+                title: s.title,
+                content: s.content,
+                placement: isMobile && (s.placement === "left" || s.placement === "right")
+                    ? "auto"
+                    : (s.placement || "bottom"),
+                disableBeacon: true,
+                skipBeacon: true,
+                skipScroll: true,
+                spotlightClicks: s.spotlightClicks ?? true,
+                spotlightPadding: 6,
+                data: {
+                    autoFill: s.autoFill,
+                    overlayNav: isOverlayNav,
+                    variant: s.variant || (isOverlayNav ? "overlay_nav" : "tooltip"),
+                },
+                floatingOptions: {
+                    strategy: "fixed",
+                },
+                before: async () => {
                 syncModalForStep(activeTutorial, idx);
 
                 if (typeof document !== "undefined" && s.target && s.target !== "body") {
@@ -170,8 +174,9 @@ export function useAuditTutorial(controls: AuditTutorialControls) {
 
                 await new Promise((res) => setTimeout(res, 80));
             },
-        }));
-    }, [tutorialSteps, activeTutorial, syncModalForStep]);
+        };
+    });
+}, [tutorialSteps, activeTutorial, syncModalForStep]);
 
     // Keep Joyride spotlight in sync with mobile/tablet scroll in <main> and inner containers
     useEffect(() => {

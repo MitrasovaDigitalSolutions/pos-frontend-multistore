@@ -25,6 +25,8 @@ export interface MembersTutorialStep {
     disableBeacon?: boolean;
     spotlightClicks?: boolean;
     autoFill?: MembersTutorialAutoFill;
+    overlayNav?: boolean;
+    variant?: "tooltip" | "overlay_nav" | "banner";
 }
 
 export interface MembersTutorialMeta {

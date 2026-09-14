@@ -26,6 +26,8 @@ export interface SettingsTutorialStep {
     disableBeacon?: boolean;
     spotlightClicks?: boolean;
     autoFill?: SettingsTutorialAutoFill;
+    overlayNav?: boolean;
+    variant?: "tooltip" | "overlay_nav" | "banner";
 }
 
 export interface SettingsTutorialMeta {

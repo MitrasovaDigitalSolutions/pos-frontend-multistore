@@ -23,6 +23,8 @@ export interface AuditTutorialStep {
     disableBeacon?: boolean;
     spotlightClicks?: boolean;
     autoFill?: AuditTutorialAutoFill;
+    overlayNav?: boolean;
+    variant?: "tooltip" | "overlay_nav" | "banner";
 }
 
 export interface AuditTutorialMeta {
