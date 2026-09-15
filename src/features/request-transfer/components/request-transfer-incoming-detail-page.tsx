@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { toast } from "sonner";
@@ -29,7 +29,10 @@ import {
 } from "../api/request-transfer-api";
 import { RequestTransferIncomingTable } from "./detail/request-transfer-incoming-table";
 import { useTransferTutorialStore } from "@/stores/transfer-tutorial-store";
-import { MOCK_INCOMING_DETAIL } from "@/features/stock-transfer/tutorial/constants/transfer-tutorial-constants";
+import {
+    MOCK_INCOMING_DETAIL,
+    MOCK_INCOMING_SUMMARY_UID,
+} from "@/features/stock-transfer/tutorial/constants/transfer-tutorial-constants";
 
 export function RequestTransferIncomingDetailPage() {
     const router = useAppRouter();

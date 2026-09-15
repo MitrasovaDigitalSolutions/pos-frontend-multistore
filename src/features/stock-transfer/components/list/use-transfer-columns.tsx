@@ -22,7 +22,7 @@ export function useTransferColumns(activeStoreUid?: string | null) {
           const isIncoming = row.original.store_uid_destination === activeStoreUid;
 
           return (
-            <div className="flex flex-col gap-0.5 min-w-[170px]">
+            <div id={row.index === 0 ? "transfer-row-0" : undefined} className="flex flex-col gap-0.5 min-w-[170px]">
               <div className="flex items-center gap-1.5 whitespace-nowrap">
                 <span className="font-mono font-bold text-slate-900 text-xs tracking-tight">
                   {row.original.nomor_transfer}

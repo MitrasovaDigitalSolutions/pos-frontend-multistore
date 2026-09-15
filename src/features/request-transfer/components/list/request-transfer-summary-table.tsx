@@ -40,7 +40,7 @@ export function RequestTransferSummaryTable({
 }: RequestTransferSummaryTableProps) {
     const router = useAppRouter();
     const isTutorialRunning = useTransferTutorialStore(
-        (state) => state.isRunning && state.activeTutorial === "request_transfer_incoming"
+        (state) => state.isRunning && state.activeTutorial === "request_transfer_incoming" && state.stepIndex < 4
     );
 
     const displaySummaries = useMemo(() => {

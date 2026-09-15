@@ -87,6 +87,7 @@ export function ReceivingConfirmDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        id="transfer-dialog-confirm-receive"
         className="max-w-sm bg-white rounded-2xl p-6 gap-0 border-slate-100 shadow-xl overflow-hidden"
         showCloseButton={false}
       >
@@ -159,24 +160,67 @@ export function ReceivingConfirmDialog({
                 </div>
               </DialogHeader>
 
-              {/* FormSelect Alasan jika ada selisih atau ditolak */}
+              {/* Summary Stats Pill */}
+              <div className="w-full grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs">
+                <div className="flex flex-col items-center">
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Dikirim</span>
+                  <span className="font-bold text-slate-700">{qtyDikirim} pcs</span>
+                </div>
+                <div className="flex flex-col items-center border-l border-slate-200">
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Diterima</span>
+                  <span
+                    className={`font-bold ${isRejected
+                      ? "text-rose-600"
+                      : hasDiscrepancy
+                        ? "text-amber-600"
+                        : "text-emerald-600"
+                      }`}
+                  >
+                    {isRejected ? "0 pcs" : `${qtyDiterima} pcs`}
+                  </span>
+                </div>
+              </div>
+
+              {/* Discrepancy Alert / Selector */}
               {needsReason && (
-                <div className="w-full text-left pt-1">
+                <div className="w-full space-y-2.5 pt-1 text-left">
+                  {hasDiscrepancy && (
+                    <div className="p-2.5 bg-amber-50/80 border border-amber-200/60 rounded-xl text-xs text-amber-800 flex items-start gap-2">
+                      <IconAlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                      <div className="space-y-0.5">
+                        <span className="font-bold block">Terjadi Selisih Kurang!</span>
+                        <span className="text-[11px] text-amber-700">
+                          Jumlah diterima kurang {qtyDikirim - qtyDiterima} pcs dari kiriman.
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {hasExcess && (
+                    <div className="p-2.5 bg-blue-50/80 border border-blue-200/60 rounded-xl text-xs text-blue-800 flex items-start gap-2">
+                      <IconAlertTriangle size={16} className="text-blue-600 shrink-0 mt-0.5" />
+                      <div className="space-y-0.5">
+                        <span className="font-bold block">Terjadi Kelebihan Stok!</span>
+                        <span className="text-[11px] text-blue-700">
+                          Jumlah diterima lebih {qtyDiterima - qtyDikirim} pcs dari kiriman.
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   <FormSelect<ConfirmFormValues>
                     name="jenis_selisih"
-                    label="Pilih Alasan Selisih / Penolakan"
+                    label="Penyebab Selisih / Alasan"
                     options={[
-                      { label: "Salah Input Kuantitas / Kelebihan Kirim", value: JENIS_SELISIH.SALAH_INPUT },
-                      { label: "Barang Rusak Saat Pengiriman", value: JENIS_SELISIH.RUSAK },
-                      { label: "Barang Hilang / Kurang", value: JENIS_SELISIH.HILANG },
+                      { value: JENIS_SELISIH.SALAH_INPUT, label: "Salah Input / Hitung" },
+                      { value: JENIS_SELISIH.RUSAK, label: "Barang Rusak / Cacat" },
+                      { value: JENIS_SELISIH.HILANG, label: "Barang Hilang / Kurang" },
                     ]}
-                    placeholder="-- Pilih Alasan --"
-                    size="sm"
                   />
                 </div>
               )}
 
-              {/* FormInput Catatan / Keterangan (Opsional) */}
+              {/* Catatan / Keterangan Optional */}
               <div className="w-full text-left pt-1">
                 <FormInput<ConfirmFormValues>
                   inputRef={keteranganInputRef}
@@ -197,6 +241,7 @@ export function ReceivingConfirmDialog({
             {/* Action Buttons */}
             <div className="w-full flex gap-2.5 mt-5">
               <Button
+                id="transfer-dialog-btn-cancel"
                 type="button"
                 variant="outline"
                 className="flex-1 h-10 text-xs font-bold border-slate-200 hover:bg-slate-50 rounded-xl cursor-pointer"
@@ -206,6 +251,7 @@ export function ReceivingConfirmDialog({
                 Batal
               </Button>
               <Button
+                id="transfer-dialog-btn-submit"
                 type="submit"
                 className={`flex-1 h-10 text-xs font-bold rounded-xl text-white flex items-center justify-center gap-1.5 cursor-pointer ${isRejected
                   ? "bg-rose-600 hover:bg-rose-700"

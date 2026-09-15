@@ -13,12 +13,26 @@ import {
 } from "@tabler/icons-react";
 import { useAppRouter } from "@/hooks/use-app-router";
 
+async function waitForPathname(substr: string, timeout = 4000): Promise<boolean> {
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+        if (typeof window !== "undefined" && window.location.pathname.includes(substr)) {
+            return true;
+        }
+        await new Promise((r) => setTimeout(r, 50));
+    }
+    return false;
+}
+
 async function waitForElement(selector: string, timeout = 3500): Promise<Element | null> {
     if (typeof document === "undefined") return null;
     const start = Date.now();
     while (Date.now() - start < timeout) {
         const el = document.querySelector(selector);
-        if (el) return el;
+        if (el) {
+            const rect = el.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0) return el;
+        }
         await new Promise((r) => setTimeout(r, 50));
     }
     return document.querySelector(selector);
@@ -36,7 +50,9 @@ export function TransferTutorialMenuDialog() {
 
             if (typeof window !== "undefined" && window.location.pathname !== "/admin/request-transfer/create") {
                 router.push("/admin/request-transfer/create");
+                await waitForPathname("/request-transfer/create");
                 await waitForElement("#req-target-store", 3500);
+                await new Promise((r) => setTimeout(r, 150));
             }
 
             startTutorial("request_transfer_create");
@@ -45,10 +61,34 @@ export function TransferTutorialMenuDialog() {
 
             if (typeof window !== "undefined" && window.location.pathname !== "/admin/request-transfer/incoming") {
                 router.push("/admin/request-transfer/incoming");
+                await waitForPathname("/request-transfer/incoming");
                 await waitForElement("#req-incoming-list-header", 3500);
+                await new Promise((r) => setTimeout(r, 150));
             }
 
             startTutorial("request_transfer_incoming");
+        } else if (id === "stock_transfer_create") {
+            setMenuOpen(false);
+
+            if (typeof window !== "undefined" && window.location.pathname !== "/admin/inventory/stock-transfer") {
+                router.push("/admin/inventory/stock-transfer");
+                await waitForPathname("/inventory/stock-transfer");
+                await waitForElement("#transfer-list-header", 3500);
+                await new Promise((r) => setTimeout(r, 150));
+            }
+
+            startTutorial("stock_transfer_create");
+        } else if (id === "stock_transfer_receive") {
+            setMenuOpen(false);
+
+            if (typeof window !== "undefined" && window.location.pathname !== "/admin/inventory/stock-transfer/terima") {
+                router.push("/admin/inventory/stock-transfer/terima");
+                await waitForPathname("/stock-transfer/terima");
+                await waitForElement("#transfer-list-header", 3500);
+                await new Promise((r) => setTimeout(r, 150));
+            }
+
+            startTutorial("stock_transfer_receive");
         }
     };
 

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { useIncomingRequestTransfers, useOutgoingRequestTransfers } from "../api/request-transfer-api";
+import { useTransferTutorialStore } from "@/stores/transfer-tutorial-store";
 import { RequestTransferSummaryHeader } from "./list/request-transfer-summary-header";
 import { RequestTransferFilters, type RequestTransferFilterValues } from "./list/request-transfer-filters";
 import { RequestTransferSummaryTable } from "./list/request-transfer-summary-table";
@@ -28,6 +29,14 @@ export function RequestTransferListPage({ mode = "outgoing" }: RequestTransferLi
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
     const [debouncedSearch, setDebouncedSearch] = useState("");
+
+    // Automatically purge any lingering tutorial state if page is mounted while not in incoming tutorial steps 0-3
+    useEffect(() => {
+        const store = useTransferTutorialStore.getState();
+        if (store.isRunning && (store.activeTutorial !== "request_transfer_incoming" || store.stepIndex >= 4)) {
+            store.stopTutorial();
+        }
+    }, []);
 
     const handleFilterSubmit = (data: RequestTransferFilterValues) => {
         setDebouncedSearch(data.search);

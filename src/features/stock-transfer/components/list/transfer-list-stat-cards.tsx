@@ -63,7 +63,7 @@ import { TRANSFER_STATUS, TRANSFER_SHIPMENT_STATUS } from "../../constants";
 export function TransferListStatCards({ mode, transfers, totalCount, isLoading }: TransferListStatCardsProps) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div id="transfer-stat-cards" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, idx) => (
           <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-2xs flex items-center gap-3">
             <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
@@ -111,7 +111,7 @@ export function TransferListStatCards({ mode, transfers, totalCount, isLoading }
   const stats = getStats();
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div id="transfer-stat-cards" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat, idx) => {
         const Icon = stat.icon;
         const style = STAT_COLOR_MAP[stat.color] || STAT_COLOR_MAP.slate;

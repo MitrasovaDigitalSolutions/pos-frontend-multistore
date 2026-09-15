@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { useConsignmentTutorialStore } from "@/stores/consignment-tutorial-store";
 import {
   MOCK_CONSIGNMENT_ITEMS,
+  MOCK_CONSIGNMENT_NOTES,
   MOCK_CONSIGNMENT_PRODUCTS,
   MOCK_CONSIGNMENT_SUPPLIER,
 } from "../../tutorial/constants/consignment-tutorial-constants";
@@ -140,6 +141,10 @@ export function ConsignmentCreatePage({ initialData }: ConsignmentCreatePageProp
         form.setValue("supplier_uid", "");
         form.setValue("supplier", "");
       }
+      const currentCatatan = form.getValues("catatan");
+      if (currentCatatan === MOCK_CONSIGNMENT_NOTES || currentCatatan?.includes("Bagi hasil 25%")) {
+        form.setValue("catatan", "");
+      }
       const currentItems = form.getValues("items") || [];
       if (currentItems.some((it) => it.product_uid.startsWith("mock-"))) {
         const clean = currentItems.filter((it) => !it.product_uid.startsWith("mock-"));
@@ -176,6 +181,10 @@ export function ConsignmentCreatePage({ initialData }: ConsignmentCreatePageProp
 
     const handleClearItems = () => {
       form.setValue("items", []);
+      const currentCatatan = form.getValues("catatan");
+      if (currentCatatan === MOCK_CONSIGNMENT_NOTES || currentCatatan?.includes("Bagi hasil 25%")) {
+        form.setValue("catatan", "");
+      }
     };
 
     const handleRestoreSnapshot = (e: Event) => {

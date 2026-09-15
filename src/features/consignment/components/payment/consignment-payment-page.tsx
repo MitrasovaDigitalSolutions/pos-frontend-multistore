@@ -30,7 +30,7 @@ export function ConsignmentPaymentPage() {
   const targetUid = searchParams.get("uid");
 
   const isTutorialRunning = useConsignmentTutorialStore(
-    (state) => state.isRunning && state.activeTutorial === "consignment_payment_return"
+    (state) => state.isRunning && state.activeTutorial === "consignment_payment"
   );
 
   const filterMethods = useForm<PaymentFilterValues>({
@@ -87,6 +87,7 @@ export function ConsignmentPaymentPage() {
   // Purge mockRow when tutorial is not running
   useEffect(() => {
     if (!isTutorialRunning && mockRow) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setMockRow(null);
     }
   }, [isTutorialRunning, mockRow]);

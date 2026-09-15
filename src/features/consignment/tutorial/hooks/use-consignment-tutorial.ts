@@ -7,11 +7,14 @@ import { CONSIGNMENT_TUTORIAL_STEPS } from "../steps/consignment-tutorial-steps"
 import type { ConsignmentTutorialAction } from "../types/consignment-tutorial";
 import { useAppRouter } from "@/hooks/use-app-router";
 
-function setInputValueWithEvents(input: HTMLInputElement, value: string) {
-    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-        window.HTMLInputElement.prototype,
-        "value"
-    )?.set;
+function setInputValueWithEvents(input: HTMLInputElement | HTMLTextAreaElement, value: string) {
+    const proto =
+        typeof window !== "undefined" && input instanceof window.HTMLTextAreaElement
+            ? window.HTMLTextAreaElement.prototype
+            : typeof window !== "undefined"
+            ? window.HTMLInputElement.prototype
+            : null;
+    const nativeInputValueSetter = proto ? Object.getOwnPropertyDescriptor(proto, "value")?.set : undefined;
     if (nativeInputValueSetter) {
         nativeInputValueSetter.call(input, value);
     } else {
@@ -268,6 +271,25 @@ export function useConsignmentTutorial() {
         if (typeof window !== "undefined") {
             window.dispatchEvent(new CustomEvent("consignment-payment-tutorial-close-dialog"));
             window.dispatchEvent(new CustomEvent("consignment-payment-tutorial-clear-mock"));
+        }
+
+        // Clean up DOM input fields if leftover
+        if (typeof document !== "undefined") {
+            const consNotesInput = document.querySelector("#cons-notes-input") as HTMLInputElement | HTMLTextAreaElement | null;
+            if (consNotesInput) {
+                setInputValueWithEvents(consNotesInput, "");
+                consNotesInput.blur();
+            }
+            const consDialogNotesInput = document.querySelector("#cons-dialog-notes-input") as HTMLInputElement | HTMLTextAreaElement | null;
+            if (consDialogNotesInput) {
+                setInputValueWithEvents(consDialogNotesInput, "");
+                consDialogNotesInput.blur();
+            }
+            const consBarcodeInput = document.querySelector("#cons-barcode-input") as HTMLInputElement | null;
+            if (consBarcodeInput) {
+                setInputValueWithEvents(consBarcodeInput, "");
+                consBarcodeInput.blur();
+            }
         }
     }, [clearSnapshot]);
 

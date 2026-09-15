@@ -6,8 +6,12 @@ import { useTransferTutorialStore } from "@/stores/transfer-tutorial-store";
 import { TRANSFER_TUTORIAL_STEPS } from "../steps/transfer-tutorial-steps";
 import type { TransferTutorialAction } from "../types/transfer-tutorial";
 import { useAppRouter } from "@/hooks/use-app-router";
+import { usePathname } from "next/navigation";
 
-import { MOCK_INCOMING_SUMMARY_UID } from "../constants/transfer-tutorial-constants";
+import {
+    MOCK_INCOMING_SUMMARY_UID,
+    MOCK_INCOMING_STOCK_TRANSFER_UID,
+} from "../constants/transfer-tutorial-constants";
 
 function setInputValueWithEvents(input: HTMLInputElement | HTMLTextAreaElement, value: string) {
     const proto =
@@ -51,17 +55,39 @@ function getVisibleElement(selector: string): HTMLElement | null {
     return (elements[0] as HTMLElement) || null;
 }
 
-async function waitForElement(selector: string, timeout = 2500): Promise<Element | null> {
-    if (typeof document === "undefined") return null;
-    if (selector === "body") return document.body;
+async function waitForPathname(substr: string, timeout = 4000): Promise<boolean> {
     const start = Date.now();
+    while (Date.now() - start < timeout) {
+        if (typeof window !== "undefined" && window.location.pathname.includes(substr)) {
+            return true;
+        }
+        await new Promise((r) => setTimeout(r, 50));
+    }
+    return false;
+}
+
+async function waitForElement(selector: string, timeout = 4000): Promise<Element | null> {
+    if (typeof document === "undefined") return null;
+    const start = Date.now();
+    if (selector === "body") {
+        while (Date.now() - start < timeout) {
+            const pageEl = document.querySelector("main, .space-y-6, [data-page-ready='true']");
+            const hasFullSkeleton = document.querySelector(".animate-pulse > .bg-white");
+            if (pageEl && !hasFullSkeleton) return document.body;
+            await new Promise((r) => setTimeout(r, 60));
+        }
+        return document.body;
+    }
     while (Date.now() - start < timeout) {
         const el = getVisibleElement(selector);
         if (el) {
             const rect = el.getBoundingClientRect();
-            if (rect.width > 0 && rect.height > 0) return el;
+            if (rect.width > 0 && rect.height > 0) {
+                const isSkeleton = el.closest(".animate-pulse") !== null;
+                if (!isSkeleton) return el;
+            }
         }
-        await new Promise((r) => setTimeout(r, 50));
+        await new Promise((r) => setTimeout(r, 60));
     }
     return getVisibleElement(selector);
 }
@@ -171,6 +197,13 @@ export function useTransferTutorial() {
     }, [router]);
 
     const activeTutorial = useTransferTutorialStore((state) => state.activeTutorial);
+    const activeTutorialRef = useRef(activeTutorial);
+    useEffect(() => {
+        if (activeTutorial) {
+            activeTutorialRef.current = activeTutorial;
+        }
+    }, [activeTutorial]);
+
     const isRunning = useTransferTutorialStore((state) => state.isRunning);
     const stepIndex = useTransferTutorialStore((state) => state.stepIndex);
     const setStepIndex = useTransferTutorialStore((state) => state.setStepIndex);
@@ -234,8 +267,54 @@ export function useTransferTutorial() {
             }
         }
 
+        // Clean up DOM input fields if leftover
+        if (typeof document !== "undefined") {
+            const reqNotesInput = document.querySelector("#req-notes-input") as HTMLTextAreaElement | HTMLInputElement | null;
+            if (reqNotesInput) {
+                setInputValueWithEvents(reqNotesInput, "");
+                reqNotesInput.blur();
+            }
+            const transferNotesInput = document.querySelector("#transfer-notes-input") as HTMLTextAreaElement | HTMLInputElement | null;
+            if (transferNotesInput) {
+                setInputValueWithEvents(transferNotesInput, "");
+                transferNotesInput.blur();
+            }
+            const reqBarcodeInput = document.querySelector("#req-barcode-input") as HTMLInputElement | null;
+            if (reqBarcodeInput) {
+                setInputValueWithEvents(reqBarcodeInput, "");
+                reqBarcodeInput.blur();
+            }
+            const transferBarcodeInput = document.querySelector("#transfer-barcode-input") as HTMLInputElement | null;
+            if (transferBarcodeInput) {
+                setInputValueWithEvents(transferBarcodeInput, "");
+                transferBarcodeInput.blur();
+            }
+
+            // Dismiss any open confirmation dialog
+            const transferDialogCancelBtn = document.querySelector("#transfer-dialog-btn-cancel") as HTMLButtonElement | null;
+            if (transferDialogCancelBtn) {
+                transferDialogCancelBtn.click();
+            }
+        }
+
         if (typeof window !== "undefined" && window.location.search.includes(MOCK_INCOMING_SUMMARY_UID)) {
             routerRef.current.push("/admin/request-transfer/incoming");
+        }
+
+        if (
+            typeof window !== "undefined" &&
+            window.location.pathname.includes(MOCK_INCOMING_STOCK_TRANSFER_UID)
+        ) {
+            routerRef.current.push("/admin/inventory/stock-transfer/terima");
+        }
+
+        if (
+            typeof window !== "undefined" &&
+            window.location.pathname === "/admin/inventory/stock-transfer/new" &&
+            (useTransferTutorialStore.getState().activeTutorial === "stock_transfer_create" ||
+                activeTutorialRef.current === "stock_transfer_create")
+        ) {
+            routerRef.current.push("/admin/inventory/stock-transfer");
         }
     }, [clearSnapshot]);
 
@@ -247,18 +326,75 @@ export function useTransferTutorial() {
         prevIsRunningRef.current = isRunning;
     }, [isRunning, cleanupAndRestore]);
 
+    const pathname = usePathname();
+
+    // Route guard: immediately auto-stop and cleanup if user navigates outside allowed tutorial pages
+    useEffect(() => {
+        if (!isRunning || !activeTutorial) return;
+
+        if (activeTutorial === "request_transfer_create") {
+            if (pathname !== "/admin/request-transfer/create") {
+                cleanupAndRestore();
+                stopTutorial();
+            }
+        } else if (activeTutorial === "request_transfer_incoming") {
+            const isIncomingList = pathname === "/admin/request-transfer/incoming";
+            const isIncomingDetail = pathname === "/admin/request-transfer/incoming/detail";
+            if (!isIncomingList && !isIncomingDetail) {
+                cleanupAndRestore();
+                stopTutorial();
+            } else if (isIncomingList && stepIndex >= 4) {
+                cleanupAndRestore();
+                stopTutorial();
+            }
+        } else if (activeTutorial === "stock_transfer_create") {
+            const isList = pathname === "/admin/inventory/stock-transfer" || pathname === "/admin/stock-transfer";
+            const isNew = pathname === "/admin/inventory/stock-transfer/new" || pathname === "/admin/stock-transfer/new";
+            if (!isList && !isNew) {
+                cleanupAndRestore();
+                stopTutorial();
+            } else if (isList && stepIndex >= 4) {
+                cleanupAndRestore();
+                stopTutorial();
+            }
+        } else if (activeTutorial === "stock_transfer_receive") {
+            const isList = pathname.includes("/admin/inventory/stock-transfer/terima") || pathname === "/admin/inventory/stock-transfer";
+            const isDetail = pathname.includes(MOCK_INCOMING_STOCK_TRANSFER_UID) || pathname.includes("/admin/inventory/stock-transfer/");
+            if (!isList && !isDetail) {
+                cleanupAndRestore();
+                stopTutorial();
+            } else if (isList && stepIndex >= 4 && stepIndex < 10) {
+                cleanupAndRestore();
+                stopTutorial();
+            }
+        }
+    }, [pathname, isRunning, activeTutorial, stepIndex, cleanupAndRestore, stopTutorial]);
+
+    // Global Escape key listener to stop tutorial
+    useEffect(() => {
+        if (!isRunning) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                cleanupAndRestore();
+                stopTutorial();
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isRunning, cleanupAndRestore, stopTutorial]);
+
     // Joyride Steps format
     const joyrideSteps: Step[] = useMemo(() => {
         return tutorialSteps.map((s, idx) => {
             const isLastStep = idx === tutorialSteps.length - 1;
-            const isCentered = isLastStep || s.placement === "center" || s.target === "body";
+            const isTargetBody = isLastStep || s.target === "body";
             const isOverlayNav = Boolean(s.overlayNav || s.variant === "overlay_nav");
 
             return {
-                target: isCentered ? "body" : s.target,
+                target: isTargetBody ? "body" : s.target,
                 title: s.title,
                 content: s.content,
-                placement: isCentered ? ("center" as const) : (s.placement || "bottom"),
+                placement: isTargetBody ? ("center" as const) : (s.placement || "bottom"),
                 skipBeacon: true,
                 disableBeacon: true,
                 spotlightClicks: false,
@@ -283,6 +419,24 @@ export function useTransferTutorial() {
         ].includes(target);
     }, []);
 
+    const isStockTransferListTarget = useCallback((target: string) => {
+        return [
+            "#transfer-list-header",
+            "#transfer-stat-cards",
+            "#transfer-list-filters",
+            "#transfer-btn-create-new",
+        ].includes(target);
+    }, []);
+
+    const isStockTransferReceiveListTarget = useCallback((target: string) => {
+        return [
+            "#transfer-list-header",
+            "#transfer-stat-cards",
+            "#transfer-list-filters",
+            "#transfer-row-0",
+        ].includes(target);
+    }, []);
+
     // Action executor
     const executeAction = useCallback(
         async (action: TransferTutorialAction) => {
@@ -303,14 +457,34 @@ export function useTransferTutorial() {
                         const currentStep = tutorialSteps[index];
                         const nextStep = tutorialSteps[nextIndex];
 
-                        // Transition from List page to Detail page (e.g. step 4 -> step 5)
+                        // Transition from List page to Detail page (e.g. step 4 -> step 5) for request transfer incoming
                         if (
                             isIncomingListTarget(currentStep.target) &&
                             !isIncomingListTarget(nextStep.target) &&
                             nextStep.target.startsWith("#req-incoming-")
                         ) {
                             routerRef.current.push(`/admin/request-transfer/incoming/detail?summary_uid=${MOCK_INCOMING_SUMMARY_UID}`);
-                            await new Promise((r) => setTimeout(r, 600));
+                            await waitForPathname("/request-transfer/incoming/detail");
+                        }
+
+                        // Transition from Stock Transfer Outgoing List page to New Form (e.g. step 4 -> step 5)
+                        if (
+                            isStockTransferListTarget(currentStep.target) &&
+                            !isStockTransferListTarget(nextStep.target) &&
+                            (nextStep.target.startsWith("#transfer-route") || nextStep.target.startsWith("#transfer-"))
+                        ) {
+                            routerRef.current.push("/admin/inventory/stock-transfer/new");
+                            await waitForPathname("/stock-transfer/new");
+                        }
+
+                        // Transition from Stock Transfer Incoming List page to Detail page (step 4 -> step 5)
+                        if (
+                            isStockTransferReceiveListTarget(currentStep.target) &&
+                            !isStockTransferReceiveListTarget(nextStep.target) &&
+                            nextStep.target.startsWith("#transfer-detail-")
+                        ) {
+                            routerRef.current.push(`/admin/inventory/stock-transfer/${MOCK_INCOMING_STOCK_TRANSFER_UID}?from=incoming`);
+                            await waitForPathname(MOCK_INCOMING_STOCK_TRANSFER_UID);
                         }
 
                         // Ensure matrix view is active if target is matrix
@@ -329,7 +503,8 @@ export function useTransferTutorial() {
                         }
 
                         ensureElementVisible(nextStep.target);
-                        await waitForElement(nextStep.target, 2500);
+                        await waitForElement(nextStep.target, 4000);
+                        await new Promise((r) => setTimeout(r, 150));
                         setStepIndex(nextIndex);
                     } else {
                         cleanupAndRestore();
@@ -341,14 +516,34 @@ export function useTransferTutorial() {
                         const currentStep = tutorialSteps[index];
                         const prevStep = tutorialSteps[prevIndex];
 
-                        // Transition BACK from Detail page to List page (e.g. step 5 -> step 4)
+                        // Transition BACK from Detail page to List page (e.g. step 5 -> step 4) for request transfer incoming
                         if (
                             !isIncomingListTarget(currentStep.target) &&
                             isIncomingListTarget(prevStep.target) &&
                             currentStep.target.startsWith("#req-incoming-")
                         ) {
                             routerRef.current.push("/admin/request-transfer/incoming");
-                            await new Promise((r) => setTimeout(r, 600));
+                            await waitForPathname("/request-transfer/incoming");
+                        }
+
+                        // Transition BACK from New Form to Stock Transfer Outgoing List page (e.g. step 5 -> step 4)
+                        if (
+                            !isStockTransferListTarget(currentStep.target) &&
+                            isStockTransferListTarget(prevStep.target) &&
+                            (currentStep.target.startsWith("#transfer-route") || currentStep.target.startsWith("#transfer-"))
+                        ) {
+                            routerRef.current.push("/admin/inventory/stock-transfer");
+                            await waitForPathname("/inventory/stock-transfer");
+                        }
+
+                        // Transition BACK from Detail page to Stock Transfer Incoming List page (step 5 -> step 4)
+                        if (
+                            !isStockTransferReceiveListTarget(currentStep.target) &&
+                            isStockTransferReceiveListTarget(prevStep.target) &&
+                            currentStep.target.startsWith("#transfer-detail-")
+                        ) {
+                            routerRef.current.push("/admin/inventory/stock-transfer/terima");
+                            await waitForPathname("/stock-transfer/terima");
                         }
 
                         // Ensure matrix view is active if target is matrix
@@ -359,7 +554,8 @@ export function useTransferTutorial() {
                         }
 
                         ensureElementVisible(prevStep.target);
-                        await waitForElement(prevStep.target, 2500);
+                        await waitForElement(prevStep.target, 4000);
+                        await new Promise((r) => setTimeout(r, 150));
                         setStepIndex(prevIndex);
                     }
                 }
@@ -392,8 +588,7 @@ export function useTransferTutorial() {
                 status === STATUS.FINISHED ||
                 status === STATUS.SKIPPED ||
                 action === ACTIONS.CLOSE ||
-                action === ACTIONS.RESET ||
-                type === EVENTS.TOUR_END
+                action === ACTIONS.RESET
             ) {
                 cleanupAndRestore();
                 stopTutorial();

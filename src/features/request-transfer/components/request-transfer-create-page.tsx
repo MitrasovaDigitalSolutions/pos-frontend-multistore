@@ -8,7 +8,10 @@ import { useAllSupplierSales } from "@/features/supplier-sales/api/supplier-sale
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useActiveStoreStore } from "@/stores/active-store-store";
 import { useTransferTutorialStore } from "@/stores/transfer-tutorial-store";
-import { MOCK_REQUEST_STORE } from "@/features/stock-transfer/tutorial/constants/transfer-tutorial-constants";
+import {
+    MOCK_REQUEST_STORE,
+    MOCK_REQUEST_NOTE,
+} from "@/features/stock-transfer/tutorial/constants/transfer-tutorial-constants";
 import type { TransferTutorialPreSnapshot } from "@/features/stock-transfer/tutorial/types/transfer-tutorial";
 import type { Store } from "@/features/stores/types";
 import { useSearchParams } from "next/navigation";
@@ -59,11 +62,14 @@ export function RequestTransferCreatePage() {
                 // eslint-disable-next-line react-hooks/set-state-in-effect
                 setRequestTo("");
             }
+            if (catatan === MOCK_REQUEST_NOTE || catatan.includes("Stok menipis menjelang promo")) {
+                setCatatan("");
+            }
             if (items.some((i) => i.product_uid.startsWith("mock-") || i.barcode === "8992745123456" || i.barcode === "8991234567890")) {
                 setItems((prev) => prev.filter((i) => !i.product_uid.startsWith("mock-") && i.barcode !== "8992745123456" && i.barcode !== "8991234567890"));
             }
         }
-    }, [isTutorialRunning, requestTo, items]);
+    }, [isTutorialRunning, requestTo, catatan, items]);
 
     // Listen to custom events from transfer tutorial
     useEffect(() => {
@@ -86,18 +92,20 @@ export function RequestTransferCreatePage() {
         };
 
         const handleClearItems = () => {
-            setItems([]);
+            setItems((prev) => prev.filter((i) => !i.product_uid.startsWith("mock-") && i.barcode !== "8992745123456" && i.barcode !== "8991234567890"));
+            setRequestTo((prev) => (prev === MOCK_REQUEST_STORE.uid ? "" : prev));
+            setCatatan((prev) => (prev === MOCK_REQUEST_NOTE || prev.includes("Stok menipis menjelang promo") ? "" : prev));
         };
 
         const handleRestoreSnapshot = (e: Event) => {
             const customEvent = e as CustomEvent<TransferTutorialPreSnapshot>;
             if (customEvent.detail) {
                 const snap = customEvent.detail;
-                setRequestTo(snap.requestTo);
-                setSupplierUid(snap.supplierUid);
-                setSupplierSalesUid(snap.supplierSalesUid);
-                setCatatan(snap.catatan);
-                setItems(snap.items);
+                if (snap.requestTo !== undefined) setRequestTo(snap.requestTo);
+                if (snap.supplierUid !== undefined) setSupplierUid(snap.supplierUid);
+                if (snap.supplierSalesUid !== undefined) setSupplierSalesUid(snap.supplierSalesUid);
+                if (snap.catatan !== undefined) setCatatan(snap.catatan);
+                if (snap.items !== undefined) setItems(snap.items);
             }
         };
 

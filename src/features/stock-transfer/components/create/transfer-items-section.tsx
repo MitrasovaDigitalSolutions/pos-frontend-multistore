@@ -79,12 +79,13 @@ export function TransferItemsSection({
       </div>
 
       {/* Barcode Scanner Box */}
-      <div className="space-y-1.5">
+      <div id="transfer-barcode-box" className="space-y-1.5">
         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
           <IconScan size={13} className="text-emerald-600" />
           <span>Cari / Scan Produk</span>
         </label>
         <BarcodeInput
+          id="transfer-barcode-input"
           ref={barcodeInputRef}
           refocusOnFound={false}
           isJasa={false}
@@ -95,7 +96,7 @@ export function TransferItemsSection({
 
       {/* Selected Items */}
       {items.length > 0 ? (
-        <div className="space-y-3">
+        <div id="transfer-items-table" className="space-y-3">
           {/* ── Mobile Card List View (< 768px) ── */}
           <div className="block md:hidden space-y-2.5">
             {items.map((item, idx) => (
@@ -204,7 +205,7 @@ export function TransferItemsSection({
           </div>
         </div>
       ) : (
-        <div className="p-7 text-center bg-slate-50/50 border border-dashed border-slate-200 rounded-xl space-y-2">
+        <div id="transfer-items-table" className="p-7 text-center bg-slate-50/50 border border-dashed border-slate-200 rounded-xl space-y-2">
           <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
             <IconPackage size={22} />
           </div>

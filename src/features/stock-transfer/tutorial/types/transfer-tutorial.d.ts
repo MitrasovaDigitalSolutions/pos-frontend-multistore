@@ -1,4 +1,5 @@
 import type { RequestLineItem } from "@/features/request-transfer/schemas/request-transfer-schema";
+import type { TransferItem } from "@/features/stock-transfer/components/create/transfer-items-section";
 
 export type TransferTutorialId =
     | "request_transfer_create"
@@ -8,7 +9,7 @@ export type TransferTutorialId =
     | "stock_transfer_validation";
 
 export type TransferTutorialAction =
-    | { type: "inject_items"; items: RequestLineItem[] }
+    | { type: "inject_items"; items: RequestLineItem[] | TransferItem[] }
     | { type: "clear_items" }
     | { type: "set_field"; field: string; value: unknown }
     | { type: "type_text"; target: string; text: string }
@@ -31,11 +32,13 @@ export interface TransferTutorialStep {
 }
 
 export interface TransferTutorialPreSnapshot {
-    requestTo: string;
-    supplierUid: string;
-    supplierSalesUid: string | null;
+    requestTo?: string;
+    supplierUid?: string;
+    supplierSalesUid?: string | null;
+    destinationUid?: string;
     catatan: string;
-    items: RequestLineItem[];
+    items?: RequestLineItem[];
+    stockItems?: TransferItem[];
 }
 
 export interface TransferTutorialMeta {
