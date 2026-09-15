@@ -203,8 +203,8 @@ export function PaymentCreatePage() {
         description: `Saldo: ${formatRupiah(acc.saldo || 0)} • (${acc.tipe === "register" ? "Kas Kasir" : acc.tipe === "bank" ? "Bank" : "Kas Utama"})`,
     }));
 
-    if (isTutorialRunning && cashAccountOptions.length === 0) {
-        cashAccountOptions.push({
+    if (isTutorialRunning && !cashAccountOptions.some((acc) => acc.value === "mock-cash-acc-1")) {
+        cashAccountOptions.unshift({
             value: "mock-cash-acc-1",
             label: "Kas Utama Toko (Pusat)",
             description: "Saldo: Rp 15.000.000 • (Kas Utama)",

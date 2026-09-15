@@ -201,7 +201,7 @@ export const PURCHASE_TUTORIAL_STEPS: Record<string, PurchaseTutorialStep[]> = {
             },
         },
         {
-            target: "#pay-cash-account-field",
+            target: "#pay-cash-account-field, #pay-account-field",
             title: "5. Pilih Akun Kas / Bank Sumber Dana",
             content: "Pilih sumber rekening kas toko (Kas Utama atau Rekening Bank) yang akan dipotong saldonya untuk transaksi pembayaran ini.",
             placement: "right",
@@ -245,7 +245,7 @@ export const PURCHASE_TUTORIAL_STEPS: Record<string, PurchaseTutorialStep[]> = {
             },
         },
         {
-            target: "#pay-submit-button",
+            target: "#pay-submit-button, #pay-submit-btn",
             title: "9. Simpan & Konfirmasi Pembayaran",
             content: "Klik tombol 'Simpan Pembayaran' untuk memunculkan dialog konfirmasi akhir. Di dialog konfirmasi, Anda dapat memverifikasi ulang saldo hutang sebelum pembukuan resmi disimpan.",
             placement: "top",

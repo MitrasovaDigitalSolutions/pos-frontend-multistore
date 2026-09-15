@@ -86,7 +86,7 @@ export function PaymentForm({
                     </div>
 
                     {/* Cash Account */}
-                    <div id="pay-account-field" className="space-y-1.5">
+                    <div id="pay-cash-account-field" className="space-y-1.5">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             Bayar Dari Akun/Kas *
                         </label>
@@ -169,7 +169,7 @@ export function PaymentForm({
                     </Button>
                     <Button
                         type="submit"
-                        id="pay-submit-btn"
+                        id="pay-submit-button"
                         className="px-6 h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
                         disabled={isPending}
                     >
