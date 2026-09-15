@@ -181,6 +181,7 @@ export function CoaPickerDialog({
                             onClick={() => handlePick(acc)}
                             icon={<IconCheck size={12} />}
                             tooltip="Pilih Akun Ini"
+                            className="coa-picker-select-btn"
                         >
                             Pilih
                         </DataTableTextActionButton>
@@ -196,6 +197,7 @@ export function CoaPickerDialog({
             open={open}
             onOpenChange={onOpenChange}
             scrollable={false}
+            contentId="coa-picker-dialog-content"
             className="w-[95vw] sm:max-w-2xl md:max-w-3xl max-h-[85vh] h-[85vh] flex flex-col p-4 sm:p-6 overflow-hidden"
             title={
                 <div className="flex items-center gap-2">

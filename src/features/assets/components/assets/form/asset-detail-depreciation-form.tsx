@@ -104,7 +104,7 @@ export function AssetDetailDepreciationForm({
     };
 
     return (
-        <div className="space-y-3 animate-in fade-in slide-in-from-right-4 duration-200">
+        <div id="btn-susut-form" className="space-y-3 animate-in fade-in slide-in-from-right-4 duration-200">
             {/* Header with Back Button */}
             <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-1.5">
@@ -163,7 +163,7 @@ export function AssetDetailDepreciationForm({
                     </div>
 
                     {/* Nominal */}
-                    <div className="space-y-1">
+                    <div className="space-y-1" id="susut-nominal">
                         <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
                             Nominal Susut <span className="text-rose-500">*</span>
                         </label>
@@ -221,7 +221,7 @@ export function AssetDetailDepreciationForm({
                 )}
 
                 {/* Keterangan */}
-                <div className="space-y-1">
+                <div className="space-y-1" id="susut-keterangan">
                     <label htmlFor="keterangan" className="text-xs font-bold text-slate-700 dark:text-slate-200">
                         Keterangan <span className="text-slate-400 font-normal">(Opsional)</span>
                     </label>
@@ -263,6 +263,7 @@ export function AssetDetailDepreciationForm({
                         Batal
                     </Button>
                     <Button
+                        id="btn-submit-susut"
                         type="submit"
                         disabled={isPending || watchedNominal <= 0 || isExceedingMax}
                         className="h-8 px-4 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-xl shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1"

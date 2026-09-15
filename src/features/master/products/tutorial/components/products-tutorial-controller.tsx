@@ -28,6 +28,7 @@ export function ProductsTutorialController(props: ProductsTutorialControllerProp
                     run={isRunning}
                     stepIndex={stepIndex}
                     continuous
+                    scrollToFirstStep={false}
                     onEvent={handleJoyrideEvent}
                     tooltipComponent={ProductsTutorialTooltip}
                     options={{

@@ -268,12 +268,13 @@ export function usePurchaseTutorial() {
         }
     }, [updateCursor]);
 
-    // Ensure target element is smoothly scrolled into view if needed
+    // Ensure target element is scrolled into view immediately
     const ensureElementVisible = useCallback((targetSelector: string) => {
         if (typeof document === "undefined" || !targetSelector || targetSelector === "body") return;
         const el = getVisibleElement(targetSelector);
         if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            el.scrollIntoView({ behavior: "auto", block: "center", inline: "center" });
+            window.dispatchEvent(new Event("resize"));
         }
     }, []);
 
@@ -384,6 +385,8 @@ export function usePurchaseTutorial() {
 
     // Joyride Steps format with center placement for last step
     const joyrideSteps: Step[] = useMemo(() => {
+        const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+
         return tutorialSteps.map((s, idx) => {
             const isLastStep = idx === tutorialSteps.length - 1;
             const isCentered = isLastStep || s.placement === "center" || s.target === "body";
@@ -393,9 +396,14 @@ export function usePurchaseTutorial() {
                 target: isCentered ? "body" : s.target,
                 title: s.title,
                 content: s.content,
-                placement: isCentered ? ("center" as const) : (s.placement || "bottom"),
+                placement: isCentered
+                    ? ("center" as const)
+                    : isMobile && (s.placement === "left" || s.placement === "right")
+                    ? "auto"
+                    : (s.placement || "bottom"),
                 skipBeacon: true,
                 disableBeacon: true,
+                skipScroll: true,
                 spotlightClicks: false,
                 floatingOptions: {
                     strategy: "fixed",
@@ -407,6 +415,18 @@ export function usePurchaseTutorial() {
             };
         });
     }, [tutorialSteps]);
+
+    // Keep Joyride spotlight in sync with mobile/tablet scroll in <main> and inner containers
+    useEffect(() => {
+        if (!isRunning) return;
+        const handleScroll = () => {
+            window.dispatchEvent(new Event("resize"));
+        };
+        window.addEventListener("scroll", handleScroll, { capture: true, passive: true });
+        return () => {
+            window.removeEventListener("scroll", handleScroll, { capture: true });
+        };
+    }, [isRunning]);
 
     // Action executor
     const executeAction = useCallback(

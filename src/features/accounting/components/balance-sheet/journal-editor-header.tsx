@@ -67,6 +67,7 @@ export function JournalEditorHeader({
                 </Button>
 
                 <Button
+                    id="mj-simpan-draf"
                     type="button"
                     variant="outline"
                     size="sm"

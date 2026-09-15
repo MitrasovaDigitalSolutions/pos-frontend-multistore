@@ -48,7 +48,7 @@ export function JournalEditorTableRow({
                     control={control}
                     name={`lines.${index}.chart_of_account_uid`}
                     render={({ field: selectField }) => (
-                        <div className="w-full">
+                        <div className="w-full mj-coa-trigger" id={`mj-coa-trigger-${index}`}>
                             <CoaPickerTrigger
                                 accounts={flatAccounts}
                                 value={selectField.value || ""}
@@ -59,7 +59,7 @@ export function JournalEditorTableRow({
                                 size="sm"
                                 allowClear
                                 className={cn(
-                                    "w-full h-8 text-xs rounded-lg",
+                                    "w-full h-8 text-xs rounded-lg mj-coa-trigger",
                                     accountError && "border-rose-400 focus:border-rose-500"
                                 )}
                             />
@@ -93,19 +93,21 @@ export function JournalEditorTableRow({
                     render={({ field: debitField }) => {
                         const numVal = Number(debitField.value) || 0;
                         return (
-                            <NumberInput
-                                value={numVal || null}
-                                onChange={(val) => {
-                                    debitField.onChange(val || 0);
-                                }}
-                                allowNegative={false}
-                                placeholder="0"
-                                className={cn(
-                                    "h-8 text-xs text-right font-mono font-bold rounded-lg border-slate-200 dark:border-slate-800 focus-visible:ring-emerald-500",
-                                    numVal > 0 &&
-                                    "text-emerald-700 dark:text-emerald-400 bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800/60"
-                                )}
-                            />
+                            <div className="mj-debit-input" id={`mj-debit-input-${index}`}>
+                                <NumberInput
+                                    value={numVal || null}
+                                    onChange={(val) => {
+                                        debitField.onChange(val || 0);
+                                    }}
+                                    allowNegative={false}
+                                    placeholder="0"
+                                    className={cn(
+                                        "mj-debit-input h-8 text-xs text-right font-mono font-bold rounded-lg border-slate-200 dark:border-slate-800 focus-visible:ring-emerald-500",
+                                        numVal > 0 &&
+                                        "text-emerald-700 dark:text-emerald-400 bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800/60"
+                                    )}
+                                />
+                            </div>
                         );
                     }}
                 />
@@ -119,19 +121,21 @@ export function JournalEditorTableRow({
                     render={({ field: creditField }) => {
                         const numVal = Number(creditField.value) || 0;
                         return (
-                            <NumberInput
-                                value={numVal || null}
-                                onChange={(val) => {
-                                    creditField.onChange(val || 0);
-                                }}
-                                allowNegative={false}
-                                placeholder="0"
-                                className={cn(
-                                    "h-8 text-xs text-right font-mono font-bold rounded-lg border-slate-200 dark:border-slate-800 focus-visible:ring-rose-500",
-                                    numVal > 0 &&
-                                    "text-rose-700 dark:text-rose-400 bg-rose-50/40 dark:bg-rose-950/20 border-rose-300 dark:border-rose-800/60"
-                                )}
-                            />
+                            <div className="mj-kredit-input" id={`mj-kredit-input-${index}`}>
+                                <NumberInput
+                                    value={numVal || null}
+                                    onChange={(val) => {
+                                        creditField.onChange(val || 0);
+                                    }}
+                                    allowNegative={false}
+                                    placeholder="0"
+                                    className={cn(
+                                        "mj-kredit-input h-8 text-xs text-right font-mono font-bold rounded-lg border-slate-200 dark:border-slate-800 focus-visible:ring-rose-500",
+                                        numVal > 0 &&
+                                        "text-rose-700 dark:text-rose-400 bg-rose-50/40 dark:bg-rose-950/20 border-rose-300 dark:border-rose-800/60"
+                                    )}
+                                />
+                            </div>
                         );
                     }}
                 />

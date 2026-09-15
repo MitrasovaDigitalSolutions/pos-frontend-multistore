@@ -233,7 +233,7 @@ function AssetCategoryFormContent({
                     </div>
 
                     {/* RIGHT COLUMN: Pengaturan Akun Akuntansi (Col 7) */}
-                    <div className="md:col-span-7 space-y-3 p-3 sm:p-3.5 rounded-2xl bg-indigo-500/[0.03] dark:bg-indigo-950/20 border border-indigo-200/60 dark:border-indigo-900/40">
+                    <div id="form-kategori-coa" className="md:col-span-7 space-y-3 p-3 sm:p-3.5 rounded-2xl bg-indigo-500/[0.03] dark:bg-indigo-950/20 border border-indigo-200/60 dark:border-indigo-900/40">
                         {/* Header CoA */}
                         <div className="flex items-center gap-1.5 pb-1 border-b border-indigo-100 dark:border-indigo-900/50">
                             <IconBuildingBank className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
@@ -381,6 +381,7 @@ function AssetCategoryFormContent({
                     Batal
                 </Button>
                 <Button
+                    id="btn-submit-kategori"
                     type="submit"
                     disabled={isPending}
                     className="w-full sm:w-auto h-9 sm:h-8.5 px-4 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-xs cursor-pointer"

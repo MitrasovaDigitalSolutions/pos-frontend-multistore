@@ -27,6 +27,7 @@ export function MembersTutorialController(props: MembersTutorialControllerProps)
                     run={isRunning}
                     stepIndex={stepIndex}
                     continuous
+                    scrollToFirstStep={false}
                     onEvent={handleJoyrideEvent}
                     tooltipComponent={MembersTutorialTooltip}
                     options={{

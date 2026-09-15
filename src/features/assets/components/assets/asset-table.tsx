@@ -25,6 +25,10 @@ interface AssetTableProps {
     isLoading?: boolean;
     isFetching?: boolean;
     onRefetch?: () => void;
+    isConfirmOpen?: boolean;
+    onConfirmOpenChange?: (open: boolean) => void;
+    assetToDelete?: Asset | null;
+    onAssetToDeleteChange?: (asset: Asset | null) => void;
 }
 
 export function AssetTable({
@@ -34,10 +38,19 @@ export function AssetTable({
     onEdit,
     isLoading = false,
     isFetching = false,
+    isConfirmOpen: externalIsConfirmOpen,
+    onConfirmOpenChange,
+    assetToDelete: externalAssetToDelete,
+    onAssetToDeleteChange,
 }: AssetTableProps) {
     const deleteAsset = useDeleteAsset();
-    const [isConfirmOpen, setIsConfirmOpen] = useState<boolean>(false);
-    const [assetToDelete, setAssetToDelete] = useState<Asset | null>(null);
+    const [internalIsConfirmOpen, setInternalIsConfirmOpen] = useState<boolean>(false);
+    const [internalAssetToDelete, setInternalAssetToDelete] = useState<Asset | null>(null);
+
+    const isConfirmOpen = externalIsConfirmOpen ?? internalIsConfirmOpen;
+    const setIsConfirmOpen = onConfirmOpenChange ?? setInternalIsConfirmOpen;
+    const assetToDelete = externalAssetToDelete ?? internalAssetToDelete;
+    const setAssetToDelete = onAssetToDeleteChange ?? setInternalAssetToDelete;
 
     const handleDelete = (asset: Asset) => {
         if (asset.can_delete === false) {
@@ -248,6 +261,7 @@ export function AssetTable({
                     return (
                         <DataTableActionButton
                             variant="amber"
+                            className="table-action-susut"
                             tooltip={
                                 canDepreciate
                                     ? "Catat Penyusutan"

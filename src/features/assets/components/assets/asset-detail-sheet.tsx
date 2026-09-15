@@ -180,6 +180,7 @@ export function AssetDetailSheet({
             <BaseDialog
                 open={open}
                 onOpenChange={onOpenChange}
+                closeBtnId="btn-close-detail"
                 title={
                     <div className="flex items-center gap-2.5">
                         <div className="p-2 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 rounded-xl border border-indigo-100 dark:border-indigo-900/40">
@@ -427,7 +428,7 @@ export function AssetDetailSheet({
                                         </div>
 
                                         {/* Reusable DataTable for Depreciation Logs */}
-                                        <div className="overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-800">
+                                        <div id="aset-riwayat-table" className="overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-800">
                                             <DataTable
                                                 columns={columns}
                                                 data={logs}

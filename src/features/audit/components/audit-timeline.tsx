@@ -105,11 +105,12 @@ export function AuditTimeline({
     return (
         <div className="space-y-4">
             <div className="relative pl-8 space-y-6 before:absolute before:left-4 before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100">
-                {logs.map((log) => (
+                {logs.map((log, idx) => (
                     <div
                         key={log.uid}
+                        id={idx === 0 ? "timeline-log-card-first" : undefined}
                         onClick={() => onViewDetail(log)}
-                        className="group relative bg-white hover:bg-slate-50/30 border border-slate-100 hover:border-slate-200/80 p-4 rounded-2xl shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col gap-2.5 duration-300"
+                        className="timeline-log-card group relative bg-white hover:bg-slate-50/30 border border-slate-100 hover:border-slate-200/80 p-4 rounded-2xl shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col gap-2.5 duration-300"
                     >
                         <div className="absolute left-[-28px] top-4 h-6 w-6 rounded-full bg-white border border-slate-150 flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform">
                             {getActionIcon(log.action)}

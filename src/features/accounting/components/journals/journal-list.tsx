@@ -172,6 +172,7 @@ export function JournalList({
                 </div>
                 {canManageJournals && (
                     <Button
+                        id="btn-buat-jurnal"
                         onClick={onAddClick}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
                     >
@@ -182,27 +183,30 @@ export function JournalList({
 
             {filterElement}
 
-            <DataTable
-                columns={columns}
-                data={journals}
-                isLoading={isLoading}
-                isFetching={isFetching}
-                emptyMessage="Tidak ada data jurnal manual ditemukan."
-                page={page}
-                perPage={perPage}
-                onPageChange={onPageChange}
-                onPerPageChange={onPerPageChange}
-                meta={meta}
-                entityName="jurnal manual"
-                virtualize={true}
-                estimateRowHeight={44}
-                // Custom action overrides so that we can pass details, drafts edit, and custom void dialog
-                hideEdit={(row) => row.status !== "draft"}
-                hideDelete={(row) => row.status === "voided"}
-                onEdit={onEdit}
-                onDelete={handleVoidClick}
-                onView={onView}
-            />
+            <div id="journal-table">
+                <DataTable
+                    viewActionClassName="journal-action-view"
+                    columns={columns}
+                    data={journals}
+                    isLoading={isLoading}
+                    isFetching={isFetching}
+                    emptyMessage="Tidak ada data jurnal manual ditemukan."
+                    page={page}
+                    perPage={perPage}
+                    onPageChange={onPageChange}
+                    onPerPageChange={onPerPageChange}
+                    meta={meta}
+                    entityName="jurnal manual"
+                    virtualize={true}
+                    estimateRowHeight={44}
+                    // Custom action overrides so that we can pass details, drafts edit, and custom void dialog
+                    hideEdit={(row) => row.status !== "draft"}
+                    hideDelete={(row) => row.status === "voided"}
+                    onEdit={onEdit}
+                    onDelete={handleVoidClick}
+                    onView={onView}
+                />
+            </div>
 
             <ConfirmDialog
                 open={isConfirmOpen}

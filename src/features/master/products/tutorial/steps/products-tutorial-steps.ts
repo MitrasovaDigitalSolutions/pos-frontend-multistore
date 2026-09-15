@@ -127,6 +127,8 @@ export const PRODUCTS_TUTORIAL_STEPS: Record<ProductsTutorialId, ProductsTutoria
             title: "2. Dialog Konfirmasi Penghapusan",
             content: "Sistem meminta konfirmasi agar produk tidak terhapus secara tidak sengaja. Klik tombol konfirmasi untuk melanjutkan pengarsipan.",
             placement: "top",
+            variant: "overlay_nav",
+            overlayNav: true,
         },
         {
             target: "#filter-status-select",

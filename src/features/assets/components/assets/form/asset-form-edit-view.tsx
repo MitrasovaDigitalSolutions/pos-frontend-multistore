@@ -138,6 +138,7 @@ export function AssetFormEditView({
                     Batal
                 </Button>
                 <Button
+                    id="btn-submit-aset-edit"
                     type="submit"
                     disabled={isPending}
                     className="h-8 px-3.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-xs cursor-pointer"

@@ -112,7 +112,7 @@ export function UserFormDialog({
                 className="space-y-4 pt-4"
             >
                 {/* Nama Lengkap */}
-                <div className="space-y-1.5">
+                <div id="form-user-name" className="space-y-1.5">
                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                         Nama Lengkap
                     </label>
@@ -131,7 +131,7 @@ export function UserFormDialog({
                 </div>
 
                 {/* Username */}
-                <div className="space-y-1.5">
+                <div id="form-user-username" className="space-y-1.5">
                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                         Username
                     </label>
@@ -150,7 +150,7 @@ export function UserFormDialog({
                 </div>
 
                 {/* Password */}
-                <div className="space-y-1.5">
+                <div id="form-user-password" className="space-y-1.5">
                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                         Password{" "}
                         {editingUser && "(Kosongkan jika tidak diubah)"}
@@ -169,33 +169,38 @@ export function UserFormDialog({
                     )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div id="form-user-role-status" className="grid grid-cols-2 gap-3">
                     {/* Role */}
-                    <FormSelect<UserInput>
-                        name="roles.0"
-                        label="Role Peran"
-                        options={[
-                            { value: "kasir", label: "Kasir" },
-                            { value: "supervisor", label: "Supervisor" },
-                            { value: "manajer_toko", label: "Manajer Toko" },
-                            { value: "admin", label: "Admin" },
-                        ]}
-                        disabled={isPending}
-                    />
+                    <div id="form-user-role">
+                        <FormSelect<UserInput>
+                            name="roles.0"
+                            label="Role Peran"
+                            options={[
+                                { value: "kasir", label: "Kasir" },
+                                { value: "supervisor", label: "Supervisor" },
+                                { value: "manajer_toko", label: "Manajer Toko" },
+                                { value: "admin", label: "Admin" },
+                            ]}
+                            disabled={isPending}
+                        />
+                    </div>
 
                     {/* Status */}
-                    <FormSelect<UserInput>
-                        name="status"
-                        label="Status"
-                        options={[
-                            { value: "active", label: "Aktif" },
-                            { value: "inactive", label: "Nonaktif" },
-                        ]}
-                        disabled={isPending}
-                    />
+                    <div id="form-user-status">
+                        <FormSelect<UserInput>
+                            name="status"
+                            label="Status"
+                            options={[
+                                { value: "active", label: "Aktif" },
+                                { value: "inactive", label: "Nonaktif" },
+                            ]}
+                            disabled={isPending}
+                        />
+                    </div>
                 </div>
 
                 <Button
+                    id="btn-submit-user"
                     type="submit"
                     className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4"
                     disabled={isPending}
