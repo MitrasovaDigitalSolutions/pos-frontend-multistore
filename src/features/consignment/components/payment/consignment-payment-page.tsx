@@ -18,6 +18,7 @@ import { useConsignmentPayments } from "../../api/consignment-api";
 import type { ConsignmentReceiving } from "../../types";
 import { ConsignmentPaymentDialog } from "./consignment-payment-dialog";
 import { MOCK_PAYMENT_CONSIGNMENT_ROW } from "../../tutorial/constants/consignment-tutorial-constants";
+import { useConsignmentTutorialStore } from "@/stores/consignment-tutorial-store";
 
 interface PaymentFilterValues {
   search: string;
@@ -27,6 +28,10 @@ export function ConsignmentPaymentPage() {
   const router = useAppRouter();
   const searchParams = useSearchParams();
   const targetUid = searchParams.get("uid");
+
+  const isTutorialRunning = useConsignmentTutorialStore(
+    (state) => state.isRunning && state.activeTutorial === "consignment_payment_return"
+  );
 
   const filterMethods = useForm<PaymentFilterValues>({
     defaultValues: {
@@ -79,11 +84,20 @@ export function ConsignmentPaymentPage() {
     };
   }, []);
 
+  // Purge mockRow when tutorial is not running
+  useEffect(() => {
+    if (!isTutorialRunning && mockRow) {
+      setMockRow(null);
+    }
+  }, [isTutorialRunning, mockRow]);
+
   const displayData = useMemo(() => {
     const rawList = data?.data || [];
-    if (!mockRow) return rawList;
-    return [mockRow, ...rawList.filter((item) => item.uid !== mockRow.uid)];
-  }, [mockRow, data?.data]);
+    if (!isTutorialRunning || !mockRow) {
+      return rawList.filter((item) => !item.uid.startsWith("mock-"));
+    }
+    return [mockRow, ...rawList.filter((item) => item.uid !== mockRow.uid && !item.uid.startsWith("mock-"))];
+  }, [isTutorialRunning, mockRow, data?.data]);
 
   const firstPayableUid = displayData.find((i) => i.status !== "closed")?.uid;
 

@@ -24,6 +24,7 @@ import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { useSession } from "next-auth/react";
 import { formatToReadableDateTime } from "@/lib/date-utils";
 import { useCheckoutStore } from "@/stores/checkout-store";
+import { useTutorialStore } from "@/stores/tutorial-store";
 
 // ─── Unified Record Type ──────────────────────────────────────────────────────
 
@@ -62,8 +63,24 @@ export function OfflineTransactionsDialog({ open, onOpenChange }: OfflineTransac
                 db.offlineDebtPayments.orderBy("timestamp").reverse().toArray(),
             ]);
 
+            const isTutorialRunning = useTutorialStore.getState().isRunning;
+            let cleanTxs = txs;
+            if (!isTutorialRunning) {
+                cleanTxs = txs.filter((t) => {
+                    const isMock =
+                        t.uid === "offline-tutorial-mock" ||
+                        t.uid.startsWith("offline-tutorial-") ||
+                        t.uid.startsWith("mock-");
+                    if (isMock) {
+                        db.offlineTransactions.delete(t.uid).catch(() => {});
+                        return false;
+                    }
+                    return true;
+                });
+            }
+
             const combined: OfflineRecord[] = [
-                ...txs.map((t) => ({ ...t, recordType: "transaction" as const })),
+                ...cleanTxs.map((t) => ({ ...t, recordType: "transaction" as const })),
                 ...debts.map((d) => ({ ...d, recordType: "debt_payment" as const })),
             ];
 

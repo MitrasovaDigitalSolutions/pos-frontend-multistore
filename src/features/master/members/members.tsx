@@ -89,7 +89,9 @@ export function Members() {
     // Tutorial: mock fallback when table is empty
     const isTutorialRunning = useMembersTutorialStore((state) => state.isRunning);
     const serverMembers = membersData?.data || [];
-    const displayMembers = isTutorialRunning && serverMembers.length === 0 ? MOCK_MEMBERS : serverMembers;
+    const displayMembers = isTutorialRunning
+        ? (serverMembers.length === 0 ? MOCK_MEMBERS : serverMembers)
+        : serverMembers.filter((m) => !m.uid.startsWith("mock-"));
     const sampleMember = displayMembers[0] || null;
 
     const handleAdjustPoints = (member: Member) => {

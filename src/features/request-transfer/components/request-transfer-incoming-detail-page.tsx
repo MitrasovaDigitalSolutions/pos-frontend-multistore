@@ -37,16 +37,23 @@ export function RequestTransferIncomingDetailPage() {
     const searchParams = useSearchParams();
     const summaryUid = searchParams.get("summary_uid") || "";
 
-    const isTutorialActive = useTransferTutorialStore(
+    const isTutorialRunning = useTransferTutorialStore(
         (state) => state.isRunning && state.activeTutorial === "request_transfer_incoming"
     );
-    const isMockSummary = summaryUid.startsWith("mock-");
+    const isMockSummary = isTutorialRunning && (summaryUid.startsWith("mock-") || summaryUid === MOCK_INCOMING_SUMMARY_UID);
+
+    // If page is loaded with a mock ID while tutorial is NOT running, redirect back to list
+    useEffect(() => {
+        if (!isTutorialRunning && summaryUid.startsWith("mock-")) {
+            router.replace(ROUTES.ADMIN_REQUEST_TRANSFERS_INCOMING);
+        }
+    }, [isTutorialRunning, summaryUid, router]);
 
     const { data: realDetail, isLoading: queryLoading, isFetching: queryFetching } = useRequestTransferDetail(
         isMockSummary ? "" : summaryUid
     );
 
-    const detail = isMockSummary || (isTutorialActive && !realDetail) ? MOCK_INCOMING_DETAIL : realDetail;
+    const detail = isMockSummary ? MOCK_INCOMING_DETAIL : realDetail;
     const isLoading = isMockSummary ? false : queryLoading;
     const isFetching = isMockSummary ? false : queryFetching;
 
@@ -76,7 +83,7 @@ export function RequestTransferIncomingDetailPage() {
     const handleConfirm = () => {
         if (!detail) return;
 
-        if (isMockSummary || isTutorialActive) {
+        if (isMockSummary || isTutorialRunning) {
             if (confirmAction === "reject") {
                 toast.success("Simulasi Demo: Semua request pada summary ditolak.");
                 setConfirmAction(null);

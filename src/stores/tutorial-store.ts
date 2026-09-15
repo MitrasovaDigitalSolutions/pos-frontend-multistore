@@ -8,7 +8,9 @@ import {
     isMockNamaTransaksi,
     MOCK_MEMBER_WITH_DEBT,
     MOCK_PRODUCTS,
+    MOCK_OFFLINE_TRANSACTION,
 } from "@/features/tutorial/constants/tutorial-constants";
+import { db } from "@/lib/db";
 
 interface CursorState {
     x: number;
@@ -101,13 +103,34 @@ export const useTutorialStore = create<TutorialStoreState>((set) => ({
         });
     },
 
-    stopTutorial: () =>
+    stopTutorial: () => {
+        // Immediately purge mock state from checkout store
+        try {
+            const checkout = useCheckoutStore.getState();
+            const cleanCart = checkout.cart.filter((item) => !isMockCartItem(item));
+            const cleanMember = isMockMember(checkout.selectedMember) ? null : checkout.selectedMember;
+            const cleanNama = isMockNamaTransaksi(checkout.namaTransaksi) ? "" : checkout.namaTransaksi;
+            const cleanHold = checkout.holdList.filter((h) => !isMockHold(h));
+
+            checkout.setCart(cleanCart);
+            checkout.setSelectedMember(cleanMember);
+            checkout.setNamaTransaksi(cleanNama);
+            checkout.clearHoldList();
+            cleanHold.forEach((h) => checkout.addHoldTransaction(h));
+
+            // Clean up mock offline transaction from IndexedDB
+            db.offlineTransactions.delete(MOCK_OFFLINE_TRANSACTION.uid).catch(() => {});
+        } catch {
+            // Safe fallback
+        }
+
         set((state) => ({
             activeTutorial: null,
             stepIndex: 0,
             isRunning: false,
             cursor: { ...state.cursor, visible: false, clicking: false },
-        })),
+        }));
+    },
 
     setStepIndex: (index) => set({ stepIndex: index }),
 

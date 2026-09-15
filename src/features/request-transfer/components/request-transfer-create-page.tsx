@@ -43,7 +43,7 @@ export function RequestTransferCreatePage() {
         if (isTutorialRunning && !filtered.some((s) => s.uid === MOCK_REQUEST_STORE.uid)) {
             return [MOCK_REQUEST_STORE as unknown as Store, ...filtered];
         }
-        return filtered;
+        return filtered.filter((s) => s.uid !== MOCK_REQUEST_STORE.uid);
     }, [storesRes?.data, activeStoreUid, isTutorialRunning]);
 
     const [requestTo, setRequestTo] = useState("");
@@ -51,6 +51,19 @@ export function RequestTransferCreatePage() {
     const [supplierSalesUid, setSupplierSalesUid] = useState<string | null>(null);
     const [catatan, setCatatan] = useState("");
     const [items, setItems] = useState<RequestLineItem[]>([]);
+
+    // Purge mock selections when tutorial is not running
+    useEffect(() => {
+        if (!isTutorialRunning) {
+            if (requestTo === MOCK_REQUEST_STORE.uid) {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
+                setRequestTo("");
+            }
+            if (items.some((i) => i.product_uid.startsWith("mock-") || i.barcode === "8992745123456" || i.barcode === "8991234567890")) {
+                setItems((prev) => prev.filter((i) => !i.product_uid.startsWith("mock-") && i.barcode !== "8992745123456" && i.barcode !== "8991234567890"));
+            }
+        }
+    }, [isTutorialRunning, requestTo, items]);
 
     // Listen to custom events from transfer tutorial
     useEffect(() => {

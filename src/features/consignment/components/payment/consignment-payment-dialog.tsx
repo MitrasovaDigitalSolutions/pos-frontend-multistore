@@ -28,6 +28,7 @@ import {
 } from "../../schemas/consignment-schema";
 import type { ConsignmentReceiving } from "../../types";
 import { MOCK_PAYMENT_RETURNABLE_ITEMS } from "../../tutorial/constants/consignment-tutorial-constants";
+import { useConsignmentTutorialStore } from "@/stores/consignment-tutorial-store";
 
 import { todayStr } from "@/lib/date-utils";
 
@@ -44,8 +45,16 @@ export function ConsignmentPaymentDialog({
   receiving,
   onSuccess,
 }: ConsignmentPaymentDialogProps) {
+  const isTutorialRunning = useConsignmentTutorialStore((state) => state.isRunning);
   const { data: cashAccounts = [], isLoading: isCashLoading } = useCashAccounts();
-  const isMock = Boolean(receiving?.uid?.startsWith("mock-"));
+  const isMock = isTutorialRunning && Boolean(receiving?.uid?.startsWith("mock-"));
+
+  // If dialog is open with a mock receiving but tutorial is not running, close immediately
+  useEffect(() => {
+    if (open && !isTutorialRunning && receiving?.uid?.startsWith("mock-")) {
+      onOpenChange(false);
+    }
+  }, [open, isTutorialRunning, receiving, onOpenChange]);
 
   const { data: realReturnableItems = [] } = useConsignmentReturnableItems(
     receiving?.uid || "",
@@ -108,7 +117,9 @@ export function ConsignmentPaymentDialog({
   const cashAccountOptions =
     rawCashOptions.length > 0
       ? rawCashOptions
-      : [{ value: "mock-cash-main", label: "Kas Utama Toko (Rp 15.000.000)" }];
+      : isTutorialRunning
+      ? [{ value: "mock-cash-main", label: "Kas Utama Toko (Rp 15.000.000)" }]
+      : [];
 
   const totalSisaTitipan = returnableItems.reduce((acc, item) => acc + Number(item.sisa || 0), 0);
 

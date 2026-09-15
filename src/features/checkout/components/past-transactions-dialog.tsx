@@ -23,6 +23,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTableTextActionButton } from "@/components/ui/data-table-actions";
+import { useTutorialStore } from "@/stores/tutorial-store";
 
 export interface PastTransactionDisplayItem {
     uid: string;
@@ -145,7 +146,19 @@ export function PastTransactionsDialog({
     useEffect(() => {
         if (open) {
             db.offlineTransactions.toArray().then((items) => {
-                setOfflineList(items || []);
+                const isTutorialRunning = useTutorialStore.getState().isRunning;
+                const clean = (items || []).filter((it) => {
+                    if (
+                        !isTutorialRunning &&
+                        (it.uid === "offline-tutorial-mock" ||
+                            it.uid.startsWith("offline-tutorial-") ||
+                            it.uid.startsWith("mock-"))
+                    ) {
+                        return false;
+                    }
+                    return true;
+                });
+                setOfflineList(clean);
             }).catch((err) => {
                 console.error("Gagal memuat transaksi offline:", err);
             });

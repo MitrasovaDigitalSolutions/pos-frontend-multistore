@@ -25,6 +25,7 @@ import { useConsignmentTutorialStore } from "@/stores/consignment-tutorial-store
 import {
   MOCK_CONSIGNMENT_ITEMS,
   MOCK_CONSIGNMENT_PRODUCTS,
+  MOCK_CONSIGNMENT_SUPPLIER,
 } from "../../tutorial/constants/consignment-tutorial-constants";
 import {
   useBulkConsignmentMutation,
@@ -130,6 +131,30 @@ export function ConsignmentCreatePage({ initialData }: ConsignmentCreatePageProp
       }
     }
   }, [isTutorialRunning, saveSnapshot, form, productsMap]);
+
+  // Purge any mock items or mock supplier if tutorial is not running
+  useEffect(() => {
+    if (!isTutorialRunning) {
+      const currentSup = form.getValues("supplier_uid");
+      if (currentSup === MOCK_CONSIGNMENT_SUPPLIER.uid || currentSup?.startsWith("mock-")) {
+        form.setValue("supplier_uid", "");
+        form.setValue("supplier", "");
+      }
+      const currentItems = form.getValues("items") || [];
+      if (currentItems.some((it) => it.product_uid.startsWith("mock-"))) {
+        const clean = currentItems.filter((it) => !it.product_uid.startsWith("mock-"));
+        form.setValue("items", clean);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setProductsMap((prev) => {
+          const next = new Map(prev);
+          for (const key of next.keys()) {
+            if (key.startsWith("mock-")) next.delete(key);
+          }
+          return next;
+        });
+      }
+    }
+  }, [isTutorialRunning, form]);
 
   // Listen for tutorial simulation events
   useEffect(() => {

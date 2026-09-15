@@ -70,7 +70,7 @@ export function POItemsPage({ poId }: POItemsPageProps) {
 
 function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder }) {
     const router = useAppRouter();
-    const isPurchaseTutorialRunning = usePurchaseTutorialStore((state) => state.isRunning);
+    const isTutorialRunning = usePurchaseTutorialStore((state) => state.isRunning);
     const [activeId, setActiveId] = useState(poId);
     const [activeOrder, setActiveOrder] = useState<PurchaseOrder | undefined>(order);
 

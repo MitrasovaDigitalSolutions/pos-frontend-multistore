@@ -39,19 +39,23 @@ export function RequestTransferSummaryTable({
     mode = "outgoing",
 }: RequestTransferSummaryTableProps) {
     const router = useAppRouter();
-    const isTutorialActive = useTransferTutorialStore(
+    const isTutorialRunning = useTransferTutorialStore(
         (state) => state.isRunning && state.activeTutorial === "request_transfer_incoming"
     );
 
     const displaySummaries = useMemo(() => {
-        if (mode === "incoming" && (isTutorialActive || summaries.length === 0)) {
+        if (mode === "incoming" && isTutorialRunning) {
             const hasMock = summaries.some((s) => s.summary_uid === MOCK_INCOMING_SUMMARY.summary_uid);
             if (!hasMock) {
                 return [MOCK_INCOMING_SUMMARY, ...summaries];
             }
+            return summaries;
         }
-        return summaries;
-    }, [mode, isTutorialActive, summaries]);
+        // When not in tutorial mode, strictly exclude any mock items
+        return summaries.filter(
+            (s) => s.summary_uid !== MOCK_INCOMING_SUMMARY.summary_uid && !s.summary_uid.startsWith("mock-")
+        );
+    }, [mode, isTutorialRunning, summaries]);
 
     const openSummary = (s: RequestTransferSummary) => {
         const detailRoute =
