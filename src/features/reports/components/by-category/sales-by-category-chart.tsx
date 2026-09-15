@@ -95,7 +95,7 @@ export function SalesByCategoryChart({ data, isLoading }: SalesByCategoryChartPr
   const hasData = chartData.length > 0;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+    <div id="kategori-chart" className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
           <h3 className="text-xs font-extrabold text-slate-800">Grafik Analisis Per Kategori</h3>

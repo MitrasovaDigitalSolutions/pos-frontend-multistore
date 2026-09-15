@@ -54,7 +54,7 @@ export function PenjualanHeaderFilters({
 
     return (
         <>
-            <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-4 sm:p-6">
+            <Card id="penjualan-header" className="bg-white border-slate-100 rounded-2xl shadow-sm p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100/60 mb-4">
                     <div>
                         <h3 className="text-sm font-bold text-slate-900">
@@ -67,6 +67,7 @@ export function PenjualanHeaderFilters({
 
                     <div className="flex gap-2 shrink-0">
                         <Button
+                            id="penjualan-btn-refresh"
                             variant="outline"
                             onClick={onRefetch}
                             disabled={isLoading || isFetching}
@@ -77,6 +78,7 @@ export function PenjualanHeaderFilters({
                         </Button>
 
                         <Button
+                            id="penjualan-btn-print"
                             onClick={() => setIsPrintDialogOpen(true)}
                             disabled={isLoading || !hasReportData}
                             className="h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex items-center justify-center gap-1.5 font-bold text-xs"
@@ -87,6 +89,7 @@ export function PenjualanHeaderFilters({
                     </div>
                 </div>
 
+                <div id="penjualan-filter-form">
                 <FilterForm
                     methods={methods}
                     onSubmit={onSubmit}
@@ -112,7 +115,7 @@ export function PenjualanHeaderFilters({
                         name="includeItems"
                         control={methods.control}
                         render={({ field }) => (
-                            <div className="flex items-center gap-3 border border-slate-100 bg-white p-3 rounded-xl shadow-xs">
+                            <div id="penjualan-switch-items" className="flex items-center gap-3 border border-slate-100 bg-white p-3 rounded-xl shadow-xs">
                                 <Switch
                                     checked={field.value}
                                     onCheckedChange={field.onChange}
@@ -125,6 +128,7 @@ export function PenjualanHeaderFilters({
                         )}
                     />
                 </FilterForm>
+                </div>
             </Card>
 
             <PrintConfirmDialog<PenjualanPrintFilterValues>

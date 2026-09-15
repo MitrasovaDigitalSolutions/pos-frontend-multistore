@@ -15,6 +15,9 @@ import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
+import { HutangTutorialController } from "../tutorial/components/hutang-tutorial-controller";
+import { MOCK_SUPPLIER_DEBTS } from "../tutorial/constants/hutang-tutorial-constants";
+import { useHutangTutorialStore } from "@/stores/hutang-tutorial-store";
 
 interface SalesDebtsFilterValues {
     search: string;
@@ -52,6 +55,8 @@ export function SalesDebtsPage() {
         setPage(1);
     };
 
+    const isTutorialRunning = useHutangTutorialStore((state) => state.isRunning);
+
     const { data: summaryData, isLoading, isFetching } = useReceivingDebtsSummary({
         page,
         per_page: perPage,
@@ -60,9 +65,16 @@ export function SalesDebtsPage() {
         ...appliedFilters,
     });
 
-    const suppliers = summaryData?.data || [];
-    const totalSuppliers = summaryData?.meta?.total ?? 0;
+    // Saat tutorial berjalan, pakai data contoh agar walkthrough selalu utuh.
+    const activeSummaryData = isTutorialRunning
+        ? { data: MOCK_SUPPLIER_DEBTS, meta: { total: MOCK_SUPPLIER_DEBTS.length } }
+        : summaryData;
+    const suppliers = activeSummaryData?.data || [];
+    const totalSuppliers = isTutorialRunning
+        ? MOCK_SUPPLIER_DEBTS.length
+        : summaryData?.meta?.total ?? 0;
     const totalHutang = suppliers.reduce((sum, s) => sum + (s.total_hutang || 0), 0);
+    const isLoadingActive = isLoading && !isTutorialRunning;
 
     if (!hasViewPurchase) {
         return (
@@ -134,28 +146,42 @@ export function SalesDebtsPage() {
                 headerClassName: "text-center w-24",
                 cellClassName: "text-center",
             },
-            cell: ({ row }) => (
-                <DataTableTextActionButton
-                    variant="indigo"
-                    onClick={() =>
-                        router.push(
-                            `/admin/debts/sales/${row.original.supplier_uid}?nama=${encodeURIComponent(row.original.nama_supplier)}`
-                        )
-                    }
-                    icon={<IconChevronRight size={14} />}
-                    tooltip="Lihat Detail Hutang"
-                    className="mx-auto"
-                >
-                    Detail
-                </DataTableTextActionButton>
-            ),
+                    cell: ({ row }) => (
+                        <DataTableTextActionButton
+                            id={row.index === 0 ? "hutang-sales-btn-detail" : undefined}
+                            variant="indigo"
+                            onClick={() =>
+                                router.push(
+                                    `/admin/debts/sales/${row.original.supplier_uid}?nama=${encodeURIComponent(row.original.nama_supplier)}`
+                                )
+                            }
+                            icon={<IconChevronRight size={14} />}
+                            tooltip="Lihat Detail Hutang"
+                            className="mx-auto"
+                        >
+                            Detail
+                        </DataTableTextActionButton>
+                    ),
         },
     ];
 
     return (
         <div className="space-y-6">
+            {/* Page Header */}
+            <div id="hutang-sales-header" className="flex items-center gap-3">
+                <div className="p-2 bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-400 rounded-xl shrink-0">
+                    <IconBuilding size={18} className="stroke-[2.5]" />
+                </div>
+                <div>
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Hutang Sales</h3>
+                    <p className="text-[10px] text-slate-400">
+                        Pantau sisa hutang usaha ke supplier dari transaksi pembelian.
+                    </p>
+                </div>
+            </div>
+
             {/* Compact Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-2.5 shadow-xs">
+            <div id="hutang-sales-summary" className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-2.5 shadow-xs">
                 {/* Card 1: Jumlah Supplier */}
                 <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100/60 dark:border-rose-900/30 min-w-0">
                     <div className="p-2 bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-400 rounded-xl shrink-0">
@@ -209,44 +235,50 @@ export function SalesDebtsPage() {
                     </div>
                 </div>
 
-                <FilterForm
-                    methods={filterMethods}
-                    onSubmit={handleFilterSubmit}
-                    onReset={handleFilterReset}
-                >
-                    <FormInput<SalesDebtsFilterValues>
-                        name="search"
-                        label="Cari Supplier"
-                        placeholder="Nama supplier, email, telepon..."
-                    />
-                </FilterForm>
+                <div id="hutang-sales-filter-form" className="scroll-mt-24">
+                    <FilterForm
+                        methods={filterMethods}
+                        onSubmit={handleFilterSubmit}
+                        onReset={handleFilterReset}
+                    >
+                        <FormInput<SalesDebtsFilterValues>
+                            name="search"
+                            label="Cari Supplier"
+                            placeholder="Nama supplier, email, telepon..."
+                        />
+                    </FilterForm>
+                </div>
 
-                <DataTable
-                    columns={columns}
-                    data={suppliers}
-                    isLoading={isLoading}
-                    isFetching={isFetching}
-                    emptyMessage="Tidak ada data hutang supplier yang ditemukan."
-                    page={page}
-                    perPage={perPage}
-                    onPageChange={setPage}
-                    onPerPageChange={(newPerPage) => {
-                        setPerPage(newPerPage);
-                        setPage(1);
-                    }}
-                    meta={summaryData?.meta}
-                    entityName="supplier"
-                    sortBy={sortBy}
-                    sortOrder={sortOrder}
-                    onSortChange={(by, order) => {
-                        setSortBy(by);
-                        setSortOrder(order);
-                        setPage(1);
-                    }}
-                    virtualize={true}
-                    estimateRowHeight={56}
-                />
+                <div id="hutang-sales-table">
+                    <DataTable
+                        columns={columns}
+                        data={suppliers}
+                        isLoading={isLoadingActive}
+                        isFetching={isFetching}
+                        emptyMessage="Tidak ada data hutang supplier yang ditemukan."
+                        page={page}
+                        perPage={perPage}
+                        onPageChange={setPage}
+                        onPerPageChange={(newPerPage) => {
+                            setPerPage(newPerPage);
+                            setPage(1);
+                        }}
+                        meta={summaryData?.meta}
+                        entityName="supplier"
+                        sortBy={sortBy}
+                        sortOrder={sortOrder}
+                        onSortChange={(by, order) => {
+                            setSortBy(by);
+                            setSortOrder(order);
+                            setPage(1);
+                        }}
+                        virtualize={true}
+                        estimateRowHeight={56}
+                    />
+                </div>
             </section>
+
+            <HutangTutorialController />
         </div>
     );
 }

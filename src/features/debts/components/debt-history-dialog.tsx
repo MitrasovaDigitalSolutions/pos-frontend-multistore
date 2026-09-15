@@ -210,7 +210,7 @@ export function DebtHistoryDialog({ open, onOpenChange, member }: DebtHistoryDia
         >
             <div className="flex-1 min-h-0 flex flex-col space-y-4">
                 {/* Member Profile Summary */}
-                <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 p-4 rounded-xl flex items-center justify-between shrink-0">
+                <div id="history-member-profile" className="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 p-4 rounded-xl flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-100 dark:border-indigo-900/50">
                             <IconUser size={18} />
@@ -227,7 +227,7 @@ export function DebtHistoryDialog({ open, onOpenChange, member }: DebtHistoryDia
                 </div>
 
                 {/* Custom Tabs Navigation */}
-                <div className="flex border-b border-slate-100 dark:border-slate-800 shrink-0">
+                <div id="history-tabs" className="flex border-b border-slate-100 dark:border-slate-800 shrink-0">
                     <button
                         onClick={() => setActiveTab("purchases")}
                         className={`px-5 py-2.5 font-bold text-xs border-b-2 cursor-pointer transition-all outline-none ${activeTab === "purchases"
@@ -249,7 +249,7 @@ export function DebtHistoryDialog({ open, onOpenChange, member }: DebtHistoryDia
                 </div>
 
                 {/* Tab Contents */}
-                <div className="flex-1 overflow-auto min-h-[250px]">
+                <div id="history-table" className="flex-1 overflow-auto min-h-[250px]">
                     {error ? (
                         <div className="p-8 text-center text-rose-500 text-xs font-semibold">
                             Gagal memuat riwayat hutang member.

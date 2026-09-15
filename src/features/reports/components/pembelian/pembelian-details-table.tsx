@@ -115,6 +115,7 @@ export function PembelianDetailsTable({
     };
 
     return (
+        <div id="pembelian-details-table">
         <CompoundTable title="Transaksi Pembelian & Detail Log">
             <CompoundTableContent>
                 <CompoundTableHeader>
@@ -213,6 +214,7 @@ export function PembelianDetailsTable({
                                 >
                                     <CompoundTableCell align="center" onClick={(e) => e.stopPropagation()}>
                                         <CompoundTableExpandButton
+                                            id={index === 0 ? "pembelian-row-expand" : undefined}
                                             isExpanded={isExpanded}
                                             onClick={() => toggleRow(row.no_faktur)}
                                         />
@@ -373,5 +375,6 @@ export function PembelianDetailsTable({
                 </CompoundTableBody>
             </CompoundTableContent>
         </CompoundTable>
+        </div>
     );
 }

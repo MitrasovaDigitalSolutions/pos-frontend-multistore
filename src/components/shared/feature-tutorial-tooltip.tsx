@@ -60,7 +60,7 @@ function StandardTooltipView({
     return (
         <div
             {...tooltipProps}
-            className="w-[300px] sm:w-[330px] max-w-[88vw] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-xl shadow-slate-900/10 overflow-hidden font-sans text-slate-800 dark:text-slate-100 animate-in fade-in zoom-in-95 duration-150"
+            className="w-[300px] sm:w-[330px] max-w-[88vw] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-xl shadow-slate-900/10 overflow-hidden font-sans text-slate-800 dark:text-slate-100"
         >
             {/* Slim 4px top progress bar */}
             <div className="w-full h-1 bg-slate-100 dark:bg-slate-800">
@@ -332,7 +332,7 @@ function OverlayNavView({
                 >
                     {/* 1. Note Tutorial Card (Ditengah Di Atas Komponen Yang Dihighlight) */}
                     <div
-                        className="pointer-events-auto w-[92vw] sm:w-[460px] bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xl shadow-slate-900/20 backdrop-blur-md overflow-hidden font-sans text-slate-800 dark:text-slate-100 animate-in fade-in slide-in-from-top-3 duration-200"
+                        className="pointer-events-auto w-[92vw] sm:w-[460px] bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xl shadow-slate-900/20 backdrop-blur-md overflow-hidden font-sans text-slate-800 dark:text-slate-100"
                         style={{
                             position: "fixed",
                             top: cardPosition.top,
@@ -501,10 +501,31 @@ export function CompactTutorialTooltip(props: CompactTutorialTooltipProps) {
         (step as unknown as { variant?: string }).variant === "overlay_nav"
     );
 
-    // Target element & page readiness check to prevent tooltip from appearing before page has finished rendering
-    const [isTargetReady, setIsTargetReady] = useState(false);
+    // Target element & page readiness check to prevent tooltip from appearing before page has finished rendering.
+    // Optimasi: cek kesiapan target SECARA SINKRON saat mount. Jika target sudah ada
+    // di DOM (kasus paling umum saat pindah step), card langsung dirender pada frame
+    // yang sama dengan floater/panah Joyride — mencegah panah "muncul duluan".
+    const [isTargetReady, setIsTargetReady] = useState<boolean>(() => {
+        if (typeof document === "undefined") return false;
+        const target = step.target;
+        const isBodyTarget = target === "body" || (typeof target === "string" && target === "body");
+        if (isBodyTarget) return true;
+        const targetEl = target instanceof HTMLElement
+            ? target
+            : typeof target === "string"
+                ? (document.querySelector(target) as HTMLElement | null)
+                : null;
+        if (targetEl && document.body.contains(targetEl)) {
+            const rect = targetEl.getBoundingClientRect();
+            return rect.width > 0 && rect.height > 0;
+        }
+        return false;
+    });
 
     useEffect(() => {
+        // Kalau sudah siap sejak render pertama, tidak perlu gate sama sekali.
+        if (isTargetReady) return;
+
         let active = true;
         const start = Date.now();
 
@@ -535,8 +556,8 @@ export function CompactTutorialTooltip(props: CompactTutorialTooltipProps) {
                     }
                 }
 
-                // Fallback timeout safety: never get stuck permanently hidden after 800ms
-                if (Date.now() - start > 800) {
+                // Fallback timeout safety: never get stuck permanently hidden after 400ms
+                if (Date.now() - start > 400) {
                     setIsTargetReady(true);
                     return;
                 }
@@ -546,12 +567,12 @@ export function CompactTutorialTooltip(props: CompactTutorialTooltipProps) {
             requestAnimationFrame(checkReadiness);
         };
 
-        const timer = setTimeout(checkReadiness, 40);
+        // Cek segera (tanpa setTimeout) supaya target yang sudah siap tidak menunggu.
+        checkReadiness();
         return () => {
             active = false;
-            clearTimeout(timer);
         };
-    }, [step.target, index]);
+    }, [step.target, index, isTargetReady]);
 
     const progressPercent = Math.round(((index + 1) / size) * 100);
 

@@ -242,6 +242,19 @@
     animation: fastLiquidFlow 1.6s ease-in-out infinite !important;
 }
 
+/* ─── React Joyride: sembunyikan panah bawaan pada mode overlay_nav ──────────
+   Pada mode `overlay_nav`, `OverlayNavView` merender anchor tersembunyi
+   (`.sr-only`) di dalam `.react-joyride__floater` dan menampilkan note card
+   sendiri lewat portal (tanpa panah). Namun Joyride tetap merender elemen
+   `.react-joyride__arrow` di anchor tersembunyi itu sehingga muncul sebagai
+   segitiga putih nyasar di dekat target. Sembunyikan panah bila floater-nya
+   adalah anchor `sr-only` (kondisi khas overlay_nav). Modal tooltip biasa tetap
+   menampilkan panah normal. */
+.react-joyride__floater:has(> .sr-only) .react-joyride__arrow,
+.react-joyride__floater .sr-only .react-joyride__arrow {
+    display: none !important;
+}
+
 
 
 

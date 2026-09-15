@@ -13,7 +13,7 @@ interface PengeluaranDetailsTableProps {
 
 export function PengeluaranDetailsTable({ reportData, isLoading }: PengeluaranDetailsTableProps) {
     return (
-        <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-6">
+        <Card id="pengeluaran-details-table" className="bg-white border-slate-100 rounded-2xl shadow-sm p-6">
             <h4 className="text-xs font-bold text-slate-800 mb-4">
                 Daftar Pengeluaran
             </h4>

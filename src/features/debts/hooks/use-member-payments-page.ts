@@ -10,6 +10,8 @@ import {
     useMemberPayments,
     useVoidMemberDebtPayment,
 } from "@/features/master/members/api/members-api";
+import { MOCK_MEMBER_PAYMENTS } from "../tutorial/constants/hutang-tutorial-constants";
+import { useHutangTutorialStore } from "@/stores/hutang-tutorial-store";
 
 export interface MemberPaymentsFilterValues {
     search: string;
@@ -102,8 +104,15 @@ export function useMemberPaymentsPage() {
         ...appliedFilters,
     });
 
-    const payments = paymentsData?.data || [];
-    const meta = paymentsData?.meta;
+    const isTutorialRunning = useHutangTutorialStore((state) => state.isRunning);
+
+    // Saat tutorial berjalan, pakai data contoh agar walkthrough selalu utuh.
+    const activePayments = isTutorialRunning ? MOCK_MEMBER_PAYMENTS : (paymentsData?.data || []);
+    const payments = activePayments;
+    const meta = isTutorialRunning
+        ? { current_page: 1, last_page: 1, per_page: 10, total: MOCK_MEMBER_PAYMENTS.length }
+        : paymentsData?.meta;
+    const isLoadingActive = isLoading && !isTutorialRunning;
 
     return {
         hasViewMembers,
@@ -114,7 +123,7 @@ export function useMemberPaymentsPage() {
         setPerPage,
         payments,
         meta,
-        isLoading,
+        isLoading: isLoadingActive,
         isFetching,
         filterMethods,
         handleFilterSubmit,
