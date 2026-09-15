@@ -99,12 +99,16 @@ export const USERS_TUTORIAL_STEPS: Record<UsersTutorialId, UsersTutorialStep[]> 
             title: "2. Konfirmasi & Keamanan",
             content: "Tinjau konfirmasi sistem. Akun yang dinonaktifkan tidak akan dapat login lagi ke kasir POS maupun dashboard admin.",
             placement: "bottom",
+            variant: "overlay_nav",
+            overlayNav: true,
         },
         {
             target: "#btn-confirm-deactivate-user",
             title: "3. Konfirmasi Tindakan",
             content: "Klik tombol 'Ya, Nonaktifkan' untuk mencabut izin akses masuk karyawan tersebut.",
             placement: "top",
+            variant: "overlay_nav",
+            overlayNav: true,
         },
     ],
 

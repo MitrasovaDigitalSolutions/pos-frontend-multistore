@@ -176,7 +176,8 @@ export const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
         };
 
         const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-            const parsed = parseNumber(localValue);
+            const currentRaw = e.target?.value !== undefined ? e.target.value : localValue;
+            const parsed = parseNumber(currentRaw);
             if (parsed !== null) {
                 let adjusted = parsed;
                 if (min !== undefined && adjusted < min) {

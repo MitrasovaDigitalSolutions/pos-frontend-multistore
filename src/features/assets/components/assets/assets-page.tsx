@@ -18,6 +18,9 @@ import { AssetFormDialog } from "./asset-form-dialog";
 import { AssetDetailSheet } from "./asset-detail-sheet";
 import { AssetBulkPenyusutanDialog } from "./asset-bulk-penyusutan-dialog";
 import type { Asset, AssetFilterParams } from "../../types";
+import { AssetsTutorialController } from "../../tutorial/components/assets-tutorial-controller";
+import { MOCK_ASSETS } from "../../tutorial/constants/assets-tutorial-constants";
+import { useAssetsTutorialStore } from "@/stores/assets-tutorial-store";
 
 export function AssetsPage() {
     const [filters, setFilters] = useState<AssetFilterParams>({
@@ -49,6 +52,14 @@ export function AssetsPage() {
     const [detailMode, setDetailMode] = useState<"history" | "form">("history");
 
     const [isBulkPenyusutanOpen, setIsBulkPenyusutanOpen] = useState<boolean>(false);
+    const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState<boolean>(false);
+    const [assetToDelete, setAssetToDelete] = useState<Asset | null>(null);
+
+    // Tutorial: mock fallback when table is empty
+    const isTutorialRunning = useAssetsTutorialStore((state) => state.isRunning);
+    const serverAssets = assetsData?.data || [];
+    const displayAssets = isTutorialRunning && serverAssets.length === 0 ? MOCK_ASSETS : serverAssets;
+    const sampleAsset = displayAssets[0] || null;
 
     // Handlers
     const handleFilterSubmit = useCallback((values: AssetFilterParams) => {
@@ -107,8 +118,6 @@ export function AssetsPage() {
         setIsDetailSheetOpen(true);
     };
 
-    const assetsList = assetsData?.data || [];
-
     return (
         <div className="space-y-4 pb-12">
             {/* Header Toolbar */}
@@ -142,6 +151,7 @@ export function AssetsPage() {
                     </Button>
 
                     <Button
+                        id="btn-susut-bulk"
                         type="button"
                         variant="outline"
                         onClick={() => setIsBulkPenyusutanOpen(true)}
@@ -152,6 +162,7 @@ export function AssetsPage() {
                     </Button>
 
                     <Button
+                        id="btn-catat-aset"
                         onClick={handleCreateClick}
                         className="h-8.5 px-3.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer"
                     >
@@ -177,13 +188,17 @@ export function AssetsPage() {
                 {/* Table */}
                 <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs overflow-hidden p-3.5">
                     <AssetTable
-                        assets={assetsList}
+                        assets={displayAssets}
                         onDetail={handleDetailClick}
                         onDepreciate={handleDepreciateClick}
                         onEdit={handleEditClick}
                         isLoading={isLoading}
                         isFetching={isFetching}
                         onRefetch={refetch}
+                        isConfirmOpen={isConfirmDeleteOpen}
+                        onConfirmOpenChange={setIsConfirmDeleteOpen}
+                        assetToDelete={assetToDelete}
+                        onAssetToDeleteChange={setAssetToDelete}
                     />
                 </div>
             </div>
@@ -202,7 +217,7 @@ export function AssetsPage() {
                 key={isBulkPenyusutanOpen ? "bulk-open" : "bulk-closed"}
                 open={isBulkPenyusutanOpen}
                 onOpenChange={setIsBulkPenyusutanOpen}
-                activeAssets={assetsList}
+                activeAssets={displayAssets}
             />
 
             {/* Modal: Asset Detail & In-Dialog Depreciation History/Form */}
@@ -212,6 +227,26 @@ export function AssetsPage() {
                 onOpenChange={setIsDetailSheetOpen}
                 assetUid={selectedAssetUid}
                 initialMode={detailMode}
+            />
+
+            {/* Tutorial Controller */}
+            <AssetsTutorialController
+                setIsCreateDialogOpen={(open) => {
+                    if (open) setEditingAsset(null);
+                    setIsFormDialogOpen(open);
+                }}
+                setIsEditDialogOpen={(open) => {
+                    if (open) setEditingAsset(sampleAsset);
+                    setIsFormDialogOpen(open);
+                }}
+                setEditingAsset={setEditingAsset}
+                setIsDetailSheetOpen={setIsDetailSheetOpen}
+                setDetailSheetMode={setDetailMode}
+                setSelectedAssetForDetail={(asset) => setSelectedAssetUid(asset?.uid ?? null)}
+                setIsBulkDialogOpen={setIsBulkPenyusutanOpen}
+                setIsConfirmDeleteDialogOpen={setIsConfirmDeleteOpen}
+                setAssetToDelete={setAssetToDelete}
+                sampleAsset={sampleAsset}
             />
         </div>
     );

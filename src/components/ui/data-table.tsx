@@ -113,6 +113,7 @@ interface DataTableProps<TData, TValue> {
     hideCheck?: boolean | ((row: TData) => boolean);
     disableCheck?: boolean | ((row: TData) => boolean);
     extraActions?: (row: TData) => React.ReactNode;
+    viewActionClassName?: string;
     actionColumnWidth?: string;
     actionColumnSize?: number;
     getRowClassName?: (row: TData) => string;
@@ -156,6 +157,7 @@ export function DataTable<TData, TValue>({
     onDelete,
     onView,
     onCheck,
+    viewActionClassName,
     hideEdit,
     disableEdit,
     hideDelete,
@@ -400,7 +402,7 @@ export function DataTable<TData, TValue>({
                                 disabled={isViewDisabled}
                                 tooltip="Lihat Detail"
                                 data-action="view"
-                                className="table-action-view"
+                                className={`table-action-view${viewActionClassName ? ` ${viewActionClassName}` : ""}`}
                             >
                                 <InfoIcon size={16} />
                             </DataTableActionButton>
@@ -467,6 +469,7 @@ export function DataTable<TData, TValue>({
         hideCheck,
         disableCheck,
         extraActions,
+        viewActionClassName,
         actionColumnWidth,
         actionColumnSize,
     ]);

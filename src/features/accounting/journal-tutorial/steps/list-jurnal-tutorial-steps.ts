@@ -1,0 +1,58 @@
+import type { JournalTutorialStep } from "../types/journal-tutorial";
+
+export const LIST_JURNAL_TUTORIAL_STEPS: JournalTutorialStep[] = [
+    {
+        id: "lj-step-1",
+        target: "#journal-search",
+        title: "1. Pencarian Jurnal",
+        content: "Ketik nomor jurnal atau keterangan transaksi untuk menemukan entri jurnal tertentu dengan cepat.",
+        placement: "bottom",
+        skipScroll: true,
+    },
+    {
+        id: "lj-step-2",
+        target: "#journal-status-filter",
+        title: "2. Filter Status Jurnal",
+        content: "Saring jurnal berdasarkan status posting (Draf, Terposting, atau Dibatalkan).",
+        placement: "bottom",
+        skipScroll: true,
+    },
+    {
+        id: "lj-step-3",
+        target: "#btn-buat-jurnal",
+        title: "3. Tombol Buat Jurnal Baru",
+        content: "Tombol ini digunakan untuk membuat entri jurnal manual baru.",
+        placement: "bottom",
+        skipScroll: true,
+    },
+    {
+        id: "lj-step-4",
+        target: "#journal-table .overflow-auto",
+        fallbackTarget: "#journal-table",
+        title: "4. Struktur Kolom Transaksi",
+        content: "Melihat baris data transaksi jurnal meliputi referensi, tanggal, keterangan, pembuat, dan status.",
+        placement: "bottom",
+        skipScroll: true,
+    },
+    {
+        id: "lj-step-5",
+        target: "#journal-table .journal-action-view",
+        fallbackTarget: "#journal-table",
+        title: "5. Aksi Detail Jurnal",
+        content: "Klik ikon mata pada baris tabel untuk melihat rincian debit-kredit transaksi jurnal.",
+        placement: "bottom",
+        skipScroll: true,
+    },
+    {
+        id: "lj-step-6",
+        target: "body",
+        title: "6. Selesai",
+        content: "Panduan kelola list jurnal selesai. Anda dapat meninjau dan mengelola seluruh riwayat transaksi.",
+        placement: "bottom",
+        skipScroll: true,
+        isLastStep: true,
+        nextLabel: "Selesai",
+        variant: "overlay_nav",
+        overlayNav: true,
+    },
+];

@@ -24,6 +24,9 @@ import { BalanceSheetHeaderFilters } from "./balance-sheet-header-filters";
 import { BalanceSheetSectionCard } from "./balance-sheet-section-card";
 import { BalanceSheetStatusCard } from "./balance-sheet-status-card";
 import { ProfitLossStatusCard } from "./profit-loss-status-card";
+import { useBalanceSheetTutorialStore } from "@/stores/balance-sheet-tutorial-store";
+import { MOCK_BALANCE_SHEET } from "@/features/accounting/balance-sheet-tutorial/constants/balance-sheet-tutorial-constants";
+import { BalanceSheetTutorialController } from "@/features/accounting/balance-sheet-tutorial/components/balance-sheet-tutorial-controller";
 
 interface BalanceSheetPrintFilterValues {
     paperSize: string;
@@ -53,6 +56,12 @@ export function BalanceSheetDashboard({
         );
     }, [coaMappings]);
 
+    const isTutorialRunning = useBalanceSheetTutorialStore((state) => state.isRunning);
+    // Demo-safety: saat tutorial berjalan, selalu tampilkan struktur akun contoh
+    // yang kaya (memiliki relasi induk-anak & detail kategori) agar tiap spotlight
+    // memiliki target nyata dan tidak bergantung pada data pembukuan toko.
+    const activeData = isTutorialRunning ? MOCK_BALANCE_SHEET : data;
+
     const [viewType, setViewType] = useState<AccountingReportMode>("neraca");
     const [showDebitCredit, setShowDebitCredit] = useState<boolean>(true);
     const [isPrintDialogOpen, setIsPrintDialogOpen] = useState<boolean>(false);
@@ -72,18 +81,18 @@ export function BalanceSheetDashboard({
     // 1. Calculate section values (Assets, Liabilities, Equity, Revenue, Expense)
     const sectionsData = useMemo(() => {
         return {
-            assets: data?.assets?.items || [],
-            liabilities: data?.liabilities?.items || [],
-            equity: data?.equity?.items || [],
-            revenue: data?.revenue?.items || [],
-            expense: data?.expense?.items || [],
-            totalAssets: data?.assets?.total_assets || 0,
-            totalLiabilities: data?.liabilities?.total_liabilities || 0,
-            totalEquity: data?.equity?.total_equity || 0,
-            totalRevenue: data?.revenue?.total_revenue || 0,
-            totalExpense: data?.expense?.total_expense || 0,
+            assets: activeData?.assets?.items || [],
+            liabilities: activeData?.liabilities?.items || [],
+            equity: activeData?.equity?.items || [],
+            revenue: activeData?.revenue?.items || [],
+            expense: activeData?.expense?.items || [],
+            totalAssets: activeData?.assets?.total_assets || 0,
+            totalLiabilities: activeData?.liabilities?.total_liabilities || 0,
+            totalEquity: activeData?.equity?.total_equity || 0,
+            totalRevenue: activeData?.revenue?.total_revenue || 0,
+            totalExpense: activeData?.expense?.total_expense || 0,
         };
-    }, [data]);
+    }, [activeData]);
 
     const {
         assets,
@@ -99,7 +108,7 @@ export function BalanceSheetDashboard({
     } = sectionsData;
 
     // 2. Compute Net Income / SHU
-    const shuData = data?.shu;
+    const shuData = activeData?.shu;
     const netIncome = useMemo(() => {
         if (shuData?.berjalan !== undefined) {
             return shuData.berjalan;
@@ -177,7 +186,7 @@ export function BalanceSheetDashboard({
             return {
                 totalLeftVal: leftVal,
                 totalRightVal: rightVal,
-                isBalanced: data?.is_balanced ?? (diff < 0.1),
+                isBalanced: activeData?.is_balanced ?? (diff < 0.1),
                 difference: diff,
             };
         } else if (viewType === "laba_rugi") {
@@ -195,11 +204,11 @@ export function BalanceSheetDashboard({
             return {
                 totalLeftVal: leftVal,
                 totalRightVal: rightVal,
-                isBalanced: data?.is_balanced ?? (diff < 0.1),
+                isBalanced: activeData?.is_balanced ?? (diff < 0.1),
                 difference: diff,
             };
         }
-    }, [viewType, totalAssets, totalLiabilities, finalEquityTotal, totalExpense, totalEquity, totalRevenue, data?.is_balanced]);
+    }, [viewType, totalAssets, totalLiabilities, finalEquityTotal, totalExpense, totalEquity, totalRevenue, activeData?.is_balanced]);
 
     return (
         <div className="space-y-3.5">
@@ -214,9 +223,10 @@ export function BalanceSheetDashboard({
                 extraAction={
                     <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap justify-end">
                         <Button
+                            id="neraca-btn-print"
                             type="button"
                             onClick={() => setIsPrintDialogOpen(true)}
-                            disabled={!data}
+                            disabled={!activeData}
                             className="h-8 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex items-center justify-center gap-1.5 font-bold text-xs shadow-xs cursor-pointer transition-all"
                         >
                             <IconPrinter className="w-3.5 h-3.5" />
@@ -250,7 +260,7 @@ export function BalanceSheetDashboard({
             {viewType === "neraca" && (
                 <div className={cn("grid gap-3.5", showDebitCredit ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
                     {/* Left Column: Aset */}
-                    <div className="space-y-3.5">
+                    <div className="space-y-3.5" id="neraca-section-assets">
                         <BalanceSheetSectionCard
                             title="Aset"
                             description="Harta kekayaan perusahaan termasuk kas, rekening bank, piutang, dan stok persediaan barang dagang."
@@ -267,7 +277,7 @@ export function BalanceSheetDashboard({
                     </div>
 
                     {/* Right Column: Liabilitas & Ekuitas */}
-                    <div className="space-y-3.5">
+                    <div className="space-y-3.5" id="neraca-section-liabilities-equity">
                         <BalanceSheetSectionCard
                             title="Kewajiban (Liabilitas)"
                             description="Kewajiban finansial jangka pendek dan jangka panjang perusahaan kepada pihak lain."
@@ -438,6 +448,7 @@ export function BalanceSheetDashboard({
                     clearable={false}
                 />
             </PrintConfirmDialog>
+            <BalanceSheetTutorialController />
         </div>
     );
 }

@@ -88,6 +88,7 @@ export function JournalEditorDesktopTable({
                     <TableRow className="border-t border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 hover:bg-slate-50/70">
                         <TableCell colSpan={3} className="py-2 px-3">
                             <Button
+                                id="mj-tambah-baris"
                                 type="button"
                                 variant="ghost"
                                 size="sm"
@@ -120,7 +121,7 @@ export function JournalEditorDesktopTable({
                     <TableRow className="border-t border-slate-150 dark:border-slate-850 bg-white dark:bg-slate-900 hover:bg-white">
                         <TableCell colSpan={6} className="py-2.5 px-4">
                             <div className="flex items-center justify-between gap-3 text-xs">
-                                <div className="flex items-center gap-2">
+                                <div id="mj-balance-badge" className="flex items-center gap-2">
                                     <span className="text-[11px] font-bold text-slate-500">
                                         Status Jurnal:
                                     </span>

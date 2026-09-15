@@ -159,18 +159,20 @@ export function CoaDialog({
             <FormProvider {...methods}>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
                     {/* Parent selection */}
-                    <FormCoaPicker
-                        name="parent_uid"
-                        label="Akun Induk (Parent Account)"
-                        placeholder="Pilih Akun Induk (Kosongkan jika akun utama/level 1)"
-                        dialogTitle="Pilih Akun Induk (Parent CoA)"
-                        accounts={flatAccounts}
-                        isPostable={undefined}
-                        excludeUid={account?.uid}
-                        allowClear={true}
-                        size="md"
-                        disabled={isSubmitting}
-                    />
+                    <div id="form-coa-parent">
+                        <FormCoaPicker
+                            name="parent_uid"
+                            label="Akun Induk (Parent Account)"
+                            placeholder="Pilih Akun Induk (Kosongkan jika akun utama/level 1)"
+                            dialogTitle="Pilih Akun Induk (Parent CoA)"
+                            accounts={flatAccounts}
+                            isPostable={undefined}
+                            excludeUid={account?.uid}
+                            allowClear={true}
+                            size="md"
+                            disabled={isSubmitting}
+                        />
+                    </div>
 
                     <div className="grid grid-cols-2 gap-3">
                         {/* Kode Akun */}
@@ -184,6 +186,7 @@ export function CoaDialog({
                         {/* Nama Akun */}
                         <FormInput<CoaSchemaInput>
                             name="nama"
+                            id={isEdit ? "edit_nama" : "nama"}
                             label="Nama Akun *"
                             placeholder="Contoh: Kas Kecil, Piutang Dagang"
                             disabled={isSubmitting}
@@ -191,13 +194,15 @@ export function CoaDialog({
                     </div>
 
                     {/* Tipe Akun */}
-                    <FormSelect<CoaSchemaInput>
-                        name="tipe"
-                        label="Tipe Akun *"
-                        placeholder="Pilih Tipe Akun"
-                        options={COA_TYPE_OPTIONS}
-                        disabled={isSubmitting || !!watchedParentUid}
-                    />
+                    <div id="form-coa-tipe">
+                        <FormSelect<CoaSchemaInput>
+                            name="tipe"
+                            label="Tipe Akun *"
+                            placeholder="Pilih Tipe Akun"
+                            options={COA_TYPE_OPTIONS}
+                            disabled={isSubmitting || !!watchedParentUid}
+                        />
+                    </div>
 
                     {/* Status Aktif */}
                     <div className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
@@ -243,6 +248,7 @@ export function CoaDialog({
                             Batal
                         </Button>
                         <Button
+                            id="btn-submit-coa"
                             type="submit"
                             className="h-10 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-xl flex items-center gap-1.5"
                             disabled={isSubmitting}

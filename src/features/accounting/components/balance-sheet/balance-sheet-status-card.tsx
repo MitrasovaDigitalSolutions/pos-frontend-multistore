@@ -41,7 +41,7 @@ export function BalanceSheetStatusCard({
             : "Terdapat selisih antara nilai Aset dan Liabilitas + Ekuitas.");
 
     return (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-2.5 sm:p-3 shadow-xs">
+        <div id="neraca-status-card" className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-2.5 sm:p-3 shadow-xs">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
                 {/* Left: Status Indicator & Short Natural Copy */}
                 <div className="flex items-center gap-2 min-w-0">

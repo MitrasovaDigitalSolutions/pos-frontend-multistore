@@ -140,12 +140,13 @@ export function BalanceSheetHeaderFilters({
             <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs rounded-2xl p-2.5 sm:px-3.5 sm:py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-2.5 min-w-0">
                 {/* Left Side: View Mode Selector */}
                 <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
-                    <div className="relative flex bg-slate-100 dark:bg-slate-950 p-0.5 rounded-xl border border-slate-200/60 dark:border-slate-800 w-full sm:w-fit">
+                    <div className="relative flex bg-slate-100 dark:bg-slate-950 p-0.5 rounded-xl border border-slate-200/60 dark:border-slate-800 w-full sm:w-fit" id="neraca-mode-switcher">
                         {reportModes.map(({ mode, label, icon: ModeIcon }) => {
                             const isActive = viewType === mode;
                             return (
                                 <button
                                     key={mode}
+                                    id={`neraca-mode-${mode}`}
                                     type="button"
                                     onClick={() => onViewTypeChange(mode)}
                                     className={cn(
@@ -173,7 +174,7 @@ export function BalanceSheetHeaderFilters({
                 {/* Right Side: Cutoff Date & D/K Switch */}
                 <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap justify-between md:justify-end">
                     {/* Date Picker & Presets */}
-                    <div className="flex items-center gap-1.5 flex-1 sm:flex-none">
+                    <div className="flex items-center gap-1.5 flex-1 sm:flex-none" id="neraca-filter-date-group">
                         <DatePicker
                             value={asOfDate}
                             onChange={(val) => onAsOfDateChange(val || "")}
@@ -186,6 +187,7 @@ export function BalanceSheetHeaderFilters({
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button
+                                    id="neraca-preset-btn"
                                     variant="outline"
                                     size="sm"
                                     className="h-8 px-2 text-xs font-bold rounded-xl border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-slate-600 dark:text-slate-300 cursor-pointer shrink-0"
@@ -221,9 +223,10 @@ export function BalanceSheetHeaderFilters({
                     </div>
 
                     {/* Detail D/K Switch */}
-                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 shrink-0 select-none">
+                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 shrink-0 select-none" id="neraca-switch-dk">
                         <Switch
                             id="switch-dk-compact"
+                            name="switch-dk-compact"
                             checked={showDebitCredit}
                             onCheckedChange={onShowDebitCreditChange}
                             className="scale-75 data-[state=checked]:bg-indigo-600"

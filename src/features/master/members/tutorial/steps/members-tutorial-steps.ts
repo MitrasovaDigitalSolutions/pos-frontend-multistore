@@ -124,6 +124,8 @@ export const MEMBERS_TUTORIAL_STEPS: Record<MembersTutorialId, MembersTutorialSt
             title: "2. Konfirmasi Penghapusan",
             content: "Sistem meminta konfirmasi agar data member tidak terhapus secara tidak sengaja. Klik 'Ya, Hapus' untuk melanjutkan.",
             placement: "top",
+            variant: "overlay_nav",
+            overlayNav: true,
         },
     ],
 

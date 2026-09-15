@@ -272,9 +272,11 @@ function OverlayNavView({
             transformStr = "translateX(-50%)";
         }
 
-        // Vertical positioning: placed above the highlighted component
+        // Vertical positioning: above the target when there is room, otherwise below
+        // it so the card never covers the highlight (ponytail: ~220px estimated card height)
         if (targetRect) {
             const spaceAbove = targetRect.top;
+            const spaceBelow = winHeight - targetRect.bottom;
             if (spaceAbove >= 170) {
                 return {
                     top: undefined,
@@ -285,9 +287,19 @@ function OverlayNavView({
                 };
             }
 
-            // Component is near the top of the viewport: pin to safe top margin
+            if (spaceBelow >= 240) {
+                return {
+                    top: `${targetRect.bottom + 16}px`,
+                    bottom: undefined,
+                    left: leftPos,
+                    transform: transformStr,
+                    isAbove: false,
+                };
+            }
+
+            // Neither side fits: pin to safe top margin as last resort
             return {
-                top: `${Math.max(16, Math.min(spaceAbove - 10, 40))}px`,
+                top: "16px",
                 bottom: undefined,
                 left: leftPos,
                 transform: transformStr,
@@ -525,15 +537,16 @@ export function CompactTutorialTooltip(props: CompactTutorialTooltipProps) {
     );
 
     // Universal Keyboard Navigation across ALL tutorial steps (ArrowRight = Next, ArrowLeft = Back, Escape = Close)
+    // ponytail: capture phase so dialog focus-traps (Radix) that stopPropagation can't swallow arrows
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Do not intercept if the user is typing into form controls
-            if (
-                e.target instanceof HTMLInputElement ||
-                e.target instanceof HTMLTextAreaElement ||
-                e.target instanceof HTMLSelectElement
-            ) {
-                return;
+            // Skip only where arrows have irreplaceable native meaning (multiline/select).
+            // Single-line inputs stay navigable: tutorial uses auto-fill so manual caret
+            // moves are rare, while focus almost always sits inside dialog inputs.
+            const el = e.target as HTMLElement | null;
+            if (el) {
+                if (el.tagName === "TEXTAREA" || el.isContentEditable) return;
+                if (el instanceof HTMLSelectElement) return;
             }
 
             if (e.key === "ArrowRight") {
@@ -548,8 +561,8 @@ export function CompactTutorialTooltip(props: CompactTutorialTooltipProps) {
             }
         };
 
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
+        window.addEventListener("keydown", handleKeyDown, true);
+        return () => window.removeEventListener("keydown", handleKeyDown, true);
     }, [handlePrimary, handleBack, handleClose, index]);
 
     const sharedProps = {

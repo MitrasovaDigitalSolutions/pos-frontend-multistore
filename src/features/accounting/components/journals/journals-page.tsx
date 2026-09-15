@@ -12,6 +12,9 @@ import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { FormSelect } from "@/components/forms/form-select";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
+import { JournalTutorialController } from "@/features/accounting/journal-tutorial/components/journal-tutorial-controller";
+import { useJournalTutorialStore } from "@/stores/journal-tutorial-store";
+import { MOCK_JOURNALS } from "@/features/accounting/journal-tutorial/constants/journal-tutorial-constants";
 
 interface JournalFilterValues {
     search: string;
@@ -63,6 +66,10 @@ export function JournalsPage() {
         status: statusFilter !== "all" ? statusFilter : undefined,
     });
 
+    const isTutorialRunning = useJournalTutorialStore((state) => state.isRunning);
+    const serverJournals = journalsData?.data || [];
+    const displayJournals = isTutorialRunning && serverJournals.length === 0 ? MOCK_JOURNALS : serverJournals;
+
     if (!hasViewReports) {
         return (
             <AccessDeniedState
@@ -94,7 +101,7 @@ export function JournalsPage() {
     return (
         <div className="space-y-6">
             <JournalList
-                journals={journalsData?.data || []}
+                journals={displayJournals}
                 meta={journalsData?.meta}
                 page={page}
                 perPage={perPage}
@@ -112,20 +119,25 @@ export function JournalsPage() {
                         onReset={handleFilterReset}
                     >
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                            <FormInput<JournalFilterValues>
-                                name="search"
-                                label="Cari Jurnal"
-                                placeholder="Masukkan no referensi atau keterangan..."
-                            />
-                            <FormSelect
-                                name="status"
-                                label="Status"
-                                options={statusFilterOptions}
-                            />
+                            <div id="journal-search">
+                                <FormInput<JournalFilterValues>
+                                    name="search"
+                                    label="Cari Jurnal"
+                                    placeholder="Masukkan no referensi atau keterangan..."
+                                />
+                            </div>
+                            <div id="journal-status-filter">
+                                <FormSelect
+                                    name="status"
+                                    label="Status"
+                                    options={statusFilterOptions}
+                                />
+                            </div>
                         </div>
                     </FilterForm>
                 }
             />
+            <JournalTutorialController />
         </div>
     );
 }

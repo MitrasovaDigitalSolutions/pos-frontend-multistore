@@ -6,6 +6,10 @@ import { IconSparkles } from "@tabler/icons-react";
 import { usePurchaseTutorialStore } from "@/stores/purchase-tutorial-store";
 import { useProductsTutorialStore } from "@/stores/products-tutorial-store";
 import { useMembersTutorialStore } from "@/stores/members-tutorial-store";
+import { useAssetsTutorialStore } from "@/stores/assets-tutorial-store";
+import { useAccountingTutorialStore } from "@/stores/accounting-tutorial-store";
+import { useBalanceSheetTutorialStore } from "@/stores/balance-sheet-tutorial-store";
+import { useJournalTutorialStore } from "@/stores/journal-tutorial-store";
 import { useSettingsTutorialStore } from "@/stores/settings-tutorial-store";
 import { useUsersTutorialStore } from "@/stores/users-tutorial-store";
 import { useAuditTutorialStore } from "@/stores/audit-tutorial-store";
@@ -39,6 +43,30 @@ export function AdminTutorialButton({ className = "", onCustomOpen }: AdminTutor
 
         if (pathname.startsWith("/admin/members")) {
             useMembersTutorialStore.getState().setMenuOpen(true);
+            return;
+        }
+
+        if (pathname.startsWith("/admin/assets")) {
+            useAssetsTutorialStore.getState().setMenuOpen(true);
+            return;
+        }
+
+        if (pathname.startsWith("/admin/accounting/coa")) {
+            useAccountingTutorialStore.getState().setMenuOpen(true);
+            return;
+        }
+
+        if (pathname.includes("/admin/accounting/balance-sheet")) {
+            useBalanceSheetTutorialStore.getState().setMenuOpen(true);
+            return;
+        }
+
+        if (
+            pathname.includes("/admin/accounting/general-ledger") ||
+            pathname.includes("/admin/accounting/journals") ||
+            pathname.includes("/admin/accounting/manual-journal")
+        ) {
+            useJournalTutorialStore.getState().setMenuOpen(true);
             return;
         }
 

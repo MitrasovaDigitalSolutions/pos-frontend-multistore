@@ -14,6 +14,7 @@ import { useGeneralLedger } from "@/features/accounting/api/reports-api";
 import { FormCoaPicker } from "../shared";
 import type { GeneralLedgerEntry } from "@/features/accounting/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { JournalTutorialController } from "@/features/accounting/journal-tutorial/components/journal-tutorial-controller";
 
 interface BukuBesarFilterValues {
     from: string;
@@ -183,7 +184,7 @@ export function BukuBesarView() {
                 <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200/50 dark:border-slate-800/60 shadow-sm rounded-3xl p-3 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all duration-300">
                     {/* Left Side: Date Filters (Dari & Sampai) */}
                     <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap w-full md:w-auto">
-                        <div className="flex items-center gap-2">
+                        <div id="bb-filter-from" className="flex items-center gap-2">
                             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Dari:</span>
                             <FormDatePicker
                                 name="from"
@@ -191,7 +192,7 @@ export function BukuBesarView() {
                                 className="w-[125px] sm:w-[135px]"
                             />
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div id="bb-filter-to" className="flex items-center gap-2">
                             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Sampai:</span>
                             <FormDatePicker
                                 name="to"
@@ -204,7 +205,7 @@ export function BukuBesarView() {
                     {/* Right Side: Account Selector (CoA) */}
                     <div className="flex items-center gap-2 w-full md:w-auto justify-end">
                         <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">Akun:</span>
-                        <div className="w-full sm:w-[240px]">
+                        <div id="bb-filter-coa" className="w-full sm:w-[240px]">
                             <FormCoaPicker
                                 name="coaUid"
                                 placeholder="Semua Akun"
@@ -226,38 +227,42 @@ export function BukuBesarView() {
                     </h3>
                 </div>
 
-                <DataTable
-                    columns={columns}
-                    data={entries}
-                    tableClassName="table-fixed"
-                    isLoading={isLoading}
-                    isFetching={isFetching}
-                    emptyMessage="Tidak ada entri pada rentang tanggal ini."
-                    page={page}
-                    perPage={perPage}
-                    onPageChange={setPage}
-                    onPerPageChange={setPerPage}
-                    meta={meta}
-                    entityName="entri buku besar"
-                    virtualize={true}
-                    estimateRowHeight={44}
-                    enableSortingRemoval={false}
+                <div id="bb-table">
+                    <DataTable
+                        columns={columns}
+                        data={entries}
+                        tableClassName="table-fixed"
+                        isLoading={isLoading}
+                        isFetching={isFetching}
+                        emptyMessage="Tidak ada entri pada rentang tanggal ini."
+                        page={page}
+                        perPage={perPage}
+                        onPageChange={setPage}
+                        onPerPageChange={setPerPage}
+                        meta={meta}
+                        entityName="entri buku besar"
+                        virtualize={true}
+                        estimateRowHeight={44}
+                        enableSortingRemoval={false}
 
-                    // Server-side Sorting
-                    sortBy={sortBy}
-                    sortOrder={sortOrder}
-                    onSortChange={(key, order) => {
-                        if (key && order) {
-                            setSortBy(key);
-                            setSortOrder(order);
-                        } else {
-                            setSortBy("transaction_date");
-                            setSortOrder("desc");
-                        }
-                        setPage(1);
-                    }}
-                />
+                        // Server-side Sorting
+                        sortBy={sortBy}
+                        sortOrder={sortOrder}
+                        onSortChange={(key, order) => {
+                            if (key && order) {
+                                setSortBy(key);
+                                setSortOrder(order);
+                            } else {
+                                setSortBy("transaction_date");
+                                setSortOrder("desc");
+                            }
+                            setPage(1);
+                        }}
+                    />
+                </div>
             </section>
+
+            <JournalTutorialController />
         </div>
     );
 }

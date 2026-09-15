@@ -79,7 +79,7 @@ export function AssetIdentityFields({
             </div>
 
             {/* Row 2: Kategori Aset & Indikator Akun CoA */}
-            <div className="space-y-1">
+            <div className="space-y-1" id="form-aset-kategori">
                 <div className="flex items-center justify-between">
                     <label className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
                         Kategori Aset <span className="text-rose-500">*</span>
@@ -108,7 +108,7 @@ export function AssetIdentityFields({
             </div>
 
             {/* Row 3: Tanggal, Harga & Residu */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2" id="form-aset-harga-tgl">
                 <div className="space-y-1">
                     <label className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
                         Tgl Perolehan <span className="text-rose-500">*</span>
@@ -128,7 +128,7 @@ export function AssetIdentityFields({
                     />
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-1" id="harga_perolehan">
                     <label className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
                         Harga Perolehan <span className="text-rose-500">*</span>
                     </label>
@@ -148,24 +148,26 @@ export function AssetIdentityFields({
                     />
                 </div>
 
-                <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate block">
-                        Nilai Residu <span className="text-slate-400 font-normal">(Sisa)</span>
-                    </label>
-                    <Controller
-                        control={control}
-                        name="nilai_residu"
-                        render={({ field }) => (
-                            <NumberInput
-                                value={field.value || 0}
-                                onChange={field.onChange}
-                                disabled={isPending}
-                                placeholder="Rp 0"
-                                min={0}
-                                className="h-8 text-xs rounded-lg"
-                            />
-                        )}
-                    />
+                <div className="space-y-1" id="form-aset-residu">
+                    <div id="nilai_residu">
+                        <label className="text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate block">
+                            Nilai Residu <span className="text-slate-400 font-normal">(Sisa)</span>
+                        </label>
+                        <Controller
+                            control={control}
+                            name="nilai_residu"
+                            render={({ field }) => (
+                                <NumberInput
+                                    value={field.value || 0}
+                                    onChange={field.onChange}
+                                    disabled={isPending}
+                                    placeholder="Rp 0"
+                                    min={0}
+                                    className="h-8 text-xs rounded-lg"
+                                />
+                            )}
+                        />
+                    </div>
                 </div>
             </div>
 
