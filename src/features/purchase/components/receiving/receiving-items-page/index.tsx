@@ -149,9 +149,9 @@ function ReceivingItemsContainer({
         onSaveSuccess,
     });
 
-    const isPurchaseTutorialRunning = usePurchaseTutorialStore((state) => state.isRunning);
+    const isTutorialRunning = usePurchaseTutorialStore((state) => state.isRunning);
     const activeTutorial = usePurchaseTutorialStore((state) => state.activeTutorial);
-    const isReceivingTutorial = isPurchaseTutorialRunning && activeTutorial === "receiving_create";
+    const isReceivingTutorial = isTutorialRunning && activeTutorial === "receiving_create";
     const tutorialDialog = usePurchaseTutorialStore((state) => state.activeDialog);
 
     const effectiveAlertOpen = isReceivingTutorial ? tutorialDialog === "price_alert" : isAlertOpen;
@@ -218,7 +218,7 @@ function ReceivingItemsContainer({
                                     <h3 className="text-xs font-bold text-slate-900">Scan Barcode Penerimaan</h3>
                                 </div>
 
-                                {isPurchaseTutorialRunning && (
+                                {isTutorialRunning && (
                                     <button
                                         type="button"
                                         id="btn-rec-seeder"

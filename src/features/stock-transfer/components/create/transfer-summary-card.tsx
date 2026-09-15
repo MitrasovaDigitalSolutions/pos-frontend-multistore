@@ -27,7 +27,7 @@ export function TransferSummaryCard({
   const isItemsValid = totalJenis > 0;
 
   return (
-    <div className="bg-white border border-slate-100 rounded-2xl shadow-2xs p-5 space-y-4 sticky top-20">
+    <div id="transfer-summary-card" className="bg-white border border-slate-100 rounded-2xl shadow-2xs p-5 space-y-4 sticky top-20">
       <h3 className="font-bold text-sm text-slate-900 border-b border-slate-50 pb-2.5">
         Ringkasan Transfer
       </h3>
@@ -94,6 +94,7 @@ export function TransferSummaryCard({
 
       {/* Submit CTA Button */}
       <AppButton
+        id="transfer-btn-submit"
         onClick={onSubmit}
         disabled={isPending || !canSubmit}
         className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-10 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-2xs transition-all"

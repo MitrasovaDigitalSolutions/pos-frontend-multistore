@@ -501,6 +501,58 @@ export function CompactTutorialTooltip(props: CompactTutorialTooltipProps) {
         (step as unknown as { variant?: string }).variant === "overlay_nav"
     );
 
+    // Target element & page readiness check to prevent tooltip from appearing before page has finished rendering
+    const [isTargetReady, setIsTargetReady] = useState(false);
+
+    useEffect(() => {
+        let active = true;
+        const start = Date.now();
+
+        const checkReadiness = () => {
+            if (!active) return;
+
+            const target = step.target;
+            const isBodyTarget = target === "body" || (typeof target === "string" && target === "body");
+
+            if (isBodyTarget) {
+                const mainEl = document.querySelector("main, .space-y-6, [data-page-ready='true']");
+                if (mainEl || Date.now() - start > 800) {
+                    setIsTargetReady(true);
+                    return;
+                }
+            } else {
+                const targetEl = target instanceof HTMLElement
+                    ? target
+                    : typeof target === "string"
+                        ? (document.querySelector(target) as HTMLElement | null)
+                        : null;
+
+                if (targetEl && document.body.contains(targetEl)) {
+                    const rect = targetEl.getBoundingClientRect();
+                    if (rect.width > 0 && rect.height > 0) {
+                        setIsTargetReady(true);
+                        return;
+                    }
+                }
+
+                // Fallback timeout safety: never get stuck permanently hidden after 800ms
+                if (Date.now() - start > 800) {
+                    setIsTargetReady(true);
+                    return;
+                }
+            }
+
+            // Retry checking on next animation frame
+            requestAnimationFrame(checkReadiness);
+        };
+
+        const timer = setTimeout(checkReadiness, 40);
+        return () => {
+            active = false;
+            clearTimeout(timer);
+        };
+    }, [step.target, index]);
+
     const progressPercent = Math.round(((index + 1) / size) * 100);
 
     const handleClose = useCallback(
@@ -573,6 +625,10 @@ export function CompactTutorialTooltip(props: CompactTutorialTooltipProps) {
         handleSkip,
         progressPercent,
     };
+
+    if (!isTargetReady) {
+        return null;
+    }
 
     if (isOverlayNav) {
         return <OverlayNavView {...sharedProps} />;

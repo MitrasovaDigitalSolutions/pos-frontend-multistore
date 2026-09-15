@@ -105,8 +105,13 @@ export const PURCHASE_TUTORIAL_STEPS: Record<string, PurchaseTutorialStep[]> = {
         {
             target: "#rec-invoice-field",
             title: "5. Nomor & Nominal Faktur Supplier",
-            content: "Masukkan nomor faktur tagihan fisik dari supplier dan total nominal yang tertera pada lembar faktur resmi.",
+            content: "Masukkan nomor faktur tagihan fisik dari supplier dan total nominal yang tertera pada lembar faktur resmi. Nomor faktur ini menjadi acuan utama saat pelunasan hutang dan rekonsiliasi penerimaan.",
             placement: "left",
+            action: {
+                type: "type_text",
+                target: "#rec-invoice-number-input",
+                text: "INV-2024-089",
+            },
         },
         {
             target: "#rec-notes-field",
@@ -119,8 +124,6 @@ export const PURCHASE_TUTORIAL_STEPS: Record<string, PurchaseTutorialStep[]> = {
             title: "7. Dialog Perubahan Harga Beli",
             content: "Jika harga beli dari distributor naik atau turun, dialog ini otomatis muncul! Anda dapat memilih apakah harga jual produk dinaikkan untuk melindungi margin keuntungan toko atau tetap.",
             placement: "bottom",
-            variant: "overlay_nav",
-            overlayNav: true,
             action: {
                 type: "open_dialog",
                 dialog: "price_alert",
@@ -131,8 +134,6 @@ export const PURCHASE_TUTORIAL_STEPS: Record<string, PurchaseTutorialStep[]> = {
             title: "8. Dialog Finalisasi Penerimaan",
             content: "Dialog ini merekonsiliasi nilai fisik barang vs nominal faktur supplier. Jika ada selisih (ongkir/diskon/pembulatan), sistem memberikan indikator status dan tombol otomatisasi penyelarasan.",
             placement: "top",
-            variant: "overlay_nav",
-            overlayNav: true,
             action: {
                 type: "open_dialog",
                 dialog: "finalize",
@@ -143,8 +144,6 @@ export const PURCHASE_TUTORIAL_STEPS: Record<string, PurchaseTutorialStep[]> = {
             title: "9. Metode Transaksi (Tunai vs Kredit)",
             content: "Pilih 'Tunai' untuk pelunasan langsung dari Akun Kas/Bank toko, atau pilih 'Kredit' untuk mencatat hutang dagang baru ke supplier beserta uang muka (DP) jika ada.",
             placement: "top",
-            variant: "overlay_nav",
-            overlayNav: true,
         },
         {
             target: "body",

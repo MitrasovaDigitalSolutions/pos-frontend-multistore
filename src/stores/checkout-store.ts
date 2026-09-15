@@ -112,6 +112,33 @@ export const useCheckoutStore = create<CheckoutStoreState>()(
         {
             name: "checkout-storage",
             storage: createJSONStorage(() => sessionStorage),
+            onRehydrateStorage: () => (state) => {
+                if (state) {
+                    state.cart = (state.cart || []).filter(
+                        (item) => !item.product_uid.startsWith("tutorial-mock-")
+                    );
+                    if (
+                        state.selectedMember &&
+                        typeof state.selectedMember.uid === "string" &&
+                        state.selectedMember.uid.startsWith("tutorial-mock-")
+                    ) {
+                        state.selectedMember = null;
+                    }
+                    if (
+                        state.namaTransaksi &&
+                        (state.namaTransaksi.startsWith("Meja 5 - Budi") ||
+                            state.namaTransaksi.startsWith("Pelanggan A (Pending)") ||
+                            state.namaTransaksi === "Meja 4 - Pak Agus" ||
+                            state.namaTransaksi === "Pesanan Meja 12" ||
+                            state.namaTransaksi === "Pelanggan B")
+                    ) {
+                        state.namaTransaksi = "";
+                    }
+                    state.holdList = (state.holdList || []).filter(
+                        (h) => !h.uid.startsWith("tutorial-mock-")
+                    );
+                }
+            },
         },
     ),
 );

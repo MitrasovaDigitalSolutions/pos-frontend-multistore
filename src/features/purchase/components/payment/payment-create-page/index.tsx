@@ -1,36 +1,35 @@
 "use client";
 
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { IconArrowLeft } from "@tabler/icons-react";
-import { useSearchParams } from "next/navigation";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAppRouter } from "@/hooks/use-app-router";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { formatToISO, todayStr, toLocalISOString } from "@/lib/date-utils";
+import { usePurchaseTutorialStore } from "@/stores/purchase-tutorial-store";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { IconArrowLeft, IconSparkles } from "@tabler/icons-react";
+import { AlertTriangle } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { AlertTriangle } from "lucide-react";
 import {
-    useCreatePayment,
-    useUpdatePayment,
     useCashAccounts,
+    useCreatePayment,
     useOutstandingReceivings,
-    usePaymentSummary,
     usePaymentDetail,
+    usePaymentSummary,
+    useUpdatePayment,
 } from "../../../api/purchase-api";
 import { paymentSchema, type PaymentInput } from "../../../schemas/payment-schema";
-import { PaymentForm } from "./payment-form";
-import { DebtSummary } from "./debt-summary";
-import { todayStr, formatToISO, toLocalISOString } from "@/lib/date-utils";
-import { IconSparkles } from "@tabler/icons-react";
-import { usePurchaseTutorialStore } from "@/stores/purchase-tutorial-store";
 import {
     MOCK_OUTSTANDING_RECEIVING,
-    MOCK_PAYMENT_SUMMARY,
     MOCK_PAYMENT_INPUT,
+    MOCK_PAYMENT_SUMMARY,
 } from "../../../tutorial/constants/purchase-tutorial-constants";
+import { DebtSummary } from "./debt-summary";
+import { PaymentForm } from "./payment-form";
 
 export function PaymentCreatePage() {
     const router = useAppRouter();
@@ -82,18 +81,25 @@ export function PaymentCreatePage() {
         reset,
     } = methods;
 
-    const isPurchaseTutorialRunning = usePurchaseTutorialStore(
+    const isTutorialRunning = usePurchaseTutorialStore(
         (s) => s.isRunning && s.activeTutorial === "payment_create"
     );
 
     const selectedReceivingId = useWatch({ name: "receiving_uid", control: methods.control });
+
+    // Purge mock receiving selection if tutorial is not running
+    useEffect(() => {
+        if (!isTutorialRunning && (selectedReceivingId === MOCK_OUTSTANDING_RECEIVING.uid || selectedReceivingId?.startsWith("mock-"))) {
+            setValue("receiving_uid", "");
+        }
+    }, [isTutorialRunning, selectedReceivingId, setValue]);
 
     // Fetch summary for selected receiving
     const { data: summary, isLoading: summaryLoading } = usePaymentSummary(
         selectedReceivingId || null
     );
 
-    const isMockReceiving = selectedReceivingId === MOCK_OUTSTANDING_RECEIVING.uid || Boolean(selectedReceivingId?.startsWith("mock-"));
+    const isMockReceiving = isTutorialRunning && (selectedReceivingId === MOCK_OUTSTANDING_RECEIVING.uid || Boolean(selectedReceivingId?.startsWith("mock-")));
     const activeSummary = isMockReceiving ? MOCK_PAYMENT_SUMMARY : summary;
     const isSummaryLoading = isMockReceiving ? false : summaryLoading;
 
@@ -171,7 +177,7 @@ export function PaymentCreatePage() {
     });
 
     // Provide mock receiving in options during tutorial
-    if (isPurchaseTutorialRunning && !receivingOptions.some((o) => o.value === MOCK_OUTSTANDING_RECEIVING.uid)) {
+    if (isTutorialRunning && !receivingOptions.some((o) => o.value === MOCK_OUTSTANDING_RECEIVING.uid)) {
         receivingOptions.unshift({
             value: MOCK_OUTSTANDING_RECEIVING.uid,
             label: `${MOCK_OUTSTANDING_RECEIVING.nomor_penerimaan} - ${MOCK_OUTSTANDING_RECEIVING.supplier}`,
@@ -197,7 +203,7 @@ export function PaymentCreatePage() {
         description: `Saldo: ${formatRupiah(acc.saldo || 0)} • (${acc.tipe === "register" ? "Kas Kasir" : acc.tipe === "bank" ? "Bank" : "Kas Utama"})`,
     }));
 
-    if (isPurchaseTutorialRunning && cashAccountOptions.length === 0) {
+    if (isTutorialRunning && cashAccountOptions.length === 0) {
         cashAccountOptions.push({
             value: "mock-cash-acc-1",
             label: "Kas Utama Toko (Pusat)",
@@ -259,7 +265,7 @@ export function PaymentCreatePage() {
     const handleConfirmSave = async () => {
         if (!pendingData) return;
 
-        if (isPurchaseTutorialRunning) {
+        if (isTutorialRunning) {
             toast.success("Simulasi pembayaran supplier berhasil disimpan.");
             setIsConfirmOpen(false);
             return;
@@ -330,7 +336,7 @@ export function PaymentCreatePage() {
                         </p>
                     </div>
 
-                    {isPurchaseTutorialRunning && (
+                    {isTutorialRunning && (
                         <button
                             type="button"
                             id="btn-pay-seeder"

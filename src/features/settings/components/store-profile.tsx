@@ -168,7 +168,8 @@ export function StoreProfile() {
         setQzError(null);
         try {
             const list = await PrinterService.findAllPrinters();
-            const options = list.map((p: PrinterDevice) => ({ value: p.name, label: p.name }));
+            const isFlutter = typeof window !== "undefined" && typeof window.FlutterBridge?.postMessage === "function";
+            const options = list.map((p: PrinterDevice) => ({ value: isFlutter ? p.id! : p.name, label: p.name }));
 
             // Ensure currently saved printer_id is in the options list
             const currentPrinter = methods.getValues("printer_id") || settings.printer_id;

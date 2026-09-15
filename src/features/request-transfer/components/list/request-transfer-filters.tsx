@@ -25,16 +25,18 @@ export function RequestTransferFilters({
     };
 
     return (
-        <FilterForm
-            methods={filterMethods}
-            onSubmit={onFilterSubmit}
-            onReset={handleReset}
-        >
-            <FormInput<RequestTransferFilterValues>
-                name="search"
-                label="Cari Supplier"
-                placeholder="Cari nama supplier atau katalog..."
-            />
-        </FilterForm>
+        <div id="req-incoming-filter">
+            <FilterForm
+                methods={filterMethods}
+                onSubmit={onFilterSubmit}
+                onReset={handleReset}
+            >
+                <FormInput<RequestTransferFilterValues>
+                    name="search"
+                    label="Cari Supplier"
+                    placeholder="Cari nama supplier atau katalog..."
+                />
+            </FilterForm>
+        </div>
     );
 }

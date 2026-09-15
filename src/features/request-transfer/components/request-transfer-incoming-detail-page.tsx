@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { toast } from "sonner";
@@ -28,6 +28,11 @@ import {
     useSendRequestTransfer,
 } from "../api/request-transfer-api";
 import { RequestTransferIncomingTable } from "./detail/request-transfer-incoming-table";
+import { useTransferTutorialStore } from "@/stores/transfer-tutorial-store";
+import {
+    MOCK_INCOMING_DETAIL,
+    MOCK_INCOMING_SUMMARY_UID,
+} from "@/features/stock-transfer/tutorial/constants/transfer-tutorial-constants";
 
 export function RequestTransferIncomingDetailPage() {
     const router = useAppRouter();
@@ -35,7 +40,25 @@ export function RequestTransferIncomingDetailPage() {
     const searchParams = useSearchParams();
     const summaryUid = searchParams.get("summary_uid") || "";
 
-    const { data: detail, isLoading, isFetching } = useRequestTransferDetail(summaryUid);
+    const isTutorialRunning = useTransferTutorialStore(
+        (state) => state.isRunning && state.activeTutorial === "request_transfer_incoming"
+    );
+    const isMockSummary = isTutorialRunning && (summaryUid.startsWith("mock-") || summaryUid === MOCK_INCOMING_SUMMARY_UID);
+
+    // If page is loaded with a mock ID while tutorial is NOT running, redirect back to list
+    useEffect(() => {
+        if (!isTutorialRunning && summaryUid.startsWith("mock-")) {
+            router.replace(ROUTES.ADMIN_REQUEST_TRANSFERS_INCOMING);
+        }
+    }, [isTutorialRunning, summaryUid, router]);
+
+    const { data: realDetail, isLoading: queryLoading, isFetching: queryFetching } = useRequestTransferDetail(
+        isMockSummary ? "" : summaryUid
+    );
+
+    const detail = isMockSummary ? MOCK_INCOMING_DETAIL : realDetail;
+    const isLoading = isMockSummary ? false : queryLoading;
+    const isFetching = isMockSummary ? false : queryFetching;
 
     const reject = useRejectRequestTransfer();
     const send = useSendRequestTransfer();
@@ -62,6 +85,19 @@ export function RequestTransferIncomingDetailPage() {
 
     const handleConfirm = () => {
         if (!detail) return;
+
+        if (isMockSummary || isTutorialRunning) {
+            if (confirmAction === "reject") {
+                toast.success("Simulasi Demo: Semua request pada summary ditolak.");
+                setConfirmAction(null);
+                router.push(ROUTES.ADMIN_REQUEST_TRANSFERS_INCOMING);
+            } else if (confirmAction === "send") {
+                toast.success("Simulasi Demo: Transfer stok draft berhasil dibuat per cabang.");
+                setConfirmAction(null);
+                router.push(ROUTES.ADMIN_REQUEST_TRANSFERS_INCOMING);
+            }
+            return;
+        }
 
         if (confirmAction === "reject") {
             reject.mutate(
@@ -118,7 +154,10 @@ export function RequestTransferIncomingDetailPage() {
     return (
         <div className="space-y-4 sm:space-y-6">
             {/* Stock Transfer Style Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-2xs">
+            <div
+                id="req-incoming-detail-header"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-2xs"
+            >
                 <div className="flex items-center gap-3.5">
                     <Button
                         type="button"
@@ -146,8 +185,12 @@ export function RequestTransferIncomingDetailPage() {
 
                 {/* Header Action Buttons */}
                 {detail && (
-                    <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
+                    <div
+                        id="req-incoming-actions-bar"
+                        className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto"
+                    >
                         <Button
+                            id="req-incoming-btn-reject"
                             type="button"
                             onClick={() => handleActionTrigger("reject")}
                             disabled={isPendingAction}
@@ -157,6 +200,7 @@ export function RequestTransferIncomingDetailPage() {
                             <IconX size={16} /> Tolak Request
                         </Button>
                         <Button
+                            id="req-incoming-btn-po"
                             type="button"
                             onClick={handleCreatePO}
                             disabled={isPendingAction}
@@ -166,6 +210,7 @@ export function RequestTransferIncomingDetailPage() {
                         </Button>
 
                         <Button
+                            id="req-incoming-btn-send"
                             type="button"
                             onClick={() => handleActionTrigger("send")}
                             disabled={isPendingAction || !allSufficient}
@@ -198,7 +243,7 @@ export function RequestTransferIncomingDetailPage() {
                     {/* Right Column: Info Cards (Rute Toko, Supplier, Summary) */}
                     <div className="lg:col-span-4 space-y-4 sm:space-y-6">
                         {/* Store Route Card */}
-                        <Card className="border-slate-100 shadow-xs rounded-2xl bg-white">
+                        <Card id="req-incoming-route-card" className="border-slate-100 shadow-xs rounded-2xl bg-white">
                             <CardHeader className="border-b border-slate-50">
                                 <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                                     <IconBuildingStore size={16} className="text-emerald-600" />
@@ -234,7 +279,7 @@ export function RequestTransferIncomingDetailPage() {
                         </Card>
 
                         {/* Supplier & Catalog Card */}
-                        <Card className="border-slate-100 shadow-xs rounded-2xl bg-white">
+                        <Card id="req-incoming-supplier-card" className="border-slate-100 shadow-xs rounded-2xl bg-white">
                             <CardHeader className="border-b border-slate-50">
                                 <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                                     <IconPackage size={16} className="text-blue-600" />
@@ -265,7 +310,7 @@ export function RequestTransferIncomingDetailPage() {
                         </Card>
 
                         {/* Totals & Stock Availability Card */}
-                        <Card className="border-slate-100 shadow-xs rounded-2xl bg-white">
+                        <Card id="req-incoming-stock-card" className="border-slate-100 shadow-xs rounded-2xl bg-white">
                             <CardHeader className="pb-3 border-b border-slate-50">
                                 <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                                     <IconTruckDelivery size={16} className="text-purple-600" />

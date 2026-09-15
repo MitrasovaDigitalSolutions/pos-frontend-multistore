@@ -19,6 +19,7 @@ import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
 import {
     isMockPurchaseItem,
     MOCK_PO_ITEMS,
+    MOCK_PO_NOTES,
     MOCK_RECEIVING_ITEMS,
     MOCK_RETURN_ITEMS,
 } from "../constants/purchase-tutorial-constants";
@@ -296,8 +297,11 @@ export function usePurchaseTutorial() {
                 clearSnapshot();
             } else {
                 const cleanItems = store.getState().items.filter((i) => !isMockPurchaseItem(i));
+                const currentHeader = store.getState().headerData;
+                const isMockCatatan = currentHeader?.catatan === MOCK_PO_NOTES || currentHeader?.catatan?.includes("Mohon dikirim sebelum hari Jumat");
                 store.setState({
                     items: cleanItems,
+                    ...(isMockCatatan ? { headerData: null } : {}),
                     lastUpdated: Date.now(),
                 });
             }

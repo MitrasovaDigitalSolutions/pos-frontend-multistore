@@ -4,6 +4,8 @@ import React from "react";
 import { usePathname } from "next/navigation";
 import { IconSparkles } from "@tabler/icons-react";
 import { usePurchaseTutorialStore } from "@/stores/purchase-tutorial-store";
+import { useConsignmentTutorialStore } from "@/stores/consignment-tutorial-store";
+import { useTransferTutorialStore } from "@/stores/transfer-tutorial-store";
 import { useProductsTutorialStore } from "@/stores/products-tutorial-store";
 import { useMembersTutorialStore } from "@/stores/members-tutorial-store";
 import { useAssetsTutorialStore } from "@/stores/assets-tutorial-store";
@@ -33,6 +35,20 @@ export function AdminTutorialButton({ className = "", onCustomOpen }: AdminTutor
         // Feature-specific routing for tutorial dialogs
         if (pathname.startsWith("/admin/purchase")) {
             usePurchaseTutorialStore.getState().setMenuOpen(true);
+            return;
+        }
+
+        if (pathname.startsWith("/admin/consignment")) {
+            useConsignmentTutorialStore.getState().setMenuOpen(true);
+            return;
+        }
+
+        if (
+            pathname.startsWith("/admin/request-transfer") ||
+            pathname.startsWith("/admin/stock-transfer") ||
+            pathname.startsWith("/admin/inventory/stock-transfer")
+        ) {
+            useTransferTutorialStore.getState().setMenuOpen(true);
             return;
         }
 

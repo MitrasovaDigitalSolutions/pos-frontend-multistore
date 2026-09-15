@@ -1,5 +1,3 @@
-import type { Product } from "@/features/master/products/types";
-
 export type ProductsTutorialId =
     | "tambah_produk"
     | "edit_produk"

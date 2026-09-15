@@ -103,6 +103,7 @@ export function useTransferDetailItemsColumns({
 
             return (
               <FormNumberInput<ReceiveFormValues>
+                id={targetIdx === 0 ? "transfer-receive-qty-0" : undefined}
                 inputRef={(el) => registerInputRef?.(row.original.uid, el)}
                 name={`items.${targetIdx}.kuantitas_diterima`}
                 min={0}

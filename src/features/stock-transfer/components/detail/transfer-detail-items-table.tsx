@@ -282,9 +282,9 @@ export function TransferDetailItemsTable({
   const validateDialogProps = getValidateDialogProps();
 
   return (
-    <div className="bg-white border border-slate-100 rounded-2xl shadow-2xs p-6 space-y-4">
+    <div id="transfer-detail-items-table" className="bg-white border border-slate-100 rounded-2xl shadow-2xs p-6 space-y-4">
       {/* Table Header / Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+      <div id="transfer-detail-items-header" className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
         <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
           <div className="p-1 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-100">
             <IconPackage size={18} />
@@ -341,11 +341,15 @@ export function TransferDetailItemsTable({
                     );
                   }
 
+                  const isFirst = items[0]?.uid === item.uid;
+
                   return (
                     <ReceivingItemRowControls
                       onOpenTerima={() => handleOpenTerimaItem(item)}
                       onOpenTolak={() => handleOpenTolakItem(item)}
                       isProcessing={processingItemUid === item.uid}
+                      terimaId={isFirst ? "transfer-btn-terima-0" : undefined}
+                      tolakId={isFirst ? "transfer-btn-tolak-0" : undefined}
                     />
                   );
                 }

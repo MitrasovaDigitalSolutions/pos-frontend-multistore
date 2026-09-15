@@ -70,7 +70,7 @@ export function POItemsPage({ poId }: POItemsPageProps) {
 
 function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder }) {
     const router = useAppRouter();
-    const isPurchaseTutorialRunning = usePurchaseTutorialStore((state) => state.isRunning);
+    const isTutorialRunning = usePurchaseTutorialStore((state) => state.isRunning);
     const [activeId, setActiveId] = useState(poId);
     const [activeOrder, setActiveOrder] = useState<PurchaseOrder | undefined>(order);
 
@@ -189,7 +189,7 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
                                     <h3 className="text-xs font-bold text-slate-900">Scan Barcode / Cari Produk</h3>
                                 </div>
 
-                                {isPurchaseTutorialRunning && (
+                                {isTutorialRunning && (
                                     <button
                                         type="button"
                                         id="btn-po-seeder"

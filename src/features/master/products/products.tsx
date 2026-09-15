@@ -187,7 +187,7 @@ export function Products() {
     if (isTutorialRunning && (!productsData?.data || productsData.data.length === 0)) {
       return MOCK_MASTER_PRODUCTS;
     }
-    return productsData?.data || [];
+    return (productsData?.data || []).filter((p) => !p.uid.startsWith("mock-") && !p.uid.startsWith("prod-mock-"));
   }, [isTutorialRunning, productsData?.data]);
 
   if (!hasViewProducts) {

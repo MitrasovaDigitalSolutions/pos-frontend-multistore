@@ -102,7 +102,7 @@ export function ConsignmentItemsTable({
 
   if (fields.length === 0) {
     return (
-      <div className="border border-dashed border-slate-200 rounded-2xl p-8 text-center bg-white shadow-xs">
+      <div id="cons-items-table" className="border border-dashed border-slate-200 rounded-2xl p-8 text-center bg-white shadow-xs">
         <div className="w-14 h-14 mx-auto mb-3 bg-emerald-50 rounded-2xl flex items-center justify-center border border-emerald-100/50">
           <IconPackage size={26} className="text-emerald-600" />
         </div>
@@ -115,7 +115,7 @@ export function ConsignmentItemsTable({
   }
 
   return (
-    <div className="space-y-4">
+    <div id="cons-items-table" className="space-y-4">
       {/* ── Mobile Card Grid (Visible on mobile screens < 768px) ── */}
       <div className="block md:hidden space-y-3">
         {fields.map((field, index) => {

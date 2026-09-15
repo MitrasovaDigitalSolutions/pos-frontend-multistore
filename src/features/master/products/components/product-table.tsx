@@ -4,27 +4,27 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTableActionButton } from "@/components/ui/data-table-actions";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { hasPermission, hasRole } from "@/constants/roles";
-import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { IconArchiveOff, IconHelp, IconPlus } from "@tabler/icons-react";
-import { ColumnDef } from "@tanstack/react-table";
-import { useSession } from "next-auth/react";
-import { useMemo, useState } from "react";
-import { toast } from "sonner";
-import { useToggleProductStatus } from "../api/products-api";
-import { useDetachProductStore } from "../api/product-store-api";
-import { useActiveStoreStore } from "@/stores/active-store-store";
-import { useSettingsStore } from "@/stores/settings-store";
 import { Show } from "@/components/ui/show";
+import { StatusBadge } from "@/components/ui/status-badge";
 import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { UnarchiveProductDialog } from "./unarchive-product-dialog";
+import { hasPermission, hasRole } from "@/constants/roles";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { useActiveStoreStore } from "@/stores/active-store-store";
+import { useSettingsStore } from "@/stores/settings-store";
+import { IconArchiveOff, IconPlus } from "@tabler/icons-react";
+import { ColumnDef } from "@tanstack/react-table";
+import { useSession } from "next-auth/react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { useDetachProductStore } from "../api/product-store-api";
+import { useToggleProductStatus } from "../api/products-api";
 import type { Product } from "../types";
+import { UnarchiveProductDialog } from "./unarchive-product-dialog";
 
 interface ProductTableProps {
     products: Product[];

@@ -75,9 +75,9 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: string; retur
     const [activeReturn, setActiveReturn] = useState<PurchaseReturn | undefined>(returnObj);
     const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
 
-    const isPurchaseTutorialRunning = usePurchaseTutorialStore((state) => state.isRunning);
+    const isTutorialRunning = usePurchaseTutorialStore((state) => state.isRunning);
     const activeTutorial = usePurchaseTutorialStore((state) => state.activeTutorial);
-    const isReturnTutorial = isPurchaseTutorialRunning && activeTutorial === "return_create";
+    const isReturnTutorial = isTutorialRunning && activeTutorial === "return_create";
     const tutorialDialog = usePurchaseTutorialStore((state) => state.activeDialog);
 
     const handleSaveSuccess = (uid: string, responseData?: PurchaseReturn) => {
@@ -168,7 +168,7 @@ function ReturnItemsContainer({ returnId, returnObj }: { returnId: string; retur
                                     <h3 className="text-xs font-bold text-slate-900 font-sans">Scan Barcode Retur</h3>
                                 </div>
 
-                                {isPurchaseTutorialRunning && (
+                                {isTutorialRunning && (
                                     <button
                                         type="button"
                                         id="btn-ret-seeder"

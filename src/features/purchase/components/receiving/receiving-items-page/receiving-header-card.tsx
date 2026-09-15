@@ -5,7 +5,7 @@ import { FormNominalInput } from "@/components/forms/form-nominal-input";
 import { FormSelect } from "@/components/forms/form-select";
 import { Input } from "@/components/ui/input";
 import { IconClipboardPlus, IconChevronDown, IconChevronUp } from "@tabler/icons-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FormProvider, useWatch, type UseFormReturn } from "react-hook-form";
 import type { ReceivingHeaderInput } from "../../../schemas/receiving-schema";
 import type { useSupplierSelectConfig } from "@/features/master/suppliers/hooks/use-supplier-select";
@@ -53,6 +53,22 @@ export function ReceivingHeaderCard({
     } = form;
 
     const purchaseOrderId = useWatch({ name: "purchase_order_uid", control: form.control });
+
+    // Listen for custom tutorial simulation events
+    useEffect(() => {
+        const handleSetField = (e: Event) => {
+            const customEvent = e as CustomEvent<{ field: keyof ReceivingHeaderInput; value: unknown }>;
+            if (customEvent.detail) {
+                form.setValue(customEvent.detail.field, customEvent.detail.value as never, { shouldValidate: true });
+            }
+        };
+
+        window.addEventListener("purchase-tutorial-set-receiving-field", handleSetField);
+
+        return () => {
+            window.removeEventListener("purchase-tutorial-set-receiving-field", handleSetField);
+        };
+    }, [form]);
 
     return (
         <FormProvider {...form}>
@@ -154,34 +170,36 @@ export function ReceivingHeaderCard({
                                 )}
                             </div>
 
-                            {/* Nomor Faktur Supplier */}
-                            <div id="rec-invoice-number-field" className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                    Nomor Faktur / Nota Supplier
-                                </label>
-                                <Input
-                                    id="rec-invoice-number-input"
-                                    type="text"
-                                    placeholder="Misal: INV-2024-001..."
-                                    className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                                    disabled={isPending}
-                                    {...register("nomor_faktur")}
-                                />
-                                {errors.nomor_faktur && (
-                                    <p className="text-[10px] text-rose-500 font-medium">
-                                        {errors.nomor_faktur.message}
-                                    </p>
-                                )}
-                            </div>
+                            {/* Nomor & Nominal Faktur Supplier */}
+                            <div id="rec-invoice-field" className="space-y-3.5 scroll-mt-24">
+                                <div id="rec-invoice-number-field" className="space-y-1">
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                        Nomor Faktur / Nota Supplier
+                                    </label>
+                                    <Input
+                                        id="rec-invoice-number-input"
+                                        type="text"
+                                        placeholder="Misal: INV-2024-001..."
+                                        className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
+                                        disabled={isPending}
+                                        {...register("nomor_faktur")}
+                                    />
+                                    {errors.nomor_faktur && (
+                                        <p className="text-[10px] text-rose-500 font-medium">
+                                            {errors.nomor_faktur.message}
+                                        </p>
+                                    )}
+                                </div>
 
-                            {/* Nilai Faktur / Tagihan */}
-                            <div id="rec-invoice-amount-field">
-                                <FormNominalInput<ReceivingHeaderInput>
-                                    name="nilai_faktur"
-                                    label="Nilai Tagihan / Faktur Supplier (Rp)"
-                                    placeholder="Total tagihan dari supplier..."
-                                    disabled={isPending}
-                                />
+                                {/* Nilai Faktur / Tagihan */}
+                                <div id="rec-invoice-amount-field">
+                                    <FormNominalInput<ReceivingHeaderInput>
+                                        name="nilai_faktur"
+                                        label="Nilai Tagihan / Faktur Supplier (Rp)"
+                                        placeholder="Total tagihan dari supplier..."
+                                        disabled={isPending}
+                                    />
+                                </div>
                             </div>
 
                             {/* Catatan / Keterangan */}

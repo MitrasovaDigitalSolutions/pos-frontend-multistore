@@ -12,11 +12,13 @@ import { IconArrowLeft, IconCash, IconCheck } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useConsignmentPayments } from "../../api/consignment-api";
 import type { ConsignmentReceiving } from "../../types";
 import { ConsignmentPaymentDialog } from "./consignment-payment-dialog";
+import { MOCK_PAYMENT_CONSIGNMENT_ROW } from "../../tutorial/constants/consignment-tutorial-constants";
+import { useConsignmentTutorialStore } from "@/stores/consignment-tutorial-store";
 
 interface PaymentFilterValues {
   search: string;
@@ -26,6 +28,10 @@ export function ConsignmentPaymentPage() {
   const router = useAppRouter();
   const searchParams = useSearchParams();
   const targetUid = searchParams.get("uid");
+
+  const isTutorialRunning = useConsignmentTutorialStore(
+    (state) => state.isRunning && state.activeTutorial === "consignment_payment"
+  );
 
   const filterMethods = useForm<PaymentFilterValues>({
     defaultValues: {
@@ -40,6 +46,7 @@ export function ConsignmentPaymentPage() {
 
   const [selectedItem, setSelectedItem] = useState<ConsignmentReceiving | null>(null);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
+  const [mockRow, setMockRow] = useState<ConsignmentReceiving | null>(null);
 
   const { data, isLoading, isFetching, refetch } = useConsignmentPayments({
     page,
@@ -47,9 +54,57 @@ export function ConsignmentPaymentPage() {
     search: activeFilters.search || undefined,
   });
 
+  // Listen to custom events from consignment payment tutorial
+  useEffect(() => {
+    const handleInjectMock = () => {
+      setMockRow(MOCK_PAYMENT_CONSIGNMENT_ROW);
+    };
+    const handleClearMock = () => {
+      setMockRow(null);
+    };
+    const handleOpenDialog = () => {
+      setSelectedItem(MOCK_PAYMENT_CONSIGNMENT_ROW);
+      setIsManualModalOpen(true);
+    };
+    const handleCloseDialog = () => {
+      setIsManualModalOpen(false);
+      setSelectedItem(null);
+    };
+
+    window.addEventListener("consignment-payment-tutorial-inject-mock", handleInjectMock);
+    window.addEventListener("consignment-payment-tutorial-clear-mock", handleClearMock);
+    window.addEventListener("consignment-payment-tutorial-open-dialog", handleOpenDialog);
+    window.addEventListener("consignment-payment-tutorial-close-dialog", handleCloseDialog);
+
+    return () => {
+      window.removeEventListener("consignment-payment-tutorial-inject-mock", handleInjectMock);
+      window.removeEventListener("consignment-payment-tutorial-clear-mock", handleClearMock);
+      window.removeEventListener("consignment-payment-tutorial-open-dialog", handleOpenDialog);
+      window.removeEventListener("consignment-payment-tutorial-close-dialog", handleCloseDialog);
+    };
+  }, []);
+
+  // Purge mockRow when tutorial is not running
+  useEffect(() => {
+    if (!isTutorialRunning && mockRow) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMockRow(null);
+    }
+  }, [isTutorialRunning, mockRow]);
+
+  const displayData = useMemo(() => {
+    const rawList = data?.data || [];
+    if (!isTutorialRunning || !mockRow) {
+      return rawList.filter((item) => !item.uid.startsWith("mock-"));
+    }
+    return [mockRow, ...rawList.filter((item) => item.uid !== mockRow.uid && !item.uid.startsWith("mock-"))];
+  }, [isTutorialRunning, mockRow, data?.data]);
+
+  const firstPayableUid = displayData.find((i) => i.status !== "closed")?.uid;
+
   // Derived state: Automatically find target item if passed via URL param
   const urlTargetItem =
-    targetUid && data?.data ? data.data.find((item) => item.uid === targetUid) || null : null;
+    targetUid && displayData ? displayData.find((item) => item.uid === targetUid) || null : null;
   const activeItem = selectedItem || urlTargetItem;
   const isPaymentOpen = Boolean(urlTargetItem) || isManualModalOpen;
 
@@ -139,7 +194,10 @@ export function ConsignmentPaymentPage() {
   return (
     <div className="space-y-6">
       {/* Header Banner (Identical layout to Consignment Receiving) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-slate-100 p-6 rounded-2xl shadow-2xs">
+      <div
+        id="cons-payment-header"
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-slate-100 p-6 rounded-2xl shadow-2xs"
+      >
         <div>
           <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
             <IconCash className="w-6 h-6 text-emerald-600" />
@@ -163,24 +221,26 @@ export function ConsignmentPaymentPage() {
       </div>
 
       {/* Filter Form */}
-      <FilterForm<PaymentFilterValues>
-        methods={filterMethods}
-        onSubmit={handleFilterSubmit}
-        onReset={handleFilterReset}
-        titleLabel="Filter Pelunasan Konsinyasi"
-      >
-        <FormInput<PaymentFilterValues>
-          name="search"
-          label="Cari Dokumen / Supplier"
-          placeholder="Masukkan nomor konsinyasi atau supplier..."
-        />
-      </FilterForm>
+      <div id="cons-payment-filter">
+        <FilterForm<PaymentFilterValues>
+          methods={filterMethods}
+          onSubmit={handleFilterSubmit}
+          onReset={handleFilterReset}
+          titleLabel="Filter Pelunasan Konsinyasi"
+        >
+          <FormInput<PaymentFilterValues>
+            name="search"
+            label="Cari Dokumen / Supplier"
+            placeholder="Masukkan nomor konsinyasi atau supplier..."
+          />
+        </FilterForm>
+      </div>
 
       {/* Main DataTable */}
-      <div className="bg-white border border-slate-100 rounded-2xl shadow-2xs overflow-hidden p-4">
+      <div id="cons-payment-table" className="bg-white border border-slate-100 rounded-2xl shadow-2xs overflow-hidden p-4">
         <DataTable
           columns={columns}
-          data={data?.data || []}
+          data={displayData}
           isFetching={isLoading || isFetching}
           virtualize={false}
           page={page}
@@ -199,14 +259,17 @@ export function ConsignmentPaymentPage() {
                 </span>
               );
             }
+            const isFirst = item.uid === firstPayableUid;
             return (
-              <DataTableActionButton
-                variant="emerald"
-                onClick={() => handleOpenPayment(item)}
-                tooltip="Bayar & Tutup Sesi Konsinyasi"
-              >
-                <IconCash size={16} />
-              </DataTableActionButton>
+              <div id={isFirst ? "cons-btn-pay-0" : undefined} className="inline-block">
+                <DataTableActionButton
+                  variant="emerald"
+                  onClick={() => handleOpenPayment(item)}
+                  tooltip="Bayar & Tutup Sesi Konsinyasi"
+                >
+                  <IconCash size={16} />
+                </DataTableActionButton>
+              </div>
             );
           }}
         />
