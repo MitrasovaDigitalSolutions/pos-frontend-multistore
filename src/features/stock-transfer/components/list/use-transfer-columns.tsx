@@ -9,7 +9,7 @@ import { useMemo } from "react";
 import { TRANSFER_STATUS, TRANSFER_STATUS_LABELS, TRANSFER_SHIPMENT_STATUS, TRANSFER_SHIPMENT_STATUS_LABELS } from "../../constants";
 import type { StockTransfer } from "../../types";
 import { STORE_BADGE_HQ } from "@/constants/store";
-import { MOCK_INCOMING_STOCK_TRANSFER_UID } from "../../tutorial/constants/transfer-tutorial-constants";
+import { MOCK_INCOMING_STOCK_TRANSFER_UID, MOCK_VALIDATION_STOCK_TRANSFER_UID } from "../../tutorial/constants/transfer-tutorial-constants";
 
 export function useTransferColumns(activeStoreUid?: string | null) {
   return useMemo<ColumnDef<StockTransfer>[]>(
@@ -21,7 +21,10 @@ export function useTransferColumns(activeStoreUid?: string | null) {
         cell: ({ row }) => {
           const isOutgoing = row.original.store_uid_source === activeStoreUid;
           const isIncoming = row.original.store_uid_destination === activeStoreUid;
-          const isFirstRow = row.original.uid === MOCK_INCOMING_STOCK_TRANSFER_UID || row.index === 0;
+          const isFirstRow =
+            row.original.uid === MOCK_INCOMING_STOCK_TRANSFER_UID ||
+            row.original.uid === MOCK_VALIDATION_STOCK_TRANSFER_UID ||
+            row.index === 0;
 
           return (
             <div id={isFirstRow ? "transfer-row-0" : undefined} className="flex flex-col gap-0.5 min-w-[170px]">

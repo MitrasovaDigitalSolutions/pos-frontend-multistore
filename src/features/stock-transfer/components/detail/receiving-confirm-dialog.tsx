@@ -93,6 +93,7 @@ export function ReceivingConfirmDialog({
       >
         <FormProvider {...formMethods}>
           <form
+            id="transfer-dialog-confirm-receive"
             onSubmit={(e) => {
               e.preventDefault();
               handleConfirmSubmit();

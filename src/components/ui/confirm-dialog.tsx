@@ -28,6 +28,7 @@ export interface ConfirmDialogProps {
     isLoading?: boolean;
     variant?: "danger" | "warning" | "info" | "success" | "primary";
     confirmBtnId?: string;
+    cancelBtnId?: string;
     contentId?: string;
 }
 
@@ -42,6 +43,7 @@ export function ConfirmDialog({
     isLoading = false,
     variant = "warning",
     confirmBtnId,
+    cancelBtnId,
     contentId = "confirm-delete-dialog-content",
 }: ConfirmDialogProps) {
     const [isInternalLoading, setIsInternalLoading] = React.useState(false);
@@ -125,6 +127,7 @@ export function ConfirmDialog({
                 {/* Actions container to bypass standard DialogFooter styles */}
                 <div className="w-full flex flex-col sm:flex-row gap-2.5 mt-6">
                     <Button
+                        id={cancelBtnId}
                         type="button"
                         variant="outline"
                         className="w-full sm:w-auto flex-1 p-2 h-11 sm:h-10 text-xs font-bold border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 rounded-xl cursor-pointer order-2 sm:order-1"

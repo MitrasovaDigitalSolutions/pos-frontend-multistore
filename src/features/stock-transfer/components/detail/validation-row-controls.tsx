@@ -12,6 +12,8 @@ interface ValidationRowControlsProps {
   onOpenApprove: () => void;
   onOpenReject: () => void;
   isProcessing: boolean;
+  approveId?: string;
+  rejectId?: string;
 }
 
 export function ValidationRowControls({
@@ -20,6 +22,8 @@ export function ValidationRowControls({
   onOpenApprove,
   onOpenReject,
   isProcessing,
+  approveId,
+  rejectId,
 }: ValidationRowControlsProps) {
   if (isProcessing) {
     return (
@@ -48,6 +52,7 @@ export function ValidationRowControls({
     return (
       <div className="flex items-center justify-center gap-1.5">
         <DataTableTextActionButton
+          id={approveId}
           variant="solidEmerald"
           onClick={onOpenApprove}
           disabled={isProcessing}
@@ -57,6 +62,7 @@ export function ValidationRowControls({
           Setujui
         </DataTableTextActionButton>
         <DataTableTextActionButton
+          id={rejectId}
           variant="solidRose"
           onClick={onOpenReject}
           disabled={isProcessing}
@@ -83,6 +89,7 @@ export function ValidationRowControls({
   return (
     <div className="flex items-center justify-center gap-1.5">
       <DataTableTextActionButton
+        id={approveId}
         variant="solidEmerald"
         onClick={onOpenApprove}
         disabled={isProcessing}
@@ -92,6 +99,7 @@ export function ValidationRowControls({
         Validasi
       </DataTableTextActionButton>
       <DataTableTextActionButton
+        id={rejectId}
         variant="solidRose"
         onClick={onOpenReject}
         disabled={isProcessing}
