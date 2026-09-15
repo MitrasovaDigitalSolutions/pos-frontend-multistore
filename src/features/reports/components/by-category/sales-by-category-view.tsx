@@ -13,6 +13,9 @@ import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { SalesByCategoryChart } from "./sales-by-category-chart";
 import { SalesByCategoryTable } from "./sales-by-category-table";
+import { ReportsTutorialController } from "../../tutorial/components/reports-tutorial-controller";
+import { MOCK_KATEGORI } from "../../tutorial/constants/reports-tutorial-constants";
+import { useReportsTutorialStore } from "@/stores/reports-tutorial-store";
 
 interface FilterValues {
   fromDate: string;
@@ -22,6 +25,7 @@ interface FilterValues {
 
 export function SalesByCategoryView() {
   const { from: defaultFrom, to: defaultTo } = getDefaultDateRange();
+  const isTutorialRunning = useReportsTutorialStore((state) => state.isRunning);
 
   const [appliedFilters, setAppliedFilters] = useState<FilterValues>({
     fromDate: defaultFrom,
@@ -46,8 +50,16 @@ export function SalesByCategoryView() {
     appliedFilters.categoryIds
   );
 
+  // Saat tutorial berjalan, pakai data contoh agar narasi & grafik selalu utuh.
+  const activeData = isTutorialRunning ? MOCK_KATEGORI : data;
+
   const categoryData = useMemo(() => {
-    const rawData = data?.data ?? [];
+    const rawData = activeData?.data ?? [];
+
+    // Selama tutorial, langsung pakai data contoh tanpa merge kategori master.
+    if (isTutorialRunning) {
+      return rawData;
+    }
 
     // Fallback if category list hasn't loaded yet
     if (categories.length === 0) {
@@ -102,7 +114,7 @@ export function SalesByCategoryView() {
         percentage_sales: totalSalesSum > 0 ? (item.total_sales / totalSalesSum) * 100 : 0,
       }))
       .sort((a, b) => b.total_sales - a.total_sales);
-  }, [data, categories, appliedFilters.categoryIds]);
+  }, [activeData, categories, appliedFilters.categoryIds, isTutorialRunning]);
 
   const handleSubmit = (values: FilterValues) => {
     setAppliedFilters(values);
@@ -130,7 +142,7 @@ export function SalesByCategoryView() {
   return (
     <div className="space-y-5">
       {/* Header Card */}
-      <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-4 sm:p-6">
+      <Card id="kategori-header" className="bg-white border-slate-100 rounded-2xl shadow-sm p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100/60">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
@@ -147,6 +159,7 @@ export function SalesByCategoryView() {
           </div>
 
           <Button
+            id="kategori-btn-refresh"
             variant="outline"
             onClick={() => refetch()}
             disabled={isLoading || isFetching}
@@ -157,6 +170,7 @@ export function SalesByCategoryView() {
           </Button>
         </div>
 
+        <div id="kategori-filter-form">
         <FilterForm
           methods={methods}
           onSubmit={handleSubmit}
@@ -185,18 +199,19 @@ export function SalesByCategoryView() {
             isLoading={isLoadingCategories}
           />
         </FilterForm>
+        </div>
 
         {/* Period and Category summary chips */}
-        {data && (
-          <div className="mt-3 space-y-2.5">
+        {activeData && (
+          <div id="kategori-period-chips" className="mt-3 space-y-2.5">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400">
                 Periode:
               </span>
               <span className="bg-indigo-50 text-indigo-600 text-[10px] font-bold px-2.5 py-1 rounded-lg">
-                {formatDate(data.from, "dd MMM yyyy")}
+                {formatDate(activeData.from, "dd MMM yyyy")}
                 {" — "}
-                {formatDate(data.to, "dd MMM yyyy")}
+                {formatDate(activeData.to, "dd MMM yyyy")}
               </span>
               <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2.5 py-1 rounded-lg">
                 {categoryData.length} Kategori
@@ -235,10 +250,12 @@ export function SalesByCategoryView() {
       </Card>
 
       {/* Chart */}
-      <SalesByCategoryChart data={categoryData} isLoading={isLoading} />
+      <SalesByCategoryChart data={categoryData} isLoading={isLoading && !isTutorialRunning} />
 
       {/* Table */}
-      <SalesByCategoryTable data={categoryData} isLoading={isLoading} />
+      <SalesByCategoryTable data={categoryData} isLoading={isLoading && !isTutorialRunning} />
+
+      <ReportsTutorialController />
     </div>
   );
 }

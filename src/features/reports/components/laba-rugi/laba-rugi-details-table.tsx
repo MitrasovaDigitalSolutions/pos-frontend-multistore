@@ -14,13 +14,13 @@ interface LabaRugiDetailsTableProps {
 
 export function LabaRugiDetailsTable({ reportData, isLoading }: LabaRugiDetailsTableProps) {
     return (
-        <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-6">
+        <Card id="laba-rugi-details-table" className="bg-white border-slate-100 rounded-2xl shadow-sm p-6">
             <Tabs defaultValue="all" className="w-full">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <h4 className="text-xs font-bold text-slate-800">
                         Rincian Transaksi
                     </h4>
-                    <TabsList className="h-10 bg-slate-100/80 border border-slate-200/40 p-1 rounded-xl gap-1 shrink-0">
+                    <TabsList id="laba-rugi-tabs" className="h-10 bg-slate-100/80 border border-slate-200/40 p-1 rounded-xl gap-1 shrink-0">
                         <TabsTrigger 
                             value="all" 
                             className="text-xs px-3.5 py-1.5 font-bold text-slate-500 rounded-lg transition-all duration-200 flex items-center gap-1.5 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm cursor-pointer"

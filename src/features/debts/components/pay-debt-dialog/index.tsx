@@ -257,17 +257,19 @@ export function PayDebtDialog({ open, onOpenChange, member, onSuccess }: PayDebt
             scrollable
         >
             <form onSubmit={handleSubmit} className="pt-1">
-                <div className="grid grid-cols-1 sm:grid-cols-[1fr_210px] gap-4">
+                <div id="pay-debt-dialog-body" className="grid grid-cols-1 sm:grid-cols-[1fr_210px] gap-4">
 
                     {/* ── Left: Form ── */}
                     <div className="space-y-3">
                         <MemberInfoStrip member={member} currentDebt={currentDebt} />
 
-                        <PayMethodToggle
-                            payMethod={payMethod}
-                            isPending={isPending}
-                            onChange={setPayMethod}
-                        />
+                        <div id="pay-debt-method-toggle">
+                            <PayMethodToggle
+                                payMethod={payMethod}
+                                isPending={isPending}
+                                onChange={setPayMethod}
+                            />
+                        </div>
 
                         <CashInput
                             cashReceived={cashReceived}
@@ -340,6 +342,7 @@ export function PayDebtDialog({ open, onOpenChange, member, onSuccess }: PayDebt
                 {/* Action buttons */}
                 <div className="flex gap-2 justify-end w-full mt-4">
                     <Button
+                        id="pay-debt-cancel-btn"
                         type="button"
                         variant="outline"
                         onClick={() => onOpenChange(false)}

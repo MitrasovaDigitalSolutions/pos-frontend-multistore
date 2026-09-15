@@ -10,6 +10,9 @@ import { PenjualanSummaryCard } from "./penjualan-summary-card";
 import { PenjualanDetailsTable } from "./penjualan-details-table";
 import { todayStr } from "@/lib/date-utils";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
+import { ReportsTutorialController } from "../../tutorial/components/reports-tutorial-controller";
+import { MOCK_PENJUALAN } from "../../tutorial/constants/reports-tutorial-constants";
+import { useReportsTutorialStore } from "@/stores/reports-tutorial-store";
 
 interface PenjualanFilterValues {
     fromDate: string;
@@ -21,6 +24,7 @@ export function PenjualanReportView() {
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
+    const isTutorialRunning = useReportsTutorialStore((state) => state.isRunning);
 
     const hasViewReports =
         hasRole(userRoles, "admin") ||
@@ -52,6 +56,9 @@ export function PenjualanReportView() {
         perPage,
         sortOrder
     );
+
+    // Saat tutorial berjalan, pakai data contoh agar walkthrough selalu utuh.
+    const activeData = isTutorialRunning ? MOCK_PENJUALAN : reportData;
 
     if (!hasViewReports) {
         return (
@@ -90,20 +97,20 @@ export function PenjualanReportView() {
                 onRefetch={refetch}
                 isLoading={isLoading}
                 isFetching={isFetching}
-                hasReportData={!!reportData}
+                hasReportData={!!activeData}
                 appliedFilters={appliedFilters}
             />
 
             {/* Metrics Summary Card Section */}
             <PenjualanSummaryCard
-                reportData={reportData}
-                isLoading={isLoading}
+                reportData={activeData}
+                isLoading={isLoading && !isTutorialRunning}
             />
 
             {/* Detailed Table Section */}
             <PenjualanDetailsTable
-                reportData={reportData}
-                isLoading={isLoading}
+                reportData={activeData}
+                isLoading={isLoading && !isTutorialRunning}
                 appliedFilters={appliedFilters}
                 page={page}
                 onPageChange={setPage}
@@ -112,6 +119,8 @@ export function PenjualanReportView() {
                 sortOrder={sortOrder}
                 onSortOrderChange={setSortOrder}
             />
+
+            <ReportsTutorialController />
         </div>
     );
 }

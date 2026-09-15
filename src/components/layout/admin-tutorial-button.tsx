@@ -13,6 +13,8 @@ import { useAssetsTutorialStore } from "@/stores/assets-tutorial-store";
 import { useAccountingTutorialStore } from "@/stores/accounting-tutorial-store";
 import { useBalanceSheetTutorialStore } from "@/stores/balance-sheet-tutorial-store";
 import { useJournalTutorialStore } from "@/stores/journal-tutorial-store";
+import { useReportsTutorialStore } from "@/stores/reports-tutorial-store";
+import { useHutangTutorialStore } from "@/stores/hutang-tutorial-store";
 import { useSettingsTutorialStore } from "@/stores/settings-tutorial-store";
 import { useUsersTutorialStore } from "@/stores/users-tutorial-store";
 import { useAuditTutorialStore } from "@/stores/audit-tutorial-store";
@@ -98,6 +100,16 @@ export function AdminTutorialButton({ className = "", onCustomOpen }: AdminTutor
 
         if (pathname.startsWith("/admin/settings")) {
             useSettingsTutorialStore.getState().setMenuOpen(true);
+            return;
+        }
+
+        if (pathname.startsWith("/admin/reports")) {
+            useReportsTutorialStore.getState().setMenuOpen(true);
+            return;
+        }
+
+        if (pathname.startsWith("/admin/debts")) {
+            useHutangTutorialStore.getState().setMenuOpen(true);
             return;
         }
 

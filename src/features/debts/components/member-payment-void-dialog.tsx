@@ -53,7 +53,7 @@ export function MemberPaymentVoidDialog({
     const memberName = payment.member?.nama;
 
     const descriptionContent = (
-        <div className="space-y-4 text-left mt-2">
+        <div id="pembayaran-void-dialog" className="space-y-4 text-left mt-2">
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-normal text-center">
                 Transaksi pembayaran hutang member yang dibatalkan tidak dapat dikembalikan dan sisa hutang member akan dihitung ulang.
             </p>
@@ -100,6 +100,8 @@ export function MemberPaymentVoidDialog({
                 cancelText="Batal"
                 onConfirm={handleConfirm}
                 isLoading={isLoading}
+                contentId="pembayaran-void-dialog-content"
+                confirmBtnId="pembayaran-void-submit"
             />
         </FormProvider>
     );

@@ -19,6 +19,9 @@ import { DebtHistoryDialog } from "./debt-history-dialog";
 import { PayDebtDialog } from "./pay-debt-dialog";
 import { toast } from "sonner";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
+import { HutangTutorialController } from "../tutorial/components/hutang-tutorial-controller";
+import { MOCK_MEMBER_DEBTS } from "../tutorial/constants/hutang-tutorial-constants";
+import { useHutangTutorialStore } from "@/stores/hutang-tutorial-store";
 
 interface MemberDebtsFilterValues {
     search: string;
@@ -71,6 +74,8 @@ export function MemberDebtsPage() {
         setPage(1);
     };
 
+    const isTutorialRunning = useHutangTutorialStore((state) => state.isRunning);
+
     const { data: debtsData, isLoading, isFetching } = useMemberDebts({
         page,
         per_page: perPage,
@@ -79,8 +84,13 @@ export function MemberDebtsPage() {
         ...appliedFilters,
     });
 
-    const members = debtsData?.data || [];
-    const summary = debtsData?.summary || { total_members_with_debt: 0, total_hutang: 0 };
+    // Saat tutorial berjalan, pakai data contoh agar walkthrough selalu utuh.
+    const members = isTutorialRunning ? MOCK_MEMBER_DEBTS.data : debtsData?.data || [];
+    const summary = isTutorialRunning
+        ? MOCK_MEMBER_DEBTS.summary
+        : debtsData?.summary || { total_members_with_debt: 0, total_hutang: 0 };
+    const isLoadingActive = isLoading && !isTutorialRunning;
+    const isFetchingActive = isFetching && !isTutorialRunning;
 
     // Dialog state
     const [payingMember, setPayingMember] = useState<Member | null>(null);
@@ -147,9 +157,10 @@ export function MemberDebtsPage() {
             cell: ({ row }) => (
                 <div className="flex items-center justify-center gap-1.5">
                     <DataTableTextActionButton
+                        id={row.index === 0 ? "hutang-member-btn-pay" : undefined}
                         variant="emerald"
                         onClick={() => {
-                            if (!session?.cashDrawerSessionId) {
+                            if (!session?.cashDrawerSessionId && !useHutangTutorialStore.getState().isRunning) {
                                 toast.warning("Silakan buka shift laci kasir terlebih dahulu untuk melakukan pembayaran hutang.");
                                 return;
                             }
@@ -162,6 +173,7 @@ export function MemberDebtsPage() {
                         Bayar
                     </DataTableTextActionButton>
                     <DataTableTextActionButton
+                        id={row.index === 0 ? "hutang-member-btn-history" : undefined}
                         variant="slate"
                         onClick={() => {
                             setHistoryMember(row.original);
@@ -185,8 +197,21 @@ export function MemberDebtsPage() {
 
     return (
         <div className="space-y-6">
+            {/* Page Header */}
+            <div id="hutang-member-header" className="flex items-center gap-3">
+                <div className="p-2 bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-400 rounded-xl shrink-0">
+                    <IconUsers size={18} className="stroke-[2.5]" />
+                </div>
+                <div>
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Hutang Member</h3>
+                    <p className="text-[10px] text-slate-400">
+                        Daftar piutang member yang belum dilunasi beserta riwayat mutasinya.
+                    </p>
+                </div>
+            </div>
+
             {/* Compact Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-2.5 shadow-xs">
+            <div id="hutang-member-summary" className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-2.5 shadow-xs">
                 {/* Summary Card 1: Member Berhutang */}
                 <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100/60 dark:border-rose-900/30 min-w-0">
                     <div className="p-2 bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-400 rounded-xl shrink-0">
@@ -238,49 +263,53 @@ export function MemberDebtsPage() {
                     </div>
                 </div>
 
-                <FilterForm
-                    methods={filterMethods}
-                    onSubmit={handleFilterSubmit}
-                    onReset={handleFilterReset}
-                >
-                    <FormInput<MemberDebtsFilterValues>
-                        name="search"
-                        label="Cari Member"
-                        placeholder="Nama, kode, telepon..."
-                    />
-                    <FormSelect<MemberDebtsFilterValues>
-                        name="status"
-                        label="Status Member"
-                        options={statusOptions}
-                        placeholder="Semua Status"
-                    />
-                </FilterForm>
+                <div id="hutang-member-filter-form" className="scroll-mt-24">
+                    <FilterForm
+                        methods={filterMethods}
+                        onSubmit={handleFilterSubmit}
+                        onReset={handleFilterReset}
+                    >
+                        <FormInput<MemberDebtsFilterValues>
+                            name="search"
+                            label="Cari Member"
+                            placeholder="Nama, kode, telepon..."
+                        />
+                        <FormSelect<MemberDebtsFilterValues>
+                            name="status"
+                            label="Status Member"
+                            options={statusOptions}
+                            placeholder="Semua Status"
+                        />
+                    </FilterForm>
+                </div>
 
-                <DataTable
-                    columns={columns}
-                    data={members}
-                    isLoading={isLoading}
-                    isFetching={isFetching}
-                    emptyMessage="Tidak ada data member berhutang yang ditemukan."
-                    page={page}
-                    perPage={perPage}
-                    onPageChange={setPage}
-                    onPerPageChange={(newPerPage) => {
-                        setPerPage(newPerPage);
-                        setPage(1);
-                    }}
-                    meta={debtsData?.meta}
-                    entityName="hutang member"
-                    sortBy={sortBy}
-                    sortOrder={sortOrder}
-                    onSortChange={(by, order) => {
-                        setSortBy(by);
-                        setSortOrder(order);
-                        setPage(1);
-                    }}
-                    virtualize={true}
-                    estimateRowHeight={48}
-                />
+                <div id="hutang-member-table">
+                    <DataTable
+                        columns={columns}
+                        data={members}
+                        isLoading={isLoadingActive}
+                        isFetching={isFetchingActive}
+                        emptyMessage="Tidak ada data member berhutang yang ditemukan."
+                        page={page}
+                        perPage={perPage}
+                        onPageChange={setPage}
+                        onPerPageChange={(newPerPage) => {
+                            setPerPage(newPerPage);
+                            setPage(1);
+                        }}
+                        meta={debtsData?.meta}
+                        entityName="hutang member"
+                        sortBy={sortBy}
+                        sortOrder={sortOrder}
+                        onSortChange={(by, order) => {
+                            setSortBy(by);
+                            setSortOrder(order);
+                            setPage(1);
+                        }}
+                        virtualize={true}
+                        estimateRowHeight={48}
+                    />
+                </div>
             </section>
 
             {/* Pay Debt Dialog */}
@@ -296,6 +325,8 @@ export function MemberDebtsPage() {
                 onOpenChange={setIsHistoryOpen}
                 member={historyMember}
             />
+
+            <HutangTutorialController />
         </div>
     );
 }

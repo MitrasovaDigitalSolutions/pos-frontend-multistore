@@ -52,6 +52,7 @@ export function MemberPaymentCard({
                     </span>
                     {canDelete && (
                         <button
+                            id="pembayaran-member-row-action"
                             type="button"
                             onClick={() => onDelete(p)}
                             className="p-1 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"

@@ -119,6 +119,7 @@ export function PenjualanDetailsTable({
     };
 
     return (
+        <div id="penjualan-details-table">
         <CompoundTable title="Transaksi Penjualan & Detail Log">
             <CompoundTableContent>
                 <CompoundTableHeader>
@@ -175,6 +176,7 @@ export function PenjualanDetailsTable({
                                 >
                                     <CompoundTableCell align="center" onClick={(e) => e.stopPropagation()}>
                                         <CompoundTableExpandButton
+                                            id={index === 0 ? "penjualan-row-expand" : undefined}
                                             isExpanded={isExpanded}
                                             onClick={() => toggleRow(row.no_faktur)}
                                         />
@@ -263,5 +265,6 @@ export function PenjualanDetailsTable({
                 />
             )}
         </CompoundTable>
+        </div>
     );
 }

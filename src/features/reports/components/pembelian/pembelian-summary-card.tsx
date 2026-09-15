@@ -12,7 +12,7 @@ interface PembelianSummaryCardProps {
 
 export function PembelianSummaryCard({ reportData, isLoading }: PembelianSummaryCardProps) {
     return (
-        <Card className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden mb-6">
+        <Card id="pembelian-summary-card" className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden mb-6">
             <div className="flex flex-col lg:flex-row lg:divide-x divide-slate-100">
                 {/* Left Section: Main KPI */}
                 <div className="p-5 flex flex-col justify-between lg:w-1/4 shrink-0 bg-slate-50/40">

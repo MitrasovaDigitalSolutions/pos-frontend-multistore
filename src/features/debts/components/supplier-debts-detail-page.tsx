@@ -23,6 +23,9 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { useActiveStoreStore } from "@/stores/active-store-store";
+import { HutangTutorialController } from "../tutorial/components/hutang-tutorial-controller";
+import { MOCK_SUPPLIER_RECEIVINGS } from "../tutorial/constants/hutang-tutorial-constants";
+import { useHutangTutorialStore } from "@/stores/hutang-tutorial-store";
 
 interface SupplierDebtsFilterValues {
     search: string;
@@ -97,6 +100,8 @@ export function SupplierDebtsDetailPage({ supplierUid, supplierName }: SupplierD
         setSelectedUids([]);
     };
 
+    const isTutorialRunning = useHutangTutorialStore((state) => state.isRunning);
+
     const { data: debtsData, isLoading, isFetching } = useReceivingDebts({
         page,
         per_page: perPage,
@@ -106,7 +111,10 @@ export function SupplierDebtsDetailPage({ supplierUid, supplierName }: SupplierD
         ...appliedFilters,
     });
 
-    const receivings = debtsData?.data || [];
+    // Saat tutorial berjalan, pakai data contoh agar walkthrough selalu utuh.
+    const receivings = isTutorialRunning ? MOCK_SUPPLIER_RECEIVINGS : debtsData?.data || [];
+    const isLoadingActive = isLoading && !isTutorialRunning;
+    const isFetchingActive = isFetching && !isTutorialRunning;
 
     // Filter payable (unpaid / partial / pending) receivings
     const payableReceivings = receivings.filter((r) => r.status_pembayaran !== "paid");
@@ -169,6 +177,7 @@ export function SupplierDebtsDetailPage({ supplierUid, supplierName }: SupplierD
                 return (
                     <div className="flex justify-center items-center">
                         <Checkbox
+                            id={row.index === 0 ? "hutang-detail-row-select" : undefined}
                             checked={isChecked}
                             disabled={isPaid}
                             onCheckedChange={() => handleRowSelectToggle(row.original.uid)}
@@ -285,8 +294,9 @@ export function SupplierDebtsDetailPage({ supplierUid, supplierName }: SupplierD
     return (
         <div className="space-y-6">
             {/* Header with back button */}
-            <div className="flex items-center gap-3">
+            <div id="hutang-detail-header" className="flex items-center gap-3">
                 <button
+                    id="hutang-detail-btn-back"
                     onClick={() => router.push("/admin/debts/sales")}
                     className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-all shrink-0 cursor-pointer"
                     title="Kembali ke Daftar Hutang"
@@ -302,7 +312,7 @@ export function SupplierDebtsDetailPage({ supplierUid, supplierName }: SupplierD
             </div>
 
             {/* Compact Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-2.5 shadow-xs">
+            <div id="hutang-detail-summary" className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-2.5 shadow-xs">
                 {/* Card 1: Total Nilai Faktur */}
                 <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-slate-50/50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/50 min-w-0">
                     <div className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl shrink-0">
@@ -370,86 +380,91 @@ export function SupplierDebtsDetailPage({ supplierUid, supplierName }: SupplierD
                     </p>
                 </div>
 
-                <FilterForm
-                    methods={filterMethods}
-                    onSubmit={handleFilterSubmit}
-                    onReset={handleFilterReset}
-                >
-                    <FormInput<SupplierDebtsFilterValues>
-                        name="search"
-                        label="Cari Transaksi"
-                        placeholder="No. penerimaan, faktur..."
-                    />
-                    <FormDatePicker<SupplierDebtsFilterValues>
-                        name="tanggal_dari"
-                        label="Tanggal Mulai"
-                        placeholder="Pilih tanggal"
-                    />
-                    <FormDatePicker<SupplierDebtsFilterValues>
-                        name="tanggal_sampai"
-                        label="Tanggal Selesai"
-                        placeholder="Pilih tanggal"
-                    />
-                </FilterForm>
+                <div id="hutang-detail-filter-form" className="scroll-mt-24">
+                    <FilterForm
+                        methods={filterMethods}
+                        onSubmit={handleFilterSubmit}
+                        onReset={handleFilterReset}
+                    >
+                        <FormInput<SupplierDebtsFilterValues>
+                            name="search"
+                            label="Cari Transaksi"
+                            placeholder="No. penerimaan, faktur..."
+                        />
+                        <FormDatePicker<SupplierDebtsFilterValues>
+                            name="tanggal_dari"
+                            label="Tanggal Mulai"
+                            placeholder="Pilih tanggal"
+                        />
+                        <FormDatePicker<SupplierDebtsFilterValues>
+                            name="tanggal_sampai"
+                            label="Tanggal Selesai"
+                            placeholder="Pilih tanggal"
+                        />
+                    </FilterForm>
+                </div>
 
-                <DataTable
-                    columns={columns}
-                    data={receivings}
-                    isLoading={isLoading}
-                    isFetching={isFetching}
-                    emptyMessage={`Tidak ada data hutang untuk supplier ${supplierName}.`}
-                    page={page}
-                    perPage={perPage}
-                    onPageChange={setPage}
-                    onPerPageChange={(newPerPage) => {
-                        setPerPage(newPerPage);
-                        setPage(1);
-                        setSelectedUids([]);
-                    }}
-                    meta={debtsData?.meta}
-                    entityName="hutang penerimaan"
-                    sortBy={sortBy}
-                    sortOrder={sortOrder}
-                    onSortChange={(by, order) => {
-                        setSortBy(by);
-                        setSortOrder(order);
-                        setPage(1);
-                    }}
-                    virtualize={true}
-                    estimateRowHeight={48}
-                    extraToolbarActions={
-                        <div className="flex items-center gap-2">
-                            <Button
-                                onClick={() => {
-                                    if (selectedUids.length === 0 && payableReceivings.length > 0) {
-                                        setSelectedUids(payableReceivings.map((r) => r.uid));
-                                    }
-                                    setIsBulkPayOpen(true);
-                                }}
-                                disabled={payableReceivings.length === 0}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 px-3.5 rounded-xl flex items-center gap-2 shadow-xs cursor-pointer disabled:opacity-50"
-                            >
-                                <IconCash size={15} />
-                                <span>
-                                    {selectedUids.length > 0
-                                        ? `Pelunasan Sekaligus (${selectedUids.length} Terpilih)`
-                                        : "Pelunasan Sekaligus"}
-                                </span>
-                            </Button>
-
-                            {selectedUids.length > 0 && (
+                <div id="hutang-detail-table">
+                    <DataTable
+                        columns={columns}
+                        data={receivings}
+                        isLoading={isLoadingActive}
+                        isFetching={isFetchingActive}
+                        emptyMessage={`Tidak ada data hutang untuk supplier ${supplierName}.`}
+                        page={page}
+                        perPage={perPage}
+                        onPageChange={setPage}
+                        onPerPageChange={(newPerPage) => {
+                            setPerPage(newPerPage);
+                            setPage(1);
+                            setSelectedUids([]);
+                        }}
+                        meta={debtsData?.meta}
+                        entityName="hutang penerimaan"
+                        sortBy={sortBy}
+                        sortOrder={sortOrder}
+                        onSortChange={(by, order) => {
+                            setSortBy(by);
+                            setSortOrder(order);
+                            setPage(1);
+                        }}
+                        virtualize={true}
+                        estimateRowHeight={48}
+                        extraToolbarActions={
+                            <div className="flex items-center gap-2">
                                 <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => setSelectedUids([])}
-                                    className="text-xs h-9 border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer rounded-xl bg-white"
+                                    id="hutang-detail-btn-bulk-pay"
+                                    onClick={() => {
+                                        if (selectedUids.length === 0 && payableReceivings.length > 0) {
+                                            setSelectedUids(payableReceivings.map((r) => r.uid));
+                                        }
+                                        setIsBulkPayOpen(true);
+                                    }}
+                                    disabled={payableReceivings.length === 0}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 px-3.5 rounded-xl flex items-center gap-2 shadow-xs cursor-pointer disabled:opacity-50"
                                 >
-                                    Reset Pilihan
+                                    <IconCash size={15} />
+                                    <span>
+                                        {selectedUids.length > 0
+                                            ? `Pelunasan Sekaligus (${selectedUids.length} Terpilih)`
+                                            : "Pelunasan Sekaligus"}
+                                    </span>
                                 </Button>
-                            )}
-                        </div>
-                    }
-                />
+
+                                {selectedUids.length > 0 && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setSelectedUids([])}
+                                        className="text-xs h-9 border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer rounded-xl bg-white"
+                                    >
+                                        Reset Pilihan
+                                    </Button>
+                                )}
+                            </div>
+                        }
+                    />
+                </div>
             </section>
 
             {/* Bulk Pay Debt Dialog */}
@@ -460,6 +475,8 @@ export function SupplierDebtsDetailPage({ supplierUid, supplierName }: SupplierD
                 selectedReceivings={selectedReceivings}
                 onSuccess={() => setSelectedUids([])}
             />
+
+            <HutangTutorialController />
         </div>
     );
 }

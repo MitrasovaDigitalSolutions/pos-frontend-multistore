@@ -10,6 +10,9 @@ import { LabaRugiSummaryCard } from "./laba-rugi-summary-card";
 import { LabaRugiDetailsTable } from "./laba-rugi-details-table";
 import { formatToISO, todayStr } from "@/lib/date-utils";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
+import { ReportsTutorialController } from "../../tutorial/components/reports-tutorial-controller";
+import { MOCK_LABA_RUGI } from "../../tutorial/constants/reports-tutorial-constants";
+import { useReportsTutorialStore } from "@/stores/reports-tutorial-store";
 
 interface LabaRugiFilterValues {
     fromDate: string;
@@ -21,6 +24,7 @@ export function LabaRugiReportView() {
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
+    const isTutorialRunning = useReportsTutorialStore((state) => state.isRunning);
 
     const hasViewReports =
         hasRole(userRoles, "admin") ||
@@ -45,6 +49,10 @@ export function LabaRugiReportView() {
         appliedFilters.toDate,
         appliedFilters.interval,
     );
+
+    // Saat tutorial berjalan, pakai data contoh agar walkthrough selalu utuh
+    // (tidak bergantung pada periode yang mungkin kosong) — aman & in-memory.
+    const activeData = isTutorialRunning ? MOCK_LABA_RUGI : reportData;
 
     if (!hasViewReports) {
         return (
@@ -79,21 +87,23 @@ export function LabaRugiReportView() {
                 onRefetch={refetch}
                 isLoading={isLoading}
                 isFetching={isFetching}
-                hasReportData={!!reportData}
+                hasReportData={!!activeData}
                 appliedFilters={appliedFilters}
             />
 
             {/* Metrics Summary Card Section */}
             <LabaRugiSummaryCard
-                reportData={reportData}
-                isLoading={isLoading}
+                reportData={activeData}
+                isLoading={isLoading && !isTutorialRunning}
             />
 
             {/* Transactions Details Table Section */}
             <LabaRugiDetailsTable
-                reportData={reportData}
-                isLoading={isLoading}
+                reportData={activeData}
+                isLoading={isLoading && !isTutorialRunning}
             />
+
+            <ReportsTutorialController />
         </div>
     );
 }
