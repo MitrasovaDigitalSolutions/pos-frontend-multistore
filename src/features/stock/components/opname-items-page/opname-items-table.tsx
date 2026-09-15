@@ -149,14 +149,16 @@ export function OpnameItemsTable({
             cell: ({ row }) => {
                 const item = row.original;
                 return (
-                    <OpnameQtyInput
-                        itemUid={item.uid}
-                        productUid={item.product_uid}
-                        stokFisik={Number(item.stok_fisik) || 0}
-                        onUpdateQty={onUpdateQty}
-                        onFocusBarcode={onFocusBarcode}
-                        size="sm"
-                    />
+                    <div id={row.index === 0 ? "opname-item-row-0-qty" : undefined} className="flex justify-center">
+                        <OpnameQtyInput
+                            itemUid={item.uid}
+                            productUid={item.product_uid}
+                            stokFisik={Number(item.stok_fisik) || 0}
+                            onUpdateQty={onUpdateQty}
+                            onFocusBarcode={onFocusBarcode}
+                            size="sm"
+                        />
+                    </div>
                 );
             },
         },
@@ -193,29 +195,31 @@ export function OpnameItemsTable({
             cell: ({ row }) => {
                 const item = row.original;
                 return (
-                    <input
-                        type="text"
-                        defaultValue={item.alasan || ""}
-                        placeholder="Alasan selisih..."
-                        onBlur={(e) => {
-                            const val = e.target.value.trim();
-                            if (val !== (item.alasan || "")) {
-                                onUpdateField(item.uid, "alasan", val || null);
-                            }
-                        }}
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                                e.preventDefault();
-                                const val = (e.target as HTMLInputElement).value.trim();
+                    <div id={row.index === 0 ? "opname-item-row-0-reason" : undefined} className="w-full">
+                        <input
+                            type="text"
+                            defaultValue={item.alasan || ""}
+                            placeholder="Alasan selisih..."
+                            onBlur={(e) => {
+                                const val = e.target.value.trim();
                                 if (val !== (item.alasan || "")) {
                                     onUpdateField(item.uid, "alasan", val || null);
                                 }
-                                (e.target as HTMLInputElement).blur();
-                                onFocusBarcode?.();
-                            }
-                        }}
-                        className="h-7 w-full min-w-[120px] border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-md text-[11px] px-2 outline-none transition-all"
-                    />
+                            }}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    const val = (e.target as HTMLInputElement).value.trim();
+                                    if (val !== (item.alasan || "")) {
+                                        onUpdateField(item.uid, "alasan", val || null);
+                                    }
+                                    (e.target as HTMLInputElement).blur();
+                                    onFocusBarcode?.();
+                                }
+                            }}
+                            className="h-7 w-full min-w-[120px] border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-md text-[11px] px-2 outline-none transition-all"
+                        />
+                    </div>
                 );
             },
         },

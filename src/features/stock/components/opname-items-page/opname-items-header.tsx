@@ -172,6 +172,7 @@ export function OpnameItemsHeader({
 
           {/* Upload Excel Button */}
           <Button
+            id="btn-opname-import-draft"
             onClick={onOpenImportExcel}
             variant="outline"
             className="font-bold text-xs h-8 px-3 rounded-xl flex items-center gap-1.5 cursor-pointer border-emerald-200 text-emerald-700 bg-emerald-50/50 hover:bg-emerald-100/70 transition-colors"
@@ -195,6 +196,7 @@ export function OpnameItemsHeader({
           </Button>
 
           <Button
+            id="btn-opname-finalize"
             onClick={onOpenFinalize}
             disabled={itemsCount === 0 || isPendingFinalize}
             className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-8 px-3.5 rounded-xl flex items-center gap-1 cursor-pointer shadow-xs border-none"
@@ -207,6 +209,7 @@ export function OpnameItemsHeader({
         {/* ── Mobile Actions (sm:hidden) ── */}
         <div className="flex sm:hidden items-center gap-1 shrink-0">
           <Button
+            id="btn-opname-import-draft-mobile"
             onClick={onOpenImportExcel}
             variant="outline"
             size="sm"

@@ -85,22 +85,25 @@ export function Users() {
   const isTutorialRunning = useUsersTutorialStore((state) => state.isRunning);
   const activeTutorial = useUsersTutorialStore((state) => state.activeTutorial);
 
+  const usersList = usersData?.data;
+  const currentUserId = session?.user?.uid;
+
   const effectiveUsers = useMemo(() => {
     if (isTutorialRunning) {
-      if (!usersData?.data || usersData.data.length === 0) {
+      if (!usersList || usersList.length === 0) {
         return MOCK_USERS;
       }
       if (activeTutorial === "nonaktifkan_karyawan") {
-        const hasDeletableUser = usersData.data.some(
-          (u) => u.uid !== session?.user?.uid && u.status === "active"
+        const hasDeletableUser = usersList.some(
+          (u) => u.uid !== currentUserId && u.status === "active"
         );
         if (!hasDeletableUser) {
-          return [...MOCK_USERS, ...usersData.data];
+          return [...MOCK_USERS, ...usersList];
         }
       }
     }
-    return usersData?.data || [];
-  }, [isTutorialRunning, activeTutorial, usersData?.data, session?.user?.uid]);
+    return usersList || [];
+  }, [isTutorialRunning, activeTutorial, usersList, currentUserId]);
 
   const dialogMethods = useForm<UserInput>({
     resolver: zodResolver(userSchema) as Resolver<UserInput>,

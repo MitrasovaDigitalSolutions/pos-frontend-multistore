@@ -6,6 +6,7 @@ import { IconSparkles } from "@tabler/icons-react";
 import { usePurchaseTutorialStore } from "@/stores/purchase-tutorial-store";
 import { useConsignmentTutorialStore } from "@/stores/consignment-tutorial-store";
 import { useTransferTutorialStore } from "@/stores/transfer-tutorial-store";
+import { useStockTutorialStore } from "@/stores/stock-tutorial-store";
 import { useProductsTutorialStore } from "@/stores/products-tutorial-store";
 import { useMembersTutorialStore } from "@/stores/members-tutorial-store";
 import { useAssetsTutorialStore } from "@/stores/assets-tutorial-store";
@@ -49,6 +50,15 @@ export function AdminTutorialButton({ className = "", onCustomOpen }: AdminTutor
             pathname.startsWith("/admin/inventory/stock-transfer")
         ) {
             useTransferTutorialStore.getState().setMenuOpen(true);
+            return;
+        }
+
+        if (
+            pathname.startsWith("/admin/inventory/stock-opname") ||
+            pathname.startsWith("/admin/inventory/stock-ledger") ||
+            pathname.startsWith("/admin/inventory/stock")
+        ) {
+            useStockTutorialStore.getState().setMenuOpen(true);
             return;
         }
 

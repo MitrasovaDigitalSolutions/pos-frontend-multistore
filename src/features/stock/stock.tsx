@@ -30,7 +30,9 @@ import {
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useStockTutorialStore } from "@/stores/stock-tutorial-store";
+import { MOCK_OPNAME } from "./tutorial/constants/stock-tutorial-constants";
 
 export function StockManagement() {
     const searchParams = useSearchParams();
@@ -70,13 +72,42 @@ export function StockManagement() {
         sort_order: opnamesSortOrder,
     });
 
-    const opnames = opnamesData?.data || [];
+    const isTutorialRunning = useStockTutorialStore((state) => state.isRunning);
+
+    const displayOpnames = useMemo(() => {
+        const raw = opnamesData?.data || [];
+        if (isTutorialRunning && !raw.some((o) => o.uid === MOCK_OPNAME.uid)) {
+            return [MOCK_OPNAME, ...raw];
+        }
+        return raw;
+    }, [opnamesData?.data, isTutorialRunning]);
 
     // Modals
     const [isAdjustmentOpen, setIsAdjustmentOpen] = useState(false);
     const [isOpnameModalOpen, setIsOpnameModalOpen] = useState(false);
     const [isDownloadingXlsx, setIsDownloadingXlsx] = useState(false);
     const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+
+    // Listen for custom tutorial simulation events
+    useEffect(() => {
+        if (!isTutorialRunning) return;
+        const handleOpenDialog = (e: Event) => {
+            const customEvent = e as CustomEvent<{ dialog: string }>;
+            if (customEvent.detail?.dialog === "opname_create") {
+                setIsOpnameModalOpen(true);
+            }
+        };
+        const handleCloseDialog = () => {
+            setIsOpnameModalOpen(false);
+            setIsAdjustmentOpen(false);
+        };
+        window.addEventListener("stock-tutorial-open-dialog", handleOpenDialog);
+        window.addEventListener("stock-tutorial-close-dialog", handleCloseDialog);
+        return () => {
+            window.removeEventListener("stock-tutorial-open-dialog", handleOpenDialog);
+            window.removeEventListener("stock-tutorial-close-dialog", handleCloseDialog);
+        };
+    }, [isTutorialRunning]);
 
     const handleDownloadTemplateXlsx = async () => {
         setIsDownloadingXlsx(true);
@@ -167,13 +198,13 @@ export function StockManagement() {
                 <div className="space-y-4 sm:space-y-6">
                     {/* Stock Levels & Movements */}
                     <section className="bg-white border border-slate-100 rounded-2xl shadow-xs p-3.5 sm:p-5 space-y-4">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5 sm:pb-4">
+                        <div id="stock-opname-header" className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5 sm:pb-4">
                             <div>
                                 <h3 className="text-sm sm:text-base font-bold text-slate-900 leading-tight">
-                                    Stock Opname & Penyesuaian Stok
+                                    Stock Opname
                                 </h3>
                                 <p className="text-[11px] text-slate-400 mt-0.5">
-                                    Peninjauan stok real-time, opname fisik, dan penyesuaian stok manual.
+                                    Pencatatan sesi audit fisik stok barang toko dan rekonsiliasi selisih inventori.
                                 </p>
                             </div>
                             {hasManageInventory && (
@@ -181,6 +212,7 @@ export function StockManagement() {
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button
+                                                id="btn-opname-documents"
                                                 variant="outline"
                                                 className="flex-1 sm:flex-none border-slate-200 text-slate-700 bg-white hover:bg-slate-50 font-bold text-xs h-9 px-3 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
                                                 disabled={isDownloadingXlsx || isDownloadingPdf}
@@ -212,6 +244,7 @@ export function StockManagement() {
                                     </DropdownMenu>
 
                                     <Button
+                                        id="btn-stock-adjustment"
                                         onClick={() => setIsAdjustmentOpen(true)}
                                         className="flex-1 sm:flex-none bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9 px-3.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-xs border-none"
                                     >
@@ -219,6 +252,7 @@ export function StockManagement() {
                                         <span>Penyesuaian Stok</span>
                                     </Button>
                                     <Button
+                                        id="btn-new-opname"
                                         onClick={() => setIsOpnameModalOpen(true)}
                                         className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 px-3.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-xs border-none"
                                     >
@@ -230,7 +264,7 @@ export function StockManagement() {
                         </div>
 
                         <OpnameList
-                            opnames={opnames}
+                            opnames={displayOpnames}
                             meta={opnamesData?.meta}
                             page={opnamesPage}
                             onPageChange={setOpnamesPage}

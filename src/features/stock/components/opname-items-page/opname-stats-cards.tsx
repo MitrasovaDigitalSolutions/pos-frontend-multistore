@@ -24,7 +24,7 @@ export function OpnameStatsCards({
   isLoading = false,
 }: OpnameStatsCardsProps) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+    <div id="opname-stats-cards" className="grid grid-cols-2 sm:grid-cols-4 gap-2">
       {/* Total Scanned */}
       <div className="bg-white border border-slate-100 rounded-xl p-2 sm:p-2.5 shadow-2xs flex items-center justify-between">
         <div className="min-w-0">
