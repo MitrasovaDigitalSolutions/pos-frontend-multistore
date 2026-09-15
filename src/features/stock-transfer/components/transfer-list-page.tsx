@@ -12,7 +12,7 @@ import { useAppRouter } from "@/hooks/use-app-router";
 import { useActiveStoreStore } from "@/stores/active-store-store";
 import { useTransferTutorialStore } from "@/stores/transfer-tutorial-store";
 import { StockTransferListMode, useStockTransfersByMode } from "../api/stock-transfer-api";
-import { MOCK_INCOMING_STOCK_TRANSFER } from "../tutorial/constants/transfer-tutorial-constants";
+import { MOCK_INCOMING_STOCK_TRANSFER, MOCK_INCOMING_STOCK_TRANSFER_UID } from "../tutorial/constants/transfer-tutorial-constants";
 
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { DataTable } from "@/components/ui/data-table";
@@ -231,7 +231,7 @@ export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
                 "ditolak",
               ].includes(st);
 
-              const isFirst = item.uid === transfers[0]?.uid;
+              const isFirst = item.uid === MOCK_INCOMING_STOCK_TRANSFER_UID || item.uid === transfers[0]?.uid;
 
               return (
                 <span

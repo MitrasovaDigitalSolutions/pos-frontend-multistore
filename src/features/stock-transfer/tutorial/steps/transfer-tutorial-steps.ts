@@ -265,85 +265,84 @@ export const TRANSFER_TUTORIAL_STEPS: Record<string, TransferTutorialStep[]> = {
             target: "#transfer-list-header",
             title: "1. Pengenalan Transfer Masuk",
             content:
-                "Menu Transfer Masuk mencatat seluruh pasokan stok fisik yang dikirimkan oleh toko cabang lain atau gudang pusat ke toko Anda. Halaman ini menjadi pos verifikasi sebelum barang resmi dicatat ke inventaris toko.",
+                "Menu Transfer Masuk mencatat seluruh pasokan stok fisik yang dikirimkan oleh toko cabang lain atau gudang pusat ke toko Anda. Halaman ini menjadi gerbang verifikasi sebelum barang kiriman resmi dibukukan ke inventaris toko Anda.",
             placement: "bottom",
         },
         {
             target: "#transfer-stat-cards",
-            title: "2. Indikator Status Pengiriman",
+            title: "2. Indikator Status Penerimaan",
             content:
-                "Pantau kiriman yang masuk melalui 4 kartu indikator:\n• 'Dalam Pengiriman': Barang telah diberangkatkan dari toko asal dan sedang dibawa kurir/ekspedisi.\n• 'Menunggu Validasi': Cabang Anda melaporkan adanya selisih/retur dan menunggu konfirmasi toko asal.\n• 'Total Selesai': Transfer yang sukses diverifikasi dan stok telah masuk penuh.",
+                "Pantau kondisi pengiriman masuk melalui 4 kartu indikator:\n• 'Total Transfer Masuk': Akumulasi seluruh surat jalan yang ditujukan ke cabang Anda.\n• 'Dikirim': Armada kurir/ekspedisi sedang dalam perjalanan membawa fisik barang.\n• 'Diterima Sebagian': Barang telah dicek sebagian atau ada selisih yang dilaporkan.\n• 'Selesai': Seluruh barang sukses diterima dan stok masuk 100% ke inventaris.",
             placement: "bottom",
         },
         {
             target: "#transfer-list-filters",
             title: "3. Filter & Pencarian Surat Jalan",
             content:
-                "Gunakan filter untuk melacak kiriman berdasarkan nomor surat jalan, rentang tanggal kirim, maupun cabang asal pengirim agar proses penerimaan barang lebih cepat dan terstruktur.",
+                "Saring daftar transfer masuk berdasarkan nomor dokumen surat jalan, rentang tanggal kirim, maupun cabang asal pengirim agar proses pengecekan bongkar muatan barang lebih cepat dan terorganisir.",
             placement: "bottom",
         },
         {
             target: "#transfer-row-0",
-            title: "4. Pilih Transfer Masuk (Data Simulasi)",
+            title: "4. Pilih Dokumen Transfer untuk Diproses",
             content:
-                "Baris ini menampilkan data simulasi kiriman transfer masuk berstatus 'Dikirim' dari Gudang Pusat Surabaya ke toko Anda. Perhatikan nomor surat jalan, rute distribusi, dan status pengiriman aktif. Klik 'Selanjutnya' untuk membuka halaman detail dan memproses penerimaan barang.",
+                "Baris ini memuat data simulasi transfer masuk berstatus 'Dikirim' dari Gudang Pusat Surabaya ke cabang Anda. Perhatikan nomor transfer, rute toko, dan status pengiriman aktif.\n\nKlik 'Selanjutnya' untuk membuka formulir manifes dan verifikasi fisik penerimaan barang.",
             placement: "bottom",
         },
         {
             target: "#transfer-detail-stepper",
-            title: "5. Manifes & Stepper Progres",
+            title: "5. Stepper Progres Distribusi",
             content:
-                "Stepper visual 4-tahap memudahkan pemantauan alur pengiriman. Dokumen saat ini berada pada tahap 'Penerimaan', menandakan armada kurir telah tiba dan barang siap dicek secara fisik.",
+                "Indikator 4-tahap ini menampilkan posisi alur pengiriman secara real-time. Dokumen saat ini berada pada tahap 'Penerimaan', menandakan armada kurir telah tiba di toko Anda dan barang siap dicek secara fisik.",
             placement: "bottom",
         },
         {
             target: "#transfer-detail-info-cards",
-            title: "6. Catatan Pengiriman & Rute Toko",
+            title: "6. Rute Toko & Catatan Pengiriman",
             content:
-                "Panel informasi merangkum toko asal pengirim, nama sopir armada, tanggal keberangkatan, serta instruksi khusus dari gudang pusat (misal: verifikasi segel kemasan barang).",
+                "Panel informasi merangkum detail toko asal pengirim (Gudang Pusat Surabaya), toko tujuan penerima (cabang Anda), tanggal keberangkatan armada, serta instruksi catatan khusus dari bagian logistik pengirim.",
             placement: "left",
         },
         {
-            target: "#transfer-detail-items-table",
+            target: "#transfer-detail-items-header",
             title: "7. Manifes Barang & Pengecekan Fisik",
             content:
-                "Tabel ini memuat daftar produk dan jumlah unit yang dikirim oleh toko asal. Saat proses bongkar muatan, lakukan penghitungan fisik satu per satu untuk dicocokkan dengan angka pada kolom 'Dikirim'.",
-            placement: "top",
+                "Tabel manifes ini memuat daftar produk dan jumlah kuantitas unit yang dikirim. Saat staf membongkar muatan kardus fisik, lakukan penghitungan teliti satu per satu untuk dicocokkan dengan angka pada kolom 'Dikirim'.",
+            placement: "bottom",
         },
         {
             target: "#transfer-receive-qty-0",
-            title: "8. Penyesuaian Kuantitas Diterima",
+            title: "8. Input Kuantitas Diterima Aktual",
             content:
-                "Secara default, kolom 'Qty Diterima' terisi sesuai jumlah kiriman. Jika terdapat selisih (misal: barang kurang atau kemasan rusak di perjalanan), staf dapat langsung mengetikkan kuantitas fisik aktual.",
+                "Secara default, kolom 'Qty Diterima' terisi sama dengan kuantitas kiriman. Jika terdapat kekurangan fisik barang (misal: hanya sampai 8 dari 10 unit), staf dapat langsung mengedit angka kuantitas yang diterima secara nyata di lapangan.",
             placement: "bottom",
         },
         {
             target: "#transfer-btn-terima-0",
-            title: "9. Konfirmasi Penerimaan Produk",
+            title: "9. Tombol Konfirmasi Penerimaan",
             content:
-                "Klik tombol 'Terima' pada baris produk yang telah selesai dihitung dan sesuai. Kotak konfirmasi penerimaan akan terbuka untuk mencatat persetujuan item.",
+                "Setelah menghitung fisik barang, tombol 'Terima' ini digunakan untuk membuka dialog konfirmasi dan memvalidasi penerimaan produk. Klik 'Selanjutnya' untuk melihat dialog konfirmasi penerimaan barang.",
             placement: "left",
-            action: {
-                type: "click",
-                target: "#transfer-btn-terima-0",
-            },
         },
         {
-            target: "#transfer-dialog-confirm-receive",
-            title: "10. Dialog Konfirmasi & Pencatatan Selisih",
+            target: "#transfer-dialog-btn-submit",
+            title: "10. Dialog Verifikasi & Tombol Konfirmasi",
             content:
-                "Periksa rincian jumlah penerimaan pada dialog. Jika terdapat selisih, pilih alasan selisih (seperti 'Rusak', 'Hilang', atau 'Salah Input') agar toko asal dapat memvalidasi pengembalian atau koreksi stok.",
-            placement: "center",
-            action: {
-                type: "click",
-                target: "#transfer-dialog-btn-cancel",
-            },
+                "Dialog ini menampilkan rincian barang yang akan diterima beserta status selisih. Anda dapat menekan tombol 'Ya, Terima Item' ini untuk menyetujui penerimaan, atau memilih alasan selisih bila barang kurang.",
+            placement: "top",
+        },
+        {
+            target: "#transfer-btn-tolak-0",
+            title: "11. Opsi Penolakan Barang (Tolak)",
+            content:
+                "Jika seluruh barang pada baris tersebut bermasalah (misal: produk salah kirim, kadaluarsa, atau rusak total saat perjalanan), Anda dapat memilih opsi tombol 'Tolak' untuk menolak item tersebut agar diverifikasi ulang oleh toko asal tanpa menambah stok ke toko Anda.",
+            placement: "left",
         },
         {
             target: "body",
             title: "🎉 Panduan Penerimaan Transfer Masuk Selesai!",
             content:
-                "Luar biasa! Anda telah menguasai alur penerimaan transfer masuk secara menyeluruh: dari pemantauan armada tiba, pencocokan fisik barang, penanganan selisih dan retur, hingga otomatisasi penambahan stok masuk ke inventaris toko.",
+                "Selamat! Anda telah menguasai alur penerimaan transfer masuk secara menyeluruh: mulai dari memilih surat jalan di daftar transfer, pengecekan manifes barang, penyesuaian kuantitas fisik dan selisih di dialog konfirmasi, hingga finalisasi inventaris stok cabang.",
             placement: "center",
             action: {
                 type: "navigate",

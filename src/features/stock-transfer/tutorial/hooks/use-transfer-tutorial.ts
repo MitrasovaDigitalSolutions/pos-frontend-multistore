@@ -358,16 +358,21 @@ export function useTransferTutorial() {
                 stopTutorial();
             }
         } else if (activeTutorial === "stock_transfer_receive") {
-            const isList = pathname.includes("/admin/inventory/stock-transfer/terima") || pathname === "/admin/inventory/stock-transfer";
-            const isDetail = pathname.includes(MOCK_INCOMING_STOCK_TRANSFER_UID) || pathname.includes("/admin/inventory/stock-transfer/");
+            const isList = pathname === "/admin/inventory/stock-transfer/terima" || pathname === "/admin/inventory/stock-transfer";
+            const isDetail = pathname.includes(MOCK_INCOMING_STOCK_TRANSFER_UID) || (pathname.startsWith("/admin/inventory/stock-transfer/") && pathname !== "/admin/inventory/stock-transfer/terima" && pathname !== "/admin/inventory/stock-transfer/validasi");
             if (!isList && !isDetail) {
                 cleanupAndRestore();
                 stopTutorial();
-            } else if (isList && stepIndex >= 4 && stepIndex < 10) {
-                cleanupAndRestore();
-                stopTutorial();
+            } else if (isList && stepIndex >= 4 && stepIndex < 11) {
+                if (typeof window !== "undefined" && !window.location.pathname.includes(MOCK_INCOMING_STOCK_TRANSFER_UID)) {
+                    cleanupAndRestore();
+                    stopTutorial();
+                }
+            } else if (isDetail && stepIndex < 4) {
+                setStepIndex(4);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pathname, isRunning, activeTutorial, stepIndex, cleanupAndRestore, stopTutorial]);
 
     // Global Escape key listener to stop tutorial
@@ -434,6 +439,8 @@ export function useTransferTutorial() {
             "#transfer-stat-cards",
             "#transfer-list-filters",
             "#transfer-row-0",
+            "#transfer-btn-detail-0",
+            "#transfer-btn-detail-0-btn",
         ].includes(target);
     }, []);
 
@@ -457,8 +464,9 @@ export function useTransferTutorial() {
                         const currentStep = tutorialSteps[index];
                         const nextStep = tutorialSteps[nextIndex];
 
-                        // Transition from List page to Detail page (e.g. step 4 -> step 5) for request transfer incoming
+                        // Transition from List page to Detail page for request transfer incoming
                         if (
+                            activeTutorial === "request_transfer_incoming" &&
                             isIncomingListTarget(currentStep.target) &&
                             !isIncomingListTarget(nextStep.target) &&
                             nextStep.target.startsWith("#req-incoming-")
@@ -467,8 +475,9 @@ export function useTransferTutorial() {
                             await waitForPathname("/request-transfer/incoming/detail");
                         }
 
-                        // Transition from Stock Transfer Outgoing List page to New Form (e.g. step 4 -> step 5)
+                        // Transition from Stock Transfer Outgoing List page to New Form (step 4 -> step 5)
                         if (
+                            activeTutorial === "stock_transfer_create" &&
                             isStockTransferListTarget(currentStep.target) &&
                             !isStockTransferListTarget(nextStep.target) &&
                             (nextStep.target.startsWith("#transfer-route") || nextStep.target.startsWith("#transfer-"))
@@ -479,12 +488,39 @@ export function useTransferTutorial() {
 
                         // Transition from Stock Transfer Incoming List page to Detail page (step 4 -> step 5)
                         if (
+                            activeTutorial === "stock_transfer_receive" &&
                             isStockTransferReceiveListTarget(currentStep.target) &&
                             !isStockTransferReceiveListTarget(nextStep.target) &&
                             nextStep.target.startsWith("#transfer-detail-")
                         ) {
                             routerRef.current.push(`/admin/inventory/stock-transfer/${MOCK_INCOMING_STOCK_TRANSFER_UID}?from=incoming`);
                             await waitForPathname(MOCK_INCOMING_STOCK_TRANSFER_UID);
+                        }
+
+                        // Open confirm receive dialog when advancing from Step 9 to Step 10
+                        if (
+                            activeTutorial === "stock_transfer_receive" &&
+                            currentStep.target === "#transfer-btn-terima-0" &&
+                            nextStep.target.startsWith("#transfer-dialog-")
+                        ) {
+                            const terimaBtn = document.querySelector("#transfer-btn-terima-0") as HTMLButtonElement | null;
+                            if (terimaBtn) {
+                                terimaBtn.click();
+                                await waitForElement(nextStep.target, 2500);
+                            }
+                        }
+
+                        // Close confirm receive dialog when advancing from Step 10 to Step 11
+                        if (
+                            activeTutorial === "stock_transfer_receive" &&
+                            currentStep.target.startsWith("#transfer-dialog-") &&
+                            !nextStep.target.startsWith("#transfer-dialog-")
+                        ) {
+                            const cancelBtn = document.querySelector("#transfer-dialog-btn-cancel") as HTMLButtonElement | null;
+                            if (cancelBtn) {
+                                cancelBtn.click();
+                                await new Promise((r) => setTimeout(r, 200));
+                            }
                         }
 
                         // Ensure matrix view is active if target is matrix
@@ -516,8 +552,9 @@ export function useTransferTutorial() {
                         const currentStep = tutorialSteps[index];
                         const prevStep = tutorialSteps[prevIndex];
 
-                        // Transition BACK from Detail page to List page (e.g. step 5 -> step 4) for request transfer incoming
+                        // Transition BACK from Detail page to List page for request transfer incoming
                         if (
+                            activeTutorial === "request_transfer_incoming" &&
                             !isIncomingListTarget(currentStep.target) &&
                             isIncomingListTarget(prevStep.target) &&
                             currentStep.target.startsWith("#req-incoming-")
@@ -526,8 +563,9 @@ export function useTransferTutorial() {
                             await waitForPathname("/request-transfer/incoming");
                         }
 
-                        // Transition BACK from New Form to Stock Transfer Outgoing List page (e.g. step 5 -> step 4)
+                        // Transition BACK from New Form to Stock Transfer Outgoing List page
                         if (
+                            activeTutorial === "stock_transfer_create" &&
                             !isStockTransferListTarget(currentStep.target) &&
                             isStockTransferListTarget(prevStep.target) &&
                             (currentStep.target.startsWith("#transfer-route") || currentStep.target.startsWith("#transfer-"))
@@ -538,12 +576,39 @@ export function useTransferTutorial() {
 
                         // Transition BACK from Detail page to Stock Transfer Incoming List page (step 5 -> step 4)
                         if (
+                            activeTutorial === "stock_transfer_receive" &&
                             !isStockTransferReceiveListTarget(currentStep.target) &&
                             isStockTransferReceiveListTarget(prevStep.target) &&
                             currentStep.target.startsWith("#transfer-detail-")
                         ) {
                             routerRef.current.push("/admin/inventory/stock-transfer/terima");
                             await waitForPathname("/stock-transfer/terima");
+                        }
+
+                        // Close confirm receive dialog when going BACK from Step 10 to Step 9
+                        if (
+                            activeTutorial === "stock_transfer_receive" &&
+                            currentStep.target.startsWith("#transfer-dialog-") &&
+                            prevStep.target === "#transfer-btn-terima-0"
+                        ) {
+                            const cancelBtn = document.querySelector("#transfer-dialog-btn-cancel") as HTMLButtonElement | null;
+                            if (cancelBtn) {
+                                cancelBtn.click();
+                                await new Promise((r) => setTimeout(r, 200));
+                            }
+                        }
+
+                        // Re-open confirm receive dialog when going BACK from Step 11 to Step 10
+                        if (
+                            activeTutorial === "stock_transfer_receive" &&
+                            !currentStep.target.startsWith("#transfer-dialog-") &&
+                            prevStep.target.startsWith("#transfer-dialog-")
+                        ) {
+                            const terimaBtn = document.querySelector("#transfer-btn-terima-0") as HTMLButtonElement | null;
+                            if (terimaBtn) {
+                                terimaBtn.click();
+                                await waitForElement(prevStep.target, 2500);
+                            }
                         }
 
                         // Ensure matrix view is active if target is matrix
