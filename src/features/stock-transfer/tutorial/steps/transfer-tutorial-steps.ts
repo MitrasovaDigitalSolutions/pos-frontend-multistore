@@ -361,4 +361,105 @@ export const TRANSFER_TUTORIAL_STEPS: Record<string, TransferTutorialStep[]> = {
             },
         },
     ],
+    stock_transfer_validation: [
+        {
+            target: "#transfer-list-header",
+            title: "1. Pengenalan Validasi Transfer Stok",
+            content:
+                "Menu Validasi Transfer adalah pusat kontrol bagi toko asal (pengirim) untuk meninjau dan menyelesaikan klaim selisih stok (retur barang rusak/hilang atau koreksi kelebihan) yang dilaporkan oleh cabang penerima saat pembongkaran kiriman.",
+            placement: "bottom",
+        },
+        {
+            target: "#transfer-stat-cards",
+            title: "2. Indikator Beban & Status Validasi",
+            content:
+                "Pantau pergerakan penyelesaian selisih transfer:\n• 'Menunggu Validasi': Pengiriman yang melaporkan adanya barang rusak, hilang, atau kelebihan dan memerlukan persetujuan toko asal.\n• 'Selesai': Seluruh transfer yang selisihnya telah divalidasi dan saldo stok antartoko telah sinkron.",
+            placement: "bottom",
+        },
+        {
+            target: "#transfer-list-filters",
+            title: "3. Filter Surat Jalan & Cabang Pemohon",
+            content:
+                "Gunakan kolom pencarian dan filter untuk menyaring dokumen berdasarkan nomor transfer atau toko cabang tujuan yang mengajukan klaim selisih barang.",
+            placement: "bottom",
+        },
+        {
+            target: "#transfer-row-0",
+            title: "4. Pilih Transfer Menunggu Validasi",
+            content:
+                "Baris ini memuat simulasi transfer stok TRF-2026-0902 yang dikirim ke Cabang Malang Kota dengan status 'Menunggu Validasi'.\n\nKlik 'Selanjutnya' untuk membuka rincian dokumen dan memeriksa laporan selisih fisik barang.",
+            placement: "bottom",
+        },
+        {
+            target: "#transfer-detail-stepper",
+            title: "5. Indikator Menunggu Validasi",
+            content:
+                "Banner status kuning ini menegaskan bahwa pengiriman berada pada tahap peninjauan selisih. Sebagai toko pengirim, Anda berwenang memutuskan: menyetujui pengembalian (retur) stok ke toko Anda atau menolak klaim jika ada ketidaksesuaian laporan.",
+            placement: "bottom",
+        },
+        {
+            target: "#transfer-detail-info-cards",
+            title: "6. Rincian Rute & Kronologi Ekspedisi",
+            content:
+                "Panel samping menampilkan rincian toko cabang pemohon klaim (Cabang Malang Kota), tanggal keberangkatan armada, nomor surat jalan, serta catatan pengiriman untuk mempermudah investigasi dengan pihak kurir/logistik.",
+            placement: "left",
+        },
+        {
+            target: "#transfer-detail-items-header",
+            title: "7. Manifes Produk & Laporan Selisih",
+            content:
+                "Tabel ini merinci produk kiriman yang bermasalah. Perhatikan perbandingan kolom 'Dikirim' vs 'Diterima', badge 'Alasan Selisih' (misal: Barang Rusak), serta catatan keterangan dari staf penerima cabang.",
+            placement: "bottom",
+        },
+        {
+            target: "#transfer-validation-qty-0",
+            title: "8. Penyesuaian Kuantitas Retur",
+            content:
+                "Secara default, kolom ini terisi selisih kekurangan (misal: 4 pcs). Anda dapat menyesuaikan kuantitas yang disetujui untuk diretur kembali ke inventaris toko Anda jika telah ada kesepakatan sebagian dengan cabang.",
+            placement: "bottom",
+        },
+        {
+            target: "#transfer-btn-validate-approve-0",
+            title: "9. Tombol Setujui Validasi Retur",
+            content:
+                "Tombol hijau 'Validasi' ini digunakan untuk menyetujui klaim pengembalian produk. Klik 'Selanjutnya' untuk melihat dialog konfirmasi dan dampak penyesuaian stoknya.",
+            placement: "left",
+        },
+        {
+            target: "#transfer-dialog-confirm-validate",
+            title: "10. Dialog Konfirmasi Validasi Retur",
+            content:
+                "Dialog ini menegaskan konsekuensi validasi:\n• Kuantitas retur (4 pcs) akan otomatis dikembalikan ke saldo stok toko asal Anda.\n• Nilai selisih dicatat dalam laporan audit inventaris.\n• Status item berubah menjadi 'Sudah Divalidasi'.",
+            placement: "top",
+            variant: "overlay_nav",
+            overlayNav: true,
+        },
+        {
+            target: "#transfer-btn-validate-reject-0",
+            title: "11. Opsi Penolakan Klaim (Tolak)",
+            content:
+                "Bila laporan selisih cabang tidak terbukti (misal: ada bukti foto serah terima dari kurir bahwa kardus diterima utuh dan segel sempurna), Anda berhak menolak klaim selisih. Klik 'Selanjutnya' untuk melihat dialog penolakan.",
+            placement: "left",
+        },
+        {
+            target: "#transfer-dialog-confirm-validate",
+            title: "12. Konsekuensi Penolakan Klaim",
+            content:
+                "Pada dialog ini, jika klaim ditolak:\n• Seluruh kuantitas awal (24 pcs) tetap dianggap sukses diterima dan dibebankan penuh ke cabang penerima.\n• Tidak ada pengembalian fisik stok ke toko asal.",
+            placement: "top",
+            variant: "overlay_nav",
+            overlayNav: true,
+        },
+        {
+            target: "body",
+            title: "🎉 Panduan Validasi Transfer Selesai!",
+            content:
+                "Luar biasa! Anda telah memahami seluruh alur validasi transfer stok antartoko: evaluasi daftar transfer selisih, pengecekan manifes & alasan klaim, penyesuaian kuantitas, hingga dampak persetujuan dan penolakan retur barang.",
+            placement: "center",
+            action: {
+                type: "navigate",
+                url: "/admin/inventory/stock-transfer/validasi",
+            },
+        },
+    ],
 };

@@ -89,6 +89,17 @@ export function TransferTutorialMenuDialog() {
             }
 
             startTutorial("stock_transfer_receive");
+        } else if (id === "stock_transfer_validation") {
+            setMenuOpen(false);
+
+            if (typeof window !== "undefined" && window.location.pathname !== "/admin/inventory/stock-transfer/validasi") {
+                router.push("/admin/inventory/stock-transfer/validasi");
+                await waitForPathname("/stock-transfer/validasi");
+                await waitForElement("#transfer-list-header", 3500);
+                await new Promise((r) => setTimeout(r, 150));
+            }
+
+            startTutorial("stock_transfer_validation");
         }
     };
 

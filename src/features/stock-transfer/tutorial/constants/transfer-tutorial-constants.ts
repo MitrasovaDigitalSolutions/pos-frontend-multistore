@@ -264,6 +264,95 @@ export const MOCK_INCOMING_STOCK_TRANSFER: StockTransfer = {
     ],
 };
 
+export const MOCK_VALIDATION_STOCK_TRANSFER_UID = "mock-validation-transfer-1";
+
+export const MOCK_VALIDATION_STOCK_TRANSFER: StockTransfer = {
+    uid: MOCK_VALIDATION_STOCK_TRANSFER_UID,
+    store_uid_source: "mock-store-asal",
+    store_uid_destination: "mock-store-malang",
+    nomor_transfer: "TRF-2026-0902",
+    status: "menunggu_validasi",
+    status_penerimaan: "partially_received",
+    status_pengiriman: "received",
+    user_uid_source: "mock-user-1",
+    user_uid_destination: "mock-user-2",
+    catatan: "Pengiriman barang promo ke Cabang Malang. Terdapat laporan selisih kemasan bocor saat penerimaan di gudang cabang.",
+    tanggal_kirim: "2026-09-14T10:00:00.000Z",
+    tanggal_terima: "2026-09-15T09:30:00.000Z",
+    created_at: "2026-09-14T09:15:00.000Z",
+    updated_at: "2026-09-15T09:30:00.000Z",
+    source_store: {
+        uid: "mock-store-asal",
+        nama: "Cabang Anda (Toko Asal)",
+        is_central: false,
+    },
+    destination_store: {
+        uid: "mock-store-malang",
+        nama: "Cabang Malang Kota",
+        is_central: false,
+    },
+    source_user: {
+        uid: "mock-user-1",
+        name: "Admin Logistik Anda",
+    },
+    destination_user: {
+        uid: "mock-user-2",
+        name: "Supervisor Cabang Malang",
+    },
+    items: [
+        {
+            uid: "mock-item-val-1",
+            stock_transfer_uid: MOCK_VALIDATION_STOCK_TRANSFER_UID,
+            product_uid: "mock-prod-trf-1",
+            kuantitas: 24,
+            kuantitas_diterima: 20,
+            kuantitas_return: 4,
+            validated_at: null,
+            jenis_validasi: null,
+            kuantitas_koreksi: null,
+            keterangan: "Kardus basah & penyok, 4 pcs kemasan bocor selama perjalanan ekspedisi.",
+            status: "received",
+            jenis_selisih: "rusak",
+            stok_sebelum_source: 80,
+            stok_sesudah_source: 56,
+            stok_sebelum_dest: 10,
+            stok_sesudah_dest: 30,
+            harga_beli_avg: 18000,
+            product: {
+                uid: "mock-prod-trf-1",
+                nama: "Minyak Goreng Sawit 2L Pouch",
+                barcode: "8991111222333",
+                satuan: "Pcs",
+            },
+        },
+        {
+            uid: "mock-item-val-2",
+            stock_transfer_uid: MOCK_VALIDATION_STOCK_TRANSFER_UID,
+            product_uid: "mock-prod-trf-2",
+            kuantitas: 10,
+            kuantitas_diterima: 12,
+            kuantitas_return: null,
+            validated_at: null,
+            jenis_validasi: null,
+            kuantitas_koreksi: 2,
+            keterangan: "Fisik beras di kardus ada 12 karung, kelebihan 2 karung dari surat jalan pengiriman.",
+            status: "received",
+            jenis_selisih: "salah_input",
+            stok_sebelum_source: 40,
+            stok_sesudah_source: 30,
+            stok_sebelum_dest: 5,
+            stok_sesudah_dest: 17,
+            harga_beli_avg: 65000,
+            product: {
+                uid: "mock-prod-trf-2",
+                nama: "Beras Rojolele Super 5kg Karung",
+                barcode: "8994444555666",
+                satuan: "Karung",
+            },
+        },
+    ],
+};
+
 export const TRANSFER_TUTORIAL_METAS: TransferTutorialMeta[] = [
     {
         id: "request_transfer_create",
@@ -309,10 +398,10 @@ export const TRANSFER_TUTORIAL_METAS: TransferTutorialMeta[] = [
         id: "stock_transfer_validation",
         title: "Validasi Selisih Transfer",
         description:
-            "Panduan verifikasi dan penyesuaian bila terjadi perbedaan jumlah barang saat pengiriman dan penerimaan.",
+            "Panduan lengkap verifikasi selisih penerimaan stok, investigasi retur barang rusak/hilang, hingga eksekusi persetujuan & penolakan klaim oleh toko asal.",
         category: "Validasi & Selisih",
-        stepCount: 5,
-        badge: "Segera Hadir",
-        isAvailable: false,
+        stepCount: 13,
+        badge: "Fitur Validasi",
+        isAvailable: true,
     },
 ];

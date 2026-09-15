@@ -21,6 +21,8 @@ import { JENIS_SELISIH, TRANSFER_SHIPMENT_STATUS, TRANSFER_STATUS } from "../con
 import {
   MOCK_INCOMING_STOCK_TRANSFER,
   MOCK_INCOMING_STOCK_TRANSFER_UID,
+  MOCK_VALIDATION_STOCK_TRANSFER,
+  MOCK_VALIDATION_STOCK_TRANSFER_UID,
 } from "../tutorial/constants/transfer-tutorial-constants";
 
 import { AppButton } from "@/components/shared/app-button";
@@ -75,6 +77,18 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
         destination_store: {
           uid: activeStoreUid || "mock-store-cabang",
           nama: session?.user?.stores?.find((s) => s.uid === activeStoreUid)?.nama || "Cabang Anda (Penerima)",
+          is_central: false,
+        },
+      };
+    }
+    if (isTutorialRunning && uid === MOCK_VALIDATION_STOCK_TRANSFER_UID) {
+      return {
+        ...MOCK_VALIDATION_STOCK_TRANSFER,
+        items: mockItems || MOCK_VALIDATION_STOCK_TRANSFER.items,
+        store_uid_source: activeStoreUid || MOCK_VALIDATION_STOCK_TRANSFER.store_uid_source,
+        source_store: {
+          uid: activeStoreUid || "mock-store-asal",
+          nama: session?.user?.stores?.find((s) => s.uid === activeStoreUid)?.nama || "Cabang Anda (Toko Asal)",
           is_central: false,
         },
       };
@@ -230,6 +244,30 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
   ) => {
     setValidatingItemUid(item.uid);
     try {
+      if (uid.startsWith("mock-")) {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        setMockItems((prev) => {
+          const current =
+            prev ||
+            (uid === MOCK_VALIDATION_STOCK_TRANSFER_UID
+              ? MOCK_VALIDATION_STOCK_TRANSFER.items
+              : MOCK_INCOMING_STOCK_TRANSFER.items);
+          return current.map((it) => {
+            if (it.uid === item.uid) {
+              return {
+                ...it,
+                jenis_validasi: payload.jenis,
+                validated_at: new Date().toISOString(),
+                kuantitas_return: payload.kuantitas_return ?? it.kuantitas_return,
+                status: payload.setujui === false ? "rejected" : "received",
+              };
+            }
+            return it;
+          });
+        });
+        toast.success(`Validasi item ${item.product?.nama || "berhasil"}.`);
+        return;
+      }
       await validate.mutateAsync({ uid, itemUid: item.uid, payload });
       toast.success(`Validasi item ${item.product?.nama || "berhasil"}.`);
     } catch (err: unknown) {
@@ -363,12 +401,15 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
     );
   }
 
-  const isSource = (isTutorialRunning && isMock) ? false : (activeStoreUid === transfer.store_uid_source);
-  const isDest = (isTutorialRunning && isMock) ? true : (activeStoreUid === transfer.store_uid_destination);
+  const isValidationTutorial = isTutorialRunning && uid === MOCK_VALIDATION_STOCK_TRANSFER_UID;
+  const isReceiveTutorial = isTutorialRunning && uid === MOCK_INCOMING_STOCK_TRANSFER_UID;
+
+  const isSource = isValidationTutorial ? true : isReceiveTutorial ? false : (activeStoreUid === transfer.store_uid_source);
+  const isDest = isValidationTutorial ? false : isReceiveTutorial ? true : (activeStoreUid === transfer.store_uid_destination);
 
   const canFinalize = transfer.status === TRANSFER_STATUS.DRAFT && isSource;
-  const canReceive = (isTutorialRunning && isMock) ? true : (transfer.status === TRANSFER_STATUS.SENT && isDest);
-  const canValidateTransfer = transfer.status === TRANSFER_STATUS.MENUNGGU_VALIDASI && isSource;
+  const canReceive = isReceiveTutorial ? true : (transfer.status === TRANSFER_STATUS.SENT && isDest);
+  const canValidateTransfer = isValidationTutorial ? true : (transfer.status === TRANSFER_STATUS.MENUNGGU_VALIDASI && isSource);
   const canCancel =
     (transfer.status === TRANSFER_STATUS.DRAFT || transfer.status === TRANSFER_STATUS.SENT) &&
     isSource;

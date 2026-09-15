@@ -12,7 +12,12 @@ import { useAppRouter } from "@/hooks/use-app-router";
 import { useActiveStoreStore } from "@/stores/active-store-store";
 import { useTransferTutorialStore } from "@/stores/transfer-tutorial-store";
 import { StockTransferListMode, useStockTransfersByMode } from "../api/stock-transfer-api";
-import { MOCK_INCOMING_STOCK_TRANSFER, MOCK_INCOMING_STOCK_TRANSFER_UID } from "../tutorial/constants/transfer-tutorial-constants";
+import {
+  MOCK_INCOMING_STOCK_TRANSFER,
+  MOCK_INCOMING_STOCK_TRANSFER_UID,
+  MOCK_VALIDATION_STOCK_TRANSFER,
+  MOCK_VALIDATION_STOCK_TRANSFER_UID,
+} from "../tutorial/constants/transfer-tutorial-constants";
 
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { DataTable } from "@/components/ui/data-table";
@@ -125,6 +130,8 @@ export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
   useEffect(() => {
     if (isTutorialRunning && activeTutorial === "stock_transfer_receive" && mode === "outgoing") {
       router.replace(ROUTES.ADMIN_STOCK_TRANSFERS_INCOMING);
+    } else if (isTutorialRunning && activeTutorial === "stock_transfer_validation" && mode !== "validations") {
+      router.replace(ROUTES.ADMIN_STOCK_TRANSFERS_VALIDATIONS);
     }
   }, [isTutorialRunning, activeTutorial, mode, router]);
 
@@ -139,6 +146,21 @@ export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
           destination_store: {
             uid: activeStoreUid || "mock-store-cabang",
             nama: session?.user?.stores?.find((s) => s.uid === activeStoreUid)?.nama || "Cabang Anda (Penerima)",
+            is_central: false,
+          },
+        },
+        ...filtered,
+      ];
+    }
+    if (isTutorialRunning && activeTutorial === "stock_transfer_validation") {
+      const filtered = rawTransfers.filter((t) => !t.uid.startsWith("mock-"));
+      return [
+        {
+          ...MOCK_VALIDATION_STOCK_TRANSFER,
+          store_uid_source: activeStoreUid || MOCK_VALIDATION_STOCK_TRANSFER.store_uid_source,
+          source_store: {
+            uid: activeStoreUid || "mock-store-asal",
+            nama: session?.user?.stores?.find((s) => s.uid === activeStoreUid)?.nama || "Cabang Anda (Toko Asal)",
             is_central: false,
           },
         },
@@ -231,7 +253,10 @@ export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
                 "ditolak",
               ].includes(st);
 
-              const isFirst = item.uid === MOCK_INCOMING_STOCK_TRANSFER_UID || item.uid === transfers[0]?.uid;
+              const isFirst =
+                item.uid === MOCK_INCOMING_STOCK_TRANSFER_UID ||
+                item.uid === MOCK_VALIDATION_STOCK_TRANSFER_UID ||
+                item.uid === transfers[0]?.uid;
 
               return (
                 <span

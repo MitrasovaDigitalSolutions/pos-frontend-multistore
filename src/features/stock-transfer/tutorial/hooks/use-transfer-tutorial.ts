@@ -11,6 +11,7 @@ import { usePathname } from "next/navigation";
 import {
     MOCK_INCOMING_SUMMARY_UID,
     MOCK_INCOMING_STOCK_TRANSFER_UID,
+    MOCK_VALIDATION_STOCK_TRANSFER_UID,
 } from "../constants/transfer-tutorial-constants";
 
 function setInputValueWithEvents(input: HTMLInputElement | HTMLTextAreaElement, value: string) {
@@ -295,6 +296,11 @@ export function useTransferTutorial() {
             if (transferDialogCancelBtn) {
                 transferDialogCancelBtn.click();
             }
+
+            const validateDialogCancelBtn = document.querySelector("#transfer-dialog-btn-cancel-validate") as HTMLButtonElement | null;
+            if (validateDialogCancelBtn) {
+                validateDialogCancelBtn.click();
+            }
         }
 
         if (typeof window !== "undefined" && window.location.search.includes(MOCK_INCOMING_SUMMARY_UID)) {
@@ -306,6 +312,13 @@ export function useTransferTutorial() {
             window.location.pathname.includes(MOCK_INCOMING_STOCK_TRANSFER_UID)
         ) {
             routerRef.current.push("/admin/inventory/stock-transfer/terima");
+        }
+
+        if (
+            typeof window !== "undefined" &&
+            window.location.pathname.includes(MOCK_VALIDATION_STOCK_TRANSFER_UID)
+        ) {
+            routerRef.current.push("/admin/inventory/stock-transfer/validasi");
         }
 
         if (
@@ -365,6 +378,24 @@ export function useTransferTutorial() {
                 stopTutorial();
             } else if (isList && stepIndex >= 4 && stepIndex < 12) {
                 if (typeof window !== "undefined" && !window.location.pathname.includes(MOCK_INCOMING_STOCK_TRANSFER_UID)) {
+                    cleanupAndRestore();
+                    stopTutorial();
+                }
+            } else if (isDetail && stepIndex < 4) {
+                setStepIndex(4);
+            }
+        } else if (activeTutorial === "stock_transfer_validation") {
+            const isList = pathname === "/admin/inventory/stock-transfer/validasi";
+            const isDetail =
+                pathname.includes(MOCK_VALIDATION_STOCK_TRANSFER_UID) ||
+                (pathname.startsWith("/admin/inventory/stock-transfer/") &&
+                    pathname !== "/admin/inventory/stock-transfer/terima" &&
+                    pathname !== "/admin/inventory/stock-transfer/validasi");
+            if (!isList && !isDetail) {
+                cleanupAndRestore();
+                stopTutorial();
+            } else if (isList && stepIndex >= 4 && stepIndex < 12) {
+                if (typeof window !== "undefined" && !window.location.pathname.includes(MOCK_VALIDATION_STOCK_TRANSFER_UID)) {
                     cleanupAndRestore();
                     stopTutorial();
                 }
@@ -434,6 +465,17 @@ export function useTransferTutorial() {
     }, []);
 
     const isStockTransferReceiveListTarget = useCallback((target: string) => {
+        return [
+            "#transfer-list-header",
+            "#transfer-stat-cards",
+            "#transfer-list-filters",
+            "#transfer-row-0",
+            "#transfer-btn-detail-0",
+            "#transfer-btn-detail-0-btn",
+        ].includes(target);
+    }, []);
+
+    const isStockTransferValidationListTarget = useCallback((target: string) => {
         return [
             "#transfer-list-header",
             "#transfer-stat-cards",
@@ -547,6 +589,65 @@ export function useTransferTutorial() {
                             await new Promise((r) => setTimeout(r, 250));
                         }
 
+                        // Transition from Stock Transfer Validation List page to Detail page (step 4 -> step 5)
+                        if (
+                            activeTutorial === "stock_transfer_validation" &&
+                            isStockTransferValidationListTarget(currentStep.target) &&
+                            !isStockTransferValidationListTarget(nextStep.target) &&
+                            nextStep.target.startsWith("#transfer-detail-")
+                        ) {
+                            routerRef.current.push(`/admin/inventory/stock-transfer/${MOCK_VALIDATION_STOCK_TRANSFER_UID}?from=validations`);
+                            await waitForPathname(MOCK_VALIDATION_STOCK_TRANSFER_UID);
+                        }
+
+                        // Open approve validation dialog when advancing from Step 9 to Step 10
+                        if (
+                            activeTutorial === "stock_transfer_validation" &&
+                            currentStep.target === "#transfer-btn-validate-approve-0" &&
+                            nextStep.target.startsWith("#transfer-dialog-")
+                        ) {
+                            window.dispatchEvent(new CustomEvent("transfer-tutorial-open-dialog", { detail: { mode: "approve_validation" } }));
+                            await waitForElement("#transfer-dialog-confirm-validate", 2500);
+                            await new Promise((r) => setTimeout(r, 200));
+                        }
+
+                        // Close approve validation dialog when advancing from Step 10 to Step 11
+                        if (
+                            activeTutorial === "stock_transfer_validation" &&
+                            currentStep.target.startsWith("#transfer-dialog-") &&
+                            nextStep.target === "#transfer-btn-validate-reject-0"
+                        ) {
+                            const cancelBtn = document.querySelector("#transfer-dialog-btn-cancel-validate") as HTMLButtonElement | null;
+                            if (cancelBtn) {
+                                cancelBtn.click();
+                            }
+                            await new Promise((r) => setTimeout(r, 250));
+                        }
+
+                        // Open reject validation dialog when advancing from Step 11 to Step 12
+                        if (
+                            activeTutorial === "stock_transfer_validation" &&
+                            currentStep.target === "#transfer-btn-validate-reject-0" &&
+                            nextStep.target.startsWith("#transfer-dialog-")
+                        ) {
+                            window.dispatchEvent(new CustomEvent("transfer-tutorial-open-dialog", { detail: { mode: "reject_validation" } }));
+                            await waitForElement("#transfer-dialog-confirm-validate", 2500);
+                            await new Promise((r) => setTimeout(r, 200));
+                        }
+
+                        // Close reject validation dialog when advancing from Step 12 to Step 13 (body)
+                        if (
+                            activeTutorial === "stock_transfer_validation" &&
+                            currentStep.target.startsWith("#transfer-dialog-") &&
+                            nextStep.target === "body"
+                        ) {
+                            const cancelBtn = document.querySelector("#transfer-dialog-btn-cancel-validate") as HTMLButtonElement | null;
+                            if (cancelBtn) {
+                                cancelBtn.click();
+                            }
+                            await new Promise((r) => setTimeout(r, 250));
+                        }
+
                         // Ensure matrix view is active if target is matrix
                         if (nextStep.target.startsWith("#req-incoming-matrix")) {
                             if (typeof window !== "undefined") {
@@ -654,6 +755,65 @@ export function useTransferTutorial() {
                         ) {
                             window.dispatchEvent(new CustomEvent("transfer-tutorial-open-dialog", { detail: { mode: "reject" } }));
                             await waitForElement("#transfer-dialog-confirm-receive", 2500);
+                            await new Promise((r) => setTimeout(r, 200));
+                        }
+
+                        // Transition BACK from Detail page to Stock Transfer Validation List page (step 5 -> step 4)
+                        if (
+                            activeTutorial === "stock_transfer_validation" &&
+                            !isStockTransferValidationListTarget(currentStep.target) &&
+                            isStockTransferValidationListTarget(prevStep.target) &&
+                            currentStep.target.startsWith("#transfer-detail-")
+                        ) {
+                            routerRef.current.push("/admin/inventory/stock-transfer/validasi");
+                            await waitForPathname("/stock-transfer/validasi");
+                        }
+
+                        // Close approve validation dialog when going BACK from Step 10 to Step 9
+                        if (
+                            activeTutorial === "stock_transfer_validation" &&
+                            currentStep.target.startsWith("#transfer-dialog-") &&
+                            prevStep.target === "#transfer-btn-validate-approve-0"
+                        ) {
+                            const cancelBtn = document.querySelector("#transfer-dialog-btn-cancel-validate") as HTMLButtonElement | null;
+                            if (cancelBtn) {
+                                cancelBtn.click();
+                                await new Promise((r) => setTimeout(r, 200));
+                            }
+                        }
+
+                        // Re-open approve validation dialog when going BACK from Step 11 to Step 10
+                        if (
+                            activeTutorial === "stock_transfer_validation" &&
+                            currentStep.target === "#transfer-btn-validate-reject-0" &&
+                            prevStep.target.startsWith("#transfer-dialog-")
+                        ) {
+                            window.dispatchEvent(new CustomEvent("transfer-tutorial-open-dialog", { detail: { mode: "approve_validation" } }));
+                            await waitForElement("#transfer-dialog-confirm-validate", 2500);
+                            await new Promise((r) => setTimeout(r, 200));
+                        }
+
+                        // Close reject validation dialog when going BACK from Step 12 to Step 11
+                        if (
+                            activeTutorial === "stock_transfer_validation" &&
+                            currentStep.target.startsWith("#transfer-dialog-") &&
+                            prevStep.target === "#transfer-btn-validate-reject-0"
+                        ) {
+                            const cancelBtn = document.querySelector("#transfer-dialog-btn-cancel-validate") as HTMLButtonElement | null;
+                            if (cancelBtn) {
+                                cancelBtn.click();
+                            }
+                            await new Promise((r) => setTimeout(r, 250));
+                        }
+
+                        // Re-open reject validation dialog when going BACK from Step 13 (body) to Step 12
+                        if (
+                            activeTutorial === "stock_transfer_validation" &&
+                            currentStep.target === "body" &&
+                            prevStep.target.startsWith("#transfer-dialog-")
+                        ) {
+                            window.dispatchEvent(new CustomEvent("transfer-tutorial-open-dialog", { detail: { mode: "reject_validation" } }));
+                            await waitForElement("#transfer-dialog-confirm-validate", 2500);
                             await new Promise((r) => setTimeout(r, 200));
                         }
 

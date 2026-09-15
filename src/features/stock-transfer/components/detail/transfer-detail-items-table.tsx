@@ -143,40 +143,46 @@ export function TransferDetailItemsTable({
     setIsDialogOpen(true);
   }, []);
 
+  const handleOpenApproveValidation = useCallback((item: StockTransferItem) => {
+    const kelebihan = Number(item.kuantitas_diterima || 0) - Number(item.kuantitas);
+    setActiveValidateItem(item);
+    setActiveValidateAction(kelebihan > 0 ? "approve_koreksi" : "confirm_retur");
+    setIsValidateDialogOpen(true);
+  }, []);
+
+  const handleOpenRejectValidation = useCallback((item: StockTransferItem) => {
+    const kelebihan = Number(item.kuantitas_diterima || 0) - Number(item.kuantitas);
+    setActiveValidateItem(item);
+    setActiveValidateAction(kelebihan > 0 ? "reject_koreksi" : "reject_retur");
+    setIsValidateDialogOpen(true);
+  }, []);
+
   useEffect(() => {
     if (!isTutorialRunning) return;
     const handleTutorialOpenDialog = (e: Event) => {
-      const customEvent = e as CustomEvent<{ mode: "receive" | "reject" }>;
+      const customEvent = e as CustomEvent<{
+        mode: "receive" | "reject" | "approve_validation" | "reject_validation";
+      }>;
       const firstItem = items[0];
       if (!firstItem) return;
       if (customEvent.detail?.mode === "reject") {
         handleOpenTolakItem(firstItem);
       } else if (customEvent.detail?.mode === "receive") {
         handleOpenTerimaItem(firstItem);
+      } else if (customEvent.detail?.mode === "approve_validation") {
+        handleOpenApproveValidation(firstItem);
+      } else if (customEvent.detail?.mode === "reject_validation") {
+        handleOpenRejectValidation(firstItem);
       }
     };
     window.addEventListener("transfer-tutorial-open-dialog", handleTutorialOpenDialog);
     return () => window.removeEventListener("transfer-tutorial-open-dialog", handleTutorialOpenDialog);
-  }, [isTutorialRunning, items, handleOpenTerimaItem, handleOpenTolakItem]);
+  }, [isTutorialRunning, items, handleOpenTerimaItem, handleOpenTolakItem, handleOpenApproveValidation, handleOpenRejectValidation]);
 
   const handleOpenValidateItem = (item: StockTransferItem) => {
     const kelebihan = Number(item.kuantitas_diterima || 0) - Number(item.kuantitas);
     setActiveValidateItem(item);
     setActiveValidateAction(kelebihan > 0 ? "approve_koreksi" : "confirm_retur");
-    setIsValidateDialogOpen(true);
-  };
-
-  const handleOpenApproveValidation = (item: StockTransferItem) => {
-    const kelebihan = Number(item.kuantitas_diterima || 0) - Number(item.kuantitas);
-    setActiveValidateItem(item);
-    setActiveValidateAction(kelebihan > 0 ? "approve_koreksi" : "confirm_retur");
-    setIsValidateDialogOpen(true);
-  };
-
-  const handleOpenRejectValidation = (item: StockTransferItem) => {
-    const kelebihan = Number(item.kuantitas_diterima || 0) - Number(item.kuantitas);
-    setActiveValidateItem(item);
-    setActiveValidateAction(kelebihan > 0 ? "reject_koreksi" : "reject_retur");
     setIsValidateDialogOpen(true);
   };
 
@@ -337,10 +343,10 @@ export function TransferDetailItemsTable({
       <AnimatePresence mode="wait">
         <motion.div
           key={modeKey}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          transition={{ duration: 0.22, ease: "easeInOut" }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18, ease: "easeInOut" }}
         >
           <DataTable
             columns={columns}
@@ -380,6 +386,11 @@ export function TransferDetailItemsTable({
                     const kelebihan = Number(item.kuantitas_diterima || 0) - Number(item.kuantitas);
                     const mode = kelebihan > 0 ? "koreksi" : "retur";
 
+                    const isFirst =
+                      item.uid === "mock-item-val-1" ||
+                      items[0]?.uid === item.uid ||
+                      items.findIndex((it) => it.uid === item.uid) === 0;
+
                     return (
                       <ValidationRowControls
                         item={item}
@@ -387,6 +398,8 @@ export function TransferDetailItemsTable({
                         onOpenApprove={() => handleOpenApproveValidation(item)}
                         onOpenReject={() => handleOpenRejectValidation(item)}
                         isProcessing={validatingItemUid === item.uid}
+                        approveId={isFirst ? "transfer-btn-validate-approve-0" : undefined}
+                        rejectId={isFirst ? "transfer-btn-validate-reject-0" : undefined}
                       />
                     );
                   }
@@ -439,6 +452,9 @@ export function TransferDetailItemsTable({
             }, 80);
           }
         }}
+        contentId="transfer-dialog-confirm-validate"
+        confirmBtnId="transfer-dialog-btn-confirm-validate"
+        cancelBtnId="transfer-dialog-btn-cancel-validate"
         title={validateDialogProps.title}
         description={validateDialogProps.description}
         confirmText={validateDialogProps.confirmText}
