@@ -14,6 +14,7 @@ import { useTransferDetailItemsColumns } from "./use-transfer-detail-items-colum
 import { ReceivingItemRowControls } from "./receiving-item-row-controls";
 import { ValidationRowControls } from "./validation-row-controls";
 import { ReceivingConfirmDialog } from "./receiving-confirm-dialog";
+import { useTransferTutorialStore } from "@/stores/transfer-tutorial-store";
 
 interface TransferDetailItemsTableProps {
   items: StockTransferItem[];
@@ -48,6 +49,7 @@ export function TransferDetailItemsTable({
   isFetching = false,
 }: TransferDetailItemsTableProps) {
   const { watch } = useFormContext<ReceiveFormValues>();
+  const isTutorialRunning = useTransferTutorialStore((state) => state.isRunning);
 
   // Receiving dialog state
   const [activeItem, setActiveItem] = useState<StockTransferItem | null>(null);
@@ -128,17 +130,34 @@ export function TransferDetailItemsTable({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canReceive, canValidateTransfer]);
 
-  const handleOpenTerimaItem = (item: StockTransferItem) => {
+  // Listener to open receive or reject dialog directly during tutorial
+  const handleOpenTerimaItem = useCallback((item: StockTransferItem) => {
     setActiveItem(item);
     setActiveMode(TRANSFER_SHIPMENT_STATUS.RECEIVED);
     setIsDialogOpen(true);
-  };
+  }, []);
 
-  const handleOpenTolakItem = (item: StockTransferItem) => {
+  const handleOpenTolakItem = useCallback((item: StockTransferItem) => {
     setActiveItem(item);
     setActiveMode(TRANSFER_SHIPMENT_STATUS.REJECTED);
     setIsDialogOpen(true);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!isTutorialRunning) return;
+    const handleTutorialOpenDialog = (e: Event) => {
+      const customEvent = e as CustomEvent<{ mode: "receive" | "reject" }>;
+      const firstItem = items[0];
+      if (!firstItem) return;
+      if (customEvent.detail?.mode === "reject") {
+        handleOpenTolakItem(firstItem);
+      } else if (customEvent.detail?.mode === "receive") {
+        handleOpenTerimaItem(firstItem);
+      }
+    };
+    window.addEventListener("transfer-tutorial-open-dialog", handleTutorialOpenDialog);
+    return () => window.removeEventListener("transfer-tutorial-open-dialog", handleTutorialOpenDialog);
+  }, [isTutorialRunning, items, handleOpenTerimaItem, handleOpenTolakItem]);
 
   const handleOpenValidateItem = (item: StockTransferItem) => {
     const kelebihan = Number(item.kuantitas_diterima || 0) - Number(item.kuantitas);
@@ -341,7 +360,10 @@ export function TransferDetailItemsTable({
                     );
                   }
 
-                  const isFirst = items[0]?.uid === item.uid;
+                  const isFirst =
+                    item.uid === "mock-item-1" ||
+                    items[0]?.uid === item.uid ||
+                    items.findIndex((it) => it.uid === item.uid) === 0;
 
                   return (
                     <ReceivingItemRowControls

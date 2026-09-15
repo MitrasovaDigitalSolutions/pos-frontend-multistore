@@ -243,7 +243,7 @@ export function useTransferTutorial() {
     const ensureElementVisible = useCallback((targetSelector: string) => {
         if (typeof document === "undefined" || !targetSelector || targetSelector === "body") return;
         const el = getVisibleElement(targetSelector);
-        if (el) {
+        if (el && !el.closest("[role='dialog']") && !targetSelector.startsWith("#transfer-dialog-")) {
             const isTall = el.offsetHeight > 250;
             el.scrollIntoView({ behavior: "smooth", block: isTall ? "start" : "center" });
         }
@@ -363,7 +363,7 @@ export function useTransferTutorial() {
             if (!isList && !isDetail) {
                 cleanupAndRestore();
                 stopTutorial();
-            } else if (isList && stepIndex >= 4 && stepIndex < 11) {
+            } else if (isList && stepIndex >= 4 && stepIndex < 12) {
                 if (typeof window !== "undefined" && !window.location.pathname.includes(MOCK_INCOMING_STOCK_TRANSFER_UID)) {
                     cleanupAndRestore();
                     stopTutorial();
@@ -503,24 +503,48 @@ export function useTransferTutorial() {
                             currentStep.target === "#transfer-btn-terima-0" &&
                             nextStep.target.startsWith("#transfer-dialog-")
                         ) {
-                            const terimaBtn = document.querySelector("#transfer-btn-terima-0") as HTMLButtonElement | null;
-                            if (terimaBtn) {
-                                terimaBtn.click();
-                                await waitForElement(nextStep.target, 2500);
-                            }
+                            window.dispatchEvent(new CustomEvent("transfer-tutorial-open-dialog", { detail: { mode: "receive" } }));
+                            await waitForElement("#transfer-dialog-confirm-receive", 2500);
+                            await new Promise((r) => setTimeout(r, 200));
                         }
 
                         // Close confirm receive dialog when advancing from Step 10 to Step 11
                         if (
                             activeTutorial === "stock_transfer_receive" &&
                             currentStep.target.startsWith("#transfer-dialog-") &&
-                            !nextStep.target.startsWith("#transfer-dialog-")
+                            nextStep.target === "#transfer-btn-tolak-0"
                         ) {
                             const cancelBtn = document.querySelector("#transfer-dialog-btn-cancel") as HTMLButtonElement | null;
                             if (cancelBtn) {
                                 cancelBtn.click();
-                                await new Promise((r) => setTimeout(r, 200));
+                            } else {
+                                // dialog may already be closed (e.g., after tab switch)
                             }
+                            await new Promise((r) => setTimeout(r, 250));
+                        }
+
+                        // Open rejection warning dialog when advancing from Step 11 to Step 12
+                        if (
+                            activeTutorial === "stock_transfer_receive" &&
+                            currentStep.target === "#transfer-btn-tolak-0" &&
+                            nextStep.target.startsWith("#transfer-dialog-")
+                        ) {
+                            window.dispatchEvent(new CustomEvent("transfer-tutorial-open-dialog", { detail: { mode: "reject" } }));
+                            await waitForElement("#transfer-dialog-confirm-receive", 2500);
+                            await new Promise((r) => setTimeout(r, 200));
+                        }
+
+                        // Close rejection warning dialog when advancing from Step 12 to Step 13 (body)
+                        if (
+                            activeTutorial === "stock_transfer_receive" &&
+                            currentStep.target.startsWith("#transfer-dialog-") &&
+                            nextStep.target === "body"
+                        ) {
+                            const cancelBtn = document.querySelector("#transfer-dialog-btn-cancel") as HTMLButtonElement | null;
+                            if (cancelBtn) {
+                                cancelBtn.click();
+                            }
+                            await new Promise((r) => setTimeout(r, 250));
                         }
 
                         // Ensure matrix view is active if target is matrix
@@ -601,14 +625,36 @@ export function useTransferTutorial() {
                         // Re-open confirm receive dialog when going BACK from Step 11 to Step 10
                         if (
                             activeTutorial === "stock_transfer_receive" &&
-                            !currentStep.target.startsWith("#transfer-dialog-") &&
+                            currentStep.target === "#transfer-btn-tolak-0" &&
                             prevStep.target.startsWith("#transfer-dialog-")
                         ) {
-                            const terimaBtn = document.querySelector("#transfer-btn-terima-0") as HTMLButtonElement | null;
-                            if (terimaBtn) {
-                                terimaBtn.click();
-                                await waitForElement(prevStep.target, 2500);
+                            window.dispatchEvent(new CustomEvent("transfer-tutorial-open-dialog", { detail: { mode: "receive" } }));
+                            await waitForElement("#transfer-dialog-confirm-receive", 2500);
+                            await new Promise((r) => setTimeout(r, 200));
+                        }
+
+                        // Close rejection warning dialog when going BACK from Step 12 to Step 11
+                        if (
+                            activeTutorial === "stock_transfer_receive" &&
+                            currentStep.target.startsWith("#transfer-dialog-") &&
+                            prevStep.target === "#transfer-btn-tolak-0"
+                        ) {
+                            const cancelBtn = document.querySelector("#transfer-dialog-btn-cancel") as HTMLButtonElement | null;
+                            if (cancelBtn) {
+                                cancelBtn.click();
                             }
+                            await new Promise((r) => setTimeout(r, 250));
+                        }
+
+                        // Re-open rejection warning dialog when going BACK from Step 13 (body) to Step 12
+                        if (
+                            activeTutorial === "stock_transfer_receive" &&
+                            currentStep.target === "body" &&
+                            prevStep.target.startsWith("#transfer-dialog-")
+                        ) {
+                            window.dispatchEvent(new CustomEvent("transfer-tutorial-open-dialog", { detail: { mode: "reject" } }));
+                            await waitForElement("#transfer-dialog-confirm-receive", 2500);
+                            await new Promise((r) => setTimeout(r, 200));
                         }
 
                         // Ensure matrix view is active if target is matrix

@@ -35,7 +35,7 @@ export function ReceivingItemRowControls({
         onClick={onOpenTerima}
         disabled={isProcessing}
         icon={<IconCheck size={14} className="stroke-[2.5]" />}
-        tooltip="Konfirmasi penerimaan produk ini"
+        tooltip={terimaId ? undefined : "Konfirmasi penerimaan produk ini"}
       >
         Terima
       </DataTableTextActionButton>
@@ -45,7 +45,7 @@ export function ReceivingItemRowControls({
         onClick={onOpenTolak}
         disabled={isProcessing}
         icon={<IconX size={14} className="stroke-[2.5]" />}
-        tooltip="Tolak produk ini"
+        tooltip={tolakId ? undefined : "Tolak produk ini"}
       >
         Tolak
       </DataTableTextActionButton>

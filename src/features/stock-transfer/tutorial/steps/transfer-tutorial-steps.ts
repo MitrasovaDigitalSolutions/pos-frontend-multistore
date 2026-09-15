@@ -325,24 +325,35 @@ export const TRANSFER_TUTORIAL_STEPS: Record<string, TransferTutorialStep[]> = {
             placement: "left",
         },
         {
-            target: "#transfer-dialog-btn-submit",
-            title: "10. Dialog Verifikasi & Tombol Konfirmasi",
+            target: "#transfer-dialog-confirm-receive",
+            title: "10. Dialog Verifikasi Penerimaan Item",
             content:
-                "Dialog ini menampilkan rincian barang yang akan diterima beserta status selisih. Anda dapat menekan tombol 'Ya, Terima Item' ini untuk menyetujui penerimaan, atau memilih alasan selisih bila barang kurang.",
+                "Dialog ini menampilkan rincian barang yang akan diterima beserta status selisih. Anda dapat memeriksa kuantitas aktual barang sebelum diverifikasi ke sistem, atau memilih alasan selisih bila terjadi kekurangan unit.",
             placement: "top",
+            variant: "overlay_nav",
+            overlayNav: true,
         },
         {
             target: "#transfer-btn-tolak-0",
             title: "11. Opsi Penolakan Barang (Tolak)",
             content:
-                "Jika seluruh barang pada baris tersebut bermasalah (misal: produk salah kirim, kadaluarsa, atau rusak total saat perjalanan), Anda dapat memilih opsi tombol 'Tolak' untuk menolak item tersebut agar diverifikasi ulang oleh toko asal tanpa menambah stok ke toko Anda.",
+                "Jika produk yang tiba rusak parah, tidak sesuai pesanan, atau salah kirim dari cabang asal, Anda dapat memilih tombol 'Tolak' ini. Klik 'Selanjutnya' untuk membuka dialog peringatan penolakan dan memahami konsekuensinya.",
             placement: "left",
+        },
+        {
+            target: "#transfer-dialog-confirm-receive",
+            title: "12. Dialog Konfirmasi Penolakan & Dampaknya",
+            content:
+                "Dialog peringatan ini memastikan penolakan produk. Dampak penting penolakan:\n• Kuantitas diterima dicatat 0 pcs dan barang TIDAK ditambahkan ke stok toko Anda.\n• Status pengiriman berubah menjadi 'Menunggu Validasi'.\n• Cabang pengirim harus memvalidasi klaim dan memproses pengembalian (retur) fisik barang.",
+            placement: "top",
+            variant: "overlay_nav",
+            overlayNav: true,
         },
         {
             target: "body",
             title: "🎉 Panduan Penerimaan Transfer Masuk Selesai!",
             content:
-                "Selamat! Anda telah menguasai alur penerimaan transfer masuk secara menyeluruh: mulai dari memilih surat jalan di daftar transfer, pengecekan manifes barang, penyesuaian kuantitas fisik dan selisih di dialog konfirmasi, hingga finalisasi inventaris stok cabang.",
+                "Selamat! Anda telah menguasai alur penerimaan transfer masuk secara menyeluruh: mulai dari memilih surat jalan di daftar transfer, pengecekan manifes barang, penyesuaian kuantitas fisik dan selisih, hingga pemahaman mekanisme penerimaan serta penolakan produk.",
             placement: "center",
             action: {
                 type: "navigate",

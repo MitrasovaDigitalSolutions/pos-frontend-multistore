@@ -301,7 +301,7 @@ export const TRANSFER_TUTORIAL_METAS: TransferTutorialMeta[] = [
         description:
             "Panduan memeriksa kiriman fisik dari cabang lain, verifikasi surat jalan, dan input penerimaan stok.",
         category: "Transfer Stok Fisik",
-        stepCount: 12,
+        stepCount: 13,
         badge: "Penerimaan",
         isAvailable: true,
     },

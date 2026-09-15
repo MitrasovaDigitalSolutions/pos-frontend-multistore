@@ -363,11 +363,11 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
     );
   }
 
-  const isSource = activeStoreUid === transfer.store_uid_source;
-  const isDest = activeStoreUid === transfer.store_uid_destination;
+  const isSource = (isTutorialRunning && isMock) ? false : (activeStoreUid === transfer.store_uid_source);
+  const isDest = (isTutorialRunning && isMock) ? true : (activeStoreUid === transfer.store_uid_destination);
 
   const canFinalize = transfer.status === TRANSFER_STATUS.DRAFT && isSource;
-  const canReceive = transfer.status === TRANSFER_STATUS.SENT && isDest;
+  const canReceive = (isTutorialRunning && isMock) ? true : (transfer.status === TRANSFER_STATUS.SENT && isDest);
   const canValidateTransfer = transfer.status === TRANSFER_STATUS.MENUNGGU_VALIDASI && isSource;
   const canCancel =
     (transfer.status === TRANSFER_STATUS.DRAFT || transfer.status === TRANSFER_STATUS.SENT) &&
