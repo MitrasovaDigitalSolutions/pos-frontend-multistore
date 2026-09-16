@@ -96,6 +96,9 @@ export function StockManagement() {
             if (customEvent.detail?.dialog === "opname_create") {
                 setIsOpnameModalOpen(true);
             }
+            if (customEvent.detail?.dialog === "adjustment_select") {
+                setIsAdjustmentOpen(true);
+            }
         };
         const handleCloseDialog = () => {
             setIsOpnameModalOpen(false);

@@ -4,7 +4,8 @@ import React, { useMemo } from "react";
 import { FeatureTutorialDialog, type FeatureTutorialItem } from "@/components/shared/feature-tutorial-dialog";
 import { useStockTutorialStore } from "@/stores/stock-tutorial-store";
 import { STOCK_TUTORIAL_METAS } from "../constants/stock-tutorial-constants";
-import { IconClipboardCheck } from "@tabler/icons-react";
+import type { StockTutorialId } from "../types/stock-tutorial";
+import { IconClipboardCheck, IconActivity, IconFileAnalytics } from "@tabler/icons-react";
 import { useAppRouter } from "@/hooks/use-app-router";
 
 async function waitForPathname(substr: string, timeout = 4000): Promise<boolean> {
@@ -39,7 +40,7 @@ export function StockTutorialMenuDialog() {
     const startTutorial = useStockTutorialStore((state) => state.startTutorial);
 
     const handleSelectTutorial = async (id: string) => {
-        if (id === "stock_opname") {
+        if (id === "stock_opname" || id === "stock_adjustment") {
             setMenuOpen(false);
 
             if (typeof window !== "undefined" && window.location.pathname !== "/admin/inventory/stock-opname") {
@@ -49,7 +50,18 @@ export function StockTutorialMenuDialog() {
                 await new Promise((r) => setTimeout(r, 150));
             }
 
-            startTutorial("stock_opname");
+            startTutorial(id as StockTutorialId);
+        } else if (id === "stock_ledger") {
+            setMenuOpen(false);
+
+            if (typeof window !== "undefined" && window.location.pathname !== "/admin/inventory/stock-ledger") {
+                router.push("/admin/inventory/stock-ledger");
+                await waitForPathname("/inventory/stock-ledger");
+                await waitForElement("#stock-ledger-header", 3500);
+                await new Promise((r) => setTimeout(r, 150));
+            }
+
+            startTutorial(id as StockTutorialId);
         }
     };
 
@@ -62,7 +74,14 @@ export function StockTutorialMenuDialog() {
             duration: meta.duration,
             stepCount: meta.stepCount,
             isAvailable: meta.isAvailable,
-            icon: <IconClipboardCheck size={20} className="text-emerald-600" />,
+            icon:
+                meta.id === "stock_adjustment" ? (
+                    <IconActivity size={20} className="text-amber-600" />
+                ) : meta.id === "stock_ledger" ? (
+                    <IconFileAnalytics size={20} className="text-blue-600" />
+                ) : (
+                    <IconClipboardCheck size={20} className="text-emerald-600" />
+                ),
         }));
     }, []);
 
@@ -70,8 +89,8 @@ export function StockTutorialMenuDialog() {
         <FeatureTutorialDialog
             open={isMenuOpen}
             onOpenChange={setMenuOpen}
-            title="Pusat Panduan & Tutorial Stock Opname"
-            subtitle="Pelajari alur lengkap audit stok fisik toko, pencocokan stok sistem, pemindaian barcode, hingga finalisasi otomatis langkah demi langkah."
+            title="Pusat Panduan & Tutorial Inventori"
+            subtitle="Pelajari alur audit fisik berkala (Stock Opname), koreksi cepat per produk (Penyesuaian Stok), hingga buku besar mutasi barang (Kartu Stok) langkah demi langkah."
             items={tutorialItems}
             onSelectTutorial={handleSelectTutorial}
         />

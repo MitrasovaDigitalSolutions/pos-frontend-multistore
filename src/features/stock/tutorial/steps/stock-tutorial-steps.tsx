@@ -213,6 +213,11 @@ const MANUAL_STEPS: StockTutorialStep[] = [
     },
 ];
 
+import { STOCK_ADJUSTMENT_STEPS } from "./stock-adjustment-tutorial-steps";
+import { STOCK_LEDGER_STEPS } from "./stock-ledger-tutorial-steps";
+
+export { STOCK_ADJUSTMENT_STEPS, STOCK_LEDGER_STEPS };
+
 /**
  * Returns dynamic steps according to current branch selection
  */
@@ -227,7 +232,9 @@ export function getStockTutorialSteps(branch: StockTutorialBranch | null): Stock
     return [...COMMON_STEPS, BRANCHING_STEP, ...EXCEL_STEPS];
 }
 
-// Backward compatibility map
+// Backward compatibility & ID map
 export const STOCK_TUTORIAL_STEPS: Record<string, StockTutorialStep[]> = {
     stock_opname: [...COMMON_STEPS, BRANCHING_STEP, ...EXCEL_STEPS],
+    stock_adjustment: STOCK_ADJUSTMENT_STEPS,
+    stock_ledger: STOCK_LEDGER_STEPS,
 };

@@ -5,6 +5,14 @@ import { ColumnDef } from "@tanstack/react-table";
 import type { StockMovement } from "../types";
 import { DataTable } from "@/components/ui/data-table";
 import { formatToReadableDateTime } from "@/lib/date-utils";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useStockTutorialStore } from "@/stores/stock-tutorial-store";
+import { MOCK_STOCK_MOVEMENTS } from "../tutorial/constants/stock-tutorial-constants";
 
 const TIPE_CLASSES: Record<string, string> = {
     receive: "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/30",
@@ -20,6 +28,10 @@ const TIPE_CLASSES: Record<string, string> = {
     mutasi: "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/30",
     transfer_in: "bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/30 dark:text-teal-400 dark:border-teal-900/30",
     transfer_out: "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-900/30",
+    production_in: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/30 dark:text-purple-400 dark:border-purple-900/30",
+    production_out: "bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200 dark:bg-fuchsia-950/30 dark:text-fuchsia-400 dark:border-fuchsia-900/30",
+    stock_in: "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/30",
+    stock_out: "bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-900/30",
 };
 
 const TIPE_LABELS: Record<string, string> = {
@@ -36,6 +48,10 @@ const TIPE_LABELS: Record<string, string> = {
     mutasi: "Mutasi",
     transfer_in: "Transfer Masuk",
     transfer_out: "Transfer Keluar",
+    production_in: "Produksi Masuk",
+    production_out: "Produksi Keluar",
+    stock_in: "Stok Masuk",
+    stock_out: "Stok Keluar",
 };
 
 interface MovementLedgerProps {
@@ -66,6 +82,14 @@ export function MovementLedger({
     sortOrder,
     onSortChange,
 }: MovementLedgerProps) {
+    const isTutorialRunning = useStockTutorialStore((state) => state.isRunning);
+    const displayMovements = useMemo(() => {
+        if (isTutorialRunning && movements.length === 0) {
+            return MOCK_STOCK_MOVEMENTS as unknown as StockMovement[];
+        }
+        return movements;
+    }, [isTutorialRunning, movements]);
+
     const columns = useMemo<ColumnDef<StockMovement>[]>(
         () => [
             {
@@ -91,7 +115,7 @@ export function MovementLedger({
             },
             {
                 accessorKey: "tipe",
-                header: "Tipe",
+                header: () => <span id="ledger-col-type">Tipe</span>,
                 cell: ({ row }) => {
                     const tipe = row.original.tipe;
                     const label = TIPE_LABELS[tipe] || tipe;
@@ -106,7 +130,7 @@ export function MovementLedger({
             },
             {
                 accessorKey: "kuantitas",
-                header: "Perubahan",
+                header: () => <span id="ledger-col-change">Perubahan</span>,
                 meta: {
                     headerClassName: "text-right",
                     cellClassName: "text-right font-bold",
@@ -130,7 +154,7 @@ export function MovementLedger({
             },
             {
                 accessorKey: "stok_sebelum",
-                header: "Sebelum",
+                header: () => <span id="ledger-col-balance">Sebelum</span>,
                 meta: {
                     headerClassName: "text-right",
                     cellClassName: "text-right text-slate-500",
@@ -150,17 +174,40 @@ export function MovementLedger({
             },
             {
                 accessorKey: "alasan",
-                header: "Alasan / Referensi",
-                cell: ({ row }) => (
-                    <span className="text-[11px] text-slate-600">
-                        {row.original.alasan || "-"}
-                    </span>
-                ),
+                header: () => <span id="ledger-col-notes">Alasan / Referensi</span>,
+                cell: ({ row }) => {
+                    const catatan = row.original.alasan;
+                    if (!catatan || catatan.trim() === "-") {
+                        return <span className="text-[11px] text-slate-400 italic">-</span>;
+                    }
+
+                    return (
+                        <TooltipProvider delayDuration={150}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <span className="text-[11px] text-slate-600 truncate block max-w-[200px] cursor-help underline decoration-dotted decoration-slate-300 underline-offset-2 hover:text-slate-900 transition-colors">
+                                        {catatan}
+                                    </span>
+                                </TooltipTrigger>
+                                <TooltipContent
+                                    side="top"
+                                    align="start"
+                                    className="max-w-xs text-xs font-normal bg-slate-900 text-slate-100 p-2.5 rounded-lg shadow-lg border border-slate-800 break-words"
+                                >
+                                    <p className="font-semibold text-[10px] text-slate-400 uppercase tracking-wider mb-1">
+                                        Catatan / Alasan Mutasi:
+                                    </p>
+                                    <p className="leading-relaxed">{catatan}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    );
+                },
                 size: 240,
             },
             {
                 accessorKey: "user",
-                header: "Petugas",
+                header: () => <span id="ledger-col-user">Petugas</span>,
                 enableSorting: false,
                 cell: ({ row }) => (
                     <span className="text-[11px] font-semibold text-slate-700">
@@ -174,13 +221,10 @@ export function MovementLedger({
     );
 
     return (
-        <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4">
-            <h3 className="text-sm font-bold text-slate-900 border-b border-slate-50 pb-2">
-                Kartu Kendali Mutasi Stok (Terbaru)
-            </h3>
+        <div id="movement-ledger-table" className="w-full overflow-x-auto">
             <DataTable
                 columns={columns}
-                data={movements}
+                data={displayMovements}
                 isLoading={isLoading}
                 isFetching={isFetching}
                 emptyMessage="Belum ada log pergerakan stok."
@@ -193,7 +237,16 @@ export function MovementLedger({
                 onSortChange={onSortChange}
                 virtualize={true}
                 estimateRowHeight={44}
+                getRowMotionProps={(item) => {
+                    if (displayMovements[0]?.uid === item.uid) {
+                        return { id: "ledger-sample-row-0" };
+                    }
+                    if (displayMovements[1]?.uid === item.uid) {
+                        return { id: "ledger-sample-row-1" };
+                    }
+                    return {};
+                }}
             />
-        </section>
+        </div>
     );
 }

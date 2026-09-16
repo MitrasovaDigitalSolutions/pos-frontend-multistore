@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { IconSparkles } from "@tabler/icons-react";
 import { usePurchaseTutorialStore } from "@/stores/purchase-tutorial-store";
@@ -19,7 +19,6 @@ import { useSettingsTutorialStore } from "@/stores/settings-tutorial-store";
 import { useUsersTutorialStore } from "@/stores/users-tutorial-store";
 import { useAuditTutorialStore } from "@/stores/audit-tutorial-store";
 import { useTutorialStore } from "@/stores/tutorial-store";
-import { toast } from "sonner";
 
 interface AdminTutorialButtonProps {
     className?: string;
@@ -29,21 +28,18 @@ interface AdminTutorialButtonProps {
 export function AdminTutorialButton({ className = "", onCustomOpen }: AdminTutorialButtonProps) {
     const pathname = usePathname();
 
-    const handleClick = () => {
+    const openTutorial = useMemo(() => {
         if (onCustomOpen) {
-            onCustomOpen();
-            return;
+            return onCustomOpen;
         }
 
         // Feature-specific routing for tutorial dialogs
         if (pathname.startsWith("/admin/purchase")) {
-            usePurchaseTutorialStore.getState().setMenuOpen(true);
-            return;
+            return () => usePurchaseTutorialStore.getState().setMenuOpen(true);
         }
 
         if (pathname.startsWith("/admin/consignment")) {
-            useConsignmentTutorialStore.getState().setMenuOpen(true);
-            return;
+            return () => useConsignmentTutorialStore.getState().setMenuOpen(true);
         }
 
         if (
@@ -51,8 +47,7 @@ export function AdminTutorialButton({ className = "", onCustomOpen }: AdminTutor
             pathname.startsWith("/admin/stock-transfer") ||
             pathname.startsWith("/admin/inventory/stock-transfer")
         ) {
-            useTransferTutorialStore.getState().setMenuOpen(true);
-            return;
+            return () => useTransferTutorialStore.getState().setMenuOpen(true);
         }
 
         if (
@@ -60,33 +55,27 @@ export function AdminTutorialButton({ className = "", onCustomOpen }: AdminTutor
             pathname.startsWith("/admin/inventory/stock-ledger") ||
             pathname.startsWith("/admin/inventory/stock")
         ) {
-            useStockTutorialStore.getState().setMenuOpen(true);
-            return;
+            return () => useStockTutorialStore.getState().setMenuOpen(true);
         }
 
         if (pathname.startsWith("/admin/products")) {
-            useProductsTutorialStore.getState().setMenuOpen(true);
-            return;
+            return () => useProductsTutorialStore.getState().setMenuOpen(true);
         }
 
         if (pathname.startsWith("/admin/members")) {
-            useMembersTutorialStore.getState().setMenuOpen(true);
-            return;
+            return () => useMembersTutorialStore.getState().setMenuOpen(true);
         }
 
         if (pathname.startsWith("/admin/assets")) {
-            useAssetsTutorialStore.getState().setMenuOpen(true);
-            return;
+            return () => useAssetsTutorialStore.getState().setMenuOpen(true);
         }
 
         if (pathname.startsWith("/admin/accounting/coa")) {
-            useAccountingTutorialStore.getState().setMenuOpen(true);
-            return;
+            return () => useAccountingTutorialStore.getState().setMenuOpen(true);
         }
 
         if (pathname.includes("/admin/accounting/balance-sheet")) {
-            useBalanceSheetTutorialStore.getState().setMenuOpen(true);
-            return;
+            return () => useBalanceSheetTutorialStore.getState().setMenuOpen(true);
         }
 
         if (
@@ -94,48 +83,46 @@ export function AdminTutorialButton({ className = "", onCustomOpen }: AdminTutor
             pathname.includes("/admin/accounting/journals") ||
             pathname.includes("/admin/accounting/manual-journal")
         ) {
-            useJournalTutorialStore.getState().setMenuOpen(true);
-            return;
+            return () => useJournalTutorialStore.getState().setMenuOpen(true);
         }
 
         if (pathname.startsWith("/admin/settings")) {
-            useSettingsTutorialStore.getState().setMenuOpen(true);
-            return;
+            return () => useSettingsTutorialStore.getState().setMenuOpen(true);
         }
 
         if (pathname.startsWith("/admin/reports")) {
-            useReportsTutorialStore.getState().setMenuOpen(true);
-            return;
+            return () => useReportsTutorialStore.getState().setMenuOpen(true);
         }
 
         if (pathname.startsWith("/admin/debts")) {
-            useHutangTutorialStore.getState().setMenuOpen(true);
-            return;
+            return () => useHutangTutorialStore.getState().setMenuOpen(true);
         }
 
-        if (pathname.startsWith("/admin/employees")) {
-            useUsersTutorialStore.getState().setMenuOpen(true);
-            return;
+        if (pathname.startsWith("/admin/employees") || pathname.startsWith("/admin/users")) {
+            return () => useUsersTutorialStore.getState().setMenuOpen(true);
         }
 
         if (pathname.startsWith("/admin/audit")) {
-            useAuditTutorialStore.getState().setMenuOpen(true);
-            return;
+            return () => useAuditTutorialStore.getState().setMenuOpen(true);
         }
 
-        if (pathname.startsWith("/admin/checkout") || pathname === "/admin") {
-            useTutorialStore.getState().setMenuOpen(true);
-            return;
+        if (pathname.startsWith("/admin/checkout") || pathname === "/checkout") {
+            return () => useTutorialStore.getState().setMenuOpen(true);
         }
 
-        // Fallback for other modules not yet implemented
-        toast.info("Panduan interaktif untuk modul ini sedang dalam persiapan.");
-    };
+        // Return null if this route has no tutorial available
+        return null;
+    }, [pathname, onCustomOpen]);
+
+    // Do NOT render the tutorial button if the current menu/page has no tutorial available
+    if (!openTutorial) {
+        return null;
+    }
 
     return (
         <button
             type="button"
-            onClick={handleClick}
+            onClick={openTutorial}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-emerald-200/80 bg-emerald-50/80 hover:bg-emerald-100/90 dark:bg-emerald-950/60 dark:border-emerald-800/80 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 transition-all font-bold text-xs select-none shrink-0 shadow-sm active:scale-95 cursor-pointer group ${className}`}
             title="Pusat Panduan & Tutorial Fitur"
             aria-label="Pusat Panduan & Tutorial"

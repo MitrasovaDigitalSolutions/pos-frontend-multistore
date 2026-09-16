@@ -4,17 +4,41 @@ import type { Supplier } from "@/features/master/suppliers/types";
 export interface StockMovement {
     uid: string;
     product_uid: string;
-    tipe: "receive" | "void" | "sale" | "retur" | "penyesuaian" | "opname" | "adjustment" | "masuk" | "keluar" | "mutasi" | "sale_void" | "transfer_in" | "transfer_out" | string;
+    tipe:
+        | "receive"
+        | "void"
+        | "sale"
+        | "retur"
+        | "penyesuaian"
+        | "opname"
+        | "adjustment"
+        | "masuk"
+        | "keluar"
+        | "mutasi"
+        | "sale_void"
+        | "transfer_in"
+        | "transfer_out"
+        | "production_in"
+        | "production_out"
+        | "stock_in"
+        | "stock_out"
+        | string;
     kuantitas: number;
     stok_sebelum: number;
     stok_sesudah: number;
+    referensi_tipe?: string | null;
+    referensi_uid?: string | null;
+    store_uid?: string;
+    user_uid?: string;
     alasan: string | null;
     created_at: string;
+    updated_at?: string;
     product?: Product;
     user?: {
         uid: string;
         name: string;
         username: string;
+        email?: string;
     };
 }
 

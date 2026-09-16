@@ -1,11 +1,14 @@
 import React from "react";
 import type { Opname, OpnameItem } from "../../types";
 
-export type StockTutorialId = "stock_opname";
+export type StockTutorialId = "stock_opname" | "stock_adjustment" | "stock_ledger";
 export type StockTutorialBranch = "excel" | "manual";
 
 export type StockTutorialAction =
-    | { type: "open_dialog"; dialog: "opname_create" | "finalize" }
+    | {
+          type: "open_dialog";
+          dialog: "opname_create" | "adjustment_select" | "adjustment_form" | "finalize";
+      }
     | { type: "close_dialog" }
     | { type: "set_dialog_tab"; tab: "import" | "manual" }
     | { type: "set_mock_excel_file" }

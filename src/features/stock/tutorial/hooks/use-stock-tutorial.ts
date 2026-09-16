@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback, useMemo } from "react";
 import { useStockTutorialStore } from "@/stores/stock-tutorial-store";
-import { getStockTutorialSteps } from "../steps/stock-tutorial-steps";
+import { getStockTutorialSteps, STOCK_ADJUSTMENT_STEPS, STOCK_LEDGER_STEPS } from "../steps/stock-tutorial-steps";
 import {
     setInputValueWithEvents,
     simulateTyping,
@@ -59,11 +59,15 @@ async function runStockAction(
     switch (action.type) {
         case "open_dialog": {
             if (typeof window !== "undefined") {
-                window.dispatchEvent(
-                    new CustomEvent("stock-tutorial-open-dialog", {
-                        detail: { dialog: action.dialog },
-                    })
-                );
+                if (action.dialog === "adjustment_form") {
+                    window.dispatchEvent(new CustomEvent("stock-tutorial-open-adjust-form"));
+                } else {
+                    window.dispatchEvent(
+                        new CustomEvent("stock-tutorial-open-dialog", {
+                            detail: { dialog: action.dialog },
+                        })
+                    );
+                }
             }
             await new Promise((r) => setTimeout(r, 200));
             break;
@@ -72,6 +76,7 @@ async function runStockAction(
         case "close_dialog": {
             if (typeof window !== "undefined") {
                 window.dispatchEvent(new CustomEvent("stock-tutorial-close-dialog"));
+                window.dispatchEvent(new CustomEvent("stock-tutorial-close-adjust-form"));
             }
             await new Promise((r) => setTimeout(r, 150));
             break;
@@ -165,9 +170,15 @@ export function useStockTutorial() {
     const clearSnapshot = useStockTutorialStore((state) => state.clearSnapshot);
     const updateCursor = useStockTutorialStore((state) => state.updateCursor);
 
-    // Steps configuration dynamically calculated based on selected branch
+    // Steps configuration dynamically calculated based on active tutorial and selected branch
     const tutorialSteps = useMemo(() => {
         if (!activeTutorial) return [];
+        if (activeTutorial === "stock_adjustment") {
+            return STOCK_ADJUSTMENT_STEPS;
+        }
+        if (activeTutorial === "stock_ledger") {
+            return STOCK_LEDGER_STEPS;
+        }
         return getStockTutorialSteps(selectedBranch);
     }, [activeTutorial, selectedBranch]);
 
@@ -259,6 +270,30 @@ export function useStockTutorial() {
                 excelNotes.blur();
             }
 
+            const adjSearch = document.querySelector("#adjustment-search-filter input") as HTMLInputElement | null;
+            if (adjSearch) {
+                setInputValueWithEvents(adjSearch, "");
+                adjSearch.blur();
+            }
+
+            const adjQty = document.querySelector("#adjustment-quantity-input") as HTMLInputElement | null;
+            if (adjQty) {
+                setInputValueWithEvents(adjQty, "");
+                adjQty.blur();
+            }
+
+            const adjReason = document.querySelector("#adjustment-reason-input") as HTMLInputElement | null;
+            if (adjReason) {
+                setInputValueWithEvents(adjReason, "");
+                adjReason.blur();
+            }
+
+            const ledgerSearch = document.querySelector("#ledger-search-input input") as HTMLInputElement | null;
+            if (ledgerSearch) {
+                setInputValueWithEvents(ledgerSearch, "");
+                ledgerSearch.blur();
+            }
+
             // Remove any lingering Joyride portal
             const portal = document.getElementById("react-joyride-portal");
             if (portal) {
@@ -305,8 +340,8 @@ export function useStockTutorial() {
                 placement: isCentered
                     ? ("center" as const)
                     : isMobile && (s.placement === "left" || s.placement === "right")
-                    ? "auto"
-                    : (s.placement || "bottom"),
+                        ? "auto"
+                        : (s.placement || "bottom"),
                 skipBeacon: true,
                 disableBeacon: true,
                 skipScroll: true,
@@ -345,42 +380,72 @@ export function useStockTutorial() {
                     if (nextIndex < tutorialSteps.length) {
                         const nextStep = tutorialSteps[nextIndex];
 
-                        // Transition from Step 3 (btn-new-opname) to Step 4 (Branching Step)
-                        if (index === 2) {
-                            await executeAction({ type: "open_dialog", dialog: "opname_create" });
-                            await executeAction({ type: "set_dialog_tab", tab: "import" });
+                        // ── Transitions for Stock Ledger ──
+                        if (activeTutorial === "stock_ledger") {
+                            // Step 7 (#ledger-col-notes) -> Step 8 (Completion)
+                            if (index === 6) {
+                                toast.success("Tutorial Kartu Stok selesai! Anda siap memantau buku besar inventori toko.", {
+                                    id: "stock-tutorial-complete",
+                                    duration: 4000,
+                                });
+                            }
                         }
 
-                        // Transition from Step 4 if user clicked "Next" without clicking branch cards
-                        if (index === 3 && !selectedBranch) {
-                            setSelectedBranch("excel");
-                            await executeAction({ type: "set_dialog_tab", tab: "import" });
+                        // ── Transitions for Stock Adjustment ──
+                        if (activeTutorial === "stock_adjustment") {
+                            // Step 2 (#btn-stock-adjustment) -> Step 3 (#adjustment-search-filter)
+                            if (index === 1) {
+                                await executeAction({ type: "open_dialog", dialog: "adjustment_select" });
+                            }
+
+                            // Step 4 (#btn-adjust-product-row-0) -> Step 5 (#adjustment-selected-product-card)
+                            if (index === 3) {
+                                await executeAction({ type: "open_dialog", dialog: "adjustment_form" });
+                            }
+
+                            // Step 8 (#btn-submit-adjustment) -> Step 9 (Completion)
+                            if (index === 7) {
+                                toast.success("Penyesuaian stok manual berhasil disimpan!");
+                                await executeAction({ type: "close_dialog" });
+                            }
                         }
 
-                        // Transition from Dialog Submit Step to Items Page (Step 7 -> Step 8):
-                        // In both Excel and Manual, dialog submit is at index 6
-                        if (index === 6) {
-                            await executeAction({ type: "close_dialog" });
-                            await executeAction({
-                                type: "navigate",
-                                url: `/admin/inventory/stock-opname/${MOCK_OPNAME_UID}/items`,
-                            });
-                        }
+                        // ── Transitions for Stock Opname ──
+                        if (activeTutorial === "stock_opname") {
+                            // Transition from Step 3 (btn-new-opname) to Step 4 (Branching Step)
+                            if (index === 2) {
+                                await executeAction({ type: "open_dialog", dialog: "opname_create" });
+                                await executeAction({ type: "set_dialog_tab", tab: "import" });
+                            }
 
-                        // Transition from Finalize Step to Completion Step:
-                        // Excel: index === 9 (Step 10 finalize -> Step 11 completion)
-                        // Manual: index === 12 (Step 13 finalize -> Step 14 completion)
-                        const isFinalizeStep =
-                            (selectedBranch === "excel" && index === 9) ||
-                            (selectedBranch === "manual" && index === 12) ||
-                            index === tutorialSteps.length - 2;
+                            // Transition from Step 4 if user clicked "Next" without clicking branch cards
+                            if (index === 3 && !selectedBranch) {
+                                setSelectedBranch("excel");
+                                await executeAction({ type: "set_dialog_tab", tab: "import" });
+                            }
 
-                        if (isFinalizeStep) {
-                            toast.success("Proses finalisasi stock opname selesai!");
-                            await executeAction({
-                                type: "navigate",
-                                url: "/admin/inventory/stock-opname",
-                            });
+                            // Transition from Dialog Submit Step to Items Page (Step 7 -> Step 8)
+                            if (index === 6) {
+                                await executeAction({ type: "close_dialog" });
+                                await executeAction({
+                                    type: "navigate",
+                                    url: `/admin/inventory/stock-opname/${MOCK_OPNAME_UID}/items`,
+                                });
+                            }
+
+                            // Transition from Finalize Step to Completion Step
+                            const isFinalizeStep =
+                                (selectedBranch === "excel" && index === 9) ||
+                                (selectedBranch === "manual" && index === 12) ||
+                                index === tutorialSteps.length - 2;
+
+                            if (isFinalizeStep) {
+                                toast.success("Proses finalisasi stock opname selesai!");
+                                await executeAction({
+                                    type: "navigate",
+                                    url: "/admin/inventory/stock-opname",
+                                });
+                            }
                         }
 
                         // Handle page navigation if step contains navigate action
@@ -408,42 +473,65 @@ export function useStockTutorial() {
                     if (prevIndex >= 0) {
                         const prevStep = tutorialSteps[prevIndex];
 
-                        // Backward transition: if navigating back to Step 3 or earlier, ensure opname modal is closed!
-                        if (prevIndex <= 2) {
-                            await executeAction({ type: "close_dialog" });
+                        // ── Backward Transitions for Stock Adjustment ──
+                        if (activeTutorial === "stock_adjustment") {
+                            // Backward to Step 2 or Step 1: close all adjustment modals
+                            if (prevIndex <= 1) {
+                                await executeAction({ type: "close_dialog" });
+                            }
+                            // Backward to Step 4 or Step 3: close form dialog, ensure product list dialog open
+                            if (prevIndex === 3 || prevIndex === 2) {
+                                if (typeof window !== "undefined") {
+                                    window.dispatchEvent(new CustomEvent("stock-tutorial-close-adjust-form"));
+                                }
+                                await executeAction({ type: "open_dialog", dialog: "adjustment_select" });
+                            }
+                            // Backward from Step 9 (completion) to Step 8: re-open dialogs
+                            if (prevIndex === 7) {
+                                await executeAction({ type: "open_dialog", dialog: "adjustment_select" });
+                                await executeAction({ type: "open_dialog", dialog: "adjustment_form" });
+                            }
                         }
 
-                        // Backward transition from Step 5 to Step 4 (Branching Step)
-                        if (prevIndex === 3) {
-                            await executeAction({ type: "open_dialog", dialog: "opname_create" });
-                        }
+                        // ── Backward Transitions for Stock Opname ──
+                        if (activeTutorial === "stock_opname") {
+                            // Backward transition: if navigating back to Step 3 or earlier, ensure opname modal is closed!
+                            if (prevIndex <= 2) {
+                                await executeAction({ type: "close_dialog" });
+                            }
 
-                        // Backward transition from Step 8 (items page) back to Step 7 (opname dialog submit)
-                        if (prevIndex === 6) {
-                            await executeAction({
-                                type: "navigate",
-                                url: "/admin/inventory/stock-opname",
-                            });
-                            await executeAction({
-                                type: "open_dialog",
-                                dialog: "opname_create",
-                            });
-                            await executeAction({
-                                type: "set_dialog_tab",
-                                tab: selectedBranch === "manual" ? "manual" : "import",
-                            });
-                        }
+                            // Backward transition from Step 5 to Step 4 (Branching Step)
+                            if (prevIndex === 3) {
+                                await executeAction({ type: "open_dialog", dialog: "opname_create" });
+                            }
 
-                        // Backward transition from completion step back to finalize step
-                        const isPrevFinalizeStep =
-                            (selectedBranch === "excel" && prevIndex === 9) ||
-                            (selectedBranch === "manual" && prevIndex === 12);
+                            // Backward transition from Step 8 (items page) back to Step 7 (opname dialog submit)
+                            if (prevIndex === 6) {
+                                await executeAction({
+                                    type: "navigate",
+                                    url: "/admin/inventory/stock-opname",
+                                });
+                                await executeAction({
+                                    type: "open_dialog",
+                                    dialog: "opname_create",
+                                });
+                                await executeAction({
+                                    type: "set_dialog_tab",
+                                    tab: selectedBranch === "manual" ? "manual" : "import",
+                                });
+                            }
 
-                        if (isPrevFinalizeStep) {
-                            await executeAction({
-                                type: "navigate",
-                                url: `/admin/inventory/stock-opname/${MOCK_OPNAME_UID}/items`,
-                            });
+                            // Backward transition from completion step back to finalize step
+                            const isPrevFinalizeStep =
+                                (selectedBranch === "excel" && prevIndex === 9) ||
+                                (selectedBranch === "manual" && prevIndex === 12);
+
+                            if (isPrevFinalizeStep) {
+                                await executeAction({
+                                    type: "navigate",
+                                    url: `/admin/inventory/stock-opname/${MOCK_OPNAME_UID}/items`,
+                                });
+                            }
                         }
 
                         ensureElementVisible(prevStep.target);
@@ -481,6 +569,7 @@ export function useStockTutorial() {
                 stopTutorial();
             }
         },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         [
             tutorialSteps,
             selectedBranch,
