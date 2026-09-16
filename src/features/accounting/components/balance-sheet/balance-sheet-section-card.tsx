@@ -396,11 +396,6 @@ export function BalanceSheetSectionCard({
             const displayDebit = (hasKids && (item.debit || 0) === 0 && subtotal.debit !== 0) ? subtotal.debit : (item.debit || 0);
             const displayCredit = (hasKids && (item.credit || 0) === 0 && subtotal.credit !== 0) ? subtotal.credit : (item.credit || 0);
 
-            const percentVal = total > 0 ? (displayAmount / total) * 100 : 0;
-            const formattedPercent =
-                percentVal > 0 && percentVal < 0.1
-                    ? "< 0.1%"
-                    : `${percentVal.toFixed(percentVal % 1 === 0 ? 0 : 1)}%`;
 
             return (
                 <Fragment key={itemKey}>
@@ -506,14 +501,7 @@ export function BalanceSheetSectionCard({
                             isParent ? "font-extrabold text-slate-900 dark:text-white" : "font-bold text-slate-800 dark:text-slate-100"
                         )}>
                             {isLevel3 ? (
-                                <div className="flex items-center justify-end gap-1.5">
-                                    <span>{formatRupiah(displayAmount)}</span>
-                                    {!showDebitCredit && percentVal > 0 && (
-                                        <span className="text-[9px] text-slate-400 dark:text-slate-500 font-semibold">
-                                            ({formattedPercent})
-                                        </span>
-                                    )}
-                                </div>
+                                formatRupiah(displayAmount)
                             ) : (
                                 <span className="text-slate-300 dark:text-slate-600 font-normal">-</span>
                             )}
@@ -563,11 +551,6 @@ export function BalanceSheetSectionCard({
             const displayDebit = (hasKids && (item.debit || 0) === 0 && subtotal.debit !== 0) ? subtotal.debit : (item.debit || 0);
             const displayCredit = (hasKids && (item.credit || 0) === 0 && subtotal.credit !== 0) ? subtotal.credit : (item.credit || 0);
 
-            const percentVal = total > 0 ? (displayAmount / total) * 100 : 0;
-            const formattedPercent =
-                percentVal > 0 && percentVal < 0.1
-                    ? "< 0.1%"
-                    : `${percentVal.toFixed(percentVal % 1 === 0 ? 0 : 1)}%`;
 
             return (
                 <Fragment key={itemKey}>
@@ -675,11 +658,6 @@ export function BalanceSheetSectionCard({
                                     )}>
                                         {formatRupiah(displayAmount)}
                                     </span>
-                                    {!showDebitCredit && percentVal > 0 && (
-                                        <span className="text-[8px] text-slate-400 dark:text-slate-500 font-semibold">
-                                            ({formattedPercent})
-                                        </span>
-                                    )}
                                 </div>
                             </div>
                         ) : (

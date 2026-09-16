@@ -255,8 +255,8 @@ export function BalanceSheetDetail({ journal, flatAccounts }: BalanceSheetDetail
                 }
             />
 
-            {/* Two-Column Grid */}
-            <div className={cn("grid gap-2.5", showDebitCredit ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
+            {/* Single-Column Grid */}
+            <div className="grid grid-cols-1 gap-2.5">
                 <div className="space-y-2.5">
                     <BalanceSheetSectionCard
                         title="Aset"

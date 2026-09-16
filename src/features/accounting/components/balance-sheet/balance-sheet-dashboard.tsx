@@ -7,7 +7,6 @@ import type {
     BalanceSheetDetailCategory,
     ChartOfAccount,
 } from "@/features/accounting/types";
-import { cn } from "@/lib/utils";
 import {
     IconCoin,
     IconPrinter,
@@ -258,7 +257,7 @@ export function BalanceSheetDashboard({
 
             {/* Mode: NERACA (Aset, Liabilitas, Ekuitas) */}
             {viewType === "neraca" && (
-                <div className={cn("grid gap-3.5", showDebitCredit ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
+                <div className="grid grid-cols-1 gap-3.5">
                     {/* Left Column: Aset */}
                     <div className="space-y-3.5" id="neraca-section-assets">
                         <BalanceSheetSectionCard
@@ -311,7 +310,7 @@ export function BalanceSheetDashboard({
 
             {/* Mode: LABA RUGI (Pendapatan & Beban) */}
             {viewType === "laba_rugi" && (
-                <div className={cn("grid gap-3.5", showDebitCredit ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
+                <div className="grid grid-cols-1 gap-3.5">
                     {/* Left Column: Pendapatan */}
                     <div className="space-y-3.5">
                         <BalanceSheetSectionCard
@@ -350,7 +349,7 @@ export function BalanceSheetDashboard({
 
             {/* Mode: PERSAMAAN AKUNTANSI (All-In-One Equation) */}
             {viewType === "equation" && (
-                <div className={cn("grid gap-3.5", showDebitCredit ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
+                <div className="grid grid-cols-1 gap-3.5">
                     {/* Left Column: Aset & Beban */}
                     <div className="space-y-3.5">
                         <BalanceSheetSectionCard
