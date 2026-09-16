@@ -91,10 +91,18 @@ function TransactionDetailSkeleton() {
     );
 }
 
+import { DUMMY_TRANSACTIONS_MAP, DUMMY_TRANSACTION_DETAIL } from "@/features/sales-tutorial/constants/transactions-tutorial-dummy";
+
 export function TransactionDetailPage({ transactionId }: TransactionDetailPageProps) {
     const router = useAppRouter();
     const queryClient = useQueryClient();
-    const { data: transaction, isLoading, error } = useTransactionDetail(transactionId);
+    const isDummy = transactionId.startsWith("trx-dummy");
+    const { data: realTransaction, isLoading: isRealLoading, error: realError } = useTransactionDetail(isDummy ? "" : transactionId);
+    const transaction = isDummy
+        ? (DUMMY_TRANSACTIONS_MAP[transactionId] || DUMMY_TRANSACTION_DETAIL)
+        : realTransaction;
+    const isLoading = !isDummy && isRealLoading;
+    const error = !isDummy && realError;
     const getSetting = useSettingsStore((state) => state.getSetting);
     const [isVoidDialogOpen, setIsVoidDialogOpen] = useState(false);
 

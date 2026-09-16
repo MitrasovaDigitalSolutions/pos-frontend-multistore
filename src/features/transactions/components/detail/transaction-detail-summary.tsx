@@ -42,7 +42,7 @@ export function TransactionDetailSummary({ transaction, formattedDate }: Transac
     return (
         <div className="space-y-3.5 sm:space-y-4">
             {/* 1. Unified Hero Metrics Card (Compact side-by-side) */}
-            <div className="bg-white dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800 rounded-2xl p-3 sm:p-4 flex items-center justify-between divide-x divide-slate-200/60 dark:divide-slate-800/80 shadow-xs">
+            <div id="trx-detail-summary-metrics" className="bg-white dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800 rounded-2xl p-3 sm:p-4 flex items-center justify-between divide-x divide-slate-200/60 dark:divide-slate-800/80 shadow-xs">
                 {/* Total Jual Column */}
                 <div className="flex-1 pr-2.5 sm:pr-3 flex items-start gap-2 sm:gap-2.5">
                     <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-indigo-50 text-indigo-650 flex items-center justify-center shrink-0 border border-indigo-100/50 shadow-xs">
@@ -80,7 +80,7 @@ export function TransactionDetailSummary({ transaction, formattedDate }: Transac
             </div>
 
             {/* 2. Rincian Biaya & Aliran Pembayaran (Merged Card) */}
-            <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-3.5 sm:p-4 space-y-3 sm:space-y-4 hover:shadow-md transition-shadow duration-200">
+            <div id="trx-detail-summary-breakdown" className="bg-white border border-slate-100 rounded-2xl shadow-sm p-3.5 sm:p-4 space-y-3 sm:space-y-4 hover:shadow-md transition-shadow duration-200">
                 <div>
                     <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                         Rincian &amp; Pembayaran
@@ -235,7 +235,7 @@ export function TransactionDetailSummary({ transaction, formattedDate }: Transac
             </div>
 
             {/* 3. Otorisasi & Pelanggan (Metadata Card) */}
-            <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-3.5 sm:p-4 space-y-2.5 sm:space-y-3 hover:shadow-md transition-shadow duration-200">
+            <div id="trx-detail-summary-auth" className="bg-white border border-slate-100 rounded-2xl shadow-sm p-3.5 sm:p-4 space-y-2.5 sm:space-y-3 hover:shadow-md transition-shadow duration-200">
                 <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                     Otorisasi &amp; Waktu
                 </h3>

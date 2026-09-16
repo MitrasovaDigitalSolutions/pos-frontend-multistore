@@ -1,12 +1,11 @@
 "use client";
 
-import { useAppRouter } from "@/hooks/use-app-router";
 import { DataTable } from "@/components/ui/data-table";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { useSession } from "next-auth/react";
 import { hasPermission, hasRole } from "@/constants/roles";
-import { useDeferredValue, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
@@ -20,6 +19,9 @@ import { id } from "date-fns/locale";
 import { IconInfoCircle, IconChevronRight } from "@tabler/icons-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
+import { useAppRouter } from "@/hooks/use-app-router";
+import { useSalesTutorialStore } from "@/stores/sales-tutorial-store";
+import { DUMMY_TRANSACTIONS } from "@/features/sales-tutorial/constants/transactions-tutorial-dummy";
 
 interface TransactionFilterValues {
     search: string;
@@ -30,8 +32,8 @@ interface TransactionFilterValues {
 }
 
 export function TransactionsListPage() {
-    const { data: session } = useSession();
     const router = useAppRouter();
+    const { data: session } = useSession();
 
     const [page, setPage] = useState(1);
     const [sortBy, setSortBy] = useState<string | undefined>("created_at");
@@ -122,7 +124,15 @@ export function TransactionsListPage() {
     }
 
     const { data: transactionsData, isLoading, isFetching } = useTransactionsList(apiParams);
-    const transactions = transactionsData?.data || [];
+
+    const isTutorialRunning = useSalesTutorialStore((state) => state.isRunning);
+    const activeTutorial = useSalesTutorialStore((state) => state.activeTutorial);
+
+    const isTutorialControlled = isTutorialRunning && activeTutorial === "transactions_list";
+    const transactions = useMemo(() => {
+        if (isTutorialControlled) return DUMMY_TRANSACTIONS;
+        return transactionsData?.data || [];
+    }, [isTutorialControlled, transactionsData?.data]);
 
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
@@ -193,7 +203,12 @@ export function TransactionsListPage() {
             header: "Pembayaran",
             cell: ({ row }) => {
                 const method = row.original.metode_pembayaran?.toLowerCase() || "draft";
-                return <StatusBadge status={method} />;
+                const isFirstRow = transactions[0]?.uid === row.original.uid;
+                return (
+                    <span id={isFirstRow ? "transactions-col-payment-0" : undefined}>
+                        <StatusBadge status={method} />
+                    </span>
+                );
             },
         },
         {
@@ -207,9 +222,13 @@ export function TransactionsListPage() {
                 const totalFormatted = formatRupiah(row.original.total);
                 const method = row.original.metode_pembayaran?.toLowerCase();
                 const isDebt = method === "debt";
+                const isFirstRow = transactions[0]?.uid === row.original.uid;
 
                 return (
-                    <div className="flex items-center justify-end gap-1.5">
+                    <div
+                        id={isFirstRow ? "transactions-col-total-0" : undefined}
+                        className="flex items-center justify-end gap-1.5"
+                    >
                         <span>{totalFormatted}</span>
                         <TooltipProvider delayDuration={100}>
                             <Tooltip>
@@ -249,7 +268,15 @@ export function TransactionsListPage() {
             cell: ({ row }) => {
                 const status = row.original.status?.toLowerCase() || "completed";
                 const label = statusLabels[status] || row.original.status;
-                return <StatusBadge status={status} label={label} />;
+                const isFirstRow = transactions[0]?.uid === row.original.uid;
+                return (
+                    <span
+                        id={isFirstRow ? "transactions-col-status-0" : undefined}
+                        className="inline-block"
+                    >
+                        <StatusBadge status={status} label={label} />
+                    </span>
+                );
             },
         },
     ];
@@ -271,9 +298,9 @@ export function TransactionsListPage() {
     ];
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6" id="transactions-container">
             <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
-                <div className="flex justify-between items-center border-b border-slate-50 pb-4">
+                <div id="transactions-header-bar" className="flex justify-between items-center border-b border-slate-50 pb-4">
                     <div>
                         <h3 className="text-sm font-bold text-slate-900">
                             Daftar Transaksi (History)
@@ -284,43 +311,56 @@ export function TransactionsListPage() {
                     </div>
                 </div>
 
-                <FilterForm
-                    methods={filterMethods}
-                    onSubmit={handleFilterSubmit}
-                    onReset={handleFilterReset}
-                >
-                    <FormInput<TransactionFilterValues>
-                        name="search"
-                        label="Cari Transaksi"
-                        placeholder="Cari nomor transaksi..."
-                    />
+                <div id="transactions-filter-card">
+                    <FilterForm
+                        headerId="transactions-filter-header"
+                        methods={filterMethods}
+                        onSubmit={handleFilterSubmit}
+                        onReset={handleFilterReset}
+                    >
+                        <div id="transactions-search-input">
+                            <FormInput<TransactionFilterValues>
+                                name="search"
+                                label="Cari Transaksi"
+                                placeholder="Cari nomor transaksi..."
+                            />
+                        </div>
 
-                    <FormDatePicker<TransactionFilterValues>
-                        name="from"
-                        label="Tanggal Awal"
-                        placeholder="Dari Tanggal"
-                    />
+                        <div id="transactions-filter-date">
+                            <FormDatePicker<TransactionFilterValues>
+                                name="from"
+                                label="Tanggal Awal"
+                                placeholder="Dari Tanggal"
+                            />
+                        </div>
 
-                    <FormDatePicker<TransactionFilterValues>
-                        name="to"
-                        label="Tanggal Akhir"
-                        placeholder="Sampai Tanggal"
-                    />
+                        <div>
+                            <FormDatePicker<TransactionFilterValues>
+                                name="to"
+                                label="Tanggal Akhir"
+                                placeholder="Sampai Tanggal"
+                            />
+                        </div>
 
-                    <FormSelect<TransactionFilterValues>
-                        name="status"
-                        label="Status"
-                        options={statusOptions}
-                        placeholder="Semua Status"
-                    />
+                        <div id="transactions-filter-status">
+                            <FormSelect<TransactionFilterValues>
+                                name="status"
+                                label="Status"
+                                options={statusOptions}
+                                placeholder="Semua Status"
+                            />
+                        </div>
 
-                    <FormSelect<TransactionFilterValues>
-                        name="payment_method"
-                        label="Pembayaran"
-                        options={paymentMethodOptions}
-                        placeholder="Semua Pembayaran"
-                    />
-                </FilterForm>
+                        <div id="transactions-filter-payment">
+                            <FormSelect<TransactionFilterValues>
+                                name="payment_method"
+                                label="Pembayaran"
+                                options={paymentMethodOptions}
+                                placeholder="Semua Pembayaran"
+                            />
+                        </div>
+                    </FilterForm>
+                </div>
 
                 <DataTable
                     columns={columns}
@@ -342,8 +382,15 @@ export function TransactionsListPage() {
                     virtualize={true}
                     estimateRowHeight={44}
                     onView={(trx) => router.push(`/admin/transactions/${trx.uid}`)}
+                    getRowMotionProps={(item) => {
+                        if (transactions[0]?.uid === item.uid) {
+                            return { id: "transactions-sample-row-0" };
+                        }
+                        return {};
+                    }}
                     renderCardItem={(row) => {
                         const trx = row.original;
+                        const isFirstItem = transactions[0]?.uid === trx.uid;
                         const status = trx.status?.toLowerCase() || "completed";
                         const statusLabel = statusLabels[status] || trx.status;
                         const method = trx.metode_pembayaran?.toLowerCase() || "cash";
@@ -353,6 +400,7 @@ export function TransactionsListPage() {
                         return (
                             <div
                                 key={trx.uid || trx.nomor_transaksi}
+                                id={isFirstItem ? "transactions-sample-row-0" : undefined}
                                 onClick={() => router.push(`/admin/transactions/${trx.uid}`)}
                                 className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-2.5 shadow-2xs hover:border-emerald-500/50 transition-all cursor-pointer group"
                             >
@@ -410,6 +458,7 @@ export function TransactionsListPage() {
 
                                     <button
                                         type="button"
+                                        id={isFirstItem ? "transactions-btn-view-0" : undefined}
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             router.push(`/admin/transactions/${trx.uid}`);

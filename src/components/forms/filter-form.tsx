@@ -20,6 +20,7 @@ interface FilterFormProps<T extends FieldValues> {
     cols?: number;
     defaultExpanded?: boolean;
     actionsId?: string;
+    headerId?: string;
 }
 
 function formatFilterKey(key: string): string {
@@ -68,6 +69,7 @@ export function FilterForm<T extends FieldValues>({
     cols,
     defaultExpanded = true,
     actionsId,
+    headerId,
 }: FilterFormProps<T>) {
     const queryClient = useQueryClient();
     const [isExpanded, setIsExpanded] = useState(defaultExpanded);
@@ -183,6 +185,7 @@ return (
         >
             {/* Toggle Header */}
             <div
+                id={headerId}
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="flex items-center justify-between cursor-pointer select-none"
             >

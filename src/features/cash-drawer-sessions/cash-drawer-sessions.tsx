@@ -10,11 +10,16 @@ import type { CashDrawerSession } from "@/features/checkout/types/cash-drawer";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { formatToReadableDateTime } from "@/lib/date-utils";
 import { ColumnDef, Row } from "@tanstack/react-table";
-import { ChevronRight, Hourglass } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { SessionDetailDialog } from "./components/session-detail-dialog";
 import { SessionFilter } from "./components/session-filter";
+import { useSalesTutorialStore } from "@/stores/sales-tutorial-store";
+import {
+    DUMMY_CASH_DRAWER_DETAIL,
+    DUMMY_CASH_DRAWER_SESSIONS,
+} from "@/features/sales-tutorial/constants/cash-drawer-tutorial-dummy";
 
 export function CashDrawerSessions() {
     const { data: session } = useSession();
@@ -39,6 +44,10 @@ export function CashDrawerSessions() {
     const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
 
+    const activeTutorial = useSalesTutorialStore((s) => s.activeTutorial);
+    const stepIndex = useSalesTutorialStore((s) => s.stepIndex);
+    const isTutorialRunning = useSalesTutorialStore((s) => s.isRunning);
+
     const { data: sessionsData, isLoading, isFetching } = useCashDrawerSessions({
         page,
         per_page: perPage,
@@ -48,12 +57,40 @@ export function CashDrawerSessions() {
         ...filters,
     });
 
+    const isTutorialControlled = isTutorialRunning && activeTutorial === "cash_drawer";
+    const effectiveDetailOpen = isTutorialControlled
+        ? (stepIndex >= 5 && stepIndex < 18)
+        : isDetailOpen;
+    const effectiveSessionId = isTutorialControlled
+        ? DUMMY_CASH_DRAWER_DETAIL.uid
+        : (selectedSessionId && selectedSessionId.startsWith("session-dummy") ? null : selectedSessionId);
+
+    // Reset dialog and selection whenever tutorial stops
+    const wasTutorialControlledRef = useRef(false);
+    useEffect(() => {
+        if (wasTutorialControlledRef.current && !isTutorialControlled) {
+            setIsDetailOpen(false);
+            setSelectedSessionId(null);
+        }
+        wasTutorialControlledRef.current = isTutorialControlled;
+    }, [isTutorialControlled]);
+
+    // Provide rich dummy data during tutorial; revert to real data on exit
+    const displaySessions = useMemo(() => {
+        return isTutorialControlled
+            ? DUMMY_CASH_DRAWER_SESSIONS
+            : (sessionsData?.data || []);
+    }, [isTutorialControlled, sessionsData?.data]);
+
     const handleFilter = (newFilters: typeof filters) => {
         setFilters(newFilters);
         setPage(1);
     };
 
     const handleView = (s: CashDrawerSession) => {
+        if (isTutorialControlled) {
+            return;
+        }
         setSelectedSessionId(s.uid);
         setIsDetailOpen(true);
     };
@@ -104,11 +141,17 @@ export function CashDrawerSessions() {
                 accessorKey: "expected_cash",
                 header: "Expected Cash",
                 enableSorting: false,
-                cell: ({ row }) => (
-                    <span className="font-semibold text-slate-700 text-xs tabular-nums">
-                        {formatRupiah(row.original.expected_cash)}
-                    </span>
-                ),
+                cell: ({ row }) => {
+                    const isFirstRow = displaySessions[0]?.uid === row.original.uid;
+                    return (
+                        <span
+                            id={isFirstRow ? "cash-drawer-col-expected-cash" : undefined}
+                            className="font-semibold text-slate-700 text-xs tabular-nums"
+                        >
+                            {formatRupiah(row.original.expected_cash)}
+                        </span>
+                    );
+                },
                 size: 120,
             },
             {
@@ -116,26 +159,42 @@ export function CashDrawerSessions() {
                 header: "Selisih",
                 enableSorting: false,
                 cell: ({ row }) => {
+                    const isFirstRow = displaySessions[0]?.uid === row.original.uid;
                     const diff = row.original.difference;
-                    if (row.original.status === "open") return <span className="text-slate-400">-</span>;
-                    if (diff === null || diff === undefined) return <span className="text-slate-400">-</span>;
+                    if (row.original.status === "open") {
+                        return <span id={isFirstRow ? "cash-drawer-col-difference" : undefined} className="text-slate-400">-</span>;
+                    }
+                    if (diff === null || diff === undefined) {
+                        return <span id={isFirstRow ? "cash-drawer-col-difference" : undefined} className="text-slate-400">-</span>;
+                    }
 
                     if (diff > 0) {
                         return (
-                            <span className="bg-teal-50 text-teal-700 text-[10px] font-bold px-2 py-0.5 rounded border border-teal-100 tabular-nums">
+                            <span
+                                id={isFirstRow ? "cash-drawer-col-difference" : undefined}
+                                className="bg-teal-50 text-teal-700 text-[10px] font-bold px-2 py-0.5 rounded border border-teal-100 tabular-nums"
+                            >
                                 +{formatRupiah(diff)}
                             </span>
                         );
                     }
                     if (diff < 0) {
                         return (
-                            <span className="bg-rose-50 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded border border-rose-100 tabular-nums">
+                            <span
+                                id={isFirstRow ? "cash-drawer-col-difference" : undefined}
+                                className="bg-rose-50 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded border border-rose-100 tabular-nums"
+                            >
                                 {formatRupiah(diff)}
                             </span>
                         );
                     }
                     return (
-                        <span className="text-slate-500 font-bold text-xs tabular-nums">0</span>
+                        <span
+                            id={isFirstRow ? "cash-drawer-col-difference" : undefined}
+                            className="text-slate-500 font-bold text-xs tabular-nums"
+                        >
+                            0
+                        </span>
                     );
                 },
                 size: 120,
@@ -153,7 +212,7 @@ export function CashDrawerSessions() {
                 size: 80,
             },
         ],
-        [],
+        [displaySessions],
     );
 
     if (!hasViewSessions) {
@@ -166,21 +225,16 @@ export function CashDrawerSessions() {
     }
 
     return (
-        <div className="space-y-6">
-            <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
-                <div className="flex justify-between items-center border-b border-slate-50 pb-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
-                            <Hourglass size={20} />
-                        </div>
-                        <div>
-                            <h3 className="text-sm font-bold text-slate-900">
-                                Sesi Kasir & Shift
-                            </h3>
-                            <p className="text-[11px] text-slate-400 mt-0.5">
-                                Pantau status laci kasir, saldo, selisih kas, dan riwayat shift operator kasir.
-                            </p>
-                        </div>
+        <div className="space-y-6" id="cash-drawer-container">
+            <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4">
+                <div id="cash-drawer-header-bar" className="flex justify-between items-center border-b border-slate-100 pb-4">
+                    <div>
+                        <h3 className="text-sm font-bold text-slate-900">
+                            Daftar Sesi Kasir & Shift
+                        </h3>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                            Monitor dan audit riwayat perputaran laci kasir (cash drawer) per shift operasional.
+                        </p>
                     </div>
                 </div>
 
@@ -188,7 +242,7 @@ export function CashDrawerSessions() {
 
                 <DataTable
                     columns={columns}
-                    data={sessionsData?.data || []}
+                    data={displaySessions}
                     isLoading={isLoading}
                     isFetching={isFetching}
                     emptyMessage="Tidak ada sesi kasir ditemukan."
@@ -208,12 +262,20 @@ export function CashDrawerSessions() {
                     virtualize={true}
                     estimateRowHeight={50}
                     onView={handleView}
+                    getRowMotionProps={(item) => {
+                        if (displaySessions[0]?.uid === item.uid) {
+                            return { id: "cash-drawer-sample-row-0" };
+                        }
+                        return {};
+                    }}
                     renderCardItem={(row: Row<CashDrawerSession>) => {
                         const sessionItem = row.original;
+                        const isFirstItem = displaySessions[0]?.uid === sessionItem.uid;
                         const diff = sessionItem.difference;
                         return (
                             <div
                                 key={sessionItem.uid}
+                                id={isFirstItem ? "cash-drawer-sample-row-0" : undefined}
                                 className="bg-white dark:bg-slate-950 border border-slate-200/90 dark:border-slate-800 rounded-xl p-3 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col gap-2.5"
                             >
                                 {/* Header: User & Status & Detail Icon */}
@@ -239,6 +301,7 @@ export function CashDrawerSessions() {
                                         />
                                         <button
                                             type="button"
+                                            id={isFirstItem ? "cash-drawer-btn-detail-0" : undefined}
                                             onClick={() => handleView(sessionItem)}
                                             className="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-[10px] transition-all cursor-pointer flex items-center gap-1 shadow-2xs shadow-emerald-600/20"
                                             title="Detail Sesi"
@@ -302,9 +365,17 @@ export function CashDrawerSessions() {
             </section>
 
             <SessionDetailDialog
-                open={isDetailOpen}
-                onOpenChange={setIsDetailOpen}
-                sessionId={selectedSessionId}
+                open={effectiveDetailOpen}
+                onOpenChange={(val) => {
+                    setIsDetailOpen(val);
+                    if (!val) {
+                        setSelectedSessionId(null);
+                        if (isTutorialControlled) {
+                            useSalesTutorialStore.getState().stopTutorial();
+                        }
+                    }
+                }}
+                sessionId={effectiveSessionId}
             />
         </div>
     );

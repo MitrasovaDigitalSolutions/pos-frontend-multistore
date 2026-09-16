@@ -18,6 +18,7 @@ import { useHutangTutorialStore } from "@/stores/hutang-tutorial-store";
 import { useSettingsTutorialStore } from "@/stores/settings-tutorial-store";
 import { useUsersTutorialStore } from "@/stores/users-tutorial-store";
 import { useAuditTutorialStore } from "@/stores/audit-tutorial-store";
+import { useSalesTutorialStore } from "@/stores/sales-tutorial-store";
 import { useTutorialStore } from "@/stores/tutorial-store";
 
 interface AdminTutorialButtonProps {
@@ -104,6 +105,10 @@ export function AdminTutorialButton({ className = "", onCustomOpen }: AdminTutor
 
         if (pathname.startsWith("/admin/audit")) {
             return () => useAuditTutorialStore.getState().setMenuOpen(true);
+        }
+
+        if (pathname.startsWith("/admin/cash-drawer") || pathname.startsWith("/admin/transactions")) {
+            return () => useSalesTutorialStore.getState().setMenuOpen(true);
         }
 
         if (pathname.startsWith("/admin/checkout") || pathname === "/checkout") {

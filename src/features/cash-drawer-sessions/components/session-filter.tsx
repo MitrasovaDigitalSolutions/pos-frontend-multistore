@@ -67,41 +67,52 @@ export function SessionFilter({ onFilter }: SessionFilterProps) {
     };
 
     return (
-        <FilterForm
-            methods={methods}
-            onSubmit={onSubmit}
-            onReset={handleReset}
-        >
-            {/* Field 1: Operator/Kasir Filter */}
-            <FormSelect<SessionFilterValues>
-                name="user_uid"
-                label="Operator / Kasir"
-                options={userOptions}
-                placeholder={isLoadingUsers ? "Memuat kasir..." : "Semua Kasir"}
-                disabled={isLoadingUsers}
-            />
+        <div id="cash-drawer-filter-card">
+            <FilterForm
+                headerId="cash-drawer-filter-header"
+                methods={methods}
+                onSubmit={onSubmit}
+                onReset={handleReset}
+            >
+                {/* Field 1: Operator/Kasir Filter */}
+                <div id="cash-drawer-filter-user">
+                    <FormSelect<SessionFilterValues>
+                        name="user_uid"
+                        label="Operator / Kasir"
+                        options={userOptions}
+                        placeholder={isLoadingUsers ? "Memuat kasir..." : "Semua Kasir"}
+                        disabled={isLoadingUsers}
+                    />
+                </div>
 
-            {/* Field 2: Status Filter */}
-            <FormSelect<SessionFilterValues>
-                name="status"
-                label="Status Shift"
-                options={statusOptions}
-                placeholder="Semua Status"
-            />
+                {/* Field 2: Status Filter */}
+                <div id="cash-drawer-filter-status">
+                    <FormSelect<SessionFilterValues>
+                        name="status"
+                        label="Status Shift"
+                        options={statusOptions}
+                        placeholder="Semua Status"
+                    />
+                </div>
 
-            {/* Field 3: Tanggal Awal */}
-            <FormDatePicker<SessionFilterValues>
-                name="from"
-                label="Tanggal Awal"
-                placeholder="Pilih tanggal awal..."
-            />
+                {/* Field 3: Tanggal Awal */}
+                <div id="cash-drawer-filter-date">
+                    <FormDatePicker<SessionFilterValues>
+                        name="from"
+                        label="Tanggal Awal"
+                        placeholder="Pilih tanggal awal..."
+                    />
+                </div>
 
-            {/* Field 4: Tanggal Akhir */}
-            <FormDatePicker<SessionFilterValues>
-                name="to"
-                label="Tanggal Akhir"
-                placeholder="Pilih tanggal akhir..."
-            />
-        </FilterForm>
+                {/* Field 4: Tanggal Akhir */}
+                <div>
+                    <FormDatePicker<SessionFilterValues>
+                        name="to"
+                        label="Tanggal Akhir"
+                        placeholder="Pilih tanggal akhir..."
+                    />
+                </div>
+            </FilterForm>
+        </div>
     );
 }

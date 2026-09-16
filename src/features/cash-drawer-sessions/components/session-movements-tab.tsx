@@ -53,14 +53,14 @@ export function SessionMovementsTab({ movements }: SessionMovementsTabProps) {
     }, [movements]);
 
     return (
-        <div className="py-1">
+        <div id="session-detail-movements-content" className="py-1">
             {sortedMovements.length > 0 ? (
                 <div className="relative pl-0 sm:pl-1">
                     {/* Vertical timeline track line */}
                     <div className="absolute left-3 sm:left-4.5 top-3 bottom-3 w-0.5 bg-slate-100 dark:bg-slate-800/80" />
 
                     <div className="space-y-3 sm:space-y-4 relative">
-                        {sortedMovements.map((movement) => {
+                        {sortedMovements.map((movement, idx) => {
                             const isOutflow =
                                 movement.type === "cash_out" ||
                                 movement.type === "cash_refund";
@@ -104,7 +104,11 @@ export function SessionMovementsTab({ movements }: SessionMovementsTabProps) {
                             }
 
                             return (
-                                <div key={movement.uid} className="relative flex items-start group">
+                                <div
+                                    key={movement.uid}
+                                    id={idx === 0 ? "session-detail-movement-item-first" : undefined}
+                                    className="relative flex items-start group"
+                                >
                                     {/* Timeline Dot Indicator */}
                                     <div className={cn(
                                         "absolute left-3 sm:left-4.5 w-5 h-5 sm:w-6 sm:h-6 rounded-full border bg-white dark:bg-slate-950 flex items-center justify-center -translate-x-1/2 z-10 transition-all duration-200 shadow-sm group-hover:scale-110",

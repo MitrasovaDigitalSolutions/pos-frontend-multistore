@@ -4,6 +4,7 @@ import { PurchaseTutorialController } from "@/features/purchase/tutorial/compone
 import { ConsignmentTutorialController } from "@/features/consignment/tutorial/components/consignment-tutorial-controller";
 import { TransferTutorialController } from "@/features/stock-transfer/tutorial/components/transfer-tutorial-controller";
 import { StockTutorialController } from "@/features/stock/tutorial/components/stock-tutorial-controller";
+import { SalesTutorialController } from "@/features/sales-tutorial/components/sales-tutorial-controller";
 import type { ReactNode } from "react";
 
 interface AdminLayoutProps {
@@ -28,6 +29,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <ConsignmentTutorialController />
             <TransferTutorialController />
             <StockTutorialController />
+            <SalesTutorialController />
         </div>
     );
 }
