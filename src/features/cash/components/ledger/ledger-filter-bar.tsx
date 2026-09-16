@@ -34,6 +34,7 @@ export function LedgerFilterBar({ methods, onSubmit, onReset }: LedgerFilterBarP
     ];
 
     return (
+        <div id="kas-filter-bar">
         <FilterForm
             methods={methods}
             onSubmit={onSubmit}
@@ -66,5 +67,6 @@ export function LedgerFilterBar({ methods, onSubmit, onReset }: LedgerFilterBarP
                 />
             </div>
         </FilterForm>
+        </div>
     );
 }

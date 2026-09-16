@@ -31,6 +31,8 @@ export function LedgerDetailModal({ open, onOpenChange, movement }: LedgerDetail
         <BaseDialog
             open={open}
             onOpenChange={onOpenChange}
+            contentId="kas-ledger-detail-content"
+            closeBtnId="kas-ledger-detail-close"
             title={
                 <span className="flex items-center gap-2 text-slate-900 font-extrabold text-sm">
                     <IconScale className="text-emerald-600" size={18} />
