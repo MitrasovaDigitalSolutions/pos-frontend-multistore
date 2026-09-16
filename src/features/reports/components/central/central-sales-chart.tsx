@@ -100,23 +100,24 @@ export function CentralSalesChart({
     return (
         <Card className="bg-white border border-slate-100 rounded-xl p-4 sm:p-5 shadow-2xs space-y-3.5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                        <IconChartDots size={16} />
-                    </div>
-                    <div>
+                <div className="flex flex-col">
+                    <div id="central-report-sales-chart-title" className="inline-flex items-center gap-2 w-fit">
+                        <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                            <IconChartDots size={16} />
+                        </div>
                         <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                             {byStore ? "Tren Penjualan Per Cabang" : "Tren Omset, Laba & Beban"}
                         </h4>
-                        <p className="text-[10px] text-slate-400">
-                            {byStore
-                                ? "Garis perbandingan omset masing-masing cabang"
-                                : "Agregasi Omset Bersih, Laba Kotor, dan Pengeluaran"}
-                        </p>
                     </div>
+                    <p className="text-[10px] text-slate-400 mt-0.5 ml-9">
+                        {byStore
+                            ? "Garis perbandingan omset masing-masing cabang"
+                            : "Agregasi Omset Bersih, Laba Kotor, dan Pengeluaran"}
+                    </p>
                 </div>
 
                 <button
+                    id="central-report-sales-chart-toggle"
                     type="button"
                     onClick={() => onByStoreToggle(!byStore)}
                     className={`h-7 px-2.5 text-[11px] font-bold rounded-lg border flex items-center gap-1.5 transition-all cursor-pointer ${

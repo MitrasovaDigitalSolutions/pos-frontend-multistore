@@ -7,6 +7,54 @@ import type {
 } from "@/features/reports/types";
 import type { ReportsTutorialMeta } from "../types/reports-tutorial";
 
+export const REPORTS_TUTORIAL_LIST: ReportsTutorialMeta[] = [
+    {
+        id: "jelajah_laba_rugi",
+        title: "Jelajah Laporan Laba Rugi",
+        description: "Memahami analisis pendapatan, HPP, diskon, dan laba bersih toko.",
+        category: "Laporan",
+        stepCount: 7,
+        badge: "Profitabilitas",
+        isAvailable: true,
+    },
+    {
+        id: "jelajah_penjualan",
+        title: "Jelajah Laporan Penjualan",
+        description: "Membaca faktur penjualan barang keluar beserta detail barang terjual.",
+        category: "Laporan",
+        stepCount: 7,
+        badge: "Penjualan",
+        isAvailable: true,
+    },
+    {
+        id: "jelajah_kategori",
+        title: "Penjualan Per Kategori",
+        description: "Analisis kontribusi penjualan berdasarkan kategori produk.",
+        category: "Laporan",
+        stepCount: 6,
+        badge: "Kategori",
+        isAvailable: true,
+    },
+    {
+        id: "jelajah_pembelian",
+        title: "Jelajah Laporan Pembelian",
+        description: "Memahami faktur pembelian, retur, dan sisa hutang kepada supplier.",
+        category: "Laporan",
+        stepCount: 7,
+        badge: "Pembelian",
+        isAvailable: true,
+    },
+    {
+        id: "jelajah_pengeluaran",
+        title: "Jelajah Laporan Pengeluaran",
+        description: "Membaca log biaya pengeluaran kas operasional toko.",
+        category: "Laporan",
+        stepCount: 6,
+        badge: "Pengeluaran",
+        isAvailable: true,
+    },
+];
+
 export const MOCK_LABA_RUGI: LabaRugiReport = {
     from: "2026-08-16",
     to: "2026-09-15",
@@ -174,51 +222,3 @@ export const MOCK_PENGELUARAN: PengeluaranReport = {
     ],
     total_amount: 750000,
 };
-
-export const REPORTS_TUTORIAL_LIST: ReportsTutorialMeta[] = [
-    {
-        id: "jelajah_laba_rugi",
-        title: "Jelajah Laporan Laba Rugi",
-        description: "Memahami analisis pendapatan, HPP, diskon, dan laba bersih toko.",
-        category: "Laporan",
-        stepCount: 7,
-        badge: "Profitabilitas",
-        isAvailable: true,
-    },
-    {
-        id: "jelajah_penjualan",
-        title: "Jelajah Laporan Penjualan",
-        description: "Membaca faktur penjualan barang keluar beserta detail barang terjual.",
-        category: "Laporan",
-        stepCount: 7,
-        badge: "Penjualan",
-        isAvailable: true,
-    },
-    {
-        id: "jelajah_kategori",
-        title: "Penjualan Per Kategori",
-        description: "Analisis kontribusi penjualan berdasarkan kategori produk.",
-        category: "Laporan",
-        stepCount: 6,
-        badge: "Kategori",
-        isAvailable: true,
-    },
-    {
-        id: "jelajah_pembelian",
-        title: "Jelajah Laporan Pembelian",
-        description: "Memahami faktur pembelian, retur, dan sisa hutang kepada supplier.",
-        category: "Laporan",
-        stepCount: 7,
-        badge: "Pembelian",
-        isAvailable: true,
-    },
-    {
-        id: "jelajah_pengeluaran",
-        title: "Jelajah Laporan Pengeluaran",
-        description: "Membaca log biaya pengeluaran kas operasional toko.",
-        category: "Laporan",
-        stepCount: 6,
-        badge: "Pengeluaran",
-        isAvailable: true,
-    },
-];
