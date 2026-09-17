@@ -44,8 +44,8 @@ export const CENTRAL_REPORT_TUTORIAL_STEPS: CentralReportTutorialStep[] = [
     {
         id: "lk-step-6",
         target: "#central-report-sales-chart-toggle",
-        title: "6. Tab Ringkasan: Sakelar Breakdown Cabang",
-        content: "Gunakan sakelar ini untuk beralih antara grafik konsolidasi total atau multi-line chart yang memetakan kurva penjualan masing-masing cabang secara berdampingan.",
+        title: "6. Tab Ringkasan: Switch Breakdown Cabang",
+        content: "Gunakan switch ini untuk beralih antara grafik konsolidasi total atau multi-line chart yang memetakan kurva penjualan masing-masing cabang secara berdampingan.",
         placement: "bottom",
         skipScroll: true,
     },

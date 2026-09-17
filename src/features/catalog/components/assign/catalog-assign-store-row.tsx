@@ -32,6 +32,7 @@ interface CatalogAssignStoreRowProps {
         global_min_qty_grosir: number | null;
     };
     masterPrice: number;
+    isFirstRow?: boolean;
     onToggleChecked: (storeUid: string, current: boolean) => void;
     onToggleCustom: (storeUid: string, current: boolean) => void;
 }
@@ -42,6 +43,7 @@ export function CatalogAssignStoreRow({
     currentAssignment,
     globalValues,
     masterPrice,
+    isFirstRow = false,
     onToggleChecked,
     onToggleCustom,
 }: CatalogAssignStoreRowProps) {
@@ -83,6 +85,7 @@ export function CatalogAssignStoreRow({
 
     return (
         <div
+            id={isFirstRow ? "catalog-assign-store-row-sample" : undefined}
             className={`border rounded-2xl transition-all overflow-hidden ${
                 isChecked
                     ? isCustom
@@ -129,7 +132,7 @@ export function CatalogAssignStoreRow({
                             )}
                         </div>
 
-                        <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                        <div id={isFirstRow ? "catalog-assign-store-status-sample" : undefined} className="flex items-center gap-2 text-[11px] text-slate-400">
                             <span>Status Saat Ini:</span>
                             <strong className="text-slate-600 font-semibold">
                                 {currentAssignment?.harga_jual != null
@@ -148,35 +151,38 @@ export function CatalogAssignStoreRow({
                 {/* Right: Effective Price Preview & Custom Toggle Button */}
                 <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                     {/* Live Effective Pill */}
-                    {isChecked ? (
-                        <div className="flex flex-col items-start sm:items-end text-right">
-                            <div className="flex items-center gap-1.5 font-mono">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                    {isCustom ? "Khusus:" : "Akan Diset:"}
-                                </span>
-                                <span className="text-xs font-black text-slate-900">
-                                    {formatRupiah(effectivePrice)}
-                                </span>
-                            </div>
+                    <div id={isFirstRow ? "catalog-assign-store-preview-sample" : undefined} className="flex flex-col items-start sm:items-end text-right">
+                        {isChecked ? (
+                            <>
+                                <div className="flex items-center gap-1.5 font-mono">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                        {isCustom ? "Khusus:" : "Akan Diset:"}
+                                    </span>
+                                    <span className="text-xs font-black text-slate-900">
+                                        {formatRupiah(effectivePrice)}
+                                    </span>
+                                </div>
 
-                            {hasEffectiveWholesale ? (
-                                <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.2 rounded-md font-mono mt-0.5">
-                                    Grosir: {formatRupiah(Number(effectiveHargaGrosir))} (≥{effectiveMinQty} pcs)
-                                </span>
-                            ) : (
-                                <span className="text-[9px] font-semibold text-slate-400">
-                                    Tanpa Grosir
-                                </span>
-                            )}
-                        </div>
-                    ) : (
-                        <span className="text-xs text-slate-400 italic">
-                            Tidak dipilih
-                        </span>
-                    )}
+                                {hasEffectiveWholesale ? (
+                                    <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.2 rounded-md font-mono mt-0.5">
+                                        Grosir: {formatRupiah(Number(effectiveHargaGrosir))} (≥{effectiveMinQty} pcs)
+                                    </span>
+                                ) : (
+                                    <span className="text-[9px] font-semibold text-slate-400">
+                                        Tanpa Grosir
+                                    </span>
+                                )}
+                            </>
+                        ) : (
+                            <span className="text-xs text-slate-400 italic">
+                                Tidak dipilih
+                            </span>
+                        )}
+                    </div>
 
                     {/* Customize Trigger Button */}
                     <button
+                        id={isFirstRow ? "catalog-assign-store-custom-toggle-sample" : undefined}
                         type="button"
                         onClick={() => onToggleCustom(store.uid, isCustom)}
                         disabled={!isChecked}
@@ -198,7 +204,7 @@ export function CatalogAssignStoreRow({
 
             {/* ── Collapsible Custom Pricing Section ──────────────────────────── */}
             <Show.When isTrue={Boolean(isChecked && isCustom)}>
-                <div className="border-t border-amber-200/80 bg-amber-50/20 p-4 sm:p-4.5 space-y-3.5 animate-in fade-in-50 duration-150">
+                <div id={isFirstRow ? "catalog-assign-store-custom-form-sample" : undefined} className="border-t border-amber-200/80 bg-amber-50/20 p-4 sm:p-4.5 space-y-3.5 animate-in fade-in-50 duration-150">
                     <div className="flex items-center gap-1.5 text-amber-900 font-extrabold text-xs">
                         <IconBuildingStore size={15} className="text-amber-600" />
                         <span>Pengaturan Khusus Toko: {store.nama}</span>

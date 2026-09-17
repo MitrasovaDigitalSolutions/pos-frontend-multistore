@@ -85,7 +85,7 @@ export const SETTINGS_TUTORIAL_STEPS: Record<SettingsTutorialId, SettingsTutoria
             target: "#form-settings-point-toggle",
             tabId: "finance",
             title: "3. Sistem Poin Loyalitas",
-            content: "Aktifkan sakelar ini agar member mendapatkan poin setiap kali berbelanja di kasir toko Anda.",
+            content: "Aktifkan switch ini agar member mendapatkan poin setiap kali berbelanja di kasir toko Anda.",
             placement: "bottom",
             disableBeacon: true,
         },

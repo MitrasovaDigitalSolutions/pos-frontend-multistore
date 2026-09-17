@@ -89,7 +89,7 @@ export function ProductPricingColumn({
                         </div>
 
                         {/* Grosir Toggle */}
-                        <div id="form-product-grosir-section" className="pt-2 border-t border-slate-200/60 space-y-1.5">
+                        <div id="product-form-wholesale-section" className="pt-2 border-t border-slate-200/60 space-y-1.5">
                             <div className="flex items-center justify-between">
                                 <span className="text-[11px] font-bold text-slate-700">Harga Grosir (Opsional)</span>
                                 <FormSwitch<ProductInput>

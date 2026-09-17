@@ -77,7 +77,7 @@ function triggerSimulateClick(target: string | { selector: string }) {
 }
 
 /**
- * Pastikan sakelar (Switch) tertentu aktif saat step ini tampil. Berguna untuk
+ * Pastikan switch (Switch) tertentu aktif saat step ini tampil. Berguna untuk
  * flow yang butuh opsi tertentu menyala agar narasi & tabel konsisten.
  */
 function ensureSwitchOn(switchSelector: string) {

@@ -21,7 +21,7 @@ export interface BalanceSheetTutorialStep {
     waitForElement?: string;
     variant?: "tooltip" | "overlay_nav" | "banner";
     skipScroll?: boolean;
-    /** Paksa sakelar "Detail D/K" (kolom Debit & Kredit) aktif saat step ini tampil. */
+    /** Paksa switch "Detail D/K" (kolom Debit & Kredit) aktif saat step ini tampil. */
     ensureDkOn?: boolean;
     /** Paksa baris rincian kategori (tombol Detail) terbuka agar spotlight `.neraca-detail-btn` selalu ada. */
     ensureDetailOpen?: boolean;

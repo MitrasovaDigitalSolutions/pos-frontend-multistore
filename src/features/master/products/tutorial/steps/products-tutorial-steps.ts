@@ -104,7 +104,7 @@ export const PRODUCTS_TUTORIAL_STEPS: Record<ProductsTutorialId, ProductsTutoria
         {
             target: "#store-edit-grosir-switch",
             title: "3. Fitur Harga Grosir Khusus Toko",
-            content: "Aktifkan sakelar Grosir untuk memberikan potongan harga bertingkat bagi pelanggan yang membeli dalam jumlah minimal tertentu.",
+            content: "Aktifkan switch Grosir untuk memberikan potongan harga bertingkat bagi pelanggan yang membeli dalam jumlah minimal tertentu.",
             placement: "left",
         },
         {

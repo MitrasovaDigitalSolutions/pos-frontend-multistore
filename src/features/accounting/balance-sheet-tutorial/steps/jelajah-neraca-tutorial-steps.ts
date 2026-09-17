@@ -20,8 +20,8 @@ export const JELAJAH_NERACA_TUTORIAL_STEPS: BalanceSheetTutorialStep[] = [
     {
         id: "jn-step-3",
         target: "#neraca-switch-dk",
-        title: "3. Sakelar Detail D/K",
-        content: "Sakelar ini menampilkan kolom mutasi Debit dan Kredit pada setiap pos akun dalam tabel.",
+        title: "3. Switch Detail D/K",
+        content: "Switch ini menampilkan kolom mutasi Debit dan Kredit pada setiap pos akun dalam tabel.",
         placement: "bottom",
         skipScroll: true,
         ensureDkOn: true,

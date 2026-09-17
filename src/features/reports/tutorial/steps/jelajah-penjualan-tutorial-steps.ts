@@ -25,7 +25,7 @@ export const JELAJAH_PENJUALAN_TUTORIAL_STEPS: ReportsTutorialStep[] = [
         id: "jp-step-3",
         target: "#penjualan-switch-items",
         title: "3. Sertakan Detail Barang",
-        content: "Sakelar ini menentukan apakah nama dan qty barang terjual ditampilkan saat baris faktur diperluas dan pada cetakan PDF.",
+        content: "Switch ini menentukan apakah nama dan qty barang terjual ditampilkan saat baris faktur diperluas dan pada cetakan PDF.",
         placement: "bottom",
         skipScroll: true,
         ensureSwitchOn: "#penjualan-switch-items [data-slot='switch'][role='switch']",

@@ -83,7 +83,7 @@ function getVisibleHtmlElement(selector: string): HTMLElement | null {
 
 function ensureDetailDkEnabled() {
     if (typeof document === "undefined") return;
-    // Utamakan sakelar di dalam grup filter Neraca; fallback ke pencarian global.
+    // Utamakan switch di dalam grup filter Neraca; fallback ke pencarian global.
     const scoped = document.querySelector('#neraca-switch-dk [data-slot="switch"][role="switch"]');
     const sw = scoped || document.querySelector('[data-slot="switch"][role="switch"]');
     if (!sw) return;

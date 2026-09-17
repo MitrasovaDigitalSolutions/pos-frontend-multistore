@@ -83,7 +83,7 @@ function getVisibleHtmlElement(selector: string): HTMLElement | null {
 void getVisibleHtmlElement;
 
 /**
- * Pastikan sakelar (Switch) tertentu aktif saat step ini tampil. Berguna untuk
+ * Pastikan switch (Switch) tertentu aktif saat step ini tampil. Berguna untuk
  * flow yang butuh "Sertakan Detail Barang" menyala agar narasi & tabel konsisten.
  */
 function ensureSwitchOn(switchSelector: string) {

@@ -19,7 +19,7 @@ export function CatalogAssignProductSummary({ product }: CatalogAssignProductSum
     );
 
     return (
-        <div className="bg-slate-50/80 border border-slate-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+        <div id="catalog-assign-product-summary" className="bg-slate-50/80 border border-slate-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
             <div className="flex items-start gap-3 min-w-0">
                 <div className="p-2.5 rounded-xl bg-white border border-slate-200 shrink-0 text-slate-500 shadow-xs">
                     <IconPackage size={22} className="text-emerald-600" />

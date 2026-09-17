@@ -1,12 +1,10 @@
-export type HutangTutorialId =
-    | "jelajah_hutang_member"
-    | "jelajah_hutang_sales"
-    | "jelajah_hutang_supplier"
-    | "jelajah_pembayaran_member";
+import type { CatalogTutorialId } from "@/stores/catalog-tutorial-store";
 
-export type HutangTutorialSimulateClick = { selector: string } | string;
+export type { CatalogTutorialId };
 
-export interface HutangTutorialStep {
+export type CatalogTutorialSimulateClick = { selector: string } | string;
+
+export interface CatalogTutorialStep {
     id?: string;
     target: string;
     fallbackTarget?: string;
@@ -19,20 +17,16 @@ export interface HutangTutorialStep {
     nextLabel?: string;
     disableBeacon?: boolean;
     spotlightClicks?: boolean;
-    simulateClick?: HutangTutorialSimulateClick;
+    simulateClick?: CatalogTutorialSimulateClick;
     navigate?: string;
     overlayNav?: boolean;
     waitForElement?: string;
     variant?: "tooltip" | "overlay_nav" | "banner";
     skipScroll?: boolean;
-    /** Paksa switch tertentu aktif saat step ini tampil (mis. Switch detail barang). */
-    ensureSwitchOn?: string;
-    /** Tutup dialog yang sedang terbuka saat step ini tampil (mis. kembali ke daftar). */
-    closeDialog?: string;
 }
 
-export interface HutangTutorialMeta {
-    id: HutangTutorialId;
+export interface CatalogTutorialMeta {
+    id: CatalogTutorialId;
     title: string;
     description: string;
     category: string;

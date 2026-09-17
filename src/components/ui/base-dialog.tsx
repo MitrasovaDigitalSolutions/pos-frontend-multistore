@@ -28,6 +28,8 @@ interface BaseDialogProps {
     scrollable?: boolean;
     contentId?: string;
     closeBtnId?: string;
+    /** Prevent closing when clicking outside or focus leaves the dialog (e.g. during guided tutorials) */
+    disablePointerDismissal?: boolean;
 }
 
 export function BaseDialog({
@@ -41,9 +43,10 @@ export function BaseDialog({
     scrollable = true,
     contentId,
     closeBtnId,
+    disablePointerDismissal,
 }: BaseDialogProps) {
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog open={open} onOpenChange={onOpenChange} disablePointerDismissal={disablePointerDismissal}>
             {/* Always hide the default absolute-positioned close button */}
             <DialogContent
                 id={contentId}

@@ -20,6 +20,7 @@ import { useSettingsTutorialStore } from "@/stores/settings-tutorial-store";
 import { useUsersTutorialStore } from "@/stores/users-tutorial-store";
 import { useAuditTutorialStore } from "@/stores/audit-tutorial-store";
 import { useSalesTutorialStore } from "@/stores/sales-tutorial-store";
+import { useCatalogTutorialStore } from "@/stores/catalog-tutorial-store";
 import { useTutorialStore } from "@/stores/tutorial-store";
 
 interface AdminTutorialButtonProps {
@@ -58,6 +59,10 @@ export function AdminTutorialButton({ className = "", onCustomOpen }: AdminTutor
             pathname.startsWith("/admin/inventory/stock")
         ) {
             return () => useStockTutorialStore.getState().setMenuOpen(true);
+        }
+
+        if (pathname.startsWith("/admin/catalog")) {
+            return () => useCatalogTutorialStore.getState().setMenuOpen(true);
         }
 
         if (pathname.startsWith("/admin/products")) {

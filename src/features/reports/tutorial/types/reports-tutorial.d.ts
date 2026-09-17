@@ -26,7 +26,7 @@ export interface ReportsTutorialStep {
     waitForElement?: string;
     variant?: "tooltip" | "overlay_nav" | "banner";
     skipScroll?: boolean;
-    /** Paksa sakelar tertentu aktif saat step ini tampil (mis. Switch detail barang). */
+    /** Paksa switch tertentu aktif saat step ini tampil (mis. Switch detail barang). */
     ensureSwitchOn?: string;
 }
 
