@@ -271,7 +271,7 @@ export function AssetDetailSheet({
                                     className="h-8 px-3 text-xs font-bold text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-xl cursor-pointer flex items-center gap-1.5 self-start sm:self-auto shrink-0"
                                 >
                                     <IconReceiptRefund className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                                    <span>JualAset</span>
+                                    <span>Jual Aset</span>
                                 </Button>
                             )}
                         </div>
