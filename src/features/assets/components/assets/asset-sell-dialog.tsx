@@ -62,6 +62,59 @@ export function AssetSellDialog({
         onSuccess,
     });
 
+    // Tutorial Event Listener: Handle simulated typing and automated field selection
+    React.useEffect(() => {
+        if (typeof window === "undefined") return;
+
+        const handleSetField = (e: Event) => {
+            const customEvent = e as CustomEvent<{ field: string; value: unknown }>;
+            if (!customEvent.detail) return;
+            const { field, value } = customEvent.detail;
+
+            if (field === "nominal_jual") {
+                const num = typeof value === "number" ? value : Number(value);
+                handleNominalChange(num);
+                form.setValue("nominal_jual", num, { shouldValidate: true, shouldDirty: true });
+            } else if (field === "cash_account_uid") {
+                const selectedUid =
+                    value === "__first__"
+                        ? cashOptions[0]?.value || "mock-cash-uid"
+                        : String(value);
+                form.setValue("cash_account_uid", selectedUid, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                });
+            } else if (field === "offset_coa_uid") {
+                const selectedUid =
+                    value === "__first__"
+                        ? offsetCoaOptions[0]?.value || "mock-offset-coa"
+                        : String(value);
+                form.setValue("offset_coa_uid", selectedUid, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                });
+            } else if (field === "catatan") {
+                form.setValue("catatan", String(value), {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                });
+            }
+        };
+
+        const handleReset = () => {
+            form.reset();
+            handleNominalChange(null);
+        };
+
+        window.addEventListener("assets-tutorial-set-field", handleSetField);
+        window.addEventListener("assets-tutorial-reset", handleReset);
+
+        return () => {
+            window.removeEventListener("assets-tutorial-set-field", handleSetField);
+            window.removeEventListener("assets-tutorial-reset", handleReset);
+        };
+    }, [cashOptions, offsetCoaOptions, form, handleNominalChange]);
+
     if (!asset) return null;
 
     return (
@@ -88,7 +141,10 @@ export function AssetSellDialog({
                     className="space-y-2.5 text-xs"
                 >
                     {/* 1. TOP: Ultra-compact Slim Horizontal Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/70 dark:border-slate-800">
+                    <div
+                        id="sell-asset-header"
+                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/70 dark:border-slate-800"
+                    >
                         <div className="flex items-center gap-2 min-w-0">
                             <span className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-slate-100 truncate">
                                 {asset.nama}
@@ -146,36 +202,50 @@ export function AssetSellDialog({
                                     />
 
                                     {/* Nominal Penjualan (Harga Jual) */}
-                                    <FormNominalInput<SellAssetSchemaInput>
-                                        name="nominal_jual"
-                                        label="Harga Jual (Rp) *"
-                                        placeholder="Contoh: 5.000.000"
-                                        disabled={isPending}
-                                        onValueChange={handleNominalChange}
-                                    />
+                                    <div id="sell-nominal-jual">
+                                        <FormNominalInput<SellAssetSchemaInput>
+                                            name="nominal_jual"
+                                            label="Harga Jual (Rp) *"
+                                            placeholder="Contoh: 5.000.000"
+                                            disabled={isPending}
+                                            onValueChange={handleNominalChange}
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Akun Kas / Bank Penerimaan */}
-                                <FormSelect<SellAssetSchemaInput>
-                                    name="cash_account_uid"
-                                    label="Akun Kas / Bank Penerimaan *"
-                                    options={cashOptions}
-                                    placeholder={isLoadingCash ? "Memuat akun kas..." : "Pilih Kas Utama / Bank..."}
-                                    isLoading={isLoadingCash}
-                                    disabled={isPending || isLoadingCash}
-                                />
+                                <div id="sell-cash-account">
+                                    <FormSelect<SellAssetSchemaInput>
+                                        name="cash_account_uid"
+                                        label="Akun Kas / Bank Penerimaan *"
+                                        options={cashOptions}
+                                        getExtraOption={(val) =>
+                                            val === "mock-cash-uid"
+                                                ? { value: val, label: "Kas Toko Utama (Demo)" }
+                                                : undefined
+                                        }
+                                        placeholder={isLoadingCash ? "Memuat akun kas..." : "Pilih Kas Utama / Bank..."}
+                                        isLoading={isLoadingCash}
+                                        disabled={isPending || isLoadingCash}
+                                    />
+                                </div>
 
                                 {/* Catatan Penjualan */}
-                                <FormInput<SellAssetSchemaInput>
-                                    name="catatan"
-                                    label="Catatan (Opsional)"
-                                    placeholder="Nama pembeli, alasan Penjualan aset..."
-                                    disabled={isPending}
-                                />
+                                <div id="sell-catatan">
+                                    <FormInput<SellAssetSchemaInput>
+                                        name="catatan"
+                                        label="Catatan (Opsional)"
+                                        placeholder="Nama pembeli, alasan Penjualan aset..."
+                                        disabled={isPending}
+                                    />
+                                </div>
                             </div>
 
                             {/* Peringatan Status Lock */}
-                            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/30 text-[10px] text-amber-700 dark:text-amber-400 mt-1">
+                            <div
+                                id="sell-status-warning"
+                                className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/30 text-[10px] text-amber-700 dark:text-amber-400 mt-1"
+                            >
                                 <IconAlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-500" />
                                 <span>
                                     Setelah diproses, status aset menjadi <strong>Dijual</strong> & terkunci permanen.
@@ -196,100 +266,115 @@ export function AssetSellDialog({
                                 </div>
 
                                 {/* 1. Real-time Calculation & CoA Offset Dynamic Handler */}
-                                {!hasEnteredNominal && (
-                                    <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/40 border border-dashed border-slate-200 dark:border-slate-800 text-center space-y-0.5">
-                                        <span className="text-[11px] text-slate-600 dark:text-slate-300 font-bold block">
-                                            Masukkan Nominal Harga Jual
-                                        </span>
-                                        <p className="text-[10px] text-slate-400 leading-relaxed">
-                                            Sistem akan otomatis menghitung selisih laba/rugi dan memandu pemilihan akun penyeimbang.
-                                        </p>
-                                    </div>
-                                )}
+                                <div id="sell-offset-coa-section" className="space-y-2">
+                                    {!hasEnteredNominal && (
+                                        <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/40 border border-dashed border-slate-200 dark:border-slate-800 text-center space-y-0.5">
+                                            <span className="text-[11px] text-slate-600 dark:text-slate-300 font-bold block">
+                                                Masukkan Nominal Harga Jual
+                                            </span>
+                                            <p className="text-[10px] text-slate-400 leading-relaxed">
+                                                Sistem akan otomatis menghitung selisih laba/rugi dan memandu pemilihan akun penyeimbang.
+                                            </p>
+                                        </div>
+                                    )}
 
-                                {isGain && (
-                                    <div className="p-2 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/70 space-y-1.5 animate-in fade-in duration-200">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-1.5">
-                                                <div className="p-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300">
-                                                    <IconTrendingUp className="w-3.5 h-3.5" />
+                                    {isGain && (
+                                        <div className="p-2 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/70 space-y-1.5 animate-in fade-in duration-200">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className="p-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300">
+                                                        <IconTrendingUp className="w-3.5 h-3.5" />
+                                                    </div>
+                                                    <span className="font-extrabold text-emerald-800 dark:text-emerald-300 text-xs">
+                                                        Keuntungan (Gain)
+                                                    </span>
                                                 </div>
-                                                <span className="font-extrabold text-emerald-800 dark:text-emerald-300 text-xs">
-                                                    Keuntungan (Gain)
+                                                <span className="font-mono font-extrabold text-xs text-emerald-700 dark:text-emerald-300">
+                                                    +{formatRupiah(selisih)}
                                                 </span>
                                             </div>
-                                            <span className="font-mono font-extrabold text-xs text-emerald-700 dark:text-emerald-300">
-                                                +{formatRupiah(selisih)}
-                                            </span>
-                                        </div>
 
-                                        {/* Akun CoA Penyeimbang Keuntungan */}
-                                        <div className="pt-1 border-t border-emerald-200/60 dark:border-emerald-800/50">
-                                            <FormSelect<SellAssetSchemaInput>
-                                                key="gain-offset-coa"
-                                                name="offset_coa_uid"
-                                                label="Akun Pendapatan / Ekuitas Penyeimbang *"
-                                                options={offsetCoaOptions}
-                                                placeholder={
-                                                    isLoadingCoa
-                                                        ? "Memuat akun CoA..."
-                                                        : "Pilih Akun Pendapatan/Ekuitas..."
-                                                }
-                                                isLoading={isLoadingCoa}
-                                                disabled={isPending || isLoadingCoa}
-                                            />
+                                            {/* Akun CoA Penyeimbang Keuntungan */}
+                                            <div className="pt-1 border-t border-emerald-200/60 dark:border-emerald-800/50">
+                                                <FormSelect<SellAssetSchemaInput>
+                                                    key="gain-offset-coa"
+                                                    name="offset_coa_uid"
+                                                    label="Akun Pendapatan / Ekuitas Penyeimbang *"
+                                                    options={offsetCoaOptions}
+                                                    getExtraOption={(val) =>
+                                                        val === "mock-offset-coa"
+                                                            ? { value: val, label: "Pendapatan Penjualan Aset (Demo)" }
+                                                            : undefined
+                                                    }
+                                                    placeholder={
+                                                        isLoadingCoa
+                                                            ? "Memuat akun CoA..."
+                                                            : "Pilih Akun Pendapatan/Ekuitas..."
+                                                    }
+                                                    isLoading={isLoadingCoa}
+                                                    disabled={isPending || isLoadingCoa}
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
 
-                                {isLoss && (
-                                    <div className="p-2 rounded-lg bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/70 space-y-1.5 animate-in fade-in duration-200">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-1.5">
-                                                <div className="p-0.5 rounded bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300">
-                                                    <IconTrendingDown className="w-3.5 h-3.5" />
+                                    {isLoss && (
+                                        <div className="p-2 rounded-lg bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/70 space-y-1.5 animate-in fade-in duration-200">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className="p-0.5 rounded bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300">
+                                                        <IconTrendingDown className="w-3.5 h-3.5" />
+                                                    </div>
+                                                    <span className="font-extrabold text-rose-800 dark:text-rose-300 text-xs">
+                                                        Kerugian (Loss)
+                                                    </span>
                                                 </div>
-                                                <span className="font-extrabold text-rose-800 dark:text-rose-300 text-xs">
-                                                    Kerugian (Loss)
+                                                <span className="font-mono font-extrabold text-xs text-rose-700 dark:text-rose-300">
+                                                    -{formatRupiah(Math.abs(selisih))}
                                                 </span>
                                             </div>
-                                            <span className="font-mono font-extrabold text-xs text-rose-700 dark:text-rose-300">
-                                                -{formatRupiah(Math.abs(selisih))}
+
+                                            {/* Akun CoA Penyeimbang Kerugian */}
+                                            <div className="pt-1 border-t border-rose-200/60 dark:border-rose-800/50">
+                                                <FormSelect<SellAssetSchemaInput>
+                                                    key="loss-offset-coa"
+                                                    name="offset_coa_uid"
+                                                    label="Akun Beban Penyeimbang *"
+                                                    options={offsetCoaOptions}
+                                                    getExtraOption={(val) =>
+                                                        val === "mock-offset-coa"
+                                                            ? { value: val, label: "Beban Kerugian Penjualan Aset (Demo)" }
+                                                            : undefined
+                                                    }
+                                                    placeholder={
+                                                        isLoadingCoa
+                                                            ? "Memuat akun CoA..."
+                                                            : "Pilih Akun Beban..."
+                                                    }
+                                                    isLoading={isLoadingCoa}
+                                                    disabled={isPending || isLoadingCoa}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {isBreakeven && (
+                                        <div className="p-2 rounded-lg bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-[11px] animate-in fade-in duration-200">
+                                            <span className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1">
+                                                <IconEqual className="w-3.5 h-3.5" /> Impas (Harga = Nilai Buku)
+                                            </span>
+                                            <span className="font-mono text-[10px] text-slate-500">
+                                                Selisih Rp 0 (Tanpa CoA)
                                             </span>
                                         </div>
-
-                                        {/* Akun CoA Penyeimbang Kerugian */}
-                                        <div className="pt-1 border-t border-rose-200/60 dark:border-rose-800/50">
-                                            <FormSelect<SellAssetSchemaInput>
-                                                key="loss-offset-coa"
-                                                name="offset_coa_uid"
-                                                label="Akun Beban Penyeimbang *"
-                                                options={offsetCoaOptions}
-                                                placeholder={
-                                                    isLoadingCoa
-                                                        ? "Memuat akun CoA..."
-                                                        : "Pilih Akun Beban..."
-                                                }
-                                                isLoading={isLoadingCoa}
-                                                disabled={isPending || isLoadingCoa}
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-
-                                {isBreakeven && (
-                                    <div className="p-2 rounded-lg bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-[11px] animate-in fade-in duration-200">
-                                        <span className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1">
-                                            <IconEqual className="w-3.5 h-3.5" /> Impas (Harga = Nilai Buku)
-                                        </span>
-                                        <span className="font-mono text-[10px] text-slate-500">
-                                            Selisih Rp 0 (Tanpa CoA)
-                                        </span>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
 
                                 {/* 2. Simulasi Jurnal GL Otomatis (Compact Slip) */}
-                                <div className="p-2 rounded-lg bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-100/70 dark:border-indigo-900/30 space-y-1">
+                                <div
+                                    id="sell-gl-simulation"
+                                    className="p-2 rounded-lg bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-100/70 dark:border-indigo-900/30 space-y-1"
+                                >
                                     <div className="flex items-center justify-between text-[10px] font-bold text-indigo-700 dark:text-indigo-300">
                                         <span className="flex items-center gap-1">
                                             <IconInfoCircle className="w-3 h-3" />
@@ -304,7 +389,7 @@ export function AssetSellDialog({
                                         {/* Debet Kas */}
                                         <div className="flex items-center justify-between gap-1 p-1 rounded bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 min-w-0">
                                             <span className="text-slate-600 dark:text-slate-300 truncate">
-                                                [D] {selectedCashAccount ? selectedCashAccount.nama : "Kas"}
+                                                [D] {selectedCashAccount ? selectedCashAccount.nama : (form.watch("cash_account_uid") ? "Kas Toko Utama (Demo)" : "Kas")}
                                             </span>
                                             <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0 ml-1">
                                                 +{formatRupiah(watchedNominalJual)}
@@ -315,7 +400,7 @@ export function AssetSellDialog({
                                         {isGain && (
                                             <div className="flex items-center justify-between gap-1 p-1 rounded bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 min-w-0">
                                                 <span className="text-slate-600 dark:text-slate-300 truncate">
-                                                    [K] {selectedOffsetCoa ? selectedOffsetCoa.nama : "(Pilih Akun Pendapatan)"}
+                                                    [K] {selectedOffsetCoa ? selectedOffsetCoa.nama : (form.watch("offset_coa_uid") ? "Pendapatan Penjualan Aset (Demo)" : "(Pilih Akun Pendapatan)")}
                                                 </span>
                                                 <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0 ml-1">
                                                     +{formatRupiah(selisih)}
@@ -326,7 +411,7 @@ export function AssetSellDialog({
                                         {isLoss && (
                                             <div className="flex items-center justify-between gap-1 p-1 rounded bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 min-w-0">
                                                 <span className="text-slate-600 dark:text-slate-300 truncate">
-                                                    [D] {selectedOffsetCoa ? selectedOffsetCoa.nama : "(Pilih Akun Beban)"}
+                                                    [D] {selectedOffsetCoa ? selectedOffsetCoa.nama : (form.watch("offset_coa_uid") ? "Beban Kerugian Penjualan Aset (Demo)" : "(Pilih Akun Beban)")}
                                                 </span>
                                                 <span className="font-mono font-bold text-rose-600 dark:text-rose-400 shrink-0 ml-1">
                                                     +{formatRupiah(Math.abs(selisih))}
@@ -371,6 +456,7 @@ export function AssetSellDialog({
                             Batal
                         </Button>
                         <Button
+                            id="btn-submit-sell-asset"
                             type="submit"
                             disabled={
                                 isPending ||

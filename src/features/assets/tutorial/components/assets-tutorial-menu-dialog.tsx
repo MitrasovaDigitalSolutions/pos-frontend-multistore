@@ -14,6 +14,7 @@ import {
     IconLayersIntersect,
     IconTrash,
     IconTags,
+    IconReceiptRefund,
 } from "@tabler/icons-react";
 import { useAppRouter } from "@/hooks/use-app-router";
 
@@ -27,6 +28,7 @@ const ASSETS_TUTORIAL_ICONS: Record<
     susut_bulk: IconLayersIntersect,
     detail_hapus: IconTrash,
     kategori_aset: IconTags,
+    jual_aset: IconReceiptRefund,
 };
 
 async function waitForElement(selector: string, timeout = 3000): Promise<Element | null> {

@@ -268,6 +268,8 @@ export function AssetsPage() {
                 setIsBulkDialogOpen={setIsBulkPenyusutanOpen}
                 setIsConfirmDeleteDialogOpen={setIsConfirmDeleteOpen}
                 setAssetToDelete={setAssetToDelete}
+                setIsSellDialogOpen={setIsSellDialogOpen}
+                setSelectedSellAsset={setSelectedSellAsset}
                 sampleAsset={sampleAsset}
             />
         </div>
