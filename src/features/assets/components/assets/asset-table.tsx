@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable, DataTableActionButton } from "@/components/ui/data-table";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { IconTrendingDown } from "@tabler/icons-react";
+import { IconTrendingDown, IconReceiptRefund } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { useDeleteAsset } from "../../api/assets-api";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
@@ -21,6 +21,7 @@ interface AssetTableProps {
     assets: Asset[];
     onDetail: (asset: Asset) => void;
     onDepreciate: (asset: Asset) => void;
+    onSell?: (asset: Asset) => void;
     onEdit: (asset: Asset) => void;
     isLoading?: boolean;
     isFetching?: boolean;
@@ -35,6 +36,7 @@ export function AssetTable({
     assets,
     onDetail,
     onDepreciate,
+    onSell,
     onEdit,
     isLoading = false,
     isFetching = false,
@@ -53,6 +55,10 @@ export function AssetTable({
     const setAssetToDelete = onAssetToDeleteChange ?? setInternalAssetToDelete;
 
     const handleDelete = (asset: Asset) => {
+        if (asset.status === "dijual") {
+            toast.error("Aset yang sudah dijual tidak dapat dihapus.");
+            return;
+        }
         if (asset.can_delete === false) {
             toast.error("Aset ini tidak dapat dihapus.");
             return;
@@ -248,7 +254,11 @@ export function AssetTable({
                 onView={onDetail}
                 onEdit={onEdit}
                 onDelete={handleDelete}
-                disableDelete={(a) => {
+                hideEdit={(a) => a.status === "dijual"}
+                hideDelete={(a) => {
+                    if (a.status === "dijual") {
+                        return true;
+                    }
                     if (typeof a.can_delete === "boolean") {
                         return !a.can_delete;
                     }
@@ -257,21 +267,38 @@ export function AssetTable({
                 extraActions={(a) => {
                     const maxSusut =
                         (Number(a.nilai_buku) || 0) - (Number(a.nilai_residu) || 0);
-                    const canDepreciate = a.status === "aktif" && maxSusut > 0;
+                    const isSold = a.status === "dijual";
+                    const canDepreciate = !isSold && a.status === "aktif" && maxSusut > 0;
+                    const canSell = !isSold && a.status !== "dihapus";
+
+                    if (!canDepreciate && (!onSell || !canSell)) {
+                        return null;
+                    }
+
                     return (
-                        <DataTableActionButton
-                            variant="amber"
-                            className="table-action-susut"
-                            tooltip={
-                                canDepreciate
-                                    ? "Catat Penyusutan"
-                                    : "Aset sudah habis disusutkan"
-                            }
-                            disabled={!canDepreciate}
-                            onClick={() => onDepreciate(a)}
-                        >
-                            <IconTrendingDown className="w-3.5 h-3.5" />
-                        </DataTableActionButton>
+                        <div className="flex items-center gap-1">
+                            {canDepreciate && (
+                                <DataTableActionButton
+                                    variant="amber"
+                                    className="table-action-susut"
+                                    tooltip="Catat Penyusutan"
+                                    onClick={() => onDepreciate(a)}
+                                >
+                                    <IconTrendingDown className="w-3.5 h-3.5" />
+                                </DataTableActionButton>
+                            )}
+
+                            {onSell && canSell && (
+                                <DataTableActionButton
+                                    variant="emerald"
+                                    className="table-action-jual"
+                                    tooltip="JualAset"
+                                    onClick={() => onSell(a)}
+                                >
+                                    <IconReceiptRefund className="w-3.5 h-3.5" />
+                                </DataTableActionButton>
+                            )}
+                        </div>
                     );
                 }}
             />

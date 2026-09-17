@@ -109,6 +109,8 @@ export interface GeneralLedgerEntry {
     reference_uid: string | null;
     description: string | null;
     source: "gl" | "manual";
+    created_at?: string;
+    updated_at?: string;
 }
 
 export type GeneralLedgerResponse = PaginatedResponse<GeneralLedgerEntry>;

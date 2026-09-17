@@ -100,11 +100,16 @@ export function AssetIdentityFields({
                 <CommandSelect
                     options={categoryOptions}
                     value={watchedCategoryUid || ""}
-                    onChange={(val: string) => setValue("asset_category_uid", val)}
+                    onChange={(val: string) => setValue("asset_category_uid", val, { shouldValidate: true })}
                     placeholder="Pilih Kategori Aset..."
                     disabled={isPending}
                     className="h-8 text-xs rounded-lg"
                 />
+                {errors.asset_category_uid && (
+                    <p className="text-[10px] text-rose-500 font-medium">
+                        {errors.asset_category_uid.message}
+                    </p>
+                )}
             </div>
 
             {/* Row 3: Tanggal, Harga & Residu */}

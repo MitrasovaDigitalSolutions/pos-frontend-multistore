@@ -19,6 +19,8 @@ export interface DatePickerProps {
   placeholder?: string
   disabled?: boolean
   className?: string
+  buttonClassName?: string
+  wrapperClassName?: string
   error?: string
   label?: string
   clearable?: boolean
@@ -37,6 +39,8 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
       placeholder = "Pilih tanggal...",
       disabled = false,
       className,
+      buttonClassName,
+      wrapperClassName,
       error,
       label,
       clearable = true,
@@ -96,7 +100,7 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
     }
 
     return (
-      <div className={cn("space-y-1.5 w-full", className)}>
+      <div className={cn("space-y-1.5 w-full", wrapperClassName || className)}>
         {label && (
           <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
             {label}
@@ -116,7 +120,8 @@ export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(
                     sizeClasses,
                     !selectedDate && "text-slate-400",
                     error && "border-rose-400 focus:border-rose-400 focus:ring-2 focus:ring-rose-500/20",
-                    disabled && "opacity-50 pointer-events-none bg-slate-50 cursor-not-allowed"
+                    disabled && "opacity-50 pointer-events-none bg-slate-50 cursor-not-allowed",
+                    buttonClassName
                   )}
                   {...props}
                 >

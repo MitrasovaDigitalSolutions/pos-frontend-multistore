@@ -60,7 +60,7 @@ export function useAssetForm({
         mode: "onChange",
         defaultValues: {
             nama: "",
-            asset_category_uid: categories.length > 0 ? categories[0].uid : "",
+            asset_category_uid: "",
             kode_aset: null,
             tanggal_perolehan: new Date().toISOString().split("T")[0],
             harga_perolehan: 0,

@@ -270,6 +270,7 @@ export const ENDPOINTS = {
         DETAIL: (uid: string) => `/v1/assets/${uid}`,
         UPDATE: (uid: string) => `/v1/assets/${uid}`,
         DELETE: (uid: string) => `/v1/assets/${uid}`,
+        SELL: (uid: string) => `/v1/assets/${uid}/sell`,
         PENYUSUTAN: {
             LIST: (assetUid: string) => `/v1/assets/${assetUid}/penyusutan`,
             CREATE: (assetUid: string) => `/v1/assets/${assetUid}/penyusutan`,

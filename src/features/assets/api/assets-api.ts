@@ -16,6 +16,7 @@ import type {
     AssetFilterParams,
     CreateAssetPayload,
     UpdateAssetPayload,
+    SellAssetPayload,
     CreateAssetPenyusutanPayload,
     BulkAssetPenyusutanPayload,
 } from "../types";
@@ -85,7 +86,22 @@ export function useDeleteAsset() {
     });
 }
 
-// 7. Get Depreciation Logs for an Asset
+// 7. Sell / Dispose Asset Mutation
+export function useSellAsset() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<Asset>, Error, { uid: string; data: SellAssetPayload }>({
+        mutationFn: ({ uid, data }) =>
+            apiPost<ApiResponse<Asset>, SellAssetPayload>(ENDPOINTS.ASSETS.SELL(uid), data),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.assets.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.assets.detail(variables.uid) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.assets.summary() });
+            queryClient.invalidateQueries({ queryKey: ["cash-accounts"] });
+        },
+    });
+}
+
+// 8. Get Depreciation Logs for an Asset
 export function useAssetPenyusutanList(assetUid: string | null) {
     return useQuery<AssetPenyusutan[]>({
         queryKey: queryKeys.assets.penyusutan(assetUid || ""),
