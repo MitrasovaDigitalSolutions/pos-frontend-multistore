@@ -8,9 +8,19 @@ import { CategoryList } from "./components/category-list";
 import { CategoryDialog } from "./components/category-dialog";
 import { expenseCategorySchema, type ExpenseCategoryInput } from "./schemas/expense-schema";
 import type { ExpenseCategory } from "./types";
+import { ExpensesTutorialController } from "./tutorial/components/expenses-tutorial-controller";
+import { MOCK_CATEGORIES } from "./tutorial/constants/expenses-tutorial-constants";
+import { useExpensesTutorialStore } from "@/stores/expenses-tutorial-store";
 
 export function ExpenseCategories() {
     const { data: categories = [], isLoading, isFetching } = useExpenseCategories();
+
+    const isTutorialRunning = useExpensesTutorialStore((state) => state.isRunning);
+
+    // Saat tutorial berjalan, pakai data contoh agar walkthrough selalu utuh.
+    const activeCategories = isTutorialRunning ? MOCK_CATEGORIES : categories;
+    const isLoadingActive = isLoading && !isTutorialRunning;
+    const isFetchingActive = isFetching && !isTutorialRunning;
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<ExpenseCategory | null>(null);
@@ -54,11 +64,11 @@ export function ExpenseCategories() {
         <FormProvider {...dialogMethods}>
             <div className="space-y-6">
                 <CategoryList
-                    categories={categories}
+                    categories={activeCategories}
                     onEdit={handleEdit}
                     onAddClick={handleAddClick}
-                    isLoading={isLoading}
-                    isFetching={isFetching}
+                    isLoading={isLoadingActive}
+                    isFetching={isFetchingActive}
                 />
 
                 <CategoryDialog
@@ -66,6 +76,8 @@ export function ExpenseCategories() {
                     onOpenChange={setIsDialogOpen}
                     editingCategory={editingCategory}
                 />
+
+                <ExpensesTutorialController />
             </div>
         </FormProvider>
     );

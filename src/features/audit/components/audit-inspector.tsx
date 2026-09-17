@@ -42,11 +42,25 @@ interface AuditInspectorProps {
     log: ActivityLog | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    activeTab?: "info" | "properties" | "json";
+    onTabChange?: (tab: "info" | "properties" | "json") => void;
 }
 
-export function AuditInspector({ log, open, onOpenChange }: AuditInspectorProps) {
-    const [activeTab, setActiveTab] = useState<"info" | "properties" | "json">("info");
+export function AuditInspector({
+    log,
+    open,
+    onOpenChange,
+    activeTab: controlledActiveTab,
+    onTabChange,
+}: AuditInspectorProps) {
+    const [internalTab, setInternalTab] = useState<"info" | "properties" | "json">("info");
     const [copied, setCopied] = useState(false);
+
+    const activeTab = controlledActiveTab ?? internalTab;
+    const handleTabSelect = (tab: "info" | "properties" | "json") => {
+        setInternalTab(tab);
+        onTabChange?.(tab);
+    };
 
     if (!log) return null;
 
@@ -166,6 +180,8 @@ export function AuditInspector({ log, open, onOpenChange }: AuditInspectorProps)
             title={dialogTitle}
             className="sm:max-w-2xl"
             scrollable={true}
+            contentId="audit-inspector-dialog"
+            closeBtnId="btn-close-audit-inspector"
         >
             <div className="space-y-4 pt-2">
                 <div className="text-xs text-slate-400">
@@ -175,7 +191,8 @@ export function AuditInspector({ log, open, onOpenChange }: AuditInspectorProps)
                 {/* Tab Headers */}
                 <div className="flex border-b border-slate-100 gap-1 shrink-0">
                     <button
-                        onClick={() => setActiveTab("info")}
+                        id="tab-audit-info"
+                        onClick={() => handleTabSelect("info")}
                         className={`px-4 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${activeTab === "info"
                             ? "border-emerald-600 text-emerald-700 font-extrabold"
                             : "border-transparent text-slate-400 hover:text-slate-700"
@@ -187,7 +204,8 @@ export function AuditInspector({ log, open, onOpenChange }: AuditInspectorProps)
                         </span>
                     </button>
                     <button
-                        onClick={() => setActiveTab("properties")}
+                        id="tab-audit-properties"
+                        onClick={() => handleTabSelect("properties")}
                         className={`px-4 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${activeTab === "properties"
                             ? "border-emerald-600 text-emerald-700 font-extrabold"
                             : "border-transparent text-slate-400 hover:text-slate-700"
@@ -199,7 +217,8 @@ export function AuditInspector({ log, open, onOpenChange }: AuditInspectorProps)
                         </span>
                     </button>
                     <button
-                        onClick={() => setActiveTab("json")}
+                        id="tab-audit-json"
+                        onClick={() => handleTabSelect("json")}
                         className={`px-4 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${activeTab === "json"
                             ? "border-emerald-600 text-emerald-700 font-extrabold"
                             : "border-transparent text-slate-400 hover:text-slate-700"
@@ -439,6 +458,7 @@ export function AuditInspector({ log, open, onOpenChange }: AuditInspectorProps)
                         <div className="flex justify-between items-center bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
                             <span className="text-[10px] font-bold text-slate-500">Gunakan data JSON untuk analisis log sistem lengkap.</span>
                             <button
+                                id="btn-copy-audit-json"
                                 onClick={handleCopyJson}
                                 className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                             >

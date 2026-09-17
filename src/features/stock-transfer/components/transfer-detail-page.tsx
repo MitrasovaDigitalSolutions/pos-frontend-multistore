@@ -4,7 +4,9 @@ import { ROUTES } from "@/constants/routes";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { ENDPOINTS } from "@/shared/api/endpoints";
 import { useActiveStoreStore } from "@/stores/active-store-store";
+import { useTransferTutorialStore } from "@/stores/transfer-tutorial-store";
 import { IconAlertCircle, IconCircleX } from "@tabler/icons-react";
+import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -16,6 +18,12 @@ import {
   useValidateStockTransferItem,
 } from "../api/stock-transfer-api";
 import { JENIS_SELISIH, TRANSFER_SHIPMENT_STATUS, TRANSFER_STATUS } from "../constants";
+import {
+  MOCK_INCOMING_STOCK_TRANSFER,
+  MOCK_INCOMING_STOCK_TRANSFER_UID,
+  MOCK_VALIDATION_STOCK_TRANSFER,
+  MOCK_VALIDATION_STOCK_TRANSFER_UID,
+} from "../tutorial/constants/transfer-tutorial-constants";
 
 import { AppButton } from "@/components/shared/app-button";
 import { BaseDialog } from "@/components/ui/base-dialog";
@@ -36,13 +44,61 @@ interface TransferDetailPageProps {
 
 export function TransferDetailPage({ uid }: TransferDetailPageProps) {
   const router = useAppRouter();
+  const { data: session } = useSession();
   const activeStoreUid = useActiveStoreStore((state) => state.activeStoreUid);
+  const isTutorialRunning = useTransferTutorialStore((state) => state.isRunning);
+  const isMock = uid.startsWith("mock-");
 
-  const { data: transfer, isLoading, isFetching, error } = useStockTransferDetail(uid);
+  useEffect(() => {
+    if (!isTutorialRunning && uid.startsWith("mock-")) {
+      router.push(ROUTES.ADMIN_STOCK_TRANSFERS);
+    }
+  }, [isTutorialRunning, uid, router]);
+
+  const {
+    data: realTransfer,
+    isLoading: realIsLoading,
+    isFetching: realIsFetching,
+    error: realError,
+  } = useStockTransferDetail(isMock ? "" : uid);
   const finalize = useFinalizeStockTransfer();
   const receive = useReceiveStockTransfer();
   const validate = useValidateStockTransferItem();
   const cancel = useCancelStockTransfer();
+
+  const [mockItems, setMockItems] = useState<StockTransferItem[] | null>(null);
+
+  const transfer = useMemo(() => {
+    if (isTutorialRunning && uid === MOCK_INCOMING_STOCK_TRANSFER_UID) {
+      return {
+        ...MOCK_INCOMING_STOCK_TRANSFER,
+        items: mockItems || MOCK_INCOMING_STOCK_TRANSFER.items,
+        store_uid_destination: activeStoreUid || MOCK_INCOMING_STOCK_TRANSFER.store_uid_destination,
+        destination_store: {
+          uid: activeStoreUid || "mock-store-cabang",
+          nama: session?.user?.stores?.find((s) => s.uid === activeStoreUid)?.nama || "Cabang Anda (Penerima)",
+          is_central: false,
+        },
+      };
+    }
+    if (isTutorialRunning && uid === MOCK_VALIDATION_STOCK_TRANSFER_UID) {
+      return {
+        ...MOCK_VALIDATION_STOCK_TRANSFER,
+        items: mockItems || MOCK_VALIDATION_STOCK_TRANSFER.items,
+        store_uid_source: activeStoreUid || MOCK_VALIDATION_STOCK_TRANSFER.store_uid_source,
+        source_store: {
+          uid: activeStoreUid || "mock-store-asal",
+          nama: session?.user?.stores?.find((s) => s.uid === activeStoreUid)?.nama || "Cabang Anda (Toko Asal)",
+          is_central: false,
+        },
+      };
+    }
+    return realTransfer;
+  }, [isTutorialRunning, uid, realTransfer, mockItems, activeStoreUid, session]);
+
+  const isLoading = isMock ? false : realIsLoading;
+  const isFetching = isMock ? false : realIsFetching;
+  const error = isMock ? null : realError;
 
   const formMethods = useForm<ReceiveFormValues>({
     defaultValues: {
@@ -148,6 +204,26 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
   ) => {
     setProcessingItemUid(item.uid);
     try {
+      if (uid.startsWith("mock-")) {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        setMockItems((prev) => {
+          const current = prev || MOCK_INCOMING_STOCK_TRANSFER.items;
+          return current.map((it) => {
+            if (it.uid === item.uid) {
+              return {
+                ...it,
+                status: payload.status,
+                kuantitas_diterima: payload.kuantitas_diterima,
+                jenis_selisih: payload.jenis_selisih,
+                keterangan: payload.keterangan,
+              };
+            }
+            return it;
+          });
+        });
+        toast.success(`Item "${item.product?.nama || "produk"}" berhasil diproses.`);
+        return;
+      }
       await receive.mutateAsync({
         uid,
         itemUid: item.uid,
@@ -168,6 +244,30 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
   ) => {
     setValidatingItemUid(item.uid);
     try {
+      if (uid.startsWith("mock-")) {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        setMockItems((prev) => {
+          const current =
+            prev ||
+            (uid === MOCK_VALIDATION_STOCK_TRANSFER_UID
+              ? MOCK_VALIDATION_STOCK_TRANSFER.items
+              : MOCK_INCOMING_STOCK_TRANSFER.items);
+          return current.map((it) => {
+            if (it.uid === item.uid) {
+              return {
+                ...it,
+                jenis_validasi: payload.jenis,
+                validated_at: new Date().toISOString(),
+                kuantitas_return: payload.kuantitas_return ?? it.kuantitas_return,
+                status: payload.setujui === false ? "rejected" : "received",
+              };
+            }
+            return it;
+          });
+        });
+        toast.success(`Validasi item ${item.product?.nama || "berhasil"}.`);
+        return;
+      }
       await validate.mutateAsync({ uid, itemUid: item.uid, payload });
       toast.success(`Validasi item ${item.product?.nama || "berhasil"}.`);
     } catch (err: unknown) {
@@ -301,12 +401,15 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
     );
   }
 
-  const isSource = activeStoreUid === transfer.store_uid_source;
-  const isDest = activeStoreUid === transfer.store_uid_destination;
+  const isValidationTutorial = isTutorialRunning && uid === MOCK_VALIDATION_STOCK_TRANSFER_UID;
+  const isReceiveTutorial = isTutorialRunning && uid === MOCK_INCOMING_STOCK_TRANSFER_UID;
+
+  const isSource = isValidationTutorial ? true : isReceiveTutorial ? false : (activeStoreUid === transfer.store_uid_source);
+  const isDest = isValidationTutorial ? false : isReceiveTutorial ? true : (activeStoreUid === transfer.store_uid_destination);
 
   const canFinalize = transfer.status === TRANSFER_STATUS.DRAFT && isSource;
-  const canReceive = transfer.status === TRANSFER_STATUS.SENT && isDest;
-  const canValidateTransfer = transfer.status === TRANSFER_STATUS.MENUNGGU_VALIDASI && isSource;
+  const canReceive = isReceiveTutorial ? true : (transfer.status === TRANSFER_STATUS.SENT && isDest);
+  const canValidateTransfer = isValidationTutorial ? true : (transfer.status === TRANSFER_STATUS.MENUNGGU_VALIDASI && isSource);
   const canCancel =
     (transfer.status === TRANSFER_STATUS.DRAFT || transfer.status === TRANSFER_STATUS.SENT) &&
     isSource;
@@ -319,20 +422,24 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
     <FormProvider {...formMethods}>
       <div className="space-y-6 max-w-6xl mx-auto">
         {/* Header Bar */}
-        <TransferDetailHeader
-          transfer={transfer}
-          canFinalize={canFinalize}
-          canReceive={canReceive}
-          canCancel={canCancel}
-          hasDiscrepancies={hasDiscrepancies}
-          onFinalize={() => setConfirmFinalizeOpen(true)}
-          onCancelClick={() => setCancelModalOpen(true)}
-          onPrint={handlePrint}
-          onEdit={transfer.status === TRANSFER_STATUS.DRAFT && isSource ? () => router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/${uid}/edit`) : undefined}
-        />
+        <div id="transfer-detail-header">
+          <TransferDetailHeader
+            transfer={transfer}
+            canFinalize={canFinalize}
+            canReceive={canReceive}
+            canCancel={canCancel}
+            hasDiscrepancies={hasDiscrepancies}
+            onFinalize={() => setConfirmFinalizeOpen(true)}
+            onCancelClick={() => setCancelModalOpen(true)}
+            onPrint={handlePrint}
+            onEdit={transfer.status === TRANSFER_STATUS.DRAFT && isSource ? () => router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/${uid}/edit`) : undefined}
+          />
+        </div>
 
         {/* Visual Stepper Bar */}
-        <TransferDetailStepper status={transfer.status} />
+        <div id="transfer-detail-stepper">
+          <TransferDetailStepper status={transfer.status} />
+        </div>
 
         {/* Main Grid Content */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -351,7 +458,7 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
           </div>
 
           {/* Right Column: Metadata & Route Cards */}
-          <div className="lg:col-span-4">
+          <div id="transfer-detail-info-cards" className="lg:col-span-4">
             <TransferDetailInfoCards transfer={transfer} />
           </div>
         </div>

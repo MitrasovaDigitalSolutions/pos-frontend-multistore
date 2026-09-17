@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,6 +21,9 @@ import type { CatalogProduct } from "./types";
 import { ProductFormDialog } from "@/features/master/products/components/product-form-dialog";
 import { productSchema, type ProductInput } from "@/features/master/products/schemas/product-schema";
 import type { Product } from "@/features/master/products/types";
+import { useCatalogTutorialStore } from "@/stores/catalog-tutorial-store";
+import { MOCK_CATALOG_PRODUCTS } from "./tutorial/constants/catalog-tutorial-constants";
+import { CatalogTutorialController } from "./tutorial/components/catalog-tutorial-controller";
 
 // ─── Filter shape ─────────────────────────────────────────────────────────────
 
@@ -41,6 +44,12 @@ export function ProductCatalog() {
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
     const isAdmin = hasRole(userRoles, "admin");
+
+    // ── Tutorial Store ────────────────────────────────────────────────────────
+    const isRunning = useCatalogTutorialStore((s) => s.isRunning);
+    const activeTutorial = useCatalogTutorialStore((s) => s.activeTutorial);
+    const stepIndex = useCatalogTutorialStore((s) => s.stepIndex);
+    const isTutorialActive = isRunning && activeTutorial !== null;
 
     // ── Pagination & sort ─────────────────────────────────────────────────────
     const [page, setPage] = useState(1);
@@ -102,6 +111,7 @@ export function ProductCatalog() {
     });
 
     const handleEdit = (product: CatalogProduct) => {
+        if (isTutorialActive) return;
         setDuplicateProduct(null);
         setEditingProduct(product);
         const storeProduct = product.product_stores?.[0];
@@ -132,12 +142,14 @@ export function ProductCatalog() {
     };
 
     const handleCopy = (product: CatalogProduct) => {
+        if (isTutorialActive) return;
         setEditingProduct(null);
         setDuplicateProduct(product);
         setIsEditDialogOpen(true);
     };
 
     const handleCreateNewProduct = () => {
+        if (isTutorialActive) return;
         setEditingProduct(null);
         setDuplicateProduct(null);
         dialogMethods.reset({
@@ -234,9 +246,50 @@ export function ProductCatalog() {
     const [assignTarget, setAssignTarget] = useState<CatalogProduct | null>(null);
 
     const handleAssign = (product: CatalogProduct) => {
+        if (isTutorialActive) return;
         setAssignTarget(product);
         setIsAssignOpen(true);
     };
+
+    // ── Register tutorial stop callback to cleanly close modals ───────────────
+    useEffect(() => {
+        useCatalogTutorialStore.getState().setOnStopCallback(() => {
+            setIsEditDialogOpen(false);
+            setIsAssignOpen(false);
+            setEditingProduct(null);
+            setDuplicateProduct(null);
+            setAssignTarget(null);
+        });
+        return () => {
+            useCatalogTutorialStore.getState().setOnStopCallback(null);
+        };
+    }, []);
+
+    const displayProducts = isTutorialActive ? MOCK_CATALOG_PRODUCTS : (catalogData?.data || []);
+    const displayMeta = isTutorialActive
+        ? { current_page: 1, per_page: 15, total: MOCK_CATALOG_PRODUCTS.length, last_page: 1 }
+        : catalogData?.meta;
+    const displayLoading = isTutorialActive ? false : isLoading;
+    const displayFetching = isTutorialActive ? false : isFetching;
+
+    // Derived modal states for tutorial
+    const isCreateFormStep = isTutorialActive && activeTutorial === "pembuatan_katalog" && stepIndex >= 5 && stepIndex <= 8;
+    const effectiveIsEditDialogOpen = isTutorialActive && activeTutorial === "pembuatan_katalog"
+        ? isCreateFormStep
+        : isEditDialogOpen;
+
+    const isAssignDialogStep = isTutorialActive && activeTutorial === "distribusi_toko" && stepIndex >= 2 && stepIndex <= 10;
+    const effectiveIsAssignOpen = isTutorialActive && activeTutorial === "distribusi_toko"
+        ? isAssignDialogStep
+        : isAssignOpen;
+
+    const effectiveAssignTarget = isTutorialActive && activeTutorial === "distribusi_toko"
+        ? (assignTarget || MOCK_CATALOG_PRODUCTS[0])
+        : assignTarget;
+
+    const effectiveEditingProduct = isTutorialActive && activeTutorial === "pembuatan_katalog"
+        ? (editingProduct || MOCK_CATALOG_PRODUCTS[0])
+        : editingProduct;
 
     // ── Dropdown options ──────────────────────────────────────────────────────
     const categoryOptions = [
@@ -277,8 +330,8 @@ export function ProductCatalog() {
         <div className="space-y-6">
             <FormProvider {...dialogMethods}>
                 <CatalogTable
-                    products={catalogData?.data || []}
-                    meta={catalogData?.meta}
+                    products={displayProducts}
+                    meta={displayMeta}
                     page={page}
                     perPage={perPage}
                     onPageChange={setPage}
@@ -287,8 +340,8 @@ export function ProductCatalog() {
                     onEdit={handleEdit}
                     onCopy={isAdmin ? handleCopy : undefined}
                     onAddClick={handleCreateNewProduct}
-                    isLoading={isLoading}
-                    isFetching={isFetching}
+                    isLoading={displayLoading}
+                    isFetching={displayFetching}
                     sortBy={sortBy}
                     sortOrder={sortOrder}
                     onSortChange={(by, order) => {
@@ -304,17 +357,20 @@ export function ProductCatalog() {
                             onReset={handleFilterReset}
                         >
                             <FormInput<CatalogFilterValues>
+                                wrapperId="catalog-filter-search"
                                 name="search"
                                 label="Cari Produk"
                                 placeholder="Cari barcode, nama, atau merek..."
                             />
                             <FormSelect<CatalogFilterValues>
+                                id="catalog-filter-category"
                                 name="category_uid"
                                 label="Kategori"
                                 options={categoryOptions}
                                 placeholder="Semua Kategori"
                             />
                             <FormSelect<CatalogFilterValues>
+                                id="catalog-filter-brand"
                                 name="brand_uid"
                                 label="Brand"
                                 options={brandOptions}
@@ -327,6 +383,7 @@ export function ProductCatalog() {
                                 placeholder="Semua Status"
                             />
                             <FormRadioChips<CatalogFilterValues>
+                                id="catalog-filter-type-chips"
                                 name="product_type"
                                 label="Tipe Produk"
                                 options={productTypeRadioOptions}
@@ -340,23 +397,41 @@ export function ProductCatalog() {
                 />
 
                 <ProductFormDialog
-                    open={isEditDialogOpen}
+                    open={effectiveIsEditDialogOpen}
                     onOpenChange={(open) => {
+                        if (isTutorialActive) {
+                            if (!open) {
+                                useCatalogTutorialStore.getState().stopTutorial();
+                            }
+                            return;
+                        }
                         setIsEditDialogOpen(open);
                         if (!open) {
                             setDuplicateProduct(null);
                         }
                     }}
-                    editingProduct={editingProduct as unknown as Product | null}
+                    editingProduct={effectiveEditingProduct as unknown as Product | null}
                     duplicateProduct={duplicateProduct as unknown as Product | null}
+                    disablePointerDismissal={isTutorialActive}
                 />
             </FormProvider>
 
             <CatalogAssignDialog
-                open={isAssignOpen}
-                onOpenChange={setIsAssignOpen}
-                product={assignTarget}
+                open={effectiveIsAssignOpen}
+                onOpenChange={(open) => {
+                    if (isTutorialActive) {
+                        if (!open) {
+                            useCatalogTutorialStore.getState().stopTutorial();
+                        }
+                        return;
+                    }
+                    setIsAssignOpen(open);
+                }}
+                product={effectiveAssignTarget}
+                disablePointerDismissal={isTutorialActive}
             />
+
+            <CatalogTutorialController />
         </div>
     );
 }

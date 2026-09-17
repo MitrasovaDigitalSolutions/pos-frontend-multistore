@@ -108,9 +108,9 @@ export function ItemsTable({
         </div>
 
         {/* ── Desktop Table View (≥ 768px) ── */}
-        <div className="hidden md:block border border-slate-100 rounded-2xl overflow-hidden shadow-2xs bg-white">
+        <div id="rec-table-card" className="hidden md:block border border-slate-100 rounded-2xl overflow-hidden shadow-2xs bg-white">
           <table className="w-full text-left border-collapse text-xs">
-            <thead>
+            <thead id="rec-table-header">
               <tr className="bg-slate-50/80 border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 <th className="p-3 w-10">No</th>
                 <th className="p-3">Barcode</th>

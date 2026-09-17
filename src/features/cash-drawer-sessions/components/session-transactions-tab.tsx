@@ -31,7 +31,7 @@ export function SessionTransactionsTab({ transactions }: SessionTransactionsTabP
     }, [transactions]);
 
     return (
-        <div className="space-y-3">
+        <div id="session-detail-transactions-content" className="space-y-3">
             {sortedTransactions.length > 0 ? (
                 <div className="border border-slate-100 dark:border-slate-850 rounded-xl overflow-x-auto bg-white dark:bg-slate-950 shadow-2xs">
                     <table className="w-full min-w-[500px] border-collapse text-left text-xs">
@@ -45,13 +45,14 @@ export function SessionTransactionsTab({ transactions }: SessionTransactionsTabP
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-850 text-slate-700 dark:text-slate-350">
-                            {sortedTransactions.map((tx) => {
+                            {sortedTransactions.map((tx, idx) => {
                                 const itemsCount = tx.items?.reduce((acc, item) => acc + item.kuantitas, 0) || 0;
                                 const isVoid = tx.status === "void";
 
                                 return (
                                     <tr
                                         key={tx.uid}
+                                        id={idx === 0 ? "session-detail-transaction-row-first" : undefined}
                                         className={cn(
                                             "hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors font-medium align-middle",
                                             isVoid && "bg-rose-50/10 hover:bg-rose-50/20 text-slate-400 dark:bg-rose-950/5"

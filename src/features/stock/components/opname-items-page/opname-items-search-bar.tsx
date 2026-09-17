@@ -35,7 +35,7 @@ export function OpnameItemsSearchBar() {
   };
 
   return (
-    <div className="relative w-48 sm:w-64">
+    <div id="opname-items-filter-bar" className="relative w-48 sm:w-64">
       <IconSearch
         size={14}
         className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"

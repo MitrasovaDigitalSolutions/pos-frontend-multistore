@@ -9,16 +9,46 @@ import { IconBook } from "@tabler/icons-react";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { todayStr } from "@/lib/date-utils";
 import { useGeneralLedger } from "@/features/accounting/api/reports-api";
 import { FormCoaPicker } from "../shared";
 import type { GeneralLedgerEntry } from "@/features/accounting/types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { JournalTutorialController } from "@/features/accounting/journal-tutorial/components/journal-tutorial-controller";
 
 interface BukuBesarFilterValues {
     from: string;
     to: string;
     coaUid: string;
+}
+
+// Helper to safely format ledger transaction date without timezone skew
+function formatLedgerDate(rawDate?: string | null): string {
+    if (!rawDate) return "-";
+    const match = rawDate.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return rawDate;
+    const year = parseInt(match[1], 10);
+    const month = parseInt(match[2], 10) - 1;
+    const day = parseInt(match[3], 10);
+    const d = new Date(year, month, day);
+    if (isNaN(d.getTime())) return rawDate;
+    return format(d, "dd MMM yyyy", { locale: localeId });
+}
+
+// Helper to extract time (HH:mm) solely from transaction_date
+function formatLedgerTime(transactionDate?: string | null): string | null {
+    if (!transactionDate) return null;
+    const match = transactionDate.match(/(?:T|\s)(\d{2}):(\d{2})/);
+    if (match) {
+        return `${match[1]}:${match[2]}`;
+    }
+    return null;
 }
 
 export function BukuBesarView() {
@@ -58,38 +88,69 @@ export function BukuBesarView() {
         sort_order: sortOrder,
     });
 
-
-
     const columns = useMemo<ColumnDef<GeneralLedgerEntry>[]>(
         () => [
             {
                 accessorKey: "transaction_date",
-                header: "Tanggal",
-                cell: ({ row }) => (
-                    <span className="text-slate-600 dark:text-slate-400 text-xs whitespace-nowrap block truncate">
-                        {format(new Date(row.original.transaction_date), "dd MMM yyyy", {
-                            locale: localeId,
-                        })}
-                    </span>
-                ),
-                size: 110,
+                header: "Tanggal & Jam",
+                cell: ({ row }) => {
+                    const rawDate = row.original.transaction_date;
+                    const dateFormatted = formatLedgerDate(rawDate);
+                    const timeFormatted = formatLedgerTime(rawDate);
+
+                    return (
+                        <div className="space-y-0.5 whitespace-nowrap">
+                            <span className="text-slate-800 dark:text-slate-200 font-bold text-xs block truncate">
+                                {dateFormatted}
+                            </span>
+                            {timeFormatted ? (
+                                <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 block truncate">
+                                    {timeFormatted}
+                                </span>
+                            ) : null}
+                        </div>
+                    );
+                },
+                size: 130,
             },
             {
                 accessorKey: "kode",
                 header: "Akun",
-                cell: ({ row }) => (
-                    <div
-                        className="flex items-center gap-1.5 overflow-hidden"
-                        title={`[${row.original.kode ?? "-"}] ${row.original.nama ?? ""}`}
-                    >
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-200 text-xs shrink-0">
-                            {row.original.kode ?? "-"}
-                        </span>
-                        <span className="text-slate-500 dark:text-slate-450 text-[11px] truncate">
-                            {row.original.nama}
-                        </span>
-                    </div>
-                ),
+                cell: ({ row }) => {
+                    const kode = row.original.kode ?? "-";
+                    const nama = row.original.nama || "-";
+                    const saldoNormal = row.original.saldo_normal;
+
+                    return (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="flex items-center gap-1.5 overflow-hidden cursor-default group py-0.5">
+                                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200 text-xs shrink-0 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                                        {kode}
+                                    </span>
+                                    <span className="text-slate-500 dark:text-slate-400 text-[11px] truncate">
+                                        {nama}
+                                    </span>
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" align="start" className="max-w-xs space-y-1 bg-slate-900/95 dark:bg-slate-800/95 backdrop-blur border border-slate-700/50 shadow-xl p-2.5 text-slate-100">
+                                <div className="flex items-center gap-2">
+                                    <span className="font-mono font-bold text-xs text-emerald-400">
+                                        [{kode}]
+                                    </span>
+                                    {saldoNormal ? (
+                                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-800 dark:bg-slate-700 text-slate-300 capitalize border border-slate-600/40">
+                                            Normal: {saldoNormal}
+                                        </span>
+                                    ) : null}
+                                </div>
+                                <p className="text-xs font-medium text-slate-200 leading-snug">
+                                    {nama}
+                                </p>
+                            </TooltipContent>
+                        </Tooltip>
+                    );
+                },
                 size: 220,
             },
             {
@@ -97,10 +158,32 @@ export function BukuBesarView() {
                 header: "Keterangan",
                 cell: ({ row }) => {
                     const desc = row.original.description || row.original.reference_type || "-";
+                    const refType = row.original.reference_type;
+                    const refUid = row.original.reference_uid;
+
                     return (
-                        <span className="text-slate-700 dark:text-slate-350 text-xs block truncate" title={desc}>
-                            {desc}
-                        </span>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <span className="text-slate-700 dark:text-slate-300 text-xs block truncate cursor-default hover:text-slate-900 dark:hover:text-slate-100 transition-colors py-0.5">
+                                    {desc}
+                                </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" align="start" className="max-w-sm space-y-1 bg-slate-900/95 dark:bg-slate-800/95 backdrop-blur border border-slate-700/50 shadow-xl p-2.5 text-slate-100">
+                                <p className="text-xs leading-relaxed break-words font-medium">
+                                    {desc}
+                                </p>
+                                {refType ? (
+                                    <div className="flex items-center gap-2 text-[10px] text-slate-400 pt-1 border-t border-slate-700/50">
+                                        <span>Tipe Ref: <span className="font-mono text-slate-300">{refType}</span></span>
+                                        {refUid ? (
+                                            <span className="truncate max-w-[140px] font-mono text-slate-500">
+                                                #{refUid.slice(0, 8)}
+                                            </span>
+                                        ) : null}
+                                    </div>
+                                ) : null}
+                            </TooltipContent>
+                        </Tooltip>
                     );
                 },
                 size: 300,
@@ -183,7 +266,7 @@ export function BukuBesarView() {
                 <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200/50 dark:border-slate-800/60 shadow-sm rounded-3xl p-3 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all duration-300">
                     {/* Left Side: Date Filters (Dari & Sampai) */}
                     <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap w-full md:w-auto">
-                        <div className="flex items-center gap-2">
+                        <div id="bb-filter-from" className="flex items-center gap-2">
                             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Dari:</span>
                             <FormDatePicker
                                 name="from"
@@ -191,7 +274,7 @@ export function BukuBesarView() {
                                 className="w-[125px] sm:w-[135px]"
                             />
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div id="bb-filter-to" className="flex items-center gap-2">
                             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Sampai:</span>
                             <FormDatePicker
                                 name="to"
@@ -204,7 +287,7 @@ export function BukuBesarView() {
                     {/* Right Side: Account Selector (CoA) */}
                     <div className="flex items-center gap-2 w-full md:w-auto justify-end">
                         <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">Akun:</span>
-                        <div className="w-full sm:w-[240px]">
+                        <div id="bb-filter-coa" className="w-full sm:w-[240px]">
                             <FormCoaPicker
                                 name="coaUid"
                                 placeholder="Semua Akun"
@@ -226,38 +309,44 @@ export function BukuBesarView() {
                     </h3>
                 </div>
 
-                <DataTable
-                    columns={columns}
-                    data={entries}
-                    tableClassName="table-fixed"
-                    isLoading={isLoading}
-                    isFetching={isFetching}
-                    emptyMessage="Tidak ada entri pada rentang tanggal ini."
-                    page={page}
-                    perPage={perPage}
-                    onPageChange={setPage}
-                    onPerPageChange={setPerPage}
-                    meta={meta}
-                    entityName="entri buku besar"
-                    virtualize={true}
-                    estimateRowHeight={44}
-                    enableSortingRemoval={false}
+                <div id="bb-table">
+                    <TooltipProvider delayDuration={150}>
+                        <DataTable
+                            columns={columns}
+                            data={entries}
+                            tableClassName="table-fixed"
+                            isLoading={isLoading}
+                            isFetching={isFetching}
+                            emptyMessage="Tidak ada entri pada rentang tanggal ini."
+                            page={page}
+                            perPage={perPage}
+                            onPageChange={setPage}
+                            onPerPageChange={setPerPage}
+                            meta={meta}
+                            entityName="entri buku besar"
+                            virtualize={true}
+                            estimateRowHeight={48}
+                            enableSortingRemoval={false}
 
-                    // Server-side Sorting
-                    sortBy={sortBy}
-                    sortOrder={sortOrder}
-                    onSortChange={(key, order) => {
-                        if (key && order) {
-                            setSortBy(key);
-                            setSortOrder(order);
-                        } else {
-                            setSortBy("transaction_date");
-                            setSortOrder("desc");
-                        }
-                        setPage(1);
-                    }}
-                />
+                            // Server-side Sorting
+                            sortBy={sortBy}
+                            sortOrder={sortOrder}
+                            onSortChange={(key, order) => {
+                                if (key && order) {
+                                    setSortBy(key);
+                                    setSortOrder(order);
+                                } else {
+                                    setSortBy("transaction_date");
+                                    setSortOrder("desc");
+                                }
+                                setPage(1);
+                            }}
+                        />
+                    </TooltipProvider>
+                </div>
             </section>
+
+            <JournalTutorialController />
         </div>
     );
 }

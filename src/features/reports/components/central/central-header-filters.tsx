@@ -115,12 +115,14 @@ export function CentralHeaderFilters({
 
     return (
         <>
-            <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-4 sm:p-6">
+            <Card id="central-report-header-card" className="bg-white border-slate-100 rounded-2xl shadow-sm p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100/60 mb-4">
                     <div>
-                        <h3 className="text-sm font-bold text-slate-900">
-                            Laporan Konsolidasi
-                        </h3>
+                        <div id="central-report-header-info" className="inline-flex items-center gap-2">
+                            <h3 className="text-sm font-bold text-slate-900">
+                                Laporan Konsolidasi
+                            </h3>
+                        </div>
                         <p className="text-[11px] text-slate-400 mt-0.5">
                             Agregasi data penjualan, laba rugi, dan stok lintas seluruh cabang toko.
                         </p>
@@ -140,6 +142,7 @@ export function CentralHeaderFilters({
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button
+                                    id="central-report-btn-print"
                                     disabled={isLoading}
                                     className="h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex items-center justify-center gap-1.5 font-bold text-xs cursor-pointer"
                                 >
@@ -175,13 +178,14 @@ export function CentralHeaderFilters({
                     </div>
                 </div>
 
-                <FilterForm<CentralFilterValues>
-                    methods={methods}
-                    onSubmit={onSubmit}
-                    onReset={onReset}
-                    cols={4}
-                    titleLabel="Filter Laporan Konsolidasi"
-                >
+                <div id="central-report-filter-form">
+                    <FilterForm<CentralFilterValues>
+                        methods={methods}
+                        onSubmit={onSubmit}
+                        onReset={onReset}
+                        cols={4}
+                        titleLabel="Filter Laporan Konsolidasi"
+                    >
                     <FormDatePicker<CentralFilterValues>
                         name="from"
                         label="Dari Tanggal"
@@ -207,6 +211,7 @@ export function CentralHeaderFilters({
                         placeholder="Semua Cabang Toko"
                     />
                 </FilterForm>
+                </div>
             </Card>
 
             <PrintConfirmDialog<CentralPrintFilterValues>

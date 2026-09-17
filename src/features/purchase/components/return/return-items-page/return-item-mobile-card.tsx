@@ -7,6 +7,7 @@ import { IconBarcode, IconTrash } from "@tabler/icons-react";
 import type { PurchaseItemLocal } from "../../../types";
 
 interface ReturnItemMobileCardProps {
+  id?: string;
   item: PurchaseItemLocal;
   index: number;
   isPending: boolean;
@@ -16,6 +17,7 @@ interface ReturnItemMobileCardProps {
 }
 
 export function ReturnItemMobileCard({
+  id,
   item,
   index,
   isPending,
@@ -28,6 +30,7 @@ export function ReturnItemMobileCard({
 
   return (
     <div
+      id={id}
       className={`bg-white border rounded-2xl p-3.5 shadow-2xs space-y-3 transition-all duration-200 ${
         isSelected
           ? "border-emerald-200 ring-1 ring-emerald-400/20 bg-emerald-50/20"

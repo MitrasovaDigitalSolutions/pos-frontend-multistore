@@ -188,7 +188,7 @@ function BulkPenyusutanFormContent({
                     </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 flex-wrap">
+                <div id="bulk-auto-pct" className="flex items-center gap-1.5 flex-wrap">
                     <span className="text-[10px] uppercase font-bold text-slate-400 mr-0.5 flex items-center gap-1">
                         <IconFlame className="w-3 h-3 text-amber-500" />
                         Alokasi Cepat:
@@ -239,6 +239,7 @@ function BulkPenyusutanFormContent({
                         <tr>
                             <th className="p-2 text-center w-10">
                                 <Checkbox
+                                    id="bulk-select-all"
                                     checked={isAllSelected}
                                     onCheckedChange={(checked: boolean) =>
                                         handleToggleSelectAll(checked)
@@ -407,6 +408,7 @@ function BulkPenyusutanFormContent({
                         Batal
                     </Button>
                     <Button
+                        id="btn-submit-bulk"
                         type="submit"
                         disabled={isPending || selectedItems.length === 0}
                         className="h-8.5 px-4 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-xl shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"

@@ -7,13 +7,16 @@ import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { useUsers } from "./api/users-api";
 import { UserFormDialog } from "./components/user-form-dialog";
 import { UserTable } from "./components/user-table";
 import { userSchema, type UserInput } from "./schemas/user-schema";
 import type { User } from "./types";
+import { useUsersTutorialStore } from "@/stores/users-tutorial-store";
+import { UsersTutorialController } from "./tutorial/components/users-tutorial-controller";
+import { MOCK_USERS } from "./tutorial/constants/users-tutorial-constants";
 
 interface UserFilterValues {
   search: string;
@@ -76,6 +79,31 @@ export function Users() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
+
+  const isTutorialRunning = useUsersTutorialStore((state) => state.isRunning);
+  const activeTutorial = useUsersTutorialStore((state) => state.activeTutorial);
+
+  const usersList = usersData?.data;
+  const currentUserId = session?.user?.uid;
+
+  const effectiveUsers = useMemo(() => {
+    if (isTutorialRunning) {
+      if (!usersList || usersList.length === 0) {
+        return MOCK_USERS;
+      }
+      if (activeTutorial === "nonaktifkan_karyawan") {
+        const hasDeletableUser = usersList.some(
+          (u) => u.uid !== currentUserId && u.status === "active"
+        );
+        if (!hasDeletableUser) {
+          return [...MOCK_USERS, ...usersList];
+        }
+      }
+    }
+    return usersList || [];
+  }, [isTutorialRunning, activeTutorial, usersList, currentUserId]);
 
   const dialogMethods = useForm<UserInput>({
     resolver: zodResolver(userSchema) as Resolver<UserInput>,
@@ -138,7 +166,7 @@ export function Users() {
       <div className="space-y-6">
         <FormProvider {...dialogMethods}>
           <UserTable
-            users={usersData?.data || []}
+            users={effectiveUsers}
             meta={usersData?.meta}
             page={page}
             perPage={perPage}
@@ -155,27 +183,36 @@ export function Users() {
               setSortOrder(order);
               setPage(1);
             }}
+            isConfirmOpen={isConfirmOpen}
+            onConfirmOpenChange={setIsConfirmOpen}
+            userToDeactivate={userToDeactivate}
+            onUserToDeactivateChange={setUserToDeactivate}
             filterElement={
               <FilterForm
                 methods={filterMethods}
                 onSubmit={handleFilterSubmit}
                 onReset={handleFilterReset}
+                actionsId="filter-user-actions"
               >
-                <FormInput<UserFilterValues>
-                  name="search"
-                  label="Cari Pengguna"
-                  placeholder="Cari berdasarkan nama atau username..."
-                />
-                <FormSelect<UserFilterValues>
-                  name="status"
-                  label="Status"
-                  options={[
-                    { value: "all", label: "Semua Status" },
-                    { value: "active", label: "Aktif" },
-                    { value: "inactive", label: "Nonaktif" },
-                  ]}
-                  placeholder="Semua Status"
-                />
+                <div id="filter-user-search">
+                  <FormInput<UserFilterValues>
+                    name="search"
+                    label="Cari Pengguna"
+                    placeholder="Cari berdasarkan nama atau username..."
+                  />
+                </div>
+                <div id="filter-user-status">
+                  <FormSelect<UserFilterValues>
+                    name="status"
+                    label="Status"
+                    options={[
+                      { value: "all", label: "Semua Status" },
+                      { value: "active", label: "Aktif" },
+                      { value: "inactive", label: "Nonaktif" },
+                    ]}
+                    placeholder="Semua Status"
+                  />
+                </div>
               </FilterForm>
             }
           />
@@ -186,6 +223,33 @@ export function Users() {
             editingUser={editingUser}
           />
         </FormProvider>
+
+        <UsersTutorialController
+          setIsDialogOpen={setIsDialogOpen}
+          setEditingUser={(u) => {
+            setEditingUser(u);
+            if (u) {
+              dialogMethods.reset({
+                name: u.name,
+                username: u.username,
+                password: "",
+                roles: u.roles,
+                status: u.status,
+              });
+            } else {
+              dialogMethods.reset({
+                name: "",
+                username: "",
+                password: "",
+                roles: ["kasir"],
+                status: "active",
+              });
+            }
+          }}
+          setIsConfirmOpen={setIsConfirmOpen}
+          setUserToDeactivate={setUserToDeactivate}
+          sampleUser={effectiveUsers[0] || MOCK_USERS[0]}
+        />
       </div>
     </div>
   );

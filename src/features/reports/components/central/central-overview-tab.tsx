@@ -28,11 +28,13 @@ export function CentralOverviewTab({
     return (
         <div className="space-y-4 sm:space-y-5">
             {/* 1. Top KPI Summary Metric Tiles */}
-            <CentralKpiCards overview={overview} isLoading={isLoadingOverview} />
+            <div id="central-report-kpi-cards">
+                <CentralKpiCards overview={overview} isLoading={isLoadingOverview} />
+            </div>
 
             {/* 2. Main Analytics Grid: Sales Chart + Store Distribution Ranking */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-start">
-                <div className="lg:col-span-8">
+                <div id="central-report-sales-chart" className="lg:col-span-8">
                     <CentralSalesChart
                         trendData={trendData}
                         byStore={byStore}
@@ -40,7 +42,7 @@ export function CentralOverviewTab({
                         isLoading={isLoadingTrend}
                     />
                 </div>
-                <div className="lg:col-span-4">
+                <div id="central-report-store-distribution" className="lg:col-span-4">
                     <CentralStoreDistribution
                         stores={overview?.stores || []}
                         totalNetSales={overview?.net_sales || 0}

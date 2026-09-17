@@ -28,6 +28,7 @@ import {
     useUpdateCashAccount,
     type CashAccount,
 } from "../api/cash-api";
+import { useCashTutorialStore } from "@/stores/cash-tutorial-store";
 
 interface CashAccountDialogProps {
     open: boolean;
@@ -113,6 +114,13 @@ export function CashAccountDialog({
     }, [open, editingAccount, reset]);
 
     const onSubmit = (data: CashAccountFormValues) => {
+        // Demo-safety: saat tutorial berjalan, jangan tulis ke server.
+        if (useCashTutorialStore.getState().isRunning) {
+            toast.info("Mode Simulasi: perubahan tidak disimpan saat panduan berjalan.");
+            onOpenChange(false);
+            return;
+        }
+
         if (isMapped) {
             toast.warning("Akun kas ini telah dimapping untuk transaksi dan tidak dapat diubah.");
             return;
@@ -168,6 +176,8 @@ export function CashAccountDialog({
             open={open}
             onOpenChange={onOpenChange}
             scrollable={false}
+            contentId="kas-account-dialog-content"
+            closeBtnId="kas-account-dialog-close"
             title={
                 <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100/60 shrink-0">
@@ -181,7 +191,7 @@ export function CashAccountDialog({
             className="max-w-lg sm:max-w-lg p-4 sm:p-6"
         >
             <FormProvider {...methods}>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 pt-1">
+                <form id="kas-account-dialog-body" onSubmit={handleSubmit(onSubmit)} className="space-y-3 pt-1">
                     {/* Warning Callout jika Akun Dipakai Transaksi */}
                     {isMapped && (
                         <div className="flex items-start gap-2.5 p-3 rounded-xl bg-violet-50/80 border border-violet-200 text-violet-900 text-xs">
@@ -196,7 +206,7 @@ export function CashAccountDialog({
                     )}
 
                     {/* Tipe Akun Kas - Compact Segmented */}
-                    <div className="space-y-1">
+                    <div id="kas-account-type-options" className="space-y-1">
                         <label className="text-[9.5px] font-bold text-slate-500 uppercase tracking-wider block">
                             Tipe Akun Kas *
                         </label>
@@ -210,7 +220,7 @@ export function CashAccountDialog({
                     </div>
 
                     {/* Nama Akun Kas & Nomor Rekening (2 Kolom Compact) */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div id="kas-account-fields" className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                         <FormInput<CashAccountFormValues>
                             name="nama"
                             label="Nama Akun Kas *"
@@ -289,6 +299,7 @@ export function CashAccountDialog({
                         {!isMapped && (
                             <Button
                                 type="submit"
+                                id="kas-account-submit"
                                 disabled={isPending || isSubmitting}
                                 className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-8.5 px-4 rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer"
                             >

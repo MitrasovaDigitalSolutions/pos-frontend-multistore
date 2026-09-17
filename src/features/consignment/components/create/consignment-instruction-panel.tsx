@@ -4,7 +4,7 @@ import { IconInfoCircle } from "@tabler/icons-react";
 
 export function ConsignmentInstructionPanel() {
   return (
-    <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 space-y-2.5 text-xs">
+    <div id="cons-instruction-panel" className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 space-y-2.5 text-xs">
       <div className="flex items-center gap-2 font-bold text-slate-800 border-b border-slate-200/40 pb-2">
         <IconInfoCircle className="w-4 h-4 text-emerald-600 shrink-0" />
         <span>Panduan Penerimaan Konsinyasi</span>

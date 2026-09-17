@@ -8,12 +8,16 @@ interface ReceivingItemRowControlsProps {
   onOpenTerima: () => void;
   onOpenTolak: () => void;
   isProcessing: boolean;
+  terimaId?: string;
+  tolakId?: string;
 }
 
 export function ReceivingItemRowControls({
   onOpenTerima,
   onOpenTolak,
   isProcessing,
+  terimaId,
+  tolakId,
 }: ReceivingItemRowControlsProps) {
   if (isProcessing) {
     return (
@@ -26,20 +30,22 @@ export function ReceivingItemRowControls({
   return (
     <div className="flex items-center justify-center gap-1.5">
       <DataTableTextActionButton
+        id={terimaId}
         variant="solidEmerald"
         onClick={onOpenTerima}
         disabled={isProcessing}
         icon={<IconCheck size={14} className="stroke-[2.5]" />}
-        tooltip="Konfirmasi penerimaan produk ini"
+        tooltip={terimaId ? undefined : "Konfirmasi penerimaan produk ini"}
       >
         Terima
       </DataTableTextActionButton>
       <DataTableTextActionButton
+        id={tolakId}
         variant="solidRose"
         onClick={onOpenTolak}
         disabled={isProcessing}
         icon={<IconX size={14} className="stroke-[2.5]" />}
-        tooltip="Tolak produk ini"
+        tooltip={tolakId ? undefined : "Tolak produk ini"}
       >
         Tolak
       </DataTableTextActionButton>

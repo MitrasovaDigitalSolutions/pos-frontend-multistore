@@ -19,6 +19,7 @@ import { useNetworkStatus } from "@/hooks/use-network-status";
 import { NetworkError } from "@/shared/errors/api-error";
 import { format } from "date-fns";
 import { useSession } from "next-auth/react";
+import { useTutorialStore } from "@/stores/tutorial-store";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -175,6 +176,12 @@ export function PayDebtDialog({ open, onOpenChange, member, onSuccess }: PayDebt
         e.preventDefault();
         if (!isValid) return;
 
+        if (useTutorialStore.getState().isRunning) {
+            toast.success("Pembayaran hutang berhasil diproses (Simulasi Tutorial)!");
+            onOpenChange(false);
+            return;
+        }
+
         if (!session?.cashDrawerSessionId) {
             toast.warning("Silakan buka shift laci kasir terlebih dahulu untuk melakukan pembayaran hutang.");
             onOpenChange(false);
@@ -250,17 +257,19 @@ export function PayDebtDialog({ open, onOpenChange, member, onSuccess }: PayDebt
             scrollable
         >
             <form onSubmit={handleSubmit} className="pt-1">
-                <div className="grid grid-cols-1 sm:grid-cols-[1fr_210px] gap-4">
+                <div id="pay-debt-dialog-body" className="grid grid-cols-1 sm:grid-cols-[1fr_210px] gap-4">
 
                     {/* ── Left: Form ── */}
                     <div className="space-y-3">
                         <MemberInfoStrip member={member} currentDebt={currentDebt} />
 
-                        <PayMethodToggle
-                            payMethod={payMethod}
-                            isPending={isPending}
-                            onChange={setPayMethod}
-                        />
+                        <div id="pay-debt-method-toggle">
+                            <PayMethodToggle
+                                payMethod={payMethod}
+                                isPending={isPending}
+                                onChange={setPayMethod}
+                            />
+                        </div>
 
                         <CashInput
                             cashReceived={cashReceived}
@@ -333,6 +342,7 @@ export function PayDebtDialog({ open, onOpenChange, member, onSuccess }: PayDebt
                 {/* Action buttons */}
                 <div className="flex gap-2 justify-end w-full mt-4">
                     <Button
+                        id="pay-debt-cancel-btn"
                         type="button"
                         variant="outline"
                         onClick={() => onOpenChange(false)}
@@ -342,6 +352,7 @@ export function PayDebtDialog({ open, onOpenChange, member, onSuccess }: PayDebt
                         Batal
                     </Button>
                     <Button
+                        id="pay-debt-submit-btn"
                         type="submit"
                         disabled={!isValid || isPending}
                         className="h-9 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 border-none cursor-pointer shadow-sm shadow-emerald-600/20 disabled:opacity-50"

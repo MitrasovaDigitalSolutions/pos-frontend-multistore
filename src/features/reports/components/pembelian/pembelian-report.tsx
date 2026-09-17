@@ -10,6 +10,9 @@ import { PembelianSummaryCard } from "./pembelian-summary-card";
 import { PembelianDetailsTable } from "./pembelian-details-table";
 import { formatToISO, todayStr } from "@/lib/date-utils";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
+import { ReportsTutorialController } from "../../tutorial/components/reports-tutorial-controller";
+import { MOCK_PEMBELIAN } from "../../tutorial/constants/reports-tutorial-constants";
+import { useReportsTutorialStore } from "@/stores/reports-tutorial-store";
 
 interface PembelianFilterValues {
     fromDate: string;
@@ -22,6 +25,7 @@ export function PembelianReportView() {
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
+    const isTutorialRunning = useReportsTutorialStore((state) => state.isRunning);
 
     const hasViewReports =
         hasRole(userRoles, "admin") ||
@@ -48,6 +52,9 @@ export function PembelianReportView() {
         appliedFilters.includeItems,
         appliedFilters.includePayments,
     );
+
+    // Saat tutorial berjalan, pakai data contoh agar walkthrough selalu utuh.
+    const activeData = isTutorialRunning ? MOCK_PEMBELIAN : reportData;
 
     if (!hasViewReports) {
         return (
@@ -83,22 +90,24 @@ export function PembelianReportView() {
                 onRefetch={refetch}
                 isLoading={isLoading}
                 isFetching={isFetching}
-                hasReportData={!!reportData}
+                hasReportData={!!activeData}
                 appliedFilters={appliedFilters}
             />
 
             {/* Metrics Summary Card Section */}
             <PembelianSummaryCard
-                reportData={reportData}
-                isLoading={isLoading}
+                reportData={activeData}
+                isLoading={isLoading && !isTutorialRunning}
             />
 
             {/* Expandable Rows Table Section */}
             <PembelianDetailsTable
-                reportData={reportData}
-                isLoading={isLoading}
+                reportData={activeData}
+                isLoading={isLoading && !isTutorialRunning}
                 appliedFilters={appliedFilters}
             />
+
+            <ReportsTutorialController />
         </div>
     );
 }

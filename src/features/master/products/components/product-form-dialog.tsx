@@ -26,6 +26,7 @@ interface ProductFormDialogProps {
     duplicateProduct?: Product | null;
     onSuccess?: (product: Product) => void;
     infoMessage?: string;
+    disablePointerDismissal?: boolean;
 }
 
 export function ProductFormDialog({
@@ -35,6 +36,7 @@ export function ProductFormDialog({
     duplicateProduct,
     onSuccess,
     infoMessage,
+    disablePointerDismissal,
 }: ProductFormDialogProps) {
     const [barcodeModalOpen, setBarcodeModalOpen] = useState(false);
 
@@ -77,6 +79,7 @@ export function ProductFormDialog({
             <BaseDialog
                 open={open}
                 onOpenChange={onOpenChange}
+                disablePointerDismissal={disablePointerDismissal ?? Boolean(editingProduct?.uid?.startsWith("mock-"))}
                 title={
                     <div className="flex items-center gap-2.5">
                         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-sm shadow-emerald-500/20 shrink-0">
@@ -143,9 +146,10 @@ export function ProductFormDialog({
                         )}
 
                         {/* ── 3-Column 3-5-4 Harmonic Bento Grid Layout ── */}
+                        {/* ── 3-Column 3-5-4 Harmonic Bento Grid Layout ── */}
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-stretch">
                             {/* Kolom 1: Foto Produk & Live Preview (Compact - 3 cols) */}
-                            <div className="md:col-span-3">
+                            <div id="product-form-media-column" className="md:col-span-3">
                                 <ProductMediaColumn
                                     productType={productType}
                                     disabled={isPending}
@@ -156,7 +160,7 @@ export function ProductFormDialog({
                             </div>
 
                             {/* Kolom 2: Identitas, FormSelect Tipe Produk, & Klasifikasi (Ekstra Luas - 5 cols) */}
-                            <div className="md:col-span-5">
+                            <div id="product-form-identity-column" className="md:col-span-5">
                                 <ProductIdentityColumn
                                     onProductTypeChange={handleProductTypeChange}
                                     disabled={isPending}
@@ -167,7 +171,7 @@ export function ProductFormDialog({
                             </div>
 
                             {/* Kolom 3: Harga, Stok Qty, & Grosir (Nyaman & Pas - 4 cols) */}
-                            <div className="md:col-span-4">
+                            <div id="product-form-pricing-column" className="md:col-span-4">
                                 <ProductPricingColumn
                                     productType={productType}
                                     isGrosir={isGrosir}
@@ -194,6 +198,7 @@ export function ProductFormDialog({
                                 Batal
                             </Button>
                             <Button
+                                id="btn-submit-product-form"
                                 type="submit"
                                 disabled={isPending}
                                 className="h-9 px-5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 cursor-pointer shadow-md shadow-emerald-600/20"

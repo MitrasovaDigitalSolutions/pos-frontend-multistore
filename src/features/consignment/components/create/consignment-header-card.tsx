@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { FormSelect } from "@/components/forms/form-select";
 import { Input } from "@/components/ui/input";
@@ -35,8 +35,23 @@ export function ConsignmentHeaderCard({ isPending = false }: ConsignmentHeaderCa
     onSupplierCreated: handleSupplierCreated,
   });
 
+  // Listen for custom tutorial simulation events
+  useEffect(() => {
+    const handleSetField = (e: Event) => {
+      const customEvent = e as CustomEvent<{ field: keyof ConsignmentReceivingFormValues; value: unknown }>;
+      if (customEvent.detail) {
+        setValue(customEvent.detail.field, customEvent.detail.value as never, { shouldValidate: true });
+      }
+    };
+
+    window.addEventListener("consignment-tutorial-set-field", handleSetField);
+    return () => {
+      window.removeEventListener("consignment-tutorial-set-field", handleSetField);
+    };
+  }, [setValue]);
+
   return (
-    <div className="bg-white border border-slate-100 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+    <div id="cons-header-card" className="bg-white border border-slate-100 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
       <div className="flex items-center gap-2 pb-3 border-b border-slate-50">
         <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg border border-emerald-100/30">
           <IconClipboardPlus size={18} />
@@ -53,7 +68,7 @@ export function ConsignmentHeaderCard({ isPending = false }: ConsignmentHeaderCa
 
       <div className="space-y-3.5">
         {/* Supplier Dropdown */}
-        <div className="space-y-1">
+        <div id="cons-supplier-field" className="space-y-1">
           <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
             Supplier / Pemasok *
           </label>
@@ -67,25 +82,30 @@ export function ConsignmentHeaderCard({ isPending = false }: ConsignmentHeaderCa
         </div>
 
         {/* Tanggal Penerimaan */}
-        <FormDatePicker<ConsignmentReceivingFormValues>
-          name="tanggal_terima"
-          label="Tanggal Penerimaan *"
-          disabled={isPending}
-        />
+        <div id="cons-date-field">
+          <FormDatePicker<ConsignmentReceivingFormValues>
+            name="tanggal_terima"
+            label="Tanggal Penerimaan *"
+            disabled={isPending}
+          />
+        </div>
 
         {/* Tanggal Jatuh Tempo */}
-        <FormDatePicker<ConsignmentReceivingFormValues>
-          name="tanggal_jatuh_tempo"
-          label="Tanggal Jatuh Tempo *"
-          disabled={isPending}
-        />
+        <div id="cons-due-date-field">
+          <FormDatePicker<ConsignmentReceivingFormValues>
+            name="tanggal_jatuh_tempo"
+            label="Tanggal Jatuh Tempo *"
+            disabled={isPending}
+          />
+        </div>
 
         {/* Catatan Penerimaan */}
-        <div className="space-y-1">
+        <div id="cons-notes-field" className="space-y-1">
           <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
             Catatan Penerimaan
           </label>
           <Input
+            id="cons-notes-input"
             type="text"
             placeholder="Catatan tambahan (opsional)..."
             className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"

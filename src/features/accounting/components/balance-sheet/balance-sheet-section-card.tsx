@@ -333,6 +333,7 @@ export function BalanceSheetSectionCard({
     totalLabel,
     icon,
     showDebitCredit = true,
+    sectionKey,
 }: BalanceSheetSectionCardProps) {
     // Collapsed state for parent items (default is expanded / open)
     const [collapsedParents, setCollapsedParents] = useState<Record<string, boolean>>({});
@@ -395,11 +396,6 @@ export function BalanceSheetSectionCard({
             const displayDebit = (hasKids && (item.debit || 0) === 0 && subtotal.debit !== 0) ? subtotal.debit : (item.debit || 0);
             const displayCredit = (hasKids && (item.credit || 0) === 0 && subtotal.credit !== 0) ? subtotal.credit : (item.credit || 0);
 
-            const percentVal = total > 0 ? (displayAmount / total) * 100 : 0;
-            const formattedPercent =
-                percentVal > 0 && percentVal < 0.1
-                    ? "< 0.1%"
-                    : `${percentVal.toFixed(percentVal % 1 === 0 ? 0 : 1)}%`;
 
             return (
                 <Fragment key={itemKey}>
@@ -456,30 +452,30 @@ export function BalanceSheetSectionCard({
                                     </div>
                                 </div>
 
-                                {hasDetail && (
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => toggleDetailRow(itemKey)}
-                                        className={cn(
-                                            "h-4.5 px-1.5 text-[9px] font-bold rounded-md flex items-center gap-0.5 shrink-0 border transition-all cursor-pointer select-none",
-                                            isDetailExpanded
-                                                ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
-                                                : "bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 dark:text-indigo-300 border-indigo-200/60 dark:border-indigo-800/40"
-                                        )}
-                                    >
-                                        <span>
-                                            {isDetailExpanded ? "Tutup" : `Detail (${item.detail!.length})`}
-                                        </span>
-                                        <IconChevronDown
+                                    {hasDetail && (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => toggleDetailRow(itemKey)}
                                             className={cn(
-                                                "w-2.5 h-2.5 transition-transform duration-200",
-                                                isDetailExpanded && "rotate-180"
+                                                "h-4.5 px-1.5 text-[9px] font-bold rounded-md flex items-center gap-0.5 shrink-0 border transition-all cursor-pointer select-none neraca-detail-btn",
+                                                isDetailExpanded
+                                                    ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
+                                                    : "bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 dark:text-indigo-300 border-indigo-200/60 dark:border-indigo-800/40"
                                             )}
-                                        />
-                                    </Button>
-                                )}
+                                        >
+                                            <span>
+                                                {isDetailExpanded ? "Tutup" : `Detail (${item.detail!.length})`}
+                                            </span>
+                                            <IconChevronDown
+                                                className={cn(
+                                                    "w-2.5 h-2.5 transition-transform duration-200",
+                                                    isDetailExpanded && "rotate-180"
+                                                )}
+                                            />
+                                        </Button>
+                                    )}
                             </div>
                         </td>
 
@@ -505,14 +501,7 @@ export function BalanceSheetSectionCard({
                             isParent ? "font-extrabold text-slate-900 dark:text-white" : "font-bold text-slate-800 dark:text-slate-100"
                         )}>
                             {isLevel3 ? (
-                                <div className="flex items-center justify-end gap-1.5">
-                                    <span>{formatRupiah(displayAmount)}</span>
-                                    {!showDebitCredit && percentVal > 0 && (
-                                        <span className="text-[9px] text-slate-400 dark:text-slate-500 font-semibold">
-                                            ({formattedPercent})
-                                        </span>
-                                    )}
-                                </div>
+                                formatRupiah(displayAmount)
                             ) : (
                                 <span className="text-slate-300 dark:text-slate-600 font-normal">-</span>
                             )}
@@ -562,11 +551,6 @@ export function BalanceSheetSectionCard({
             const displayDebit = (hasKids && (item.debit || 0) === 0 && subtotal.debit !== 0) ? subtotal.debit : (item.debit || 0);
             const displayCredit = (hasKids && (item.credit || 0) === 0 && subtotal.credit !== 0) ? subtotal.credit : (item.credit || 0);
 
-            const percentVal = total > 0 ? (displayAmount / total) * 100 : 0;
-            const formattedPercent =
-                percentVal > 0 && percentVal < 0.1
-                    ? "< 0.1%"
-                    : `${percentVal.toFixed(percentVal % 1 === 0 ? 0 : 1)}%`;
 
             return (
                 <Fragment key={itemKey}>
@@ -633,18 +617,18 @@ export function BalanceSheetSectionCard({
                             <div className="px-2 pb-1.5 flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-1.5">
                                     {hasDetail && (
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => toggleDetailRow(itemKey)}
-                                            className={cn(
-                                                "h-4.5 px-1.5 text-[9px] font-bold rounded-md flex items-center gap-0.5 shrink-0 border transition-all cursor-pointer select-none",
-                                                isDetailExpanded
-                                                    ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
-                                                    : "bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 dark:text-indigo-300 border-indigo-200/60 dark:border-indigo-800/40"
-                                            )}
-                                        >
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => toggleDetailRow(itemKey)}
+                                        className={cn(
+                                            "h-4.5 px-1.5 text-[9px] font-bold rounded-md flex items-center gap-0.5 shrink-0 border transition-all cursor-pointer select-none neraca-detail-btn",
+                                            isDetailExpanded
+                                                ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
+                                                : "bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 dark:text-indigo-300 border-indigo-200/60 dark:border-indigo-800/40"
+                                        )}
+                                    >
                                             <span>
                                                 {isDetailExpanded ? "Tutup" : `Detail (${item.detail!.length})`}
                                             </span>
@@ -674,11 +658,6 @@ export function BalanceSheetSectionCard({
                                     )}>
                                         {formatRupiah(displayAmount)}
                                     </span>
-                                    {!showDebitCredit && percentVal > 0 && (
-                                        <span className="text-[8px] text-slate-400 dark:text-slate-500 font-semibold">
-                                            ({formattedPercent})
-                                        </span>
-                                    )}
                                 </div>
                             </div>
                         ) : (
@@ -690,7 +669,7 @@ export function BalanceSheetSectionCard({
                                         size="sm"
                                         onClick={() => toggleDetailRow(itemKey)}
                                         className={cn(
-                                            "h-4.5 px-1.5 text-[9px] font-bold rounded-md flex items-center gap-0.5 shrink-0 border transition-all cursor-pointer select-none",
+                                            "h-4.5 px-1.5 text-[9px] font-bold rounded-md flex items-center gap-0.5 shrink-0 border transition-all cursor-pointer select-none neraca-detail-btn",
                                             isDetailExpanded
                                                 ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
                                                 : "bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 dark:text-indigo-300 border-indigo-200/60 dark:border-indigo-800/40"
@@ -740,7 +719,10 @@ export function BalanceSheetSectionCard({
             )}
         >
             {/* Ultra-Compact Card Header */}
-            <div className="px-2.5 py-1.5 sm:px-3 sm:py-1.5 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2 bg-slate-50/60 dark:bg-slate-950/30">
+            <div
+                className="px-2.5 py-1.5 sm:px-3 sm:py-1.5 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2 bg-slate-50/60 dark:bg-slate-950/30"
+                id={sectionKey ? `neraca-section-header-${sectionKey}` : undefined}
+            >
                 <div className="flex items-center gap-1.5 min-w-0">
                     {icon}
                     <span className="text-[11px] font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider truncate">

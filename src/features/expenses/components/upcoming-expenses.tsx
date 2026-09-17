@@ -15,6 +15,8 @@ import { id } from "date-fns/locale";
 import { useSession } from "next-auth/react";
 import { useSyncExternalStore, useState } from "react";
 import { useUpcomingExpenses } from "../api/expenses-api";
+import { useExpensesTutorialStore } from "@/stores/expenses-tutorial-store";
+import { MOCK_UPCOMING } from "../tutorial/constants/expenses-tutorial-constants";
 
 const emptySubscribe = () => () => {};
 const useMounted = () => useSyncExternalStore(emptySubscribe, () => true, () => false);
@@ -25,13 +27,20 @@ interface UpcomingExpensesProps {
 
 export function UpcomingExpenses({ onPayCategory }: UpcomingExpensesProps) {
     const mounted = useMounted();
-    const { data: upcoming = [], isLoading } = useUpcomingExpenses();
+    const { data: upcomingData = [], isLoading: isLoadingUpcoming } = useUpcomingExpenses();
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
     const hasManageExpenses =
         hasRole(userRoles, "admin") ||
         hasPermission(userRoles, userPermissions, "manage_expenses");
+
+    const isTutorialRunning = useExpensesTutorialStore((state) => state.isRunning);
+
+    // Saat tutorial berjalan, gunakan data contoh & paksa panel mengecil (pill)
+    // agar tidak menutupi kolom aksi tabel yang menjadi target langkah tutorial.
+    const upcoming = isTutorialRunning ? MOCK_UPCOMING : upcomingData;
+    const isLoading = isLoadingUpcoming && !isTutorialRunning;
 
     const [isMinimized, setIsMinimized] = useState<boolean>(() => {
         if (typeof window === "undefined") return false;
@@ -54,9 +63,14 @@ export function UpcomingExpenses({ onPayCategory }: UpcomingExpensesProps) {
     const hasUnpaid = unpaidCount > 0;
     const hasOverdue = overdueCount > 0;
 
+    const effectiveMinimized = isTutorialRunning || isMinimized;
+    // Saat tutorial, pill diposisikan sedikit lebih tinggi agar tidak menutupi
+    // tombol aksi baris terbawah pada tabel pengeluaran.
+    const tutorialOffsetClass = isTutorialRunning ? "bottom-[88px]" : "bottom-6";
+
     if (isLoading) {
         return (
-            <div className="fixed bottom-6 right-6 z-40 w-[calc(100vw-48px)] sm:w-96 bg-white border border-slate-100 rounded-2xl shadow-2xl p-6">
+            <div id="pengeluaran-upcoming" className={`fixed ${tutorialOffsetClass} right-6 z-40 w-[calc(100vw-48px)] sm:w-96 bg-white border border-slate-100 rounded-2xl shadow-2xl p-6`}>
                 <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                     <IconHourglass size={14} className="text-slate-400 animate-spin" />
                     <span>Jadwal Pengeluaran Rutin</span>
@@ -69,11 +83,13 @@ export function UpcomingExpenses({ onPayCategory }: UpcomingExpensesProps) {
         );
     }
 
-    if (isMinimized) {
+    if (effectiveMinimized) {
         return (
             <button
+                id="pengeluaran-upcoming"
                 onClick={toggleMinimize}
-                className="fixed bottom-6 right-6 z-40 bg-white border border-slate-200/80 shadow-xl hover:shadow-2xl px-4 py-3 rounded-full flex items-center gap-2.5 cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 group"
+                disabled={isTutorialRunning}
+                className={`fixed ${tutorialOffsetClass} right-6 z-40 bg-white border border-slate-200/80 shadow-xl hover:shadow-2xl px-4 py-3 rounded-full flex items-center gap-2.5 cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 group`}
             >
                 <div className={`p-1.5 rounded-full ${hasOverdue ? 'bg-rose-50 text-rose-600' : hasUnpaid ? 'bg-amber-50 text-amber-500' : 'bg-emerald-50 text-emerald-600'}`}>
                     {hasOverdue ? (
@@ -104,7 +120,7 @@ export function UpcomingExpenses({ onPayCategory }: UpcomingExpensesProps) {
     }
 
     return (
-        <div className="fixed bottom-6 right-6 z-40 w-[calc(100vw-48px)] sm:w-96 bg-white border border-slate-100 rounded-2xl shadow-2xl transition-all duration-300 flex flex-col overflow-hidden">
+        <div id="pengeluaran-upcoming" className={`fixed ${tutorialOffsetClass} right-6 z-40 w-[calc(100vw-48px)] sm:w-96 bg-white border border-slate-100 rounded-2xl shadow-2xl transition-all duration-300 flex flex-col overflow-hidden`}>
             {/* Header */}
             <div className="bg-slate-50/80 backdrop-blur-sm px-4 py-3.5 border-b border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">

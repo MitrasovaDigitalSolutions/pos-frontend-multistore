@@ -67,6 +67,19 @@ export interface Asset {
         username?: string;
     } | null;
     penyusutan?: AssetPenyusutan[];
+    tanggal_jual?: string | null;
+    nominal_jual?: number | null;
+    nilai_buku_saat_jual?: number | null;
+    selisih_jual?: number | null;
+    jual_cash_account_uid?: string | null;
+    jual_offset_coa_uid?: string | null;
+    catatan_jual?: string | null;
+    jualCashAccount?: {
+        uid: string;
+        nama: string;
+        tipe?: string;
+    } | null;
+    jualOffsetCoa?: ChartOfAccount | null;
     created_at?: string;
     updated_at?: string;
 }
@@ -100,6 +113,7 @@ export interface AssetSummary {
     total_nilai_buku: number;
     total_aset_aktif: number;
     total_aset_habis_susut: number;
+    total_aset_dijual?: number;
 }
 
 // ─── Filter & Payload Types ─────────────────────────────────────────────────
@@ -169,3 +183,12 @@ export interface BulkAssetPenyusutanPayload {
     tanggal: string;
     items: BulkAssetPenyusutanItem[];
 }
+
+export interface SellAssetPayload {
+    tanggal_jual: string;
+    nominal_jual: number;
+    cash_account_uid: string;
+    offset_coa_uid?: string | null;
+    catatan?: string | null;
+}
+

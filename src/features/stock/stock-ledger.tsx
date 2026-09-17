@@ -80,33 +80,58 @@ export function StockLedger() {
         { value: "receive", label: "Penerimaan" },
         { value: "sale", label: "Penjualan" },
         { value: "sale_void", label: "Pembatalan Penjualan" },
+        { value: "production_in", label: "Produksi Masuk (Hasil Produksi)" },
+        { value: "production_out", label: "Produksi Keluar (Bahan Baku)" },
         { value: "transfer_in", label: "Transfer Masuk (Transfer IN)" },
         { value: "transfer_out", label: "Transfer Keluar (Transfer OUT)" },
-        { value: "retur", label: "Retur" },
-        { value: "void", label: "Pembatalan" },
+        { value: "stock_in", label: "Stok Masuk" },
+        { value: "stock_out", label: "Stok Keluar (Pemakaian)" },
         { value: "adjustment", label: "Penyesuaian" },
         { value: "opname", label: "Opname" },
+        { value: "retur", label: "Retur" },
+        { value: "void", label: "Pembatalan" },
     ];
 
     return (
-        <div className="space-y-6">
-            <FilterForm
-                methods={filterMethods}
-                onSubmit={handleFilterSubmit}
-                onReset={handleFilterReset}
-            >
-                <FormInput<LedgerFilterValues>
-                    name="search"
-                    label="Cari Produk atau Keterangan"
-                    placeholder="Cari nama produk, alasan..."
-                />
-                <FormSelect<LedgerFilterValues>
-                    name="tipe"
-                    label="Tipe Perubahan"
-                    options={tipeOptions}
-                    placeholder="Semua Tipe"
-                />
-            </FilterForm>
+        <div className="space-y-4 sm:space-y-6 pb-28 sm:pb-8">
+            {/* Header */}
+            <section id="stock-ledger-header" className="bg-white border border-slate-100 rounded-2xl shadow-xs p-3.5 sm:p-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h3 className="text-sm sm:text-base font-bold text-slate-900 leading-tight">
+                            Kartu Stok (Buku Mutasi Inventori)
+                        </h3>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                            Buku kendali log audit pergerakan keluar-masuk stok barang, riwayat transaksi kasir, dan penyesuaian inventori.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            {/* Filter Form */}
+            <div id="ledger-filter-card">
+                <FilterForm
+                    methods={filterMethods}
+                    onSubmit={handleFilterSubmit}
+                    onReset={handleFilterReset}
+                >
+                    <div id="ledger-search-input">
+                        <FormInput<LedgerFilterValues>
+                            name="search"
+                            label="Cari Produk atau Keterangan"
+                            placeholder="Cari nama produk, alasan..."
+                        />
+                    </div>
+                    <div id="ledger-type-filter">
+                        <FormSelect<LedgerFilterValues>
+                            name="tipe"
+                            label="Tipe Perubahan"
+                            options={tipeOptions}
+                            placeholder="Semua Tipe"
+                        />
+                    </div>
+                </FilterForm>
+            </div>
 
             <MovementLedger
                 movements={movementsData?.data || []}

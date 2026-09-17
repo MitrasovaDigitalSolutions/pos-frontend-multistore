@@ -14,6 +14,7 @@ import { FormTextarea } from "@/components/forms/form-textarea";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { transferSchema, type TransferSchemaInput } from "../schemas/cash-schema";
 import { useTransferCashAccount, type CashAccount } from "../api/cash-api";
+import { useCashTutorialStore } from "@/stores/cash-tutorial-store";
 
 interface CashTransferDialogProps {
     open: boolean;
@@ -62,6 +63,13 @@ export function CashTransferDialog({
     }, [open, reset]);
 
     const onSubmit = async (data: TransferSchemaInput) => {
+        // Demo-safety: saat tutorial berjalan, jangan eksekusi transfer.
+        if (useCashTutorialStore.getState().isRunning) {
+            toast.info("Mode Simulasi: transfer saldo tidak dieksekusi saat panduan berjalan.");
+            onOpenChange(false);
+            return;
+        }
+
         // Validate from/to diff
         if (data.from_account_uid === data.to_account_uid) {
             setError("to_account_uid", {
@@ -125,20 +133,24 @@ export function CashTransferDialog({
         <BaseDialog
             open={open}
             onOpenChange={onOpenChange}
+            contentId="kas-transfer-dialog-content"
+            closeBtnId="kas-transfer-dialog-close"
             title={dialogTitle}
             className="max-w-md"
         >
-            <div className="space-y-4 pt-2">
+            <div id="kas-transfer-dialog-body" className="space-y-4 pt-2">
                 <FormProvider {...methods}>
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                         {/* Source Account */}
-                        <FormSelect<TransferSchemaInput>
-                            name="from_account_uid"
-                            label="Dari Akun Kas (Asal) *"
-                            placeholder="-- Pilih Akun Kas Asal --"
-                            options={fromOptions}
-                            disabled={isSubmitting}
-                        />
+                        <div id="kas-transfer-from">
+                            <FormSelect<TransferSchemaInput>
+                                name="from_account_uid"
+                                label="Dari Akun Kas (Asal) *"
+                                placeholder="-- Pilih Akun Kas Asal --"
+                                options={fromOptions}
+                                disabled={isSubmitting}
+                            />
+                        </div>
 
                         {/* Balance display for source account */}
                         {fromAccount && (
@@ -154,30 +166,34 @@ export function CashTransferDialog({
                         )}
 
                         {/* Target Account */}
-                        <FormSelect<TransferSchemaInput>
-                            name="to_account_uid"
-                            label="Ke Akun Kas (Tujuan) *"
-                            placeholder="-- Pilih Akun Kas Tujuan --"
-                            options={toOptions}
-                            disabled={isSubmitting}
-                        />
+                        <div id="kas-transfer-to">
+                            <FormSelect<TransferSchemaInput>
+                                name="to_account_uid"
+                                label="Ke Akun Kas (Tujuan) *"
+                                placeholder="-- Pilih Akun Kas Tujuan --"
+                                options={toOptions}
+                                disabled={isSubmitting}
+                            />
+                        </div>
 
-                        {/* Amount */}
-                        <FormNominalInput<TransferSchemaInput>
-                            name="amount"
-                            label="Nominal Transfer *"
-                            placeholder="Masukkan nominal Rp..."
-                            disabled={isSubmitting}
-                        />
+                        {/* Amount + Notes */}
+                        <div id="kas-transfer-amount-notes" className="space-y-4">
+                            <FormNominalInput<TransferSchemaInput>
+                                name="amount"
+                                label="Nominal Transfer *"
+                                placeholder="Masukkan nominal Rp..."
+                                disabled={isSubmitting}
+                            />
 
-                        {/* Notes */}
-                        <FormTextarea<TransferSchemaInput>
-                            name="catatan"
-                            label="Catatan / Keterangan"
-                            placeholder="Keterangan transfer (misal: isi kas kecil, setoran bank, dsb)..."
-                            className="min-h-[80px]"
-                            disabled={isSubmitting}
-                        />
+                            {/* Notes */}
+                            <FormTextarea<TransferSchemaInput>
+                                name="catatan"
+                                label="Catatan / Keterangan"
+                                placeholder="Keterangan transfer (misal: isi kas kecil, setoran bank, dsb)..."
+                                className="min-h-[80px]"
+                                disabled={isSubmitting}
+                            />
+                        </div>
 
                         {/* Action Buttons */}
                         <div className="flex justify-end gap-3 pt-3 border-t border-slate-50">
@@ -192,6 +208,7 @@ export function CashTransferDialog({
                             </Button>
                             <Button
                                 type="submit"
+                                id="kas-transfer-submit"
                                 className="h-10 text-xs font-bold text-white rounded-xl bg-blue-600 hover:bg-blue-700"
                                 disabled={isSubmitting}
                             >

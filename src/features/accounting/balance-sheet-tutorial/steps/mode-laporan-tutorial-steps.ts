@@ -1,0 +1,45 @@
+import type { BalanceSheetTutorialStep } from "../types/balance-sheet-tutorial";
+
+export const MODE_LAPORAN_TUTORIAL_STEPS: BalanceSheetTutorialStep[] = [
+    {
+        id: "ml-step-1",
+        target: "#neraca-mode-switcher",
+        title: "1. Pengalih Mode Laporan",
+        content: "Toolbar ini memungkinkan Anda beralih seketika antara mode Neraca, Laba Rugi, dan Persamaan Akuntansi.",
+        placement: "bottom",
+        skipScroll: true,
+    },
+    {
+        id: "ml-step-2",
+        target: "#neraca-mode-laba_rugi",
+        title: "2. Mode Laba Rugi",
+        content: "Tinjau omset Pendapatan vs Beban & HPP operasional, serta surplus/defisit laba bersih periode berjalan.",
+        placement: "bottom",
+        skipScroll: true,
+        simulateClick: "#neraca-mode-laba_rugi",
+        ensureDkOn: true,
+    },
+    {
+        id: "ml-step-3",
+        target: "#neraca-mode-equation",
+        title: "3. Mode Persamaan Akuntansi",
+        content: "Melakukan audit formula dasar pembukuan: Aset + Beban = Liabilitas + Ekuitas + Pendapatan untuk kepatuhan akuntansi ganda.",
+        placement: "bottom",
+        skipScroll: true,
+        simulateClick: "#neraca-mode-equation",
+        ensureDkOn: true,
+    },
+    {
+        id: "ml-step-4",
+        target: "#neraca-mode-neraca",
+        title: "4. Selesai & Kembali ke Neraca",
+        content: "Kembali ke neraca posisi keuangan. Anda kini siap memantau dan menganalisis laporan akuntansi toko.",
+        placement: "bottom",
+        skipScroll: true,
+        isLastStep: true,
+        nextLabel: "Selesai",
+        variant: "overlay_nav",
+        overlayNav: true,
+        simulateClick: "#neraca-mode-neraca",
+    },
+];

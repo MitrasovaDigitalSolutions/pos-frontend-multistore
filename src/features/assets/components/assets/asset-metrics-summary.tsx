@@ -21,6 +21,7 @@ export function AssetMetricsSummary({ summary, isLoading = false }: AssetMetrics
     const totalPenyusutan = summary?.total_penyusutan ?? 0;
     const totalAktif = summary?.total_aset_aktif ?? 0;
     const totalHabisSusut = summary?.total_aset_habis_susut ?? 0;
+    const totalDijual = summary?.total_aset_dijual ?? 0;
 
     return (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-2 shadow-xs">
@@ -99,6 +100,13 @@ export function AssetMetricsSummary({ summary, isLoading = false }: AssetMetrics
                                 <span className="text-slate-400 font-normal"> Aktif / </span>
                                 <strong className="text-slate-600 dark:text-slate-300">{totalHabisSusut}</strong>
                                 <span className="text-slate-400 font-normal"> Habis</span>
+                                {totalDijual > 0 && (
+                                    <>
+                                        <span className="text-slate-400 font-normal"> / </span>
+                                        <strong className="text-indigo-600 dark:text-indigo-400">{totalDijual}</strong>
+                                        <span className="text-slate-400 font-normal"> Dijual</span>
+                                    </>
+                                )}
                             </span>
                         )}
                     </div>

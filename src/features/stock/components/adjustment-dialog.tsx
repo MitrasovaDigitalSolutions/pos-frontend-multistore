@@ -21,6 +21,8 @@ import { FormInput } from "@/components/forms/form-input";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTableTextActionButton } from "@/components/ui/data-table-actions";
 import { ColumnDef } from "@tanstack/react-table";
+import { useStockTutorialStore } from "@/stores/stock-tutorial-store";
+import { MOCK_ADJUSTMENT_PRODUCT } from "../tutorial/constants/stock-tutorial-constants";
 
 interface AdjustmentDialogProps {
     open: boolean;
@@ -35,6 +37,7 @@ export function AdjustmentDialog({
     open,
     onOpenChange,
 }: AdjustmentDialogProps) {
+    const isTutorialRunning = useStockTutorialStore((state) => state.isRunning);
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
     const [sortBy, setSortBy] = useState<string | undefined>("nama");
@@ -65,7 +68,33 @@ export function AdjustmentDialog({
         sort_order: sortOrder,
     });
 
-    const products = productsData?.data || [];
+    const products = useMemo(() => {
+        const rawProducts = productsData?.data || [];
+        if (isTutorialRunning && rawProducts.length === 0) {
+            return [MOCK_ADJUSTMENT_PRODUCT as Product];
+        }
+        return rawProducts;
+    }, [productsData?.data, isTutorialRunning]);
+
+    // Listen to tutorial simulation events to open/close adjustment form
+    useEffect(() => {
+        if (!isTutorialRunning) return;
+        const handleOpenForm = (e: Event) => {
+            const customEvent = e as CustomEvent<{ product?: Product }>;
+            const prod = customEvent.detail?.product || (products[0] as Product) || (MOCK_ADJUSTMENT_PRODUCT as Product);
+            setSelectedProduct(prod);
+            setIsFormOpen(true);
+        };
+        const handleCloseForm = () => {
+            setIsFormOpen(false);
+        };
+        window.addEventListener("stock-tutorial-open-adjust-form", handleOpenForm);
+        window.addEventListener("stock-tutorial-close-adjust-form", handleCloseForm);
+        return () => {
+            window.removeEventListener("stock-tutorial-open-adjust-form", handleOpenForm);
+            window.removeEventListener("stock-tutorial-close-adjust-form", handleCloseForm);
+        };
+    }, [isTutorialRunning, products]);
 
     const filterMethods = useForm<ProductSearchValues>({
         defaultValues: {
@@ -137,17 +166,19 @@ export function AdjustmentDialog({
             >
                 <div className="flex flex-col flex-1 overflow-hidden">
                     {/* Reusable FilterForm */}
-                    <FilterForm<ProductSearchValues>
-                        methods={filterMethods}
-                        onSubmit={handleFilterSubmit}
-                        onReset={handleFilterReset}
-                        className="mt-0"
-                    >
-                        <FormInput<ProductSearchValues>
-                            name="search"
-                            placeholder="Cari barcode, nama, atau merek..."
-                        />
-                    </FilterForm>
+                    <div id="adjustment-search-filter">
+                        <FilterForm<ProductSearchValues>
+                            methods={filterMethods}
+                            onSubmit={handleFilterSubmit}
+                            onReset={handleFilterReset}
+                            className="mt-0"
+                        >
+                            <FormInput<ProductSearchValues>
+                                name="search"
+                                placeholder="Cari barcode, nama, atau merek..."
+                            />
+                        </FilterForm>
+                    </div>
 
                     {/* DataTable */}
                     <div className="min-h-[280px]">
@@ -169,6 +200,7 @@ export function AdjustmentDialog({
                             }}
                             extraActions={(p) => (
                                 <DataTableTextActionButton
+                                    id={p.uid === products[0]?.uid ? "btn-adjust-product-row-0" : undefined}
                                     variant="amber"
                                     onClick={() => {
                                         setSelectedProduct(p);
@@ -237,6 +269,12 @@ export function AdjustmentFormDialog({
     const isPending = createAdjustment.isPending;
 
     const onSubmit = (data: AdjustmentInput) => {
+        if (useStockTutorialStore.getState().isRunning) {
+            toast.success("Penyesuaian stok manual berhasil disimpan!");
+            onOpenChange(false);
+            return;
+        }
+
         createAdjustment.mutate(data, {
             onSuccess: () => {
                 toast.success("Penyesuaian stok manual berhasil disimpan!");
@@ -271,7 +309,7 @@ export function AdjustmentFormDialog({
                     onSubmit={handleSubmit(onSubmit, onErrorSubmit)}
                     className="space-y-4"
                 >
-                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1">
+                    <div id="adjustment-selected-product-card" className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1">
                         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Produk Terpilih</span>
                         <p className="text-xs font-bold text-slate-800">{product.nama}</p>
                         {product.barcode && (
@@ -280,24 +318,28 @@ export function AdjustmentFormDialog({
                         <p className="text-[10px] text-slate-500 mt-1">Stok Saat Ini: <strong className="text-slate-800 font-bold">{product.stok}</strong></p>
                     </div>
 
-                    <FormNumberInput<AdjustmentInput>
-                        name="kuantitas"
-                        label={
-                            <>
-                                Kuantitas Perubahan (+ / -) <span className="text-rose-500 font-bold">*</span>
-                            </>
-                        }
-                        placeholder="Contoh: -5 untuk kurangi, 10 untuk tambah..."
-                        disabled={isPending}
-                        allowNegative={true}
-                    />
+                    <div id="adjustment-quantity-field">
+                        <FormNumberInput<AdjustmentInput>
+                            id="adjustment-quantity-input"
+                            name="kuantitas"
+                            label={
+                                <>
+                                    Kuantitas Perubahan (+ / -) <span className="text-rose-500 font-bold">*</span>
+                                </>
+                            }
+                            placeholder="Contoh: -5 untuk kurangi, 10 untuk tambah..."
+                            disabled={isPending}
+                            allowNegative={true}
+                        />
+                    </div>
 
                     {/* Alasan */}
-                    <div className="space-y-1.5">
+                    <div id="adjustment-reason-field" className="space-y-1.5">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             Alasan Penyesuaian <span className="text-rose-500 font-bold">*</span>
                         </label>
                         <Input
+                            id="adjustment-reason-input"
                             type="text"
                             placeholder="Contoh: Barang rusak, display hilang..."
                             className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
@@ -321,6 +363,7 @@ export function AdjustmentFormDialog({
                             Batal
                         </Button>
                         <Button
+                            id="btn-submit-adjustment"
                             type="submit"
                             className="w-full h-11 bg-amber-600 hover:bg-amber-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-amber-600/10 border-none"
                             disabled={isPending}

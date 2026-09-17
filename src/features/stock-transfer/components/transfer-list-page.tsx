@@ -2,7 +2,7 @@
 
 import { IconInfoCircle } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { hasPermission, hasRole } from "@/constants/roles";
@@ -10,7 +10,14 @@ import { ROUTES } from "@/constants/routes";
 import { useStores } from "@/features/stores/api/stores-api";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useActiveStoreStore } from "@/stores/active-store-store";
+import { useTransferTutorialStore } from "@/stores/transfer-tutorial-store";
 import { StockTransferListMode, useStockTransfersByMode } from "../api/stock-transfer-api";
+import {
+  MOCK_INCOMING_STOCK_TRANSFER,
+  MOCK_INCOMING_STOCK_TRANSFER_UID,
+  MOCK_VALIDATION_STOCK_TRANSFER,
+  MOCK_VALIDATION_STOCK_TRANSFER_UID,
+} from "../tutorial/constants/transfer-tutorial-constants";
 
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { DataTable } from "@/components/ui/data-table";
@@ -117,9 +124,57 @@ export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
   const canManage = hasRole(roles, "admin") || hasPermission(roles, permissions, "manage_stock_transfers");
   const canView = canManage || hasPermission(roles, permissions, "view_stock_transfers");
 
-  const transfers = data?.data || [];
+  const isTutorialRunning = useTransferTutorialStore((state) => state.isRunning);
+  const activeTutorial = useTransferTutorialStore((state) => state.activeTutorial);
+
+  useEffect(() => {
+    if (isTutorialRunning && activeTutorial === "stock_transfer_receive" && mode === "outgoing") {
+      router.replace(ROUTES.ADMIN_STOCK_TRANSFERS_INCOMING);
+    } else if (isTutorialRunning && activeTutorial === "stock_transfer_validation" && mode !== "validations") {
+      router.replace(ROUTES.ADMIN_STOCK_TRANSFERS_VALIDATIONS);
+    }
+  }, [isTutorialRunning, activeTutorial, mode, router]);
+
+  const transfers = useMemo(() => {
+    const rawTransfers = data?.data || [];
+    if (isTutorialRunning && activeTutorial === "stock_transfer_receive") {
+      const filtered = rawTransfers.filter((t) => !t.uid.startsWith("mock-"));
+      return [
+        {
+          ...MOCK_INCOMING_STOCK_TRANSFER,
+          store_uid_destination: activeStoreUid || MOCK_INCOMING_STOCK_TRANSFER.store_uid_destination,
+          destination_store: {
+            uid: activeStoreUid || "mock-store-cabang",
+            nama: session?.user?.stores?.find((s) => s.uid === activeStoreUid)?.nama || "Cabang Anda (Penerima)",
+            is_central: false,
+          },
+        },
+        ...filtered,
+      ];
+    }
+    if (isTutorialRunning && activeTutorial === "stock_transfer_validation") {
+      const filtered = rawTransfers.filter((t) => !t.uid.startsWith("mock-"));
+      return [
+        {
+          ...MOCK_VALIDATION_STOCK_TRANSFER,
+          store_uid_source: activeStoreUid || MOCK_VALIDATION_STOCK_TRANSFER.store_uid_source,
+          source_store: {
+            uid: activeStoreUid || "mock-store-asal",
+            nama: session?.user?.stores?.find((s) => s.uid === activeStoreUid)?.nama || "Cabang Anda (Toko Asal)",
+            is_central: false,
+          },
+        },
+        ...filtered,
+      ];
+    }
+    return isTutorialRunning
+      ? rawTransfers
+      : rawTransfers.filter((t) => !t.uid.startsWith("mock-"));
+  }, [data?.data, isTutorialRunning, activeTutorial, activeStoreUid, session]);
   const meta = data?.meta;
   const totalCount = meta?.total || transfers.length;
+
+  const isTableLoading = isTutorialRunning && transfers.length > 0 ? false : isLoading;
 
   const columns = useTransferColumns(activeStoreUid);
 
@@ -153,7 +208,7 @@ export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
           <DataTable
             columns={columns}
             data={transfers}
-            isLoading={isLoading}
+            isLoading={isTableLoading}
             isFetching={isFetching}
             actionColumnWidth="w-36"
             emptyMessage="Belum ada transaksi transfer stok ditemukan."
@@ -198,14 +253,25 @@ export function TransferListPage({ mode }: { mode: StockTransferListMode }) {
                 "ditolak",
               ].includes(st);
 
+              const isFirst =
+                item.uid === MOCK_INCOMING_STOCK_TRANSFER_UID ||
+                item.uid === MOCK_VALIDATION_STOCK_TRANSFER_UID ||
+                item.uid === transfers[0]?.uid;
+
               return (
-                <DataTableActionButton
-                  variant={!isFinishedOrRejected ? "amber" : "slate"}
-                  onClick={() => router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/${item.uid}?from=${mode}`)}
-                  tooltip="Lihat Detail Transfer"
+                <span
+                  id={isFirst ? "transfer-btn-detail-0" : undefined}
+                  className="inline-flex items-center justify-center"
                 >
-                  <IconInfoCircle size={16} />
-                </DataTableActionButton>
+                  <DataTableActionButton
+                    id={isFirst ? "transfer-btn-detail-0-btn" : undefined}
+                    variant={!isFinishedOrRejected ? "amber" : "slate"}
+                    onClick={() => router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/${item.uid}?from=${mode}`)}
+                    tooltip="Lihat Detail Transfer"
+                  >
+                    <IconInfoCircle size={16} />
+                  </DataTableActionButton>
+                </span>
               );
             }}
           />

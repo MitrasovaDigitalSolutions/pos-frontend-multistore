@@ -35,54 +35,56 @@ export function TransferListFilters({
   onReset,
 }: TransferListFiltersProps) {
   return (
-    <FilterForm<TransferFilterValues>
-      methods={filterMethods}
-      onSubmit={onSubmit}
-      onReset={onReset}
-      titleLabel="Filter Transfer Stok"
-    >
-      <FormDatePicker<TransferFilterValues>
-        name="created_from"
-        label="Dari Tanggal"
-        placeholder="Pilih tanggal awal..."
-        size="sm"
-      />
-      <FormDatePicker<TransferFilterValues>
-        name="created_to"
-        label="Sampai Tanggal"
-        placeholder="Pilih tanggal akhir..."
-        size="sm"
-      />
-      <FormSelect<TransferFilterValues>
-        name="source"
-        label="Asal (Source)"
-        options={storeOptions}
-        placeholder="Semua Cabang"
-        size="sm"
-      />
-      <FormSelect<TransferFilterValues>
-        name="destination"
-        label="Tujuan (Destination)"
-        options={storeOptions}
-        placeholder="Semua Cabang"
-        size="sm"
-      />
-      {mode !== "validations" && (
-        <FormSelect<TransferFilterValues>
-          name="status"
-          label="Status Transfer"
-          options={statusOptions}
-          placeholder="Semua Status Transfer"
+    <div id="transfer-list-filters">
+      <FilterForm<TransferFilterValues>
+        methods={filterMethods}
+        onSubmit={onSubmit}
+        onReset={onReset}
+        titleLabel="Filter Transfer Stok"
+      >
+        <FormDatePicker<TransferFilterValues>
+          name="created_from"
+          label="Dari Tanggal"
+          placeholder="Pilih tanggal awal..."
           size="sm"
         />
-      )}
-      <FormSelect<TransferFilterValues>
-        name="status_penerimaan"
-        label="Status Penerimaan"
-        options={statusPenerimaanOptions}
-        placeholder="Semua Status Penerimaan"
-        size="sm"
-      />
-    </FilterForm>
+        <FormDatePicker<TransferFilterValues>
+          name="created_to"
+          label="Sampai Tanggal"
+          placeholder="Pilih tanggal akhir..."
+          size="sm"
+        />
+        <FormSelect<TransferFilterValues>
+          name="source"
+          label="Asal (Source)"
+          options={storeOptions}
+          placeholder="Semua Cabang"
+          size="sm"
+        />
+        <FormSelect<TransferFilterValues>
+          name="destination"
+          label="Tujuan (Destination)"
+          options={storeOptions}
+          placeholder="Semua Cabang"
+          size="sm"
+        />
+        {mode !== "validations" && (
+          <FormSelect<TransferFilterValues>
+            name="status"
+            label="Status Transfer"
+            options={statusOptions}
+            placeholder="Semua Status Transfer"
+            size="sm"
+          />
+        )}
+        <FormSelect<TransferFilterValues>
+          name="status_penerimaan"
+          label="Status Penerimaan"
+          options={statusPenerimaanOptions}
+          placeholder="Semua Status Penerimaan"
+          size="sm"
+        />
+      </FilterForm>
+    </div>
   );
 }

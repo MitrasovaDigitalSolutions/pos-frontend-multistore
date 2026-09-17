@@ -31,6 +31,7 @@ export function TransactionDetailHeader({
             <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1">
                 <Button
                     type="button"
+                    id="trx-detail-btn-back"
                     onClick={() => router.push("/admin/transactions")}
                     variant="outline"
                     className="group p-2 h-9 w-9 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900 bg-white dark:bg-slate-950 shadow-sm shrink-0"
@@ -39,7 +40,7 @@ export function TransactionDetailHeader({
                         size={18}
                     />
                 </Button>
-                <div className="min-w-0 flex-1">
+                <div id="trx-detail-header-info" className="min-w-0 flex-1">
                     {/* Breadcrumbs */}
                     <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
                         <span
@@ -73,6 +74,7 @@ export function TransactionDetailHeader({
                 <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 w-full sm:w-auto">
                     {onVoid && (
                         <Button
+                            id="trx-detail-btn-void"
                             onClick={onVoid}
                             className="group text-white bg-rose-500 hover:bg-rose-600 font-extrabold text-xs h-9 sm:h-10 px-3.5 sm:px-5 rounded-xl sm:rounded-2xl flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer flex-1 sm:flex-initial"
                         >
@@ -83,6 +85,7 @@ export function TransactionDetailHeader({
                         </Button>
                     )}
                     <Button
+                        id="trx-detail-btn-print"
                         onClick={onPrint}
                         className="group bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-extrabold text-xs h-9 sm:h-10 px-3.5 sm:px-5 rounded-xl sm:rounded-2xl flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer flex-1 sm:flex-initial"
                     >

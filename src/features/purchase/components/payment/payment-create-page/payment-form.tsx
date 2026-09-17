@@ -36,7 +36,7 @@ export function PaymentForm({
     } = useFormContext<PaymentInput>();
 
     return (
-        <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6">
+        <section id="pay-form-card" className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6">
             <div className="flex items-center gap-2.5 pb-4 border-b border-slate-50 mb-6">
                 <div className="bg-emerald-50 text-emerald-600 p-2 rounded-xl border border-emerald-100/30">
                     <IconCreditCard size={20} />
@@ -50,7 +50,7 @@ export function PaymentForm({
             <form onSubmit={onSubmit} className="space-y-5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Select Outstanding Receiving */}
-                    <div className="sm:col-span-2 space-y-1.5">
+                    <div id="pay-receiving-field" className="sm:col-span-2 space-y-1.5">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             Faktur Penerimaan *
                         </label>
@@ -67,7 +67,7 @@ export function PaymentForm({
                     </div>
 
                     {/* Nominal Pembayaran */}
-                    <div>
+                    <div id="pay-amount-field">
                         <FormNominalInput<PaymentInput>
                             name="jumlah_bayar"
                             label="Nominal Pembayaran *"
@@ -77,7 +77,7 @@ export function PaymentForm({
                     </div>
 
                     {/* Payment Date */}
-                    <div className="space-y-1.5">
+                    <div id="pay-date-field" className="space-y-1.5">
                         <FormDatePicker<PaymentInput>
                             name="tanggal_bayar"
                             label="Tanggal Bayar *"
@@ -86,7 +86,7 @@ export function PaymentForm({
                     </div>
 
                     {/* Cash Account */}
-                    <div className="space-y-1.5">
+                    <div id="pay-cash-account-field" className="space-y-1.5">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             Bayar Dari Akun/Kas *
                         </label>
@@ -103,7 +103,7 @@ export function PaymentForm({
                     </div>
 
                     {/* Payment Method */}
-                    <div className="space-y-1.5">
+                    <div id="pay-method-field" className="space-y-1.5">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             Metode Pembayaran *
                         </label>
@@ -116,11 +116,12 @@ export function PaymentForm({
                     </div>
 
                     {/* Reference Number */}
-                    <div className="sm:col-span-2 space-y-1.5">
+                    <div id="pay-ref-field" className="sm:col-span-2 space-y-1.5">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             Nomor Referensi (Misal: Kode Transaksi, No Transfer)
                         </label>
                         <Input
+                            id="pay-ref-input"
                             type="text"
                             placeholder="TRF-XXXXX / GIRO-XXXXX..."
                             className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
@@ -135,11 +136,12 @@ export function PaymentForm({
                     </div>
 
                     {/* Notes */}
-                    <div className="sm:col-span-2 space-y-1.5">
+                    <div id="pay-notes-field" className="sm:col-span-2 space-y-1.5">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             Catatan / Keterangan Pembayaran
                         </label>
                         <Input
+                            id="pay-notes-input"
                             type="text"
                             placeholder="Misal: Pembayaran sisa 50% atau pelunasan..."
                             className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
@@ -155,7 +157,7 @@ export function PaymentForm({
                 </div>
 
                 {/* Form Actions */}
-                <div className="flex justify-end gap-3 pt-4 border-t border-slate-50">
+                <div id="pay-actions-bar" className="flex justify-end gap-3 pt-4 border-t border-slate-50">
                     <Button
                         type="button"
                         onClick={onCancel}
@@ -167,6 +169,7 @@ export function PaymentForm({
                     </Button>
                     <Button
                         type="submit"
+                        id="pay-submit-button"
                         className="px-6 h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
                         disabled={isPending}
                     >

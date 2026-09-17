@@ -9,6 +9,8 @@ import { useCashFlow, type CashLedger, type CashAccount } from "../api/cash-api"
 import { LedgerFilterBar, type LedgerFilterValues } from "./ledger/ledger-filter-bar";
 import { LedgerDetailModal } from "./ledger/ledger-detail-modal";
 import { useLedgerColumns } from "./ledger/use-ledger-columns";
+import { useCashTutorialStore } from "@/stores/cash-tutorial-store";
+import { MOCK_CASH_LEDGER } from "../tutorial/constants/cash-tutorial-constants";
 
 interface CashLedgerTableProps {
     cashAccountUid?: string;
@@ -85,10 +87,15 @@ export function CashLedgerTable({
     const rawList = ledgerData?.data || [];
     const selectedAccountName = accounts.find((a) => a.uid === cashAccountUid)?.nama;
 
+    // Tutorial: tampilkan mutasi contoh bila data toko kosong agar spotlight
+    // aksi rincian mutasi tetap punya target.
+    const isTutorialRunning = useCashTutorialStore((state) => state.isRunning);
+    const displayList = isTutorialRunning && rawList.length === 0 ? MOCK_CASH_LEDGER : rawList;
+
     const columns = useLedgerColumns();
 
     return (
-        <div className="space-y-4">
+        <div id="kas-ledger-table" className="space-y-4">
             {/* Account Filter Active Indicator */}
             {cashAccountUid && (
                 <div className="flex items-center gap-2 text-xs">
@@ -113,32 +120,34 @@ export function CashLedgerTable({
             />
 
             {/* DataTable View with Fixed Table Layout & Column Widths */}
-            <DataTable
-                columns={columns}
-                data={rawList}
-                isLoading={ledgerLoading}
-                isFetching={ledgerFetching}
-                tableClassName="table-fixed min-w-[900px]"
-                emptyMessage="Tidak ada data mutasi arus kas yang ditemukan."
-                paginationMode="server"
-                page={ledgerFilters.page}
-                perPage={ledgerFilters.per_page}
-                onPageChange={(page) => setLedgerFilters((prev) => ({ ...prev, page }))}
-                onView={(movement) => {
-                    setSelectedMovement(movement);
-                    setIsDetailOpen(true);
-                }}
-                meta={
-                    ledgerData?.meta
-                        ? {
-                              current_page: ledgerData.meta.current_page,
-                              last_page: ledgerData.meta.last_page,
-                              per_page: ledgerData.meta.per_page,
-                              total: ledgerData.meta.total,
-                          }
-                        : undefined
-                }
-            />
+            <div id="kas-ledger-table-scroll">
+                <DataTable
+                    columns={columns}
+                    data={displayList}
+                    isLoading={ledgerLoading}
+                    isFetching={ledgerFetching}
+                    tableClassName="table-fixed min-w-[900px]"
+                    emptyMessage="Tidak ada data mutasi arus kas yang ditemukan."
+                    paginationMode="server"
+                    page={ledgerFilters.page}
+                    perPage={ledgerFilters.per_page}
+                    onPageChange={(page) => setLedgerFilters((prev) => ({ ...prev, page }))}
+                    onView={(movement) => {
+                        setSelectedMovement(movement);
+                        setIsDetailOpen(true);
+                    }}
+                    meta={
+                        ledgerData?.meta
+                            ? {
+                                  current_page: ledgerData.meta.current_page,
+                                  last_page: ledgerData.meta.last_page,
+                                  per_page: ledgerData.meta.per_page,
+                                  total: ledgerData.meta.total,
+                              }
+                            : undefined
+                    }
+                />
+            </div>
 
             {/* Detail Audit Dialog Modal */}
             <LedgerDetailModal

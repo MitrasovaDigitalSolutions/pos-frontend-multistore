@@ -27,6 +27,8 @@ import {
     downloadOpnameSheetPdf,
 } from "../api/stock-api";
 import { useAppRouter } from "@/hooks/use-app-router";
+import { useStockTutorialStore } from "@/stores/stock-tutorial-store";
+import { MOCK_OPNAME_UID } from "../tutorial/constants/stock-tutorial-constants";
 
 interface OpnameDialogProps {
     open: boolean;
@@ -75,6 +77,35 @@ export function OpnameDialog({
             });
         }
     }, [open, reset]);
+
+    // Listen to tutorial events for setting dialog tab
+    useEffect(() => {
+        const handleSetTab = (e: CustomEvent<{ tab: "import" | "manual" }>) => {
+            if (e.detail?.tab) {
+                setActiveTab(e.detail.tab);
+            }
+        };
+        const handleSetMockFile = () => {
+            const mockFile = new File(["mock_excel_content"], "hasil_stock_opname_juni_2026.xlsx", {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            });
+            setSelectedFile(mockFile);
+            setCatatanImport("Audit Massal Excel - Gudang Pusat");
+        };
+        const handleCleanup = () => {
+            setSelectedFile(null);
+            setCatatanImport("");
+        };
+
+        window.addEventListener("stock-tutorial-set-tab", handleSetTab as EventListener);
+        window.addEventListener("stock-tutorial-set-mock-file", handleSetMockFile);
+        window.addEventListener("stock-tutorial-cleanup", handleCleanup);
+        return () => {
+            window.removeEventListener("stock-tutorial-set-tab", handleSetTab as EventListener);
+            window.removeEventListener("stock-tutorial-set-mock-file", handleSetMockFile);
+            window.removeEventListener("stock-tutorial-cleanup", handleCleanup);
+        };
+    }, []);
 
     const handleDownloadTemplateXlsx = async () => {
         setIsDownloadingXlsx(true);
@@ -145,6 +176,13 @@ export function OpnameDialog({
 
     const handleImportSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (useStockTutorialStore.getState().isRunning) {
+            toast.success("Draft stock opname berhasil dibuat dari file Excel!");
+            onOpenChange(false);
+            router.push(`/admin/inventory/stock-opname/${MOCK_OPNAME_UID}/items`);
+            return;
+        }
+
         if (!selectedFile) {
             toast.error("Silakan pilih file Excel (.xlsx) terlebih dahulu.");
             return;
@@ -169,6 +207,16 @@ export function OpnameDialog({
     };
 
     const onManualSubmit = (data: OpnameHeaderInput) => {
+        if (useStockTutorialStore.getState().isRunning) {
+            toast.success("Draft stock opname berhasil dibuat!");
+            onOpenChange(false);
+            if (useStockTutorialStore.getState().stepIndex === 5) {
+                useStockTutorialStore.getState().setStepIndex(6);
+            }
+            router.push(`/admin/inventory/stock-opname/${MOCK_OPNAME_UID}/items`);
+            return;
+        }
+
         createOpname.mutate(data, {
             onSuccess: (res) => {
                 toast.success("Draft stock opname berhasil dibuat!");
@@ -206,8 +254,9 @@ export function OpnameDialog({
         >
             {/* ── Tab Selector ── */}
             <div className="px-5 pt-4 pb-2 bg-slate-50/70 border-b border-slate-100">
-                <div className="grid grid-cols-2 p-1 bg-slate-200/70 rounded-xl gap-1">
+                <div id="opname-dialog-tabs" className="grid grid-cols-2 p-1 bg-slate-200/70 rounded-xl gap-1">
                     <button
+                        id="opname-tab-import-btn"
                         type="button"
                         onClick={() => setActiveTab("import")}
                         disabled={isPending}
@@ -222,6 +271,7 @@ export function OpnameDialog({
                         <span>Upload Excel (Default)</span>
                     </button>
                     <button
+                        id="opname-tab-manual-btn"
                         type="button"
                         onClick={() => setActiveTab("manual")}
                         disabled={isPending}
@@ -285,6 +335,7 @@ export function OpnameDialog({
                     <form id="import-opname-form" onSubmit={handleImportSubmit} className="space-y-4">
                         {/* Drag & Drop Upload Zone */}
                         <div
+                            id="opname-excel-dropzone"
                             onDragOver={handleDragOver}
                             onDragLeave={handleDragLeave}
                             onDrop={handleDrop}
@@ -323,7 +374,7 @@ export function OpnameDialog({
                                     <button
                                         type="button"
                                         onClick={(e) => {
-                                            e.stopPropagation();
+                                             e.stopPropagation();
                                             handleRemoveFile();
                                         }}
                                         disabled={isPending}
@@ -356,6 +407,7 @@ export function OpnameDialog({
                                 Catatan Opname <span className="text-slate-400 font-normal">(Opsional)</span>
                             </label>
                             <input
+                                id="opname-excel-notes-input"
                                 type="text"
                                 value={catatanImport}
                                 onChange={(e) => setCatatanImport(e.target.value)}
@@ -368,8 +420,9 @@ export function OpnameDialog({
                 ) : (
                     <FormProvider {...methods}>
                         <form id="manual-opname-form" onSubmit={handleSubmit(onManualSubmit)} className="space-y-4">
-                            <div className="space-y-1">
+                            <div id="opname-manual-notes-field" className="space-y-1">
                                 <FormInput<OpnameHeaderInput>
+                                    id="opname-manual-notes-input"
                                     name="catatan"
                                     label="Catatan Opname"
                                     placeholder="Contoh: Opname Bulanan Akhir Juni 2026..."
@@ -398,9 +451,10 @@ export function OpnameDialog({
 
                 {activeTab === "import" ? (
                     <Button
+                        id="opname-excel-submit-btn"
                         type="submit"
                         form="import-opname-form"
-                        disabled={!selectedFile || isPending}
+                        disabled={(!selectedFile && !useStockTutorialStore.getState().isRunning) || isPending}
                         className="h-9 px-4.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer shadow-xs border-none disabled:opacity-50"
                     >
                         {importOpname.isPending ? (
@@ -417,6 +471,7 @@ export function OpnameDialog({
                     </Button>
                 ) : (
                     <Button
+                        id="opname-manual-submit-btn"
                         type="submit"
                         form="manual-opname-form"
                         disabled={isPending}

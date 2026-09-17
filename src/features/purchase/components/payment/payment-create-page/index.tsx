@@ -1,29 +1,35 @@
 "use client";
 
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { IconArrowLeft } from "@tabler/icons-react";
-import { useSearchParams } from "next/navigation";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAppRouter } from "@/hooks/use-app-router";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { formatToISO, todayStr, toLocalISOString } from "@/lib/date-utils";
+import { usePurchaseTutorialStore } from "@/stores/purchase-tutorial-store";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { IconArrowLeft, IconSparkles } from "@tabler/icons-react";
+import { AlertTriangle } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { AlertTriangle } from "lucide-react";
 import {
-    useCreatePayment,
-    useUpdatePayment,
     useCashAccounts,
+    useCreatePayment,
     useOutstandingReceivings,
-    usePaymentSummary,
     usePaymentDetail,
+    usePaymentSummary,
+    useUpdatePayment,
 } from "../../../api/purchase-api";
 import { paymentSchema, type PaymentInput } from "../../../schemas/payment-schema";
-import { PaymentForm } from "./payment-form";
+import {
+    MOCK_OUTSTANDING_RECEIVING,
+    MOCK_PAYMENT_INPUT,
+    MOCK_PAYMENT_SUMMARY,
+} from "../../../tutorial/constants/purchase-tutorial-constants";
 import { DebtSummary } from "./debt-summary";
-import { todayStr, formatToISO, toLocalISOString } from "@/lib/date-utils";
+import { PaymentForm } from "./payment-form";
 
 export function PaymentCreatePage() {
     const router = useAppRouter();
@@ -75,12 +81,68 @@ export function PaymentCreatePage() {
         reset,
     } = methods;
 
+    const isTutorialRunning = usePurchaseTutorialStore(
+        (s) => s.isRunning && s.activeTutorial === "payment_create"
+    );
+
     const selectedReceivingId = useWatch({ name: "receiving_uid", control: methods.control });
+
+    // Purge mock receiving selection if tutorial is not running
+    useEffect(() => {
+        if (!isTutorialRunning && (selectedReceivingId === MOCK_OUTSTANDING_RECEIVING.uid || selectedReceivingId?.startsWith("mock-"))) {
+            setValue("receiving_uid", "");
+        }
+    }, [isTutorialRunning, selectedReceivingId, setValue]);
 
     // Fetch summary for selected receiving
     const { data: summary, isLoading: summaryLoading } = usePaymentSummary(
         selectedReceivingId || null
     );
+
+    const isMockReceiving = isTutorialRunning && (selectedReceivingId === MOCK_OUTSTANDING_RECEIVING.uid || Boolean(selectedReceivingId?.startsWith("mock-")));
+    const activeSummary = isMockReceiving ? MOCK_PAYMENT_SUMMARY : summary;
+    const isSummaryLoading = isMockReceiving ? false : summaryLoading;
+
+    // Listen for custom tutorial simulation events
+    useEffect(() => {
+        const handleSetField = (e: Event) => {
+            const customEvent = e as CustomEvent<{ field: keyof PaymentInput; value: unknown }>;
+            if (customEvent.detail) {
+                setValue(customEvent.detail.field, customEvent.detail.value as never, { shouldValidate: true });
+            }
+        };
+
+        const handleClearData = () => {
+            reset({
+                receiving_uid: "",
+                jumlah_bayar: 0,
+                tanggal_bayar: todayStr(),
+                cash_account_uid: "",
+                metode_pembayaran: "Cash",
+                nomor_referensi: "",
+                catatan: "",
+            });
+        };
+
+        const handleInjectData = (e: Event) => {
+            const customEvent = e as CustomEvent<Partial<PaymentInput>>;
+            if (customEvent.detail) {
+                Object.entries(customEvent.detail).forEach(([k, v]) => {
+                    setValue(k as keyof PaymentInput, v as never, { shouldValidate: true });
+                });
+            }
+        };
+
+        window.addEventListener("purchase-tutorial-set-payment-field", handleSetField);
+        window.addEventListener("purchase-tutorial-clear-payment-data", handleClearData);
+        window.addEventListener("purchase-tutorial-inject-payment-data", handleInjectData);
+
+        return () => {
+            window.removeEventListener("purchase-tutorial-set-payment-field", handleSetField);
+            window.removeEventListener("purchase-tutorial-clear-payment-data", handleClearData);
+            window.removeEventListener("purchase-tutorial-inject-payment-data", handleInjectData);
+        };
+    }, [setValue, reset]);
 
     // Sync editing payment data into form defaults
     useEffect(() => {
@@ -114,6 +176,15 @@ export function PaymentCreatePage() {
         };
     });
 
+    // Provide mock receiving in options during tutorial
+    if (isTutorialRunning && !receivingOptions.some((o) => o.value === MOCK_OUTSTANDING_RECEIVING.uid)) {
+        receivingOptions.unshift({
+            value: MOCK_OUTSTANDING_RECEIVING.uid,
+            label: `${MOCK_OUTSTANDING_RECEIVING.nomor_penerimaan} - ${MOCK_OUTSTANDING_RECEIVING.supplier}`,
+            description: `Sisa Hutang: ${formatRupiah(MOCK_OUTSTANDING_RECEIVING.sisa_hutang || 0)} (Demo Tutorial)`,
+        });
+    }
+
     // If editing, make sure the current receiving is in options
     if (isEdit && editingPayment && !receivingOptions.some(o => o.value === editingPayment.referensi_uid)) {
         const editSisaHutang = editingPayment.stock_receiving?.sisa_hutang !== undefined
@@ -132,6 +203,14 @@ export function PaymentCreatePage() {
         description: `Saldo: ${formatRupiah(acc.saldo || 0)} • (${acc.tipe === "register" ? "Kas Kasir" : acc.tipe === "bank" ? "Bank" : "Kas Utama"})`,
     }));
 
+    if (isTutorialRunning && !cashAccountOptions.some((acc) => acc.value === "mock-cash-acc-1")) {
+        cashAccountOptions.unshift({
+            value: "mock-cash-acc-1",
+            label: "Kas Utama Toko (Pusat)",
+            description: "Saldo: Rp 15.000.000 • (Kas Utama)",
+        });
+    }
+
     const paymentMethodOptions = [
         { value: "Cash", label: "Cash / Tunai" },
         { value: "Transfer", label: "Transfer Bank" },
@@ -141,6 +220,10 @@ export function PaymentCreatePage() {
     // Auto fill nominal when receiving is selected (only for create mode)
     useEffect(() => {
         if (!isEdit && selectedReceivingId) {
+            if (selectedReceivingId === MOCK_OUTSTANDING_RECEIVING.uid) {
+                setValue("jumlah_bayar", 1500000);
+                return;
+            }
             const rec = outstandingReceivings.find((r) => r.uid === selectedReceivingId);
             if (rec) {
                 // Default to remaining debt if sisa_hutang is available, otherwise nilai_faktur
@@ -154,19 +237,21 @@ export function PaymentCreatePage() {
     const showPageLoading = isEdit && editingPaymentLoading;
 
     // Calculate dynamic sisa_hutang for validation
-    // If edit: sisa_hutang without current payment = current_sisa_hutang + editingPayment.total
-    const selectedReceiving = outstandingReceivings.find((r) => r.uid === selectedReceivingId);
-    const sisaHutangLimit = summary
+    const selectedReceiving = isMockReceiving
+        ? MOCK_OUTSTANDING_RECEIVING
+        : outstandingReceivings.find((r) => r.uid === selectedReceivingId);
+
+    const sisaHutangLimit = activeSummary
         ? isEdit && editingPayment
-            ? summary.sisa_hutang + editingPayment.total
-            : summary.sisa_hutang
+            ? activeSummary.sisa_hutang + editingPayment.total
+            : activeSummary.sisa_hutang
         : (selectedReceiving
             ? (selectedReceiving.sisa_hutang !== undefined ? selectedReceiving.sisa_hutang : (selectedReceiving.nilai_faktur || 0))
             : 0);
 
     const onSubmit = (data: PaymentInput) => {
         // Validate sisa_hutang limit
-        if (summary) {
+        if (activeSummary) {
             if (data.jumlah_bayar > sisaHutangLimit) {
                 toast.error(`Nominal pembayaran melebihi sisa hutang (Maksimal ${formatRupiah(sisaHutangLimit)})`);
                 return;
@@ -179,6 +264,12 @@ export function PaymentCreatePage() {
 
     const handleConfirmSave = async () => {
         if (!pendingData) return;
+
+        if (isTutorialRunning) {
+            toast.success("Simulasi pembayaran supplier berhasil disimpan.");
+            setIsConfirmOpen(false);
+            return;
+        }
 
         const payload = {
             ...pendingData,
@@ -233,15 +324,39 @@ export function PaymentCreatePage() {
                 >
                     <IconArrowLeft size={18} />
                 </Button>
-                <div>
-                    <h2 className="text-base font-bold text-slate-900">
-                        {isEdit ? "Ubah Pembayaran Supplier" : "Catat Pembayaran Supplier Baru"}
-                    </h2>
-                    <p className="text-xs text-slate-400">
-                        {isEdit
-                            ? `Ubah data transaksi pembayaran ${editingPayment?.nomor_transaksi || ""}`
-                            : "Catat transaksi pembayaran hutang dagang kepada supplier atas penerimaan barang."}
-                    </p>
+                <div className="flex-1 flex items-center justify-between gap-3">
+                    <div>
+                        <h2 className="text-base font-bold text-slate-900">
+                            {isEdit ? "Ubah Pembayaran Supplier" : "Catat Pembayaran Supplier Baru"}
+                        </h2>
+                        <p className="text-xs text-slate-400">
+                            {isEdit
+                                ? `Ubah data transaksi pembayaran ${editingPayment?.nomor_transaksi || ""}`
+                                : "Catat transaksi pembayaran hutang dagang kepada supplier atas penerimaan barang."}
+                        </p>
+                    </div>
+
+                    {isTutorialRunning && (
+                        <button
+                            type="button"
+                            id="btn-pay-seeder"
+                            onClick={() => {
+                                setValue("receiving_uid", MOCK_PAYMENT_INPUT.receiving_uid, { shouldValidate: true });
+                                setValue("jumlah_bayar", MOCK_PAYMENT_INPUT.jumlah_bayar, { shouldValidate: true });
+                                setValue("tanggal_bayar", MOCK_PAYMENT_INPUT.tanggal_bayar, { shouldValidate: true });
+                                setValue("cash_account_uid", cashAccountOptions[0]?.value || "mock-cash-acc-1", { shouldValidate: true });
+                                setValue("metode_pembayaran", MOCK_PAYMENT_INPUT.metode_pembayaran as never, { shouldValidate: true });
+                                setValue("nomor_referensi", MOCK_PAYMENT_INPUT.nomor_referensi, { shouldValidate: true });
+                                setValue("catatan", MOCK_PAYMENT_INPUT.catatan, { shouldValidate: true });
+                                toast.success("Data simulasi pembayaran hutang berhasil diisi!");
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
+                            title="Klik untuk mengisi data seeder contoh pembayaran"
+                        >
+                            <IconSparkles size={14} className="text-emerald-600 animate-pulse" />
+                            <span>Seeder Demo Pembayaran</span>
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -268,8 +383,8 @@ export function PaymentCreatePage() {
                 <div>
                     <DebtSummary
                         selectedReceivingId={selectedReceivingId}
-                        summaryLoading={summaryLoading}
-                        summary={summary}
+                        summaryLoading={isSummaryLoading}
+                        summary={activeSummary}
                         isEdit={isEdit}
                         editId={editId}
                         sisaHutangLimit={sisaHutangLimit}

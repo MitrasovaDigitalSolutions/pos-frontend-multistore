@@ -301,17 +301,20 @@ export function CatalogTable({
     return (
         <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
             <div className="flex justify-between items-center border-b border-slate-50 pb-4">
-                <div>
-                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                        <IconBuildingStore size={16} className="text-brand-600" />
-                        Katalog Keseluruhan Produk
-                    </h3>
+                <div id="catalog-header-info">
+                    <div id="catalog-header-title" className="inline-flex items-center gap-2 w-fit">
+                        <IconBuildingStore size={16} className="text-brand-600 shrink-0" />
+                        <h3 className="text-sm font-bold text-slate-900">
+                            Katalog Keseluruhan Produk
+                        </h3>
+                    </div>
                     <p className="text-[11px] text-slate-400 mt-0.5">
                         Produk master — kelola distribusi harga ke seluruh toko &amp; cabang.
                     </p>
                 </div>
                 {isAdmin && onAddClick && (
                     <Button
+                        id="catalog-btn-add"
                         onClick={onAddClick}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
                     >
@@ -322,68 +325,79 @@ export function CatalogTable({
 
             {filterElement}
 
-            <DataTable
-                columns={columns}
-                data={products}
-                isLoading={isLoading}
-                isFetching={isFetching}
-                emptyMessage="Tidak ada produk ditemukan."
-                page={page}
-                perPage={perPage}
-                onPageChange={onPageChange}
-                onPerPageChange={onPerPageChange}
-                meta={meta}
-                entityName="produk"
-                sortBy={sortBy}
-                sortOrder={sortOrder}
-                onSortChange={onSortChange}
-                virtualize={true}
-                estimateRowHeight={44}
-                onView={(item) => {
-                    setProductToView(item);
-                    setIsDetailOpen(true);
-                }}
-                onEdit={isAdmin ? onEdit : undefined}
-                onDelete={isAdmin ? handleRemoveProduct : undefined}
-                hideDelete={(row: CatalogProduct) => row.status === "archived"}
-                hideEdit={(row: CatalogProduct) => row.status === "archived"}
-                hideView={(row: CatalogProduct) => row.status !== "archived"}
-                extraActions={(item) =>
-                    isAdmin ? (
-                        item.status === "archived" ? (
-                            <DataTableActionButton
-                                variant="emerald"
-                                onClick={() => {
-                                    setProductToUnarchive(item);
-                                    setIsUnarchiveOpen(true);
-                                }}
-                                tooltip="Batalkan Hapus (Unarchive)"
-                            >
-                                <IconArchiveOff size={16} />
-                            </DataTableActionButton>
-                        ) : (
-                            <>
-                                {onCopy && (
-                                    <DataTableActionButton
-                                        variant="sky"
-                                        onClick={() => onCopy(item)}
-                                        tooltip="Salin / Duplikat Produk"
-                                    >
-                                        <IconCopy size={16} />
-                                    </DataTableActionButton>
-                                )}
+            <div id="catalog-table-container" className="relative overflow-x-auto min-w-full">
+                <DataTable
+                    columns={columns}
+                    data={products}
+                    isLoading={isLoading}
+                    isFetching={isFetching}
+                    emptyMessage="Tidak ada produk ditemukan."
+                    page={page}
+                    perPage={perPage}
+                    onPageChange={onPageChange}
+                    onPerPageChange={onPerPageChange}
+                    meta={meta}
+                    entityName="produk"
+                    sortBy={sortBy}
+                    sortOrder={sortOrder}
+                    onSortChange={onSortChange}
+                    virtualize={true}
+                    estimateRowHeight={44}
+                    getRowMotionProps={(item) => {
+                        if (products[0]?.uid === item.uid) {
+                            return { id: "catalog-table-sample-row" };
+                        }
+                        return {};
+                    }}
+                    onView={(item) => {
+                        setProductToView(item);
+                        setIsDetailOpen(true);
+                    }}
+                    onEdit={isAdmin ? onEdit : undefined}
+                    onDelete={isAdmin ? handleRemoveProduct : undefined}
+                    hideDelete={(row: CatalogProduct) => row.status === "archived"}
+                    hideEdit={(row: CatalogProduct) => row.status === "archived"}
+                    hideView={(row: CatalogProduct) => row.status !== "archived"}
+                    extraActions={(item) => {
+                        const isSampleRow = products[0]?.uid === item.uid;
+                        return isAdmin ? (
+                            item.status === "archived" ? (
                                 <DataTableActionButton
                                     variant="emerald"
-                                    onClick={() => onAssign(item)}
-                                    tooltip="Kelola Distribusi Toko"
+                                    onClick={() => {
+                                        setProductToUnarchive(item);
+                                        setIsUnarchiveOpen(true);
+                                    }}
+                                    tooltip="Batalkan Hapus (Unarchive)"
                                 >
-                                    <IconBuildingStore size={16} />
+                                    <IconArchiveOff size={16} />
                                 </DataTableActionButton>
-                            </>
-                        )
-                    ) : null
-                }
-            />
+                            ) : (
+                                <>
+                                    {onCopy && (
+                                        <DataTableActionButton
+                                            id={isSampleRow ? "catalog-action-copy-btn-sample" : undefined}
+                                            variant="sky"
+                                            onClick={() => onCopy(item)}
+                                            tooltip="Salin / Duplikat Produk"
+                                        >
+                                            <IconCopy size={16} />
+                                        </DataTableActionButton>
+                                    )}
+                                    <DataTableActionButton
+                                        id={isSampleRow ? "catalog-action-assign-btn-sample" : undefined}
+                                        variant="emerald"
+                                        onClick={() => onAssign(item)}
+                                        tooltip="Kelola Distribusi Toko"
+                                    >
+                                        <IconBuildingStore size={16} />
+                                    </DataTableActionButton>
+                                </>
+                            )
+                        ) : null;
+                    }}
+                />
+            </div>
 
             <ConfirmDialog
                 open={isConfirmOpen}

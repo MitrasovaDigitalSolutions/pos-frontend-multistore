@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { DataTable } from "@/components/ui/data-table";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { ColumnDef } from "@tanstack/react-table";
@@ -20,6 +20,32 @@ export function CentralStoresComparisonTable({
     totals,
     isLoading,
 }: CentralStoresComparisonTableProps) {
+    const tableContainerRef = useRef<HTMLDivElement>(null);
+    const [sampleHeight, setSampleHeight] = useState<number>(96);
+
+    useEffect(() => {
+        const updateHeight = () => {
+            if (!tableContainerRef.current) return;
+            const thead = tableContainerRef.current.querySelector("thead");
+            const firstRow = tableContainerRef.current.querySelector("tbody tr");
+            if (thead && firstRow) {
+                const theadRect = thead.getBoundingClientRect();
+                const rowRect = firstRow.getBoundingClientRect();
+                const diff = Math.round(rowRect.bottom - theadRect.top);
+                if (diff > 40) {
+                    setSampleHeight(diff);
+                }
+            }
+        };
+
+        const frameId = requestAnimationFrame(updateHeight);
+        window.addEventListener("resize", updateHeight);
+        return () => {
+            cancelAnimationFrame(frameId);
+            window.removeEventListener("resize", updateHeight);
+        };
+    }, [stores, isLoading]);
+
     const columns = useMemo<ColumnDef<CentralStoreComparisonRow>[]>(
         () => [
             {
@@ -124,17 +150,30 @@ export function CentralStoresComparisonTable({
 
     return (
         <div className="space-y-3">
-            <div className="overflow-x-auto min-w-full">
-                <DataTable<CentralStoreComparisonRow, unknown>
-                    columns={columns}
-                    data={stores}
-                    isLoading={isLoading}
+            <div ref={tableContainerRef} className="relative overflow-x-auto min-w-full">
+                <div
+                    id="central-report-stores-sample-matrix"
+                    className="pointer-events-none absolute left-0 right-0 top-0 rounded-xl"
+                    style={{ height: `${sampleHeight}px` }}
                 />
+                <div id="central-report-stores-table">
+                    <DataTable<CentralStoreComparisonRow, unknown>
+                        columns={columns}
+                        data={stores}
+                        isLoading={isLoading}
+                        getRowMotionProps={(item) => {
+                            if (stores[0]?.store_uid === item.store_uid) {
+                                return { id: "central-report-stores-sample-row" };
+                            }
+                            return {};
+                        }}
+                    />
+                </div>
             </div>
 
             {/* Total Consolidation Summary Banner */}
             {totals && stores.length > 0 && (
-                <div className="bg-slate-50/80 border border-slate-100 rounded-xl p-3.5 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs shadow-2xs">
+                <div id="central-report-stores-totals" className="bg-slate-50/80 border border-slate-100 rounded-xl p-3.5 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs shadow-2xs">
                     <div className="font-extrabold uppercase tracking-wider text-[11px] text-slate-800 shrink-0">
                         Total Konsolidasi ({stores.length} Cabang)
                     </div>

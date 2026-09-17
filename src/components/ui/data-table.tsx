@@ -113,6 +113,7 @@ interface DataTableProps<TData, TValue> {
     hideCheck?: boolean | ((row: TData) => boolean);
     disableCheck?: boolean | ((row: TData) => boolean);
     extraActions?: (row: TData) => React.ReactNode;
+    viewActionClassName?: string;
     actionColumnWidth?: string;
     actionColumnSize?: number;
     getRowClassName?: (row: TData) => string;
@@ -156,6 +157,7 @@ export function DataTable<TData, TValue>({
     onDelete,
     onView,
     onCheck,
+    viewActionClassName,
     hideEdit,
     disableEdit,
     hideDelete,
@@ -399,6 +401,8 @@ export function DataTable<TData, TValue>({
                                 onClick={() => onView(item)}
                                 disabled={isViewDisabled}
                                 tooltip="Lihat Detail"
+                                data-action="view"
+                                className={`table-action-view${viewActionClassName ? ` ${viewActionClassName}` : ""}`}
                             >
                                 <InfoIcon size={16} />
                             </DataTableActionButton>
@@ -409,6 +413,8 @@ export function DataTable<TData, TValue>({
                                 onClick={() => onEdit(item)}
                                 disabled={isEditDisabled}
                                 tooltip="Ubah"
+                                data-action="edit"
+                                className="table-action-edit"
                             >
                                 <IconEdit size={16} />
                             </DataTableActionButton>
@@ -419,6 +425,8 @@ export function DataTable<TData, TValue>({
                                 onClick={() => onCheck(item)}
                                 disabled={isCheckDisabled}
                                 tooltip="Finalisasi"
+                                data-action="check"
+                                className="table-action-check"
                             >
                                 <IconCheck size={16} />
                             </DataTableActionButton>
@@ -429,6 +437,8 @@ export function DataTable<TData, TValue>({
                                 onClick={() => onDelete(item)}
                                 disabled={isDeleteDisabled}
                                 tooltip="Hapus"
+                                data-action="delete"
+                                className="table-action-delete"
                             >
                                 <IconTrash size={16} />
                             </DataTableActionButton>
@@ -459,6 +469,7 @@ export function DataTable<TData, TValue>({
         hideCheck,
         disableCheck,
         extraActions,
+        viewActionClassName,
         actionColumnWidth,
         actionColumnSize,
     ]);

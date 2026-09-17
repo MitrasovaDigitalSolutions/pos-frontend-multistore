@@ -127,6 +127,7 @@ export function TabPrinter({
                                             tooltip={printerMeta?.description || "ID Printer thermal default yang digunakan untuk mencetak struk."}
                                         />
                                         <AppButton
+                                            id="btn-scan-printer"
                                             type="button"
                                             variant="ghost"
                                             size="xs"
@@ -140,13 +141,15 @@ export function TabPrinter({
                                             Pindai Ulang
                                         </AppButton>
                                     </div>
-                                    <FormSelect<StoreSettingsInput>
-                                        name="printer_id"
-                                        options={printerOptions}
-                                        placeholder={isLoadingPrinters ? "Memuat printer..." : "Pilih Printer"}
-                                        disabled={isSaving || isLoadingPrinters}
-                                        emptyMessage={qzError ? "Gagal terhubung ke Printer Service. Pastikan Printer Service berjalan." : "Tidak ada printer yang terdeteksi"}
-                                    />
+                                    <div id="form-settings-printer-select">
+                                        <FormSelect<StoreSettingsInput>
+                                            name="printer_id"
+                                            options={printerOptions}
+                                            placeholder={isLoadingPrinters ? "Memuat printer..." : "Pilih Printer"}
+                                            disabled={isSaving || isLoadingPrinters}
+                                            emptyMessage={qzError ? "Gagal terhubung ke Printer Service. Pastikan Printer Service berjalan." : "Tidak ada printer yang terdeteksi"}
+                                        />
+                                    </div>
                                 </div>
                             </div>
 

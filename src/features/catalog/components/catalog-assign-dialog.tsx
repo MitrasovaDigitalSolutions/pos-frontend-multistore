@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { BaseDialog } from "@/components/ui/base-dialog";
@@ -21,28 +21,46 @@ import { Scrollable } from "@/components/ui/scrollable";
 import { CatalogAssignProductSummary } from "./assign/catalog-assign-product-summary";
 import { CatalogAssignGlobalPreset } from "./assign/catalog-assign-global-preset";
 import { CatalogAssignStoreRow } from "./assign/catalog-assign-store-row";
+import { MOCK_CATALOG_STORES, MOCK_CATALOG_ASSIGNMENTS } from "../tutorial/constants/catalog-tutorial-constants";
 import type { BulkAssignmentItem, CatalogAssignFormValues, CatalogProduct } from "../types";
 
 interface CatalogAssignDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     product: CatalogProduct | null;
+    disablePointerDismissal?: boolean;
 }
 
 export function CatalogAssignDialog({
     open,
     onOpenChange,
     product,
+    disablePointerDismissal,
 }: CatalogAssignDialogProps) {
     const [storeSearch, setStoreSearch] = useState("");
 
+    const isMock = Boolean(product?.uid?.startsWith("mock-"));
+
     const { data: storesRes, isLoading: isLoadingStores } = useStores({ per_page: 1000 });
-    const { data: assignments = [], isLoading: isLoadingAssignments } = useProductStores(
-        open ? product?.uid : undefined
+    const { data: rawAssignments, isLoading: isLoadingAssignments } = useProductStores(
+        open && product && !isMock ? product.uid : undefined
     );
     const bulkAssign = useBulkAssignProductStores();
 
-    const stores = useMemo(() => storesRes?.data ?? [], [storesRes?.data]);
+    const stores = useMemo(() => {
+        if (isMock && (!storesRes?.data || storesRes.data.length === 0)) {
+            return MOCK_CATALOG_STORES;
+        }
+        return storesRes?.data ?? (isMock ? MOCK_CATALOG_STORES : []);
+    }, [isMock, storesRes?.data]);
+
+    const assignments = useMemo(() => {
+        if (isMock) {
+            return product?.product_stores ?? MOCK_CATALOG_ASSIGNMENTS;
+        }
+        return rawAssignments ?? [];
+    }, [isMock, product?.product_stores, rawAssignments]);
+
     const isLoading = isLoadingStores || isLoadingAssignments;
 
     const methods = useForm<CatalogAssignFormValues>({
@@ -57,65 +75,76 @@ export function CatalogAssignDialog({
 
     const { control, setValue, handleSubmit, reset } = methods;
 
+    const lastInitializedRef = useRef<string | null>(null);
+
     useEffect(() => {
-        if (open && product && !isLoading) {
-            const masterPrice = Number(product.harga_jual ?? product.harga);
-            const masterHargaGrosir = product.harga_grosir != null ? Number(product.harga_grosir) : null;
-            const masterMinQtyGrosir = product.min_qty_grosir != null ? Number(product.min_qty_grosir) : null;
-
-            const storeMap: CatalogAssignFormValues["stores"] = {};
-            stores.forEach((s) => {
-                const existing = assignments.find((a) => a.store_uid === s.uid);
-
-                // Check if store has custom pricing or wholesale data differing from master
-                const hasDifferentRetailPrice = Boolean(
-                    existing &&
-                    existing.harga_jual != null &&
-                    Number(existing.harga_jual) !== masterPrice
-                );
-                const hasWholesale = Boolean(
-                    existing && (
-                        existing.is_grosir === true ||
-                        (existing.harga_grosir != null && Number(existing.harga_grosir) > 0)
-                    )
-                );
-                const hasDifferentWholesalePrice = Boolean(
-                    existing &&
-                    existing.harga_grosir != null &&
-                    (masterHargaGrosir == null || Number(existing.harga_grosir) !== masterHargaGrosir)
-                );
-                const hasDifferentMinQty = Boolean(
-                    existing &&
-                    existing.min_qty_grosir != null &&
-                    (masterMinQtyGrosir == null || Number(existing.min_qty_grosir) !== masterMinQtyGrosir)
-                );
-
-                const hasCustom = Boolean(
-                    hasDifferentRetailPrice ||
-                    hasWholesale ||
-                    hasDifferentWholesalePrice ||
-                    hasDifferentMinQty
-                );
-
-                storeMap[s.uid] = {
-                    checked: !!existing,
-                    is_custom: hasCustom,
-                    harga_jual: hasCustom && existing?.harga_jual != null ? Number(existing.harga_jual) : null,
-                    is_grosir: hasCustom ? Boolean(existing?.is_grosir ?? (existing?.harga_grosir != null)) : false,
-                    harga_grosir: hasCustom && existing?.harga_grosir != null ? Number(existing.harga_grosir) : null,
-                    min_qty_grosir: hasCustom && existing?.min_qty_grosir != null ? Number(existing.min_qty_grosir) : null,
-                };
-            });
-
-            reset({
-                global_harga_jual: null,
-                global_is_grosir: Boolean(product.is_grosir),
-                global_harga_grosir: product.harga_grosir ?? null,
-                global_min_qty_grosir: product.min_qty_grosir ?? null,
-                stores: storeMap,
-            });
+        if (!open || !product || isLoading) {
+            lastInitializedRef.current = null;
+            return;
         }
-    }, [open, product, isLoading, stores, assignments, reset]);
+
+        const currentKey = `${product.uid}-${open}-${stores.length}-${assignments.length}`;
+        if (lastInitializedRef.current === currentKey) {
+            return;
+        }
+        lastInitializedRef.current = currentKey;
+
+        const masterPrice = Number(product.harga_jual ?? product.harga);
+        const masterHargaGrosir = product.harga_grosir != null ? Number(product.harga_grosir) : null;
+        const masterMinQtyGrosir = product.min_qty_grosir != null ? Number(product.min_qty_grosir) : null;
+
+        const storeMap: CatalogAssignFormValues["stores"] = {};
+        stores.forEach((s) => {
+            const existing = assignments.find((a) => a.store_uid === s.uid);
+
+            // Check if store has custom pricing or wholesale data differing from master
+            const hasDifferentRetailPrice = Boolean(
+                existing &&
+                existing.harga_jual != null &&
+                Number(existing.harga_jual) !== masterPrice
+            );
+            const hasWholesale = Boolean(
+                existing && (
+                    existing.is_grosir === true ||
+                    (existing.harga_grosir != null && Number(existing.harga_grosir) > 0)
+                )
+            );
+            const hasDifferentWholesalePrice = Boolean(
+                existing &&
+                existing.harga_grosir != null &&
+                (masterHargaGrosir == null || Number(existing.harga_grosir) !== masterHargaGrosir)
+            );
+            const hasDifferentMinQty = Boolean(
+                existing &&
+                existing.min_qty_grosir != null &&
+                (masterMinQtyGrosir == null || Number(existing.min_qty_grosir) !== masterMinQtyGrosir)
+            );
+
+            const hasCustom = Boolean(
+                hasDifferentRetailPrice ||
+                hasWholesale ||
+                hasDifferentWholesalePrice ||
+                hasDifferentMinQty
+            );
+
+            storeMap[s.uid] = {
+                checked: isMock ? true : !!existing,
+                is_custom: hasCustom,
+                harga_jual: hasCustom && existing?.harga_jual != null ? Number(existing.harga_jual) : null,
+                is_grosir: hasCustom ? Boolean(existing?.is_grosir ?? (existing?.harga_grosir != null)) : false,
+                harga_grosir: hasCustom && existing?.harga_grosir != null ? Number(existing.harga_grosir) : null,
+                min_qty_grosir: hasCustom && existing?.min_qty_grosir != null ? Number(existing.min_qty_grosir) : null,
+            };
+        });
+
+        reset({
+            global_harga_jual: null,
+            global_is_grosir: Boolean(product.is_grosir),
+            global_harga_grosir: product.harga_grosir ?? null,
+            global_min_qty_grosir: product.min_qty_grosir ?? null,
+            stores: storeMap,
+        });
+    }, [open, product, isLoading, stores, assignments, isMock, reset]);
 
     const watchStores = useWatch({ control, name: "stores" });
     const watchGlobalPrice = useWatch({ control, name: "global_harga_jual" });
@@ -273,6 +302,7 @@ export function CatalogAssignDialog({
         <BaseDialog
             open={open}
             onOpenChange={onOpenChange}
+            disablePointerDismissal={disablePointerDismissal ?? isMock}
             title={
                 <div className="flex items-center gap-2.5">
                     <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600">
@@ -304,7 +334,7 @@ export function CatalogAssignDialog({
 
                             {/* ── Stores List Header & Search ────────────────────────────── */}
                             <div className="flex flex-col gap-3.5">
-                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-1">
+                                <div id="catalog-assign-stores-toolbar" className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-1">
                                     <div className="flex items-center gap-2.5">
                                         <button
                                             type="button"
@@ -362,7 +392,7 @@ export function CatalogAssignDialog({
                                             {storeSearch ? "Tidak ada toko yang sesuai pencarian." : "Tidak ada data toko."}
                                         </div>
                                     ) : (
-                                        filteredStoreEntries.map(({ store, formState, currentAssignment }) => (
+                                        filteredStoreEntries.map(({ store, formState, currentAssignment }, idx) => (
                                             <CatalogAssignStoreRow
                                                 key={store.uid}
                                                 store={store}
@@ -370,6 +400,7 @@ export function CatalogAssignDialog({
                                                 currentAssignment={currentAssignment}
                                                 globalValues={globalValues}
                                                 masterPrice={masterPrice}
+                                                isFirstRow={idx === 0}
                                                 onToggleChecked={toggleRow}
                                                 onToggleCustom={toggleCustomPrice}
                                             />
@@ -399,6 +430,7 @@ export function CatalogAssignDialog({
                                 Batal
                             </Button>
                             <Button
+                                id="catalog-assign-btn-submit"
                                 type="submit"
                                 form="catalog-assign-form"
                                 disabled={bulkAssign.isPending || selectedCount === 0}

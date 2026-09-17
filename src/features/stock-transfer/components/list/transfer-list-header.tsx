@@ -37,7 +37,7 @@ export function TransferListHeader({ mode, canManage }: TransferListHeaderProps)
 
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div>
+      <div id="transfer-list-header">
         <h2 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
           <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
             <IconTruckDelivery size={22} />
@@ -51,6 +51,7 @@ export function TransferListHeader({ mode, canManage }: TransferListHeaderProps)
 
       {canManage && mode === "outgoing" && (
         <AppButton
+          id="transfer-btn-create-new"
           type="button"
           onClick={() => router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/new`)}
           className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer shadow-sm"

@@ -13,13 +13,21 @@ import {
   IconBarcode,
   IconCheck,
   IconInfoCircle,
+  IconSparkles,
   IconUpload,
   IconX,
 } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
+import { useConsignmentTutorialStore } from "@/stores/consignment-tutorial-store";
+import {
+  MOCK_CONSIGNMENT_ITEMS,
+  MOCK_CONSIGNMENT_NOTES,
+  MOCK_CONSIGNMENT_PRODUCTS,
+  MOCK_CONSIGNMENT_SUPPLIER,
+} from "../../tutorial/constants/consignment-tutorial-constants";
 import {
   useBulkConsignmentMutation,
   useCompareConsignmentPricesMutation,
@@ -108,6 +116,101 @@ export function ConsignmentCreatePage({ initialData }: ConsignmentCreatePageProp
     completeMutation.isPending ||
     bulkMutation.isPending ||
     comparePricesMutation.isPending;
+
+  const isTutorialRunning = useConsignmentTutorialStore((state) => state.isRunning);
+  const saveSnapshot = useConsignmentTutorialStore((state) => state.saveSnapshot);
+
+  // Snapshot on tutorial start
+  useEffect(() => {
+    if (isTutorialRunning) {
+      const currentSnap = useConsignmentTutorialStore.getState().preSnapshot;
+      if (!currentSnap) {
+        saveSnapshot({
+          formValues: form.getValues(),
+          products: Array.from(productsMap.values()),
+        });
+      }
+    }
+  }, [isTutorialRunning, saveSnapshot, form, productsMap]);
+
+  // Purge any mock items or mock supplier if tutorial is not running
+  useEffect(() => {
+    if (!isTutorialRunning) {
+      const currentSup = form.getValues("supplier_uid");
+      if (currentSup === MOCK_CONSIGNMENT_SUPPLIER.uid || currentSup?.startsWith("mock-")) {
+        form.setValue("supplier_uid", "");
+        form.setValue("supplier", "");
+      }
+      const currentCatatan = form.getValues("catatan");
+      if (currentCatatan === MOCK_CONSIGNMENT_NOTES || currentCatatan?.includes("Bagi hasil 25%")) {
+        form.setValue("catatan", "");
+      }
+      const currentItems = form.getValues("items") || [];
+      if (currentItems.some((it) => it.product_uid.startsWith("mock-"))) {
+        const clean = currentItems.filter((it) => !it.product_uid.startsWith("mock-"));
+        form.setValue("items", clean);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setProductsMap((prev) => {
+          const next = new Map(prev);
+          for (const key of next.keys()) {
+            if (key.startsWith("mock-")) next.delete(key);
+          }
+          return next;
+        });
+      }
+    }
+  }, [isTutorialRunning, form]);
+
+  // Listen for tutorial simulation events
+  useEffect(() => {
+    const handleInjectItems = (e: Event) => {
+      const customEvent = e as CustomEvent<{
+        items: ConsignmentReceivingFormValues["items"];
+        products: Product[];
+      }>;
+      if (customEvent.detail) {
+        const { items: newItems, products: newProducts } = customEvent.detail;
+        setProductsMap((prev) => {
+          const next = new Map(prev);
+          newProducts.forEach((p) => next.set(p.uid, p));
+          return next;
+        });
+        form.setValue("items", newItems);
+      }
+    };
+
+    const handleClearItems = () => {
+      form.setValue("items", []);
+      const currentCatatan = form.getValues("catatan");
+      if (currentCatatan === MOCK_CONSIGNMENT_NOTES || currentCatatan?.includes("Bagi hasil 25%")) {
+        form.setValue("catatan", "");
+      }
+    };
+
+    const handleRestoreSnapshot = (e: Event) => {
+      const customEvent = e as CustomEvent<{
+        formValues: ConsignmentReceivingFormValues;
+        products: Product[];
+      }>;
+      if (customEvent.detail) {
+        const { formValues, products: restoredProducts } = customEvent.detail;
+        form.reset(formValues);
+        const nextMap = new Map<string, Product>();
+        restoredProducts.forEach((p) => nextMap.set(p.uid, p));
+        setProductsMap(nextMap);
+      }
+    };
+
+    window.addEventListener("consignment-tutorial-inject-items", handleInjectItems);
+    window.addEventListener("consignment-tutorial-clear-items", handleClearItems);
+    window.addEventListener("consignment-tutorial-restore-snapshot", handleRestoreSnapshot);
+
+    return () => {
+      window.removeEventListener("consignment-tutorial-inject-items", handleInjectItems);
+      window.removeEventListener("consignment-tutorial-clear-items", handleClearItems);
+      window.removeEventListener("consignment-tutorial-restore-snapshot", handleRestoreSnapshot);
+    };
+  }, [form]);
 
   const handleProductFound = (product: Product) => {
     setLastAddedUid(product.uid);
@@ -320,15 +423,40 @@ export function ConsignmentCreatePage({ initialData }: ConsignmentCreatePageProp
           {/* Left Column */}
           <div className="lg:col-span-8 space-y-5 sm:space-y-6">
             {/* Barcode scanner box */}
-            <div className="bg-white border border-slate-100 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
-              <div className="flex items-center gap-2 pb-3 border-b border-slate-50">
-                <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg border border-emerald-100/30">
-                  <IconBarcode size={18} />
+            <div id="cons-barcode-box" className="bg-white border border-slate-100 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-50">
+                <div className="flex items-center gap-2">
+                  <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg border border-emerald-100/30">
+                    <IconBarcode size={18} />
+                  </div>
+                  <h3 className="text-xs font-bold text-slate-900">Scan Barcode Penerimaan Konsinyasi</h3>
                 </div>
-                <h3 className="text-xs font-bold text-slate-900">Scan Barcode Penerimaan Konsinyasi</h3>
+
+                {isTutorialRunning && (
+                  <button
+                    type="button"
+                    id="btn-cons-seeder"
+                    onClick={() => {
+                      const mockProducts = MOCK_CONSIGNMENT_PRODUCTS;
+                      setProductsMap((prev) => {
+                        const next = new Map(prev);
+                        mockProducts.forEach((p) => next.set(p.uid, p));
+                        return next;
+                      });
+                      form.setValue("items", [...MOCK_CONSIGNMENT_ITEMS]);
+                      toast.success("Produk konsinyasi simulasi berhasil ditambahkan ke tabel!");
+                    }}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-[11px] font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                    title="Klik untuk mengisi data seeder contoh konsinyasi"
+                  >
+                    <IconSparkles size={13} className="text-emerald-600 animate-pulse" />
+                    <span>Seeder Demo Konsinyasi</span>
+                  </button>
+                )}
               </div>
 
               <BarcodeInput
+                id="cons-barcode-input"
                 ref={barcodeInputRef}
                 refocusOnFound={false}
                 isJasa={false}
@@ -399,19 +527,21 @@ export function ConsignmentCreatePage({ initialData }: ConsignmentCreatePageProp
         </div>
 
         {/* Sticky Bottom Action Bar */}
-        <BulkSubmitBar
-          itemCount={itemCount}
-          productCount={uniqueProductCount}
-          total={totalValue}
-          onSubmit={handleCompleteClick}
-          onSecondarySubmit={handleSaveDraft}
-          onReset={() => setIsResetDialogOpen(true)}
-          isSubmitting={isSubmitting}
-          submitLabel={isEditMode ? "Simpan & Selesaikan" : "Selesaikan Konsinyasi"}
-          submitIcon={<IconCheck size={16} />}
-          secondarySubmitLabel="Simpan Draft"
-          secondarySubmitIcon={<IconUpload size={16} />}
-        />
+        <div id="cons-submit-bar">
+          <BulkSubmitBar
+            itemCount={itemCount}
+            productCount={uniqueProductCount}
+            total={totalValue}
+            onSubmit={handleCompleteClick}
+            onSecondarySubmit={handleSaveDraft}
+            onReset={() => setIsResetDialogOpen(true)}
+            isSubmitting={isSubmitting}
+            submitLabel={isEditMode ? "Simpan & Selesaikan" : "Selesaikan Konsinyasi"}
+            submitIcon={<IconCheck size={16} />}
+            secondarySubmitLabel="Simpan Draft"
+            secondarySubmitIcon={<IconUpload size={16} />}
+          />
+        </div>
 
         {/* Dialogs */}
         <ProductFormDialog

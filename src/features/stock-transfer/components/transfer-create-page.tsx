@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import type { CommandOption } from "@/components/ui/command-select";
@@ -12,6 +12,12 @@ import type { Product } from "@/features/master/products/types";
 import { useStores } from "@/features/stores/api/stores-api";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useActiveStoreStore } from "@/stores/active-store-store";
+import { useTransferTutorialStore } from "@/stores/transfer-tutorial-store";
+import {
+  MOCK_STOCK_TRANSFER_DEST_STORE,
+  MOCK_STOCK_TRANSFER_NOTE,
+} from "../tutorial/constants/transfer-tutorial-constants";
+import type { TransferTutorialPreSnapshot } from "../tutorial/types/transfer-tutorial";
 import {
   useCreateStockTransfer,
   useStockTransferDetail,
@@ -32,7 +38,9 @@ export function TransferCreatePage({ editUid }: TransferCreatePageProps) {
   const { data: session, status } = useSession();
   const activeStoreUid = useActiveStoreStore((state) => state.activeStoreUid);
   const activeStore = session?.user?.stores?.find((s) => s.uid === activeStoreUid);
-
+  const isTutorialRunning = useTransferTutorialStore(
+    (state) => state.isRunning && state.activeTutorial === "stock_transfer_create"
+  );
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -41,17 +49,111 @@ export function TransferCreatePage({ editUid }: TransferCreatePageProps) {
   }, []);
 
   const { data: storesRes } = useStores({ per_page: 1000 });
-  const stores = storesRes?.data ?? [];
-  const destStores = stores.filter((s) => s.uid !== activeStoreUid);
-  const storeOptions: CommandOption[] = destStores.map((s) => ({
-    value: s.uid,
-    label: `${s.nama}${s.is_central ? ` (${STORE_LABEL_HQ})` : ""}`,
-  }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const rawStores = storesRes?.data ?? [];
+  const stores = useMemo(() => {
+    if (isTutorialRunning && !rawStores.some((s) => s.uid === MOCK_STOCK_TRANSFER_DEST_STORE.uid)) {
+      return [...rawStores, MOCK_STOCK_TRANSFER_DEST_STORE as unknown as (typeof rawStores)[0]];
+    }
+    return rawStores.filter((s) => !s.uid.startsWith("mock-"));
+  }, [rawStores, isTutorialRunning]);
+
+  const destStores = useMemo(() => {
+    return stores.filter((s) => s.uid !== activeStoreUid);
+  }, [stores, activeStoreUid]);
+
+  const storeOptions: CommandOption[] = useMemo(() => {
+    return destStores.map((s) => ({
+      value: s.uid,
+      label: `${s.nama}${s.is_central ? ` (${STORE_LABEL_HQ})` : ""}`,
+    }));
+  }, [destStores]);
 
   const [destinationUid, setDestinationUid] = useState<string>("");
   const [catatan, setCatatan] = useState("");
   const [items, setItems] = useState<TransferItem[]>([]);
   const [prefilled, setPrefilled] = useState(false);
+
+  // Snapshot on tutorial start
+  useEffect(() => {
+    if (isTutorialRunning) {
+      const currentSnap = useTransferTutorialStore.getState().preSnapshot;
+      if (!currentSnap) {
+        useTransferTutorialStore.getState().saveSnapshot({
+          destinationUid,
+          catatan,
+          stockItems: items,
+        });
+      }
+    }
+  }, [isTutorialRunning, destinationUid, catatan, items]);
+
+  // Purge mock selections when tutorial is not running
+  useEffect(() => {
+    if (!isTutorialRunning) {
+      if (destinationUid.startsWith("mock-")) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setDestinationUid("");
+      }
+      if (catatan === MOCK_STOCK_TRANSFER_NOTE || catatan.includes("Cabang Malang")) {
+        setCatatan("");
+      }
+      if (items.some((i) => i.product_uid.startsWith("mock-") || i.barcode === "8991111222333" || i.barcode === "8994444555666")) {
+        setItems((prev) => prev.filter((i) => !i.product_uid.startsWith("mock-") && i.barcode !== "8991111222333" && i.barcode !== "8994444555666"));
+      }
+    }
+  }, [isTutorialRunning, destinationUid, catatan, items]);
+
+  // Listen to custom events from transfer tutorial
+  useEffect(() => {
+    const handleSetField = (e: Event) => {
+      const customEvent = e as CustomEvent<{ field: string; value: unknown }>;
+      if (customEvent.detail) {
+        const { field, value } = customEvent.detail;
+        if (field === "destination_uid" || field === "store_uid_destination") {
+          setDestinationUid(String(value || ""));
+        }
+        if (field === "catatan") {
+          setCatatan(String(value || ""));
+        }
+      }
+    };
+
+    const handleInjectItems = (e: Event) => {
+      const customEvent = e as CustomEvent<{ items: TransferItem[] }>;
+      if (customEvent.detail?.items) {
+        setItems(customEvent.detail.items);
+      }
+    };
+
+    const handleClearItems = () => {
+      setItems((prev) => prev.filter((i) => !i.product_uid.startsWith("mock-") && i.barcode !== "8991111222333" && i.barcode !== "8994444555666"));
+      setDestinationUid((prev) => (prev.startsWith("mock-") ? "" : prev));
+      setCatatan((prev) => (prev === MOCK_STOCK_TRANSFER_NOTE || prev.includes("Cabang Malang") ? "" : prev));
+    };
+
+    const handleRestoreSnapshot = (e: Event) => {
+      const customEvent = e as CustomEvent<TransferTutorialPreSnapshot>;
+      if (customEvent.detail) {
+        const snap = customEvent.detail;
+        if (snap.destinationUid !== undefined) setDestinationUid(snap.destinationUid);
+        if (snap.catatan !== undefined) setCatatan(snap.catatan);
+        if (snap.stockItems !== undefined) setItems(snap.stockItems);
+      }
+    };
+
+    window.addEventListener("transfer-tutorial-set-field", handleSetField);
+    window.addEventListener("transfer-tutorial-inject-items", handleInjectItems);
+    window.addEventListener("transfer-tutorial-clear-items", handleClearItems);
+    window.addEventListener("transfer-tutorial-restore-snapshot", handleRestoreSnapshot);
+
+    return () => {
+      window.removeEventListener("transfer-tutorial-set-field", handleSetField);
+      window.removeEventListener("transfer-tutorial-inject-items", handleInjectItems);
+      window.removeEventListener("transfer-tutorial-clear-items", handleClearItems);
+      window.removeEventListener("transfer-tutorial-restore-snapshot", handleRestoreSnapshot);
+    };
+  }, []);
 
   const createMutation = useCreateStockTransfer();
   const updateMutation = useUpdateStockTransfer();
@@ -167,6 +269,11 @@ export function TransferCreatePage({ editUid }: TransferCreatePageProps) {
     if (!destinationUid) return toast.error("Pilih toko tujuan pengiriman!");
     if (items.length === 0) return toast.error("Minimal tambahkan 1 barang ke dalam daftar transfer");
     if (items.some((i) => i.kuantitas <= 0)) return toast.error("Kuantitas pengiriman harus lebih dari 0");
+
+    if (isTutorialRunning || destinationUid.startsWith("mock-") || items.some((it) => it.product_uid.startsWith("mock-"))) {
+      toast.success("Simulasi: Draft transfer stok berhasil disimpan (Mode Panduan)!");
+      return;
+    }
 
     const payload = {
       store_uid_destination: destinationUid,

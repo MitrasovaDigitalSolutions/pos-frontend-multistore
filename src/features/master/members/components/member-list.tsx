@@ -13,6 +13,7 @@ import { DataTableActionButton } from "@/components/ui/data-table-actions";
 import { useDeleteMember } from "../api/members-api";
 import { toast } from "sonner";
 import { useSettingsStore } from "@/stores/settings-store";
+import { useMembersTutorialStore } from "@/stores/members-tutorial-store";
 
 interface MemberListProps {
     members: Member[];
@@ -35,6 +36,10 @@ interface MemberListProps {
     sortBy?: string;
     sortOrder?: "asc" | "desc";
     onSortChange?: (sortBy: string | undefined, sortOrder: "asc" | "desc" | undefined) => void;
+    // Tutorial-controlled confirm state
+    externalConfirmOpen?: boolean;
+    onExternalConfirmChange?: (open: boolean) => void;
+    externalMemberToDelete?: Member | null;
 }
 
 export function MemberList({
@@ -53,6 +58,9 @@ export function MemberList({
     sortBy,
     sortOrder,
     onSortChange,
+    externalConfirmOpen,
+    onExternalConfirmChange,
+    externalMemberToDelete,
 }: MemberListProps) {
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
@@ -63,13 +71,20 @@ export function MemberList({
 
     const getSetting = useSettingsStore((state) => state.getSetting);
     const pointSystemEnabled = getSetting("point_system_enabled", "true") === "true";
+    // ponytail: force-show adjust-points action while tutorial runs so the flow works even when point system is disabled
+    const isTutorialRunning = useMembersTutorialStore((state) => state.isRunning);
 
     const deleteMember = useDeleteMember();
-    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-    const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
+    const [internalConfirmOpen, setInternalConfirmOpen] = useState(false);
+    const [internalMemberToDelete, setInternalMemberToDelete] = useState<Member | null>(null);
+
+    // Use external state when provided (for tutorial), otherwise internal
+    const isConfirmOpen = externalConfirmOpen ?? internalConfirmOpen;
+    const setIsConfirmOpen = onExternalConfirmChange ?? setInternalConfirmOpen;
+    const memberToDelete = externalMemberToDelete ?? internalMemberToDelete;
 
     const handleDelete = (m: Member) => {
-        setMemberToDelete(m);
+        setInternalMemberToDelete(m);
         setIsConfirmOpen(true);
     };
 
@@ -79,7 +94,7 @@ export function MemberList({
             onSuccess: () => {
                 toast.success(`Member "${memberToDelete.nama}" berhasil dihapus.`);
                 setIsConfirmOpen(false);
-                setMemberToDelete(null);
+                setInternalMemberToDelete(null);
             },
             onError: (err) => {
                 toast.error(err.message || "Gagal menghapus member.");
@@ -187,6 +202,7 @@ export function MemberList({
                 </div>
                 {hasManageMembers && (
                     <Button
+                        id="btn-tambah-member"
                         onClick={onAddClick}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer border-none"
                     >
@@ -216,9 +232,10 @@ export function MemberList({
                 estimateRowHeight={44}
                 onEdit={hasManageMembers ? onEdit : undefined}
                 onDelete={hasManageMembers ? handleDelete : undefined}
-                extraActions={hasManageMembers && pointSystemEnabled ? (member) => (
+                extraActions={hasManageMembers && (pointSystemEnabled || isTutorialRunning) ? (member) => (
                     <DataTableActionButton
                         variant="emerald"
+                        className="table-action-adjust-points"
                         onClick={() => onAdjustPoints(member)}
                         tooltip="Sesuaikan Poin"
                     >

@@ -15,6 +15,7 @@ interface FormInputProps<T extends FieldValues> extends Omit<
 > {
     name: FieldPath<T>;
     label?: string;
+    wrapperId?: string;
     inputRef?: React.Ref<HTMLInputElement>;
 }
 
@@ -29,6 +30,7 @@ function setRef<T>(ref: React.Ref<T> | undefined, value: T | null) {
 export function FormInput<T extends FieldValues>({
     name,
     label,
+    wrapperId,
     className,
     required,
     inputRef,
@@ -51,7 +53,7 @@ export function FormInput<T extends FieldValues>({
     );
 
     return (
-        <div className="space-y-1.5">
+        <div id={wrapperId} className="space-y-1.5">
             {label && (
                 <label
                     htmlFor={name}

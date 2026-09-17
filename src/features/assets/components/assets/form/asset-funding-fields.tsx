@@ -112,7 +112,7 @@ export function AssetFundingFields({
                     <label className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
                         Metode Perolehan <span className="text-rose-500">*</span>
                     </label>
-                    <div className="grid grid-cols-2 p-0.5 bg-slate-100 dark:bg-slate-900/60 rounded-lg border border-slate-200/80 dark:border-slate-800">
+                    <div id="aset-sumber-tabs" className="grid grid-cols-2 p-0.5 bg-slate-100 dark:bg-slate-900/60 rounded-lg border border-slate-200/80 dark:border-slate-800">
                         <button
                             type="button"
                             onClick={() => {
@@ -345,6 +345,7 @@ export function AssetFundingFields({
                     Batal
                 </Button>
                 <Button
+                    id="btn-submit-aset"
                     type="submit"
                     disabled={
                         isPending ||

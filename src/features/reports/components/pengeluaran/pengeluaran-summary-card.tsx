@@ -12,7 +12,7 @@ interface PengeluaranSummaryCardProps {
 
 export function PengeluaranSummaryCard({ reportData, isLoading }: PengeluaranSummaryCardProps) {
     return (
-        <Card className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden my-6">
+        <Card id="pengeluaran-summary-card" className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden my-6">
             <div className="flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
                 {/* Left Section: Main KPI */}
                 <div className="p-5 flex flex-col justify-between sm:w-1/2 bg-slate-50/40">

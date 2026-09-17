@@ -148,7 +148,7 @@ export function TransactionDetailItems({ items }: TransactionDetailItemsProps) {
     ];
 
     return (
-        <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-col p-3.5 sm:p-4.5 space-y-3 sm:space-y-4 transition-all duration-300 hover:shadow-md">
+        <div id="trx-detail-items-card" className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-col p-3.5 sm:p-4.5 space-y-3 sm:space-y-4 transition-all duration-300 hover:shadow-md">
             {/* Header section with decorative card header */}
             <div className="flex items-center justify-between border-b border-slate-50 pb-2.5 sm:pb-3">
                 <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
@@ -174,8 +174,16 @@ export function TransactionDetailItems({ items }: TransactionDetailItemsProps) {
                 emptyMessage="Tidak ada item dalam transaksi ini."
                 virtualize={false}
                 entityName="item"
+                getRowMotionProps={(item) => {
+                    const isFirst = items[0]?.uid ? items[0]?.uid === item.uid : items[0]?.nama_produk === item.nama_produk;
+                    if (isFirst) {
+                        return { id: "trx-detail-sample-item-row-0" };
+                    }
+                    return {};
+                }}
                 renderCardItem={(row) => {
                     const item = row.original;
+                    const isFirst = items[0]?.uid ? items[0]?.uid === item.uid : items[0]?.nama_produk === item.nama_produk;
                     const hargaBeli = item.harga_beli ?? 0;
                     const subtotal = item.subtotal;
                     const qty = item.kuantitas;
@@ -184,6 +192,7 @@ export function TransactionDetailItems({ items }: TransactionDetailItemsProps) {
                     return (
                         <div
                             key={item.uid || item.nama_produk}
+                            id={isFirst ? "trx-detail-sample-item-row-0" : undefined}
                             className="p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-2 shadow-2xs"
                         >
                             {/* Header: Nama Produk + Qty */}

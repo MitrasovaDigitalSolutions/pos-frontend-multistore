@@ -10,6 +10,9 @@ import { PengeluaranSummaryCard } from "./pengeluaran-summary-card";
 import { PengeluaranDetailsTable } from "./pengeluaran-details-table";
 import { formatToISO, todayStr } from "@/lib/date-utils";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
+import { ReportsTutorialController } from "../../tutorial/components/reports-tutorial-controller";
+import { MOCK_PENGELUARAN } from "../../tutorial/constants/reports-tutorial-constants";
+import { useReportsTutorialStore } from "@/stores/reports-tutorial-store";
 
 interface PengeluaranFilterValues {
     fromDate: string;
@@ -20,6 +23,7 @@ export function PengeluaranReportView() {
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
+    const isTutorialRunning = useReportsTutorialStore((state) => state.isRunning);
 
     const hasViewReports =
         hasRole(userRoles, "admin") ||
@@ -42,6 +46,9 @@ export function PengeluaranReportView() {
         appliedFilters.fromDate,
         appliedFilters.toDate,
     );
+
+    // Saat tutorial berjalan, pakai data contoh agar walkthrough selalu utuh.
+    const activeData = isTutorialRunning ? MOCK_PENGELUARAN : reportData;
 
     if (!hasViewReports) {
         return (
@@ -81,15 +88,17 @@ export function PengeluaranReportView() {
 
             {/* Metrics Summary Card Section */}
             <PengeluaranSummaryCard
-                reportData={reportData}
-                isLoading={isLoading}
+                reportData={activeData}
+                isLoading={isLoading && !isTutorialRunning}
             />
 
-            {/* Table Details Section */}
+            {/* Transactions Details Table Section */}
             <PengeluaranDetailsTable
-                reportData={reportData}
-                isLoading={isLoading}
+                reportData={activeData}
+                isLoading={isLoading && !isTutorialRunning}
             />
+
+            <ReportsTutorialController />
         </div>
     );
 }

@@ -19,6 +19,8 @@ interface FilterFormProps<T extends FieldValues> {
     titleIcon?: React.ReactNode;
     cols?: number;
     defaultExpanded?: boolean;
+    actionsId?: string;
+    headerId?: string;
 }
 
 function formatFilterKey(key: string): string {
@@ -66,6 +68,8 @@ export function FilterForm<T extends FieldValues>({
     titleIcon,
     cols,
     defaultExpanded = true,
+    actionsId,
+    headerId,
 }: FilterFormProps<T>) {
     const queryClient = useQueryClient();
     const [isExpanded, setIsExpanded] = useState(defaultExpanded);
@@ -181,6 +185,7 @@ return (
         >
             {/* Toggle Header */}
             <div
+                id={headerId}
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="flex items-center justify-between cursor-pointer select-none"
             >
@@ -237,7 +242,7 @@ return (
                     </div>
 
                     {/* Filter Action Buttons (Bottom Right) */}
-                    <div className="flex justify-end items-center gap-2 pt-2.5 sm:pt-3 border-t border-slate-100/50">
+                    <div id={actionsId} className="flex justify-end items-center gap-2 pt-2.5 sm:pt-3 border-t border-slate-100/50">
                         <Button
                             type="button"
                             onClick={(e) => {

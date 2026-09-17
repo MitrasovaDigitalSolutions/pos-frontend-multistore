@@ -34,6 +34,10 @@ interface UserTableProps {
     sortBy?: string;
     sortOrder?: "asc" | "desc";
     onSortChange?: (sortBy: string | undefined, sortOrder: "asc" | "desc" | undefined) => void;
+    isConfirmOpen?: boolean;
+    onConfirmOpenChange?: (open: boolean) => void;
+    userToDeactivate?: User | null;
+    onUserToDeactivateChange?: (user: User | null) => void;
 }
 
 export function UserTable({
@@ -51,6 +55,10 @@ export function UserTable({
     sortBy,
     sortOrder,
     onSortChange,
+    isConfirmOpen: externalConfirmOpen,
+    onConfirmOpenChange,
+    userToDeactivate: externalUserToDeactivate,
+    onUserToDeactivateChange,
 }: UserTableProps) {
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
@@ -63,8 +71,14 @@ export function UserTable({
 
     const currentUser = session?.user;
 
-    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-    const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
+    const [internalConfirmOpen, setInternalConfirmOpen] = useState(false);
+    const [internalUserToDeactivate, setInternalUserToDeactivate] = useState<User | null>(null);
+
+    const isConfirmOpen = externalConfirmOpen ?? internalConfirmOpen;
+    const setIsConfirmOpen = onConfirmOpenChange ?? setInternalConfirmOpen;
+
+    const userToDeactivate = externalUserToDeactivate !== undefined ? externalUserToDeactivate : internalUserToDeactivate;
+    const setUserToDeactivate = onUserToDeactivateChange ?? setInternalUserToDeactivate;
 
     const handleDeactivate = (u: User) => {
         setUserToDeactivate(u);
@@ -172,6 +186,7 @@ export function UserTable({
                 </div>
                 {hasManageUsers && (
                     <Button
+                        id="btn-tambah-user"
                         onClick={onAddClick}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
                     >
@@ -201,12 +216,17 @@ export function UserTable({
                 estimateRowHeight={44}
                 onEdit={hasManageUsers ? onEdit : undefined}
                 onDelete={hasManageUsers ? handleDeactivate : undefined}
-                hideDelete={(u) => !(currentUser && u.uid !== currentUser.uid && u.status === "active")}
+                hideDelete={(u) => {
+                    if (u.uid.startsWith("tutorial-mock-")) return false;
+                    return !(currentUser && u.uid !== currentUser.uid && u.status === "active");
+                }}
             />
 
             <ConfirmDialog
                 open={isConfirmOpen}
                 onOpenChange={setIsConfirmOpen}
+                contentId="confirm-deactivate-user-dialog"
+                confirmBtnId="btn-confirm-deactivate-user"
                 title="Nonaktifkan Pengguna"
                 description={
                     userToDeactivate ? (

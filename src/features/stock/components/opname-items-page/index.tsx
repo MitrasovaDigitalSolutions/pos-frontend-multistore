@@ -8,7 +8,7 @@ import { useCategories } from "@/features/master/categories/api/categories-api";
 import type { Product } from "@/features/master/products/types";
 import { useOpnameUIStore } from "@/stores/opname-items-store";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   useDeleteOpnameItemRow,
@@ -20,6 +20,12 @@ import {
   useUpdateOpnameItemRow,
 } from "../../api/stock-api";
 import type { OpnameItem } from "../../types";
+import {
+  MOCK_OPNAME,
+  MOCK_OPNAME_ITEMS,
+  MOCK_OPNAME_UID,
+  MOCK_SCANNED_OPNAME_ITEM,
+} from "../../tutorial/constants/stock-tutorial-constants";
 import { EditHeaderDialog } from "./edit-header-dialog";
 import { ImportOpnameDraftDialog } from "./import-opname-draft-dialog";
 import { OpnameInstructions } from "./opname-instructions";
@@ -35,6 +41,7 @@ interface OpnameItemsPageProps {
 
 export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   const router = useRouter();
+  const isMockTutorial = opnameId === MOCK_OPNAME_UID;
 
   // ── UI Filter Store ──
   const page = useOpnameUIStore((state) => state.page);
@@ -44,19 +51,23 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   const sortOrder = useOpnameUIStore((state) => state.sortOrder);
 
   // ── Queries & Mutations ──
-  const { data: opname, isLoading: opnameLoading, refetch: refetchDetail } = useOpnameDetail(opnameId);
+  const { data: rawOpname, isLoading: rawOpnameLoading, refetch: refetchDetail } = useOpnameDetail(isMockTutorial ? null : opnameId);
   const {
-    data: itemsResponse,
-    isLoading: itemsLoading,
-    isFetching: itemsFetching,
+    data: rawItemsResponse,
+    isLoading: rawItemsLoading,
+    isFetching: rawItemsFetching,
     refetch: refetchItems,
-  } = useOpnameItems(opnameId, {
+  } = useOpnameItems(isMockTutorial ? null : opnameId, {
     page,
     per_page: perPage,
     search: search || undefined,
     sort_by: sortBy,
     sort_order: sortOrder,
   });
+
+  const [mockItems, setMockItems] = useState<OpnameItem[]>(() =>
+    isMockTutorial ? [...MOCK_OPNAME_ITEMS] : []
+  );
 
   const { data: categoriesData } = useCategories({ per_page: 500 });
   const { data: brandsData } = useBrands({ per_page: 500 });
@@ -105,6 +116,69 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
     qty: number;
   } | null>(null);
 
+  // Listen to tutorial events
+  useEffect(() => {
+    const handleInjectItem = () => {
+      setMockItems((prev) => {
+        const existingIdx = prev.findIndex(
+          (i) => i.barcode === MOCK_SCANNED_OPNAME_ITEM.barcode || i.uid === MOCK_SCANNED_OPNAME_ITEM.uid
+        );
+        if (existingIdx >= 0) {
+          const next = [...prev];
+          const cur = next[existingIdx];
+          const nextQty = (Number(cur.stok_fisik) || 0) + 1;
+          const diff = nextQty - (Number(cur.stok_sistem) || 0);
+          next[existingIdx] = { ...cur, stok_fisik: nextQty, selisih: diff };
+          const productName = cur.nama || cur.product?.nama || "Produk";
+          setLastScanFeedback({
+            type: "incremented",
+            productName,
+            qty: nextQty,
+          });
+          toast.success(`Jumlah ${productName} (+1): ${nextQty} pcs`);
+          return next;
+        } else {
+          const productName = MOCK_SCANNED_OPNAME_ITEM.nama || "Produk";
+          setLastScanFeedback({
+            type: "added",
+            productName,
+            qty: 1,
+          });
+          toast.success(`Ditambahkan: ${productName} (1 pcs)`);
+          return [MOCK_SCANNED_OPNAME_ITEM, ...prev];
+        }
+      });
+      setTimeout(() => setLastScanFeedback(null), 3000);
+    };
+
+    const handleOpenDialog = (e: CustomEvent<{ dialog?: string }>) => {
+      if (e.detail?.dialog === "finalize") {
+        setIsConfirmFinalizeOpen(true);
+      }
+    };
+
+    const handleCloseDialog = () => {
+      setIsConfirmFinalizeOpen(false);
+    };
+
+    const handleCleanup = () => {
+      setMockItems([...MOCK_OPNAME_ITEMS]);
+      setIsConfirmFinalizeOpen(false);
+    };
+
+    window.addEventListener("stock-tutorial-inject-item", handleInjectItem as EventListener);
+    window.addEventListener("stock-tutorial-open-dialog", handleOpenDialog as EventListener);
+    window.addEventListener("stock-tutorial-close-dialog", handleCloseDialog as EventListener);
+    window.addEventListener("stock-tutorial-cleanup", handleCleanup as EventListener);
+
+    return () => {
+      window.removeEventListener("stock-tutorial-inject-item", handleInjectItem as EventListener);
+      window.removeEventListener("stock-tutorial-open-dialog", handleOpenDialog as EventListener);
+      window.removeEventListener("stock-tutorial-close-dialog", handleCloseDialog as EventListener);
+      window.removeEventListener("stock-tutorial-cleanup", handleCleanup as EventListener);
+    };
+  }, []);
+
   const barcodeInputRef = useRef<HTMLInputElement | null>(null);
 
   const scrollToInput = () => {
@@ -142,6 +216,40 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
     const trimmed = barcode.trim();
     if (!trimmed) return;
 
+    if (isMockTutorial) {
+      const existing = mockItems.find((i) => i.barcode === trimmed);
+      if (existing) {
+        const nextQty = (Number(existing.stok_fisik) || 0) + 1;
+        const diff = nextQty - (Number(existing.stok_sistem) || 0);
+        setMockItems((prev) =>
+          prev.map((i) => (i.uid === existing.uid ? { ...i, stok_fisik: nextQty, selisih: diff } : i))
+        );
+        const productName = existing.nama || existing.product?.nama || "Produk";
+        setLastScanFeedback({
+          type: "incremented",
+          productName,
+          qty: nextQty,
+        });
+        toast.success(`Jumlah ${productName} (+1): ${nextQty} pcs`);
+      } else {
+        const productName = fallbackName || `Produk Barcode ${trimmed}`;
+        const newItem: OpnameItem = {
+          ...MOCK_SCANNED_OPNAME_ITEM,
+          barcode: trimmed,
+          nama: productName,
+        };
+        setMockItems((prev) => [newItem, ...prev]);
+        setLastScanFeedback({
+          type: "added",
+          productName,
+          qty: 1,
+        });
+        toast.success(`Ditambahkan: ${productName} (1 pcs)`);
+      }
+      setTimeout(() => setLastScanFeedback(null), 3000);
+      return;
+    }
+
     try {
       const res = await scanOpnameItem.mutateAsync({
         uid: opnameId,
@@ -173,6 +281,19 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
 
   // ── Single row updates ──
   const handleUpdateQty = (itemUid: string, qty: number) => {
+    if (isMockTutorial) {
+      setMockItems((prev) =>
+        prev.map((item) => {
+          if (item.uid === itemUid) {
+            const diff = qty - (Number(item.stok_sistem) || 0);
+            return { ...item, stok_fisik: qty, selisih: diff };
+          }
+          return item;
+        })
+      );
+      return;
+    }
+
     updateSingleItem.mutate({
       opnameUid: opnameId,
       itemUid,
@@ -185,6 +306,18 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
     field: "alasan" | "brand_uid" | "category_uid",
     value: string | null
   ) => {
+    if (isMockTutorial) {
+      setMockItems((prev) =>
+        prev.map((item) => {
+          if (item.uid === itemUid) {
+            return { ...item, [field]: value };
+          }
+          return item;
+        })
+      );
+      return;
+    }
+
     updateSingleItem.mutate({
       opnameUid: opnameId,
       itemUid,
@@ -193,6 +326,12 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
   };
 
   const handleRemoveItem = (itemUid: string) => {
+    if (isMockTutorial) {
+      setMockItems((prev) => prev.filter((item) => item.uid !== itemUid));
+      toast.success("Barang dihapus dari daftar opname.");
+      return;
+    }
+
     deleteSingleItem.mutate(
       { opnameUid: opnameId, itemUid },
       {
@@ -226,6 +365,13 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
       return;
     }
 
+    if (isMockTutorial) {
+      setIsConfirmFinalizeOpen(false);
+      toast.success("Proses finalisasi stock opname selesai!");
+      router.push(ROUTES.ADMIN_STOCK);
+      return;
+    }
+
     try {
       await finalizeOpname.mutateAsync(opnameId);
       toast.success("Proses finalisasi stock opname selesai!");
@@ -252,6 +398,46 @@ export function OpnameItemsPage({ opnameId }: OpnameItemsPageProps) {
       return false;
     }
   };
+
+  const opname = isMockTutorial ? MOCK_OPNAME : rawOpname;
+  const opnameLoading = isMockTutorial ? false : rawOpnameLoading;
+
+  const itemsResponse = isMockTutorial
+    ? (() => {
+        let filtered = [...mockItems];
+        if (search) {
+          const lower = search.toLowerCase();
+          filtered = filtered.filter(
+            (i) => i.nama?.toLowerCase().includes(lower) || i.barcode?.toLowerCase().includes(lower)
+          );
+        }
+        const total = filtered.length;
+        const match = filtered.filter((i) => (Number(i.stok_fisik) || 0) === (Number(i.stok_sistem) || 0)).length;
+        const positive = filtered.filter((i) => (Number(i.stok_fisik) || 0) > (Number(i.stok_sistem) || 0)).length;
+        const negative = filtered.filter((i) => (Number(i.stok_fisik) || 0) < (Number(i.stok_sistem) || 0)).length;
+
+        return {
+          data: filtered,
+          meta: {
+            current_page: 1,
+            from: 1,
+            last_page: 1,
+            per_page: 25,
+            to: total,
+            total,
+          },
+          summary: {
+            total_count: total,
+            match_count: match,
+            positive_count: positive,
+            negative_count: negative,
+          },
+        };
+      })()
+    : rawItemsResponse;
+
+  const itemsLoading = isMockTutorial ? false : rawItemsLoading;
+  const itemsFetching = isMockTutorial ? false : rawItemsFetching;
 
   if (opnameLoading || !opname) {
     return (

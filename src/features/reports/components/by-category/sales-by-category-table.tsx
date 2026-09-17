@@ -40,7 +40,7 @@ export function SalesByCategoryTable({ data, isLoading }: SalesByCategoryTablePr
   const hasData = data.length > 0;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+    <div id="kategori-table" className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
       <div className="mb-4">
         <h3 className="text-xs font-extrabold text-slate-800">Detail Per Kategori</h3>
         <p className="text-[10px] text-slate-400 mt-0.5">Rincian penjualan, kuantitas, dan kontribusi tiap kategori</p>

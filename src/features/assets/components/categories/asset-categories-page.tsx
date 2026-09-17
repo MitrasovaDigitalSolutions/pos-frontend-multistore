@@ -10,6 +10,7 @@ import { useAssetCategories } from "../../api/asset-categories-api";
 import { AssetCategoriesTable } from "./asset-categories-table";
 import { AssetCategoryFormDialog } from "./asset-category-form-dialog";
 import type { AssetCategory } from "../../types";
+import { AssetsTutorialController } from "../../tutorial/components/assets-tutorial-controller";
 
 export function AssetCategoriesPage() {
     const { data: session } = useSession();
@@ -70,6 +71,7 @@ export function AssetCategoriesPage() {
                         Segarkan
                     </Button>
                     <Button
+                        id="btn-tambah-kategori"
                         onClick={handleCreateClick}
                         className="h-8.5 px-3.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer"
                     >
@@ -95,6 +97,11 @@ export function AssetCategoriesPage() {
                 open={isDialogOpen}
                 onOpenChange={setIsDialogOpen}
                 editingCategory={editingCategory}
+            />
+
+            {/* Tutorial Controller */}
+            <AssetsTutorialController
+                setIsCategoryDialogOpen={setIsDialogOpen}
             />
         </div>
     );

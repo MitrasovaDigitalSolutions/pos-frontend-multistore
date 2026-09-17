@@ -28,6 +28,9 @@ import { useChartOfAccounts, useFlatChartOfAccounts, useDeleteChartOfAccount } f
 import { getNormalBalanceByType, NORMAL_BALANCE_CONFIG } from "../../constants/coa-constants";
 import { CoaDialog } from "./coa-dialog";
 import type { ChartOfAccount, ChartOfAccountType } from "../../types";
+import { CoaTutorialController } from "../../tutorial/components/coa-tutorial-controller";
+import { MOCK_COA } from "../../tutorial/constants/accounting-tutorial-constants";
+import { useAccountingTutorialStore } from "@/stores/accounting-tutorial-store";
 
 // Recursive filter helper for Tree View
 function filterTree(nodes: ChartOfAccount[], query: string, typeFilter: string): ChartOfAccount[] {
@@ -199,18 +202,42 @@ export function CoaPage() {
         expense: "border-l-rose-500",
     };
 
+    // Tutorial: mock fallback when tree / flat account list is empty
+    const isTutorialRunning = useAccountingTutorialStore((state) => state.isRunning);
+
+    const displayTreeAccounts = useMemo(() => {
+        const rawTree = treeAccounts || [];
+        if (isTutorialRunning && rawTree.length === 0) {
+            return MOCK_COA;
+        }
+        return rawTree;
+    }, [isTutorialRunning, treeAccounts]);
+
+    const displayFlatAccounts = useMemo(() => {
+        const rawFlat = flatAccounts || [];
+        if (isTutorialRunning && rawFlat.length === 0) {
+            return MOCK_COA;
+        }
+        return rawFlat;
+    }, [isTutorialRunning, flatAccounts]);
+
+    const sampleAccount = useMemo(() => {
+        const leaf = displayFlatAccounts.find((a) => a.is_postable) || displayFlatAccounts[1] || displayFlatAccounts[0];
+        return leaf || MOCK_COA[1];
+    }, [displayFlatAccounts]);
+
     // Filtered data for Tree View
     const filteredTreeData = useMemo(() => {
-        if (!treeAccounts) return [];
-        return filterTree(treeAccounts, searchQuery, activeTab);
-    }, [treeAccounts, searchQuery, activeTab]);
+        if (!displayTreeAccounts) return [];
+        return filterTree(displayTreeAccounts, searchQuery, activeTab);
+    }, [displayTreeAccounts, searchQuery, activeTab]);
 
     // Filtered data for Flat View
     const filteredFlatData = useMemo(() => {
-        if (!flatAccounts) return [];
+        if (!displayFlatAccounts) return [];
         const lowerQuery = searchQuery.toLowerCase().trim();
 
-        return flatAccounts.filter((acc) => {
+        return displayFlatAccounts.filter((acc) => {
             const matchesSearch =
                 !lowerQuery ||
                 acc.kode.toLowerCase().includes(lowerQuery) ||
@@ -220,7 +247,7 @@ export function CoaPage() {
 
             return matchesSearch && matchesType;
         });
-    }, [flatAccounts, searchQuery, activeTab]);
+    }, [displayFlatAccounts, searchQuery, activeTab]);
 
     // ─── CRUD Actions ──────────────────────────────────────────────────────────
     const handleCreateClick = () => {
@@ -242,12 +269,18 @@ export function CoaPage() {
     };
 
     const handleDeleteClick = (account: ChartOfAccount) => {
-        setAccountToDelete(account);
+        setAccountToDelete(isTutorialRunning ? MOCK_COA[1] : account);
         setDeleteOpen(true);
     };
 
     const confirmDelete = async () => {
         if (!accountToDelete) return;
+        if (isTutorialRunning || accountToDelete.uid.startsWith("tutorial-mock-")) {
+            toast.success(`Akun ${accountToDelete.kode} - ${accountToDelete.nama} berhasil dihapus.`);
+            setDeleteOpen(false);
+            setAccountToDelete(null);
+            return;
+        }
         try {
             await deleteMutation.mutateAsync(accountToDelete.uid);
             toast.success(`Akun ${accountToDelete.kode} - ${accountToDelete.nama} berhasil dihapus.`);
@@ -371,7 +404,7 @@ export function CoaPage() {
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => handleCreateSubClick(node)}
-                                    className="h-7 w-7 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 rounded-lg"
+                                    className="table-action-sub h-7 w-7 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 rounded-lg"
                                     title="Tambah Sub-Akun"
                                 >
                                     <IconFolderPlus size={14} />
@@ -383,7 +416,7 @@ export function CoaPage() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => handleEditClick(node)}
-                                className="h-7 w-7 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-lg"
+                                className="table-action-edit h-7 w-7 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-lg"
                                 title="Ubah Akun"
                             >
                                 <IconEdit size={14} />
@@ -394,7 +427,7 @@ export function CoaPage() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => handleDeleteClick(node)}
-                                className="h-7 w-7 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg"
+                                className="table-action-delete h-7 w-7 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg"
                                 title="Hapus Akun"
                             >
                                 <IconTrash size={14} />
@@ -439,6 +472,7 @@ export function CoaPage() {
                         <IconRefresh size={16} className={cn(isRefetching && "animate-spin")} />
                     </Button>
                     <Button
+                        id="btn-tambah-akun"
                         onClick={handleCreateClick}
                         className="h-10 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-xl flex items-center gap-1.5 shadow-sm cursor-pointer ml-auto md:ml-0"
                     >
@@ -457,6 +491,7 @@ export function CoaPage() {
                         <div className="relative flex-1 max-w-md">
                             <IconSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                             <Input
+                                id="coa-search"
                                 placeholder="Cari kode atau nama akun..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -544,7 +579,7 @@ export function CoaPage() {
 
             {/* Accounts List Table Card */}
             <Card className="border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden bg-white dark:bg-slate-900 rounded-2xl">
-                <CardContent className="p-0 overflow-x-auto">
+                <CardContent className="p-0 overflow-x-auto" id="coa-tree-table">
                     <div className="min-w-[760px]">
                         {/* Table Headers */}
                         <div className="grid grid-cols-12 items-center py-3 px-4 text-[10px] font-extrabold uppercase text-slate-500 bg-slate-50/50 dark:bg-slate-950/20 border-b border-slate-100 dark:border-slate-800 tracking-wider">
@@ -699,6 +734,7 @@ export function CoaPage() {
                 open={deleteOpen}
                 onOpenChange={setDeleteOpen}
                 title="Hapus Akun Perkiraan"
+                contentId="confirm-delete-dialog-content"
                 description={
                     <div className="space-y-2">
                         <p>
@@ -718,6 +754,17 @@ export function CoaPage() {
                 onConfirm={confirmDelete}
                 isLoading={deleteMutation.isPending}
                 variant="danger"
+            />
+
+            {/* Controller Tutorial COA */}
+            <CoaTutorialController
+                setDialogOpen={setDialogOpen}
+                setSelectedAccount={setSelectedAccount}
+                setParentForCreate={setParentForCreate}
+                setDeleteOpen={setDeleteOpen}
+                setAccountToDelete={setAccountToDelete}
+                setSearchQuery={setSearchQuery}
+                sampleAccount={sampleAccount}
             />
         </div>
     );

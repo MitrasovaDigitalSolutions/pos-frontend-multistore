@@ -52,22 +52,24 @@ export function CentralInventoryTab({ data, isLoading }: CentralInventoryTabProp
     return (
         <div className="space-y-4 sm:space-y-5">
             {/* 1. Inventory Summary Cards */}
-            <CentralInventoryCards data={data} isLoading={isLoading} />
+            <div id="central-report-inventory-cards">
+                <CentralInventoryCards data={data} isLoading={isLoading} />
+            </div>
 
             {/* 2. Visual Inventory Comparison Chart */}
-            <Card className="bg-white border border-slate-100 rounded-xl p-4 sm:p-5 shadow-2xs space-y-3.5">
-                <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-100">
-                    <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100/80">
-                        <IconBox size={16} />
-                    </div>
-                    <div>
+            <Card id="central-report-inventory-chart" className="bg-white border border-slate-100 rounded-xl p-4 sm:p-5 shadow-2xs space-y-3.5">
+                <div className="flex flex-col pb-2.5 border-b border-slate-100">
+                    <div id="central-report-inventory-chart-header" className="inline-flex items-center gap-2.5 w-fit">
+                        <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100/80 shrink-0">
+                            <IconBox size={16} />
+                        </div>
                         <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                             Komparasi Valuasi Stok Antar Cabang
                         </h3>
-                        <p className="text-[10px] text-slate-400">
-                            Perbandingan total nilai barang berdasarkan harga beli (HPP)
-                        </p>
                     </div>
+                    <p className="text-[10px] text-slate-400 mt-0.5 ml-9.5">
+                        Perbandingan total nilai barang berdasarkan harga beli (HPP)
+                    </p>
                 </div>
 
                 {isLoading ? (

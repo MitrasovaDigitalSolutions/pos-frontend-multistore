@@ -4,6 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getPurchaseItemsStore, clearPurchaseItemsStore } from "@/stores/purchase-items-store";
 import type { PurchaseReturn } from "@/features/purchase/types";
 import { useReturnableItems } from "@/features/purchase/api/purchase-api";
+import { usePurchaseTutorialStore } from "@/stores/purchase-tutorial-store";
+import {
+    MOCK_OUTSTANDING_RECEIVING,
+    MOCK_RETURN_LIMITS_MAP,
+} from "../tutorial/constants/purchase-tutorial-constants";
 
 import { useReturnHeaderForm } from "./use-return-header-form";
 import { useReturnScanner } from "./use-return-scanner";
@@ -43,7 +48,12 @@ export function useReturnFlow({
     useEffect(() => {
         if (isCurrentNew && isInitialMountRef.current) {
             isInitialMountRef.current = false;
-            clearPurchaseItemsStore("new", "return");
+            const isTut =
+                usePurchaseTutorialStore.getState().isRunning &&
+                usePurchaseTutorialStore.getState().activeTutorial === "return_create";
+            if (!isTut) {
+                clearPurchaseItemsStore("new", "return");
+            }
         }
     }, [isCurrentNew]);
 
@@ -63,9 +73,47 @@ export function useReturnFlow({
     });
 
     // 2. Fetch returnable items based on selected receiving doc
-    const { data: returnableItems = [], isLoading: returnableLoading } = useReturnableItems(
-        headerState.receivingId
+    const isMockReceiving =
+        headerState.receivingId === MOCK_OUTSTANDING_RECEIVING.uid ||
+        Boolean(headerState.receivingId?.startsWith("mock-"));
+
+    const { data: fetchedReturnableItems = [], isLoading: returnableLoading } = useReturnableItems(
+        isMockReceiving ? null : headerState.receivingId
     );
+
+    const returnableItems = useMemo(() => {
+        if (isMockReceiving) {
+            return [
+                {
+                    product_uid: "tutorial-ret-prod-1",
+                    product: {
+                        uid: "tutorial-ret-prod-1",
+                        nama: "Kopi Susu Gula Aren 250ml",
+                        barcode: "8991234567890",
+                        harga_beli: 18000,
+                    },
+                    kuantitas_diterima: 24,
+                    kuantitas_diretur: 0,
+                    kuantitas_sisa: 24,
+                    harga_beli: 18000,
+                },
+                {
+                    product_uid: "tutorial-ret-prod-2",
+                    product: {
+                        uid: "tutorial-ret-prod-2",
+                        nama: "Roti Bakar Coklat Keju Premium",
+                        barcode: "8991234567891",
+                        harga_beli: 12000,
+                    },
+                    kuantitas_diterima: 30,
+                    kuantitas_diretur: 0,
+                    kuantitas_sisa: 30,
+                    harga_beli: 12000,
+                },
+            ];
+        }
+        return fetchedReturnableItems;
+    }, [isMockReceiving, fetchedReturnableItems]);
 
     const lastInitializedReceivingIdRef = useRef<string | null>(null);
 
@@ -96,15 +144,23 @@ export function useReturnFlow({
         }
 
         if (isCurrentNew) {
-            const storeItems = returnableItems.map((item) => ({
-                temp_uid: `ret-${item.product_uid}-${Math.random().toString(36).substring(2, 5)}`,
-                product_uid: String(item.product_uid),
-                barcode: item.product?.barcode || null,
-                nama: item.product?.nama || "Produk",
-                kuantitas: 0,
-                harga_estimasi: item.harga_beli,
-                alasan: "damaged",
-            }));
+            const currentStoreItems = store.getState().items;
+            const currentItemMap = new Map(currentStoreItems.map((i) => [i.product_uid, i]));
+
+            const storeItems = returnableItems.map((item) => {
+                const existing = currentItemMap.get(String(item.product_uid));
+                return {
+                    temp_uid:
+                        existing?.temp_uid ||
+                        `ret-${item.product_uid}-${Math.random().toString(36).substring(2, 5)}`,
+                    product_uid: String(item.product_uid),
+                    barcode: item.product?.barcode || null,
+                    nama: item.product?.nama || "Produk",
+                    kuantitas: existing?.kuantitas ?? 0,
+                    harga_estimasi: item.harga_beli,
+                    alasan: existing?.alasan || "damaged",
+                };
+            });
             store.setState({ items: storeItems });
             lastInitializedReceivingIdRef.current = headerState.receivingId;
         } else if (currentReturn && currentReturn.items) {
@@ -161,6 +217,12 @@ export function useReturnFlow({
                 };
             });
         }
+        // Ensure mock tutorial limits are populated
+        Object.entries(MOCK_RETURN_LIMITS_MAP).forEach(([k, v]) => {
+            if (!map[k]) {
+                map[k] = v;
+            }
+        });
         return map;
     }, [returnableItems]);
 

@@ -22,7 +22,7 @@ export function CatalogAssignGlobalPreset({ product }: CatalogAssignGlobalPreset
     const masterPrice = product.harga_jual ?? product.harga;
 
     return (
-        <div className="bg-gradient-to-br from-emerald-50/70 via-teal-50/40 to-slate-50 border border-emerald-200/90 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
+        <div id="catalog-assign-global-preset" className="bg-gradient-to-br from-emerald-50/70 via-teal-50/40 to-slate-50 border border-emerald-200/90 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
             <div className="flex items-start justify-between gap-2 border-b border-emerald-100/80 pb-3">
                 <div className="flex items-center gap-2">
                     <div className="p-1.5 rounded-lg bg-emerald-600 text-white shadow-xs">
@@ -45,7 +45,7 @@ export function CatalogAssignGlobalPreset({ product }: CatalogAssignGlobalPreset
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
                 {/* ── Global Retail Price ────────────────────────────────────────── */}
-                <div className="space-y-2 bg-white/90 p-3.5 rounded-xl border border-emerald-100/90 shadow-xs">
+                <div id="catalog-assign-global-price" className="space-y-2 bg-white/90 p-3.5 rounded-xl border border-emerald-100/90 shadow-xs">
                     <div className="flex items-center gap-1.5 text-slate-700">
                         <IconTag size={15} className="text-emerald-600" />
                         <span className="text-xs font-bold">Harga Jual Global</span>
@@ -61,7 +61,7 @@ export function CatalogAssignGlobalPreset({ product }: CatalogAssignGlobalPreset
                 </div>
 
                 {/* ── Global Wholesale Scheme ────────────────────────────────────── */}
-                <div className="space-y-2.5 bg-white/90 p-3.5 rounded-xl border border-emerald-100/90 shadow-xs">
+                <div id="catalog-assign-global-wholesale" className="space-y-2.5 bg-white/90 p-3.5 rounded-xl border border-emerald-100/90 shadow-xs">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5 text-slate-700">
                             <IconPercentage size={15} className="text-emerald-600" />

@@ -19,6 +19,9 @@ import { AuditTimeline } from "./components/audit-timeline";
 import { AuditInspector } from "./components/audit-inspector";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { AuditTutorialController } from "./tutorial/components/audit-tutorial-controller";
+import { useAuditTutorialStore } from "@/stores/audit-tutorial-store";
+import { MOCK_AUDIT_LOGS } from "./tutorial/constants/audit-tutorial-constants";
 
 interface AuditFilterValues {
     search: string;
@@ -59,6 +62,9 @@ export function AuditLogs() {
     const [debouncedSearch, setDebouncedSearch] = useState("");
     const [viewMode, setViewMode] = useState<"table" | "timeline">("table");
     const [selectedLog, setSelectedLog] = useState<ActivityLog | null>(null);
+    const [inspectorTab, setInspectorTab] = useState<"info" | "properties" | "json">("info");
+
+    const isTutorialRunning = useAuditTutorialStore((state) => state.isRunning);
 
     const filterMethods = useForm<AuditFilterValues>({
         defaultValues: {
@@ -88,6 +94,27 @@ export function AuditLogs() {
         search: debouncedSearch || undefined,
         module: selectedModules.length ? selectedModules.join(',') : undefined,
     });
+
+    const effectiveLogs = useMemo(() => {
+        if (isTutorialRunning && (!logsData?.data || logsData.data.length === 0)) {
+            return MOCK_AUDIT_LOGS;
+        }
+        return logsData?.data || [];
+    }, [isTutorialRunning, logsData?.data]);
+
+    const sampleLog = useMemo(() => {
+        if (effectiveLogs.length > 0) {
+            return (
+                effectiveLogs.find(
+                    (l) =>
+                        l.properties &&
+                        (("old" in l.properties && "new" in l.properties) ||
+                            Object.keys(l.properties).length > 0)
+                ) || effectiveLogs[0]
+            );
+        }
+        return MOCK_AUDIT_LOGS[1];
+    }, [effectiveLogs]);
 
     const getActionBadgeClass = (action: string) => {
         const act = action.toLowerCase();
@@ -297,6 +324,7 @@ export function AuditLogs() {
                 {/* View Mode Toggle Buttons */}
                 <div className="flex items-center gap-1.5 bg-slate-100/80 p-1 rounded-xl border border-slate-200/50">
                     <button
+                        id="btn-view-mode-table"
                         onClick={() => setViewMode("table")}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                             viewMode === "table"
@@ -308,6 +336,7 @@ export function AuditLogs() {
                         Tabel
                     </button>
                     <button
+                        id="btn-view-mode-timeline"
                         onClick={() => setViewMode("timeline")}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                             viewMode === "timeline"
@@ -334,9 +363,9 @@ export function AuditLogs() {
                     <div className="pt-2">
                         <DataTable
                             columns={columns}
-                            data={logsData?.data || []}
-                            isLoading={isLoading}
-                            isFetching={isFetching}
+                            data={effectiveLogs}
+                            isLoading={isLoading && !isTutorialRunning}
+                            isFetching={isFetching && !isTutorialRunning}
                             emptyMessage="Tidak ada catatan aktivitas ditemukan."
                             page={page}
                             perPage={perPage}
@@ -360,9 +389,9 @@ export function AuditLogs() {
                     // Timeline Feed View
                     <div className="pt-2">
                         <AuditTimeline
-                            logs={logsData?.data || []}
-                            isLoading={isLoading}
-                            isFetching={isFetching}
+                            logs={effectiveLogs}
+                            isLoading={isLoading && !isTutorialRunning}
+                            isFetching={isFetching && !isTutorialRunning}
                             page={page}
                             setPage={setPage}
                             meta={logsData?.meta}
@@ -377,6 +406,15 @@ export function AuditLogs() {
                 log={selectedLog}
                 open={selectedLog !== null}
                 onOpenChange={(open) => !open && setSelectedLog(null)}
+                activeTab={inspectorTab}
+                onTabChange={setInspectorTab}
+            />
+
+            <AuditTutorialController
+                setViewMode={setViewMode}
+                setSelectedLog={setSelectedLog}
+                setInspectorTab={setInspectorTab}
+                sampleLog={sampleLog}
             />
         </div>
     );

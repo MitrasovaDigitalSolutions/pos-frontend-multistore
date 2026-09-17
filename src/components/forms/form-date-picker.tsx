@@ -9,6 +9,8 @@ interface FormDatePickerProps<T extends FieldValues> {
     placeholder?: string;
     disabled?: boolean;
     className?: string;
+    buttonClassName?: string;
+    wrapperClassName?: string;
     clearable?: boolean;
     size?: "sm" | "md" | "lg";
     captionLayout?: "label" | "dropdown" | "dropdown-months" | "dropdown-years";
@@ -23,6 +25,8 @@ export function FormDatePicker<T extends FieldValues>({
     placeholder,
     disabled = false,
     className,
+    buttonClassName,
+    wrapperClassName,
     clearable = true,
     size = "md",
     captionLayout,
@@ -65,6 +69,8 @@ export function FormDatePicker<T extends FieldValues>({
                     placeholder={placeholder}
                     disabled={disabled}
                     className={className}
+                    buttonClassName={buttonClassName}
+                    wrapperClassName={wrapperClassName}
                     error={error?.message}
                     label={label}
                     clearable={clearable}

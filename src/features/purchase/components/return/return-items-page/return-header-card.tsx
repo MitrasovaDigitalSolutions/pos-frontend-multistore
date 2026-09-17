@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { FormProvider, type UseFormReturn } from "react-hook-form";
 import { FormSelect } from "@/components/forms/form-select";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
@@ -35,9 +36,25 @@ export function ReturnHeaderCard({
 
     const { register, formState: { errors } } = form;
 
+    // Listen for custom tutorial simulation events
+    useEffect(() => {
+        const handleSetField = (e: Event) => {
+            const customEvent = e as CustomEvent<{ field: keyof PurchaseReturnHeaderInput; value: unknown }>;
+            if (customEvent.detail) {
+                form.setValue(customEvent.detail.field, customEvent.detail.value as never, { shouldValidate: true });
+            }
+        };
+
+        window.addEventListener("purchase-tutorial-set-return-field", handleSetField);
+
+        return () => {
+            window.removeEventListener("purchase-tutorial-set-return-field", handleSetField);
+        };
+    }, [form]);
+
     return (
         <FormProvider {...form}>
-            <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
+            <div id="ret-header-card" className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
                 <div className="flex items-center gap-2.5 pb-3 border-b border-slate-50">
                     <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg border border-emerald-100/30">
                         <IconClipboardPlus size={18} />
@@ -50,7 +67,7 @@ export function ReturnHeaderCard({
 
                 <div className="grid grid-cols-1 gap-4">
                     {/* Reference Receiving Invoice */}
-                    <div className="space-y-1.5">
+                    <div id="ret-receiving-field" className="space-y-1.5">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             Referensi Faktur Penerimaan *
                         </label>
@@ -63,7 +80,7 @@ export function ReturnHeaderCard({
                     </div>
 
                     {/* Supplier Selector */}
-                    <div className="space-y-1.5">
+                    <div id="ret-supplier-field" className="space-y-1.5">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                             Supplier *
                         </label>
@@ -77,7 +94,7 @@ export function ReturnHeaderCard({
                     </div>
 
                     {/* Tanggal Retur */}
-                    <div className="space-y-1.5">
+                    <div id="ret-date-field" className="space-y-1.5">
                         <FormDatePicker<PurchaseReturnHeaderInput>
                             name="tanggal_retur"
                             label="Tanggal Retur *"
@@ -88,11 +105,12 @@ export function ReturnHeaderCard({
                 </div>
 
                 {/* Catatan */}
-                <div className="space-y-1.5">
+                <div id="ret-notes-field" className="space-y-1.5">
                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                         Catatan / Keterangan Retur
                     </label>
                     <Input
+                        id="ret-notes-input"
                         type="text"
                         placeholder="Misal: Barang rusak saat diterima, pecah kemasan, atau salah spesifikasi..."
                         className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"

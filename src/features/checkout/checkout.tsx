@@ -27,6 +27,8 @@ import type { CashDrawerSession } from "@/features/checkout/types";
 import { db } from "@/lib/db";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { Show } from "@/components/ui/show";
+import { CheckoutTutorialController } from "@/features/tutorial/components/checkout-tutorial-controller";
+import { useTutorialStore } from "@/stores/tutorial-store";
 
 export function Checkout() {
     const isOnline = useNetworkStatus();
@@ -42,6 +44,7 @@ export function Checkout() {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [isOfflineTransactionsOpen, setIsOfflineTransactionsOpen] = useState(false);
     const [isPastTransactionsOpen, setIsPastTransactionsOpen] = useState(false);
+    const [isPayDebtOpen, setIsPayDebtOpen] = useState(false);
     const [activeMobileTab, setActiveMobileTab] = useState<"cart" | "totals">("cart");
 
     const [localDrawerSession, setLocalDrawerSession] = useState<CashDrawerSession | null>(null);
@@ -59,6 +62,9 @@ export function Checkout() {
     const activeDrawerSession = isOnline ? currentDrawerData?.data : localDrawerSession;
 
     const validateCanPay = useCallback(() => {
+        if (useTutorialStore.getState().isRunning) {
+            return true;
+        }
         if (!activeDrawerSession || !session?.cashDrawerSessionId) {
             toast.warning("Silakan buka shift laci kasir terlebih dahulu untuk melakukan transaksi.");
             setIsBukaShiftOpen(true);
@@ -189,6 +195,7 @@ export function Checkout() {
                 }}
                 onLogout={handleLogout}
                 onDashboardClick={() => state.router.push("/admin")}
+                onTutorialClick={() => useTutorialStore.getState().setMenuOpen(true)}
                 isOnline={syncEngine.isOnline}
                 pendingCount={syncEngine.pendingCount}
                 isSyncing={syncEngine.isSyncing}
@@ -280,13 +287,15 @@ export function Checkout() {
                         namaTransaksi={state.namaTransaksi}
                         onNamaTransaksiChange={state.setNamaTransaksi}
                         validateCanPay={validateCanPay}
+                        isPayDebtOpen={isPayDebtOpen}
+                        onPayDebtOpenChange={setIsPayDebtOpen}
                     />
                 </div>
             </div>
 
             {/* Shortcuts Bar (Flex child footer - never overlaps content) */}
-            <div className="hidden md:flex bg-slate-900 border-t border-slate-800 text-slate-400 items-center px-6 text-[10px] justify-between font-semibold select-none shrink-0 h-8 z-10">
-                <div className="flex gap-6 items-center">
+            <div id="checkout-shortcuts-bar" className="flex bg-slate-900 border-t border-slate-800 text-slate-400 items-center px-3 sm:px-6 text-[10px] justify-between font-semibold select-none shrink-0 h-8 z-10">
+                <div className="hidden md:flex gap-6 items-center">
                     <div className="flex gap-1.5 items-center">
                         <kbd className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold shadow border border-slate-700">F1</kbd> Bayar
                     </div>
@@ -302,6 +311,11 @@ export function Checkout() {
                     <div className="flex gap-1.5 items-center">
                         <kbd className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold shadow border border-slate-700">Esc</kbd> Tutup
                     </div>
+                </div>
+
+                <div className="flex md:hidden items-center gap-2 text-[10px] text-slate-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span>Terminal Siap Transaksi</span>
                 </div>
 
                 <button
@@ -331,6 +345,8 @@ export function Checkout() {
                 title="Batal Transaksi"
                 description="Apakah Anda yakin ingin membatalkan seluruh transaksi ini? Keranjang belanja akan dikosongkan."
                 confirmText="Ya, Batalkan"
+                confirmBtnId="btn-confirm-void"
+                contentId="void-confirm-dialog"
                 cancelText="Kembali"
                 variant="danger"
                 onConfirm={state.handleConfirmVoid}
@@ -458,6 +474,34 @@ export function Checkout() {
                     onOpenChange={state.setIsSettingsOpen}
                 />
             </Show.When>
+
+            {/* Interactive Demo Tutorial System */}
+            <CheckoutTutorialController
+                openDialog={(dialog) => {
+                    if (dialog === "pay") state.setIsPayModalOpen(true);
+                    if (dialog === "hold_list") state.setIsHoldListOpen(true);
+                    if (dialog === "cash_drawer") {
+                        setIsBukaShiftOpen(true);
+                    }
+                    if (dialog === "reprint") setIsPastTransactionsOpen(true);
+                    if (dialog === "offline") setIsOfflineTransactionsOpen(true);
+                    if (dialog === "pay_debt") setIsPayDebtOpen(true);
+                    if (dialog === "void_confirm") state.setIsVoidConfirmOpen(true);
+                }}
+                closeDialog={(dialog) => {
+                    if (dialog === "pay") state.setIsPayModalOpen(false);
+                    if (dialog === "hold_list") state.setIsHoldListOpen(false);
+                    if (dialog === "cash_drawer") {
+                        setIsInfoSesiOpen(false);
+                        setIsBukaShiftOpen(false);
+                    }
+                    if (dialog === "reprint") setIsPastTransactionsOpen(false);
+                    if (dialog === "offline") setIsOfflineTransactionsOpen(false);
+                    if (dialog === "pay_debt") setIsPayDebtOpen(false);
+                    if (dialog === "void_confirm") state.setIsVoidConfirmOpen(false);
+                }}
+                setActiveMobileTab={setActiveMobileTab}
+            />
 
             {/* Hidden Print Receipt container */}
             <PrintReceiptLayout

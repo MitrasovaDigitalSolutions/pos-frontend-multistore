@@ -24,6 +24,7 @@ import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { useSession } from "next-auth/react";
 import { formatToReadableDateTime } from "@/lib/date-utils";
 import { useCheckoutStore } from "@/stores/checkout-store";
+import { useTutorialStore } from "@/stores/tutorial-store";
 
 // ─── Unified Record Type ──────────────────────────────────────────────────────
 
@@ -62,8 +63,24 @@ export function OfflineTransactionsDialog({ open, onOpenChange }: OfflineTransac
                 db.offlineDebtPayments.orderBy("timestamp").reverse().toArray(),
             ]);
 
+            const isTutorialRunning = useTutorialStore.getState().isRunning;
+            let cleanTxs = txs;
+            if (!isTutorialRunning) {
+                cleanTxs = txs.filter((t) => {
+                    const isMock =
+                        t.uid === "offline-tutorial-mock" ||
+                        t.uid.startsWith("offline-tutorial-") ||
+                        t.uid.startsWith("mock-");
+                    if (isMock) {
+                        db.offlineTransactions.delete(t.uid).catch(() => {});
+                        return false;
+                    }
+                    return true;
+                });
+            }
+
             const combined: OfflineRecord[] = [
-                ...txs.map((t) => ({ ...t, recordType: "transaction" as const })),
+                ...cleanTxs.map((t) => ({ ...t, recordType: "transaction" as const })),
                 ...debts.map((d) => ({ ...d, recordType: "debt_payment" as const })),
             ];
 
@@ -372,7 +389,7 @@ export function OfflineTransactionsDialog({ open, onOpenChange }: OfflineTransac
                 </div>
 
                 {/* Summary Row & Header Controls */}
-                <div className="flex flex-wrap items-center justify-between gap-3 shrink-0">
+                <div id="offline-pending-summary" className="flex flex-wrap items-center justify-between gap-3 shrink-0">
                     <div className="flex gap-4 text-xs font-semibold text-slate-500">
                         <div>
                             Belum dikirim: <span className="text-amber-600 font-extrabold">{pendingCount}</span>
@@ -424,6 +441,7 @@ export function OfflineTransactionsDialog({ open, onOpenChange }: OfflineTransac
                             Refresh
                         </Button>
                         <Button
+                            id="btn-sync-selected"
                             onClick={handleSyncSelected}
                             disabled={!isOnline || isSyncing || selectedUids.size === 0}
                             className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer border-none disabled:opacity-50"
@@ -435,16 +453,18 @@ export function OfflineTransactionsDialog({ open, onOpenChange }: OfflineTransac
                 </div>
 
                 {/* Table Container */}
-                <OfflineTransactionsTable
-                    records={records}
-                    isLoading={isLoading}
-                    selectedUids={selectedUids}
-                    syncableRecords={syncableRecords}
-                    isAllSelected={isAllSelected}
-                    onSelectAllToggle={handleSelectAllToggle}
-                    onRowSelectToggle={handleRowSelectToggle}
-                    onDeleteClick={setDeleteTarget}
-                />
+                <div id="offline-transactions-table-wrap" className="flex-1 flex flex-col min-h-0">
+                    <OfflineTransactionsTable
+                        records={records}
+                        isLoading={isLoading}
+                        selectedUids={selectedUids}
+                        syncableRecords={syncableRecords}
+                        isAllSelected={isAllSelected}
+                        onSelectAllToggle={handleSelectAllToggle}
+                        onRowSelectToggle={handleRowSelectToggle}
+                        onDeleteClick={setDeleteTarget}
+                    />
+                </div>
 
                 {/* Footer notes */}
                 <div className="text-[11px] text-slate-400 bg-slate-50 px-3.5 py-2.5 rounded-xl border border-slate-100 shrink-0">

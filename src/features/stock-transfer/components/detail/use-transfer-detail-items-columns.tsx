@@ -103,6 +103,7 @@ export function useTransferDetailItemsColumns({
 
             return (
               <FormNumberInput<ReceiveFormValues>
+                id={targetIdx === 0 ? "transfer-receive-qty-0" : undefined}
                 inputRef={(el) => registerInputRef?.(row.original.uid, el)}
                 name={`items.${targetIdx}.kuantitas_diterima`}
                 min={0}
@@ -210,6 +211,7 @@ export function useTransferDetailItemsColumns({
 
               return (
                 <FormNumberInput<ReceiveFormValues>
+                  id={row.index === 0 ? "transfer-validation-qty-0" : undefined}
                   inputRef={(el) => registerValidationInputRef?.(row.original.uid, el)}
                   name={`items.${targetIdx}.kuantitas_koreksi`}
                   min={0}
@@ -237,6 +239,7 @@ export function useTransferDetailItemsColumns({
 
             return (
               <FormNumberInput<ReceiveFormValues>
+                id={row.index === 0 ? "transfer-validation-qty-0" : undefined}
                 inputRef={(el) => registerValidationInputRef?.(row.original.uid, el)}
                 name={`items.${targetIdx}.kuantitas_return`}
                 min={0}

@@ -162,7 +162,7 @@ export function SessionSummaryTab({ session }: SessionSummaryTabProps) {
         <div className="space-y-3.5 sm:space-y-5">
             {/* Session Status Banner */}
             {session.status === "open" ? (
-                <div className="bg-gradient-to-r from-emerald-50/80 via-emerald-50/50 to-white dark:from-emerald-950/20 dark:to-transparent border border-emerald-100 dark:border-emerald-900/30 rounded-2xl p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3.5 shadow-xs">
+                <div id="session-detail-status-banner" className="bg-gradient-to-r from-emerald-50/80 via-emerald-50/50 to-white dark:from-emerald-950/20 dark:to-transparent border border-emerald-100 dark:border-emerald-900/30 rounded-2xl p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3.5 shadow-xs">
                     <div className="relative flex shrink-0 h-2.5 w-2.5 sm:h-3 sm:w-3">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-emerald-500"></span>
@@ -175,7 +175,7 @@ export function SessionSummaryTab({ session }: SessionSummaryTabProps) {
                     </div>
                 </div>
             ) : (
-                <div className="bg-slate-50 border border-slate-200/80 dark:bg-slate-900/20 dark:border-slate-800 rounded-2xl p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3.5 shadow-xs">
+                <div id="session-detail-status-banner" className="bg-slate-50 border border-slate-200/80 dark:bg-slate-900/20 dark:border-slate-800 rounded-2xl p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3.5 shadow-xs">
                     <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-slate-400 dark:bg-slate-600 shrink-0" />
                     <div className="text-[11px] sm:text-xs">
                         <span className="font-extrabold text-slate-800 dark:text-slate-200 block">Sesi Shift Telah Ditutup</span>
@@ -187,7 +187,7 @@ export function SessionSummaryTab({ session }: SessionSummaryTabProps) {
             )}
 
             {/* Metadata Cards Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+            <div id="session-detail-metadata-grid" className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
                 <div className="bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850 shadow-xs rounded-xl p-2.5 sm:p-3.5 space-y-1 sm:space-y-1.5 hover:border-slate-200 transition-all">
                     <div className="flex items-center gap-1 text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">
                         <IconClock size={11} />
@@ -236,7 +236,7 @@ export function SessionSummaryTab({ session }: SessionSummaryTabProps) {
             </div>
 
             {/* Reconciliation Dashboard Card */}
-            <div className="bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-3 sm:space-y-4">
+            <div id="session-detail-reconciliation" className="bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-3 sm:space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 pb-2 border-b border-slate-100 dark:border-slate-850">
                     <div className="flex items-center gap-1.5">
                         <IconInfoCircle size={15} className="text-slate-400 dark:text-slate-500 shrink-0" />
@@ -367,7 +367,7 @@ export function SessionSummaryTab({ session }: SessionSummaryTabProps) {
             </div>
 
             {/* Inflows vs Outflows Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+            <div id="session-detail-inflow-outflow" className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 {/* Cash Inflows Box */}
                 <div className="border border-slate-100 dark:border-slate-850 rounded-2xl shadow-xs bg-white dark:bg-slate-950 overflow-hidden">
                     <div className="bg-emerald-50/20 px-3.5 sm:px-4 py-3 border-b border-slate-100 dark:border-slate-850 flex items-center justify-between">
@@ -453,8 +453,8 @@ export function SessionSummaryTab({ session }: SessionSummaryTabProps) {
             </div>
 
             {/* Shift Business Sales Card */}
-            <div className="bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-3 sm:space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 pb-2 border-b border-slate-100 dark:border-slate-850">
+            <div id="session-detail-sales-summary" className="bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-3 sm:space-y-4">
+                <div id="session-detail-sales-summary-header" className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 pb-2 border-b border-slate-100 dark:border-slate-850">
                     <span className="text-[11px] sm:text-xs font-extrabold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
                         <IconReceipt size={15} className="text-slate-400 shrink-0" /> Ikhtisar Penjualan Shift
                     </span>
@@ -599,7 +599,7 @@ export function SessionSummaryTab({ session }: SessionSummaryTabProps) {
             </div>
 
             {/* Session Notes */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div id="session-detail-notes-section" className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {/* Note Buka */}
                 <div className="border border-slate-100 dark:border-slate-850 rounded-xl p-3 sm:p-4 bg-slate-50/20 dark:bg-slate-900/10 relative">
                     <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">

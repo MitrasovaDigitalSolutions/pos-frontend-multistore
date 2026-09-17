@@ -15,7 +15,7 @@ interface PayMethodToggleProps {
 /** Cash / Card toggle buttons. */
 export function PayMethodToggle({ payMethod, isPending, onChange }: PayMethodToggleProps) {
     return (
-        <div className="space-y-1.5">
+        <div id="pay-debt-method-toggle" className="space-y-1.5">
             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
                 Metode Pembayaran
             </label>

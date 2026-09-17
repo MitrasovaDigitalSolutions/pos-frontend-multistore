@@ -10,6 +10,7 @@ import { BalanceSheetDetail } from "@/features/accounting/components/balance-she
 import { BalanceSheetSkeleton } from "@/features/accounting/components/balance-sheet/balance-sheet-skeleton";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
 import { todayStr } from "@/lib/date-utils";
+import { JournalTutorialController } from "@/features/accounting/journal-tutorial/components/journal-tutorial-controller";
 
 export function ManualJournalEditorPage() {
     const { data: session } = useSession();
@@ -63,15 +64,18 @@ export function ManualJournalEditorPage() {
     }
 
     return (
-        <BalanceSheetEditor
-            asOfDate={todayStr()}
-            flatAccounts={flatAccounts || []}
-            journal={journal}
-            action={action}
-            journalUid={journalUid}
-            refetch={() => {
-                void refetchJournal();
-            }}
-        />
+        <>
+            <JournalTutorialController />
+            <BalanceSheetEditor
+                asOfDate={todayStr()}
+                flatAccounts={flatAccounts || []}
+                journal={journal}
+                action={action}
+                journalUid={journalUid}
+                refetch={() => {
+                    void refetchJournal();
+                }}
+            />
+        </>
     );
 }

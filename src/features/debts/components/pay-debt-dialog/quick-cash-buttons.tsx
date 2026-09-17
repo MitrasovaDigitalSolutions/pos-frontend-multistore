@@ -25,7 +25,7 @@ export function QuickCashButtons({
     onSelect,
 }: QuickCashButtonsProps) {
     return (
-        <div className="space-y-1.5">
+        <div id="pay-debt-quick-cash" className="space-y-1.5">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block select-none">
                 Pilihan Cepat
             </span>

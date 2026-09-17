@@ -27,6 +27,8 @@ import {
   type ConsignmentPaymentFormValues,
 } from "../../schemas/consignment-schema";
 import type { ConsignmentReceiving } from "../../types";
+import { MOCK_PAYMENT_RETURNABLE_ITEMS } from "../../tutorial/constants/consignment-tutorial-constants";
+import { useConsignmentTutorialStore } from "@/stores/consignment-tutorial-store";
 
 import { todayStr } from "@/lib/date-utils";
 
@@ -43,11 +45,23 @@ export function ConsignmentPaymentDialog({
   receiving,
   onSuccess,
 }: ConsignmentPaymentDialogProps) {
+  const isTutorialRunning = useConsignmentTutorialStore((state) => state.isRunning);
   const { data: cashAccounts = [], isLoading: isCashLoading } = useCashAccounts();
-  const { data: returnableItems = [] } = useConsignmentReturnableItems(
+  const isMock = isTutorialRunning && Boolean(receiving?.uid?.startsWith("mock-"));
+
+  // If dialog is open with a mock receiving but tutorial is not running, close immediately
+  useEffect(() => {
+    if (open && !isTutorialRunning && receiving?.uid?.startsWith("mock-")) {
+      onOpenChange(false);
+    }
+  }, [open, isTutorialRunning, receiving, onOpenChange]);
+
+  const { data: realReturnableItems = [] } = useConsignmentReturnableItems(
     receiving?.uid || "",
-    open && !!receiving
+    open && !!receiving && !isMock
   );
+
+  const returnableItems = isMock ? MOCK_PAYMENT_RETURNABLE_ITEMS : realReturnableItems;
 
   const paymentMutation = useCreateConsignmentPaymentMutation();
   const sisaHutang = Number(receiving?.sisa_hutang || 0);
@@ -74,17 +88,54 @@ export function ConsignmentPaymentDialog({
     }
   }, [open, receiving, reset]);
 
-  const cashAccountOptions = (Array.isArray(cashAccounts) ? cashAccounts : []).map(
+  // Tutorial field simulator event listener
+  useEffect(() => {
+    const handleSetField = (e: Event) => {
+      const customEvent = e as CustomEvent<{ field: keyof ConsignmentPaymentFormValues; value: unknown }>;
+      if (customEvent.detail) {
+        form.setValue(customEvent.detail.field, customEvent.detail.value as never, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      }
+    };
+
+    window.addEventListener("consignment-payment-tutorial-set-field", handleSetField);
+    return () => {
+      window.removeEventListener("consignment-payment-tutorial-set-field", handleSetField);
+    };
+  }, [form]);
+
+  const rawCashOptions = (Array.isArray(cashAccounts) ? cashAccounts : []).map(
     (acc: { uid: string; nama: string; saldo?: number }) => ({
       value: acc.uid,
       label: `${acc.nama} (${formatRupiah(acc.saldo || 0)})`,
     })
   );
 
+  // Guarantee at least one mock option during simulation demo if cash accounts are empty
+  const cashAccountOptions =
+    rawCashOptions.length > 0
+      ? rawCashOptions
+      : isTutorialRunning
+      ? [{ value: "mock-cash-main", label: "Kas Utama Toko (Rp 15.000.000)" }]
+      : [];
+
   const totalSisaTitipan = returnableItems.reduce((acc, item) => acc + Number(item.sisa || 0), 0);
 
   const handleSubmit = async (values: ConsignmentPaymentFormValues) => {
     if (!receiving) return;
+
+    // Simulation safe-path: Do not trigger actual backend API if using mock data
+    if (isMock) {
+      toast.success(
+        `[Demo Simulasi] Pelunasan untuk ${receiving.nomor_konsinyasi} berhasil disubmit. Sisa barang titipan otomatis dikembalikan.`
+      );
+      onOpenChange(false);
+      onSuccess?.();
+      return;
+    }
+
     try {
       await paymentMutation.mutateAsync({
         uid: receiving.uid,
@@ -127,7 +178,7 @@ export function ConsignmentPaymentDialog({
           </p>
 
           {/* Top Grid Info Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div id="cons-dialog-summary-cards" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Sisa Hutang Overview */}
             <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex items-center justify-between">
               <div>
@@ -160,7 +211,7 @@ export function ConsignmentPaymentDialog({
           {/* 2-Column Form Fields Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50/40 p-4 rounded-xl border border-slate-100">
             {/* Left Column */}
-            <div className="space-y-3.5">
+            <div id="cons-dialog-cash-account" className="space-y-3.5">
               {/* Cash Account Selection */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
@@ -181,7 +232,7 @@ export function ConsignmentPaymentDialog({
             </div>
 
             {/* Right Column */}
-            <div className="space-y-3.5">
+            <div id="cons-dialog-amount-notes" className="space-y-3.5">
               {/* Jumlah Bayar */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
@@ -196,7 +247,7 @@ export function ConsignmentPaymentDialog({
               </div>
 
               {/* Catatan */}
-              <div>
+              <div id="cons-dialog-notes-input">
                 <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
                   Catatan Pembayaran
                 </label>
@@ -221,6 +272,7 @@ export function ConsignmentPaymentDialog({
             </Button>
 
             <Button
+              id="cons-dialog-submit-btn"
               type="submit"
               disabled={paymentMutation.isPending}
               className="h-9 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-1.5 cursor-pointer shadow-2xs"

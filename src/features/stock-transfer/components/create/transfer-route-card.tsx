@@ -24,7 +24,7 @@ export function TransferRouteCard({
   setCatatan,
 }: TransferRouteCardProps) {
   return (
-    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs space-y-4">
+    <div id="transfer-route-box" className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs space-y-4">
       <div className="flex items-center justify-between border-b border-slate-50 pb-2.5">
         <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
           <div className="p-1 rounded-md bg-emerald-50 text-emerald-600">
@@ -85,6 +85,7 @@ export function TransferRouteCard({
           <span className="text-[10px] text-slate-400">{catatan.length}/300</span>
         </div>
         <textarea
+          id="transfer-notes-input"
           value={catatan}
           onChange={(e) => setCatatan(e.target.value)}
           placeholder="Misal: Pengiriman restok mingguan untuk produk populer..."

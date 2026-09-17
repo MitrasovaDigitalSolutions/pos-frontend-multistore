@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { getPurchaseItemsStore, selectItemCount, selectTotal } from "@/stores/purchase-items-store";
+import { usePurchaseTutorialStore } from "@/stores/purchase-tutorial-store";
 import type { PurchaseItemLocal, PurchaseOrder } from "@/features/purchase/types";
 
 import { usePoHeaderForm } from "./use-po-header-form";
@@ -91,7 +92,9 @@ export function usePoFlow({ poId, order, onSaveSuccess }: UsePoFlowProps) {
                 }
             }
 
-            poStore.getState().clearAll();
+            if (!usePurchaseTutorialStore.getState().isRunning) {
+                poStore.getState().clearAll();
+            }
         }
     }, [isCurrentNew, summaryUid]);
 

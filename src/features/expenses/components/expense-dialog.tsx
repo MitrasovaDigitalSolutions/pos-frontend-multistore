@@ -14,6 +14,7 @@ import { IconCoin } from "@tabler/icons-react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 import { useCreateExpense, useExpenseCategories, useUpdateExpense } from "../api/expenses-api";
+import { useTutorialStore } from "@/stores/tutorial-store";
 import type { ExpenseInput } from "../schemas/expense-schema";
 import type { Expense } from "../types";
 
@@ -39,6 +40,12 @@ export function ExpenseDialog({
     const { data: cashAccounts = [], isLoading: isCashLoading } = useCashAccounts();
 
     const onSubmit = (data: ExpenseInput) => {
+        // Demo-safety: saat tutorial berjalan, jangan hit API sungguhan.
+        if (useTutorialStore.getState().isRunning) {
+            toast.info("Mode panduan aktif — penyimpanan pengeluaran tidak difinalkan.");
+            return;
+        }
+
         const formattedData = {
             ...data,
             tanggal: formatUTC(data.tanggal || todayStr()),
@@ -92,9 +99,12 @@ export function ExpenseDialog({
                 </>
             }
             className="sm:max-w-lg"
+            contentId="expense-dialog-content"
+            closeBtnId="expense-dialog-close"
         >
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div id="expense-dialog-body" className="space-y-4">
+                    <div id="expense-dialog-fields-a" className="grid grid-cols-2 gap-4">
                     {/* Kategori Pengeluaran */}
                     <FormSelect<ExpenseInput>
                         name="expense_category_uid"
@@ -114,43 +124,45 @@ export function ExpenseDialog({
                         isLoading={isCashLoading}
                         disabled={isPending}
                     />
-                </div>
+                    </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                    {/* Nominal Jumlah */}
-                    <FormNominalInput<ExpenseInput>
-                        name="amount"
-                        label="Nominal Jumlah *"
-                        placeholder="Masukkan nominal pengeluaran..."
+                    <div id="expense-dialog-fields-b" className="grid grid-cols-2 gap-4">
+                        {/* Nominal Jumlah */}
+                        <FormNominalInput<ExpenseInput>
+                            name="amount"
+                            label="Nominal Jumlah *"
+                            placeholder="Masukkan nominal pengeluaran..."
+                            disabled={isPending}
+                        />
+
+                        {/* Tanggal Transaksi */}
+                        <FormDatePicker<ExpenseInput>
+                            name="tanggal"
+                            label="Tanggal Transaksi *"
+                            placeholder="Pilih tanggal transaksi..."
+                            disabled={isPending}
+                        />
+                    </div>
+
+                    {/* Deskripsi Singkat */}
+                    <FormInput<ExpenseInput>
+                        name="nama"
+                        label="Nama / Keperluan Pengeluaran"
+                        placeholder="Contoh: Bayar Listrik Ruko Juni, Pembelian ATK..."
                         disabled={isPending}
                     />
 
-                    {/* Tanggal Transaksi */}
-                    <FormDatePicker<ExpenseInput>
-                        name="tanggal"
-                        label="Tanggal Transaksi *"
-                        placeholder="Pilih tanggal transaksi..."
+                    {/* Catatan Tambahan */}
+                    <FormTextarea<ExpenseInput>
+                        name="catatan"
+                        label="Catatan Tambahan"
+                        placeholder="Masukkan rincian tambahan jika diperlukan..."
                         disabled={isPending}
                     />
                 </div>
-
-                {/* Deskripsi Singkat */}
-                <FormInput<ExpenseInput>
-                    name="nama"
-                    label="Nama / Keperluan Pengeluaran"
-                    placeholder="Contoh: Bayar Listrik Ruko Juni, Pembelian ATK..."
-                    disabled={isPending}
-                />
-
-                {/* Catatan Tambahan */}
-                <FormTextarea<ExpenseInput>
-                    name="catatan"
-                    label="Catatan Tambahan"
-                    placeholder="Masukkan rincian tambahan jika diperlukan..."
-                    disabled={isPending}
-                />
 
                 <Button
+                    id="expense-dialog-submit"
                     type="submit"
                     className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4 border-none"
                     disabled={isPending}

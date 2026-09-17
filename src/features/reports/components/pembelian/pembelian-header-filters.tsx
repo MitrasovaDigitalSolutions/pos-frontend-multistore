@@ -56,7 +56,7 @@ export function PembelianHeaderFilters({
 
     return (
         <>
-            <Card className="bg-white border-slate-100 rounded-2xl shadow-sm p-4 sm:p-6">
+            <Card id="pembelian-header" className="bg-white border-slate-100 rounded-2xl shadow-sm p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100/60 mb-4">
                     <div>
                         <h3 className="text-sm font-bold text-slate-900">
@@ -69,6 +69,7 @@ export function PembelianHeaderFilters({
 
                     <div className="flex gap-2 shrink-0">
                         <Button
+                            id="pembelian-btn-refresh"
                             variant="outline"
                             onClick={onRefetch}
                             disabled={isLoading || isFetching}
@@ -79,6 +80,7 @@ export function PembelianHeaderFilters({
                         </Button>
 
                         <Button
+                            id="pembelian-btn-print"
                             onClick={() => setIsPrintDialogOpen(true)}
                             disabled={isLoading || !hasReportData}
                             className="h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex items-center justify-center gap-1.5 font-bold text-xs"
@@ -89,6 +91,7 @@ export function PembelianHeaderFilters({
                     </div>
                 </div>
 
+                <div id="pembelian-filter-form">
                 <FilterForm
                     methods={methods}
                     onSubmit={onSubmit}
@@ -144,6 +147,7 @@ export function PembelianHeaderFilters({
                         )}
                     />
                 </FilterForm>
+                </div>
             </Card>
 
             <PrintConfirmDialog<PembelianPrintFilterValues>

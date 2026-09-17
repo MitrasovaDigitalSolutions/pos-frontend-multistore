@@ -12,7 +12,7 @@ interface LabaRugiSummaryCardProps {
 
 export function LabaRugiSummaryCard({ reportData, isLoading }: LabaRugiSummaryCardProps) {
     return (
-        <Card className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+        <Card id="laba-rugi-summary-card" className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
             <div className="flex flex-col lg:flex-row lg:divide-x divide-slate-100">
                 {/* Left Section: Main KPI */}
                 {(() => {

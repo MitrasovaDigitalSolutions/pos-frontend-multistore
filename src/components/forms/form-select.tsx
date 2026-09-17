@@ -21,6 +21,7 @@ export interface AsyncQueryResult<TData = unknown> {
 }
 
 export interface FormSelectProps<T extends FieldValues, TData = unknown> {
+    id?: string;
     name: FieldPath<T>;
     label?: string;
     /** Static list of options */
@@ -68,6 +69,7 @@ const defaultAsyncHook = (): AsyncQueryResult => ({
 });
 
 export function FormSelect<T extends FieldValues, TData = unknown>({
+    id,
     name,
     label,
     options,
@@ -173,7 +175,7 @@ export function FormSelect<T extends FieldValues, TData = unknown>({
     const error = getNestedValue(errors, name);
 
     return (
-        <div className={cn("space-y-1.5", wrapperClassName)}>
+        <div id={id} className={cn("space-y-1.5", wrapperClassName)}>
             {label && (
                 <label
                     htmlFor={name}

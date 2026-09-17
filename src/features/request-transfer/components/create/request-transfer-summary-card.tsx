@@ -28,7 +28,7 @@ export function RequestTransferSummaryCard({
   const isItemsValid = totalJenis > 0 && totalQty > 0;
 
   return (
-    <div className="bg-white border border-slate-100 rounded-2xl shadow-2xs p-4 sm:p-5 space-y-4 lg:sticky lg:top-20">
+    <div id="req-summary-card" className="bg-white border border-slate-100 rounded-2xl shadow-2xs p-4 sm:p-5 space-y-4 lg:sticky lg:top-20">
       <h3 className="font-bold text-sm text-slate-900 border-b border-slate-50 pb-2.5">
         Ringkasan Request Transfer
       </h3>
@@ -105,9 +105,9 @@ export function RequestTransferSummaryCard({
         </p>
       </div>
 
-
       {/* Submit CTA Button */}
       <AppButton
+        id="req-submit-btn"
         onClick={onSubmit}
         disabled={isPending || !canSubmit}
         className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-10 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-2xs transition-all"

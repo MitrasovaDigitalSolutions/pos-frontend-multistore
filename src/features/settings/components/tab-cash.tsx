@@ -47,7 +47,10 @@ export function TabCash({ isSaving, cashAccountOptions = [] }: TabCashProps) {
                     <CardContent className="p-5 space-y-4">
                         <div className="space-y-4">
                             {/* Row 1: Kas Kasir */}
-                            <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border border-slate-100 dark:border-slate-800 rounded-2xl bg-slate-50/30 dark:bg-slate-900/30 gap-4">
+                            <div
+                                id="form-settings-cash-register"
+                                className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border border-slate-100 dark:border-slate-800 rounded-2xl bg-slate-50/30 dark:bg-slate-900/30 gap-4"
+                            >
                                 <div className="flex items-start gap-3 flex-1">
                                     <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 shrink-0 border border-amber-100/50 dark:border-amber-900/50 mt-0.5">
                                         <Coins size={16} />
@@ -89,7 +92,10 @@ export function TabCash({ isSaving, cashAccountOptions = [] }: TabCashProps) {
                             </div>
 
                             {/* Row 2: Kas Utama */}
-                            <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border border-slate-100 dark:border-slate-800 rounded-2xl bg-slate-50/30 dark:bg-slate-900/30 gap-4">
+                            <div
+                                id="form-settings-cash-main"
+                                className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border border-slate-100 dark:border-slate-800 rounded-2xl bg-slate-50/30 dark:bg-slate-900/30 gap-4"
+                            >
                                 <div className="flex items-start gap-3 flex-1">
                                     <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 shrink-0 border border-emerald-100/50 dark:border-emerald-900/50 mt-0.5">
                                         <Vault size={16} />
@@ -131,7 +137,10 @@ export function TabCash({ isSaving, cashAccountOptions = [] }: TabCashProps) {
                             </div>
 
                             {/* Row 3: Kas Bank */}
-                            <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border border-slate-100 dark:border-slate-800 rounded-2xl bg-slate-50/30 dark:bg-slate-900/30 gap-4">
+                            <div
+                                id="form-settings-cash-bank"
+                                className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border border-slate-100 dark:border-slate-800 rounded-2xl bg-slate-50/30 dark:bg-slate-900/30 gap-4"
+                            >
                                 <div className="flex items-start gap-3 flex-1">
                                     <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 shrink-0 border border-blue-100/50 dark:border-blue-900/50 mt-0.5">
                                         <Landmark size={16} />
@@ -173,7 +182,10 @@ export function TabCash({ isSaving, cashAccountOptions = [] }: TabCashProps) {
                             </div>
 
                             {/* Row 4: Cash In / Cash Out di Kasir Toggle */}
-                            <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border border-slate-100 dark:border-slate-800 rounded-2xl bg-slate-50/30 dark:bg-slate-900/30 gap-4">
+                            <div
+                                id="form-settings-cash-inout-toggle"
+                                className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border border-slate-100 dark:border-slate-800 rounded-2xl bg-slate-50/30 dark:bg-slate-900/30 gap-4"
+                            >
                                 <div className="flex items-start gap-3 flex-1">
                                     <div className="p-2 rounded-xl bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 shrink-0 border border-violet-100/50 dark:border-violet-900/50 mt-0.5">
                                         <ArrowRightLeft size={16} />

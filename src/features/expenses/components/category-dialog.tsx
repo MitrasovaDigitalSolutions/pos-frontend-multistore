@@ -11,6 +11,7 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { useCreateExpenseCategory, useUpdateExpenseCategory } from "../api/expenses-api";
 import { FormCoaPicker } from "@/features/accounting/components/shared";
+import { useTutorialStore } from "@/stores/tutorial-store";
 import type { ExpenseCategoryInput } from "../schemas/expense-schema";
 import type { ExpenseCategory } from "../types";
 
@@ -39,6 +40,12 @@ export function CategoryDialog({
     });
 
     const onSubmit = (data: ExpenseCategoryInput) => {
+        // Demo-safety: saat tutorial berjalan, jangan hit API sungguhan.
+        if (useTutorialStore.getState().isRunning) {
+            toast.info("Mode panduan aktif — penyimpanan kategori tidak difinalkan.");
+            return;
+        }
+
         const payload = {
             ...data,
             chart_of_account_uid: data.chart_of_account_uid || null,
@@ -90,59 +97,70 @@ export function CategoryDialog({
                 </>
             }
             className="max-w-md"
+            contentId="category-dialog-content"
+            closeBtnId="category-dialog-close"
         >
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4">
-                {/* Nama Kategori */}
-                <FormInput<ExpenseCategoryInput>
-                    name="nama"
-                    label="Nama Kategori *"
-                    placeholder="Gaji, Listrik & Air, Sewa Ruko..."
-                    disabled={isPending}
-                />
+                <div id="category-dialog-body" className="space-y-4">
+                    <div id="category-dialog-fields" className="space-y-4">
+                        {/* Nama Kategori */}
+                        <FormInput<ExpenseCategoryInput>
+                            name="nama"
+                            label="Nama Kategori *"
+                            placeholder="Gaji, Listrik & Air, Sewa Ruko..."
+                            disabled={isPending}
+                        />
 
-                {/* Chart of Account / Akun CoA */}
-                <FormCoaPicker
-                    name="chart_of_account_uid"
-                    label="Chart of Account (CoA)"
-                    placeholder="Pilih Chart of Account..."
-                    dialogTitle="Pilih Akun CoA Kategori Pengeluaran"
-                    size="md"
-                    disabled={isPending}
-                />
+                        {/* Chart of Account / Akun CoA */}
+                        <FormCoaPicker
+                            name="chart_of_account_uid"
+                            label="Chart of Account (CoA)"
+                            placeholder="Pilih Chart of Account..."
+                            dialogTitle="Pilih Akun CoA Kategori Pengeluaran"
+                            size="md"
+                            disabled={isPending}
+                        />
 
-                {/* Apakah Berulang / Recurring */}
-                <FormSelect<ExpenseCategoryInput>
-                    name="is_recurring"
-                    label="Pengeluaran Rutin / Berulang?"
-                    options={recurringOptions}
-                    placeholder="Pilih pengeluaran berulang..."
-                    disabled={isPending}
-                    onChange={(val) => {
-                        setValue("is_recurring", val === "true");
-                    }}
-                />
+                        {/* Apakah Berulang / Recurring */}
+                        <div id="category-dialog-recurring-toggle">
+                            <FormSelect<ExpenseCategoryInput>
+                                name="is_recurring"
+                                label="Pengeluaran Rutin / Berulang?"
+                                options={recurringOptions}
+                                placeholder="Pilih pengeluaran berulang..."
+                                disabled={isPending}
+                                onChange={(val) => {
+                                    setValue("is_recurring", val === "true");
+                                }}
+                            />
+                        </div>
 
-                {/* Hari Jatuh Tempo - Only shown if is_recurring is true */}
-                {isRecurring && (
-                    <FormNumberInput<ExpenseCategoryInput>
-                        name="hari_jatuh_tempo"
-                        label="Tanggal Jatuh Tempo Bulanan (1 - 31) *"
-                        placeholder="Contoh: 10 (Setiap tanggal 10)"
-                        disabled={isPending}
-                        min={1}
-                        max={31}
-                    />
-                )}
+                        {/* Hari Jatuh Tempo - Only shown if is_recurring is true */}
+                        {isRecurring && (
+                            <div id="category-dialog-sublabel">
+                                <FormNumberInput<ExpenseCategoryInput>
+                                    name="hari_jatuh_tempo"
+                                    label="Tanggal Jatuh Tempo Bulanan (1 - 31) *"
+                                    placeholder="Contoh: 10 (Setiap tanggal 10)"
+                                    disabled={isPending}
+                                    min={1}
+                                    max={31}
+                                />
+                            </div>
+                        )}
 
-                {/* Keterangan */}
-                <FormTextarea<ExpenseCategoryInput>
-                    name="keterangan"
-                    label="Keterangan / Deskripsi"
-                    placeholder="Tulis deskripsi singkat mengenai kategori pengeluaran ini..."
-                    disabled={isPending}
-                />
+                        {/* Keterangan */}
+                        <FormTextarea<ExpenseCategoryInput>
+                            name="keterangan"
+                            label="Keterangan / Deskripsi"
+                            placeholder="Tulis deskripsi singkat mengenai kategori pengeluaran ini..."
+                            disabled={isPending}
+                        />
+                    </div>
+                </div>
 
                 <Button
+                    id="category-dialog-submit"
                     type="submit"
                     className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4 border-none"
                     disabled={isPending}

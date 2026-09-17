@@ -5,7 +5,7 @@ import { OfflineReadinessBadge } from "@/features/checkout/components/offline-re
 import type { OfflineReadinessState } from "@/hooks/use-offline-readiness";
 import { cn, getImageUrl } from "@/lib/utils";
 import { useSettingsStore } from "@/stores/settings-store";
-import { IconCash, IconHome, IconLogout, IconScan, IconWifi, IconBuildingStore } from "@tabler/icons-react";
+import { IconCash, IconHome, IconLogout, IconScan, IconWifi, IconBuildingStore, IconHelp } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 import { useActiveStoreStore } from "@/stores/active-store-store";
 import { Show } from "@/components/ui/show";
@@ -19,6 +19,7 @@ interface CheckoutTopBarProps {
     onInfoSesiClick: () => void;
     onLogout: () => void;
     onDashboardClick: () => void;
+    onTutorialClick?: () => void;
     isOnline?: boolean;
     pendingCount?: number;
     isSyncing?: boolean;
@@ -36,6 +37,7 @@ export function CheckoutTopBar({
     onInfoSesiClick,
     onLogout,
     onDashboardClick,
+    onTutorialClick,
     isOnline = true,
     pendingCount = 0,
     isSyncing = false,
@@ -83,6 +85,7 @@ export function CheckoutTopBar({
 
             <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
                 <Button
+                    id="topbar-cash-drawer-btn"
                     variant="ghost"
                     onClick={onInfoSesiClick}
                     className={cn(
@@ -96,6 +99,19 @@ export function CheckoutTopBar({
                     <span className="hidden sm:inline">
                         {activeDrawerSession ? "Info Laci Kasir" : "Buka Shift Kasir"}
                     </span>
+                </Button>
+                <div className="w-px h-4 bg-slate-800" />
+
+                {/* Panduan Tutorial */}
+                <Button
+                    id="btn-tutorial-help"
+                    variant="ghost"
+                    onClick={onTutorialClick}
+                    className="text-[11px] font-bold text-teal-400 hover:text-teal-300 hover:bg-teal-950/20 h-7 px-2 sm:px-2.5 rounded-md flex items-center gap-1.5 cursor-pointer bg-transparent border-none transition-colors"
+                    title="Pusat Panduan & Tutorial Kasir"
+                >
+                    <IconHelp size={15} />
+                    <span className="hidden sm:inline">Panduan</span>
                 </Button>
                 <div className="w-px h-4 bg-slate-800" />
 
@@ -123,48 +139,55 @@ export function CheckoutTopBar({
                 </Button>
             </div>
 
-            <div className="hidden lg:flex items-center gap-3 text-xs font-semibold text-slate-400">
+            <div className="flex items-center gap-1.5 sm:gap-3 text-xs font-semibold text-slate-400">
                 {/* Offline Readiness Badge */}
-                <Show.When isTrue={Boolean(offlineReadiness)}>
-                    <OfflineReadinessBadge
-                        state={offlineReadiness!}
-                        onRefreshRequest={onCatalogSyncRequest}
-                        isSyncing={isCatalogSyncing}
-                        catalogProgress={catalogProgress}
-                    />
-                </Show.When>
+                <div id="topbar-offline-readiness" className="hidden sm:block">
+                    <Show.When isTrue={Boolean(offlineReadiness)}>
+                        <OfflineReadinessBadge
+                            state={offlineReadiness!}
+                            onRefreshRequest={onCatalogSyncRequest}
+                            isSyncing={isCatalogSyncing}
+                            catalogProgress={catalogProgress}
+                        />
+                    </Show.When>
+                </div>
 
-                <div className="w-px h-4 bg-slate-800" />
+                <div className="hidden sm:block w-px h-4 bg-slate-800" />
 
                 {/* Network / Sync Status */}
-                {!isOnline ? (
-                    <button
-                        onClick={onSyncClick}
-                        className="flex items-center gap-1.5 text-rose-500 hover:text-rose-400 px-2 py-1 rounded-lg transition-all cursor-pointer font-bold outline-none border-none bg-transparent"
-                    >
-                        <IconWifi size={16} className="opacity-60" />
-                        <span>Offline {pendingCount > 0 ? `(${pendingCount} pending)` : "(Ready)"}</span>
-                    </button>
-                ) : pendingCount > 0 ? (
-                    <button
-                        onClick={onSyncClick}
-                        disabled={isSyncing}
-                        className="flex items-center gap-1.5 text-amber-500 border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 px-2.5 py-1 rounded-lg transition-all cursor-pointer font-bold disabled:opacity-60 outline-none"
-                    >
-                        <IconWifi size={16} className={isSyncing ? "animate-spin" : ""} />
-                        <span>Sinkronisasi {pendingCount} Transaksi</span>
-                    </button>
-                ) : (
-                    <button
-                        onClick={onSyncClick}
-                        className="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 px-2 py-1 rounded-lg transition-all cursor-pointer font-bold outline-none border-none bg-transparent"
-                    >
-                        <IconWifi size={16} />
-                        <span>Online</span>
-                    </button>
-                )}
-                <div className="w-px h-4 bg-slate-800" />
-                <div>Terminal: POS-01</div>
+                <div id="topbar-network-status">
+                    {!isOnline ? (
+                        <button
+                            onClick={onSyncClick}
+                            className="flex items-center gap-1.5 text-rose-500 hover:text-rose-400 px-2 py-1 rounded-lg transition-all cursor-pointer font-bold outline-none border-none bg-transparent"
+                            title="Status Offline"
+                        >
+                            <IconWifi size={16} className="opacity-60" />
+                            <span className="hidden sm:inline">Offline {pendingCount > 0 ? `(${pendingCount} pending)` : "(Ready)"}</span>
+                        </button>
+                    ) : pendingCount > 0 ? (
+                        <button
+                            onClick={onSyncClick}
+                            disabled={isSyncing}
+                            className="flex items-center gap-1.5 text-amber-500 border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 px-2.5 py-1 rounded-lg transition-all cursor-pointer font-bold disabled:opacity-60 outline-none"
+                            title="Sinkronisasi Transaksi"
+                        >
+                            <IconWifi size={16} className={isSyncing ? "animate-spin" : ""} />
+                            <span className="hidden sm:inline">Sinkronisasi {pendingCount} Transaksi</span>
+                        </button>
+                    ) : (
+                        <button
+                            onClick={onSyncClick}
+                            className="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 px-2 py-1 rounded-lg transition-all cursor-pointer font-bold outline-none border-none bg-transparent"
+                            title="Status Online"
+                        >
+                            <IconWifi size={16} />
+                            <span className="hidden sm:inline">Online</span>
+                        </button>
+                    )}
+                </div>
+                <div className="hidden xl:block w-px h-4 bg-slate-800" />
+                <div className="hidden xl:block">Terminal: POS-01</div>
             </div>
         </div>
     );

@@ -27,6 +27,7 @@ import { TabCash } from "./tab-cash";
 import { TabPrinter } from "./tab-printer";
 import { FloatingSaveBar } from "./floating-save-bar";
 import { StoreSettingsInput, storeSettingsSchema } from "../schemas/settings-schema";
+import { SettingsTutorialController } from "../tutorial/components/settings-tutorial-controller";
 
 export function StoreProfile() {
     const queryClient = useQueryClient();
@@ -167,7 +168,8 @@ export function StoreProfile() {
         setQzError(null);
         try {
             const list = await PrinterService.findAllPrinters();
-            const options = list.map((p: PrinterDevice) => ({ value: p.name, label: p.name }));
+            const isFlutter = typeof window !== "undefined" && typeof window.FlutterBridge?.postMessage === "function";
+            const options = list.map((p: PrinterDevice) => ({ value: isFlutter ? p.id! : p.name, label: p.name }));
 
             // Ensure currently saved printer_id is in the options list
             const currentPrinter = methods.getValues("printer_id") || settings.printer_id;
@@ -379,6 +381,7 @@ export function StoreProfile() {
                                     return (
                                         <button
                                             key={tab.id}
+                                            id={`settings-tab-${tab.id}`}
                                             type="button"
                                             onClick={() => setActiveTab(tab.id)}
                                             className={cn(
@@ -481,6 +484,11 @@ export function StoreProfile() {
 
                         {/* Sticky Floating Action Bar */}
                         <FloatingSaveBar isSaving={isSaving} />
+
+                        <SettingsTutorialController
+                            resetForm={() => methods.reset()}
+                            setActiveTab={setActiveTab}
+                        />
                     </div>
                 </div>
             </form>

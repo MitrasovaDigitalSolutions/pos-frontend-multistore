@@ -19,19 +19,21 @@ import {
     IconHistory,
     IconPlus,
     IconLoader2,
+    IconReceiptRefund,
 } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { useAssetDetail, useDeleteAssetPenyusutan } from "../../api/assets-api";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { formatToReadableDate } from "@/lib/date-utils";
 import { AssetDetailDepreciationForm } from "./form/asset-detail-depreciation-form";
-import type { AssetPenyusutan } from "../../types";
+import type { Asset, AssetPenyusutan } from "../../types";
 
 interface AssetDetailSheetProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     assetUid: string | null;
     initialMode?: "history" | "form";
+    onSell?: (asset: Asset) => void;
 }
 
 export function AssetDetailSheet({
@@ -39,6 +41,7 @@ export function AssetDetailSheet({
     onOpenChange,
     assetUid,
     initialMode = "history",
+    onSell,
 }: AssetDetailSheetProps) {
     const { data: asset, isLoading, isFetching, refetch } = useAssetDetail(assetUid);
     const deletePenyusutan = useDeleteAssetPenyusutan();
@@ -180,6 +183,7 @@ export function AssetDetailSheet({
             <BaseDialog
                 open={open}
                 onOpenChange={onOpenChange}
+                closeBtnId="btn-close-detail"
                 title={
                     <div className="flex items-center gap-2.5">
                         <div className="p-2 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 rounded-xl border border-indigo-100 dark:border-indigo-900/40">
@@ -257,6 +261,19 @@ export function AssetDetailSheet({
                                     </span>
                                 </div>
                             </div>
+
+                            {asset.status !== "dijual" && asset.status !== "dihapus" && onSell && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => onSell(asset)}
+                                    className="h-8 px-3 text-xs font-bold text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-xl cursor-pointer flex items-center gap-1.5 self-start sm:self-auto shrink-0"
+                                >
+                                    <IconReceiptRefund className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                                    <span>JualAset</span>
+                                </Button>
+                            )}
                         </div>
 
                         {/* 2. Main 2-Column Responsive Layout (4 cols Left, 8 cols Right) */}
@@ -380,6 +397,89 @@ export function AssetDetailSheet({
                                     </div>
                                 </div>
 
+                                {/* Informasi Penjualan Aset (Jika Status Terjual) */}
+                                {asset.status === "dijual" && (
+                                    <div className="p-3 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-900/50 space-y-2.5 text-xs">
+                                        <div className="flex items-center justify-between pb-1.5 border-b border-indigo-100 dark:border-indigo-900/40">
+                                            <div className="flex items-center gap-1.5 font-bold text-indigo-900 dark:text-indigo-200 text-xs">
+                                                <IconReceiptRefund className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                                <span>Data Penjualan Aset</span>
+                                            </div>
+                                            <span className="px-1.5 py-0.5 rounded text-[10px] font-extrabold uppercase bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">
+                                                Telah Dijual
+                                            </span>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-2 text-[11px]">
+                                            <div className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-indigo-100/60 dark:border-indigo-900/30">
+                                                <span className="text-[10px] text-slate-400 block truncate">Harga Jual</span>
+                                                <span className="font-mono font-extrabold text-emerald-600 dark:text-emerald-400 text-xs block truncate">
+                                                    {formatRupiah(Number(asset.nominal_jual) || 0)}
+                                                </span>
+                                            </div>
+                                            <div className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-indigo-100/60 dark:border-indigo-900/30">
+                                                <span className="text-[10px] text-slate-400 block truncate">Nilai Buku Saat Jual</span>
+                                                <span className="font-mono font-bold text-slate-700 dark:text-slate-300 text-xs block truncate">
+                                                    {formatRupiah(Number(asset.nilai_buku_saat_jual) || 0)}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-1.5 text-[11px] pt-1">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className="text-slate-500">Tgl Penjualan:</span>
+                                                <span className="font-medium text-slate-800 dark:text-slate-200">
+                                                    {asset.tanggal_jual ? formatToReadableDate(asset.tanggal_jual) : "-"}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className="text-slate-500">Hasil Penjualan:</span>
+                                                {(() => {
+                                                    const selisih = Number(asset.selisih_jual) || 0;
+                                                    if (selisih > 0) {
+                                                        return (
+                                                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                                                Untung +{formatRupiah(selisih)}
+                                                            </span>
+                                                        );
+                                                    }
+                                                    if (selisih < 0) {
+                                                        return (
+                                                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300">
+                                                                Rugi -{formatRupiah(Math.abs(selisih))}
+                                                            </span>
+                                                        );
+                                                    }
+                                                    return (
+                                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                                            Impas (Rp 0)
+                                                        </span>
+                                                    );
+                                                })()}
+                                            </div>
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className="text-slate-500">Kas Masuk:</span>
+                                                <span className="font-semibold text-slate-700 dark:text-slate-300 truncate">
+                                                    {asset.jualCashAccount?.nama || asset.cashAccount?.nama || "-"}
+                                                </span>
+                                            </div>
+                                            {asset.jualOffsetCoa && (
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <span className="text-slate-500">Akun Offset:</span>
+                                                    <span className="font-semibold text-indigo-600 dark:text-indigo-400 text-right truncate">
+                                                        [{asset.jualOffsetCoa.kode}] {asset.jualOffsetCoa.nama}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {asset.catatan_jual && (
+                                                <div className="pt-1 text-[10px] text-slate-500 italic border-t border-indigo-100/60 dark:border-indigo-900/30">
+                                                    Catatan: &ldquo;{asset.catatan_jual}&rdquo;
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Catatan jika ada */}
                                 {asset.catatan && (
                                     <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/30 border border-slate-200/60 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-400 flex items-start gap-2">
@@ -427,7 +527,7 @@ export function AssetDetailSheet({
                                         </div>
 
                                         {/* Reusable DataTable for Depreciation Logs */}
-                                        <div className="overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-800">
+                                        <div id="aset-riwayat-table" className="overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-800">
                                             <DataTable
                                                 columns={columns}
                                                 data={logs}
@@ -438,6 +538,7 @@ export function AssetDetailSheet({
                                                 perPage={5}
                                                 emptyMessage="Belum ada riwayat transaksi penyusutan pada aset ini."
                                                 onDelete={handleVoidClick}
+                                                hideDelete={asset.status === "dijual"}
                                                 hideEdit={true}
                                                 hideView={true}
                                                 maxHeight="380px"

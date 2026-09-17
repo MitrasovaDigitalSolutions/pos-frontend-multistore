@@ -6,11 +6,13 @@ import { cn } from "@/lib/utils";
 
 export interface FormRadioChipsProps<T extends FieldValues>
     extends Omit<RadioChipsProps, "value" | "onChange"> {
+    id?: string;
     name: FieldPath<T>;
     onChange?: (value: string) => void;
 }
 
 export function FormRadioChips<T extends FieldValues>({
+    id,
     name,
     label,
     options,
@@ -46,7 +48,7 @@ export function FormRadioChips<T extends FieldValues>({
     const error = getNestedError(errors, name);
 
     return (
-        <div className={cn("space-y-1.5 w-full", wrapperClassName)}>
+        <div id={id} className={cn("space-y-1.5 w-full", wrapperClassName)}>
             <Controller
                 name={name}
                 control={control}

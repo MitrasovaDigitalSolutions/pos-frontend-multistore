@@ -134,13 +134,19 @@ export function PriceAlertDialog({
             className="sm:max-w-4xl flex flex-col max-h-[90vh] font-sans"
         >
             <FormProvider {...alertFormMethods}>
-                <div className="space-y-4 my-4">
-                    <p className="text-xs text-slate-500 leading-relaxed">
-                        Sistem mendeteksi adanya perubahan harga beli dari supplier dibandingkan dengan harga beli master/PO. Silakan tinjau perubahan berikut dan Anda dapat memperbarui harga jual atau margin produk secara langsung:
-                    </p>
+                <div id="price-alert-dialog-content" className="space-y-4 my-4">
+                    <div id="price-alert-banner" className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-xl space-y-1">
+                        <p className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                            <IconAlertTriangle size={15} className="text-amber-600" />
+                            Deteksi Selisih Harga Beli dari Distributor
+                        </p>
+                        <p className="text-[11px] text-amber-800/90 leading-relaxed">
+                            Sistem mendeteksi adanya perubahan harga beli dari supplier dibandingkan dengan harga beli master/PO. Silakan tinjau perubahan berikut dan Anda dapat memperbarui harga jual atau margin produk secara langsung:
+                        </p>
+                    </div>
 
                     <div className="border border-slate-100 rounded-xl overflow-x-auto overflow-y-auto max-h-[350px]">
-                        <table className="w-full text-left border-collapse text-xs">
+                        <table id="price-alert-table" className="w-full text-left border-collapse text-xs">
                             <thead>
                                 <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                     <th className="p-3">Nama Produk</th>
