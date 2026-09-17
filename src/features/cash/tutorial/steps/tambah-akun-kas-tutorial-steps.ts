@@ -1,0 +1,62 @@
+import type { CashTutorialStep } from "../types/cash-tutorial";
+
+export const TAMBAH_AKUN_KAS_TUTORIAL_STEPS: CashTutorialStep[] = [
+    {
+        id: "tak-step-1",
+        target: "#kas-btn-add",
+        fallbackTarget: "#kas-header",
+        title: "1. Buat Akun Kas Baru",
+        content: "Klik tombol ini untuk membuka formulir pendaftaran akun kas, rekening bank, atau laci kasir baru.",
+        placement: "bottom",
+        skipScroll: true,
+        // Pastikan dialog tertutup saat masuk step ini (termasuk mundur dari step 3).
+        closeDialog: "#kas-account-dialog-close",
+    },
+    {
+        id: "tak-step-2",
+        target: "#kas-account-dialog-body",
+        title: "2. Formulir Akun Kas",
+        content: "Dialog ini dipakai untuk membuat akun kas baru. Tentukan tipe, nama, nomor rekening, dan keterangannya.",
+        placement: "bottom",
+        skipScroll: true,
+        variant: "overlay_nav",
+        overlayNav: true,
+        // Buka dialog saat masuk step ini (maju dari step 1 maupun mundur dari step 3+).
+        simulateClick: "#kas-btn-add",
+    },
+    {
+        id: "tak-step-3",
+        target: "#kas-account-type-options",
+        fallbackTarget: "#kas-account-dialog-body",
+        title: "3. Pilih Tipe Akun",
+        content: "Pilih jenis akun: Kas (brankas/toko), Bank (rekening transfer/QRIS), atau Laci Kasir untuk sesi POS.",
+        placement: "bottom",
+        skipScroll: true,
+        simulateClick: "#kas-btn-add",
+    },
+    {
+        id: "tak-step-4",
+        target: "#kas-account-fields",
+        title: "4. Nama, Rekening & Keterangan",
+        content: "Isi nama akun, nomor rekening (untuk bank), dan keterangan singkat peruntukan akun kas ini.",
+        placement: "bottom",
+        skipScroll: true,
+        variant: "overlay_nav",
+        overlayNav: true,
+        simulateClick: "#kas-btn-add",
+    },
+    {
+        id: "tak-step-5",
+        target: "#kas-account-submit",
+        fallbackTarget: "#kas-account-dialog-body",
+        title: "5. Simpan Akun Baru (Demo)",
+        content: "Tombol ini menyimpan akun kas baru. Pada mode tutorial kita berhenti di sini — data tidak akan disimpan.",
+        placement: "top",
+        skipScroll: true,
+        variant: "overlay_nav",
+        overlayNav: true,
+        closeDialog: "#kas-account-dialog-close",
+        isLastStep: true,
+        nextLabel: "Selesai",
+    },
+];

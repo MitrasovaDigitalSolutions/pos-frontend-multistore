@@ -35,6 +35,12 @@ interface CashAccountCardProps {
     className?: string;
     isMapped?: boolean;
     mappingInfo?: AccountMappingInfo;
+    /** Kartu active pertama (belum dimapping): anchor spotlight umum, tombol In/Out & Ubah/Hapus. */
+    isFirstCard?: boolean;
+    /** Anchor untuk kartu editable (belum dimapping). */
+    isEditableCard?: boolean;
+    /** Anchor untuk kartu yang sudah dimapping (badge Transaksi terkunci). */
+    isMappedCard?: boolean;
 }
 
 export const getAccountTypeConfig = (
@@ -133,14 +139,26 @@ export function CashAccountCard({
     className,
     isMapped = false,
     mappingInfo,
+    isFirstCard = false,
+    isEditableCard = false,
+    isMappedCard = false,
 }: CashAccountCardProps) {
     const config = getAccountTypeConfig(account.tipe, account.nama, mappingInfo);
     const CardIcon = config.icon;
     const isInactive = account.is_active === false;
 
+    const cardId = isFirstCard
+        ? "kas-first-card"
+        : isEditableCard
+            ? "kas-card-editable"
+            : isMappedCard
+                ? "kas-mapped-card"
+                : undefined;
+
     return (
         <div
             onClick={onClick}
+            id={cardId}
             className={cn(
                 "rounded-xl border transition-all duration-200 cursor-pointer relative overflow-hidden flex flex-col justify-between p-3 gap-2.5 select-none min-h-[105px]",
                 isSelected
@@ -264,6 +282,7 @@ export function CashAccountCard({
                         <div className="flex items-center ml-0.5">
                             <button
                                 type="button"
+                                id={isEditableCard ? "kas-card-btn-edit" : undefined}
                                 title="Ubah Akun Kas"
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -275,6 +294,7 @@ export function CashAccountCard({
                             </button>
                             <button
                                 type="button"
+                                id={isEditableCard ? "kas-card-btn-delete" : undefined}
                                 title="Hapus Akun Kas"
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -308,6 +328,7 @@ export function CashAccountCard({
                         <Button
                             size="sm"
                             variant="outline"
+                            id={isFirstCard ? "kas-first-card-btn-in" : undefined}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onAction(account, "debit");
@@ -320,6 +341,7 @@ export function CashAccountCard({
                         <Button
                             size="sm"
                             variant="outline"
+                            id={isFirstCard ? "kas-first-card-btn-out" : undefined}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onAction(account, "credit");

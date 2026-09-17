@@ -9,7 +9,7 @@ import {
     IconLock,
 } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -17,8 +17,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Scrollable } from "@/components/ui/scrollable";
 import { hasPermission, hasRole } from "@/constants/roles";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import {
-    useCashAccounts,
+import { useCashAccounts,
     useDeleteCashAccount,
     type CashAccount,
 } from "../api/cash-api";
@@ -28,11 +27,18 @@ import { CashTransferDialog } from "./cash-transfer-dialog";
 import { CashAccountDialog } from "./cash-account-dialog";
 import { CashAccountCard } from "./cash-account-card";
 import { CashLedgerTable } from "./cash-ledger-table";
+import { CashTutorialController } from "../tutorial/components/cash-tutorial-controller";
+import { useCashTutorialStore } from "@/stores/cash-tutorial-store";
+import { MOCK_CASH_ACCOUNTS } from "../tutorial/constants/cash-tutorial-constants";
 
 export function CashAccountsDashboard() {
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
+
+    // Tutorial: fallback ke data mock agar flow edit/hapus & transfer bisa
+    // disimulasikan walau data toko kosong. Data asli tetap diutamakan.
+    const isTutorialRunning = useCashTutorialStore((state) => state.isRunning);
 
     const canManageCash =
         hasRole(userRoles, "admin") ||
@@ -40,7 +46,7 @@ export function CashAccountsDashboard() {
 
     // Queries: Cash accounts & Mapping settings
     const {
-        data: accounts = [],
+        data: fetchedAccounts = [],
         isLoading: accountsLoading,
         isFetching: accountsFetching,
     } = useCashAccounts();
@@ -51,6 +57,28 @@ export function CashAccountsDashboard() {
         getAccountMapping,
         mappedAccountsCount,
     } = useCashMapping();
+
+    const accounts = useMemo(() => {
+        if (!isTutorialRunning) return fetchedAccounts;
+        // Tutorial aktif: jika data kosong, gunakan data contoh. Jika semua akun
+        // terkunci transaksi (tidak ada tombol Ubah/Hapus), tambahkan 1 akun contoh
+        // yang belum dimapping agar flow "Kelola Akun Kas" tetap bisa disimulasikan.
+        if (fetchedAccounts.length === 0) {
+            return MOCK_CASH_ACCOUNTS;
+        }
+        const hasEditable = fetchedAccounts.some((acc) => !isAccountMapped(acc.uid));
+        if (!hasEditable) {
+            const mockEditable = MOCK_CASH_ACCOUNTS.find((acc) => !acc.uid.includes("bank")) || MOCK_CASH_ACCOUNTS[0];
+            return [...fetchedAccounts, mockEditable];
+        }
+        return fetchedAccounts;
+    }, [fetchedAccounts, isTutorialRunning, isAccountMapped]);
+
+    // Urutkan akun sekali untuk render kartu & penentuan anchor tutorial.
+    const sortedAccounts = useMemo(
+        () => [...accounts].sort((a, b) => a.nama.localeCompare(b.nama, "id")),
+        [accounts]
+    );
 
     const isSyncing = accountsFetching || isSettingsFetching;
 
@@ -110,6 +138,14 @@ export function CashAccountsDashboard() {
     const handleConfirmDelete = () => {
         if (!accountToDelete) return;
 
+        // Demo-safety: saat tutorial berjalan, jangan hapus akun.
+        if (useCashTutorialStore.getState().isRunning) {
+            toast.info("Mode Simulasi: akun kas tidak dihapus saat panduan berjalan.");
+            setIsDeleteDialogOpen(false);
+            setAccountToDelete(null);
+            return;
+        }
+
         if (isAccountMapped(accountToDelete.uid)) {
             toast.error(`Akun kas "${accountToDelete.nama}" telah dimapping untuk transaksi dan tidak dapat dihapus.`);
             setIsDeleteDialogOpen(false);
@@ -135,7 +171,7 @@ export function CashAccountsDashboard() {
     return (
         <div className="space-y-5 max-w-7xl mx-auto pb-8">
             {/* Header Block - Compact & Ergonomic */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3.5 bg-white border border-slate-100 rounded-2xl p-4 sm:p-5 shadow-sm">
+            <div id="kas-header" className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3.5 bg-white border border-slate-100 rounded-2xl p-4 sm:p-5 shadow-sm">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100/60 shadow-inner shrink-0">
                         <IconWallet size={20} />
@@ -154,6 +190,7 @@ export function CashAccountsDashboard() {
                     <div className="flex items-center gap-2 w-full sm:w-auto">
                         <Button
                             variant="outline"
+                            id="kas-btn-transfer"
                             onClick={() => setIsTransferOpen(true)}
                             className="w-full sm:w-auto border-blue-200 text-blue-700 bg-blue-50/40 hover:bg-blue-50 hover:border-blue-300 font-bold text-xs px-4 h-9 rounded-xl shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
                         >
@@ -165,7 +202,7 @@ export function CashAccountsDashboard() {
             </div>
 
             {/* Cash Accounts Selection Section - 1 Row Horizontal Scrollable */}
-            <div className="space-y-2">
+            <div id="kas-accounts-list" className="space-y-2">
                 <div className="flex justify-between items-center px-0.5">
                     <div className="flex items-center gap-2">
                         <h3 className="text-xs font-bold text-slate-600 uppercase tracking-wider">
@@ -237,6 +274,7 @@ export function CashAccountsDashboard() {
                             {canManageCash && (
                                 <button
                                     type="button"
+                                    id="kas-btn-add"
                                     onClick={handleOpenCreate}
                                     className="w-[130px] sm:w-[145px] shrink-0 rounded-xl border-2 border-dashed border-emerald-300/80 bg-emerald-50/40 hover:bg-emerald-50 hover:border-emerald-500 transition-all duration-200 cursor-pointer flex flex-col items-center justify-center p-3 gap-1.5 text-center group select-none min-h-[105px]"
                                 >
@@ -268,6 +306,7 @@ export function CashAccountsDashboard() {
                             {canManageCash && (
                                 <button
                                     type="button"
+                                    id="kas-btn-add"
                                     onClick={handleOpenCreate}
                                     className="w-[130px] sm:w-[145px] shrink-0 rounded-xl border-2 border-dashed border-emerald-300/80 bg-emerald-50/40 hover:bg-emerald-50 hover:border-emerald-500 transition-all duration-200 cursor-pointer flex flex-col items-center justify-center p-3 gap-1.5 text-center group select-none min-h-[105px]"
                                 >
@@ -283,12 +322,21 @@ export function CashAccountsDashboard() {
                             )}
 
                             {/* Daftar Kartu Akun Kas */}
-                            {[...accounts]
-                                .sort((a, b) => a.nama.localeCompare(b.nama, "id"))
-                                .map((account) => {
+                            {(() => {
+                                const firstEditableIndex = sortedAccounts.findIndex(
+                                    (acc) => !isAccountMapped(acc.uid)
+                                );
+                                const firstMappedIndex = sortedAccounts.findIndex((acc) =>
+                                    isAccountMapped(acc.uid)
+                                );
+                                return sortedAccounts.map((account, index) => {
                                     const isSelected = selectedAccountUid === account.uid;
                                     const isMapped = isAccountMapped(account.uid);
                                     const mappingInfo = getAccountMapping(account.uid);
+                                    // Kartu editable pertama (belum dimapping) = anchor spotlight
+                                    // umum, tombol In/Out & Ubah/Hapus. Kartu mapped pertama =
+                                    // anchor narasi proteksi akun.
+                                    const isFirstEditable = index === firstEditableIndex;
                                     return (
                                         <CashAccountCard
                                             key={account.uid}
@@ -301,10 +349,14 @@ export function CashAccountsDashboard() {
                                             onEdit={handleOpenEdit}
                                             onDelete={handleOpenDelete}
                                             canManage={canManageCash}
+                                            isFirstCard={isFirstEditable}
+                                            isEditableCard={isFirstEditable}
+                                            isMappedCard={index === firstMappedIndex}
                                             className="w-[270px] sm:w-[290px] shrink-0"
                                         />
                                     );
-                                })}
+                                });
+                            })()}
                         </div>
                     </Scrollable>
                 )}
@@ -330,6 +382,9 @@ export function CashAccountsDashboard() {
             <ConfirmDialog
                 open={isDeleteDialogOpen}
                 onOpenChange={setIsDeleteDialogOpen}
+                contentId="kas-delete-confirm-content"
+                confirmBtnId="kas-delete-confirm-btn"
+                cancelBtnId="kas-delete-confirm-cancel"
                 title="Hapus Akun Kas?"
                 description={
                     <div className="space-y-2 text-xs">
@@ -374,6 +429,9 @@ export function CashAccountsDashboard() {
                 onOpenChange={setIsTransferOpen}
                 accounts={accounts}
             />
+
+            {/* Tutorial Engine */}
+            <CashTutorialController />
         </div>
     );
 }

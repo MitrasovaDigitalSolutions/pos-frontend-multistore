@@ -16,6 +16,9 @@ import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { useExpenseCategories } from "./api/expenses-api";
 import { useCashAccounts } from "@/features/cash/api/cash-api";
 import { getDefaultDateRange, todayStr, formatToISO } from "@/lib/date-utils";
+import { ExpensesTutorialController } from "./tutorial/components/expenses-tutorial-controller";
+import { MOCK_EXPENSES, MOCK_EXPENSES_META } from "./tutorial/constants/expenses-tutorial-constants";
+import { useExpensesTutorialStore } from "@/stores/expenses-tutorial-store";
 
 interface ExpenseFilterValues {
     search: string;
@@ -86,6 +89,14 @@ export function Expenses() {
         ...appliedFilters,
     });
 
+    const isTutorialRunning = useExpensesTutorialStore((state) => state.isRunning);
+
+    // Saat tutorial berjalan, pakai data contoh agar walkthrough selalu utuh.
+    const activeExpenses = isTutorialRunning ? MOCK_EXPENSES : expensesData?.data || [];
+    const activeMeta = isTutorialRunning ? MOCK_EXPENSES_META : expensesData?.meta;
+    const isLoadingActive = isLoading && !isTutorialRunning;
+    const isFetchingActive = isFetching && !isTutorialRunning;
+
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
@@ -155,16 +166,16 @@ export function Expenses() {
         <FormProvider {...dialogMethods}>
             <div className="w-full space-y-6 relative">
                 <ExpenseList
-                    expenses={expensesData?.data || []}
-                    meta={expensesData?.meta}
+                    expenses={activeExpenses}
+                    meta={activeMeta}
                     page={page}
                     perPage={perPage}
                     onPageChange={setPage}
                     onPerPageChange={setPerPage}
                     onEdit={handleEdit}
                     onAddClick={handleAddClick}
-                    isLoading={isLoading}
-                    isFetching={isFetching}
+                    isLoading={isLoadingActive}
+                    isFetching={isFetchingActive}
                     filterElement={
                         <FilterForm
                             methods={filterMethods}
@@ -210,6 +221,8 @@ export function Expenses() {
                     onOpenChange={setIsDialogOpen}
                     editingExpense={editingExpense}
                 />
+
+                <ExpensesTutorialController />
             </div>
         </FormProvider>
     );

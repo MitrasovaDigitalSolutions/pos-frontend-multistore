@@ -188,7 +188,7 @@ export function ExpenseList({
 
     return (
         <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
-            <div className="flex justify-between items-center border-b border-slate-50 pb-4">
+            <div id="pengeluaran-header" className="flex justify-between items-center border-b border-slate-50 pb-4">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">
                         Riwayat Pengeluaran Kas Toko
@@ -199,6 +199,7 @@ export function ExpenseList({
                 </div>
                 {hasManageExpenses && (
                     <Button
+                        id="pengeluaran-btn-add"
                         onClick={onAddClick}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer border-none"
                     >
@@ -207,32 +208,39 @@ export function ExpenseList({
                 )}
             </div>
 
-            {filterElement}
+            <div id="pengeluaran-filter-form" className="scroll-mt-24">
+                {filterElement}
+            </div>
 
-            <DataTable
-                columns={columns}
-                data={expenses}
-                isLoading={isLoading}
-                isFetching={isFetching}
-                emptyMessage="Tidak ada catatan pengeluaran ditemukan."
-                page={page}
-                perPage={perPage}
-                onPageChange={onPageChange}
-                onPerPageChange={onPerPageChange}
-                meta={meta}
-                entityName="pengeluaran"
-                virtualize={true}
-                estimateRowHeight={44}
-                onEdit={hasManageExpenses ? onEdit : undefined}
-                hideEdit={(item) => item.status === "void" || item.status === "cancelled" || item.status === "dibatalkan"}
-                onDelete={hasManageExpenses ? handleDelete : undefined}
-                hideDelete={(item) => item.status === "void" || item.status === "cancelled" || item.status === "dibatalkan"}
-            />
+            <div id="pengeluaran-table">
+                <DataTable
+                    columns={columns}
+                    data={expenses}
+                    isLoading={isLoading}
+                    isFetching={isFetching}
+                    emptyMessage="Tidak ada catatan pengeluaran ditemukan."
+                    page={page}
+                    perPage={perPage}
+                    onPageChange={onPageChange}
+                    onPerPageChange={onPerPageChange}
+                    meta={meta}
+                    entityName="pengeluaran"
+                    virtualize={true}
+                    estimateRowHeight={44}
+                    onEdit={hasManageExpenses ? onEdit : undefined}
+                    hideEdit={(item) => item.status === "void" || item.status === "cancelled" || item.status === "dibatalkan"}
+                    onDelete={hasManageExpenses ? handleDelete : undefined}
+                    hideDelete={(item) => item.status === "void" || item.status === "cancelled" || item.status === "dibatalkan"}
+                />
+            </div>
 
             <ConfirmDialog
                 open={isConfirmOpen}
                 onOpenChange={setIsConfirmOpen}
                 title="Hapus Catatan Pengeluaran"
+                contentId="pengeluaran-void-confirm"
+                confirmBtnId="pengeluaran-void-confirm-btn"
+                cancelBtnId="pengeluaran-void-confirm-cancel"
                 description={
                     expenseToDelete ? (
                         <span>

@@ -1,0 +1,75 @@
+import type { CashTutorialStep } from "../types/cash-tutorial";
+
+export const KELOLA_AKUN_KAS_TUTORIAL_STEPS: CashTutorialStep[] = [
+    {
+        id: "kak-step-1",
+        target: "#kas-mapped-card",
+        fallbackTarget: "#kas-accounts-list",
+        title: "1. Status & Proteksi Akun",
+        content: "Akun kas yang sudah dimapping untuk transaksi menampilkan badge \"Transaksi\" berwarna violet — akun ini terkunci dan tidak dapat diubah maupun dihapus.",
+        placement: "bottom",
+        skipScroll: true,
+        variant: "overlay_nav",
+        overlayNav: true,
+        closeDialog: "#kas-account-dialog-close",
+    },
+    {
+        id: "kak-step-2",
+        target: "#kas-card-btn-edit",
+        fallbackTarget: "#kas-card-editable",
+        title: "2. Tombol Ubah Akun",
+        content: "Tombol ikon pensil untuk menyunting identitas akun kas yang belum terkunci transaksi. Klik untuk membuka form ubah.",
+        placement: "bottom",
+        skipScroll: true,
+        closeDialog: "#kas-account-dialog-close",
+    },
+    {
+        id: "kak-step-3",
+        target: "#kas-account-dialog-body",
+        title: "3. Formulir Ubah Akun",
+        content: "Ubah nama, nomor rekening, atau deskripsi akun. Anda juga dapat menonaktifkan akun yang sudah tidak dipakai.",
+        placement: "bottom",
+        skipScroll: true,
+        variant: "overlay_nav",
+        overlayNav: true,
+        // Buka dialog ubah saat masuk step ini (maju dari step 2 maupun mundur dari step 4+).
+        simulateClick: "#kas-card-btn-edit",
+    },
+    {
+        id: "kak-step-4",
+        target: "#kas-account-submit",
+        fallbackTarget: "#kas-account-dialog-body",
+        title: "4. Simpan Perubahan (Demo)",
+        content: "Tombol ini menyimpan perubahan data akun. Pada mode tutorial kita berhenti di sini — perubahan tidak disimpan.",
+        placement: "top",
+        skipScroll: true,
+        // Buka/kembalikan dialog ubah saat masuk step ini (mis. mundur dari step 5).
+        simulateClick: "#kas-card-btn-edit",
+        closeDialog: "#kas-account-dialog-close",
+    },
+    {
+        id: "kak-step-5",
+        target: "#kas-card-btn-delete",
+        fallbackTarget: "#kas-card-editable",
+        title: "5. Tombol Hapus Akun",
+        content: "Tombol ikon tempat sampah untuk menghapus akun kas. Penghapusan hanya berlaku bila saldo akun Rp 0 dan belum memiliki riwayat transaksi.",
+        placement: "bottom",
+        skipScroll: true,
+        // Tutup form ubah (dari step 4) & dialog konfirmasi hapus (mundur dari step 6).
+        closeDialog: "#kas-account-dialog-close, #kas-delete-confirm-cancel",
+    },
+    {
+        id: "kak-step-6",
+        target: "#kas-delete-confirm-content",
+        title: "6. Konfirmasi Hapus Akun",
+        content: "Dialog ini mengonfirmasi penghapusan akun kas. Pada mode tutorial kita berhenti di sini — akun tidak akan dihapus.",
+        placement: "bottom",
+        skipScroll: true,
+        variant: "overlay_nav",
+        overlayNav: true,
+        // Buka dialog konfirmasi saat masuk step ini (maju dari step 5).
+        simulateClick: "#kas-card-btn-delete",
+        isLastStep: true,
+        nextLabel: "Selesai",
+    },
+];

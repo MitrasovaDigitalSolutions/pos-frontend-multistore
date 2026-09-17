@@ -14,6 +14,7 @@ import { FormCoaPicker } from "@/features/accounting/components/shared";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { debitCreditSchema, type DebitCreditSchemaInput } from "../schemas/cash-schema";
 import { useDebitCashAccount, useCreditCashAccount, type CashAccount } from "../api/cash-api";
+import { useCashTutorialStore } from "@/stores/cash-tutorial-store";
 
 interface CashMutationDialogProps {
     open: boolean;
@@ -64,6 +65,13 @@ export function CashMutationDialog({
     if (!type || !account) return null;
 
     const onSubmit = async (data: DebitCreditSchemaInput) => {
+        // Demo-safety: saat tutorial berjalan, jangan tulis mutasi ke server.
+        if (useCashTutorialStore.getState().isRunning) {
+            toast.info("Mode Simulasi: mutasi kas tidak dicatat saat panduan berjalan.");
+            onOpenChange(false);
+            return;
+        }
+
         // Client-side safety check for credit amount
         if (!isDebit && data.amount > account.saldo) {
             setError("amount", {
@@ -117,10 +125,12 @@ export function CashMutationDialog({
         <BaseDialog
             open={open}
             onOpenChange={onOpenChange}
+            contentId="kas-mutation-dialog-content"
+            closeBtnId="kas-mutation-dialog-close"
             title={dialogTitle}
             className="sm:max-w-xl max-w-lg"
         >
-            <div className="space-y-3.5 pt-1">
+            <div id="kas-mutation-dialog-body" className="space-y-3.5 pt-1">
                 {/* Compact Account Details Strip */}
                 <div className="bg-slate-50 border border-slate-100 rounded-xl px-3.5 py-2.5 flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2 min-w-0">
@@ -149,27 +159,34 @@ export function CashMutationDialog({
 
                 <FormProvider {...methods}>
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
-                        {/* 2-Column Form Grid */}
+                        {/* Baris 1: Nominal & CoA (2 kolom) */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {/* Nominal Input */}
-                            <FormNominalInput<DebitCreditSchemaInput>
-                                name="amount"
-                                label="Nominal Transaksi *"
-                                placeholder="Masukkan nominal Rp..."
-                                disabled={isSubmitting}
-                            />
+                            <div id="kas-mutation-amount">
+                                <FormNominalInput<DebitCreditSchemaInput>
+                                    name="amount"
+                                    label="Nominal Transaksi *"
+                                    placeholder="Masukkan nominal Rp..."
+                                    disabled={isSubmitting}
+                                />
+                            </div>
 
                             {/* Chart of Account / Akun CoA */}
-                            <FormCoaPicker
-                                name="chart_of_account_uid"
-                                label="Chart of Account (CoA)"
-                                placeholder="Pilih Akun CoA Lawan..."
-                                dialogTitle={`Pilih Akun CoA untuk ${isDebit ? "Debit" : "Kredit"} Kas`}
-                                size="md"
-                                disabled={isSubmitting}
-                                allowClear
-                            />
+                            <div id="kas-mutation-coa">
+                                <FormCoaPicker
+                                    name="chart_of_account_uid"
+                                    label="Chart of Account (CoA)"
+                                    placeholder="Pilih Akun CoA Lawan..."
+                                    dialogTitle={`Pilih Akun CoA untuk ${isDebit ? "Debit" : "Kredit"} Kas`}
+                                    size="md"
+                                    disabled={isSubmitting}
+                                    allowClear
+                                />
+                            </div>
+                        </div>
 
+                        {/* Baris 2: Kategori & Catatan (anchor tutorial #kas-mutation-fields) */}
+                        <div id="kas-mutation-fields" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {/* Category Input */}
                             <FormInput<DebitCreditSchemaInput>
                                 name="kategori"
@@ -200,6 +217,7 @@ export function CashMutationDialog({
                             </Button>
                             <Button
                                 type="submit"
+                                id="kas-mutation-submit"
                                 className={`h-9 px-5 text-xs font-bold text-white rounded-xl cursor-pointer shadow-sm ${
                                     isDebit
                                         ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20"

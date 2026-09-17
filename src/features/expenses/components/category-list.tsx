@@ -150,7 +150,7 @@ export function CategoryList({
 
     return (
         <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
-            <div className="flex justify-between items-center border-b border-slate-50 pb-4">
+            <div id="kategori-header" className="flex justify-between items-center border-b border-slate-50 pb-4">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">
                         Kategori Pengeluaran Toko
@@ -161,6 +161,7 @@ export function CategoryList({
                 </div>
                 {hasManageExpenses && (
                     <Button
+                        id="kategori-btn-add"
                         onClick={onAddClick}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer border-none"
                     >
@@ -169,23 +170,28 @@ export function CategoryList({
                 )}
             </div>
 
-            <DataTable
-                columns={columns}
-                data={categories}
-                isLoading={isLoading}
-                isFetching={isFetching}
-                emptyMessage="Tidak ada kategori pengeluaran ditemukan."
-                entityName="kategori"
-                virtualize={true}
-                estimateRowHeight={44}
-                onEdit={hasManageExpenses ? onEdit : undefined}
-                onDelete={hasManageExpenses ? handleDelete : undefined}
-            />
+            <div id="kategori-table">
+                <DataTable
+                    columns={columns}
+                    data={categories}
+                    isLoading={isLoading}
+                    isFetching={isFetching}
+                    emptyMessage="Tidak ada kategori pengeluaran ditemukan."
+                    entityName="kategori"
+                    virtualize={true}
+                    estimateRowHeight={44}
+                    onEdit={hasManageExpenses ? onEdit : undefined}
+                    onDelete={hasManageExpenses ? handleDelete : undefined}
+                />
+            </div>
 
             <ConfirmDialog
                 open={isConfirmOpen}
                 onOpenChange={setIsConfirmOpen}
                 title="Hapus Kategori Pengeluaran"
+                contentId="kategori-void-confirm"
+                confirmBtnId="kategori-void-confirm-btn"
+                cancelBtnId="kategori-void-confirm-cancel"
                 description={
                     categoryToDelete ? (
                         <span>
