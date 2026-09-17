@@ -259,4 +259,99 @@ export const ASSET_TUTORIAL_STEPS: Record<AssetTutorialId, AssetTutorialStep[]> 
             skipScroll: true,
         },
     ],
+
+    jual_aset: [
+        {
+            target: ".table-action-jual",
+            title: "1. Tombol Jual / Pelepasan Aset",
+            content:
+                "Klik tombol 'Jual / Pelepasan Aset' berikon nota hijau pada baris aset untuk memulai proses pelepasan aset tetap.",
+            placement: "left",
+            skipScroll: true,
+        },
+        {
+            target: "#sell-asset-header",
+            title: "2. Ringkasan Finansial & Nilai Buku",
+            content:
+                "Sistem menampilkan rincian Harga Perolehan awal, Total Akumulasi Penyusutan, dan Nilai Buku saat ini sebagai acuan perhitungan untung atau rugi pelepasan aset.",
+            placement: "bottom",
+            skipScroll: true,
+        },
+        {
+            target: "#sell-nominal-jual",
+            title: "3. Input Nominal Harga Jual",
+            content:
+                "Masukkan harga jual tunai/bank yang disepakati dengan pembeli. Sistem mengetikkan contoh nominal Rp 16.500.000 secara otomatis.",
+            placement: "bottom",
+            skipScroll: true,
+            action: {
+                type: "type_text",
+                target: "#sell-nominal-jual input",
+                text: "16500000",
+            },
+        },
+        {
+            target: "#sell-cash-account",
+            title: "4. Akun Kas / Bank Penerimaan Dana",
+            content:
+                "Tentukan rekening Kas atau Bank tempat penerimaan dana hasil penjualan disetorkan. Saldo akun kas terpilih otomatis didebet dalam jurnal GL.",
+            placement: "bottom",
+            skipScroll: true,
+            action: {
+                type: "set_field",
+                field: "cash_account_uid",
+                value: "__first__",
+            },
+        },
+        {
+            target: "#sell-offset-coa-section",
+            title: "5. Deteksi Hasil Pelepasan & Akun Offset",
+            content:
+                "Sistem secara cerdas membandingkan Harga Jual (Rp 16.500.000) vs Nilai Buku (Rp 15.000.000). Karena harga jual lebih tinggi, terdeteksi Keuntungan (Gain) +Rp 1.500.000 dan sistem otomatis memilih Akun Pendapatan penyeimbang.",
+            placement: "bottom",
+            skipScroll: true,
+            action: {
+                type: "set_field",
+                field: "offset_coa_uid",
+                value: "__first__",
+            },
+        },
+        {
+            target: "#sell-catatan",
+            title: "6. Catatan Keterangan Penjualan",
+            content:
+                "Dokumentasikan keterangan pembeli, nomor surat serah terima, atau alasan pelepasan aset untuk audit jejak transaksi.",
+            placement: "bottom",
+            skipScroll: true,
+            action: {
+                type: "type_text",
+                target: "#sell-catatan input",
+                text: "Pelepasan aset laptop inventaris lama ke vendor rekanan (Demo)",
+            },
+        },
+        {
+            target: "#sell-gl-simulation",
+            title: "7. Simulasi Penjurnalan GL Real-Time",
+            content:
+                "Tinjau slip jurnal GL otomatis: [D] Kas bertambah, [D] Akumulasi Penyusutan ditutup ke 0, [K] Aset Tetap dinolkan, dan [K] Keuntungan Penjualan dicatat seimbang (balanced 0-0).",
+            placement: "top",
+            skipScroll: true,
+        },
+        {
+            target: "#sell-status-warning",
+            title: "8. Peringatan Penguncian Status Aset",
+            content:
+                "PENTING: Setelah konfirmasi disimpan, aset berubah status menjadi 'Dijual' secara permanen dan terkunci dari perubahan atau penghapusan demi menjaga integritas pembukuan akuntansi.",
+            placement: "top",
+            skipScroll: true,
+        },
+        {
+            target: "#btn-submit-sell-asset",
+            title: "9. Konfirmasi & Selesai Panduan",
+            content:
+                "Tombol ini kini aktif karena seluruh data telah terisi lengkap. Pada transaksi nyata, klik tombol ini untuk memproses pelepasan. Mode simulasi aman dan tidak akan memodifikasi data toko Anda. Klik Selesai untuk mengakhiri panduan.",
+            placement: "top",
+            skipScroll: true,
+        },
+    ],
 };

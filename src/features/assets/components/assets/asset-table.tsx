@@ -292,7 +292,7 @@ export function AssetTable({
                                 <DataTableActionButton
                                     variant="emerald"
                                     className="table-action-jual"
-                                    tooltip="JualAset"
+                                    tooltip="Jual Aset"
                                     onClick={() => onSell(a)}
                                 >
                                     <IconReceiptRefund className="w-3.5 h-3.5" />

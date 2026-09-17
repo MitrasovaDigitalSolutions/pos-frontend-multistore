@@ -4,7 +4,7 @@ import { useEffect, useRef, useCallback, useMemo } from "react";
 import { useAssetsTutorialStore } from "@/stores/assets-tutorial-store";
 import { ASSET_TUTORIAL_STEPS } from "../steps/assets-tutorial-steps";
 import { MOCK_ASSETS } from "../constants/assets-tutorial-constants";
-import type { AssetTutorialStep } from "../types/assets-tutorial";
+import type { AssetTutorialStep, AssetTutorialAction } from "../types/assets-tutorial";
 import type { Asset } from "@/features/assets/types";
 import {
     ACTIONS,
@@ -25,10 +25,80 @@ export interface AssetsTutorialControls {
     setIsConfirmDeleteDialogOpen?: (open: boolean) => void;
     setAssetToDelete?: (asset: Asset | null) => void;
     setIsCategoryDialogOpen?: (open: boolean) => void;
+    setIsSellDialogOpen?: (open: boolean) => void;
+    setSelectedSellAsset?: (asset: Asset | null) => void;
     sampleAsset?: Asset | null;
 }
 
 const DEFAULT_SAMPLE_ASSET = MOCK_ASSETS[0];
+
+function setInputValueWithEvents(input: HTMLInputElement | HTMLTextAreaElement, value: string) {
+    if (typeof window === "undefined") return;
+    const proto =
+        input instanceof HTMLTextAreaElement
+            ? window.HTMLTextAreaElement.prototype
+            : window.HTMLInputElement.prototype;
+    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(proto, "value")?.set;
+    if (nativeInputValueSetter) {
+        nativeInputValueSetter.call(input, value);
+    } else {
+        input.value = value;
+    }
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+async function simulateTyping(el: HTMLInputElement | HTMLTextAreaElement, text: string) {
+    el.focus();
+    setInputValueWithEvents(el, "");
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        setInputValueWithEvents(el, el.value + char);
+        await new Promise((r) => setTimeout(r, 35));
+    }
+}
+
+async function runAssetAction(
+    action: AssetTutorialAction,
+    updateCursor: (cursor: { label?: string }) => void
+): Promise<void> {
+    switch (action.type) {
+        case "type_text": {
+            const container = document.querySelector(action.target);
+            const el = (container instanceof HTMLInputElement || container instanceof HTMLTextAreaElement
+                ? container
+                : container?.querySelector("input, textarea")) as HTMLInputElement | HTMLTextAreaElement | null;
+            if (el) {
+                updateCursor({ label: "Mengetik..." });
+                await simulateTyping(el, action.text);
+                updateCursor({ label: undefined });
+            }
+            break;
+        }
+        case "set_field": {
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(
+                    new CustomEvent("assets-tutorial-set-field", {
+                        detail: { field: action.field, value: action.value },
+                    })
+                );
+            }
+            await new Promise((r) => setTimeout(r, 120));
+            break;
+        }
+        case "wait": {
+            await new Promise((r) => setTimeout(r, action.ms));
+            break;
+        }
+        case "sequence": {
+            for (const subAction of action.actions) {
+                await runAssetAction(subAction, updateCursor);
+                await new Promise((r) => setTimeout(r, 150));
+            }
+            break;
+        }
+    }
+}
 
 async function waitForElement(selector: string, timeout = 2500): Promise<Element | null> {
     if (typeof document === "undefined") return null;
@@ -61,6 +131,13 @@ export function useAssetsTutorial(controls: AssetsTutorialControls) {
         if (!activeTutorial) return [];
         return ASSET_TUTORIAL_STEPS[activeTutorial] || [];
     }, [activeTutorial]);
+
+    const executeAssetAction = useCallback(
+        async (action: AssetTutorialAction) => {
+            await runAssetAction(action, updateCursor);
+        },
+        [updateCursor]
+    );
 
     const positionCursorAt = useCallback(
         (targetSelector: string) => {
@@ -142,6 +219,14 @@ export function useAssetsTutorial(controls: AssetsTutorialControls) {
             } else if (idx >= 1) {
                 controlsRef.current.setIsCategoryDialogOpen?.(true);
             }
+        } else if (tutorialId === "jual_aset") {
+            if (idx === 0) {
+                controlsRef.current.setIsSellDialogOpen?.(false);
+                controlsRef.current.setSelectedSellAsset?.(null);
+            } else if (idx >= 1) {
+                controlsRef.current.setSelectedSellAsset?.(effectiveSample);
+                controlsRef.current.setIsSellDialogOpen?.(true);
+            }
         }
     }, []);
 
@@ -155,6 +240,11 @@ export function useAssetsTutorial(controls: AssetsTutorialControls) {
         controlsRef.current.setIsConfirmDeleteDialogOpen?.(false);
         controlsRef.current.setAssetToDelete?.(null);
         controlsRef.current.setIsCategoryDialogOpen?.(false);
+        controlsRef.current.setIsSellDialogOpen?.(false);
+        controlsRef.current.setSelectedSellAsset?.(null);
+        if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("assets-tutorial-reset"));
+        }
         updateCursor({ visible: false, label: undefined });
     }, [updateCursor]);
 
@@ -280,6 +370,13 @@ export function useAssetsTutorial(controls: AssetsTutorialControls) {
                     setTimeout(() => {
                         positionCursorAt(step.target);
                     }, 80);
+
+                    if (step.action) {
+                        await executeAssetAction(step.action);
+                        setTimeout(() => {
+                            positionCursorAt(step.target);
+                        }, 80);
+                    }
                 }
             }
 
@@ -297,6 +394,7 @@ export function useAssetsTutorial(controls: AssetsTutorialControls) {
         [
             tutorialSteps,
             activeTutorial,
+            executeAssetAction,
             positionCursorAt,
             setStepIndex,
             syncModalForStep,

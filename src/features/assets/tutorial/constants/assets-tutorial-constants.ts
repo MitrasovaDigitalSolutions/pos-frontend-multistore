@@ -54,6 +54,15 @@ export const ASSET_TUTORIAL_LIST: AssetTutorialMeta[] = [
         badge: "Pengaturan",
         isAvailable: true,
     },
+    {
+        id: "jual_aset",
+        title: "Penjualan & Pelepasan Aset",
+        description: "Panduan lengkap pelepasan aset tetap, kalkulasi otomatis laba/rugi, pemilihan akun offset, dan simulasi jurnal GL.",
+        category: "Pelepasan Aset",
+        stepCount: 9,
+        badge: "Fitur Baru",
+        isAvailable: true,
+    },
 ];
 
 export const MOCK_ASSETS: Asset[] = [
