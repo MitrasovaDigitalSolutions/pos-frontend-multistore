@@ -1,0 +1,225 @@
+"use client";
+
+import { FormProvider } from "react-hook-form";
+import { BaseDialog } from "@/components/ui/base-dialog";
+import { Scrollable } from "@/components/ui/scrollable";
+import { FormSelect } from "@/components/forms/form-select";
+import { FormSwitch } from "@/components/forms/form-switch";
+import { AppButton } from "@/components/shared/app-button";
+import { Badge } from "@/components/ui/badge";
+import type { CommandOption } from "@/components/ui/command-select";
+import { IconReceipt, IconShoppingCart } from "@tabler/icons-react";
+import type { CatalogProduct } from "../types";
+import { useLicenseOrder } from "../hooks/use-license-order";
+import { LicenseOrderAddonItem } from "./order/license-order-addon-item";
+import { LicenseOrderSummary } from "./order/license-order-summary";
+
+interface LicenseOrderDialogProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    catalog: CatalogProduct[];
+    productCode?: string;
+    initialAddonId?: string;
+}
+
+const BILLING_OPTIONS: CommandOption[] = [
+    {
+        value: "monthly",
+        label: "Bulanan",
+        description: "Pembayaran reguler per bulan",
+    },
+    {
+        value: "annual",
+        label: "Tahunan",
+        badge: "Hemat 17%",
+        description: "Pembayaran 1 tahun sekaligus",
+    },
+];
+
+export function LicenseOrderDialog({
+    open,
+    onOpenChange,
+    catalog,
+    productCode,
+    initialAddonId,
+}: LicenseOrderDialogProps) {
+    const {
+        methods,
+        targetProduct,
+        addons,
+        billingPeriod,
+        selectedAddonIds,
+        includeBase,
+        displayTotal,
+        totalMonthly,
+        totalAnnual,
+        toggleAddon,
+        selectAllAddons,
+        clearAllAddons,
+        isPending,
+        onSubmit,
+    } = useLicenseOrder({
+        open,
+        onOpenChange,
+        catalog,
+        productCode,
+        initialAddonId,
+    });
+
+    if (!targetProduct) return null;
+
+    return (
+        <BaseDialog
+            open={open}
+            onOpenChange={onOpenChange}
+            scrollable={false}
+            title={
+                <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100/70 shadow-2xs shrink-0">
+                        <IconShoppingCart size={17} />
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <span className="font-extrabold text-slate-900 text-sm block leading-tight">
+                                Perpanjang Lisensi & Add-on POS
+                            </span>
+                            <Badge
+                                variant="outline"
+                                className="text-[10px] font-mono font-bold px-1.5 py-0 rounded bg-slate-100 text-slate-600 border-slate-200"
+                            >
+                                {targetProduct.nama}
+                            </Badge>
+                        </div>
+                        <span className="text-[11px] text-slate-400 font-medium block">
+                            Pilih add-on yang ingin Anda aktifkan untuk meningkatkan efisiensi toko
+                        </span>
+                    </div>
+                </div>
+            }
+            className="sm:max-w-4xl max-h-[90vh] overflow-hidden"
+        >
+            <FormProvider {...methods}>
+                <form onSubmit={onSubmit} className="mt-1 flex-1 min-h-0 flex flex-col overflow-hidden">
+                    {/* 2-Column Responsive Layout with strictly constrained overflow */}
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch min-h-0 flex-1 overflow-hidden">
+                        {/* LEFT COLUMN: Summary & Order Settings (5 cols) */}
+                        <div className="md:col-span-5 flex flex-col min-h-0 max-h-[380px] md:max-h-[450px] md:h-[450px] overflow-hidden">
+                            {/* Scrollable Container for Order Settings & Breakdown */}
+                            <Scrollable className="flex-1 min-h-0 max-h-[320px] md:max-h-[390px] pr-1.5 overflow-hidden" scrollbarClassName="z-20">
+                                <div className="space-y-3 pb-2">
+                                    {/* Billing Period Selector with Badge Support */}
+                                    <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/80 space-y-2.5">
+                                        <div>
+                                            <span className="text-xs font-bold text-slate-800 block">
+                                                Skema Pembayaran
+                                            </span>
+                                            <span className="text-[11px] text-slate-400">
+                                                Pilih siklus penagihan lisensi & add-on
+                                            </span>
+                                        </div>
+                                        <FormSelect
+                                            name="billing_period"
+                                            options={BILLING_OPTIONS}
+                                            placeholder="Pilih siklus langganan"
+                                            className="bg-white"
+                                        />
+                                    </div>
+
+                                    {/* Base Product Extension Switch */}
+                                    <FormSwitch
+                                        name="include_base_product"
+                                        label="Perpanjang Lisensi Utama POS"
+                                        description="Centang untuk sekaligus memperpanjang lisensi dasar multi-store Anda"
+                                    />
+
+                                    {/* Order Summary & Final Breakdown */}
+                                    <LicenseOrderSummary
+                                        selectedCount={selectedAddonIds.length}
+                                        billingPeriod={billingPeriod}
+                                        includeBase={includeBase}
+                                        totalMonthly={totalMonthly}
+                                        totalAnnual={totalAnnual}
+                                        displayTotal={displayTotal}
+                                    />
+                                </div>
+                            </Scrollable>
+
+                            {/* Pinned Bottom Action Buttons - Always visible & docked */}
+                            <div className="pt-2.5 border-t border-slate-100 bg-white shrink-0 mt-auto flex items-center gap-2">
+                                <AppButton
+                                    type="button"
+                                    variant="outline"
+                                    className="flex-1 text-xs font-bold h-9 rounded-xl cursor-pointer"
+                                    onClick={() => onOpenChange(false)}
+                                >
+                                    Batal
+                                </AppButton>
+                                <AppButton
+                                    type="submit"
+                                    isLoading={isPending}
+                                    disabled={selectedAddonIds.length === 0 && !includeBase}
+                                    className="flex-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold h-9 rounded-xl shadow-xs cursor-pointer gap-1.5"
+                                >
+                                    <IconReceipt size={15} />
+                                    <span>Buat Pesanan & Bayar</span>
+                                </AppButton>
+                            </div>
+                        </div>
+
+                        {/* RIGHT COLUMN: Add-on Selection List (7 cols) */}
+                        <div className="md:col-span-7 flex flex-col min-h-0 max-h-[380px] md:max-h-[450px] md:h-[450px] overflow-hidden space-y-2">
+                            {/* Header Toolbar for Addons */}
+                            <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 shrink-0">
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold text-slate-800 block">
+                                            Pilih Add-on Tambahan
+                                        </span>
+                                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-600 border border-slate-200/60">
+                                            {addons.length} Tersedia
+                                        </span>
+                                    </div>
+                                    <span className="text-[11px] text-slate-400">
+                                        Pilih add-on yang ingin diaktifkan untuk meningkatkan efisiensi
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-xs">
+                                    <button
+                                        type="button"
+                                        onClick={selectAllAddons}
+                                        className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer"
+                                    >
+                                        Pilih Semua
+                                    </button>
+                                    <span className="text-slate-300">•</span>
+                                    <button
+                                        type="button"
+                                        onClick={clearAllAddons}
+                                        className="text-[11px] font-bold text-slate-400 hover:text-slate-600 hover:underline cursor-pointer"
+                                    >
+                                        Batal Pilih
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Scrollable Container with Addon Cards */}
+                            <Scrollable className="flex-1 min-h-0 max-h-[395px] pr-1.5 overflow-hidden" scrollbarClassName="z-20">
+                                <div className="flex flex-col gap-2 p-0.5 pb-2">
+                                    {addons.map((addon) => (
+                                        <LicenseOrderAddonItem
+                                            key={addon.id}
+                                            addon={addon}
+                                            isSelected={selectedAddonIds.includes(addon.id)}
+                                            billingPeriod={billingPeriod}
+                                            onToggle={() => toggleAddon(addon.id)}
+                                        />
+                                    ))}
+                                </div>
+                            </Scrollable>
+                        </div>
+                    </div>
+                </form>
+            </FormProvider>
+        </BaseDialog>
+    );
+}

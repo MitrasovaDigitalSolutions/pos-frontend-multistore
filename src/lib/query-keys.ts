@@ -270,4 +270,12 @@ export const queryKeys = {
         list: () => [...queryKeys.settings.all, "list"] as const,
         detail: (key: string) => [...queryKeys.settings.all, "detail", key] as const,
     },
+
+    // License
+    license: {
+        all: ["license"] as const,
+        status: () => [...queryKeys.license.all, "status"] as const,
+        catalog: () => [...queryKeys.license.all, "catalog"] as const,
+        invoices: () => [...queryKeys.license.all, "invoices"] as const,
+    },
 } as const;

@@ -10,6 +10,33 @@ import { LoginCard } from "./login-card";
 import { LoginStoreDialog } from "./login-store-dialog";
 import type { LoginInput } from "../schemas/login-schema";
 import { AUTH_APP_NAME, AUTH_APP_VERSION } from "../constants/auth-constants";
+import { LicenseGateDialog } from "@/features/license/components/license-gate-dialog";
+import type { LicenseStatus } from "@/features/license/types";
+import { ENDPOINTS } from "@/shared/api/endpoints";
+
+/** Fetch license status directly (not via React Query) to avoid mounting query context issues. */
+async function fetchLicenseStatus(accessToken: string): Promise<LicenseStatus | null> {
+    const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/+$/, "");
+    const endpoint = `/api${ENDPOINTS.LICENSE.STATUS}`; // /api/v1/license/status
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
+    try {
+        const res = await fetch(`${apiBase}${endpoint}`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/json",
+            },
+            signal: controller.signal,
+        });
+        if (!res.ok) return null;
+        const body = await res.json() as { data?: LicenseStatus };
+        return body.data ?? null;
+    } catch {
+        return null;
+    } finally {
+        clearTimeout(timeoutId);
+    }
+}
 
 export function LoginForm() {
     const router = useAppRouter();
@@ -21,9 +48,38 @@ export function LoginForm() {
     const [isStoreDialogOpen, setIsStoreDialogOpen] = useState(false);
     const [isRedirecting, setIsRedirecting] = useState(false);
 
+    // ─── License Gate State ───────────────────────────────────────────────────
+    const [licenseGateOpen, setLicenseGateOpen] = useState(false);
+    const [licenseStatus, setLicenseStatus] = useState<LicenseStatus | null>(null);
+    // Pending redirect path (stored while license gate is showing)
+    const [pendingRedirectPath, setPendingRedirectPath] = useState<string | null>(null);
+
+    /** Check license and either proceed to redirect or show gate dialog. */
+    const checkLicenseAndRedirect = React.useCallback(async (targetPath: string, accessToken: string) => {
+        try {
+            const ls = await fetchLicenseStatus(accessToken);
+
+            // Fail-closed: if null (error/timeout) treat as not operable
+            if (!ls || !ls.can_operate) {
+                setLicenseStatus(ls);
+                setPendingRedirectPath(targetPath);
+                setLicenseGateOpen(true);
+                return;
+            }
+
+            // License OK — proceed
+            setIsRedirecting(true);
+            router.push(targetPath);
+        } catch {
+            setLicenseStatus(null);
+            setPendingRedirectPath(targetPath);
+            setLicenseGateOpen(true);
+        }
+    }, [router]);
+
     // Redirect user if they are already logged in
     useEffect(() => {
-        if (status === "authenticated" && session?.user && !isRedirecting) {
+        if (status === "authenticated" && session?.user && !isRedirecting && !licenseGateOpen) {
             const stores = session.user.stores ?? [];
 
             if (stores.length === 0) {
@@ -45,8 +101,7 @@ export function LoginForm() {
                     toast.info(`Masuk sebagai Karyawan di ${soleStore.nama}`);
                 } else {
                     // eslint-disable-next-line react-hooks/set-state-in-effect
-                    setIsRedirecting(true);
-                    router.push(targetPath);
+                    void checkLicenseAndRedirect(targetPath, session.accessToken ?? "");
                 }
                 return;
             }
@@ -56,13 +111,12 @@ export function LoginForm() {
             if (hasValidActiveStore && !justLoggedIn) {
                 const currentStore = stores.find((s) => s.uid === activeStoreUid)!;
                 toast.info(`Masuk sebagai Karyawan di ${currentStore.nama}`);
-                setIsRedirecting(true);
-                router.push(targetPath);
+                void checkLicenseAndRedirect(targetPath, session.accessToken ?? "");
             } else {
                 setIsStoreDialogOpen(true);
             }
         }
-    }, [session, status, router, activeStoreUid, justLoggedIn, isRedirecting, setActiveStore]);
+    }, [session, status, router, activeStoreUid, justLoggedIn, isRedirecting, licenseGateOpen, setActiveStore, checkLicenseAndRedirect]);
 
     const onSubmit = async (data: LoginInput) => {
         setIsLoading(true);
@@ -118,8 +172,17 @@ export function LoginForm() {
             userRoles.includes("supervisor")
         ) ? "/admin" : "/checkout";
 
-        setIsRedirecting(true);
-        router.push(targetPath);
+        void checkLicenseAndRedirect(targetPath, session?.accessToken ?? "");
+    };
+
+    /** Called after license is activated inside the gate dialog. */
+    const onLicenseActivated = () => {
+        setLicenseGateOpen(false);
+        setLicenseStatus(null);
+        if (pendingRedirectPath) {
+            setIsRedirecting(true);
+            router.push(pendingRedirectPath);
+        }
     };
 
     return (
@@ -148,6 +211,13 @@ export function LoginForm() {
                 open={isStoreDialogOpen}
                 stores={session?.user?.stores ?? []}
                 onConfirm={onConfirmStore}
+            />
+
+            {/* License Gate — blocking, non-closeable */}
+            <LicenseGateDialog
+                open={licenseGateOpen}
+                licenseStatus={licenseStatus}
+                onActivated={onLicenseActivated}
             />
 
             {/* Global Footer Section */}

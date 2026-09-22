@@ -5,6 +5,7 @@ import { ConsignmentTutorialController } from "@/features/consignment/tutorial/c
 import { TransferTutorialController } from "@/features/stock-transfer/tutorial/components/transfer-tutorial-controller";
 import { StockTutorialController } from "@/features/stock/tutorial/components/stock-tutorial-controller";
 import { SalesTutorialController } from "@/features/sales-tutorial/components/sales-tutorial-controller";
+import { LicenseBanner } from "@/features/license/components/license-banner";
 import type { ReactNode } from "react";
 
 interface AdminLayoutProps {
@@ -18,6 +19,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
             <div className="grow flex-1 flex flex-col h-full h-[100dvh] max-h-[100dvh] min-h-0 min-w-0 overflow-hidden">
                 <AdminHeader />
+                <LicenseBanner />
 
                 <main className="grow flex-1 min-h-0 min-w-0 pt-2 px-3 sm:px-6 md:px-8 pb-28 sm:pb-8 overflow-y-auto overscroll-y-contain [scrollbar-gutter:stable]">
                     {children}

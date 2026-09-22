@@ -68,6 +68,7 @@ export const ROUTES = {
     ADMIN_PRODUCT_BOM: "/admin/manufacturing/product-bom",
     ADMIN_BOM_COMPONENT_TYPES: "/admin/manufacturing/bom-component-types",
     ADMIN_UNITS: "/admin/units",
+    ADMIN_LICENSE: "/admin/license",
 
 
     // Protected - POS
