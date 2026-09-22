@@ -220,14 +220,6 @@ export function LicenseInvoiceDetailDialog({
 
                     <div className="flex items-center gap-2">
                         <AppButton
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onOpenChange(false)}
-                            className="h-8 text-xs font-bold rounded-lg cursor-pointer"
-                        >
-                            Tutup
-                        </AppButton>
-                        <AppButton
                             size="sm"
                             onClick={() => onDownloadPdf(invoice.invoice_number)}
                             isLoading={isDownloading}
