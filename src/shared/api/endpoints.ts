@@ -324,4 +324,15 @@ export const ENDPOINTS = {
         DETAIL: (key: string) => `/v1/settings/${key}`,
         UPDATE: (key: string) => `/v1/settings/${key}`,
     },
+
+    // License
+    LICENSE: {
+        STATUS: "/v1/license/status",
+        ACTIVATE: "/v1/license/activate",
+        SYNC: "/v1/license/sync",
+        CATALOG: "/v1/license/catalog",
+        ORDERS: "/v1/license/orders",
+        INVOICES: "/v1/license/invoices",
+        INVOICE_PDF: (invoiceNumber: string) => `/v1/license/invoices/${invoiceNumber}/pdf`,
+    },
 } as const;

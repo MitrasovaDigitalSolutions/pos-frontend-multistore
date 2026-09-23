@@ -11,6 +11,7 @@ import {
     IconDatabase,
     IconDeviceLaptop,
     IconHome,
+    IconKey,
     IconNotebook,
     IconReceipt,
     IconSettings,
@@ -31,6 +32,7 @@ export interface NavItem {
     badge?: string | number;
     badgeVariant?: "emerald" | "amber" | "rose" | "blue" | "slate";
     permission?: PermissionChecker;
+    addon?: string;
     children?: NavItem[];
 }
 
@@ -94,6 +96,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
             {
                 label: "Pembelian",
                 icon: IconShoppingCart,
+                addon: "purchasing",
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") ||
                     hasPermission(roles, permissions, "view_purchase") ||
@@ -136,6 +139,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
             {
                 label: "Konsinyasi",
                 icon: IconBuildingWarehouse,
+                addon: "consignment",
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") ||
                     hasPermission(roles, permissions, "view_consignment") ||
@@ -233,6 +237,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     {
                         label: "Stok Opname",
                         path: ROUTES.ADMIN_STOCK,
+                        addon: "stock_opname",
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") ||
                             hasPermission(roles, permissions, "view_inventory") ||
@@ -251,6 +256,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
             {
                 label: "Manufaktur",
                 icon: IconBuildingFactory2,
+                addon: "production",
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") ||
                     hasPermission(roles, permissions, "view_production") ||
@@ -305,6 +311,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
             {
                 label: "Pengeluaran",
                 icon: IconReceipt,
+                addon: "expenses",
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") ||
                     hasPermission(roles, permissions, "view_expenses") ||
@@ -331,6 +338,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
             {
                 label: "Hutang",
                 icon: IconNotebook,
+                addon: "debts",
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") ||
                     hasPermission(roles, permissions, "view_members") ||
@@ -359,6 +367,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
             {
                 label: "Laporan",
                 icon: IconChartBar,
+                addon: "reports",
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                 children: [
@@ -397,6 +406,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
             {
                 label: "Akuntansi",
                 icon: IconBuildingBank,
+                addon: "accounting",
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") || hasPermission(roles, permissions, "view_reports"),
                 children: [
@@ -436,6 +446,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 label: "Aset",
                 path: ROUTES.ADMIN_ASSETS,
                 icon: IconBuildingWarehouse,
+                addon: "assets",
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") ||
                     hasPermission(roles, permissions, "view_reports") ||
@@ -471,6 +482,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     {
                         label: "Member / Pelanggan",
                         path: ROUTES.ADMIN_MEMBERS,
+                        addon: "members",
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") ||
                             hasPermission(roles, permissions, "view_members") ||
@@ -512,6 +524,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 label: "Laporan Konsolidasi",
                 path: ROUTES.ADMIN_REPORTS_CENTRAL,
                 icon: IconChartBar,
+                addon: "reports",
                 permission: (roles) => hasRole(roles, "admin"),
             },
             {
@@ -542,11 +555,13 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     {
                         label: "Supplier",
                         path: ROUTES.ADMIN_SUPPLIERS,
+                        addon: "purchasing",
                         permission: (roles) => hasRole(roles, "admin"),
                     },
                     {
                         label: "Sales",
                         path: ROUTES.ADMIN_SUPPLIER_SALES,
+                        addon: "purchasing",
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") ||
                             hasPermission(roles, permissions, "view_request_transfers") ||
@@ -562,11 +577,13 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     {
                         label: "Bagan Akun (CoA)",
                         path: ROUTES.ADMIN_ACCOUNTING_COA,
+                        addon: "accounting",
                         permission: (roles) => hasRole(roles, "admin"),
                     },
                     {
                         label: "Kategori Aset",
                         path: ROUTES.ADMIN_ASSET_CATEGORIES,
+                        addon: "assets",
                         permission: (roles) => hasRole(roles, "admin"),
                     },
                 ],
@@ -581,6 +598,12 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 label: "Kelola Toko",
                 path: ROUTES.ADMIN_STORES,
                 icon: IconBuildingStore,
+                permission: (roles) => hasRole(roles, "admin"),
+            },
+            {
+                label: "Lisensi",
+                path: ROUTES.ADMIN_LICENSE,
+                icon: IconKey,
                 permission: (roles) => hasRole(roles, "admin"),
             },
         ],
@@ -719,12 +742,13 @@ export function hasActiveChild(
 }
 
 /**
- * Filters navigation tree by user roles and permissions recursively.
+ * Filters navigation tree by user roles, permissions, and active addons recursively.
  */
 export function filterNavItems(
     items: NavItem[],
     roles: string[],
-    permissions: string[]
+    permissions: string[],
+    activeAddons?: string[] | null
 ): NavItem[] {
     return items
         .map((item) => {
@@ -732,9 +756,14 @@ export function filterNavItems(
             const isAllowed = item.permission ? item.permission(roles, permissions) : true;
             if (!isAllowed) return null;
 
+            // Check addon requirement if activeAddons list is provided
+            if (item.addon && Array.isArray(activeAddons) && !activeAddons.includes(item.addon)) {
+                return null;
+            }
+
             // If item has children, filter them recursively
             if (item.children && item.children.length > 0) {
-                const filteredChildren = filterNavItems(item.children, roles, permissions);
+                const filteredChildren = filterNavItems(item.children, roles, permissions, activeAddons);
                 if (filteredChildren.length === 0) return null;
                 return { ...item, children: filteredChildren };
             }

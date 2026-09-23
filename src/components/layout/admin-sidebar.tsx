@@ -24,6 +24,7 @@ import {
     filterNavItems,
 } from "./sidebar-config";
 import { SidebarItem } from "./sidebar-item";
+import { useLicenseStatusQuery } from "@/features/license/api/license-api";
 
 export function AdminSidebar() {
     const pathname = usePathname();
@@ -61,6 +62,9 @@ export function AdminSidebar() {
 
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
+
+    const { data: licenseStatus } = useLicenseStatusQuery();
+    const activeAddons = licenseStatus?.has_license ? licenseStatus.active_addons : null;
 
     const getSetting = useSettingsStore((state) => state.getSetting);
     const isLoadingSettings = useSettingsStore((state) => state.isLoading);
@@ -148,7 +152,7 @@ export function AdminSidebar() {
                         )}
                     >
                         {NAVIGATION_CONFIG.map((section) => {
-                            const visibleItems = filterNavItems(section.items, userRoles, userPermissions);
+                            const visibleItems = filterNavItems(section.items, userRoles, userPermissions, activeAddons);
                             if (visibleItems.length === 0) return null;
 
                             return (

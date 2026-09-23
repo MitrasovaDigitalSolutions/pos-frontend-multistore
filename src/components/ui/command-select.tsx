@@ -339,6 +339,11 @@ export function CommandSelect({
               <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
                 {leftIcon && <span className="shrink-0">{leftIcon}</span>}
                 <span className="truncate text-left">{selectedOption ? selectedOption.label : placeholder}</span>
+                {selectedOption?.badge && (
+                  <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200/80 leading-none">
+                    {selectedOption.badge}
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
                 {rightElement}
@@ -401,7 +406,14 @@ export function CommandSelect({
                         >
                           <div className="flex items-center justify-between gap-2 w-full min-w-0">
                             <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-                              <span className="font-semibold text-slate-800 truncate block">{truncatedLabel}</span>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-semibold text-slate-800 truncate block">{truncatedLabel}</span>
+                                {opt.badge && opt.badge !== STORE_BADGE_HQ && (
+                                  <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200/80 leading-none">
+                                    {opt.badge}
+                                  </span>
+                                )}
+                              </div>
                               {opt.description && (
                                 <span className="text-[10px] text-slate-400 font-normal truncate block">{opt.description}</span>
                               )}
