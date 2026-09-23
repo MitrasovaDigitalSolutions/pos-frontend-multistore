@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
     Dialog,
     DialogContent,
@@ -11,187 +10,198 @@ import {
 import { AppButton } from "@/components/shared/app-button";
 import {
     IconAlertTriangle,
-    IconArrowLeft,
-    IconKey,
+    IconArrowRight,
     IconLogout,
     IconRefresh,
+    IconShieldOff,
     IconShieldX,
+    IconWifi,
 } from "@tabler/icons-react";
 import type { LicenseStatus } from "../types";
-import { LicenseActivateForm } from "./license-activate-form";
 import { signOut } from "@/lib/auth-helpers";
+import { useAppRouter } from "@/hooks/use-app-router";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface LicenseGateDialogProps {
     open: boolean;
     /** The current (invalid) license status. null = no license at all or network error. */
     licenseStatus: LicenseStatus | null;
-    /** Called after license is successfully activated or retried */
-    onActivated: () => void;
 }
 
-const STATUS_MESSAGES: Record<string, { title: string; description: string }> = {
+type StatusKey = "network_error" | "not_activated" | "expired" | "suspended";
+
+const STATUS_MESSAGES: Record<StatusKey, { title: string; description: string }> = {
     network_error: {
-        title: "Koneksi ke Server Lisensi Terputus",
+        title: "Gagal Menghubungi Server Lisensi",
         description:
-            "Aplikasi tidak dapat memvalidasi status langganan dengan server pusat. Pastikan koneksi internet aktif dan server dapat diakses.",
+            "Aplikasi tidak dapat memvalidasi status lisensi dengan server pusat. Pastikan perangkat terhubung ke internet dan coba refresh halaman.",
     },
     not_activated: {
-        title: "Aplikasi Belum Teraktivasi",
+        title: "Lisensi Belum Diaktifkan",
         description:
-            "Aplikasi ini belum memiliki lisensi aktif. Masukkan license key resmi yang Anda peroleh untuk mengaktifkan operasional kasir.",
+            "Instalasi POS ini belum memiliki lisensi operasional aktif. Silakan lakukan aktivasi lisensi untuk memulai operasional toko.",
     },
     expired: {
-        title: "Masa Aktif Langganan Berakhir",
+        title: "Masa Langganan Telah Berakhir",
         description:
-            "Masa aktif paket langganan Anda telah habis. Silakan masukkan license key baru atau lakukan perpanjangan agar operasional tetap berjalan.",
+            "Masa aktif paket langganan POS Anda telah kedaluwarsa. Silakan lakukan perpanjangan paket agar operasional kasir dapat dilanjutkan.",
     },
     suspended: {
         title: "Akses Layanan Ditangguhkan",
         description:
-            "Lisensi aplikasi saat ini dibekukan sementara oleh sistem pusat. Hubungi tim dukungan untuk bantuan pemulihan akses.",
-    },
-    grace_period: {
-        title: "Masa Tenggang Langganan Berjalan",
-        description:
-            "Masa aktif lisensi telah melewati tanggal jatuh tempo. Segera lakukan perpanjangan agar sistem kasir dan operasional toko tidak terhenti.",
+            "Akses operasional untuk lisensi ini sementara ditangguhkan oleh administrator sistem. Hubungi tim dukungan pelanggan untuk proses pemulihan akses.",
     },
 };
 
-type ViewMode = "info" | "activate";
-
-export function LicenseGateDialog({
-    open,
-    licenseStatus,
-    onActivated,
-}: LicenseGateDialogProps) {
-    const [view, setView] = useState<ViewMode>("info");
+export function LicenseGateDialog({ open, licenseStatus }: LicenseGateDialogProps) {
+    const router = useAppRouter();
     const [isRetrying, setIsRetrying] = useState(false);
 
-    const status = licenseStatus === null ? "network_error" : (licenseStatus.status ?? "not_activated");
-    const msg = STATUS_MESSAGES[status] ?? STATUS_MESSAGES.not_activated;
+    const statusKey: StatusKey =
+        licenseStatus === null
+            ? "network_error"
+            : (licenseStatus.status as StatusKey) ?? "not_activated";
 
-    const isGracePeriod = status === "grace_period";
-    const isSuspended = status === "suspended";
-    const isNetworkError = status === "network_error";
+    const msg = STATUS_MESSAGES[statusKey] ?? STATUS_MESSAGES.not_activated;
+    const isNetworkError = statusKey === "network_error";
+    const isSuspended = statusKey === "suspended";
+    const isGracePeriod = licenseStatus?.is_grace_period === true;
 
-    const handleRetry = async () => {
+    const handleRetry = () => {
         setIsRetrying(true);
-        try {
-            onActivated();
-        } finally {
-            setTimeout(() => setIsRetrying(false), 1000);
-        }
+        // Trigger a full page reload so the login-form re-checks the license
+        window.location.reload();
+    };
+
+    const handleGoToLicense = () => {
+        router.push("/licenses");
     };
 
     return (
         <Dialog open={open} onOpenChange={() => void 0} disablePointerDismissal>
             <DialogContent
                 showCloseButton={false}
-                className="max-w-md p-6 rounded-2xl border border-slate-200/90 shadow-2xl"
+                className="max-w-sm p-0 rounded-3xl border-0 shadow-2xl overflow-hidden bg-transparent"
             >
-                <DialogHeader>
-                    <div className="flex flex-col items-center text-center gap-3">
-                        {/* Status Icon Badge */}
-                        <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-600 flex items-center justify-center shadow-xs">
-                            {isSuspended ? (
-                                <IconShieldX size={24} className="text-rose-600" />
-                            ) : (
-                                <IconAlertTriangle size={24} />
-                            )}
-                        </div>
-
-                        <div>
-                            <DialogTitle className="text-base font-extrabold text-slate-900 tracking-tight">
-                                {msg.title}
-                            </DialogTitle>
-                            <DialogDescription className="text-xs text-slate-500 leading-relaxed mt-1.5 max-w-sm mx-auto">
-                                {msg.description}
-                            </DialogDescription>
-                        </div>
-
-                        {/* Grace period warning strip */}
-                        {isGracePeriod && licenseStatus?.grace_days_remaining && licenseStatus.grace_days_remaining > 0 && (
-                            <div className="w-full rounded-xl bg-amber-50 border border-amber-200/90 px-3.5 py-2 text-center">
-                                <p className="text-xs font-bold text-amber-700">
-                                    ⚠ Tersisa {licenseStatus.grace_days_remaining} hari masa tenggang
-                                </p>
-                            </div>
+                {/* Clean white modal card matching POS design */}
+                <div className="bg-white border border-slate-200/90 rounded-3xl overflow-hidden shadow-2xl">
+                    {/* Top Google One-style accent strip */}
+                    <div
+                        className={cn(
+                            "h-1.5 w-full",
+                            isNetworkError
+                                ? "bg-gradient-to-r from-amber-500 to-orange-500"
+                                : isSuspended || statusKey === "expired"
+                                    ? "bg-gradient-to-r from-rose-500 via-red-500 to-rose-600"
+                                    : "bg-gradient-to-r from-slate-400 to-slate-500"
                         )}
-                    </div>
-                </DialogHeader>
+                    />
 
-                <div className="space-y-3 pt-2">
-                    {/* Suspended: no activate, show contact info */}
-                    {isSuspended ? (
-                        <div className="rounded-xl bg-rose-50 border border-rose-200/80 p-3.5 text-center space-y-1.5">
-                            <p className="text-xs font-bold text-rose-700">
-                                Hubungi Tim Dukungan Mitrasova
-                            </p>
-                            <p className="text-[11px] text-rose-600">
-                                Email:{" "}
-                                <a
-                                    href="mailto:support@mitrasovapos.my.id"
-                                    className="underline font-bold"
+                    <div className="p-6 sm:p-7 space-y-5">
+                        <DialogHeader>
+                            <div className="flex flex-col items-center text-center gap-3.5">
+                                {/* Status Icon */}
+                                <div
+                                    className={cn(
+                                        "w-14 h-14 rounded-2xl flex items-center justify-center shadow-2xs border",
+                                        isNetworkError
+                                            ? "bg-amber-50 border-amber-200 text-amber-600"
+                                            : isSuspended || statusKey === "expired"
+                                                ? "bg-rose-50 border-rose-200 text-rose-600"
+                                                : "bg-slate-100 border-slate-200 text-slate-600"
+                                    )}
                                 >
-                                    support@mitrasovapos.my.id
-                                </a>
-                            </p>
-                        </div>
-                    ) : view === "info" ? (
+                                    {isNetworkError ? (
+                                        <IconWifi size={28} />
+                                    ) : isSuspended ? (
+                                        <IconShieldX size={28} />
+                                    ) : statusKey === "expired" ? (
+                                        <IconAlertTriangle size={28} />
+                                    ) : (
+                                        <IconShieldOff size={28} />
+                                    )}
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <DialogTitle className="text-base font-black text-slate-900 tracking-tight leading-snug">
+                                        {msg.title}
+                                    </DialogTitle>
+                                    <DialogDescription className="text-xs text-slate-500 leading-relaxed max-w-xs mx-auto">
+                                        {msg.description}
+                                    </DialogDescription>
+                                </div>
+
+                                {/* Grace period notice */}
+                                {isGracePeriod && licenseStatus!.grace_days_remaining > 0 && (
+                                    <div className="w-full rounded-2xl bg-amber-50 border border-amber-200 px-4 py-2.5 text-center">
+                                        <p className="text-xs font-bold text-amber-800">
+                                            Masa Tenggang: Tersisa {licenseStatus!.grace_days_remaining} hari sebelum akses operasional dibatasi.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </DialogHeader>
+
+                        {/* Action Buttons */}
                         <div className="space-y-2.5">
-                            {isNetworkError ? (
+                            {/* Primary CTA — navigate to /licenses */}
+                            {!isSuspended && (
                                 <AppButton
-                                    className="w-full h-10 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl gap-2 shadow-xs cursor-pointer"
+                                    className="w-full h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl gap-2 shadow-sm cursor-pointer transition-all"
+                                    onClick={handleGoToLicense}
+                                >
+                                    <span>Kelola Langganan</span>
+                                    <IconArrowRight size={14} />
+                                </AppButton>
+                            )}
+
+                            {/* Network error retry */}
+                            {isNetworkError && (
+                                <AppButton
+                                    className="w-full h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl gap-2 border border-slate-200 cursor-pointer transition-all"
                                     onClick={handleRetry}
                                     disabled={isRetrying}
                                 >
-                                    <IconRefresh size={15} className={isRetrying ? "animate-spin" : ""} />
-                                    {isRetrying ? "Memeriksa Koneksi..." : "Hubungkan Ulang"}
-                                </AppButton>
-                            ) : (
-                                <AppButton
-                                    className="w-full h-10 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl gap-2 shadow-xs cursor-pointer"
-                                    onClick={() => setView("activate")}
-                                >
-                                    <IconKey size={15} />
-                                    <span>
-                                        {status === "not_activated"
-                                            ? "Masukkan Kunci Lisensi"
-                                            : "Aktivasi Kunci Lisensi Baru"}
-                                    </span>
+                                    <IconRefresh size={14} className={isRetrying ? "animate-spin" : ""} />
+                                    {isRetrying ? "Memeriksa Koneksi..." : "Coba Hubungkan Kembali"}
                                 </AppButton>
                             )}
 
-                            <div className="flex items-center justify-between pt-2.5 border-t border-slate-100 text-xs">
-                                <button
-                                    type="button"
-                                    onClick={() => void signOut({ callbackUrl: "/login" })}
-                                    className="flex items-center gap-1.5 text-slate-500 hover:text-rose-600 transition-colors py-1 cursor-pointer font-medium"
-                                >
-                                    <IconLogout size={14} />
-                                    <span>Keluar / Ganti Akun</span>
-                                </button>
-                                <a
-                                    href="mailto:support@mitrasovapos.my.id"
-                                    className="text-[11px] text-emerald-600 hover:underline font-bold"
-                                >
-                                    Bantuan Dukungan
-                                </a>
-                            </div>
+                            {/* Suspended — show support info */}
+                            {isSuspended && (
+                                <div className="rounded-2xl bg-rose-50 border border-rose-200 p-3.5 text-center space-y-1.5">
+                                    <p className="text-xs font-bold text-rose-800">
+                                        Layanan Dukungan Pelanggan
+                                    </p>
+                                    <a
+                                        href="mailto:support@mitrasovapos.my.id"
+                                        className="text-[11px] text-rose-600 hover:text-rose-700 underline font-bold block"
+                                    >
+                                        support@mitrasovapos.my.id
+                                    </a>
+                                </div>
+                            )}
                         </div>
-                    ) : (
-                        <div className="space-y-3">
+
+                        {/* Footer: Logout */}
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
                             <button
                                 type="button"
-                                onClick={() => setView("info")}
-                                className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 transition-colors cursor-pointer"
+                                onClick={() => void signOut({ callbackUrl: "/login" })}
+                                className="flex items-center gap-1.5 text-slate-400 hover:text-rose-600 transition-colors py-1 cursor-pointer font-semibold"
                             >
-                                <IconArrowLeft size={13} />
-                                <span>Kembali ke Informasi</span>
+                                <IconLogout size={13} />
+                                <span>Keluar Akun</span>
                             </button>
-                            <LicenseActivateForm compact onSuccess={onActivated} />
+                            <a
+                                href="mailto:support@mitrasovapos.my.id"
+                                className="text-[11px] text-emerald-600 hover:text-emerald-700 hover:underline font-bold"
+                            >
+                                Pusat Bantuan
+                            </a>
                         </div>
-                    )}
+                    </div>
                 </div>
             </DialogContent>
         </Dialog>

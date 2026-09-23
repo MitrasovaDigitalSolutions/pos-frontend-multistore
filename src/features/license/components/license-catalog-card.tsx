@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 interface LicenseCatalogCardProps {
     addon: CatalogAddon;
     isOwned: boolean;
+    isOperable?: boolean;
     billingView: "monthly" | "annual";
     onOrder: () => void;
 }
@@ -101,6 +102,7 @@ const ADDON_VISUALS: Record<
 export function LicenseCatalogCard({
     addon,
     isOwned,
+    isOperable = true,
     billingView,
     onOrder,
 }: LicenseCatalogCardProps) {
@@ -122,7 +124,9 @@ export function LicenseCatalogCard({
             className={cn(
                 "rounded-xl border p-3.5 sm:p-4 flex flex-col justify-between gap-3.5 transition-all",
                 isOwned
-                    ? "bg-slate-50/40 border-slate-200/90"
+                    ? isOperable
+                        ? "bg-slate-50/40 border-slate-200/90"
+                        : "bg-rose-50/20 border-rose-200/70"
                     : "bg-white border-slate-200 hover:border-emerald-300 hover:shadow-2xs",
             )}
         >
@@ -151,13 +155,23 @@ export function LicenseCatalogCard({
                     </div>
 
                     {isOwned ? (
-                        <Badge
-                            variant="outline"
-                            className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border-emerald-200/90 shrink-0 flex items-center gap-1 shadow-2xs"
-                        >
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                            <span>Terpasang</span>
-                        </Badge>
+                        isOperable ? (
+                            <Badge
+                                variant="outline"
+                                className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border-emerald-200/90 shrink-0 flex items-center gap-1 shadow-2xs"
+                            >
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                <span>Terpasang</span>
+                            </Badge>
+                        ) : (
+                            <Badge
+                                variant="outline"
+                                className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border-rose-200 shrink-0 flex items-center gap-1 shadow-2xs"
+                            >
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                <span>Nonaktif</span>
+                            </Badge>
+                        )
                     ) : (
                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200/60 shrink-0">
                             Tersedia
@@ -188,15 +202,26 @@ export function LicenseCatalogCard({
 
                 <div>
                     {isOwned ? (
-                        <div className="h-7.5 px-3 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 flex items-center gap-1 shadow-2xs">
-                            <IconCheck size={13} strokeWidth={2.5} />
-                            <span>Aktif</span>
-                        </div>
+                        isOperable ? (
+                            <div className="h-7.5 px-3 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 flex items-center gap-1 shadow-2xs">
+                                <IconCheck size={13} strokeWidth={2.5} />
+                                <span>Aktif</span>
+                            </div>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={onOrder}
+                                className="h-7.5 px-2.5 rounded-lg text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 border border-rose-200/80 transition-colors duration-150 flex items-center gap-1 cursor-pointer shadow-2xs"
+                                title="Perpanjang paket langganan untuk mengaktifkan kembali add-on ini"
+                            >
+                                <span>Perlu Perpanjangan</span>
+                            </button>
+                        )
                     ) : (
                         <button
                             type="button"
                             onClick={onOrder}
-                            className="h-7.5 px-3 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 transition-all flex items-center gap-1 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95"
+                            className="h-7.5 px-3 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200/80 border border-emerald-200/80 transition-colors duration-150 flex items-center gap-1 cursor-pointer shadow-2xs"
                         >
                             <IconPlus size={13} strokeWidth={2.5} />
                             <span>Pesan Add-on</span>

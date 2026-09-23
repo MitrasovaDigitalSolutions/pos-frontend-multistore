@@ -5,9 +5,9 @@ import type { LicenseEffectiveStatus } from "../types";
 export const LICENSE_STATUS_LABELS: Record<LicenseEffectiveStatus, string> = {
     active: "Aktif",
     grace_period: "Masa Tenggang",
-    expired: "Kadaluarsa",
-    suspended: "Dibekukan",
-    not_activated: "Belum Diaktivasi",
+    expired: "Kedaluwarsa",
+    suspended: "Ditangguhkan",
+    not_activated: "Belum Diaktifkan",
 };
 
 export const LICENSE_STATUS_BADGE_VARIANTS: Record<
@@ -148,8 +148,18 @@ export const BILLING_PERIOD_LABELS: Record<string, string> = {
 };
 
 export const SUBSCRIPTION_TYPE_LABELS: Record<string, string> = {
-    starter: "Starter POS",
-    standard: "Standard POS",
-    multi_store: "Multi-Store POS",
-    enterprise: "Enterprise POS",
+    monthly: "Langganan Bulanan",
+    annual: "Langganan Tahunan",
+    yearly: "Langganan Tahunan",
+    lifetime: "Lisensi Permanen",
+    trial: "Masa Uji Coba",
 };
+
+export const SUBSCRIPTION_TYPE_BADGE_LABELS: Record<string, string> = {
+    monthly: "Bulanan",
+    annual: "Tahunan",
+    yearly: "Tahunan",
+    lifetime: "Permanen",
+    trial: "Uji Coba",
+};
+

@@ -113,7 +113,7 @@ export function LicenseInvoicesTable({
             },
             {
                 id: "items_count",
-                header: "Layanan",
+                header: "Item Layanan",
                 cell: ({ row }) => {
                     const count = row.original.items?.length ?? 0;
                     return (
@@ -121,14 +121,14 @@ export function LicenseInvoicesTable({
                             variant="secondary"
                             className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200/70"
                         >
-                            {count} Layanan
+                            {count} Item
                         </Badge>
                     );
                 },
             },
             {
                 accessorKey: "payment_method",
-                header: "Metode Bayar",
+                header: "Metode Pembayaran",
                 cell: ({ row }) => {
                     const method = row.original.payment_method;
                     if (method) {
@@ -144,7 +144,7 @@ export function LicenseInvoicesTable({
                     }
                     return (
                         <span className="text-xs text-slate-400 italic">
-                            Belum Dipilih
+                            Menunggu Pembayaran
                         </span>
                     );
                 },
@@ -196,7 +196,7 @@ export function LicenseInvoicesTable({
             },
             {
                 accessorKey: "due_date",
-                header: "Batas Bayar",
+                header: "Jatuh Tempo",
                 cell: ({ row }) => {
                     const inv = row.original;
                     if (inv.status === "paid") {

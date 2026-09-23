@@ -11,6 +11,7 @@ import type { CommandOption } from "@/components/ui/command-select";
 import { IconReceipt, IconShoppingCart } from "@tabler/icons-react";
 import type { CatalogProduct } from "../types";
 import { useLicenseOrder } from "../hooks/use-license-order";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { LicenseOrderAddonItem } from "./order/license-order-addon-item";
 import { LicenseOrderSummary } from "./order/license-order-summary";
 
@@ -53,6 +54,8 @@ export function LicenseOrderDialog({
         displayTotal,
         totalMonthly,
         totalAnnual,
+        displayAddonsTotal,
+        currentBasePrice,
         toggleAddon,
         selectAllAddons,
         clearAllAddons,
@@ -81,7 +84,7 @@ export function LicenseOrderDialog({
                     <div>
                         <div className="flex items-center gap-2">
                             <span className="font-extrabold text-slate-900 text-sm block leading-tight">
-                                Perpanjang Lisensi & Add-on POS
+                                Perpanjangan Lisensi & Add-on POS
                             </span>
                             <Badge
                                 variant="outline"
@@ -91,7 +94,7 @@ export function LicenseOrderDialog({
                             </Badge>
                         </div>
                         <span className="text-[11px] text-slate-400 font-medium block">
-                            Pilih add-on yang ingin Anda aktifkan untuk meningkatkan efisiensi toko
+                            Pilih modul add-on yang ingin diaktifkan untuk mendukung operasional toko
                         </span>
                     </div>
                 </div>
@@ -111,26 +114,55 @@ export function LicenseOrderDialog({
                                     <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/80 space-y-2.5">
                                         <div>
                                             <span className="text-xs font-bold text-slate-800 block">
-                                                Skema Pembayaran
+                                                Periode Penagihan
                                             </span>
                                             <span className="text-[11px] text-slate-400">
-                                                Pilih siklus penagihan lisensi & add-on
+                                                Pilih siklus pembayaran langganan
                                             </span>
                                         </div>
                                         <FormSelect
                                             name="billing_period"
                                             options={BILLING_OPTIONS}
-                                            placeholder="Pilih siklus langganan"
+                                            placeholder="Pilih periode penagihan"
                                             className="bg-white"
                                         />
                                     </div>
 
                                     {/* Base Product Extension Switch */}
-                                    <FormSwitch
-                                        name="include_base_product"
-                                        label="Perpanjang Lisensi Utama POS"
-                                        description="Centang untuk sekaligus memperpanjang lisensi dasar multi-store Anda"
-                                    />
+                                    <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/80">
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="flex-1 min-w-0">
+                                                <FormSwitch
+                                                    name="include_base_product"
+                                                    label={
+                                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                                            <span className="font-semibold text-xs text-slate-800">
+                                                                Perpanjang Paket Utama POS
+                                                            </span>
+                                                            <Badge
+                                                                variant="outline"
+                                                                className="text-[9px] font-mono px-1.5 py-0 bg-white"
+                                                            >
+                                                                {billingPeriod === "annual" ? "+12 Bulan" : "+1 Bulan"}
+                                                            </Badge>
+                                                        </div>
+                                                    }
+                                                    description="Aktifkan untuk sekaligus memperpanjang paket lisensi multi-store Anda"
+                                                    className="border-0 p-0 bg-transparent shadow-none"
+                                                />
+                                            </div>
+                                            {currentBasePrice > 0 && (
+                                                <div className="text-right shrink-0 pt-0.5">
+                                                    <span className="font-bold text-xs text-emerald-700 font-mono block">
+                                                        {formatRupiah(currentBasePrice)}
+                                                    </span>
+                                                    <span className="text-[10px] text-slate-400">
+                                                        /{billingPeriod === "annual" ? "tahun" : "bulan"}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
 
                                     {/* Order Summary & Final Breakdown */}
                                     <LicenseOrderSummary
@@ -140,6 +172,8 @@ export function LicenseOrderDialog({
                                         totalMonthly={totalMonthly}
                                         totalAnnual={totalAnnual}
                                         displayTotal={displayTotal}
+                                        basePrice={currentBasePrice}
+                                        addonsTotal={displayAddonsTotal}
                                     />
                                 </div>
                             </Scrollable>

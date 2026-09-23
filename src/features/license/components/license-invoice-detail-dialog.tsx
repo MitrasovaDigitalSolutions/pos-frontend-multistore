@@ -101,7 +101,7 @@ export function LicenseInvoiceDetailDialog({
                         <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
                             {invoice.status === "paid"
                                 ? "Tanggal Lunas"
-                                : "Batas Pembayaran"}
+                                : "Jatuh Tempo"}
                         </span>
                         <span
                             className={cn(
@@ -125,7 +125,7 @@ export function LicenseInvoiceDetailDialog({
                             Metode Pembayaran
                         </span>
                         <span className="font-semibold text-slate-800 block mt-0.5">
-                            {invoice.payment_method || "Belum dipilih"}
+                            {invoice.payment_method || "Menunggu Pembayaran"}
                         </span>
                     </div>
 
@@ -142,7 +142,7 @@ export function LicenseInvoiceDetailDialog({
                 {/* Itemized Table */}
                 <div className="space-y-1.5">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                        Rincian Add-on & Layanan ({invoice.items?.length ?? 0} Item)
+                        Rincian Item Layanan ({invoice.items?.length ?? 0} Item)
                     </span>
 
                     {invoice.items && invoice.items.length > 0 ? (

@@ -11,6 +11,8 @@ interface LicenseOrderSummaryProps {
     totalMonthly: number;
     totalAnnual: number;
     displayTotal: number;
+    basePrice?: number;
+    addonsTotal?: number;
 }
 
 export function LicenseOrderSummary({
@@ -20,10 +22,12 @@ export function LicenseOrderSummary({
     totalMonthly,
     totalAnnual,
     displayTotal,
+    basePrice = 0,
+    addonsTotal = 0,
 }: LicenseOrderSummaryProps) {
     const isAnnual = billingPeriod === "annual";
     const normalAnnualTotal = totalMonthly * 12;
-    const hasDiscount = isAnnual && selectedCount > 0 && normalAnnualTotal > totalAnnual;
+    const hasDiscount = isAnnual && totalAnnual > 0 && normalAnnualTotal > totalAnnual;
     const discountAmount = hasDiscount ? normalAnnualTotal - totalAnnual : 0;
     const discountPercent = hasDiscount
         ? Math.round((discountAmount / normalAnnualTotal) * 100)
@@ -66,19 +70,28 @@ export function LicenseOrderSummary({
                             </span>
                         </div>
                     </>
-                ) : (
+                ) : null}
+
+                {selectedCount > 0 && (
                     <div className="flex justify-between text-slate-600">
                         <span>Subtotal Add-on</span>
                         <span className="font-bold text-slate-900">
-                            {formatRupiah(displayTotal)}
+                            {formatRupiah(addonsTotal)}
                         </span>
                     </div>
                 )}
 
                 {includeBase && (
-                    <div className="flex justify-between text-emerald-700 font-semibold pt-1 border-t border-slate-200/50">
-                        <span>Lisensi Utama POS</span>
-                        <span>Termasuk</span>
+                    <div className="flex justify-between items-center text-emerald-700 font-semibold pt-1 border-t border-slate-200/50">
+                        <span className="flex items-center gap-1.5">
+                            <span>Lisensi Utama POS</span>
+                            <span className="text-[10px] text-emerald-600/80 font-normal">
+                                ({isAnnual ? "Tahunan" : "Bulanan"})
+                            </span>
+                        </span>
+                        <span>
+                            {basePrice > 0 ? formatRupiah(basePrice) : "Rp 0 (Termasuk)"}
+                        </span>
                     </div>
                 )}
             </div>

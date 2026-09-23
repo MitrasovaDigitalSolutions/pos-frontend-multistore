@@ -20,6 +20,13 @@ import type {
 
 export const licenseApi = {
     getStatus: async (): Promise<LicenseStatus> => {
+        // Hit sync endpoint first before retrieving latest status
+        try {
+            await apiPost<SyncResponse>(ENDPOINTS.LICENSE.SYNC);
+        } catch (syncErr) {
+            console.warn("Auto-sync prior to getStatus failed:", syncErr);
+        }
+
         const response = await apiGet<LicenseStatusResponse>(ENDPOINTS.LICENSE.STATUS);
         return response.data;
     },
@@ -65,12 +72,16 @@ export const licenseApi = {
 
 // ─── React Query Hooks ───────────────────────────────────────────────────────
 
-export function useLicenseStatusQuery(options?: { enabled?: boolean }) {
+export function useLicenseStatusQuery(options?: {
+    enabled?: boolean;
+    refetchOnMount?: boolean | "always";
+}) {
     return useQuery({
         queryKey: queryKeys.license.status(),
         queryFn: () => licenseApi.getStatus(),
         staleTime: 1000 * 60 * 5, // 5 minutes
         enabled: options?.enabled ?? true,
+        refetchOnMount: options?.refetchOnMount,
     });
 }
 
@@ -97,10 +108,10 @@ export function useLicenseActivateMutation() {
         mutationFn: (payload: ActivatePayload) => licenseApi.activate(payload),
         onSuccess: () => {
             void queryClient.invalidateQueries({ queryKey: queryKeys.license.all });
-            toast.success("Lisensi berhasil diaktivasi!");
+            toast.success("Lisensi berhasil diaktifkan.");
         },
         onError: (error: Error) => {
-            toast.error(error.message ?? "Gagal mengaktivasi lisensi.");
+            toast.error(error.message ?? "Gagal mengaktifkan lisensi.");
         },
     });
 }
@@ -130,7 +141,7 @@ export function useLicenseOrderMutation() {
             if (data.payment_url) {
                 window.open(data.payment_url, "_blank");
             }
-            toast.success("Pesanan berhasil dibuat! Lanjutkan ke halaman pembayaran.");
+            toast.success("Pesanan berhasil dibuat. Mengalihkan ke pembayaran...");
         },
         onError: (error: Error) => {
             toast.error(error.message ?? "Gagal membuat pesanan lisensi.");
