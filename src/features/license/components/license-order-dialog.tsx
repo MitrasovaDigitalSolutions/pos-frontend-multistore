@@ -18,7 +18,7 @@ import { LicenseOrderSummary } from "./order/license-order-summary";
 interface LicenseOrderDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    catalog: CatalogProduct[];
+    catalog?: CatalogProduct[];
     productCode?: string;
     initialAddonId?: string;
 }
@@ -40,10 +40,11 @@ const BILLING_OPTIONS: CommandOption[] = [
 export function LicenseOrderDialog({
     open,
     onOpenChange,
-    catalog,
+    catalog = [],
     productCode,
     initialAddonId,
 }: LicenseOrderDialogProps) {
+    const safeCatalog = Array.isArray(catalog) ? catalog : [];
     const {
         methods,
         targetProduct,
@@ -64,7 +65,7 @@ export function LicenseOrderDialog({
     } = useLicenseOrder({
         open,
         onOpenChange,
-        catalog,
+        catalog: safeCatalog,
         productCode,
         initialAddonId,
     });

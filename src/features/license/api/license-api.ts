@@ -1,19 +1,19 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiGet, apiPost } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
+import { apiGet, apiPost } from "@/shared/api/api-client";
 import { ENDPOINTS } from "@/shared/api/endpoints";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type {
-    LicenseStatusResponse,
-    CatalogResponse,
-    InvoicesResponse,
     ActivatePayload,
     ActivateResponse,
-    SyncResponse,
+    CatalogProduct,
+    Invoice,
+    InvoicesResponse,
+    LicenseStatus,
+    LicenseStatusResponse,
     OrderPayload,
     OrderResponse,
-    LicenseStatus,
-    Invoice,
+    SyncResponse
 } from "../types";
 
 // ─── License API Object ──────────────────────────────────────────────────────
@@ -41,9 +41,36 @@ export const licenseApi = {
         return response.data;
     },
 
-    getCatalog: async () => {
-        const response = await apiGet<CatalogResponse>(ENDPOINTS.LICENSE.CATALOG);
-        return response.data;
+    getCatalog: async (): Promise<CatalogProduct[]> => {
+        try {
+            const response = await apiGet<unknown>(ENDPOINTS.LICENSE.CATALOG);
+            if (Array.isArray(response)) {
+                return response as CatalogProduct[];
+            }
+            if (
+                response &&
+                typeof response === "object" &&
+                "data" in response
+            ) {
+                const data = (response as { data: unknown }).data;
+                if (Array.isArray(data)) {
+                    return data as CatalogProduct[];
+                }
+                if (data && typeof data === "object") {
+                    const record = data as Record<string, unknown>;
+                    if (Array.isArray(record.products)) {
+                        return record.products as CatalogProduct[];
+                    }
+                    if (Array.isArray(record.catalog)) {
+                        return record.catalog as CatalogProduct[];
+                    }
+                }
+            }
+            return [];
+        } catch (error) {
+            console.warn("Failed to fetch license catalog:", error);
+            return [];
+        }
     },
 
     getInvoices: async (): Promise<Invoice[]> => {

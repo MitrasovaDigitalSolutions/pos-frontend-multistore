@@ -10,16 +10,17 @@ import { useLicenseCatalog } from "../hooks/use-license-catalog";
 import { cn } from "@/lib/utils";
 
 interface LicenseCatalogSectionProps {
-    catalog: CatalogProduct[];
+    catalog?: CatalogProduct[];
     activeAddons: string[];
     isOperable?: boolean;
 }
 
 export function LicenseCatalogSection({
-    catalog,
+    catalog = [],
     activeAddons,
     isOperable = true,
 }: LicenseCatalogSectionProps) {
+    const safeCatalog = Array.isArray(catalog) ? catalog : [];
     const {
         posProduct,
         addons,
@@ -30,7 +31,7 @@ export function LicenseCatalogSection({
         selectedProductCode,
         selectedAddonId,
         openOrder,
-    } = useLicenseCatalog(catalog);
+    } = useLicenseCatalog(safeCatalog);
 
     if (!posProduct) {
         return (

@@ -66,9 +66,9 @@ export function LicenseStandalonePage() {
         return null;
     }
 
-    const invoiceList = invoices ?? [];
+    const invoiceList = Array.isArray(invoices) ? invoices : [];
     const activeAddons = status?.active_addons ?? [];
-    const catalogList = catalog ?? [];
+    const catalogList = Array.isArray(catalog) ? catalog : [];
 
     const handleActivated = () => {
         // After activation, switch to the status tab to see the result

@@ -11,7 +11,7 @@ import { useLicenseOrderMutation } from "../api/license-api";
 interface UseLicenseOrderParams {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    catalog: CatalogProduct[];
+    catalog?: CatalogProduct[];
     productCode?: string;
     initialAddonId?: string;
 }
@@ -19,15 +19,16 @@ interface UseLicenseOrderParams {
 export function useLicenseOrder({
     open,
     onOpenChange,
-    catalog,
+    catalog = [],
     productCode,
     initialAddonId,
 }: UseLicenseOrderParams) {
+    const safeCatalog = Array.isArray(catalog) ? catalog : [];
     const { mutate, isPending } = useLicenseOrderMutation();
 
     const targetProduct = productCode
-        ? catalog.find((p) => p.code.toLowerCase() === productCode.toLowerCase())
-        : catalog[0];
+        ? safeCatalog.find((p) => p?.code?.toLowerCase() === productCode.toLowerCase())
+        : safeCatalog[0];
 
     const methods = useForm<OrderLicenseInput>({
         resolver: zodResolver(orderLicenseSchema),

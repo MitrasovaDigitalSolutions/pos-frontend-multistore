@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import type { CatalogProduct } from "../types";
 
-export function useLicenseCatalog(catalog: CatalogProduct[]) {
+export function useLicenseCatalog(catalog: CatalogProduct[] = []) {
     const [orderOpen, setOrderOpen] = useState(false);
     const [selectedProductCode, setSelectedProductCode] = useState<string | undefined>();
     const [selectedAddonId, setSelectedAddonId] = useState<string | undefined>();
@@ -9,12 +9,13 @@ export function useLicenseCatalog(catalog: CatalogProduct[]) {
 
     // Only select the POS product
     const posProduct = useMemo(() => {
+        const safeCatalog = Array.isArray(catalog) ? catalog : [];
         return (
-            catalog.find(
+            safeCatalog.find(
                 (p) =>
-                    p.code.toLowerCase() === "pos" ||
-                    p.nama.toLowerCase().includes("pos"),
-            ) ?? catalog[0]
+                    p?.code?.toLowerCase() === "pos" ||
+                    p?.nama?.toLowerCase().includes("pos"),
+            ) ?? safeCatalog[0]
         );
     }, [catalog]);
 
