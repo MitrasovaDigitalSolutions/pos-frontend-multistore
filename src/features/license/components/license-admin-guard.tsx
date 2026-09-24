@@ -68,7 +68,7 @@ export function LicenseAdminGuard({ children }: LicenseAdminGuardProps) {
             const userAddons = status.active_addons ?? [];
             if (!userAddons.includes(matchedAddon.addon)) {
                 toast.error(
-                    `Modul ${matchedAddon.label} belum aktif pada paket langganan Anda. Silakan aktifkan modul di halaman Kelola Langganan.`
+                    `Add-on ${matchedAddon.label} belum aktif pada paket langganan Anda. Silakan aktifkan add-on di halaman Kelola Langganan.`
                 );
                 router.replace("/admin");
             }

@@ -5,8 +5,8 @@ import { z } from "zod";
 export const activateLicenseSchema = z.object({
     license_key: z
         .string()
-        .min(6, "Kunci lisensi minimal 6 karakter")
-        .max(64, "Kunci lisensi maksimal 64 karakter")
+        .min(6, "License key minimal 6 karakter")
+        .max(64, "License key maksimal 64 karakter")
         .trim(),
     instance_name: z.string().max(100).optional().or(z.literal("")),
 });

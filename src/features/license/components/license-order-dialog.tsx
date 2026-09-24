@@ -104,7 +104,7 @@ export function LicenseOrderDialog({
                             </Badge>
                         </div>
                         <span className="text-[11px] text-slate-400 font-medium block">
-                            Pilih modul add-on yang ingin diaktifkan untuk mendukung operasional toko
+                            Pilih add-on yang ingin diaktifkan untuk mendukung operasional toko
                         </span>
                     </div>
                 </div>

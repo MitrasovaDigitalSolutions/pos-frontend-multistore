@@ -96,8 +96,8 @@ export function AddonGuard({
     }
 
     const addonInfo = ADDON_DETAILS[addon] || {
-        title: title || `Modul ${addon}`,
-        description: description || "Fitur ini memerlukan modul add-on tambahan pada paket lisensi Anda.",
+        title: title || `Add-on ${addon}`,
+        description: description || "Fitur ini memerlukan add-on tambahan pada paket langganan Anda.",
     };
 
     const finalTitle = title || addonInfo.title;

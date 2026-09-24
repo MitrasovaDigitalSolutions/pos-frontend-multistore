@@ -20,6 +20,7 @@ import { LicenseAddonsTab } from "./license-addons-tab";
 import { LicenseCatalogSection } from "./license-catalog-section";
 import { LicenseInvoicesTable } from "./license-invoices-table";
 import { LicenseOrderDialog } from "./license-order-dialog";
+import { LicenseKeyMaskedChip } from "./license-key-masked-chip";
 import { AppButton } from "@/components/shared/app-button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -87,9 +88,9 @@ export function LicenseStandalonePage() {
     const tabs: TabDef[] = [
         { id: "status",   label: "Ringkasan",        icon: IconShieldCheck },
         { id: "catalog",  label: "Paket & Add-on",   icon: IconPackage     },
-        { id: "addons",   label: isOperable ? "Add-on Aktif" : "Modul Add-on", icon: IconShoppingCart },
+        { id: "addons",   label: isOperable ? "Add-on Aktif" : "Add-on", icon: IconShoppingCart },
         { id: "invoices", label: "Riwayat Tagihan",  icon: IconFileInvoice  },
-        { id: "activate", label: "Aktivasi Lisensi", icon: IconKey         },
+        { id: "activate", label: "Aktivasi License", icon: IconKey         },
     ];
 
     return (
@@ -242,10 +243,10 @@ export function LicenseStandalonePage() {
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                         <div>
                                             <h3 className="text-sm font-extrabold text-slate-900">
-                                                Ringkasan Status Langganan
+                                                Summary Subscription
                                             </h3>
                                             <p className="text-[11px] text-slate-500 mt-0.5">
-                                                Informasi masa berlaku paket, lisensi, dan modul operasional toko Anda
+                                                Informasi masa aktif paket, license key, dan add-on toko Anda
                                             </p>
                                         </div>
                                         {!isOperable && status && (
@@ -268,14 +269,14 @@ export function LicenseStandalonePage() {
                                                 <div>
                                                     <div className="flex items-center gap-2">
                                                         <h4 className="text-xs font-bold text-rose-900 uppercase tracking-wide">
-                                                            Masa Langganan Kedaluwarsa — Layanan Dinonaktifkan
+                                                            Masa Langganan Berakhir
                                                         </h4>
                                                         <Badge variant="outline" className="text-[9px] font-bold bg-rose-100 text-rose-700 border-rose-200">
                                                             Perlu Tindakan
                                                         </Badge>
                                                     </div>
                                                     <p className="text-[11px] text-rose-700/80 mt-0.5 leading-relaxed">
-                                                        Akses kasir POS dan seluruh modul add-on ({activeAddons.length} modul terpasang) saat ini terkunci. Perpanjang paket sekarang untuk memulihkan kembali operasional toko Anda.
+                                                        Akses kasir POS dan {activeAddons.length} add-on terpasang saat ini nonaktif. Perpanjang langganan sekarang untuk melanjutkan operasional toko Anda.
                                                     </p>
                                                 </div>
                                             </div>
@@ -321,9 +322,9 @@ export function LicenseStandalonePage() {
                                                         : "emerald"
                                                 }
                                             />
-                                            {/* Stat: Kunci Lisensi */}
+                                            {/* Stat: License Key */}
                                             <StatCard
-                                                label="Kunci Lisensi"
+                                                label="License Key"
                                                 value={
                                                     status.license_key
                                                         ? isOperable
@@ -332,11 +333,18 @@ export function LicenseStandalonePage() {
                                                         : "Belum Diaktifkan"
                                                 }
                                                 sub={
-                                                    status.license_key
-                                                        ? isOperable
-                                                            ? status.license_key.substring(0, 16) + "..."
-                                                            : "Perlu perpanjangan lisensi"
-                                                        : "Belum diaktifkan"
+                                                    status.license_key ? (
+                                                        isOperable ? (
+                                                            <LicenseKeyMaskedChip
+                                                                licenseKey={status.license_key}
+                                                                variant="compact"
+                                                            />
+                                                        ) : (
+                                                            "Perlu perpanjangan lisensi"
+                                                        )
+                                                    ) : (
+                                                        "Belum diaktifkan"
+                                                    )
                                                 }
                                                 accent={status.license_key ? (isOperable ? "emerald" : "rose") : "slate"}
                                             />
@@ -361,18 +369,18 @@ export function LicenseStandalonePage() {
                                             />
                                             {/* Stat: Add-on */}
                                             <StatCard
-                                                label="Status Modul Add-on"
+                                                label="Add-on Aktif"
                                                 value={
                                                     isOperable
-                                                        ? `${activeAddons.length} Modul Aktif`
-                                                        : `${activeAddons.length} Modul Dinonaktifkan`
+                                                        ? `${activeAddons.length} Add-on Aktif`
+                                                        : `${activeAddons.length} Add-on Nonaktif`
                                                 }
                                                 sub={
                                                     !isOperable
                                                         ? "Terkunci — paket utama kedaluwarsa"
                                                         : activeAddons.length > 0
-                                                            ? "Semua modul operasional aktif"
-                                                            : "Belum ada add-on"
+                                                            ? "Semua add-on siap digunakan"
+                                                            : "Belum ada add-on terpasang"
                                                 }
                                                 accent={isOperable ? "emerald" : "rose"}
                                             />
@@ -429,10 +437,10 @@ export function LicenseStandalonePage() {
                                 <div className="max-w-md mx-auto py-1">
                                     <div className="mb-4 space-y-1">
                                         <h3 className="text-sm font-extrabold text-slate-800">
-                                            Aktivasi Lisensi POS
+                                            Aktivasi License Key POS
                                         </h3>
                                         <p className="text-xs text-slate-500 leading-relaxed">
-                                            Masukkan kunci lisensi resmi yang Anda terima saat pembelian paket atau perpanjangan langganan.
+                                            Masukkan License Key resmi yang Anda terima saat pembelian paket atau perpanjangan langganan.
                                         </p>
                                     </div>
                                     <LicenseActivateForm
@@ -443,10 +451,10 @@ export function LicenseStandalonePage() {
                                     {/* Info callout */}
                                     <div className="mt-4 rounded-xl border border-slate-200/80 bg-slate-50 p-3.5 text-xs text-slate-600 space-y-1">
                                         <p className="font-extrabold text-slate-800 text-[11px]">
-                                            Panduan Kunci Lisensi
+                                            Informasi License Key
                                         </p>
                                         <p className="leading-relaxed text-slate-500 text-[11px]">
-                                            Kunci lisensi diterbitkan secara otomatis setelah konfirmasi pembayaran paket langganan. Hubungi tim dukungan pelanggan melalui{" "}
+                                            License Key diterbitkan secara otomatis setelah verifikasi pembayaran paket langganan. Hubungi tim dukungan pelanggan melalui{" "}
                                             <a
                                                 href="mailto:support@mitrasovapos.my.id"
                                                 className="text-emerald-600 font-bold underline hover:text-emerald-700"
@@ -494,7 +502,7 @@ export function LicenseStandalonePage() {
 interface StatCardProps {
     label: string;
     value: string;
-    sub: string;
+    sub: React.ReactNode;
     accent: "emerald" | "amber" | "rose" | "blue" | "slate";
 }
 
@@ -522,7 +530,7 @@ function StatCard({ label, value, sub, accent }: StatCardProps) {
                 <div className={cn("w-1.5 h-1.5 rounded-full", cls.dot)} />
             </div>
             <p className={cn("text-sm font-black tracking-tight", cls.text)}>{value}</p>
-            <p className="text-[10px] text-slate-500 font-medium truncate">{sub}</p>
+            <div className="text-[10px] text-slate-500 font-medium truncate">{sub}</div>
         </div>
     );
 }
