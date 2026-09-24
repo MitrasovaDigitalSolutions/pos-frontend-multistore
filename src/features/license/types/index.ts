@@ -129,6 +129,53 @@ export interface SyncResponse {
     data: LicenseStatus;
 }
 
+// ─── Coupons & Cloud Server ──────────────────────────────────────────────────
+
+export interface CouponCheckPayload {
+    coupon_code: string;
+    billing_period: BillingPeriod;
+    include_base_product?: boolean;
+    include_server?: boolean;
+    server_package_id?: string;
+    addon_ids?: string[];
+}
+
+export interface CouponCheckResult {
+    code: string;
+    name?: string;
+    discount_type?: "percentage" | "fixed" | string;
+    discount_value?: number;
+    max_discount_amount?: number | null;
+    discount_amount: number;
+    subtotal?: number;
+    final_amount?: number;
+    description?: string;
+}
+
+export interface CouponCheckResponse {
+    status: "success" | "error";
+    message: string;
+    data: CouponCheckResult;
+}
+
+export interface ServerPackage {
+    id: string;
+    nama: string;
+    code?: string;
+    description?: string;
+    cpu_cores?: number;
+    ram_gb?: number;
+    storage_gb?: number;
+    harga_bulanan: number;
+    harga_tahunan: number;
+    is_active?: boolean;
+}
+
+export interface InvoiceFilterParams {
+    status?: "unpaid" | "paid" | "cancelled" | "expired" | string;
+    year?: number;
+}
+
 // ─── Orders ──────────────────────────────────────────────────────────────────
 
 export type BillingPeriod = "monthly" | "annual";
@@ -137,6 +184,9 @@ export interface OrderPayload {
     billing_period: BillingPeriod;
     include_base_product?: boolean;
     addon_ids?: string[];
+    coupon_code?: string;
+    include_server?: boolean;
+    server_package_id?: string;
 }
 
 export interface OrderResult {

@@ -1,21 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { IconChevronLeft, IconLogout, IconShield } from "@tabler/icons-react";
+import { IconLayoutDashboard, IconLogout, IconShield } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { signOut } from "@/lib/auth-helpers";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useLicenseStatusQuery } from "../api/license-api";
 
 interface LicenseTopNavProps {
     showBackToDashboard?: boolean;
 }
 
-export function LicenseTopNav({ showBackToDashboard = false }: LicenseTopNavProps) {
+export function LicenseTopNav({ showBackToDashboard }: LicenseTopNavProps) {
     const { data: session } = useSession();
     const router = useAppRouter();
     const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+    const { data: licenseStatus } = useLicenseStatusQuery();
+    const isOperable = Boolean(
+        licenseStatus?.can_operate &&
+        (licenseStatus?.status === "active" || licenseStatus?.is_grace_period)
+    );
+
+    const canGoToDashboard = showBackToDashboard !== undefined ? showBackToDashboard : isOperable;
 
     const userName = session?.user?.name ?? session?.user?.email ?? "Admin";
 
@@ -53,14 +62,14 @@ export function LicenseTopNav({ showBackToDashboard = false }: LicenseTopNavProp
                         </div>
 
                         {/* Back to Dashboard — only renders when license is active and valid */}
-                        {showBackToDashboard && (
+                        {canGoToDashboard && (
                             <button
                                 type="button"
                                 onClick={() => router.push("/admin")}
-                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200/80 active:bg-slate-200 border border-slate-200/80 text-slate-700 transition-colors duration-150 cursor-pointer text-xs font-bold"
+                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 active:bg-slate-200/80 border border-slate-200/80 text-slate-700 hover:text-slate-900 transition-colors duration-150 cursor-pointer text-xs font-bold"
                             >
-                                <IconChevronLeft size={13} />
-                                <span className="hidden sm:inline">Dashboard</span>
+                                <IconLayoutDashboard size={13} />
+                                <span>Dashboard Admin</span>
                             </button>
                         )}
 

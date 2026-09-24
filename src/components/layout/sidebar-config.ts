@@ -179,6 +179,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
             {
                 label: "Transfer Stok",
                 icon: IconArrowsLeftRight,
+                addon: "multi_store",
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") ||
                     hasPermission(roles, permissions, "view_stock_transfers") ||
@@ -524,7 +525,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 label: "Laporan Konsolidasi",
                 path: ROUTES.ADMIN_REPORTS_CENTRAL,
                 icon: IconChartBar,
-                addon: "reports",
+                addon: "multi_store",
                 permission: (roles) => hasRole(roles, "admin"),
             },
             {

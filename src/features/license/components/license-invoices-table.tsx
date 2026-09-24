@@ -1,27 +1,44 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { FormProvider, useForm } from "react-hook-form";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable, DataTableActionButton } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
+import { FormSelect } from "@/components/forms/form-select";
+import type { CommandOption } from "@/components/ui/command-select";
 import {
     IconBuildingBank,
     IconCheck,
     IconClock,
     IconDownload,
     IconFileInvoice,
+    IconFilter,
     IconReceipt,
 } from "@tabler/icons-react";
-import type { Invoice } from "../types";
+import type { Invoice, InvoiceFilterParams } from "../types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { formatDate } from "@/lib/date-utils";
 import { useLicenseInvoices } from "../hooks/use-license-invoices";
 import { LicenseInvoiceDetailDialog } from "./license-invoice-detail-dialog";
 import { cn } from "@/lib/utils";
 
+interface InvoiceFilterFormValues {
+    status: string;
+}
+
+const STATUS_FILTER_OPTIONS: CommandOption[] = [
+    { value: "all", label: "Semua Status" },
+    { value: "paid", label: "Lunas (Paid)" },
+    { value: "unpaid", label: "Menunggu Pembayaran (Unpaid)" },
+    { value: "cancelled", label: "Dibatalkan (Cancelled)" },
+];
+
 interface LicenseInvoicesTableProps {
     invoices: Invoice[];
     isLoading?: boolean;
+    filters?: InvoiceFilterParams;
+    onFilterChange?: (filters: InvoiceFilterParams) => void;
 }
 
 const STATUS_BADGE: Record<
@@ -57,6 +74,8 @@ const STATUS_LABELS: Record<string, string> = {
 export function LicenseInvoicesTable({
     invoices,
     isLoading = false,
+    filters,
+    onFilterChange,
 }: LicenseInvoicesTableProps) {
     const {
         stats,
@@ -65,6 +84,36 @@ export function LicenseInvoicesTable({
         downloadingId,
         handleDownloadPdf,
     } = useLicenseInvoices(invoices);
+
+    const filterMethods = useForm<InvoiceFilterFormValues>({
+        defaultValues: {
+            status: filters?.status || "all",
+        },
+    });
+
+    const { setValue, reset } = filterMethods;
+
+    useEffect(() => {
+        reset({
+            status: filters?.status || "all",
+        });
+    }, [filters?.status, reset]);
+
+    const handleStatusChange = (val: string) => {
+        setValue("status", val);
+        onFilterChange?.({
+            ...filters,
+            status: val === "all" ? undefined : val,
+        });
+    };
+
+    const handleReset = () => {
+        reset({ status: "all" });
+        onFilterChange?.({
+            ...filters,
+            status: undefined,
+        });
+    };
 
     // Columns configuration for DataTable
     const columns: ColumnDef<Invoice, unknown>[] = useMemo(
@@ -274,6 +323,39 @@ export function LicenseInvoicesTable({
                     </div>
                 )}
             </div>
+
+            {/* Filter Bar: Status & Tahun via Reusable FormSelect */}
+            <FormProvider {...filterMethods}>
+                <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-slate-50/80 border border-slate-200/70 text-xs">
+                    <div className="flex items-center gap-2.5 flex-wrap flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 text-slate-500 font-semibold shrink-0">
+                            <IconFilter size={14} className="text-slate-400" />
+                            <span>Filter Status:</span>
+                        </div>
+
+                        {/* Status Dropdown via FormSelect */}
+                        <div className="w-64 min-w-[210px]">
+                            <FormSelect<InvoiceFilterFormValues>
+                                name="status"
+                                options={STATUS_FILTER_OPTIONS}
+                                placeholder="Semua Status"
+                                size="sm"
+                                onChange={handleStatusChange}
+                            />
+                        </div>
+                    </div>
+
+                    {filters?.status && (
+                        <button
+                            type="button"
+                            onClick={handleReset}
+                            className="text-[11px] font-bold text-slate-400 hover:text-slate-600 hover:underline cursor-pointer shrink-0"
+                        >
+                            Reset Filter
+                        </button>
+                    )}
+                </div>
+            </FormProvider>
 
             {/* Reusable DataTable Component */}
             <DataTable

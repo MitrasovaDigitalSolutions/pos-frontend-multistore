@@ -21,6 +21,26 @@ export const LICENSE_STATUS_BADGE_VARIANTS: Record<
     not_activated: "slate",
 };
 
+export const LICENSE_ADDON_CODES = {
+    PURCHASING: "purchasing",
+    DEBTS: "debts",
+    EXPENSES: "expenses",
+    MEMBERS: "members",
+    STOCK_OPNAME: "stock_opname",
+    REPORTS: "reports",
+    ACCOUNTING: "accounting",
+    CONSIGNMENT: "consignment",
+    PRODUCTION: "production",
+    ASSETS: "assets",
+    MULTI_STORE: "multi_store",
+    KDS: "kds",
+    TABLE_MGMT: "table_mgmt",
+    RESERVATION: "reservation",
+} as const;
+
+export type LicenseAddonCode =
+    (typeof LICENSE_ADDON_CODES)[keyof typeof LICENSE_ADDON_CODES];
+
 /** Addon code → menu/feature label mapping (matches active_addons from status endpoint) */
 export const ADDON_LABELS: Record<string, string> = {
     purchasing: "Pembelian & Supplier",
@@ -33,6 +53,7 @@ export const ADDON_LABELS: Record<string, string> = {
     consignment: "Konsinyasi (Barang Titipan)",
     production: "Produksi & Manufaktur (BOM)",
     assets: "Manajemen Aset & Depresiasi",
+    multi_store: "Multi-Store & Cabang",
     // Resto addons
     kds: "Kitchen Display System (KDS Pro)",
     table_mgmt: "Table & Floor Management",
@@ -107,6 +128,12 @@ export const ADDON_METADATA: Record<string, AddonMetadata> = {
         description: "Inventarisasi Aset Tetap, Jadwal & Perhitungan Penyusutan Berkala (Garis Lurus), Pelepasan/Penjualan Aset, Auto Jurnal Depresiasi ke Neraca/Laba Rugi.",
         menuPaths: ["Keuangan → Aset", "Admin → Keuangan & Aset (Kategori Aset)"],
     },
+    multi_store: {
+        code: "multi_store",
+        nama: "Multi-Store & Cabang",
+        description: "Pengelolaan cabang toko tak terbatas, transfer stok antar cabang, request transfer, dan laporan konsolidasi pusat.",
+        menuPaths: ["Admin → Kelola Toko", "Inventori → Transfer Stok", "Admin → Laporan Konsolidasi"],
+    },
     // Resto addons
     kds: {
         code: "kds",
@@ -140,6 +167,7 @@ export const ADDON_SECTION: Record<string, string> = {
     consignment: "Transaksi → Konsinyasi",
     production: "Inventori → Manufaktur",
     assets: "Keuangan → Aset",
+    multi_store: "Inventori → Transfer Stok",
 };
 
 export const BILLING_PERIOD_LABELS: Record<string, string> = {

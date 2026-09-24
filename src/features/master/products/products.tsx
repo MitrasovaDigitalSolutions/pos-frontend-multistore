@@ -11,6 +11,7 @@ import { ProductFormDialog } from "./components/product-form-dialog";
 import { ProductStoreDialog } from "./components/product-store-dialog";
 import { CatalogMatchDialog } from "./components/catalog-match-dialog";
 import { StoreProductEditDialog } from "./components/store-product-edit-dialog";
+import { ProductAdjustmentDialog } from "./components/product-adjustment-dialog";
 import { productSchema, type ProductInput } from "./schemas/product-schema";
 import type { Product } from "./types";
 import { useCategories } from "@/features/master/categories/api/categories-api";
@@ -157,6 +158,9 @@ export function Products() {
   const [isStoreDialogOpen, setIsStoreDialogOpen] = useState(false);
   const [managingProduct, setManagingProduct] = useState<Product | null>(null);
 
+  const [isAdjustmentOpen, setIsAdjustmentOpen] = useState(false);
+  const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
+
   const dialogMethods = useForm<ProductInput>({
     resolver: zodResolver(productSchema) as Resolver<ProductInput>,
     defaultValues: {
@@ -266,6 +270,10 @@ export function Products() {
           onPageChange={setPage}
           onPerPageChange={setPerPage}
           onEdit={handleEdit}
+          onAdjustmentClick={(p) => {
+            setAdjustingProduct(p);
+            setIsAdjustmentOpen(true);
+          }}
           onManageStores={(p) => {
             setManagingProduct(p);
             setIsStoreDialogOpen(true);
@@ -355,6 +363,12 @@ export function Products() {
         open={isStoreDialogOpen}
         onOpenChange={setIsStoreDialogOpen}
         product={managingProduct}
+      />
+
+      <ProductAdjustmentDialog
+        open={isAdjustmentOpen}
+        onOpenChange={setIsAdjustmentOpen}
+        product={adjustingProduct}
       />
 
       {/* Tutorial Controller for Master Produk */}

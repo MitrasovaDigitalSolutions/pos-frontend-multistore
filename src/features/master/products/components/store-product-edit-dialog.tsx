@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ProductBarcodeDialog } from "@/components/shared/product-barcode-dialog";
 import { getImageUrl } from "@/lib/utils";
 import { useActiveStoreStore } from "@/stores/active-store-store";
-import { IconBarcode, IconCheck, IconInfoCircle, IconLoader2, IconPackage, IconTag, IconTrendingUp } from "@tabler/icons-react";
+import { IconActivity, IconBarcode, IconCheck, IconLoader2, IconPackage, IconTag, IconTrendingUp } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ import { useUpdateProductStore } from "../api/product-store-api";
 import { useToggleProductStatus } from "../api/products-api";
 import type { Product } from "../types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { ProductAdjustmentDialog } from "./product-adjustment-dialog";
 
 interface StoreProductEditDialogProps {
     open: boolean;
@@ -45,6 +46,7 @@ export function StoreProductEditDialog({
     const activeStoreUid = useActiveStoreStore((s) => s.activeStoreUid);
     const updateProductStore = useUpdateProductStore();
     const [barcodeModalOpen, setBarcodeModalOpen] = useState(false);
+    const [isAdjustmentOpen, setIsAdjustmentOpen] = useState(false);
 
     const methods = useForm<StoreProductEditFormValues>({
         defaultValues: {
@@ -320,12 +322,24 @@ export function StoreProductEditDialog({
                                         </div>
                                     </div>
 
-                                    {/* Info Banner on Stock Management (Rata Kiri, Icon & Teks Sejajar Presisi) */}
-                                    <div className="px-2.5 py-1.5 bg-white border border-slate-200/70 rounded-lg text-[10px] text-slate-500 flex items-center gap-1.5">
-                                        <IconInfoCircle size={13} className="text-slate-400 shrink-0" />
-                                        <span className="leading-none translate-y-[1px]">
-                                            Stok fisik diubah via <strong className="font-semibold text-slate-700">Penerimaan / Opname Stok</strong>.
-                                        </span>
+                                    {/* Stock Info with Quick Adjustment Action */}
+                                    <div className="p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                            <IconPackage size={15} className="text-slate-500 shrink-0" />
+                                            <span className="text-[11px] text-slate-600 truncate">
+                                                Stok Toko: <strong className="font-bold text-slate-900 font-mono">{product.stok ?? 0} {product.unit?.simbol || product.satuan || ""}</strong>
+                                            </span>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => setIsAdjustmentOpen(true)}
+                                            className="h-7 px-2.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800 border-emerald-200/80 rounded-lg gap-1 shrink-0 cursor-pointer"
+                                        >
+                                            <IconActivity size={13} />
+                                            <span>Adjustment Qty</span>
+                                        </Button>
                                     </div>
                                 </div>
                             )}
@@ -468,6 +482,16 @@ export function StoreProductEditDialog({
                     categoryName={product.category?.nama}
                 />
             )}
+
+            {/* Product Stock Adjustment Dialog */}
+            <ProductAdjustmentDialog
+                open={isAdjustmentOpen}
+                onOpenChange={setIsAdjustmentOpen}
+                product={product}
+                onSuccess={() => {
+                    onOpenChange(false);
+                }}
+            />
         </BaseDialog>
     );
 }

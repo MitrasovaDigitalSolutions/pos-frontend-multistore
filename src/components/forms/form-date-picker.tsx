@@ -2,6 +2,9 @@
 
 import { useFormContext, Controller, type FieldPath, type FieldValues, type FieldError, type FieldErrors } from "react-hook-form";
 import { DatePicker } from "@/components/ui/date-picker";
+import { YearPicker } from "@/components/ui/year-picker";
+
+export { FormYearPicker } from "./form-year-picker";
 
 interface FormDatePickerProps<T extends FieldValues> {
     name: FieldPath<T>;
@@ -17,6 +20,10 @@ interface FormDatePickerProps<T extends FieldValues> {
     startMonth?: Date;
     endMonth?: Date;
     reverseYears?: boolean;
+    mode?: "date" | "year";
+    minYear?: number;
+    maxYear?: number;
+    onChange?: (val: string | number | null) => void;
 }
 
 export function FormDatePicker<T extends FieldValues>({
@@ -33,6 +40,10 @@ export function FormDatePicker<T extends FieldValues>({
     startMonth,
     endMonth,
     reverseYears,
+    mode = "date",
+    minYear,
+    maxYear,
+    onChange: customOnChange,
 }: FormDatePickerProps<T>) {
     const {
         control,
@@ -62,25 +73,49 @@ export function FormDatePicker<T extends FieldValues>({
         <Controller
             name={name}
             control={control}
-            render={({ field }) => (
-                <DatePicker
-                    value={field.value}
-                    onChange={field.onChange}
-                    placeholder={placeholder}
-                    disabled={disabled}
-                    className={className}
-                    buttonClassName={buttonClassName}
-                    wrapperClassName={wrapperClassName}
-                    error={error?.message}
-                    label={label}
-                    clearable={clearable}
-                    size={size}
-                    captionLayout={captionLayout}
-                    startMonth={startMonth}
-                    endMonth={endMonth}
-                    reverseYears={reverseYears}
-                />
-            )}
+            render={({ field }) =>
+                mode === "year" ? (
+                    <YearPicker
+                        value={field.value}
+                        onChange={(val) => {
+                            field.onChange(val);
+                            customOnChange?.(val);
+                        }}
+                        placeholder={placeholder || "Semua Tahun"}
+                        disabled={disabled}
+                        className={className}
+                        buttonClassName={buttonClassName}
+                        wrapperClassName={wrapperClassName}
+                        error={error?.message}
+                        label={label}
+                        clearable={clearable}
+                        size={size}
+                        minYear={minYear}
+                        maxYear={maxYear}
+                    />
+                ) : (
+                    <DatePicker
+                        value={field.value}
+                        onChange={(val) => {
+                            field.onChange(val);
+                            customOnChange?.(val);
+                        }}
+                        placeholder={placeholder}
+                        disabled={disabled}
+                        className={className}
+                        buttonClassName={buttonClassName}
+                        wrapperClassName={wrapperClassName}
+                        error={error?.message}
+                        label={label}
+                        clearable={clearable}
+                        size={size}
+                        captionLayout={captionLayout}
+                        startMonth={startMonth}
+                        endMonth={endMonth}
+                        reverseYears={reverseYears}
+                    />
+                )
+            }
         />
     );
 }
