@@ -3,17 +3,12 @@
 import {
     IconAlertTriangle,
     IconCalendarOff,
-    IconCheck,
     IconClock,
-    IconCopy,
-    IconLayersLinked,
     IconShieldCheck,
     IconShieldOff,
     IconShieldX,
     IconSparkles,
 } from "@tabler/icons-react";
-import { useState } from "react";
-import { toast } from "sonner";
 import { motion } from "framer-motion";
 import type { LicenseStatus } from "../types";
 import { getLicenseTimeMetrics } from "../utils/license-time";
@@ -23,6 +18,7 @@ import {
 } from "../constants/license-constants";
 import { formatDate } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
+import { LicenseKeyMaskedChip } from "./license-key-masked-chip";
 
 interface LicenseHeroCardProps {
     data: LicenseStatus;
@@ -35,19 +31,9 @@ export function LicenseHeroCard({
     onRenewClick,
     onActivateClick,
 }: LicenseHeroCardProps) {
-    const [keyCopied, setKeyCopied] = useState(false);
-
     const formattedExpiry = data.expires_at
         ? formatDate(data.expires_at, "d MMMM yyyy")
         : null;
-
-    const handleCopyKey = () => {
-        if (!data.license_key) return;
-        void navigator.clipboard.writeText(data.license_key);
-        setKeyCopied(true);
-        toast.success("Kunci lisensi berhasil disalin");
-        setTimeout(() => setKeyCopied(false), 2000);
-    };
 
     const isActive = data.status === "active";
     const isGrace = data.status === "grace_period";
@@ -161,9 +147,9 @@ export function LicenseHeroCard({
                             </div>
                             <p className="text-[11px] text-slate-500 font-medium truncate">
                                 {data.instance_name ? (
-                                    <>Instalasi Cabang: <span className="font-semibold text-slate-700">{data.instance_name}</span></>
+                                    <span className="font-semibold text-slate-700">{data.instance_name}</span>
                                 ) : (
-                                    "Paket Langganan Cloud POS Multi-Store"
+                                    "Cloud POS Multi-Store"
                                 )}
                             </p>
                         </div>
@@ -188,7 +174,7 @@ export function LicenseHeroCard({
                                 className="h-8 sm:h-9 px-3.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white shadow-2xs flex items-center gap-1.5 cursor-pointer transition-colors duration-150"
                             >
                                 <IconSparkles size={14} />
-                                <span>Aktivasi Lisensi</span>
+                                <span>Aktivasi License Key</span>
                             </button>
                         )}
                         {isActive && (
@@ -197,7 +183,7 @@ export function LicenseHeroCard({
                                 onClick={onActivateClick}
                                 className="h-8 sm:h-9 px-3 rounded-xl text-xs font-bold border border-slate-200/90 bg-slate-50/60 hover:bg-slate-100 active:bg-slate-200 text-slate-700 cursor-pointer transition-colors duration-150"
                             >
-                                Ganti Lisensi
+                                Ganti License Key
                             </button>
                         )}
                     </div>
@@ -275,57 +261,13 @@ export function LicenseHeroCard({
                     </div>
                 )}
 
-                {/* Metadata Pills Row (Interactive, Compact) */}
+                {/* Metadata Row: License Key Only */}
                 <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                    {/* License Key Chip with clean color feedback */}
-                    {data.license_key ? (
-                        <button
-                            type="button"
-                            onClick={handleCopyKey}
-                            title="Salin Kunci Lisensi"
-                            className={cn(
-                                "group inline-flex items-center gap-1.5 border rounded-lg px-2.5 py-1 text-xs transition-colors duration-150 cursor-pointer",
-                                keyCopied
-                                    ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                                    : "bg-slate-50/80 hover:bg-slate-100 border-slate-200/80 text-slate-700"
-                            )}
-                        >
-                            <span className="text-slate-400 font-bold text-[9px] uppercase">Kunci Lisensi:</span>
-                            <span className="font-mono font-bold text-[11px] truncate max-w-[170px] sm:max-w-[210px]">
-                                {data.license_key}
-                            </span>
-                            {keyCopied ? (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-600">
-                                    <IconCheck size={12} />
-                                    <span>Berhasil Disalin</span>
-                                </span>
-                            ) : (
-                                <IconCopy
-                                    size={12}
-                                    className="shrink-0 text-slate-400 group-hover:text-slate-600 transition-colors"
-                                />
-                            )}
-                        </button>
-                    ) : (
-                        <div className="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200/80 rounded-lg px-2.5 py-1 text-xs text-slate-500">
-                            <span className="text-slate-400 font-bold text-[9px] uppercase">Kunci Lisensi:</span>
-                            <span className="font-medium italic text-[11px]">Belum Diaktifkan</span>
-                        </div>
-                    )}
-
-                    {/* Mode Cabang */}
-                    <div className="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200/80 rounded-lg px-2.5 py-1 text-[11px] text-slate-700">
-                        <IconLayersLinked size={12} className="text-indigo-600 shrink-0" />
-                        <span className="font-bold">Multi-Store</span>
-                    </div>
-
-                    {/* Addon Badge */}
-                    <div className="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200/80 rounded-lg px-2.5 py-1 text-[11px] text-slate-700">
-                        <span className="text-slate-400 font-bold text-[9px] uppercase">Add-on:</span>
-                        <span className="font-extrabold text-emerald-700">
-                            {data.active_addons.length > 0 ? `${data.active_addons.length} Modul Aktif` : "Standar"}
-                        </span>
-                    </div>
+                    {/* License Key Masked Chip (Password-style dots with peek toggle & copy) */}
+                    <LicenseKeyMaskedChip
+                        licenseKey={data.license_key}
+                        variant="hero"
+                    />
 
                     {/* Suspended Notice */}
                     {isSuspended && (

@@ -53,7 +53,7 @@ export function LicenseCatalogSection({
                             <IconAlertTriangle size={16} />
                         </div>
                         <p className="text-xs text-rose-800 font-medium">
-                            <strong className="font-bold">Paket Utama Kedaluwarsa:</strong> Perpanjang paket dasar POS untuk mengaktifkan kembali seluruh modul add-on atau memesan fitur baru.
+                            <strong className="font-bold">Paket Utama Kedaluwarsa:</strong> Perpanjang paket dasar POS untuk mengaktifkan kembali seluruh add-on atau memesan fitur baru.
                         </p>
                     </div>
                     <AppButton

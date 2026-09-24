@@ -48,14 +48,14 @@ export function LicenseAddonsTab({
                         <div>
                             <div className="flex items-center gap-2">
                                 <h4 className="text-xs font-bold text-rose-900 uppercase tracking-wide">
-                                    Modul Add-on Dinonaktifkan Sementara
+                                    Add-on Dinonaktifkan Sementara
                                 </h4>
                                 <Badge variant="outline" className="text-[9px] font-bold bg-rose-100 text-rose-700 border-rose-200">
                                     Terkunci
                                 </Badge>
                             </div>
                             <p className="text-[11px] text-rose-700/80 mt-0.5 leading-relaxed">
-                                Masa aktif paket langganan POS telah kedaluwarsa. Seluruh fitur modul add-on yang terpasang di bawah ini tidak dapat dioperasikan hingga paket langganan toko diperpanjang.
+                                Masa aktif paket langganan POS telah kedaluwarsa. Seluruh fitur add-on yang terpasang di bawah ini tidak dapat dioperasikan hingga paket langganan toko diperpanjang.
                             </p>
                         </div>
                     </div>
