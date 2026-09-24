@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { AppButton } from "@/components/shared/app-button";
-import { IconPackage, IconShoppingCart } from "@tabler/icons-react";
+import { IconAlertTriangle, IconPackage, IconShoppingCart } from "@tabler/icons-react";
 import type { CatalogProduct } from "../types";
 import { LicenseOrderDialog } from "./license-order-dialog";
 import { LicenseCatalogCard } from "./license-catalog-card";
@@ -10,14 +10,17 @@ import { useLicenseCatalog } from "../hooks/use-license-catalog";
 import { cn } from "@/lib/utils";
 
 interface LicenseCatalogSectionProps {
-    catalog: CatalogProduct[];
+    catalog?: CatalogProduct[];
     activeAddons: string[];
+    isOperable?: boolean;
 }
 
 export function LicenseCatalogSection({
-    catalog,
+    catalog = [],
     activeAddons,
+    isOperable = true,
 }: LicenseCatalogSectionProps) {
+    const safeCatalog = Array.isArray(catalog) ? catalog : [];
     const {
         posProduct,
         addons,
@@ -28,7 +31,7 @@ export function LicenseCatalogSection({
         selectedProductCode,
         selectedAddonId,
         openOrder,
-    } = useLicenseCatalog(catalog);
+    } = useLicenseCatalog(safeCatalog);
 
     if (!posProduct) {
         return (
@@ -42,6 +45,27 @@ export function LicenseCatalogSection({
 
     return (
         <div className="space-y-4">
+            {/* Warning Banner if Subscription Expired */}
+            {!isOperable && (
+                <div className="rounded-xl border border-rose-200/90 bg-rose-50/70 p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs text-left">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                            <IconAlertTriangle size={16} />
+                        </div>
+                        <p className="text-xs text-rose-800 font-medium">
+                            <strong className="font-bold">Paket Utama Kedaluwarsa:</strong> Perpanjang paket dasar POS untuk mengaktifkan kembali seluruh modul add-on atau memesan fitur baru.
+                        </p>
+                    </div>
+                    <AppButton
+                        size="sm"
+                        onClick={() => openOrder(posProduct.code)}
+                        className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shrink-0 h-8 self-end sm:self-center cursor-pointer shadow-2xs"
+                    >
+                        <span>Perpanjang Paket</span>
+                    </AppButton>
+                </div>
+            )}
+
             {/* Top Bar: Section Info, Billing Toggle & Order Action */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2.5 border-b border-slate-100">
                 <div className="flex items-center gap-2">
@@ -109,13 +133,14 @@ export function LicenseCatalogSection({
                 </div>
             </div>
 
-            {/* Aesthetic Add-onar Grid */}
+            {/* Aesthetic Add-on Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                 {addons.map((addon) => (
                     <LicenseCatalogCard
                         key={addon.id}
                         addon={addon}
                         isOwned={activeAddons.includes(addon.code)}
+                        isOperable={isOperable}
                         billingView={billingView}
                         onOrder={() => openOrder(posProduct.code, addon.id)}
                     />

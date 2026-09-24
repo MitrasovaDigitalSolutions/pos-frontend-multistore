@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 
 interface FormSwitchProps<T extends FieldValues> {
     name: FieldPath<T>;
-    label: string;
-    description?: string;
+    label: React.ReactNode;
+    description?: React.ReactNode;
     className?: string;
     disabled?: boolean;
 }
@@ -34,9 +34,9 @@ export function FormSwitch<T extends FieldValues>({
                     {label}
                 </label>
                 {description && (
-                    <p className="text-[10px] text-slate-400 leading-snug">
+                    <div className="text-[10px] text-slate-400 leading-snug">
                         {description}
-                    </p>
+                    </div>
                 )}
             </div>
             <Controller

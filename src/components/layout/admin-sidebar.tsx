@@ -64,7 +64,10 @@ export function AdminSidebar() {
     const userPermissions = session?.user?.permissions || [];
 
     const { data: licenseStatus } = useLicenseStatusQuery();
-    const activeAddons = licenseStatus?.has_license ? licenseStatus.active_addons : null;
+    const isLicenseOperable = Boolean(
+        licenseStatus?.can_operate && (licenseStatus?.status === "active" || licenseStatus?.is_grace_period)
+    );
+    const activeAddons = isLicenseOperable ? (licenseStatus?.active_addons ?? []) : [];
 
     const getSetting = useSettingsStore((state) => state.getSetting);
     const isLoadingSettings = useSettingsStore((state) => state.isLoading);

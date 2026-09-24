@@ -602,7 +602,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
             },
             {
                 label: "Lisensi",
-                path: ROUTES.ADMIN_LICENSE,
+                path: ROUTES.LICENSE,
                 icon: IconKey,
                 permission: (roles) => hasRole(roles, "admin"),
             },
@@ -756,9 +756,12 @@ export function filterNavItems(
             const isAllowed = item.permission ? item.permission(roles, permissions) : true;
             if (!isAllowed) return null;
 
-            // Check addon requirement if activeAddons list is provided
-            if (item.addon && Array.isArray(activeAddons) && !activeAddons.includes(item.addon)) {
-                return null;
+            // Check addon requirement: item requires an active addon subscription
+            if (item.addon) {
+                const userAddons = Array.isArray(activeAddons) ? activeAddons : [];
+                if (!userAddons.includes(item.addon)) {
+                    return null;
+                }
             }
 
             // If item has children, filter them recursively

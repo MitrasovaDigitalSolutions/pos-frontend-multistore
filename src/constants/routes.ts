@@ -70,6 +70,9 @@ export const ROUTES = {
     ADMIN_UNITS: "/admin/units",
     ADMIN_LICENSE: "/admin/license",
 
+    // Protected - Standalone Pages (no sidebar/header)
+    LICENSE: "/licenses",
+
 
     // Protected - POS
     CHECKOUT: "/checkout",

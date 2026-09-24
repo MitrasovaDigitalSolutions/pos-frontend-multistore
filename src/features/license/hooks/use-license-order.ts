@@ -11,7 +11,7 @@ import { useLicenseOrderMutation } from "../api/license-api";
 interface UseLicenseOrderParams {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    catalog: CatalogProduct[];
+    catalog?: CatalogProduct[];
     productCode?: string;
     initialAddonId?: string;
 }
@@ -19,14 +19,16 @@ interface UseLicenseOrderParams {
 export function useLicenseOrder({
     open,
     onOpenChange,
-    catalog,
+    catalog = [],
     productCode,
     initialAddonId,
 }: UseLicenseOrderParams) {
+    const safeCatalog = Array.isArray(catalog) ? catalog : [];
     const { mutate, isPending } = useLicenseOrderMutation();
 
-    const targetProduct =
-        catalog.find((p) => p.code === productCode) ?? catalog[0];
+    const targetProduct = productCode
+        ? safeCatalog.find((p) => p?.code?.toLowerCase() === productCode.toLowerCase())
+        : safeCatalog[0];
 
     const methods = useForm<OrderLicenseInput>({
         resolver: zodResolver(orderLicenseSchema),
@@ -78,16 +80,28 @@ export function useLicenseOrder({
         setValue("addon_ids", [], { shouldValidate: true });
     };
 
-    // Calculate subtotal
-    const totalMonthly = addons
+    // Base product pricing directly from BE (defaults to 0 if not provided by BE)
+    const baseMonthlyPrice = targetProduct?.harga_bulanan ?? 0;
+    const baseAnnualPrice = targetProduct?.harga_tahunan ?? 0;
+
+    // Calculate subtotal for addons
+    const addonsMonthly = addons
         .filter((a) => selectedAddonIds.includes(a.id))
         .reduce((sum, a) => sum + a.harga_bulanan, 0);
 
-    const totalAnnual = addons
+    const addonsAnnual = addons
         .filter((a) => selectedAddonIds.includes(a.id))
         .reduce((sum, a) => sum + a.harga_tahunan, 0);
 
+    // Total combines addons + base product (if selected)
+    const totalMonthly = addonsMonthly + (includeBase ? baseMonthlyPrice : 0);
+    const totalAnnual = addonsAnnual + (includeBase ? baseAnnualPrice : 0);
+
     const displayTotal = billingPeriod === "monthly" ? totalMonthly : totalAnnual;
+    const displayAddonsTotal =
+        billingPeriod === "monthly" ? addonsMonthly : addonsAnnual;
+    const currentBasePrice =
+        billingPeriod === "monthly" ? baseMonthlyPrice : baseAnnualPrice;
 
     const onSubmit = handleSubmit((data: OrderLicenseInput) => {
         mutate(
@@ -112,6 +126,12 @@ export function useLicenseOrder({
         displayTotal,
         totalMonthly,
         totalAnnual,
+        addonsMonthly,
+        addonsAnnual,
+        displayAddonsTotal,
+        baseMonthlyPrice,
+        baseAnnualPrice,
+        currentBasePrice,
         toggleAddon,
         selectAllAddons,
         clearAllAddons,

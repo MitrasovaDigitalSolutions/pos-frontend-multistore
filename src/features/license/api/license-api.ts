@@ -1,25 +1,32 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiGet, apiPost } from "@/shared/api/api-client";
 import { queryKeys } from "@/lib/query-keys";
+import { apiGet, apiPost } from "@/shared/api/api-client";
 import { ENDPOINTS } from "@/shared/api/endpoints";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type {
-    LicenseStatusResponse,
-    CatalogResponse,
-    InvoicesResponse,
     ActivatePayload,
     ActivateResponse,
-    SyncResponse,
+    CatalogProduct,
+    Invoice,
+    InvoicesResponse,
+    LicenseStatus,
+    LicenseStatusResponse,
     OrderPayload,
     OrderResponse,
-    LicenseStatus,
-    Invoice,
+    SyncResponse
 } from "../types";
 
 // ─── License API Object ──────────────────────────────────────────────────────
 
 export const licenseApi = {
     getStatus: async (): Promise<LicenseStatus> => {
+        // Hit sync endpoint first before retrieving latest status
+        try {
+            await apiPost<SyncResponse>(ENDPOINTS.LICENSE.SYNC);
+        } catch (syncErr) {
+            console.warn("Auto-sync prior to getStatus failed:", syncErr);
+        }
+
         const response = await apiGet<LicenseStatusResponse>(ENDPOINTS.LICENSE.STATUS);
         return response.data;
     },
@@ -34,9 +41,36 @@ export const licenseApi = {
         return response.data;
     },
 
-    getCatalog: async () => {
-        const response = await apiGet<CatalogResponse>(ENDPOINTS.LICENSE.CATALOG);
-        return response.data;
+    getCatalog: async (): Promise<CatalogProduct[]> => {
+        try {
+            const response = await apiGet<unknown>(ENDPOINTS.LICENSE.CATALOG);
+            if (Array.isArray(response)) {
+                return response as CatalogProduct[];
+            }
+            if (
+                response &&
+                typeof response === "object" &&
+                "data" in response
+            ) {
+                const data = (response as { data: unknown }).data;
+                if (Array.isArray(data)) {
+                    return data as CatalogProduct[];
+                }
+                if (data && typeof data === "object") {
+                    const record = data as Record<string, unknown>;
+                    if (Array.isArray(record.products)) {
+                        return record.products as CatalogProduct[];
+                    }
+                    if (Array.isArray(record.catalog)) {
+                        return record.catalog as CatalogProduct[];
+                    }
+                }
+            }
+            return [];
+        } catch (error) {
+            console.warn("Failed to fetch license catalog:", error);
+            return [];
+        }
     },
 
     getInvoices: async (): Promise<Invoice[]> => {
@@ -65,12 +99,16 @@ export const licenseApi = {
 
 // ─── React Query Hooks ───────────────────────────────────────────────────────
 
-export function useLicenseStatusQuery(options?: { enabled?: boolean }) {
+export function useLicenseStatusQuery(options?: {
+    enabled?: boolean;
+    refetchOnMount?: boolean | "always";
+}) {
     return useQuery({
         queryKey: queryKeys.license.status(),
         queryFn: () => licenseApi.getStatus(),
         staleTime: 1000 * 60 * 5, // 5 minutes
         enabled: options?.enabled ?? true,
+        refetchOnMount: options?.refetchOnMount,
     });
 }
 
@@ -97,10 +135,10 @@ export function useLicenseActivateMutation() {
         mutationFn: (payload: ActivatePayload) => licenseApi.activate(payload),
         onSuccess: () => {
             void queryClient.invalidateQueries({ queryKey: queryKeys.license.all });
-            toast.success("Lisensi berhasil diaktivasi!");
+            toast.success("Lisensi berhasil diaktifkan.");
         },
         onError: (error: Error) => {
-            toast.error(error.message ?? "Gagal mengaktivasi lisensi.");
+            toast.error(error.message ?? "Gagal mengaktifkan lisensi.");
         },
     });
 }
@@ -130,7 +168,7 @@ export function useLicenseOrderMutation() {
             if (data.payment_url) {
                 window.open(data.payment_url, "_blank");
             }
-            toast.success("Pesanan berhasil dibuat! Lanjutkan ke halaman pembayaran.");
+            toast.success("Pesanan berhasil dibuat. Mengalihkan ke pembayaran...");
         },
         onError: (error: Error) => {
             toast.error(error.message ?? "Gagal membuat pesanan lisensi.");

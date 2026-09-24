@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { useEffect, useState } from "react";
-import { signIn, useSession } from "next-auth/react";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { signIn, getSession, useSession } from "next-auth/react";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { toast } from "sonner";
 import { useActiveStoreStore } from "@/stores/active-store-store";
@@ -12,20 +12,40 @@ import type { LoginInput } from "../schemas/login-schema";
 import { AUTH_APP_NAME, AUTH_APP_VERSION } from "../constants/auth-constants";
 import { LicenseGateDialog } from "@/features/license/components/license-gate-dialog";
 import type { LicenseStatus } from "@/features/license/types";
+import type { Store } from "@/types/auth";
 import { ENDPOINTS } from "@/shared/api/endpoints";
 
 /** Fetch license status directly (not via React Query) to avoid mounting query context issues. */
 async function fetchLicenseStatus(accessToken: string): Promise<LicenseStatus | null> {
     const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/+$/, "");
-    const endpoint = `/api${ENDPOINTS.LICENSE.STATUS}`; // /api/v1/license/status
+    const syncEndpoint = `/api${ENDPOINTS.LICENSE.SYNC}`;
+    const statusEndpoint = `/api${ENDPOINTS.LICENSE.STATUS}`;
+
+    const headers = {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/json",
+    };
+
+    // 1. Always hit sync endpoint first before hitting status
+    try {
+        const syncController = new AbortController();
+        const syncTimeoutId = setTimeout(() => syncController.abort(), 6000);
+        await fetch(`${apiBase}${syncEndpoint}`, {
+            method: "POST",
+            headers,
+            signal: syncController.signal,
+        });
+        clearTimeout(syncTimeoutId);
+    } catch (err) {
+        console.warn("Auto-sync prior to license status failed:", err);
+    }
+
+    // 2. Fetch latest status
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
     try {
-        const res = await fetch(`${apiBase}${endpoint}`, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                Accept: "application/json",
-            },
+        const res = await fetch(`${apiBase}${statusEndpoint}`, {
+            headers,
             signal: controller.signal,
         });
         if (!res.ok) return null;
@@ -43,83 +63,73 @@ export function LoginForm() {
     const { data: session, status } = useSession();
     const [isLoading, setIsLoading] = useState(false);
 
-    const { activeStoreUid, setActiveStore } = useActiveStoreStore();
-    const [justLoggedIn, setJustLoggedIn] = useState(false);
+    const setActiveStore = useActiveStoreStore((s) => s.setActiveStore);
     const [isStoreDialogOpen, setIsStoreDialogOpen] = useState(false);
-    const [isRedirecting, setIsRedirecting] = useState(false);
+    const [dialogStores, setDialogStores] = useState<Store[]>([]);
 
     // ─── License Gate State ───────────────────────────────────────────────────
     const [licenseGateOpen, setLicenseGateOpen] = useState(false);
     const [licenseStatus, setLicenseStatus] = useState<LicenseStatus | null>(null);
-    // Pending redirect path (stored while license gate is showing)
-    const [pendingRedirectPath, setPendingRedirectPath] = useState<string | null>(null);
+    const isCheckingLicenseRef = useRef(false);
+    const isSubmittingRef = useRef(false);
+    const pendingTokenRef = useRef("");
+    const pendingRolesRef = useRef<string[]>([]);
 
-    /** Check license and either proceed to redirect or show gate dialog. */
-    const checkLicenseAndRedirect = React.useCallback(async (targetPath: string, accessToken: string) => {
+    /**
+     * Check license and either proceed to redirect or show the blocking gate dialog.
+     * Grace period (can_operate = true) is allowed through — only hard-blocked statuses
+     * (expired, suspended, not_activated) and network errors show the gate.
+     */
+    const checkLicenseAndRedirect = useCallback(async (targetPath: string, accessToken: string) => {
+        if (isCheckingLicenseRef.current) return;
+        isCheckingLicenseRef.current = true;
+
         try {
             const ls = await fetchLicenseStatus(accessToken);
 
-            // Fail-closed: if null (error/timeout) treat as not operable
+            // Fail-closed: if null (network error/timeout) block with gate dialog
             if (!ls || !ls.can_operate) {
+                isCheckingLicenseRef.current = false;
+                isSubmittingRef.current = false;
                 setLicenseStatus(ls);
-                setPendingRedirectPath(targetPath);
                 setLicenseGateOpen(true);
                 return;
             }
 
-            // License OK — proceed
-            setIsRedirecting(true);
+            // License OK (active or grace_period) — proceed to target
             router.push(targetPath);
         } catch {
+            isCheckingLicenseRef.current = false;
+            isSubmittingRef.current = false;
             setLicenseStatus(null);
-            setPendingRedirectPath(targetPath);
             setLicenseGateOpen(true);
         }
     }, [router]);
 
-    // Redirect user if they are already logged in
+    // Handle already-authenticated users visiting /login directly
     useEffect(() => {
-        if (status === "authenticated" && session?.user && !isRedirecting && !licenseGateOpen) {
-            const stores = session.user.stores ?? [];
-
-            if (stores.length === 0) {
-                toast.error("Akun Anda tidak memiliki akses ke toko manapun. Hubungi Admin.");
-                return;
-            }
-
-            const userRoles = session.user.roles;
+        if (
+            status === "authenticated" &&
+            session?.user &&
+            !isSubmittingRef.current &&
+            !licenseGateOpen &&
+            !isStoreDialogOpen
+        ) {
+            const userRoles = session.user.roles ?? [];
             const targetPath = (
                 userRoles.includes("admin") ||
                 userRoles.includes("manajer_toko") ||
                 userRoles.includes("supervisor")
             ) ? "/admin" : "/checkout";
 
-            if (stores.length === 1) {
-                const soleStore = stores[0];
-                if (activeStoreUid !== soleStore.uid) {
-                    setActiveStore(soleStore.uid);
-                    toast.info(`Masuk sebagai Karyawan di ${soleStore.nama}`);
-                } else {
-                    // eslint-disable-next-line react-hooks/set-state-in-effect
-                    void checkLicenseAndRedirect(targetPath, session.accessToken ?? "");
-                }
-                return;
-            }
-
-            // User has multiple stores
-            const hasValidActiveStore = activeStoreUid && stores.some((s) => s.uid === activeStoreUid);
-            if (hasValidActiveStore && !justLoggedIn) {
-                const currentStore = stores.find((s) => s.uid === activeStoreUid)!;
-                toast.info(`Masuk sebagai Karyawan di ${currentStore.nama}`);
-                void checkLicenseAndRedirect(targetPath, session.accessToken ?? "");
-            } else {
-                setIsStoreDialogOpen(true);
-            }
+            router.replace(targetPath);
         }
-    }, [session, status, router, activeStoreUid, justLoggedIn, isRedirecting, licenseGateOpen, setActiveStore, checkLicenseAndRedirect]);
+    }, [status, session, router, licenseGateOpen, isStoreDialogOpen]);
 
     const onSubmit = async (data: LoginInput) => {
         setIsLoading(true);
+        isSubmittingRef.current = true;
+
         try {
             const res = await signIn("credentials", {
                 username: data.username,
@@ -128,19 +138,58 @@ export function LoginForm() {
             });
 
             if (res?.error) {
+                isSubmittingRef.current = false;
                 const errorMessage = res.error === "CredentialsSignin"
                     ? "Username atau password salah. Silakan coba lagi."
                     : res.error === "Configuration"
                         ? "Gagal terhubung ke server. Periksa koneksi internet Anda dan coba lagi."
                         : res.error;
                 toast.error(errorMessage);
-            } else {
-                // Clear any leftover active store from localStorage to force re-selection
-                setActiveStore(null);
-                toast.success("Login berhasil! Selamat bekerja.");
-                setJustLoggedIn(true);
+                return;
             }
+
+            toast.success("Login berhasil! Selamat bekerja.");
+
+            // Fetch the freshly authenticated session
+            let freshSession = await getSession();
+            if (!freshSession?.user) {
+                await new Promise((resolve) => setTimeout(resolve, 150));
+                freshSession = await getSession();
+            }
+
+            const currentUser = freshSession?.user ?? session?.user;
+            const stores = currentUser?.stores ?? [];
+            const userRoles = currentUser?.roles ?? [];
+            const token = freshSession?.accessToken ?? session?.accessToken ?? "";
+
+            pendingTokenRef.current = token;
+            pendingRolesRef.current = userRoles;
+
+            if (stores.length === 0) {
+                isSubmittingRef.current = false;
+                toast.error("Akun Anda tidak memiliki akses ke toko manapun. Hubungi Admin.");
+                return;
+            }
+
+            const targetPath = (
+                userRoles.includes("admin") ||
+                userRoles.includes("manajer_toko") ||
+                userRoles.includes("supervisor")
+            ) ? "/admin" : "/checkout";
+
+            if (stores.length === 1) {
+                const soleStore = stores[0];
+                setActiveStore(soleStore.uid);
+                toast.info(`Masuk sebagai Karyawan di ${soleStore.nama}`);
+                await checkLicenseAndRedirect(targetPath, token);
+                return;
+            }
+
+            // User has multiple stores — prompt store selection dialog
+            setDialogStores(stores);
+            setIsStoreDialogOpen(true);
         } catch {
+            isSubmittingRef.current = false;
             toast.error("Gagal terhubung ke server. Periksa koneksi internet Anda dan coba lagi.");
         } finally {
             setIsLoading(false);
@@ -153,37 +202,30 @@ export function LoginForm() {
             return;
         }
 
-        const selectedStore = session?.user?.stores?.find((s) => s.uid === data.storeUid);
+        const availableStores = dialogStores.length > 0 ? dialogStores : (session?.user?.stores ?? []);
+        const selectedStore = availableStores.find((s) => s.uid === data.storeUid);
         if (!selectedStore) {
             toast.error("Toko tidak valid.");
             return;
         }
 
-        setActiveStore(data.storeUid);
         setIsStoreDialogOpen(false);
-        setJustLoggedIn(false);
+        setActiveStore(data.storeUid);
 
         toast.info(`Masuk sebagai Karyawan di ${selectedStore.nama}`);
 
-        const userRoles = session?.user?.roles ?? [];
+        const userRoles = session?.user?.roles ?? pendingRolesRef.current ?? [];
         const targetPath = (
             userRoles.includes("admin") ||
             userRoles.includes("manajer_toko") ||
             userRoles.includes("supervisor")
         ) ? "/admin" : "/checkout";
 
-        void checkLicenseAndRedirect(targetPath, session?.accessToken ?? "");
+        const token = session?.accessToken ?? pendingTokenRef.current ?? "";
+        void checkLicenseAndRedirect(targetPath, token);
     };
 
-    /** Called after license is activated inside the gate dialog. */
-    const onLicenseActivated = () => {
-        setLicenseGateOpen(false);
-        setLicenseStatus(null);
-        if (pendingRedirectPath) {
-            setIsRedirecting(true);
-            router.push(pendingRedirectPath);
-        }
-    };
+    // Gate dialog is purely informational — navigation is handled inside the dialog itself.
 
     return (
         <div className="h-screen w-full flex flex-col justify-between p-4 md:p-6 bg-slate-50 relative overflow-hidden">
@@ -209,15 +251,14 @@ export function LoginForm() {
 
             <LoginStoreDialog
                 open={isStoreDialogOpen}
-                stores={session?.user?.stores ?? []}
+                stores={dialogStores.length > 0 ? dialogStores : (session?.user?.stores ?? [])}
                 onConfirm={onConfirmStore}
             />
 
-            {/* License Gate — blocking, non-closeable */}
+            {/* License Gate — blocking, non-closeable. Navigates user to /licenses. */}
             <LicenseGateDialog
                 open={licenseGateOpen}
                 licenseStatus={licenseStatus}
-                onActivated={onLicenseActivated}
             />
 
             {/* Global Footer Section */}

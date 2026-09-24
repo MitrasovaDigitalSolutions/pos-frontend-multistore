@@ -6,6 +6,7 @@ import { TransferTutorialController } from "@/features/stock-transfer/tutorial/c
 import { StockTutorialController } from "@/features/stock/tutorial/components/stock-tutorial-controller";
 import { SalesTutorialController } from "@/features/sales-tutorial/components/sales-tutorial-controller";
 import { LicenseBanner } from "@/features/license/components/license-banner";
+import { LicenseAdminGuard } from "@/features/license/components/license-admin-guard";
 import type { ReactNode } from "react";
 
 interface AdminLayoutProps {
@@ -14,7 +15,8 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
     return (
-        <div className="flex h-screen h-[100dvh] max-h-[100dvh] w-full min-h-0 overflow-hidden bg-slate-100">
+        <LicenseAdminGuard>
+            <div className="flex h-screen h-[100dvh] max-h-[100dvh] w-full min-h-0 overflow-hidden bg-slate-100">
             <AdminSidebar />
 
             <div className="grow flex-1 flex flex-col h-full h-[100dvh] max-h-[100dvh] min-h-0 min-w-0 overflow-hidden">
@@ -33,6 +35,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <StockTutorialController />
             <SalesTutorialController />
         </div>
+        </LicenseAdminGuard>
     );
 }
 

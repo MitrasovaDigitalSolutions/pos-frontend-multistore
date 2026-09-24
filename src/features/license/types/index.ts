@@ -7,6 +7,8 @@ export type LicenseEffectiveStatus =
     | "suspended"
     | "not_activated";
 
+export type SubscriptionType = "monthly" | "annual" | "yearly" | "lifetime" | "trial" | (string & {});
+
 /**
  * Response shape from GET /api/v1/license/status
  */
@@ -14,7 +16,7 @@ export interface LicenseStatus {
     has_license: boolean;
     license_key: string | null;
     status: LicenseEffectiveStatus;
-    subscription_type: string | null;
+    subscription_type: SubscriptionType | null;
     instance_name: string | null;
     domain_instance: string | null;
     expires_at: string | null;
@@ -52,6 +54,8 @@ export interface CatalogProduct {
     code: string;
     nama: string;
     description: string;
+    harga_bulanan?: number | null;
+    harga_tahunan?: number | null;
     is_active: boolean;
     created_at: string;
     updated_at: string;

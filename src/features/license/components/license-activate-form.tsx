@@ -46,10 +46,10 @@ export function LicenseActivateForm({ onSuccess, compact = false }: LicenseActiv
             const text = await navigator.clipboard.readText();
             if (text) {
                 setValue("license_key", text.trim(), { shouldValidate: true });
-                toast.success("Kunci lisensi berhasil ditempel dari clipboard");
+                toast.success("Kunci lisensi berhasil ditempel");
             }
         } catch {
-            toast.error("Gagal membaca clipboard. Silakan tempel secara manual.");
+            toast.error("Gagal membaca papan klip. Silakan tempel secara manual.");
         }
     };
 
@@ -73,7 +73,7 @@ export function LicenseActivateForm({ onSuccess, compact = false }: LicenseActiv
             <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                     <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                        Kunci Lisensi (License Key) <span className="text-rose-500">*</span>
+                        Kunci Lisensi <span className="text-rose-500">*</span>
                     </label>
                     <button
                         type="button"
@@ -81,7 +81,7 @@ export function LicenseActivateForm({ onSuccess, compact = false }: LicenseActiv
                         className="text-[11px] text-emerald-600 hover:text-emerald-700 font-bold flex items-center gap-1 cursor-pointer"
                     >
                         <IconClipboard size={12} />
-                        <span>Tempel Clipboard</span>
+                        <span>Tempel Kunci</span>
                     </button>
                 </div>
                 <div className="relative group">
@@ -110,14 +110,14 @@ export function LicenseActivateForm({ onSuccess, compact = false }: LicenseActiv
                     <p className="text-[11px] text-rose-500 font-medium">{errors.license_key.message}</p>
                 ) : (
                     <p className="text-[10px] text-slate-400">
-                        Kode lisensi resmi yang Anda terima saat pendaftaran atau pembelian paket.
+                        Masukkan format kunci lisensi resmi yang tertera pada faktur atau email konfirmasi langganan.
                     </p>
                 )}
             </div>
 
             <div className="space-y-1.5">
                 <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
-                    Nama Toko / Cabang <span className="text-slate-400 font-normal lowercase">(opsional)</span>
+                    Nama Cabang / Instalasi <span className="text-slate-400 font-normal lowercase">(opsional)</span>
                 </label>
                 <Input
                     type="text"
@@ -130,7 +130,7 @@ export function LicenseActivateForm({ onSuccess, compact = false }: LicenseActiv
                     <p className="text-[11px] text-rose-500 font-medium">{errors.instance_name.message}</p>
                 ) : (
                     <p className="text-[10px] text-slate-400">
-                        Nama penanda toko untuk instalasi ini.
+                        Nama identifikasi cabang untuk memudahkan pengelolaan lisensi toko Anda.
                     </p>
                 )}
             </div>
@@ -139,9 +139,9 @@ export function LicenseActivateForm({ onSuccess, compact = false }: LicenseActiv
                 type="submit"
                 className="w-full h-10 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer"
                 isLoading={isPending}
-                loadingText="Memvalidasi Lisensi..."
+                loadingText="Memverifikasi Lisensi..."
             >
-                Aktivasi Lisensi Sekarang
+                Aktivasi Lisensi
             </AppButton>
         </form>
     );
@@ -157,10 +157,10 @@ export function LicenseActivateForm({ onSuccess, compact = false }: LicenseActiv
                     </div>
                     <div>
                         <h4 className="text-sm font-bold text-slate-800 tracking-tight">
-                            Form Aktivasi Lisensi
+                            Aktivasi Lisensi POS
                         </h4>
                         <p className="text-[11px] text-slate-400 font-medium">
-                            Masukkan kunci lisensi untuk mengaktifkan add-on & operasional kasir.
+                            Masukkan kunci lisensi untuk mengaktifkan modul operasional dan akses kasir toko.
                         </p>
                     </div>
                 </div>
@@ -172,13 +172,13 @@ export function LicenseActivateForm({ onSuccess, compact = false }: LicenseActiv
                 <IconInfoCircle size={16} className="text-slate-400 shrink-0 mt-0.5" />
                 <div className="space-y-1">
                     <p className="font-bold text-slate-700 text-[11px]">
-                        Di mana saya mendapatkan Kunci Lisensi?
+                        Panduan Kunci Lisensi
                     </p>
                     <p className="text-[11px] text-slate-500 leading-relaxed">
-                        Kunci lisensi diberikan setelah pembelian paket langganan Mitrasova POS. Jika Anda membutuhkan bantuan aktivasi, silakan hubungi tim dukungan kami di{" "}
+                        Kunci lisensi diterbitkan secara otomatis setelah konfirmasi pembayaran paket langganan. Jika Anda membutuhkan bantuan teknis, silakan hubungi tim dukungan kami di{" "}
                         <a
                             href="mailto:support@mitrasovapos.my.id"
-                            className="text-emerald-600 font-bold hover:underline"
+                            className="text-emerald-600 font-bold underline hover:text-emerald-700"
                         >
                             support@mitrasovapos.my.id
                         </a>
