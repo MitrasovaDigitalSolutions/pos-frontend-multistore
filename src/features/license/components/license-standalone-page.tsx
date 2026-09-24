@@ -26,6 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLicenseStatusQuery, useLicenseCatalogQuery, useLicenseInvoicesQuery } from "../api/license-api";
 import { getLicenseTimeMetrics } from "../utils/license-time";
 import { SUBSCRIPTION_TYPE_LABELS } from "../constants/license-constants";
+import type { InvoiceFilterParams } from "../types";
 import { cn } from "@/lib/utils";
 
 type TabId = "status" | "catalog" | "addons" | "invoices" | "activate";
@@ -50,7 +51,10 @@ export function LicenseStandalonePage() {
     } = useLicenseStatusQuery({ refetchOnMount: "always" });
 
     const { data: catalog, isLoading: catalogLoading } = useLicenseCatalogQuery();
-    const { data: invoices, isLoading: invoicesLoading } = useLicenseInvoicesQuery();
+    const [invoiceFilters, setInvoiceFilters] = useState<InvoiceFilterParams>({
+        status: undefined,
+    });
+    const { data: invoices, isLoading: invoicesLoading } = useLicenseInvoicesQuery(invoiceFilters);
 
     const userRoles = session?.user?.roles ?? [];
     const isAdmin = userRoles.includes("admin");
@@ -91,7 +95,7 @@ export function LicenseStandalonePage() {
     return (
         <div className="flex flex-col min-h-[100dvh]">
             {/* Top Navigation Bar */}
-            <LicenseTopNav />
+            <LicenseTopNav showBackToDashboard={isOperable} />
 
             {/* Main Content Area */}
             <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-4 space-y-4">
@@ -415,6 +419,8 @@ export function LicenseStandalonePage() {
                                 <LicenseInvoicesTable
                                     invoices={invoiceList}
                                     isLoading={invoicesLoading}
+                                    filters={invoiceFilters}
+                                    onFilterChange={setInvoiceFilters}
                                 />
                             )}
 

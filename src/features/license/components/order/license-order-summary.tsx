@@ -13,6 +13,10 @@ interface LicenseOrderSummaryProps {
     displayTotal: number;
     basePrice?: number;
     addonsTotal?: number;
+    couponDiscount?: number;
+    couponCode?: string;
+    serverPrice?: number;
+    includeServer?: boolean;
 }
 
 export function LicenseOrderSummary({
@@ -24,6 +28,10 @@ export function LicenseOrderSummary({
     displayTotal,
     basePrice = 0,
     addonsTotal = 0,
+    couponDiscount = 0,
+    couponCode,
+    serverPrice = 0,
+    includeServer = false,
 }: LicenseOrderSummaryProps) {
     const isAnnual = billingPeriod === "annual";
     const normalAnnualTotal = totalMonthly * 12;
@@ -91,6 +99,29 @@ export function LicenseOrderSummary({
                         </span>
                         <span>
                             {basePrice > 0 ? formatRupiah(basePrice) : "Rp 0 (Termasuk)"}
+                        </span>
+                    </div>
+                )}
+
+                {includeServer && serverPrice > 0 && (
+                    <div className="flex justify-between items-center text-slate-700 font-semibold pt-1 border-t border-slate-200/50">
+                        <span>Sewa Server Cloud</span>
+                        <span>{formatRupiah(serverPrice)}</span>
+                    </div>
+                )}
+
+                {couponDiscount > 0 && (
+                    <div className="flex justify-between items-center text-emerald-700 font-semibold pt-1 border-t border-emerald-100">
+                        <div className="flex items-center gap-1.5">
+                            <span>Diskon Kupon</span>
+                            {couponCode && (
+                                <Badge variant="outline" className="text-[9px] font-mono font-bold px-1.5 py-0 bg-emerald-100/90 text-emerald-800 border-emerald-300">
+                                    {couponCode}
+                                </Badge>
+                            )}
+                        </div>
+                        <span className="font-bold text-emerald-700">
+                            -{formatRupiah(couponDiscount)}
                         </span>
                     </div>
                 )}

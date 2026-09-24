@@ -16,7 +16,7 @@ import { hasPermission, hasRole } from "@/constants/roles";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { useActiveStoreStore } from "@/stores/active-store-store";
 import { useSettingsStore } from "@/stores/settings-store";
-import { IconArchiveOff, IconPlus } from "@tabler/icons-react";
+import { IconActivity, IconArchiveOff, IconPlus } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
 import { useMemo, useState } from "react";
@@ -55,6 +55,7 @@ interface ProductTableProps {
     onUnarchiveOpenChange?: (open: boolean) => void;
     productToUnarchive?: Product | null;
     onProductToUnarchiveChange?: (product: Product | null) => void;
+    onAdjustmentClick?: (product: Product) => void;
 }
 
 export function ProductTable(props: ProductTableProps) {
@@ -441,6 +442,21 @@ export function ProductTable(props: ProductTableProps) {
                                     </DataTableActionButton>
                                 );
                             }
+
+                            if (props.onAdjustmentClick) {
+                                return (
+                                    <DataTableActionButton
+                                        variant="slate"
+                                        onClick={() => props.onAdjustmentClick?.(row)}
+                                        tooltip="Penyesuaian Stok (Adjustment Qty)"
+                                        data-action="adjust-stock"
+                                        className="hover:text-emerald-600 hover:bg-emerald-50"
+                                    >
+                                        <IconActivity size={16} />
+                                    </DataTableActionButton>
+                                );
+                            }
+
                             return null;
                         }
                         : undefined

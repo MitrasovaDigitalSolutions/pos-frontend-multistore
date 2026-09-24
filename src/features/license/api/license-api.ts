@@ -3,11 +3,16 @@ import { apiGet, apiPost } from "@/shared/api/api-client";
 import { ENDPOINTS } from "@/shared/api/endpoints";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useLicenseStore } from "@/stores/license-store";
 import type {
     ActivatePayload,
     ActivateResponse,
     CatalogProduct,
+    CouponCheckPayload,
+    CouponCheckResponse,
+    CouponCheckResult,
     Invoice,
+    InvoiceFilterParams,
     InvoicesResponse,
     LicenseStatus,
     LicenseStatusResponse,
@@ -28,16 +33,27 @@ export const licenseApi = {
         }
 
         const response = await apiGet<LicenseStatusResponse>(ENDPOINTS.LICENSE.STATUS);
-        return response.data;
+        const data = response.data;
+        useLicenseStore.getState().setLicenseStatus(data);
+        return data;
     },
 
     activate: async (payload: ActivatePayload): Promise<LicenseStatus> => {
         const response = await apiPost<ActivateResponse>(ENDPOINTS.LICENSE.ACTIVATE, payload);
-        return response.data;
+        const data = response.data;
+        useLicenseStore.getState().setLicenseStatus(data);
+        return data;
     },
 
     sync: async (): Promise<LicenseStatus> => {
         const response = await apiPost<SyncResponse>(ENDPOINTS.LICENSE.SYNC);
+        const data = response.data;
+        useLicenseStore.getState().setLicenseStatus(data);
+        return data;
+    },
+
+    checkCoupon: async (payload: CouponCheckPayload): Promise<CouponCheckResult> => {
+        const response = await apiPost<CouponCheckResponse>(ENDPOINTS.LICENSE.CHECK_COUPON, payload);
         return response.data;
     },
 
@@ -73,8 +89,23 @@ export const licenseApi = {
         }
     },
 
-    getInvoices: async (): Promise<Invoice[]> => {
-        const response = await apiGet<InvoicesResponse | Invoice[]>(ENDPOINTS.LICENSE.INVOICES);
+    getInvoices: async (filters?: InvoiceFilterParams): Promise<Invoice[]> => {
+        let endpoint: string = ENDPOINTS.LICENSE.INVOICES;
+        if (filters) {
+            const params = new URLSearchParams();
+            if (filters.status && filters.status !== "all") {
+                params.append("status", filters.status);
+            }
+            if (filters.year && Number(filters.year) > 0) {
+                params.append("year", String(filters.year));
+            }
+            const qs = params.toString();
+            if (qs) {
+                endpoint = `${endpoint}?${qs}`;
+            }
+        }
+
+        const response = await apiGet<InvoicesResponse | Invoice[]>(endpoint);
         if (Array.isArray(response)) {
             return response;
         }
@@ -120,11 +151,17 @@ export function useLicenseCatalogQuery() {
     });
 }
 
-export function useLicenseInvoicesQuery() {
+export function useLicenseInvoicesQuery(filters?: InvoiceFilterParams) {
     return useQuery({
-        queryKey: queryKeys.license.invoices(),
-        queryFn: () => licenseApi.getInvoices(),
+        queryKey: queryKeys.license.invoices(filters),
+        queryFn: () => licenseApi.getInvoices(filters),
         staleTime: 1000 * 60 * 5,
+    });
+}
+
+export function useLicenseCheckCouponMutation() {
+    return useMutation({
+        mutationFn: (payload: CouponCheckPayload) => licenseApi.checkCoupon(payload),
     });
 }
 
@@ -133,7 +170,10 @@ export function useLicenseActivateMutation() {
 
     return useMutation({
         mutationFn: (payload: ActivatePayload) => licenseApi.activate(payload),
-        onSuccess: () => {
+        onSuccess: (data) => {
+            if (data) {
+                useLicenseStore.getState().setLicenseStatus(data);
+            }
             void queryClient.invalidateQueries({ queryKey: queryKeys.license.all });
             toast.success("Lisensi berhasil diaktifkan.");
         },
@@ -148,7 +188,10 @@ export function useLicenseSyncMutation() {
 
     return useMutation({
         mutationFn: () => licenseApi.sync(),
-        onSuccess: () => {
+        onSuccess: (data) => {
+            if (data) {
+                useLicenseStore.getState().setLicenseStatus(data);
+            }
             void queryClient.invalidateQueries({ queryKey: queryKeys.license.all });
             toast.success("Status lisensi berhasil disinkronkan.");
         },

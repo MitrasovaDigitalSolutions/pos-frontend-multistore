@@ -21,6 +21,9 @@ export const orderLicenseSchema = z.object({
     }),
     include_base_product: z.boolean().optional(),
     addon_ids: z.array(z.string()).optional(),
+    coupon_code: z.string().optional(),
+    include_server: z.boolean().optional(),
+    server_package_id: z.string().optional().nullable(),
 });
 
 export type OrderLicenseInput = z.infer<typeof orderLicenseSchema>;

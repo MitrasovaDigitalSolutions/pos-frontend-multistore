@@ -14,8 +14,10 @@ import { storeSchema, type StoreInput } from "../schemas/store-schema";
 import { useCreateStore, useUpdateStore } from "../api/stores-api";
 import type { Store } from "../types";
 import { ApiError } from "@/shared/errors/api-error";
-import { IconPlus, IconEdit } from "@tabler/icons-react";
+import { IconPlus, IconEdit, IconLock } from "@tabler/icons-react";
 import { STORE_LABEL_HQ } from "@/constants/store";
+import { useHasAddon } from "@/stores/license-store";
+import Link from "next/link";
 
 interface StoreFormDialogProps {
     open: boolean;
@@ -86,7 +88,15 @@ export function StoreFormDialog({ open, onOpenChange, editingStore }: StoreFormD
         }
     }, [isCentral]);
 
+    const hasMultiStore = useHasAddon("multi_store");
+    const isCreateBlocked = !isEdit && !hasMultiStore;
+
     const onSubmit = (data: StoreInput) => {
+        if (isCreateBlocked) {
+            toast.error("Paket lisensi Anda memerlukan add-on Multi-Store untuk menambah cabang baru.");
+            return;
+        }
+
         const action = isEdit
             ? updateMutation.mutateAsync({ uid: editingStore.uid, data })
             : createMutation.mutateAsync(data);
@@ -131,12 +141,31 @@ export function StoreFormDialog({ open, onOpenChange, editingStore }: StoreFormD
             >
                 <FormProvider {...formMethods}>
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                        {isCreateBlocked && (
+                            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-slate-800 dark:text-slate-200 space-y-2">
+                                <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-bold text-xs">
+                                    <IconLock size={16} />
+                                    <span>Add-on Multi-Store Diperlukan</span>
+                                </div>
+                                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                                    Lisensi Anda saat ini merupakan Single Store. Untuk menambahkan cabang toko ke-2 atau lebih, aktifkan add-on Multi-Store.
+                                </p>
+                                <Link
+                                    href="/licenses?tab=catalog"
+                                    onClick={() => onOpenChange(false)}
+                                    className="inline-flex items-center text-[11px] font-bold text-amber-700 dark:text-amber-400 hover:underline"
+                                >
+                                    Buka Katalog Add-on &rarr;
+                                </Link>
+                            </div>
+                        )}
+
                         {/* Nama Toko */}
                         <FormInput<StoreInput>
                             name="nama"
                             label="Nama Toko"
                             placeholder="Nama cabang toko..."
-                            disabled={isPending}
+                            disabled={isPending || isCreateBlocked}
                             required
                         />
 
@@ -178,9 +207,13 @@ export function StoreFormDialog({ open, onOpenChange, editingStore }: StoreFormD
                         <Button
                             type="submit"
                             className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer mt-4"
-                            disabled={isPending}
+                            disabled={isPending || isCreateBlocked}
                         >
-                            {isPending ? "Menyimpan..." : "Simpan Toko"}
+                            {isPending
+                                ? "Menyimpan..."
+                                : isCreateBlocked
+                                ? "Add-on Multi-Store Diperlukan"
+                                : "Simpan Toko"}
                         </Button>
                     </form>
                 </FormProvider>

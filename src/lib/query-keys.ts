@@ -276,6 +276,6 @@ export const queryKeys = {
         all: ["license"] as const,
         status: () => [...queryKeys.license.all, "status"] as const,
         catalog: () => [...queryKeys.license.all, "catalog"] as const,
-        invoices: () => [...queryKeys.license.all, "invoices"] as const,
+        invoices: (params?: unknown) => [...queryKeys.license.all, "invoices", params] as const,
     },
 } as const;

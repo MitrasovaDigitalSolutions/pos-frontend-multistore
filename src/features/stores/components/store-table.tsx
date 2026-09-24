@@ -5,9 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTableActionButton } from "@/components/ui/data-table-actions";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { IconBuildingStore, IconPlus, IconUsers } from "@tabler/icons-react";
+import { IconBuildingStore, IconPlus, IconUsers, IconLock, IconSparkles } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
+import Link from "next/link";
+import { useHasAddon } from "@/stores/license-store";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Store } from "../types";
 import { STORE_BADGE_HQ } from "@/constants/store";
 
@@ -125,8 +128,32 @@ export function StoreTable({
         []
     );
 
+    const hasMultiStore = useHasAddon("multi_store");
+    const totalStores = meta?.total ?? stores.length;
+    const isMultiStoreLocked = totalStores >= 1 && !hasMultiStore;
+
     return (
         <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4">
+            {isMultiStoreLocked && (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-slate-800 dark:text-slate-200">
+                    <div className="flex items-center gap-2.5">
+                        <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-700 dark:text-amber-400 shrink-0">
+                            <IconLock size={16} />
+                        </div>
+                        <p className="text-xs leading-relaxed">
+                            <span className="font-bold">Paket Toko Tunggal Aktif:</span> Untuk menambah cabang baru, transfer stok antar cabang, dan laporan multi-toko, aktifkan add-on <span className="font-bold text-amber-700 dark:text-amber-400">Multi-Store</span>.
+                        </p>
+                    </div>
+                    <Link
+                        href="/licenses?tab=catalog"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shrink-0 transition-colors shadow-xs"
+                    >
+                        <IconSparkles size={14} />
+                        Aktifkan Multi-Store
+                    </Link>
+                </div>
+            )}
+
             <div className="flex justify-between items-center border-b border-slate-50 pb-2">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">
@@ -137,13 +164,34 @@ export function StoreTable({
                     </p>
                 </div>
                 {hasManageStores && onAddClick && (
-                    <AppButton
-                        type="button"
-                        onClick={onAddClick}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
-                    >
-                        <IconPlus size={16} /> Tambah Toko
-                    </AppButton>
+                    isMultiStoreLocked ? (
+                        <TooltipProvider delayDuration={100}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <span>
+                                        <AppButton
+                                            type="button"
+                                            disabled
+                                            className="bg-slate-200 text-slate-400 font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-not-allowed opacity-70"
+                                        >
+                                            <IconLock size={15} /> Tambah Toko
+                                        </AppButton>
+                                    </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" className="max-w-xs text-center text-xs">
+                                    Memerlukan add-on Multi-Store untuk menambah lebih dari 1 cabang toko.
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    ) : (
+                        <AppButton
+                            type="button"
+                            onClick={onAddClick}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
+                        >
+                            <IconPlus size={16} /> Tambah Toko
+                        </AppButton>
+                    )
                 )}
             </div>
 

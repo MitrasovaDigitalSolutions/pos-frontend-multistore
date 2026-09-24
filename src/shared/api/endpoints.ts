@@ -332,6 +332,7 @@ export const ENDPOINTS = {
         SYNC: "/v1/license/sync",
         CATALOG: "/v1/license/catalog",
         ORDERS: "/v1/license/orders",
+        CHECK_COUPON: "/v1/license/coupons/check",
         INVOICES: "/v1/license/invoices",
         INVOICE_PDF: (invoiceNumber: string) => `/v1/license/invoices/${invoiceNumber}/pdf`,
     },

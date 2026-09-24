@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import {
     IconArrowsExchange,
     IconAssembly,
+    IconBuildingStore,
     IconBuildingWarehouse,
     IconChartBar,
     IconCheck,
@@ -96,6 +97,12 @@ const ADDON_VISUALS: Record<
         iconBg: "bg-purple-50",
         iconColor: "text-purple-600",
         borderColor: "border-purple-100",
+    },
+    multi_store: {
+        icon: IconBuildingStore,
+        iconBg: "bg-emerald-50",
+        iconColor: "text-emerald-600",
+        borderColor: "border-emerald-100",
     },
 };
 

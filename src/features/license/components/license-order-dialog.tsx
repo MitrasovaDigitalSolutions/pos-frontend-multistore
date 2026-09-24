@@ -6,9 +6,10 @@ import { Scrollable } from "@/components/ui/scrollable";
 import { FormSelect } from "@/components/forms/form-select";
 import { FormSwitch } from "@/components/forms/form-switch";
 import { AppButton } from "@/components/shared/app-button";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { CommandOption } from "@/components/ui/command-select";
-import { IconReceipt, IconShoppingCart } from "@tabler/icons-react";
+import { IconReceipt, IconShoppingCart, IconTag } from "@tabler/icons-react";
 import type { CatalogProduct } from "../types";
 import { useLicenseOrder } from "../hooks/use-license-order";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
@@ -60,6 +61,14 @@ export function LicenseOrderDialog({
         toggleAddon,
         selectAllAddons,
         clearAllAddons,
+        couponInput,
+        setCouponInput,
+        couponResult,
+        couponError,
+        isCheckingCoupon,
+        couponDiscount,
+        handleApplyCoupon,
+        handleRemoveCoupon,
         isPending,
         onSubmit,
     } = useLicenseOrder({
@@ -165,6 +174,74 @@ export function LicenseOrderDialog({
                                         </div>
                                     </div>
 
+                                    {/* Promo Coupon Card */}
+                                    <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/80 space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                                <IconTag size={13} className="text-emerald-600" />
+                                                <span>Kupon Promo / Diskon</span>
+                                            </span>
+                                            {couponResult && (
+                                                <Badge variant="outline" className="text-[9px] font-mono font-bold bg-emerald-100 text-emerald-800 border-emerald-300">
+                                                    Kupon Aktif
+                                                </Badge>
+                                            )}
+                                        </div>
+
+                                        {couponResult ? (
+                                            <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-2">
+                                                <div>
+                                                    <span className="font-bold text-xs text-emerald-900 block font-mono">
+                                                        {couponResult.code}
+                                                    </span>
+                                                    <span className="text-[10px] text-emerald-700 font-medium">
+                                                        Hemat {formatRupiah(couponDiscount)}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleRemoveCoupon}
+                                                    className="text-[10px] font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer"
+                                                >
+                                                    Hapus Kupon
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-1.5">
+                                                <div className="flex items-center gap-1.5">
+                                                    <input
+                                                        type="text"
+                                                        value={couponInput}
+                                                        onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === "Enter") {
+                                                                e.preventDefault();
+                                                                void handleApplyCoupon();
+                                                            }
+                                                        }}
+                                                        placeholder="Kode promo..."
+                                                        className="flex-1 h-8 px-2.5 rounded-lg border border-slate-200 text-xs font-mono uppercase bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                                    />
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant="outline"
+                                                        disabled={isCheckingCoupon || !couponInput.trim()}
+                                                        onClick={() => void handleApplyCoupon()}
+                                                        className="h-8 px-3 text-xs font-bold rounded-lg border-emerald-300 text-emerald-700 hover:bg-emerald-50 cursor-pointer shrink-0"
+                                                    >
+                                                        {isCheckingCoupon ? "Cek..." : "Terapkan"}
+                                                    </Button>
+                                                </div>
+                                                {couponError && (
+                                                    <span className="text-[10px] text-rose-600 font-medium block">
+                                                        {couponError}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
                                     {/* Order Summary & Final Breakdown */}
                                     <LicenseOrderSummary
                                         selectedCount={selectedAddonIds.length}
@@ -175,6 +252,8 @@ export function LicenseOrderDialog({
                                         displayTotal={displayTotal}
                                         basePrice={currentBasePrice}
                                         addonsTotal={displayAddonsTotal}
+                                        couponDiscount={couponDiscount}
+                                        couponCode={couponResult?.code}
                                     />
                                 </div>
                             </Scrollable>
