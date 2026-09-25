@@ -45,7 +45,7 @@ const STATUS_MESSAGES: Record<StatusKey, { title: string; description: string }>
     expired: {
         title: "Masa Langganan Telah Berakhir",
         description:
-            "Masa aktif paket langganan POS Anda telah kedaluwarsa. Silakan lakukan perpanjangan paket agar operasional kasir dapat dilanjutkan.",
+            "Masa aktif paket langganan POS Anda telah kedaluwarsa. Silakan perbarui langganan agar operasional kasir dapat dilanjutkan.",
     },
     suspended: {
         title: "Akses Layanan Ditangguhkan",
@@ -134,8 +134,8 @@ export function LicenseGateDialog({ open, licenseStatus }: LicenseGateDialogProp
 
                                 {/* Grace period notice */}
                                 {isGracePeriod && licenseStatus!.grace_days_remaining > 0 && (
-                                    <div className="w-full rounded-2xl bg-amber-50 border border-amber-200 px-4 py-2.5 text-center">
-                                        <p className="text-xs font-bold text-amber-800">
+                                    <div className="w-full rounded-2xl bg-rose-50 border border-rose-200 px-4 py-2.5 text-center">
+                                        <p className="text-xs font-bold text-rose-800">
                                             Masa Tenggang: Tersisa {licenseStatus!.grace_days_remaining} hari sebelum akses operasional dibatasi.
                                         </p>
                                     </div>

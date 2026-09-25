@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { FormProvider } from "react-hook-form";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Scrollable } from "@/components/ui/scrollable";
@@ -9,17 +10,25 @@ import { AppButton } from "@/components/shared/app-button";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { CommandOption } from "@/components/ui/command-select";
-import { IconReceipt, IconShoppingCart, IconTag } from "@tabler/icons-react";
-import type { CatalogProduct } from "../types";
+import {
+    IconAlertCircle,
+    IconReceipt,
+    IconServer,
+    IconShoppingCart,
+    IconTag,
+} from "@tabler/icons-react";
+import type { CatalogProduct, ServerPackage } from "../types";
 import { useLicenseOrder } from "../hooks/use-license-order";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { LicenseOrderAddonItem } from "./order/license-order-addon-item";
 import { LicenseOrderSummary } from "./order/license-order-summary";
+import { cn } from "@/lib/utils";
 
 interface LicenseOrderDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     catalog?: CatalogProduct[];
+    serverPackages?: ServerPackage[];
     productCode?: string;
     initialAddonId?: string;
 }
@@ -42,10 +51,12 @@ export function LicenseOrderDialog({
     open,
     onOpenChange,
     catalog = [],
+    serverPackages = [],
     productCode,
     initialAddonId,
 }: LicenseOrderDialogProps) {
     const safeCatalog = Array.isArray(catalog) ? catalog : [];
+    const safeServerPackages = Array.isArray(serverPackages) ? serverPackages : [];
     const {
         methods,
         targetProduct,
@@ -53,6 +64,11 @@ export function LicenseOrderDialog({
         billingPeriod,
         selectedAddonIds,
         includeBase,
+        includeServer,
+        selectedServer,
+        serverPackages: orderServerPackages,
+        currentServerPrice,
+        selectServerPackage,
         displayTotal,
         totalMonthly,
         totalAnnual,
@@ -75,9 +91,33 @@ export function LicenseOrderDialog({
         open,
         onOpenChange,
         catalog: safeCatalog,
+        serverPackages: safeServerPackages,
         productCode,
         initialAddonId,
     });
+
+    const serverOptions: CommandOption[] = useMemo(() => {
+        return orderServerPackages.map((pkg) => {
+            const isFree = pkg.harga_bulanan === 0;
+            const price = billingPeriod === "annual" ? pkg.harga_tahunan : pkg.harga_bulanan;
+            const priceLabel = isFree ? "Gratis" : `${formatRupiah(price)}/${billingPeriod === "annual" ? "thn" : "bln"}`;
+            const specs = [pkg.cpu, pkg.ram, pkg.storage].filter(Boolean).filter(s => s !== "Self-Hosted").join(" • ");
+            return {
+                value: pkg.id,
+                label: pkg.nama,
+                description: specs || (pkg.description ?? undefined),
+                badge: priceLabel,
+            };
+        });
+    }, [orderServerPackages, billingPeriod]);
+
+    // Validation: Server is strictly required if base package extension is checked
+    const isServerRequiredMissing = includeBase && !selectedServer;
+    const isNothingSelected =
+        selectedAddonIds.length === 0 &&
+        !includeBase &&
+        (!includeServer || currentServerPrice === 0);
+    const isSubmitDisabled = isPending || isServerRequiredMissing || isNothingSelected;
 
     if (!targetProduct) return null;
 
@@ -94,7 +134,7 @@ export function LicenseOrderDialog({
                     <div>
                         <div className="flex items-center gap-2">
                             <span className="font-extrabold text-slate-900 text-sm block leading-tight">
-                                Perpanjangan Lisensi & Add-on POS
+                                Pembaruan Langganan & Add-on POS
                             </span>
                             <Badge
                                 variant="outline"
@@ -104,24 +144,33 @@ export function LicenseOrderDialog({
                             </Badge>
                         </div>
                         <span className="text-[11px] text-slate-400 font-medium block">
-                            Pilih add-on yang ingin diaktifkan untuk mendukung operasional toko
+                            Pilih paket utama, server, dan add-on yang ingin diaktifkan
                         </span>
                     </div>
                 </div>
             }
-            className="sm:max-w-4xl max-h-[90vh] overflow-hidden"
+            className="sm:max-w-5xl lg:max-w-6xl max-h-[92vh] overflow-hidden"
         >
             <FormProvider {...methods}>
                 <form onSubmit={onSubmit} className="mt-1 flex-1 min-h-0 flex flex-col overflow-hidden">
-                    {/* 2-Column Responsive Layout with strictly constrained overflow */}
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch min-h-0 flex-1 overflow-hidden">
-                        {/* LEFT COLUMN: Summary & Order Settings (5 cols) */}
-                        <div className="md:col-span-5 flex flex-col min-h-0 max-h-[380px] md:max-h-[450px] md:h-[450px] overflow-hidden">
-                            {/* Scrollable Container for Order Settings & Breakdown */}
-                            <Scrollable className="flex-1 min-h-0 max-h-[320px] md:max-h-[390px] pr-1.5 overflow-hidden" scrollbarClassName="z-20">
-                                <div className="space-y-3 pb-2">
-                                    {/* Billing Period Selector with Badge Support */}
-                                    <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/80 space-y-2.5">
+                    {/* 3-Column Responsive Layout: Clear Separation of Configuration, Add-ons, and Checkout */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-stretch min-h-0 flex-1 overflow-hidden">
+                        {/* COLUMN 1: Base Plan & Server Infrastructure (4 cols on lg) */}
+                        <div className="lg:col-span-4 flex flex-col min-h-0 max-h-[380px] md:max-h-[460px] lg:h-[460px] overflow-hidden">
+                            <div className="flex items-center gap-1.5 pb-2 border-b border-slate-100 shrink-0">
+                                <span className="w-5 h-5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-black flex items-center justify-center border border-emerald-200">
+                                    1
+                                </span>
+                                <span className="text-xs font-bold text-slate-800">
+                                    Paket & Server
+                                </span>
+                            </div>
+
+                            {/* Scrollable Container for Column 1 */}
+                            <Scrollable className="flex-1 min-h-0 max-h-[340px] md:max-h-[420px] pr-1.5 overflow-hidden" scrollbarClassName="z-20">
+                                <div className="space-y-3 pt-2 pb-2">
+                                    {/* Billing Period Selector */}
+                                    <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/80 space-y-2">
                                         <div>
                                             <span className="text-xs font-bold text-slate-800 block">
                                                 Periode Penagihan
@@ -147,7 +196,7 @@ export function LicenseOrderDialog({
                                                     label={
                                                         <div className="flex items-center gap-1.5 flex-wrap">
                                                             <span className="font-semibold text-xs text-slate-800">
-                                                                Perpanjang Paket Utama POS
+                                                                Perbarui Paket Utama POS
                                                             </span>
                                                             <Badge
                                                                 variant="outline"
@@ -157,7 +206,7 @@ export function LicenseOrderDialog({
                                                             </Badge>
                                                         </div>
                                                     }
-                                                    description="Aktifkan untuk sekaligus memperpanjang paket lisensi multi-store Anda"
+                                                    description="Aktifkan untuk sekaligus memperbarui masa aktif paket lisensi toko"
                                                     className="border-0 p-0 bg-transparent shadow-none"
                                                 />
                                             </div>
@@ -174,6 +223,150 @@ export function LicenseOrderDialog({
                                         </div>
                                     </div>
 
+                                    {/* Server Infrastructure Selector */}
+                                    {orderServerPackages.length > 0 && (
+                                        <div className={cn(
+                                            "p-3 rounded-xl border transition-colors space-y-2.5",
+                                            isServerRequiredMissing
+                                                ? "bg-rose-50/40 border-rose-300"
+                                                : "bg-slate-50/80 border-slate-200/80"
+                                        )}>
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-1.5">
+                                                    <IconServer size={14} className="text-blue-600" />
+                                                    <span className="text-xs font-bold text-slate-800">
+                                                        Infrastruktur Server
+                                                    </span>
+                                                    {includeBase && (
+                                                        <span className="text-[9px] font-extrabold text-rose-700 bg-rose-100 border border-rose-200 px-1.5 py-0.2 rounded-full">
+                                                            Wajib Dipilih
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <span className="text-[11px] text-slate-400 block -mt-1">
+                                                Pilih hosting cloud POS atau server lokal toko Anda
+                                            </span>
+
+                                            <FormSelect
+                                                name="server_package_id"
+                                                options={serverOptions}
+                                                placeholder="Pilih paket server..."
+                                                className="bg-white"
+                                                clearable={true}
+                                                onChange={(val) => selectServerPackage(val || null)}
+                                                onClear={() => selectServerPackage(null)}
+                                            />
+
+                                            {/* Mandatory Alert if Base Product Checked but Server Not Selected */}
+                                            {isServerRequiredMissing && (
+                                                <p className="text-[10px] font-semibold text-rose-600 bg-rose-50 border border-rose-200/80 p-1.5 rounded-lg flex items-center gap-1.5">
+                                                    <IconAlertCircle size={13} className="shrink-0 text-rose-600" />
+                                                    <span>Paket server wajib dipilih jika memperbarui paket utama POS.</span>
+                                                </p>
+                                            )}
+
+                                            {/* Selected Server Specs Chip */}
+                                            {selectedServer && (
+                                                <div className="p-2 rounded-lg bg-white border border-slate-200/80 space-y-1 text-[11px]">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="font-bold text-slate-800">{selectedServer.nama}</span>
+                                                        <span className="font-mono font-bold text-blue-700">
+                                                            {currentServerPrice > 0
+                                                                ? `${formatRupiah(currentServerPrice)}/${billingPeriod === "annual" ? "tahun" : "bulan"}`
+                                                                : "Rp 0 (Gratis)"}
+                                                        </span>
+                                                    </div>
+                                                    {selectedServer.cpu && selectedServer.cpu !== "Self-Hosted" && (
+                                                        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-medium flex-wrap">
+                                                            <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono">
+                                                                {selectedServer.cpu}
+                                                            </span>
+                                                            <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono">
+                                                                {selectedServer.ram}
+                                                            </span>
+                                                            <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono">
+                                                                {selectedServer.storage}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    {selectedServer.description && (
+                                                        <p className="text-[10px] text-slate-400 line-clamp-2">
+                                                            {selectedServer.description}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </Scrollable>
+                        </div>
+
+                        {/* COLUMN 2: Add-on Selection List (4 cols on lg) */}
+                        <div className="lg:col-span-4 flex flex-col min-h-0 max-h-[380px] md:max-h-[460px] lg:h-[460px] overflow-hidden space-y-2">
+                            {/* Header Toolbar for Addons */}
+                            <div className="flex items-center justify-between pb-2 border-b border-slate-100 shrink-0">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="w-5 h-5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-black flex items-center justify-center border border-emerald-200">
+                                        2
+                                    </span>
+                                    <span className="text-xs font-bold text-slate-800">
+                                        Pilih Add-on
+                                    </span>
+                                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-600 border border-slate-200/60 ml-0.5">
+                                        {addons.length}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-xs">
+                                    <button
+                                        type="button"
+                                        onClick={selectAllAddons}
+                                        className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer"
+                                    >
+                                        Semua
+                                    </button>
+                                    <span className="text-slate-300">•</span>
+                                    <button
+                                        type="button"
+                                        onClick={clearAllAddons}
+                                        className="text-[11px] font-bold text-slate-400 hover:text-slate-600 hover:underline cursor-pointer"
+                                    >
+                                        Batal
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Scrollable Container with Addon Cards */}
+                            <Scrollable className="flex-1 min-h-0 max-h-[340px] md:max-h-[420px] pr-1.5 overflow-hidden" scrollbarClassName="z-20">
+                                <div className="flex flex-col gap-2 p-0.5 pb-2">
+                                    {addons.map((addon) => (
+                                        <LicenseOrderAddonItem
+                                            key={addon.id}
+                                            addon={addon}
+                                            isSelected={selectedAddonIds.includes(addon.id)}
+                                            billingPeriod={billingPeriod}
+                                            onToggle={() => toggleAddon(addon.id)}
+                                        />
+                                    ))}
+                                </div>
+                            </Scrollable>
+                        </div>
+
+                        {/* COLUMN 3: Cost Summary & Docked Checkout (4 cols on lg, always visible) */}
+                        <div className="lg:col-span-4 md:col-span-2 lg:col-span-4 flex flex-col min-h-0 max-h-[420px] md:max-h-[460px] lg:h-[460px] overflow-hidden">
+                            <div className="flex items-center gap-1.5 pb-2 border-b border-slate-100 shrink-0">
+                                <span className="w-5 h-5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-black flex items-center justify-center border border-emerald-200">
+                                    3
+                                </span>
+                                <span className="text-xs font-bold text-slate-800">
+                                    Total & Pembayaran
+                                </span>
+                            </div>
+
+                            {/* Scrollable Container for Summary & Promo Coupon */}
+                            <Scrollable className="flex-1 min-h-0 max-h-[340px] md:max-h-[390px] pr-1.5 overflow-hidden" scrollbarClassName="z-20">
+                                <div className="space-y-2.5 pt-2 pb-2">
                                     {/* Promo Coupon Card */}
                                     <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/80 space-y-2">
                                         <div className="flex items-center justify-between">
@@ -190,20 +383,27 @@ export function LicenseOrderDialog({
 
                                         {couponResult ? (
                                             <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-2">
-                                                <div>
-                                                    <span className="font-bold text-xs text-emerald-900 block font-mono">
-                                                        {couponResult.code}
-                                                    </span>
-                                                    <span className="text-[10px] text-emerald-700 font-medium">
-                                                        Hemat {formatRupiah(couponDiscount)}
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <span className="font-bold text-xs text-emerald-900 block font-mono">
+                                                            {couponResult.code}
+                                                        </span>
+                                                        {couponResult.discount_value > 0 && (
+                                                            <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100/90 border border-emerald-200 px-1 py-0.2 rounded font-mono">
+                                                                {couponResult.discount_type === "percentage" ? `${couponResult.discount_value}%` : "Potongan"}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-[10px] text-emerald-700 font-medium block truncate">
+                                                        {couponResult.name ? `${couponResult.name} • ` : ""}Hemat {couponResult.formatted_discount || formatRupiah(couponDiscount)}
                                                     </span>
                                                 </div>
                                                 <button
                                                     type="button"
                                                     onClick={handleRemoveCoupon}
-                                                    className="text-[10px] font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer"
+                                                    className="text-[10px] font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer shrink-0"
                                                 >
-                                                    Hapus Kupon
+                                                    Hapus
                                                 </button>
                                             </div>
                                         ) : (
@@ -242,7 +442,7 @@ export function LicenseOrderDialog({
                                         )}
                                     </div>
 
-                                    {/* Order Summary & Final Breakdown */}
+                                    {/* Order Summary & Final Breakdown - ALWAYS clearly visible */}
                                     <LicenseOrderSummary
                                         selectedCount={selectedAddonIds.length}
                                         billingPeriod={billingPeriod}
@@ -254,11 +454,13 @@ export function LicenseOrderDialog({
                                         addonsTotal={displayAddonsTotal}
                                         couponDiscount={couponDiscount}
                                         couponCode={couponResult?.code}
+                                        serverPrice={currentServerPrice}
+                                        includeServer={includeServer && currentServerPrice > 0}
                                     />
                                 </div>
                             </Scrollable>
 
-                            {/* Pinned Bottom Action Buttons - Always visible & docked */}
+                            {/* Pinned Bottom Action Buttons for Column 3 */}
                             <div className="pt-2.5 border-t border-slate-100 bg-white shrink-0 mt-auto flex items-center gap-2">
                                 <AppButton
                                     type="button"
@@ -271,65 +473,13 @@ export function LicenseOrderDialog({
                                 <AppButton
                                     type="submit"
                                     isLoading={isPending}
-                                    disabled={selectedAddonIds.length === 0 && !includeBase}
+                                    disabled={isSubmitDisabled}
                                     className="flex-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold h-9 rounded-xl shadow-xs cursor-pointer gap-1.5"
                                 >
                                     <IconReceipt size={15} />
                                     <span>Buat Pesanan & Bayar</span>
                                 </AppButton>
                             </div>
-                        </div>
-
-                        {/* RIGHT COLUMN: Add-on Selection List (7 cols) */}
-                        <div className="md:col-span-7 flex flex-col min-h-0 max-h-[380px] md:max-h-[450px] md:h-[450px] overflow-hidden space-y-2">
-                            {/* Header Toolbar for Addons */}
-                            <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 shrink-0">
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs font-bold text-slate-800 block">
-                                            Pilih Add-on Tambahan
-                                        </span>
-                                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-600 border border-slate-200/60">
-                                            {addons.length} Tersedia
-                                        </span>
-                                    </div>
-                                    <span className="text-[11px] text-slate-400">
-                                        Pilih add-on yang ingin diaktifkan untuk meningkatkan efisiensi
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-2 text-xs">
-                                    <button
-                                        type="button"
-                                        onClick={selectAllAddons}
-                                        className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer"
-                                    >
-                                        Pilih Semua
-                                    </button>
-                                    <span className="text-slate-300">•</span>
-                                    <button
-                                        type="button"
-                                        onClick={clearAllAddons}
-                                        className="text-[11px] font-bold text-slate-400 hover:text-slate-600 hover:underline cursor-pointer"
-                                    >
-                                        Batal Pilih
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Scrollable Container with Addon Cards */}
-                            <Scrollable className="flex-1 min-h-0 max-h-[395px] pr-1.5 overflow-hidden" scrollbarClassName="z-20">
-                                <div className="flex flex-col gap-2 p-0.5 pb-2">
-                                    {addons.map((addon) => (
-                                        <LicenseOrderAddonItem
-                                            key={addon.id}
-                                            addon={addon}
-                                            isSelected={selectedAddonIds.includes(addon.id)}
-                                            billingPeriod={billingPeriod}
-                                            onToggle={() => toggleAddon(addon.id)}
-                                        />
-                                    ))}
-                                </div>
-                            </Scrollable>
                         </div>
                     </div>
                 </form>

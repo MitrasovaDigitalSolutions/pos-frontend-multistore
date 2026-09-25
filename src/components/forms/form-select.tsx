@@ -56,6 +56,8 @@ export interface FormSelectProps<T extends FieldValues, TData = unknown> {
     maxLabelLength?: number;
     leftIcon?: React.ReactNode;
     rightElement?: React.ReactNode;
+    clearable?: boolean;
+    onClear?: () => void;
     onCreateOption?: (searchQuery: string) => void;
     createOptionLabel?: string;
 }
@@ -85,6 +87,8 @@ export function FormSelect<T extends FieldValues, TData = unknown>({
     hasMore,
     isLoadingMore,
     onChange,
+    clearable,
+    onClear,
     className,
     wrapperClassName,
     disabled,
@@ -216,13 +220,25 @@ export function FormSelect<T extends FieldValues, TData = unknown>({
                             value={fieldValueStr}
                             onChange={(val) => {
                                 const originalValue = field.value;
-                                if (typeof originalValue === "number") {
-                                    field.onChange(val === "" ? "" : Number(val));
+                                if (val === "" || val === undefined) {
+                                    field.onChange(null);
+                                } else if (typeof originalValue === "number") {
+                                    field.onChange(Number(val));
                                 } else {
                                     field.onChange(val);
                                 }
                                 if (onChange) {
                                     onChange(val);
+                                }
+                            }}
+                            clearable={clearable}
+                            onClear={() => {
+                                field.onChange(null);
+                                if (onChange) {
+                                    onChange("");
+                                }
+                                if (onClear) {
+                                    onClear();
                                 }
                             }}
                             placeholder={placeholder}

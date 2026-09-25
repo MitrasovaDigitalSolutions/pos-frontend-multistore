@@ -219,9 +219,9 @@ export function LicenseCatalogCard({
                                 type="button"
                                 onClick={onOrder}
                                 className="h-7.5 px-2.5 rounded-lg text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 border border-rose-200/80 transition-colors duration-150 flex items-center gap-1 cursor-pointer shadow-2xs"
-                                title="Perpanjang paket langganan untuk mengaktifkan kembali add-on ini"
+                                title="Perbarui langganan untuk mengaktifkan kembali add-on ini"
                             >
-                                <span>Perlu Perpanjangan</span>
+                                <span>Aktifkan Kembali</span>
                             </button>
                         )
                     ) : (

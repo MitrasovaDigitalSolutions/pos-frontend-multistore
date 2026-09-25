@@ -15,15 +15,28 @@ export type ActivateLicenseInput = z.infer<typeof activateLicenseSchema>;
 
 // ─── Order License Schema ────────────────────────────────────────────────────
 
-export const orderLicenseSchema = z.object({
-    billing_period: z.enum(["monthly", "annual"], {
-        error: "Pilih periode penagihan",
-    }),
-    include_base_product: z.boolean().optional(),
-    addon_ids: z.array(z.string()).optional(),
-    coupon_code: z.string().optional(),
-    include_server: z.boolean().optional(),
-    server_package_id: z.string().optional().nullable(),
-});
+export const orderLicenseSchema = z
+    .object({
+        billing_period: z.enum(["monthly", "annual"], {
+            error: "Pilih periode penagihan",
+        }),
+        include_base_product: z.boolean().optional(),
+        addon_ids: z.array(z.string()).optional(),
+        coupon_code: z.string().optional(),
+        include_server: z.boolean().optional(),
+        server_package_id: z.string().optional().nullable(),
+    })
+    .refine(
+        (data) => {
+            if (data.include_base_product) {
+                return Boolean(data.server_package_id && data.server_package_id.trim() !== "");
+            }
+            return true;
+        },
+        {
+            message: "Paket server wajib dipilih jika memperbarui paket utama POS",
+            path: ["server_package_id"],
+        }
+    );
 
 export type OrderLicenseInput = z.infer<typeof orderLicenseSchema>;

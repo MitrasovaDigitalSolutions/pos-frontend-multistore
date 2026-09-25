@@ -59,13 +59,19 @@ export interface CatalogProduct {
     is_active: boolean;
     created_at: string;
     updated_at: string;
+    features?: string[] | null;
     addons: CatalogAddon[];
+}
+
+export interface CatalogData {
+    products: CatalogProduct[];
+    server_packages: ServerPackage[];
 }
 
 export interface CatalogResponse {
     status: "success" | "error";
     message: string;
-    data: CatalogProduct[];
+    data: CatalogData | CatalogProduct[];
 }
 
 // ─── Invoices ────────────────────────────────────────────────────────────────
@@ -140,35 +146,60 @@ export interface CouponCheckPayload {
     addon_ids?: string[];
 }
 
-export interface CouponCheckResult {
+export interface CouponDetail {
     code: string;
-    name?: string;
-    discount_type?: "percentage" | "fixed" | string;
-    discount_value?: number;
-    max_discount_amount?: number | null;
+    name: string;
+    discount_type: "percentage" | "fixed" | string;
+    discount_value: number;
     discount_amount: number;
+    formatted_discount?: string;
+    subtotal: number;
+    final_amount: number;
+    description?: string;
+}
+
+export interface CouponCheckData {
+    valid: boolean;
+    coupon: CouponDetail;
+}
+
+export interface CouponCheckResult {
+    valid: boolean;
+    coupon: CouponDetail;
+    code: string;
+    name: string;
+    discount_type: "percentage" | "fixed" | string;
+    discount_value: number;
+    discount_amount: number;
+    formatted_discount?: string;
     subtotal?: number;
     final_amount?: number;
     description?: string;
 }
 
 export interface CouponCheckResponse {
-    status: "success" | "error";
+    status: "success" | "error" | string;
     message: string;
-    data: CouponCheckResult;
+    data: CouponCheckData;
 }
 
 export interface ServerPackage {
     id: string;
+    code: string;
     nama: string;
-    code?: string;
-    description?: string;
-    cpu_cores?: number;
-    ram_gb?: number;
-    storage_gb?: number;
+    cpu?: string;
+    ram?: string;
+    storage?: string;
+    description?: string | null;
     harga_bulanan: number;
     harga_tahunan: number;
     is_active?: boolean;
+    created_at?: string;
+    updated_at?: string;
+    // Backward compatibility for legacy numeric fields
+    cpu_cores?: number;
+    ram_gb?: number;
+    storage_gb?: number;
 }
 
 export interface InvoiceFilterParams {

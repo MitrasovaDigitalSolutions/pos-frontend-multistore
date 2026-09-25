@@ -21,11 +21,11 @@ export function LicenseBanner() {
         return null;
     }
 
-    // Grace period — amber warning banner
+    // Grace period — rose critical warning banner
     if (license.is_grace_period && license.can_operate) {
         return (
-            <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-800 text-xs relative">
-                <IconAlertTriangle size={14} className="shrink-0 text-amber-600" />
+            <div className="flex items-center gap-2 px-4 py-2 bg-rose-50 border-b border-rose-200 text-rose-800 text-xs relative">
+                <IconAlertTriangle size={14} className="shrink-0 text-rose-600" />
                 <span className="flex-1">
                     <span className="font-bold">Masa tenggang langganan aktif.</span>{" "}
                     {license.grace_days_remaining > 0 && (
@@ -33,14 +33,14 @@ export function LicenseBanner() {
                     )}
                     <Link
                         href={ROUTES.LICENSE}
-                        className="underline font-bold hover:text-amber-900 ml-1"
+                        className="underline font-bold hover:text-rose-900 ml-1"
                     >
-                        Perpanjang langganan sekarang →
+                        Perbarui langganan sekarang →
                     </Link>
                 </span>
                 <button
                     onClick={() => setDismissed(true)}
-                    className="p-0.5 rounded hover:bg-amber-200/60 transition-colors cursor-pointer"
+                    className="p-0.5 rounded hover:bg-rose-200/60 transition-colors cursor-pointer"
                     aria-label="Tutup"
                 >
                     <IconX size={12} />
@@ -98,7 +98,7 @@ export function LicenseBanner() {
                         href={ROUTES.LICENSE}
                         className="underline font-bold hover:text-rose-200 ml-1"
                     >
-                        Aktivasi atau perpanjang lisensi →
+                        Aktivasi atau perbarui langganan →
                     </Link>
                 </span>
             </div>
