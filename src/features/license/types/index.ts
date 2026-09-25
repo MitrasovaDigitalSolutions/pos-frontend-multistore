@@ -59,13 +59,19 @@ export interface CatalogProduct {
     is_active: boolean;
     created_at: string;
     updated_at: string;
+    features?: string[] | null;
     addons: CatalogAddon[];
+}
+
+export interface CatalogData {
+    products: CatalogProduct[];
+    server_packages: ServerPackage[];
 }
 
 export interface CatalogResponse {
     status: "success" | "error";
     message: string;
-    data: CatalogProduct[];
+    data: CatalogData | CatalogProduct[];
 }
 
 // ─── Invoices ────────────────────────────────────────────────────────────────
@@ -138,42 +144,111 @@ export interface CouponCheckPayload {
     include_server?: boolean;
     server_package_id?: string;
     addon_ids?: string[];
+    prorate?: boolean;
+}
+
+export interface CouponDetail {
+    code: string;
+    name: string;
+    discount_type: "percentage" | "fixed" | string;
+    discount_value: number;
+    discount_amount: number;
+    formatted_discount?: string;
+    subtotal: number;
+    final_amount: number;
+    description?: string;
+}
+
+export interface CouponCheckData {
+    valid: boolean;
+    coupon: CouponDetail;
 }
 
 export interface CouponCheckResult {
+    valid: boolean;
+    coupon: CouponDetail;
     code: string;
-    name?: string;
-    discount_type?: "percentage" | "fixed" | string;
-    discount_value?: number;
-    max_discount_amount?: number | null;
+    name: string;
+    discount_type: "percentage" | "fixed" | string;
+    discount_value: number;
     discount_amount: number;
+    formatted_discount?: string;
     subtotal?: number;
     final_amount?: number;
     description?: string;
 }
 
 export interface CouponCheckResponse {
-    status: "success" | "error";
+    status: "success" | "error" | string;
     message: string;
-    data: CouponCheckResult;
+    data: CouponCheckData;
 }
 
 export interface ServerPackage {
     id: string;
+    code: string;
     nama: string;
-    code?: string;
-    description?: string;
-    cpu_cores?: number;
-    ram_gb?: number;
-    storage_gb?: number;
+    cpu?: string;
+    ram?: string;
+    storage?: string;
+    description?: string | null;
     harga_bulanan: number;
     harga_tahunan: number;
     is_active?: boolean;
+    created_at?: string;
+    updated_at?: string;
+    // Backward compatibility for legacy numeric fields
+    cpu_cores?: number;
+    ram_gb?: number;
+    storage_gb?: number;
 }
 
 export interface InvoiceFilterParams {
     status?: "unpaid" | "paid" | "cancelled" | "expired" | string;
     year?: number;
+}
+
+// ─── Prorate Calculation ─────────────────────────────────────────────────────
+
+export interface ProrateItem {
+    name: string;
+    type: string;
+    code: string;
+    addon_id: string;
+    billing_basis: string;
+    period_full_price: number;
+    daily_rate: number;
+    prorated_days: number;
+    raw_amount: number;
+    price: number;
+    subtotal: number;
+    formatted_price: string;
+    is_prorated: boolean;
+    period_months: number;
+    target_expires_at?: string;
+}
+
+export interface ProrateCalculateData {
+    license_key: string;
+    license_status: string;
+    license_expires_at: string;
+    subscription_type: string;
+    billing_basis: string;
+    days_remaining: number;
+    items: ProrateItem[];
+    subtotal: number;
+    formatted_subtotal: string;
+    addon_codes: string[];
+}
+
+export interface ProrateCalculatePayload {
+    addon_ids: string[];
+}
+
+export interface ProrateCalculateResponse {
+    status: "success" | "error" | string;
+    message: string;
+    data: ProrateCalculateData;
 }
 
 // ─── Orders ──────────────────────────────────────────────────────────────────
@@ -187,6 +262,7 @@ export interface OrderPayload {
     coupon_code?: string;
     include_server?: boolean;
     server_package_id?: string;
+    prorate?: boolean;
 }
 
 export interface OrderResult {

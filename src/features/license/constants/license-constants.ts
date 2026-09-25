@@ -15,7 +15,7 @@ export const LICENSE_STATUS_BADGE_VARIANTS: Record<
     "emerald" | "amber" | "rose" | "blue" | "slate"
 > = {
     active: "emerald",
-    grace_period: "amber",
+    grace_period: "rose",
     expired: "rose",
     suspended: "rose",
     not_activated: "slate",

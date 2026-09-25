@@ -17,6 +17,7 @@ interface LicenseOrderSummaryProps {
     couponCode?: string;
     serverPrice?: number;
     includeServer?: boolean;
+    isProrated?: boolean;
 }
 
 export function LicenseOrderSummary({
@@ -32,6 +33,7 @@ export function LicenseOrderSummary({
     couponCode,
     serverPrice = 0,
     includeServer = false,
+    isProrated = false,
 }: LicenseOrderSummaryProps) {
     const isAnnual = billingPeriod === "annual";
     const normalAnnualTotal = totalMonthly * 12;
@@ -81,9 +83,19 @@ export function LicenseOrderSummary({
                 ) : null}
 
                 {selectedCount > 0 && (
-                    <div className="flex justify-between text-slate-600">
-                        <span>Subtotal Add-on</span>
-                        <span className="font-bold text-slate-900">
+                    <div className="flex justify-between items-center text-slate-600">
+                        <div className="flex items-center gap-1.5">
+                            <span>Subtotal Add-on</span>
+                            {isProrated && (
+                                <Badge
+                                    variant="outline"
+                                    className="text-[9px] font-bold px-1.5 py-0 rounded bg-emerald-50 text-emerald-700 border-emerald-200"
+                                >
+                                    Prorata
+                                </Badge>
+                            )}
+                        </div>
+                        <span className="font-bold text-slate-900 font-mono">
                             {formatRupiah(addonsTotal)}
                         </span>
                     </div>
@@ -132,11 +144,11 @@ export function LicenseOrderSummary({
                     Total Tagihan
                 </span>
                 <div className="text-right">
-                    <span className="text-lg font-black text-emerald-700 block leading-tight">
+                    <span className="text-lg font-black text-emerald-700 block leading-tight font-mono">
                         {formatRupiah(displayTotal)}
                     </span>
                     <span className="text-[10px] text-slate-400 font-medium">
-                        /{isAnnual ? "tahun" : "bulan"}
+                        {isProrated ? "Prorata sisa masa aktif" : `/${isAnnual ? "tahun" : "bulan"}`}
                     </span>
                 </div>
             </div>

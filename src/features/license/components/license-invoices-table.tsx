@@ -292,7 +292,7 @@ export function LicenseInvoicesTable({
                             </span>
                         </div>
                         <p className="text-[11px] text-slate-400 font-medium">
-                            Daftar tagihan resmi perpanjangan add-on dan add-on aplikasi POS
+                            Daftar tagihan resmi pembaruan langganan dan paket add-on POS
                         </p>
                     </div>
                 </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
     IconArrowsExchange,
     IconAssembly,
@@ -17,7 +18,7 @@ import {
     IconTruckDelivery,
     IconUsers,
 } from "@tabler/icons-react";
-import type { CatalogAddon } from "../types";
+import type { CatalogAddon, ProrateItem } from "../types";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,8 @@ interface LicenseCatalogCardProps {
     isOperable?: boolean;
     billingView: "monthly" | "annual";
     onOrder: () => void;
+    isProrateLoading?: boolean;
+    prorateItem?: ProrateItem;
 }
 
 const ADDON_VISUALS: Record<
@@ -112,6 +115,8 @@ export function LicenseCatalogCard({
     isOperable = true,
     billingView,
     onOrder,
+    isProrateLoading = false,
+    prorateItem,
 }: LicenseCatalogCardProps) {
     const visual = ADDON_VISUALS[addon.code] ?? {
         icon: IconPackage,
@@ -125,6 +130,11 @@ export function LicenseCatalogCard({
         billingView === "monthly"
             ? addon.harga_bulanan
             : addon.harga_tahunan;
+
+    const hasProratePrice =
+        !isOwned &&
+        billingView === "monthly" &&
+        Boolean(prorateItem && prorateItem.is_prorated);
 
     return (
         <div
@@ -194,17 +204,55 @@ export function LicenseCatalogCard({
             {/* Bottom: Pricing + Action */}
             <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-slate-100">
                 <div>
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-medium">
-                        Biaya Langganan
-                    </span>
-                    <div className="flex items-baseline gap-1">
-                        <span className="text-xs font-extrabold text-slate-900">
-                            {formatRupiah(price)}
-                        </span>
-                        <span className="text-[10px] text-slate-400 font-medium">
-                            /{billingView === "monthly" ? "bulan" : "tahun"}
-                        </span>
-                    </div>
+                    {isProrateLoading && billingView === "monthly" && !isOwned ? (
+                        <div>
+                            <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-medium">
+                                Biaya Langganan
+                            </span>
+                            <div className="flex items-center gap-1.5 pt-1 pb-0.5">
+                                <Skeleton className="h-4 w-20 rounded" />
+                            </div>
+                        </div>
+                    ) : hasProratePrice && prorateItem ? (
+                        <div className="space-y-0.5">
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-medium">
+                                    Biaya Langganan
+                                </span>
+                                <Badge
+                                    variant="outline"
+                                    className="text-[9px] font-bold px-1.5 py-0 rounded bg-emerald-50 text-emerald-700 border-emerald-200"
+                                >
+                                    Prorata
+                                </Badge>
+                            </div>
+                            <div className="flex items-baseline gap-1.5 flex-wrap">
+                                <span className="text-xs font-black text-slate-900 font-mono">
+                                    {prorateItem.formatted_price || formatRupiah(prorateItem.price)}
+                                </span>
+                                <span className="text-[10px] text-slate-400 line-through font-mono">
+                                    {formatRupiah(addon.harga_bulanan)}
+                                </span>
+                            </div>
+                            <span className="text-[10px] text-slate-400 block leading-tight">
+                                sisa {prorateItem.prorated_days} hari masa aktif lisensi
+                            </span>
+                        </div>
+                    ) : (
+                        <div>
+                            <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-medium">
+                                Biaya Langganan
+                            </span>
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-xs font-extrabold text-slate-900 font-mono">
+                                    {formatRupiah(price)}
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-medium">
+                                    /{billingView === "monthly" ? "bulan" : "tahun"}
+                                </span>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div>
@@ -219,9 +267,9 @@ export function LicenseCatalogCard({
                                 type="button"
                                 onClick={onOrder}
                                 className="h-7.5 px-2.5 rounded-lg text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 border border-rose-200/80 transition-colors duration-150 flex items-center gap-1 cursor-pointer shadow-2xs"
-                                title="Perpanjang paket langganan untuk mengaktifkan kembali add-on ini"
+                                title="Perbarui langganan untuk mengaktifkan kembali add-on ini"
                             >
-                                <span>Perlu Perpanjangan</span>
+                                <span>Aktifkan Kembali</span>
                             </button>
                         )
                     ) : (

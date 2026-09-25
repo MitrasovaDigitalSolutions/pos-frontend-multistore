@@ -4,6 +4,7 @@ import {
     IconAlertTriangle,
     IconCalendarOff,
     IconClock,
+    IconRefresh,
     IconShieldCheck,
     IconShieldOff,
     IconShieldX,
@@ -19,6 +20,7 @@ import {
 import { formatDate } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import { LicenseKeyMaskedChip } from "./license-key-masked-chip";
+import { LicenseHeroCountdown } from "./license-hero-countdown";
 
 interface LicenseHeroCardProps {
     data: LicenseStatus;
@@ -44,25 +46,25 @@ export function LicenseHeroCard({
     const timeMetrics = getLicenseTimeMetrics(data);
     const { isExpired, isLastDay, effectiveDays, progressPercent, urgencyLevel } = timeMetrics;
 
-    const isCritical = urgencyLevel === "critical" || urgencyLevel === "expired" || isSuspended;
+    const isCritical = urgencyLevel === "critical" || urgencyLevel === "expired" || isSuspended || isGrace;
     const isWarning = urgencyLevel === "warning" && !isCritical;
 
     const barGradient = isCritical
         ? "bg-gradient-to-r from-rose-500 to-red-500"
         : isWarning
-            ? "bg-gradient-to-r from-amber-500 to-orange-400"
+            ? "bg-gradient-to-r from-amber-400 to-yellow-400"
             : "bg-gradient-to-r from-emerald-500 to-teal-500";
 
     const meterIconColor = isCritical
         ? "text-rose-600"
         : isWarning
-            ? "text-amber-600"
+            ? "text-amber-500"
             : "text-emerald-600";
 
     const meterTextColor = isCritical
         ? "text-rose-600 font-black"
         : isWarning
-            ? "text-amber-800 font-extrabold"
+            ? "text-amber-700 font-extrabold"
             : "text-slate-900 font-extrabold";
 
     return (
@@ -75,7 +77,7 @@ export function LicenseHeroCard({
                         isCritical
                             ? "bg-rose-200"
                             : isWarning
-                                ? "bg-amber-200"
+                                ? "bg-yellow-200/70"
                                 : "bg-emerald-100"
                     )}
                 />
@@ -90,11 +92,9 @@ export function LicenseHeroCard({
                                 "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border shadow-2xs",
                                 isActive
                                     ? "bg-emerald-50 border-emerald-100 text-emerald-600"
-                                    : isGrace
-                                        ? "bg-amber-50 border-amber-100 text-amber-600"
-                                        : isExpired || isSuspended
-                                            ? "bg-rose-50 border-rose-100 text-rose-600"
-                                            : "bg-slate-100 border-slate-200 text-slate-500"
+                                    : isGrace || isExpired || isSuspended
+                                        ? "bg-rose-50 border-rose-100 text-rose-600"
+                                        : "bg-slate-100 border-slate-200 text-slate-500"
                             )}
                         >
                             {isActive ? (
@@ -130,17 +130,15 @@ export function LicenseHeroCard({
                                         "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[10px] font-bold tracking-wide shrink-0",
                                         isActive
                                             ? "bg-emerald-50 text-emerald-700 border-emerald-200/80"
-                                            : isGrace
-                                                ? "bg-amber-50 text-amber-700 border-amber-200/80"
-                                                : isExpired || isSuspended
-                                                    ? "bg-rose-50 text-rose-700 border-rose-200/80"
-                                                    : "bg-slate-100 text-slate-600 border-slate-200"
+                                            : isGrace || isExpired || isSuspended
+                                                ? "bg-rose-50 text-rose-700 border-rose-200/80"
+                                                : "bg-slate-100 text-slate-600 border-slate-200"
                                     )}
                                 >
                                     {isActive && (
                                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                     )}
-                                    {isGrace && <IconAlertTriangle size={11} className="text-amber-600" />}
+                                    {isGrace && <IconAlertTriangle size={11} className="text-rose-600" />}
                                     {(isExpired || isSuspended) && <IconShieldX size={11} className="text-rose-600" />}
                                     {LICENSE_STATUS_LABELS[data.status] ?? data.status}
                                 </div>
@@ -157,14 +155,14 @@ export function LicenseHeroCard({
 
                     {/* Quick CTA Buttons with clean color transitions */}
                     <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
-                        {!isSuspended && !isNotActivated && (
+                        {(isExpired || !data.can_operate || isLastDay || effectiveDays <= 3) && !isSuspended && !isNotActivated && (
                             <button
                                 type="button"
                                 onClick={onRenewClick}
-                                className="h-8 sm:h-9 px-3.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white shadow-2xs flex items-center gap-1.5 cursor-pointer transition-colors duration-150"
+                                className="h-8 sm:h-9 px-3.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white shadow-2xs flex items-center gap-1.5 cursor-pointer transition-colors duration-150"
                             >
-                                <IconSparkles size={14} />
-                                <span>{isActive ? "Perpanjang & Tambah Add-on" : "Perpanjang Paket"}</span>
+                                <IconRefresh size={14} className="stroke-[2.2]" />
+                                <span>Perbarui Langganan</span>
                             </button>
                         )}
                         {isNotActivated && (
@@ -210,26 +208,26 @@ export function LicenseHeroCard({
                                 <span>
                                     {isExpired ? (
                                         <span className="text-rose-600 font-black">Masa berlaku langganan telah berakhir</span>
+                                    ) : isLastDay ? (
+                                        <LicenseHeroCountdown expiresAt={data.expires_at} />
                                     ) : (
                                         <>
                                             Tersisa{" "}
                                             <strong className={meterTextColor}>
-                                                {isLastDay ? "< 24 jam (Hari Terakhir)" : `${effectiveDays} hari`}
-                                            </strong>{" "}
-                                            ({progressPercent}%)
-                                            {isLastDay ? (
-                                                <span className="ml-1.5 text-[10px] font-black text-rose-700 bg-rose-100/90 border border-rose-200 px-1.5 py-0.2 rounded-full">
-                                                    Hari Terakhir
-                                                </span>
-                                            ) : isCritical ? (
-                                                <span className="ml-1.5 text-[10px] font-black text-rose-700 bg-rose-100/90 border border-rose-200 px-1.5 py-0.2 rounded-full">
-                                                    Perlu Tindakan
-                                                </span>
-                                            ) : isWarning ? (
-                                                <span className="ml-1.5 text-[10px] font-black text-amber-800 bg-amber-100/90 border border-amber-200 px-1.5 py-0.2 rounded-full">
+                                                {`${effectiveDays} hari`}
+                                            </strong>
+                                            {(isCritical || isWarning) && (
+                                                <span
+                                                    className={cn(
+                                                        "ml-1.5 text-[10px] font-black px-1.5 py-0.2 rounded-full",
+                                                        isCritical
+                                                            ? "text-rose-700 bg-rose-100/90 border border-rose-200"
+                                                            : "text-amber-800 bg-amber-100/90 border border-amber-200"
+                                                    )}
+                                                >
                                                     Segera Berakhir
                                                 </span>
-                                            ) : null}
+                                            )}
                                         </>
                                     )}
                                 </span>
@@ -253,7 +251,7 @@ export function LicenseHeroCard({
 
                         {/* Grace period callout */}
                         {isGrace && data.grace_days_remaining > 0 && (
-                            <p className="text-[10px] font-bold text-amber-700 pt-0.5 flex items-center gap-1">
+                            <p className="text-[10px] font-bold text-rose-700 pt-0.5 flex items-center gap-1">
                                 <IconAlertTriangle size={12} className="shrink-0" />
                                 <span>Masa tenggang: Tersisa {data.grace_days_remaining} hari sebelum akses operasional dibatasi.</span>
                             </p>

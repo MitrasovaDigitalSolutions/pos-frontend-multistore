@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useAppRouter } from "@/hooks/use-app-router";
 import {
-    IconAlertTriangle,
     IconFileInvoice,
     IconKey,
     IconPackage,
@@ -21,6 +20,7 @@ import { LicenseCatalogSection } from "./license-catalog-section";
 import { LicenseInvoicesTable } from "./license-invoices-table";
 import { LicenseOrderDialog } from "./license-order-dialog";
 import { LicenseKeyMaskedChip } from "./license-key-masked-chip";
+import { LicenseExpiredWrapper } from "./license-expired-wrapper";
 import { AppButton } from "@/components/shared/app-button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -73,7 +73,8 @@ export function LicenseStandalonePage() {
 
     const invoiceList = Array.isArray(invoices) ? invoices : [];
     const activeAddons = status?.active_addons ?? [];
-    const catalogList = Array.isArray(catalog) ? catalog : [];
+    const catalogList = Array.isArray(catalog) ? catalog : catalog?.products ?? [];
+    const serverPackages = Array.isArray(catalog?.server_packages) ? catalog.server_packages : [];
 
     const handleActivated = () => {
         // After activation, switch to the status tab to see the result
@@ -192,18 +193,7 @@ export function LicenseStandalonePage() {
                                                     {!isOperable && " Nonaktif"}
                                                 </span>
                                             )}
-                                            {tab.id === "catalog" && !isOperable && (
-                                                <span
-                                                    className={cn(
-                                                        "text-[9px] font-bold px-1.5 py-0.2 rounded-full",
-                                                        isActive
-                                                            ? "bg-rose-100 text-rose-800"
-                                                            : "bg-rose-200/60 text-rose-700"
-                                                    )}
-                                                >
-                                                    Perpanjang
-                                                </span>
-                                            )}
+
                                             {tab.id === "status" && !isOperable && (
                                                 <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shrink-0" />
                                             )}
@@ -259,38 +249,6 @@ export function LicenseStandalonePage() {
                                         )}
                                     </div>
 
-                                    {/* Prominent Warning Banner if Subscription Expired */}
-                                    {!isOperable && status && (
-                                        <div className="rounded-xl border border-rose-200/90 bg-rose-50/70 p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs text-left animate-fade-in">
-                                            <div className="flex items-start gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 border border-rose-200 mt-0.5">
-                                                    <IconAlertTriangle size={18} />
-                                                </div>
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <h4 className="text-xs font-bold text-rose-900 uppercase tracking-wide">
-                                                            Masa Langganan Berakhir
-                                                        </h4>
-                                                        <Badge variant="outline" className="text-[9px] font-bold bg-rose-100 text-rose-700 border-rose-200">
-                                                            Perlu Tindakan
-                                                        </Badge>
-                                                    </div>
-                                                    <p className="text-[11px] text-rose-700/80 mt-0.5 leading-relaxed">
-                                                        Akses kasir POS dan {activeAddons.length} add-on terpasang saat ini nonaktif. Perpanjang langganan sekarang untuk melanjutkan operasional toko Anda.
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <AppButton
-                                                size="sm"
-                                                onClick={() => setOrderOpen(true)}
-                                                className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shrink-0 shadow-2xs gap-1.5 h-8 cursor-pointer self-end sm:self-center"
-                                            >
-                                                <IconRefresh size={14} />
-                                                <span>Perpanjang Sekarang</span>
-                                            </AppButton>
-                                        </div>
-                                    )}
-
                                     {statusLoading ? (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                                             {[1, 2, 3, 4].map((i) => (
@@ -298,93 +256,101 @@ export function LicenseStandalonePage() {
                                             ))}
                                         </div>
                                     ) : status ? (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                                            {/* Stat: Masa Aktif */}
-                                            <StatCard
-                                                label="Sisa Masa Aktif"
-                                                value={
-                                                    !isOperable
-                                                        ? "Kedaluwarsa"
-                                                        : timeMetrics.timeRemainingLabel
-                                                }
-                                                sub={
-                                                    !isOperable
-                                                        ? "Masa aktif telah berakhir"
-                                                        : timeMetrics.timeRemainingDescription
-                                                }
-                                                accent={
-                                                    !isOperable
-                                                        ? "rose"
-                                                        : timeMetrics.urgencyLevel === "critical"
-                                                        ? "rose"
-                                                        : timeMetrics.urgencyLevel === "warning"
-                                                        ? "amber"
-                                                        : "emerald"
-                                                }
-                                            />
-                                            {/* Stat: License Key */}
-                                            <StatCard
-                                                label="License Key"
-                                                value={
-                                                    status.license_key
-                                                        ? isOperable
-                                                            ? "Aktif & Terpasang"
-                                                            : "Kedaluwarsa"
-                                                        : "Belum Diaktifkan"
-                                                }
-                                                sub={
-                                                    status.license_key ? (
-                                                        isOperable ? (
-                                                            <LicenseKeyMaskedChip
-                                                                licenseKey={status.license_key}
-                                                                variant="compact"
-                                                            />
+                                        <LicenseExpiredWrapper
+                                            isExpired={!isOperable}
+                                            title="Masa Langganan Kedaluwarsa"
+                                            description={`Akses kasir POS & ${activeAddons.length} add-on dinonaktifkan. Perbarui langganan untuk mengaktifkan kembali.`}
+                                            actionLabel="Perbarui Langganan"
+                                            onRenew={() => setOrderOpen(true)}
+                                        >
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                                                {/* Stat: Masa Aktif */}
+                                                <StatCard
+                                                    label="Sisa Masa Aktif"
+                                                    value={
+                                                        !isOperable
+                                                            ? "Kedaluwarsa"
+                                                            : timeMetrics.timeRemainingLabel
+                                                    }
+                                                    sub={
+                                                        !isOperable
+                                                            ? "Masa aktif telah berakhir"
+                                                            : timeMetrics.timeRemainingDescription
+                                                    }
+                                                    accent={
+                                                        !isOperable
+                                                            ? "rose"
+                                                            : timeMetrics.urgencyLevel === "critical"
+                                                            ? "rose"
+                                                            : timeMetrics.urgencyLevel === "warning"
+                                                            ? "amber"
+                                                            : "emerald"
+                                                    }
+                                                />
+                                                {/* Stat: License Key */}
+                                                <StatCard
+                                                    label="License Key"
+                                                    value={
+                                                        status.license_key
+                                                            ? isOperable
+                                                                ? "Aktif & Terpasang"
+                                                                : "Kedaluwarsa"
+                                                            : "Belum Diaktifkan"
+                                                    }
+                                                    sub={
+                                                        status.license_key ? (
+                                                            isOperable ? (
+                                                                <LicenseKeyMaskedChip
+                                                                    licenseKey={status.license_key}
+                                                                    variant="compact"
+                                                                />
+                                                            ) : (
+                                                                "Langganan perlu diperbarui"
+                                                            )
                                                         ) : (
-                                                            "Perlu perpanjangan lisensi"
+                                                            "Belum diaktifkan"
                                                         )
-                                                    ) : (
-                                                        "Belum diaktifkan"
-                                                    )
-                                                }
-                                                accent={status.license_key ? (isOperable ? "emerald" : "rose") : "slate"}
-                                            />
-                                            {/* Stat: Paket */}
-                                            <StatCard
-                                                label="Paket Langganan"
-                                                value={
-                                                    status.subscription_type
-                                                        ? (SUBSCRIPTION_TYPE_LABELS[status.subscription_type] ?? "POS Multi-Store")
-                                                        : "POS Multi-Store"
-                                                }
-                                                sub={
-                                                    status.subscription_type === "lifetime"
-                                                        ? "Akses penuh permanen tanpa batas"
-                                                        : status.subscription_type === "trial"
-                                                        ? "Masa evaluasi dan uji coba fitur"
-                                                        : isOperable
-                                                        ? "Multi-cabang cloud aktif"
-                                                        : "Operasional terhenti"
-                                                }
-                                                accent={isOperable ? "blue" : "slate"}
-                                            />
-                                            {/* Stat: Add-on */}
-                                            <StatCard
-                                                label="Add-on Aktif"
-                                                value={
-                                                    isOperable
-                                                        ? `${activeAddons.length} Add-on Aktif`
-                                                        : `${activeAddons.length} Add-on Nonaktif`
-                                                }
-                                                sub={
-                                                    !isOperable
-                                                        ? "Terkunci — paket utama kedaluwarsa"
-                                                        : activeAddons.length > 0
-                                                            ? "Semua add-on siap digunakan"
-                                                            : "Belum ada add-on terpasang"
-                                                }
-                                                accent={isOperable ? "emerald" : "rose"}
-                                            />
-                                        </div>
+                                                    }
+                                                    accent={status.license_key ? (isOperable ? "emerald" : "rose") : "slate"}
+                                                />
+                                                {/* Stat: Paket */}
+                                                <StatCard
+                                                    label="Paket Langganan"
+                                                    value={
+                                                        status.subscription_type
+                                                            ? (SUBSCRIPTION_TYPE_LABELS[status.subscription_type] ?? "POS Multi-Store")
+                                                            : "POS Multi-Store"
+                                                    }
+                                                    sub={
+                                                        status.subscription_type === "lifetime"
+                                                            ? "Akses penuh permanen tanpa batas"
+                                                            : status.subscription_type === "trial"
+                                                            ? "Masa evaluasi dan uji coba fitur"
+                                                            : isOperable
+                                                            ? "Multi-cabang cloud aktif"
+                                                            : "Operasional terhenti"
+                                                    }
+                                                    accent={isOperable ? "blue" : "slate"}
+                                                />
+                                                {/* Stat: Add-on */}
+                                                <StatCard
+                                                    label="Add-on Aktif"
+                                                    value={
+                                                        isOperable
+                                                            ? `${activeAddons.length} Add-on Aktif`
+                                                            : `${activeAddons.length} Add-on Nonaktif`
+                                                    }
+                                                    sub={
+                                                        !isOperable
+                                                            ? "Terkunci — paket utama kedaluwarsa"
+                                                            : activeAddons.length > 0
+                                                                ? "Semua add-on siap digunakan"
+                                                                : "Belum ada add-on terpasang"
+                                                    }
+                                                    accent={isOperable ? "emerald" : "rose"}
+                                                />
+                                            </div>
+                                        </LicenseExpiredWrapper>
                                     ) : (
                                         <p className="text-slate-500 text-xs text-center py-6">
                                             Data status tidak tersedia.
@@ -405,6 +371,7 @@ export function LicenseStandalonePage() {
                                     ) : (
                                         <LicenseCatalogSection
                                             catalog={catalogList}
+                                            serverPackages={serverPackages}
                                             activeAddons={activeAddons}
                                             isOperable={isOperable}
                                         />
@@ -417,6 +384,8 @@ export function LicenseStandalonePage() {
                                 <LicenseAddonsTab
                                     activeAddons={activeAddons}
                                     isOperable={isOperable}
+                                    expiresAt={status?.expires_at}
+                                    daysRemaining={status?.days_remaining}
                                     onGoToCatalog={() => setActiveTab("catalog")}
                                     onRenewClick={() => setOrderOpen(true)}
                                 />
@@ -440,7 +409,7 @@ export function LicenseStandalonePage() {
                                             Aktivasi License Key POS
                                         </h3>
                                         <p className="text-xs text-slate-500 leading-relaxed">
-                                            Masukkan License Key resmi yang Anda terima saat pembelian paket atau perpanjangan langganan.
+                                            Masukkan License Key resmi yang Anda terima saat pembelian paket atau pembaruan langganan.
                                         </p>
                                     </div>
                                     <LicenseActivateForm
@@ -492,6 +461,8 @@ export function LicenseStandalonePage() {
                 open={orderOpen}
                 onOpenChange={setOrderOpen}
                 catalog={catalogList}
+                serverPackages={serverPackages}
+                isOperable={isOperable}
             />
         </div>
     );

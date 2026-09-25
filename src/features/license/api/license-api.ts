@@ -1,16 +1,18 @@
 import { queryKeys } from "@/lib/query-keys";
 import { apiGet, apiPost } from "@/shared/api/api-client";
 import { ENDPOINTS } from "@/shared/api/endpoints";
+import { useLicenseStore } from "@/stores/license-store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useLicenseStore } from "@/stores/license-store";
 import type {
     ActivatePayload,
     ActivateResponse,
+    CatalogData,
     CatalogProduct,
     CouponCheckPayload,
     CouponCheckResponse,
     CouponCheckResult,
+    CouponDetail,
     Invoice,
     InvoiceFilterParams,
     InvoicesResponse,
@@ -18,6 +20,10 @@ import type {
     LicenseStatusResponse,
     OrderPayload,
     OrderResponse,
+    ProrateCalculateData,
+    ProrateCalculatePayload,
+    ProrateCalculateResponse,
+    ServerPackage,
     SyncResponse
 } from "../types";
 
@@ -54,14 +60,74 @@ export const licenseApi = {
 
     checkCoupon: async (payload: CouponCheckPayload): Promise<CouponCheckResult> => {
         const response = await apiPost<CouponCheckResponse>(ENDPOINTS.LICENSE.CHECK_COUPON, payload);
+        const root = response as unknown as {
+            status?: string;
+            message?: string;
+            data?: {
+                valid?: boolean;
+                coupon?: Partial<CouponDetail>;
+            } & Partial<CouponDetail>;
+        };
+
+        const data = root?.data;
+        const rawCoupon = data?.coupon ?? data;
+        const isValid = data?.valid !== false && root?.status !== "error";
+
+        if (!isValid || !rawCoupon) {
+            const errorMsg = root?.message || "Kupon tidak valid atau telah kedaluwarsa";
+            throw new Error(errorMsg);
+        }
+
+        const discountAmount = Number(rawCoupon.discount_amount) || 0;
+        const code = String(rawCoupon.code || payload.coupon_code).toUpperCase();
+        const name = String(rawCoupon.name || code);
+        const discountType = String(rawCoupon.discount_type || "fixed");
+        const discountValue = Number(rawCoupon.discount_value) || 0;
+        const formattedDiscount = rawCoupon.formatted_discount;
+        const subtotal = rawCoupon.subtotal !== undefined ? Number(rawCoupon.subtotal) : undefined;
+        const finalAmount = rawCoupon.final_amount !== undefined ? Number(rawCoupon.final_amount) : undefined;
+        const description = rawCoupon.description;
+
+        const couponDetail: CouponDetail = {
+            code,
+            name,
+            discount_type: discountType,
+            discount_value: discountValue,
+            discount_amount: discountAmount,
+            formatted_discount: formattedDiscount,
+            subtotal: subtotal ?? 0,
+            final_amount: finalAmount ?? 0,
+            description,
+        };
+
+        return {
+            valid: true,
+            coupon: couponDetail,
+            code,
+            name,
+            discount_type: discountType,
+            discount_value: discountValue,
+            discount_amount: discountAmount,
+            formatted_discount: formattedDiscount,
+            subtotal,
+            final_amount: finalAmount,
+            description,
+        };
+    },
+
+    calculateProrate: async (payload: ProrateCalculatePayload): Promise<ProrateCalculateData> => {
+        const response = await apiPost<ProrateCalculateResponse>(ENDPOINTS.LICENSE.CALCULATE_PRORATE, payload);
         return response.data;
     },
 
-    getCatalog: async (): Promise<CatalogProduct[]> => {
+    getCatalog: async (): Promise<CatalogData> => {
         try {
             const response = await apiGet<unknown>(ENDPOINTS.LICENSE.CATALOG);
             if (Array.isArray(response)) {
-                return response as CatalogProduct[];
+                return {
+                    products: response as CatalogProduct[],
+                    server_packages: [],
+                };
             }
             if (
                 response &&
@@ -70,22 +136,36 @@ export const licenseApi = {
             ) {
                 const data = (response as { data: unknown }).data;
                 if (Array.isArray(data)) {
-                    return data as CatalogProduct[];
+                    return {
+                        products: data as CatalogProduct[],
+                        server_packages: [],
+                    };
                 }
                 if (data && typeof data === "object") {
                     const record = data as Record<string, unknown>;
-                    if (Array.isArray(record.products)) {
-                        return record.products as CatalogProduct[];
-                    }
-                    if (Array.isArray(record.catalog)) {
-                        return record.catalog as CatalogProduct[];
-                    }
+                    const products = (
+                        Array.isArray(record.products)
+                            ? record.products
+                            : Array.isArray(record.catalog)
+                                ? record.catalog
+                                : []
+                    ) as CatalogProduct[];
+                    const serverPackages = (
+                        Array.isArray(record.server_packages)
+                            ? record.server_packages
+                            : []
+                    ) as ServerPackage[];
+
+                    return {
+                        products,
+                        server_packages: serverPackages,
+                    };
                 }
             }
-            return [];
+            return { products: [], server_packages: [] };
         } catch (error) {
             console.warn("Failed to fetch license catalog:", error);
-            return [];
+            return { products: [], server_packages: [] };
         }
     },
 
@@ -156,6 +236,19 @@ export function useLicenseInvoicesQuery(filters?: InvoiceFilterParams) {
         queryKey: queryKeys.license.invoices(filters),
         queryFn: () => licenseApi.getInvoices(filters),
         staleTime: 1000 * 60 * 5,
+    });
+}
+
+export function useLicenseProrateQuery(
+    addonIds: string[],
+    options?: { enabled?: boolean }
+) {
+    const sortedKey = [...addonIds].sort().join(",");
+    return useQuery({
+        queryKey: queryKeys.license.prorate([sortedKey]),
+        queryFn: () => licenseApi.calculateProrate({ addon_ids: addonIds }),
+        enabled: (options?.enabled ?? true) && addonIds.length > 0,
+        staleTime: 1000 * 60 * 5, // 5 minutes cache
     });
 }
 

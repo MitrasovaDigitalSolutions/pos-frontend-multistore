@@ -90,7 +90,7 @@ export function getLicenseTimeMetrics(license?: LicenseStatus | null): LicenseTi
             progressPercent: Math.max(5, Math.round(((license.grace_days_remaining ?? 1) / 14) * 100)),
             timeRemainingLabel: `Masa Tenggang (${license.grace_days_remaining} Hari)`,
             timeRemainingDescription: `Tersisa ${license.grace_days_remaining} hari masa tenggang`,
-            urgencyLevel: "warning",
+            urgencyLevel: "critical",
         };
     }
 
@@ -104,7 +104,7 @@ export function getLicenseTimeMetrics(license?: LicenseStatus | null): LicenseTi
 
     // Normalisasi hari:
     // Backend sering mem-floor sisa jam sehingga mengirim days_remaining: 0 ketika < 24 jam.
-    // Jika lisensi masih aktif dan belum lewat expiry, minimal tersisa 1 hari (hari terakhir).
+    // Jika lisensi masih aktif dan belum lewat expiry, minimal tersisa 1 hari .
     let effectiveDays = days_remaining ?? calendarDaysCeil;
     if (effectiveDays <= 0 && diffMs > 0 && (status === "active" || can_operate)) {
         effectiveDays = 1;
@@ -119,17 +119,24 @@ export function getLicenseTimeMetrics(license?: LicenseStatus | null): LicenseTi
     // Berikan minimal 3% visual width agar bar tidak hilang/kosong selama lisensi masih aktif
     const progressPercent = Math.min(100, Math.max(3, Math.round(rawProgress)));
 
-    // Level urgensi
+    // Level urgensi:
+    // - critical: hari terakhir (< 24 jam atau sisa 1 hari)
+    // - warning: H-3 sebelum berakhir (sisa <= 3 hari)
+    // - healthy: masih lebih dari 3 hari tersisa (sehat & aktif)
     const urgencyLevel: "healthy" | "warning" | "critical" =
-        effectiveDays <= 7 || isLastDay ? "critical" : effectiveDays <= 30 ? "warning" : "healthy";
+        isLastDay || effectiveDays <= 1
+            ? "critical"
+            : effectiveDays <= 3
+                ? "warning"
+                : "healthy";
 
     const timeRemainingLabel = isLastDay
-        ? "1 Hari (Hari Terakhir)"
+        ? "1 Hari"
         : `${effectiveDays} Hari`;
 
     const timeRemainingDescription = isLastDay
         ? hoursRemaining > 0
-            ? `Tersisa ~${hoursRemaining} jam (berakhir hari ini)`
+            ? `Tersisa ~${hoursRemaining} jam`
             : "Berakhir hari ini"
         : `Tersisa ${effectiveDays} hari`;
 

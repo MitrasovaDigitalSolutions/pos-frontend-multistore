@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import type { CatalogProduct, CouponCheckResult } from "../types";
+import type { CatalogProduct, CouponCheckResult, ProrateItem, ServerPackage } from "../types";
 import {
     orderLicenseSchema,
     type OrderLicenseInput,
@@ -10,6 +10,7 @@ import {
 import {
     useLicenseOrderMutation,
     useLicenseCheckCouponMutation,
+    useLicenseProrateQuery,
 } from "../api/license-api";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 
@@ -17,18 +18,26 @@ interface UseLicenseOrderParams {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     catalog?: CatalogProduct[];
+    serverPackages?: ServerPackage[];
     productCode?: string;
     initialAddonId?: string;
+    isOperable?: boolean;
 }
 
 export function useLicenseOrder({
     open,
     onOpenChange,
     catalog = [],
+    serverPackages = [],
     productCode,
     initialAddonId,
+    isOperable = true,
 }: UseLicenseOrderParams) {
-    const safeCatalog = Array.isArray(catalog) ? catalog : [];
+    const safeCatalog = useMemo(() => (Array.isArray(catalog) ? catalog : []), [catalog]);
+    const safeServerPackages = useMemo(
+        () => (Array.isArray(serverPackages) ? serverPackages : []),
+        [serverPackages]
+    );
     const { mutate, isPending } = useLicenseOrderMutation();
     const checkCouponMutation = useLicenseCheckCouponMutation();
 
@@ -65,6 +74,9 @@ export function useLicenseOrder({
     const serverPackageId =
         useWatch({ control, name: "server_package_id" }) ?? null;
 
+    const selectedServer =
+        safeServerPackages.find((s) => s.id === serverPackageId) ?? null;
+
     // Reset coupon state during render when open prop changes (avoids setState in effect)
     const [prevOpen, setPrevOpen] = useState(open);
     if (open !== prevOpen) {
@@ -76,7 +88,7 @@ export function useLicenseOrder({
         }
     }
 
-    // Reset and sync initial form state whenever dialog opens
+    // Reset and sync initial form state whenever dialog opens (default server starts empty)
     useEffect(() => {
         if (open) {
             reset({
@@ -91,6 +103,26 @@ export function useLicenseOrder({
     }, [open, initialAddonId, reset]);
 
     const addons = targetProduct?.addons || [];
+    const allAddonIds = useMemo(() => addons.map((a) => a.id), [addons]);
+
+    const { data: prorateData, isLoading: isProrateLoading } = useLicenseProrateQuery(
+        allAddonIds,
+        {
+            enabled: open && isOperable && allAddonIds.length > 0,
+        },
+    );
+
+    const prorateMap = useMemo(() => {
+        const map = new Map<string, ProrateItem>();
+        if (!prorateData?.items) return map;
+        for (const item of prorateData.items) {
+            if (item.addon_id) map.set(item.addon_id, item);
+            if (item.code) map.set(item.code, item);
+        }
+        return map;
+    }, [prorateData]);
+
+    const isProrated = isOperable && !includeBase && billingPeriod === "monthly";
 
     const toggleAddon = (id: string) => {
         const current = selectedAddonIds;
@@ -132,15 +164,39 @@ export function useLicenseOrder({
     // Calculate subtotal for addons
     const addonsMonthly = addons
         .filter((a) => selectedAddonIds.includes(a.id))
-        .reduce((sum, a) => sum + a.harga_bulanan, 0);
+        .reduce((sum, a) => {
+            if (isProrated) {
+                const prorateItem = prorateMap.get(a.id) ?? prorateMap.get(a.code);
+                return sum + (prorateItem ? prorateItem.price : a.harga_bulanan);
+            }
+            return sum + a.harga_bulanan;
+        }, 0);
 
     const addonsAnnual = addons
         .filter((a) => selectedAddonIds.includes(a.id))
         .reduce((sum, a) => sum + a.harga_tahunan, 0);
 
-    // Total combines addons + base product (if selected)
-    const totalMonthly = addonsMonthly + (includeBase ? baseMonthlyPrice : 0);
-    const totalAnnual = addonsAnnual + (includeBase ? baseAnnualPrice : 0);
+    // Server package pricing (only added if include_server is active and has a cost)
+    const isCloudServer = Boolean(
+        selectedServer &&
+        selectedServer.code !== "on_premise" &&
+        selectedServer.harga_bulanan > 0
+    );
+    const serverMonthlyPrice = isCloudServer && includeServer ? (selectedServer?.harga_bulanan ?? 0) : 0;
+    const serverAnnualPrice = isCloudServer && includeServer ? (selectedServer?.harga_tahunan ?? 0) : 0;
+    const currentServerPrice =
+        billingPeriod === "annual" ? serverAnnualPrice : serverMonthlyPrice;
+
+    // Total combines addons + base product (if selected) + server (if selected)
+    const totalMonthly =
+        addonsMonthly +
+        (includeBase ? baseMonthlyPrice : 0) +
+        serverMonthlyPrice;
+
+    const totalAnnual =
+        addonsAnnual +
+        (includeBase ? baseAnnualPrice : 0) +
+        serverAnnualPrice;
 
     const grossTotal = billingPeriod === "monthly" ? totalMonthly : totalAnnual;
     const couponDiscount = couponResult ? Math.min(grossTotal, Number(couponResult.discount_amount) || 0) : 0;
@@ -150,6 +206,30 @@ export function useLicenseOrder({
         billingPeriod === "monthly" ? addonsMonthly : addonsAnnual;
     const currentBasePrice =
         billingPeriod === "monthly" ? baseMonthlyPrice : baseAnnualPrice;
+
+    const selectServerPackage = (packageId: string | null) => {
+        if (!packageId) {
+            setValue("server_package_id", null, { shouldValidate: true });
+            setValue("include_server", false, { shouldValidate: true });
+            if (couponResult) {
+                setCouponResult(null);
+                setValue("coupon_code", undefined);
+            }
+            return;
+        }
+        const pkg = safeServerPackages.find((s) => s.id === packageId);
+        if (!pkg || pkg.code === "on_premise" || pkg.harga_bulanan === 0) {
+            setValue("server_package_id", packageId, { shouldValidate: true });
+            setValue("include_server", false, { shouldValidate: true });
+        } else {
+            setValue("server_package_id", packageId, { shouldValidate: true });
+            setValue("include_server", true, { shouldValidate: true });
+        }
+        if (couponResult) {
+            setCouponResult(null);
+            setValue("coupon_code", undefined);
+        }
+    };
 
     // Check Coupon Handler
     const handleApplyCoupon = async () => {
@@ -170,13 +250,15 @@ export function useLicenseOrder({
                 addon_ids: selectedAddonIds,
                 include_server: includeServer,
                 server_package_id: serverPackageId || undefined,
+                prorate: isProrated,
             });
 
-            const discount = Number(res?.discount_amount) || 0;
+            const discount = Number(res?.discount_amount) || Number(res?.coupon?.discount_amount) || 0;
+            const appliedCode = res?.code || res?.coupon?.code || code;
             setCouponResult(res);
-            setValue("coupon_code", code, { shouldValidate: true });
+            setValue("coupon_code", appliedCode, { shouldValidate: true });
             toast.success(
-                `Kupon ${res.code} berhasil diterapkan! Hemat ${formatRupiah(discount)}`
+                `Kupon ${appliedCode} berhasil diterapkan! Hemat ${res?.formatted_discount || formatRupiah(discount)}`
             );
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : "Kupon tidak valid atau telah kedaluwarsa";
@@ -206,6 +288,7 @@ export function useLicenseOrder({
                 coupon_code: couponResult?.code ?? data.coupon_code ?? undefined,
                 include_server: data.include_server,
                 server_package_id: data.server_package_id ?? undefined,
+                prorate: isProrated,
             },
             {
                 onSuccess: () => onOpenChange(false),
@@ -222,6 +305,12 @@ export function useLicenseOrder({
         includeBase,
         includeServer,
         serverPackageId,
+        selectedServer,
+        serverPackages: safeServerPackages,
+        serverMonthlyPrice,
+        serverAnnualPrice,
+        currentServerPrice,
+        selectServerPackage,
         grossTotal,
         displayTotal,
         totalMonthly,
@@ -246,5 +335,9 @@ export function useLicenseOrder({
         handleRemoveCoupon,
         isPending,
         onSubmit,
+        isProrated,
+        prorateMap,
+        prorateData,
+        isProrateLoading,
     };
 }

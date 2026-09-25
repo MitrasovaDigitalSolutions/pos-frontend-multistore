@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Check, ChevronsUpDown, Search, Loader2, Plus } from "lucide-react"
+import { Check, ChevronsUpDown, Search, Loader2, Plus, X } from "lucide-react"
 import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 import { cn } from "@/lib/utils"
 import { STORE_BADGE_HQ, STORE_LABEL_HQ } from "@/constants/store"
@@ -32,6 +32,8 @@ export interface CommandSelectProps {
   maxLabelLength?: number
   leftIcon?: React.ReactNode
   rightElement?: React.ReactNode
+  clearable?: boolean
+  onClear?: () => void
 }
 
 // ─── Command Context ─────────────────────────────────────────────────────────
@@ -272,6 +274,8 @@ export function CommandSelect({
   isLoadingMore,
   leftIcon,
   rightElement,
+  clearable = false,
+  onClear,
   className,
   wrapperClassName,
   disabled = false,
@@ -301,6 +305,13 @@ export function CommandSelect({
   const handleSelect = (val: string) => {
     onChange(val)
     setOpen(false)
+  }
+
+  const handleClear = (e: React.MouseEvent | React.KeyboardEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    onChange("")
+    onClear?.()
   }
 
   const isAsyncMode = disableLocalFilter !== undefined ? disableLocalFilter : !!onSearchChange
@@ -345,8 +356,24 @@ export function CommandSelect({
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 shrink-0">
+              <div className="flex items-center gap-1 shrink-0">
                 {rightElement}
+                {clearable && !!value && !disabled && (
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={handleClear}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        handleClear(e)
+                      }
+                    }}
+                    className="p-0.5 rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer"
+                    title="Kosongkan pilihan"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </span>
+                )}
                 <ChevronsUpDown className="h-3.5 w-3.5 opacity-50" />
               </div>
             </button>
@@ -384,6 +411,28 @@ export function CommandSelect({
                   isLoadingMore={isLoadingMore}
                   isLoading={isLoading}
                 >
+                  {clearable && !!value && (
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => {
+                        onChange("")
+                        onClear?.()
+                        setOpen(false)
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          onChange("")
+                          onClear?.()
+                          setOpen(false)
+                        }
+                      }}
+                      className="flex w-full items-center gap-2 border-b border-slate-100 bg-rose-50/50 hover:bg-rose-100/60 px-3 py-1.5 text-xs font-semibold text-rose-600 transition-colors cursor-pointer shrink-0"
+                    >
+                      <X className="h-3.5 w-3.5 stroke-[2.5] text-rose-500" />
+                      <span>Kosongkan pilihan</span>
+                    </div>
+                  )}
                   {isLoading && (
                     <CommandEmpty isLoading={true} />
                   )}
