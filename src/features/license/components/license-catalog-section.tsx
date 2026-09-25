@@ -1,12 +1,14 @@
 "use client";
 
+import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { AppButton } from "@/components/shared/app-button";
 import { IconPackage, IconServer, IconShoppingCart } from "@tabler/icons-react";
-import type { CatalogProduct, ServerPackage } from "../types";
+import type { CatalogProduct, ProrateItem, ServerPackage } from "../types";
 import { LicenseOrderDialog } from "./license-order-dialog";
 import { LicenseCatalogCard } from "./license-catalog-card";
 import { useLicenseCatalog } from "../hooks/use-license-catalog";
+import { useLicenseProrateQuery } from "../api/license-api";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +38,25 @@ export function LicenseCatalogSection({
         selectedAddonId,
         openOrder,
     } = useLicenseCatalog(safeCatalog);
+
+    const allAddonIds = useMemo(() => addons.map((a) => a.id), [addons]);
+
+    const { data: prorateData, isLoading: isProrateLoading } = useLicenseProrateQuery(
+        allAddonIds,
+        {
+            enabled: isOperable && allAddonIds.length > 0,
+        },
+    );
+
+    const prorateMap = useMemo(() => {
+        const map = new Map<string, ProrateItem>();
+        if (!prorateData?.items) return map;
+        for (const item of prorateData.items) {
+            if (item.addon_id) map.set(item.addon_id, item);
+            if (item.code) map.set(item.code, item);
+        }
+        return map;
+    }, [prorateData]);
 
     if (!posProduct) {
         return (
@@ -120,16 +141,21 @@ export function LicenseCatalogSection({
 
             {/* Aesthetic Add-on Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                {addons.map((addon) => (
-                    <LicenseCatalogCard
-                        key={addon.id}
-                        addon={addon}
-                        isOwned={activeAddons.includes(addon.code)}
-                        isOperable={isOperable}
-                        billingView={billingView}
-                        onOrder={() => openOrder(posProduct.code, addon.id)}
-                    />
-                ))}
+                {addons.map((addon) => {
+                    const prorateItem = prorateMap.get(addon.id) ?? prorateMap.get(addon.code);
+                    return (
+                        <LicenseCatalogCard
+                            key={addon.id}
+                            addon={addon}
+                            isOwned={activeAddons.includes(addon.code)}
+                            isOperable={isOperable}
+                            billingView={billingView}
+                            isProrateLoading={isProrateLoading}
+                            prorateItem={prorateItem}
+                            onOrder={() => openOrder(posProduct.code, addon.id)}
+                        />
+                    );
+                })}
             </div>
 
             {/* Server Infrastructure Packages Showcase */}
@@ -221,6 +247,7 @@ export function LicenseCatalogSection({
                 serverPackages={safeServerPackages}
                 productCode={selectedProductCode}
                 initialAddonId={selectedAddonId}
+                isOperable={isOperable}
             />
         </div>
     );

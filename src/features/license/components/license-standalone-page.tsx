@@ -384,6 +384,8 @@ export function LicenseStandalonePage() {
                                 <LicenseAddonsTab
                                     activeAddons={activeAddons}
                                     isOperable={isOperable}
+                                    expiresAt={status?.expires_at}
+                                    daysRemaining={status?.days_remaining}
                                     onGoToCatalog={() => setActiveTab("catalog")}
                                     onRenewClick={() => setOrderOpen(true)}
                                 />
@@ -460,6 +462,7 @@ export function LicenseStandalonePage() {
                 onOpenChange={setOrderOpen}
                 catalog={catalogList}
                 serverPackages={serverPackages}
+                isOperable={isOperable}
             />
         </div>
     );

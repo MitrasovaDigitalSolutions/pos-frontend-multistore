@@ -1,9 +1,9 @@
 import { queryKeys } from "@/lib/query-keys";
 import { apiGet, apiPost } from "@/shared/api/api-client";
 import { ENDPOINTS } from "@/shared/api/endpoints";
+import { useLicenseStore } from "@/stores/license-store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useLicenseStore } from "@/stores/license-store";
 import type {
     ActivatePayload,
     ActivateResponse,
@@ -20,6 +20,9 @@ import type {
     LicenseStatusResponse,
     OrderPayload,
     OrderResponse,
+    ProrateCalculateData,
+    ProrateCalculatePayload,
+    ProrateCalculateResponse,
     ServerPackage,
     SyncResponse
 } from "../types";
@@ -110,6 +113,11 @@ export const licenseApi = {
             final_amount: finalAmount,
             description,
         };
+    },
+
+    calculateProrate: async (payload: ProrateCalculatePayload): Promise<ProrateCalculateData> => {
+        const response = await apiPost<ProrateCalculateResponse>(ENDPOINTS.LICENSE.CALCULATE_PRORATE, payload);
+        return response.data;
     },
 
     getCatalog: async (): Promise<CatalogData> => {
@@ -228,6 +236,19 @@ export function useLicenseInvoicesQuery(filters?: InvoiceFilterParams) {
         queryKey: queryKeys.license.invoices(filters),
         queryFn: () => licenseApi.getInvoices(filters),
         staleTime: 1000 * 60 * 5,
+    });
+}
+
+export function useLicenseProrateQuery(
+    addonIds: string[],
+    options?: { enabled?: boolean }
+) {
+    const sortedKey = [...addonIds].sort().join(",");
+    return useQuery({
+        queryKey: queryKeys.license.prorate([sortedKey]),
+        queryFn: () => licenseApi.calculateProrate({ addon_ids: addonIds }),
+        enabled: (options?.enabled ?? true) && addonIds.length > 0,
+        staleTime: 1000 * 60 * 5, // 5 minutes cache
     });
 }
 

@@ -3,13 +3,14 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { cn } from "@/lib/utils";
-import type { CatalogAddon, BillingPeriod } from "../../types";
+import type { CatalogAddon, BillingPeriod, ProrateItem } from "../../types";
 
 interface LicenseOrderAddonItemProps {
     addon: CatalogAddon;
     isSelected: boolean;
     billingPeriod: BillingPeriod;
     onToggle: () => void;
+    prorateItem?: ProrateItem;
 }
 
 export function LicenseOrderAddonItem({
@@ -17,6 +18,7 @@ export function LicenseOrderAddonItem({
     isSelected,
     billingPeriod,
     onToggle,
+    prorateItem,
 }: LicenseOrderAddonItemProps) {
     const normalAnnualPrice = addon.harga_bulanan * 12;
     const isAnnual = billingPeriod === "annual";
@@ -52,9 +54,9 @@ export function LicenseOrderAddonItem({
                         </span>
                     </div>
 
-                    {/* Price with strikethrough logic when annual */}
+                    {/* Price with strikethrough logic when annual or prorated */}
                     <div className="flex flex-col items-end shrink-0 pl-1">
-                        {hasAnnualDiscount ? (
+                        {isAnnual && hasAnnualDiscount ? (
                             <>
                                 <div className="flex items-center gap-1 leading-none mb-0.5">
                                     <span className="text-[10px] text-slate-400 line-through font-medium">
@@ -72,6 +74,25 @@ export function LicenseOrderAddonItem({
                                     </span>
                                     <span className="text-[10px] text-slate-400 font-medium">
                                         /tahun
+                                    </span>
+                                </div>
+                            </>
+                        ) : !isAnnual && prorateItem?.is_prorated ? (
+                            <>
+                                <div className="flex items-center gap-1 leading-none mb-0.5">
+                                    <span className="text-[10px] text-slate-400 line-through font-mono">
+                                        {formatRupiah(addon.harga_bulanan)}
+                                    </span>
+                                    <span className="text-[9px] font-extrabold text-emerald-700 bg-emerald-100/80 px-1 py-0.2 rounded border border-emerald-200/70 leading-none">
+                                        Prorata
+                                    </span>
+                                </div>
+                                <div className="flex items-baseline gap-0.5">
+                                    <span className="text-xs font-black text-emerald-700 font-mono">
+                                        {prorateItem.formatted_price || formatRupiah(prorateItem.price)}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 font-medium">
+                                        ({prorateItem.prorated_days} hr)
                                     </span>
                                 </div>
                             </>

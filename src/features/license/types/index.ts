@@ -144,6 +144,7 @@ export interface CouponCheckPayload {
     include_server?: boolean;
     server_package_id?: string;
     addon_ids?: string[];
+    prorate?: boolean;
 }
 
 export interface CouponDetail {
@@ -207,6 +208,49 @@ export interface InvoiceFilterParams {
     year?: number;
 }
 
+// ─── Prorate Calculation ─────────────────────────────────────────────────────
+
+export interface ProrateItem {
+    name: string;
+    type: string;
+    code: string;
+    addon_id: string;
+    billing_basis: string;
+    period_full_price: number;
+    daily_rate: number;
+    prorated_days: number;
+    raw_amount: number;
+    price: number;
+    subtotal: number;
+    formatted_price: string;
+    is_prorated: boolean;
+    period_months: number;
+    target_expires_at?: string;
+}
+
+export interface ProrateCalculateData {
+    license_key: string;
+    license_status: string;
+    license_expires_at: string;
+    subscription_type: string;
+    billing_basis: string;
+    days_remaining: number;
+    items: ProrateItem[];
+    subtotal: number;
+    formatted_subtotal: string;
+    addon_codes: string[];
+}
+
+export interface ProrateCalculatePayload {
+    addon_ids: string[];
+}
+
+export interface ProrateCalculateResponse {
+    status: "success" | "error" | string;
+    message: string;
+    data: ProrateCalculateData;
+}
+
 // ─── Orders ──────────────────────────────────────────────────────────────────
 
 export type BillingPeriod = "monthly" | "annual";
@@ -218,6 +262,7 @@ export interface OrderPayload {
     coupon_code?: string;
     include_server?: boolean;
     server_package_id?: string;
+    prorate?: boolean;
 }
 
 export interface OrderResult {

@@ -333,6 +333,7 @@ export const ENDPOINTS = {
         CATALOG: "/v1/license/catalog",
         ORDERS: "/v1/license/orders",
         CHECK_COUPON: "/v1/license/coupons/check",
+        CALCULATE_PRORATE: "/v1/license/prorate/calculate",
         INVOICES: "/v1/license/invoices",
         INVOICE_PDF: (invoiceNumber: string) => `/v1/license/invoices/${invoiceNumber}/pdf`,
     },

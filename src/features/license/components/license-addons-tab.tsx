@@ -11,12 +11,15 @@ import {
     IconShieldX,
 } from "@tabler/icons-react";
 import { LicenseExpiredWrapper } from "./license-expired-wrapper";
+import { LicenseAddonExpiryTime } from "./license-addon-expiry-time";
 import { useLicenseAddons } from "../hooks/use-license-addons";
 import { cn } from "@/lib/utils";
 
 interface LicenseAddonsTabProps {
     activeAddons: string[];
     isOperable?: boolean;
+    expiresAt?: string | null;
+    daysRemaining?: number | null;
     onGoToCatalog?: () => void;
     onRenewClick?: () => void;
 }
@@ -24,6 +27,8 @@ interface LicenseAddonsTabProps {
 export function LicenseAddonsTab({
     activeAddons,
     isOperable = true,
+    expiresAt,
+    daysRemaining,
     onGoToCatalog,
     onRenewClick,
 }: LicenseAddonsTabProps) {
@@ -171,25 +176,34 @@ export function LicenseAddonsTab({
                                     </div>
                                 </div>
 
-                                {/* Right: CLEAR - Dynamic Status Badge */}
-                                <div className="shrink-0 sm:self-center pl-11 sm:pl-0">
-                                    {isOperable ? (
-                                        <Badge
-                                            variant="outline"
-                                            className="text-[9px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border-emerald-200/90 uppercase tracking-wider flex items-center gap-1.5 shadow-2xs"
-                                        >
-                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                            <span>Aktif</span>
-                                        </Badge>
-                                    ) : (
-                                        <Badge
-                                            variant="outline"
-                                            className="text-[9px] font-bold px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border-rose-200 uppercase tracking-wider flex items-center gap-1.5 shadow-2xs"
-                                        >
-                                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                                            <span>Tidak Aktif (Kedaluwarsa)</span>
-                                        </Badge>
-                                    )}
+                                {/* Right: Dynamic Status Badge & Masa Berlaku / Realtime Countdown */}
+                                <div className="shrink-0 sm:self-center pl-11 sm:pl-0 flex flex-col sm:items-end gap-1.5">
+                                    <div className="flex items-center gap-2">
+                                        {isOperable ? (
+                                            <Badge
+                                                variant="outline"
+                                                className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border-emerald-200/90 uppercase tracking-wider flex items-center gap-1 shadow-2xs"
+                                            >
+                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                                <span>Aktif</span>
+                                            </Badge>
+                                        ) : (
+                                            <Badge
+                                                variant="outline"
+                                                className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border-rose-200 uppercase tracking-wider flex items-center gap-1 shadow-2xs"
+                                            >
+                                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                                <span>Tidak Aktif</span>
+                                            </Badge>
+                                        )}
+                                    </div>
+
+                                    {/* Masa Berlaku / Realtime Countdown when < 24 jam */}
+                                    <LicenseAddonExpiryTime
+                                        expiresAt={addon.expires_at ?? expiresAt}
+                                        daysRemaining={addon.days_remaining ?? daysRemaining}
+                                        isOperable={isOperable}
+                                    />
                                 </div>
                             </div>
                         ))}

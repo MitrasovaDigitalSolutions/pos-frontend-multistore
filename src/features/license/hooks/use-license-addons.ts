@@ -9,6 +9,8 @@ export interface PurchasedAddonItem {
     nama: string;
     description: string;
     menuPaths: string[];
+    expires_at?: string | null;
+    days_remaining?: number | null;
 }
 
 export function useLicenseAddons(activeAddons: string[]) {

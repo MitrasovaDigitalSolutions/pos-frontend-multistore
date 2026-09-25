@@ -31,6 +31,7 @@ interface LicenseOrderDialogProps {
     serverPackages?: ServerPackage[];
     productCode?: string;
     initialAddonId?: string;
+    isOperable?: boolean;
 }
 
 const BILLING_OPTIONS: CommandOption[] = [
@@ -54,6 +55,7 @@ export function LicenseOrderDialog({
     serverPackages = [],
     productCode,
     initialAddonId,
+    isOperable = true,
 }: LicenseOrderDialogProps) {
     const safeCatalog = Array.isArray(catalog) ? catalog : [];
     const safeServerPackages = Array.isArray(serverPackages) ? serverPackages : [];
@@ -87,6 +89,8 @@ export function LicenseOrderDialog({
         handleRemoveCoupon,
         isPending,
         onSubmit,
+        isProrated,
+        prorateMap,
     } = useLicenseOrder({
         open,
         onOpenChange,
@@ -94,6 +98,7 @@ export function LicenseOrderDialog({
         serverPackages: safeServerPackages,
         productCode,
         initialAddonId,
+        isOperable,
     });
 
     const serverOptions: CommandOption[] = useMemo(() => {
@@ -340,15 +345,21 @@ export function LicenseOrderDialog({
                             {/* Scrollable Container with Addon Cards */}
                             <Scrollable className="flex-1 min-h-0 max-h-[340px] md:max-h-[420px] pr-1.5 overflow-hidden" scrollbarClassName="z-20">
                                 <div className="flex flex-col gap-2 p-0.5 pb-2">
-                                    {addons.map((addon) => (
-                                        <LicenseOrderAddonItem
-                                            key={addon.id}
-                                            addon={addon}
-                                            isSelected={selectedAddonIds.includes(addon.id)}
-                                            billingPeriod={billingPeriod}
-                                            onToggle={() => toggleAddon(addon.id)}
-                                        />
-                                    ))}
+                                    {addons.map((addon) => {
+                                        const prorateItem = isProrated
+                                            ? (prorateMap.get(addon.id) ?? prorateMap.get(addon.code))
+                                            : undefined;
+                                        return (
+                                            <LicenseOrderAddonItem
+                                                key={addon.id}
+                                                addon={addon}
+                                                isSelected={selectedAddonIds.includes(addon.id)}
+                                                billingPeriod={billingPeriod}
+                                                onToggle={() => toggleAddon(addon.id)}
+                                                prorateItem={prorateItem}
+                                            />
+                                        );
+                                    })}
                                 </div>
                             </Scrollable>
                         </div>
@@ -456,6 +467,7 @@ export function LicenseOrderDialog({
                                         couponCode={couponResult?.code}
                                         serverPrice={currentServerPrice}
                                         includeServer={includeServer && currentServerPrice > 0}
+                                        isProrated={isProrated}
                                     />
                                 </div>
                             </Scrollable>

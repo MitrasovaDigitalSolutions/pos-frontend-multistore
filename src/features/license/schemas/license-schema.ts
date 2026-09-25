@@ -25,6 +25,7 @@ export const orderLicenseSchema = z
         coupon_code: z.string().optional(),
         include_server: z.boolean().optional(),
         server_package_id: z.string().optional().nullable(),
+        prorate: z.boolean().optional(),
     })
     .refine(
         (data) => {

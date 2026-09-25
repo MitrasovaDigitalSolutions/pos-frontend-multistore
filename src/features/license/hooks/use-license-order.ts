@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import type { CatalogProduct, CouponCheckResult, ServerPackage } from "../types";
+import type { CatalogProduct, CouponCheckResult, ProrateItem, ServerPackage } from "../types";
 import {
     orderLicenseSchema,
     type OrderLicenseInput,
@@ -10,6 +10,7 @@ import {
 import {
     useLicenseOrderMutation,
     useLicenseCheckCouponMutation,
+    useLicenseProrateQuery,
 } from "../api/license-api";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 
@@ -20,6 +21,7 @@ interface UseLicenseOrderParams {
     serverPackages?: ServerPackage[];
     productCode?: string;
     initialAddonId?: string;
+    isOperable?: boolean;
 }
 
 export function useLicenseOrder({
@@ -29,6 +31,7 @@ export function useLicenseOrder({
     serverPackages = [],
     productCode,
     initialAddonId,
+    isOperable = true,
 }: UseLicenseOrderParams) {
     const safeCatalog = useMemo(() => (Array.isArray(catalog) ? catalog : []), [catalog]);
     const safeServerPackages = useMemo(
@@ -100,6 +103,26 @@ export function useLicenseOrder({
     }, [open, initialAddonId, reset]);
 
     const addons = targetProduct?.addons || [];
+    const allAddonIds = useMemo(() => addons.map((a) => a.id), [addons]);
+
+    const { data: prorateData, isLoading: isProrateLoading } = useLicenseProrateQuery(
+        allAddonIds,
+        {
+            enabled: open && isOperable && allAddonIds.length > 0,
+        },
+    );
+
+    const prorateMap = useMemo(() => {
+        const map = new Map<string, ProrateItem>();
+        if (!prorateData?.items) return map;
+        for (const item of prorateData.items) {
+            if (item.addon_id) map.set(item.addon_id, item);
+            if (item.code) map.set(item.code, item);
+        }
+        return map;
+    }, [prorateData]);
+
+    const isProrated = isOperable && !includeBase && billingPeriod === "monthly";
 
     const toggleAddon = (id: string) => {
         const current = selectedAddonIds;
@@ -141,7 +164,13 @@ export function useLicenseOrder({
     // Calculate subtotal for addons
     const addonsMonthly = addons
         .filter((a) => selectedAddonIds.includes(a.id))
-        .reduce((sum, a) => sum + a.harga_bulanan, 0);
+        .reduce((sum, a) => {
+            if (isProrated) {
+                const prorateItem = prorateMap.get(a.id) ?? prorateMap.get(a.code);
+                return sum + (prorateItem ? prorateItem.price : a.harga_bulanan);
+            }
+            return sum + a.harga_bulanan;
+        }, 0);
 
     const addonsAnnual = addons
         .filter((a) => selectedAddonIds.includes(a.id))
@@ -221,6 +250,7 @@ export function useLicenseOrder({
                 addon_ids: selectedAddonIds,
                 include_server: includeServer,
                 server_package_id: serverPackageId || undefined,
+                prorate: isProrated,
             });
 
             const discount = Number(res?.discount_amount) || Number(res?.coupon?.discount_amount) || 0;
@@ -258,6 +288,7 @@ export function useLicenseOrder({
                 coupon_code: couponResult?.code ?? data.coupon_code ?? undefined,
                 include_server: data.include_server,
                 server_package_id: data.server_package_id ?? undefined,
+                prorate: isProrated,
             },
             {
                 onSuccess: () => onOpenChange(false),
@@ -304,5 +335,9 @@ export function useLicenseOrder({
         handleRemoveCoupon,
         isPending,
         onSubmit,
+        isProrated,
+        prorateMap,
+        prorateData,
+        isProrateLoading,
     };
 }
