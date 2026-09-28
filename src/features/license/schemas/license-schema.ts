@@ -22,10 +22,24 @@ export const orderLicenseSchema = z
         }),
         include_base_product: z.boolean().optional(),
         addon_ids: z.array(z.string()).optional(),
+        addons: z
+            .array(
+                z.union([
+                    z.string(),
+                    z.object({
+                        id: z.string(),
+                        custom_days: z.number().int().min(1).optional(),
+                    }),
+                ])
+            )
+            .optional(),
         coupon_code: z.string().optional(),
         include_server: z.boolean().optional(),
         server_package_id: z.string().optional().nullable(),
         prorate: z.boolean().optional(),
+        custom_days: z.number().int().min(1, "Jumlah hari minimal 1 hari").optional().nullable(),
+        with_renewal: z.boolean().optional(),
+        renewal_period: z.enum(["monthly", "annual"]).optional(),
     })
     .refine(
         (data) => {

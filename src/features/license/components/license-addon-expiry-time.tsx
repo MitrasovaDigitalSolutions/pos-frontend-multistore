@@ -24,6 +24,8 @@ export function LicenseAddonExpiryTime({
     isOperable = true,
     className,
 }: LicenseAddonExpiryTimeProps) {
+    const countdown = useLicenseCountdown(expiresAt);
+
     // Lisensi tidak aktif / ditangguhkan
     if (!isOperable) {
         return (
@@ -44,12 +46,8 @@ export function LicenseAddonExpiryTime({
         );
     }
 
-    const now = Date.now();
-    const expiryTime = new Date(expiresAt).getTime();
-    const diffMs = expiryTime - now;
-
     // Sudah lewat batas waktu
-    if (diffMs <= 0 || Number.isNaN(diffMs)) {
+    if (countdown.isCountdownFinished) {
         return (
             <div className={cn("flex items-center gap-1 text-[11px] font-semibold text-rose-600", className)}>
                 <IconClock size={12} className="text-rose-500 shrink-0" />
@@ -59,12 +57,29 @@ export function LicenseAddonExpiryTime({
     }
 
     // Kurang dari 24 jam (< 24 jam) -> Render Countdown realtime
-    if (diffMs <= 24 * 60 * 60 * 1000) {
-        return <LicenseAddonCountdown expiresAt={expiresAt} className={className} />;
+    if (countdown.totalSecondsRemaining <= 24 * 60 * 60) {
+        return (
+            <div
+                className={cn(
+                    "inline-flex items-center gap-1.5 text-[11px] font-semibold text-rose-700 bg-rose-50 border border-rose-200/90 px-2 py-0.5 rounded-lg shadow-2xs",
+                    className,
+                )}
+            >
+                <IconClock size={12} className="text-rose-500 shrink-0 animate-pulse" />
+                <span className="text-[10px] font-bold text-rose-700">Berakhir dalam:</span>
+                <strong className="font-mono font-black text-xs text-rose-600 tracking-wider tabular-nums">
+                    <span>{countdown.hours}</span>
+                    <span className="text-rose-400/80 animate-pulse font-bold mx-0.5">:</span>
+                    <span>{countdown.minutes}</span>
+                    <span className="text-rose-400/80 animate-pulse font-bold mx-0.5">:</span>
+                    <span>{countdown.seconds}</span>
+                </strong>
+            </div>
+        );
     }
 
     // Normal: Sisa >= 1 hari (lebih dari 24 jam)
-    const calendarDaysCeil = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    const calendarDaysCeil = Math.ceil(countdown.totalSecondsRemaining / (60 * 60 * 24));
     const effectiveDays = daysRemaining ?? calendarDaysCeil;
     const isWarning = effectiveDays <= 3;
     const formattedExpiry = formatDate(expiresAt, "d MMM yyyy");
@@ -93,47 +108,6 @@ export function LicenseAddonExpiryTime({
                     Jatuh tempo: <strong className="text-slate-600 font-semibold">{formattedExpiry}</strong>
                 </span>
             )}
-        </div>
-    );
-}
-
-/**
- * Sub-komponen countdown realtime detik per detik saat < 24 jam.
- */
-function LicenseAddonCountdown({
-    expiresAt,
-    className,
-}: {
-    expiresAt: string;
-    className?: string;
-}) {
-    const { hours, minutes, seconds, isCountdownFinished } = useLicenseCountdown(expiresAt);
-
-    if (isCountdownFinished) {
-        return (
-            <div className={cn("flex items-center gap-1 text-[11px] font-semibold text-rose-600", className)}>
-                <IconClock size={12} className="text-rose-500 shrink-0" />
-                <span>Masa aktif berakhir</span>
-            </div>
-        );
-    }
-
-    return (
-        <div
-            className={cn(
-                "inline-flex items-center gap-1.5 text-[11px] font-semibold text-rose-700 bg-rose-50 border border-rose-200/90 px-2 py-0.5 rounded-lg shadow-2xs",
-                className,
-            )}
-        >
-            <IconClock size={12} className="text-rose-500 shrink-0 animate-pulse" />
-            <span className="text-[10px] font-bold text-rose-700">Berakhir dalam:</span>
-            <strong className="font-mono font-black text-xs text-rose-600 tracking-wider tabular-nums">
-                <span>{hours}</span>
-                <span className="text-rose-400/80 animate-pulse font-bold mx-0.5">:</span>
-                <span>{minutes}</span>
-                <span className="text-rose-400/80 animate-pulse font-bold mx-0.5">:</span>
-                <span>{seconds}</span>
-            </strong>
         </div>
     );
 }

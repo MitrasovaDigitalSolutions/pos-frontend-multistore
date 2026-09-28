@@ -2,13 +2,14 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { cn } from "@/lib/utils";
 import {
     IconArrowsExchange,
     IconAssembly,
     IconBuildingStore,
     IconBuildingWarehouse,
     IconChartBar,
-    IconCheck,
     IconCreditCard,
     IconPackage,
     IconPlus,
@@ -16,11 +17,9 @@ import {
     IconReportMoney,
     IconScan,
     IconTruckDelivery,
-    IconUsers,
+    IconUsers
 } from "@tabler/icons-react";
 import type { CatalogAddon, ProrateItem } from "../types";
-import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { cn } from "@/lib/utils";
 
 interface LicenseCatalogCardProps {
     addon: CatalogAddon;
@@ -178,7 +177,7 @@ export function LicenseCatalogCard({
                                 className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border-emerald-200/90 shrink-0 flex items-center gap-1 shadow-2xs"
                             >
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                <span>Terpasang</span>
+                                <span>Berlangganan</span>
                             </Badge>
                         ) : (
                             <Badge
@@ -258,10 +257,11 @@ export function LicenseCatalogCard({
                 <div>
                     {isOwned ? (
                         isOperable ? (
-                            <div className="h-7.5 px-3 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 flex items-center gap-1 shadow-2xs">
-                                <IconCheck size={13} strokeWidth={2.5} />
-                                <span>Aktif</span>
-                            </div>
+                            // <div className="h-7.5 pxO-3 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 flex items-center gap-1 shadow-2xs">
+                            //     <IconCheck size={13} strokeWidth={2.5} />
+                            //     <span>Aktif</span>
+                            // </div>
+                            <></>
                         ) : (
                             <button
                                 type="button"

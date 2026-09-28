@@ -113,7 +113,7 @@ export function LicenseHeroCard({
                         <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                                 <h2 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight truncate">
-                                    POS Multi-Store
+                                    Point of Sales
                                 </h2>
                                 {/* Subscription Plan Badge */}
                                 {data.subscription_type && (
@@ -147,7 +147,7 @@ export function LicenseHeroCard({
                                 {data.instance_name ? (
                                     <span className="font-semibold text-slate-700">{data.instance_name}</span>
                                 ) : (
-                                    "Cloud POS Multi-Store"
+                                    "Cloud Point of Sales"
                                 )}
                             </p>
                         </div>

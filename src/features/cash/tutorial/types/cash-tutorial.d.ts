@@ -26,7 +26,7 @@ export interface CashTutorialStep {
     waitForElement?: string;
     variant?: "tooltip" | "overlay_nav" | "banner";
     skipScroll?: boolean;
-    /** Paksa sakelar/select tertentu aktif saat step ini tampil. */
+    /** Paksa select tertentu aktif saat step ini tampil. */
     ensureSwitchOn?: string;
     /** Tutup dialog yang sedang terbuka saat step ini tampil (mis. kembali ke daftar). */
     closeDialog?: string;

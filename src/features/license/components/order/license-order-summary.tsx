@@ -1,6 +1,8 @@
 "use client";
 
+import * as React from "react";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { BillingPeriod } from "../../types";
 
@@ -18,9 +20,12 @@ interface LicenseOrderSummaryProps {
     serverPrice?: number;
     includeServer?: boolean;
     isProrated?: boolean;
+    proratedDays?: number | null;
+    withRenewal?: boolean;
+    isCalculating?: boolean;
 }
 
-export function LicenseOrderSummary({
+function LicenseOrderSummaryComponent({
     selectedCount,
     billingPeriod,
     includeBase,
@@ -34,12 +39,15 @@ export function LicenseOrderSummary({
     serverPrice = 0,
     includeServer = false,
     isProrated = false,
+    proratedDays,
+    withRenewal = false,
+    isCalculating = false,
 }: LicenseOrderSummaryProps) {
     const isAnnual = billingPeriod === "annual";
-    const normalAnnualTotal = totalMonthly * 12;
-    const hasDiscount = isAnnual && totalAnnual > 0 && normalAnnualTotal > totalAnnual;
+    const normalAnnualTotal = isProrated ? 0 : totalMonthly * 12;
+    const hasDiscount = isAnnual && !isProrated && totalAnnual > 0 && normalAnnualTotal > totalAnnual;
     const discountAmount = hasDiscount ? normalAnnualTotal - totalAnnual : 0;
-    const discountPercent = hasDiscount
+    const discountPercent = hasDiscount && normalAnnualTotal > 0
         ? Math.round((discountAmount / normalAnnualTotal) * 100)
         : 0;
 
@@ -84,20 +92,32 @@ export function LicenseOrderSummary({
 
                 {selectedCount > 0 && (
                     <div className="flex justify-between items-center text-slate-600">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                             <span>Subtotal Add-on</span>
                             {isProrated && (
                                 <Badge
                                     variant="outline"
                                     className="text-[9px] font-bold px-1.5 py-0 rounded bg-emerald-50 text-emerald-700 border-emerald-200"
                                 >
-                                    Prorata
+                                    Prorata {proratedDays ? `(${proratedDays} hr)` : ""}
+                                </Badge>
+                            )}
+                            {isProrated && withRenewal && (
+                                <Badge
+                                    variant="outline"
+                                    className="text-[9px] font-bold px-1.5 py-0 rounded bg-blue-50 text-blue-700 border-blue-200"
+                                >
+                                    +1 {isAnnual ? "Tahun" : "Bulan"}
                                 </Badge>
                             )}
                         </div>
-                        <span className="font-bold text-slate-900 font-mono">
-                            {formatRupiah(addonsTotal)}
-                        </span>
+                        {isCalculating ? (
+                            <Skeleton className="h-4 w-20 rounded bg-slate-200/90" />
+                        ) : (
+                            <span className="font-bold text-slate-900 font-mono">
+                                {formatRupiah(addonsTotal)}
+                            </span>
+                        )}
                     </div>
                 )}
 
@@ -144,14 +164,29 @@ export function LicenseOrderSummary({
                     Total Tagihan
                 </span>
                 <div className="text-right">
-                    <span className="text-lg font-black text-emerald-700 block leading-tight font-mono">
-                        {formatRupiah(displayTotal)}
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-medium">
-                        {isProrated ? "Prorata sisa masa aktif" : `/${isAnnual ? "tahun" : "bulan"}`}
-                    </span>
+                    {isCalculating ? (
+                        <div className="flex flex-col items-end gap-1">
+                            <Skeleton className="h-6 w-28 rounded bg-emerald-200/60" />
+                            <Skeleton className="h-3 w-36 rounded bg-slate-200/80" />
+                        </div>
+                    ) : (
+                        <>
+                            <span className="text-lg font-black text-emerald-700 block leading-tight font-mono">
+                                {formatRupiah(displayTotal)}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium">
+                                {isProrated
+                                    ? withRenewal
+                                        ? `Prorata ${proratedDays ? `${proratedDays} hr` : ""} + 1 ${isAnnual ? "tahun" : "bulan"}`
+                                        : `Prorata ${proratedDays ? `${proratedDays} hari` : "sisa masa aktif"}`
+                                    : `/${isAnnual ? "tahun" : "bulan"}`}
+                            </span>
+                        </>
+                    )}
                 </div>
             </div>
         </div>
     );
 }
+
+export const LicenseOrderSummary = React.memo(LicenseOrderSummaryComponent);
