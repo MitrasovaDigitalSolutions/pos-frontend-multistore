@@ -12,6 +12,7 @@ import type {
     CouponCheckPayload,
     CouponCheckResponse,
     CouponCheckResult,
+    AddonOrderItem,
     CouponDetail,
     Invoice,
     InvoiceFilterParams,
@@ -116,7 +117,17 @@ export const licenseApi = {
     },
 
     calculateProrate: async (payload: ProrateCalculatePayload): Promise<ProrateCalculateData> => {
-        const response = await apiPost<ProrateCalculateResponse>(ENDPOINTS.LICENSE.CALCULATE_PRORATE, payload);
+        const cleanPayload = {
+            addons: payload.addons.map((a) => ({
+                id: a.id,
+                ...(a.custom_days !== undefined && a.custom_days !== null && a.custom_days > 0
+                    ? { custom_days: a.custom_days }
+                    : {}),
+            })),
+            with_renewal: Boolean(payload.with_renewal),
+            renewal_period: payload.renewal_period ?? "monthly",
+        };
+        const response = await apiPost<ProrateCalculateResponse>(ENDPOINTS.LICENSE.CALCULATE_PRORATE, cleanPayload);
         return response.data;
     },
 
@@ -240,15 +251,42 @@ export function useLicenseInvoicesQuery(filters?: InvoiceFilterParams) {
 }
 
 export function useLicenseProrateQuery(
-    addonIds: string[],
-    options?: { enabled?: boolean }
+    params: Array<string | AddonOrderItem> | ProrateCalculatePayload,
+    options?: { enabled?: boolean; staleTime?: number }
 ) {
-    const sortedKey = [...addonIds].sort().join(",");
+    const payload: ProrateCalculatePayload = Array.isArray(params)
+        ? {
+              addons: params.map((item) =>
+                  typeof item === "string" ? { id: item } : item
+              ),
+              with_renewal: false,
+              renewal_period: "monthly",
+          }
+        : {
+              addons: params.addons.map((item) =>
+                  typeof item === "string" ? { id: item } : item
+              ),
+              with_renewal: Boolean(params.with_renewal),
+              renewal_period: params.renewal_period ?? "monthly",
+          };
+
+    const sortedKey = payload.addons
+        .map((a) => `${a.id}:${a.custom_days ?? "auto"}`)
+        .sort()
+        .join(",");
+
+    const withRenewalKey = Boolean(payload.with_renewal);
+    const periodKey = payload.renewal_period ?? "monthly";
+
     return useQuery({
-        queryKey: queryKeys.license.prorate([sortedKey]),
-        queryFn: () => licenseApi.calculateProrate({ addon_ids: addonIds }),
-        enabled: (options?.enabled ?? true) && addonIds.length > 0,
-        staleTime: 1000 * 60 * 5, // 5 minutes cache
+        queryKey: queryKeys.license.prorate([
+            sortedKey,
+            withRenewalKey ? "with_renewal" : "no_renewal",
+            periodKey,
+        ]),
+        queryFn: () => licenseApi.calculateProrate(payload),
+        enabled: (options?.enabled ?? true) && payload.addons.length > 0,
+        staleTime: options?.staleTime ?? 0,
     });
 }
 

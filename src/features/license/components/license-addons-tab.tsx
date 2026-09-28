@@ -12,6 +12,7 @@ import {
 } from "@tabler/icons-react";
 import { LicenseExpiredWrapper } from "./license-expired-wrapper";
 import { LicenseAddonExpiryTime } from "./license-addon-expiry-time";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useLicenseAddons } from "../hooks/use-license-addons";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +38,8 @@ export function LicenseAddonsTab({
         filteredAddons,
         searchQuery,
         setSearchQuery,
-    } = useLicenseAddons(activeAddons);
+        isProrateLoading,
+    } = useLicenseAddons(activeAddons, isOperable);
 
     return (
         <div className="space-y-3.5">
@@ -88,7 +90,7 @@ export function LicenseAddonsTab({
                         />
                         <Input
                             type="text"
-                            placeholder="Cari fitur atau jalur menu..."
+                            placeholder="Cari add-on..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="h-8 pl-8 pr-3 text-xs rounded-xl border-slate-200 focus-visible:ring-emerald-500 bg-slate-50/50"
@@ -199,11 +201,18 @@ export function LicenseAddonsTab({
                                     </div>
 
                                     {/* Masa Berlaku / Realtime Countdown when < 24 jam */}
-                                    <LicenseAddonExpiryTime
-                                        expiresAt={addon.expires_at ?? expiresAt}
-                                        daysRemaining={addon.days_remaining ?? daysRemaining}
-                                        isOperable={isOperable}
-                                    />
+                                    {isProrateLoading ? (
+                                        <div className="flex flex-col sm:items-end gap-1 py-0.5">
+                                            <Skeleton className="h-3 w-24 rounded bg-slate-200/80" />
+                                            <Skeleton className="h-2.5 w-16 rounded bg-slate-100" />
+                                        </div>
+                                    ) : (
+                                        <LicenseAddonExpiryTime
+                                            expiresAt={addon.expires_at ?? expiresAt}
+                                            daysRemaining={addon.days_remaining ?? daysRemaining}
+                                            isOperable={isOperable}
+                                        />
+                                    )}
                                 </div>
                             </div>
                         ))}

@@ -10,6 +10,7 @@ interface FormSwitchProps<T extends FieldValues> {
     description?: React.ReactNode;
     className?: string;
     disabled?: boolean;
+    onCheckedChange?: (checked: boolean) => void;
 }
 
 export function FormSwitch<T extends FieldValues>({
@@ -18,6 +19,7 @@ export function FormSwitch<T extends FieldValues>({
     description,
     className,
     disabled,
+    onCheckedChange,
 }: FormSwitchProps<T>) {
     const { control } = useFormContext<T>();
 
@@ -45,7 +47,10 @@ export function FormSwitch<T extends FieldValues>({
                 render={({ field }) => (
                     <Switch
                         checked={field.value}
-                        onCheckedChange={field.onChange}
+                        onCheckedChange={(val) => {
+                            field.onChange(val);
+                            onCheckedChange?.(val);
+                        }}
                         disabled={disabled}
                         id={`switch-${name}`}
                     />

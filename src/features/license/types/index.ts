@@ -218,12 +218,25 @@ export interface ProrateItem {
     billing_basis: string;
     period_full_price: number;
     daily_rate: number;
+    selected_days?: number;
     prorated_days: number;
+    max_days_available?: number;
+    slider_ticks?: number[];
+    is_currently_active?: boolean;
+    current_expires_at?: string | null;
+    current_remaining_days?: number;
+    prorated_amount?: number;
+    with_renewal?: boolean;
+    renewal_period?: string | null;
+    renewal_amount?: number;
     raw_amount: number;
     price: number;
     subtotal: number;
     formatted_price: string;
     is_prorated: boolean;
+    is_eligible?: boolean;
+    ineligibility_reason?: string | null;
+    note?: string | null;
     period_months: number;
     target_expires_at?: string;
 }
@@ -233,16 +246,29 @@ export interface ProrateCalculateData {
     license_status: string;
     license_expires_at: string;
     subscription_type: string;
-    billing_basis: string;
+    license_remaining_days?: number;
     days_remaining: number;
+    max_days_available?: number;
+    selected_days?: number;
+    billing_basis: string;
+    slider_ticks?: number[];
+    with_renewal?: boolean;
+    renewal_period?: string | null;
     items: ProrateItem[];
     subtotal: number;
     formatted_subtotal: string;
     addon_codes: string[];
 }
 
+export interface AddonOrderItem {
+    id: string;
+    custom_days?: number;
+}
+
 export interface ProrateCalculatePayload {
-    addon_ids: string[];
+    addons: AddonOrderItem[];
+    with_renewal?: boolean;
+    renewal_period?: BillingPeriod;
 }
 
 export interface ProrateCalculateResponse {
@@ -258,11 +284,13 @@ export type BillingPeriod = "monthly" | "annual";
 export interface OrderPayload {
     billing_period: BillingPeriod;
     include_base_product?: boolean;
-    addon_ids?: string[];
-    coupon_code?: string;
     include_server?: boolean;
     server_package_id?: string;
+    addon_ids?: string[];
+    addons?: Array<string | AddonOrderItem>;
+    coupon_code?: string;
     prorate?: boolean;
+    custom_days?: number;
 }
 
 export interface OrderResult {

@@ -316,18 +316,14 @@ export function LicenseStandalonePage() {
                                                 {/* Stat: Paket */}
                                                 <StatCard
                                                     label="Paket Langganan"
-                                                    value={
-                                                        status.subscription_type
-                                                            ? (SUBSCRIPTION_TYPE_LABELS[status.subscription_type] ?? "POS Multi-Store")
-                                                            : "POS Multi-Store"
-                                                    }
+                                                    value="Point of Sales"
                                                     sub={
                                                         status.subscription_type === "lifetime"
                                                             ? "Akses penuh permanen tanpa batas"
                                                             : status.subscription_type === "trial"
                                                             ? "Masa evaluasi dan uji coba fitur"
                                                             : isOperable
-                                                            ? "Multi-cabang cloud aktif"
+                                                            ? (status.subscription_type ? `${SUBSCRIPTION_TYPE_LABELS[status.subscription_type] ?? status.subscription_type} aktif` : "Sistem POS aktif")
                                                             : "Operasional terhenti"
                                                     }
                                                     accent={isOperable ? "blue" : "slate"}
