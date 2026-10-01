@@ -17,9 +17,8 @@ import { ENDPOINTS } from "@/shared/api/endpoints";
 
 /** Fetch license status directly (not via React Query) to avoid mounting query context issues. */
 async function fetchLicenseStatus(accessToken: string): Promise<LicenseStatus | null> {
-    const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/+$/, "");
-    const syncEndpoint = `/api${ENDPOINTS.LICENSE.SYNC}`;
-    const statusEndpoint = `/api${ENDPOINTS.LICENSE.STATUS}`;
+    const syncEndpoint = `/api/proxy${ENDPOINTS.LICENSE.SYNC}`;
+    const statusEndpoint = `/api/proxy${ENDPOINTS.LICENSE.STATUS}`;
 
     const headers = {
         Authorization: `Bearer ${accessToken}`,
@@ -30,7 +29,7 @@ async function fetchLicenseStatus(accessToken: string): Promise<LicenseStatus | 
     try {
         const syncController = new AbortController();
         const syncTimeoutId = setTimeout(() => syncController.abort(), 6000);
-        await fetch(`${apiBase}${syncEndpoint}`, {
+        await fetch(syncEndpoint, {
             method: "POST",
             headers,
             signal: syncController.signal,
@@ -44,7 +43,7 @@ async function fetchLicenseStatus(accessToken: string): Promise<LicenseStatus | 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
     try {
-        const res = await fetch(`${apiBase}${statusEndpoint}`, {
+        const res = await fetch(statusEndpoint, {
             headers,
             signal: controller.signal,
         });
