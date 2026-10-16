@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AddonGuard } from "@/features/license/components/addon-guard";
 import { RemittanceVerifyDashboard } from "@/features/remittance/components/verify/remittance-verify-dashboard";
 
 export const metadata: Metadata = {
@@ -41,8 +42,10 @@ function RemittanceVerifyLoadingSkeleton() {
 
 export default function RemittanceVerifyPage() {
   return (
-    <Suspense fallback={<RemittanceVerifyLoadingSkeleton />}>
-      <RemittanceVerifyDashboard />
-    </Suspense>
+    <AddonGuard addon="multi_store">
+      <Suspense fallback={<RemittanceVerifyLoadingSkeleton />}>
+        <RemittanceVerifyDashboard />
+      </Suspense>
+    </AddonGuard>
   );
 }

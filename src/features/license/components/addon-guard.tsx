@@ -51,7 +51,7 @@ export const ADDON_DETAILS: Record<string, { title: string; description: string 
     },
     multi_store: {
         title: "Multi-Store & Cabang",
-        description: "Dukungan pengelolaan lebih dari 1 cabang, transfer stok antar toko, dan laporan konsolidasi pusat.",
+        description: "Dukungan pengelolaan lebih dari 1 cabang, transfer stok antar toko, setoran konsinyasi cabang ke pusat, dan laporan konsolidasi.",
     },
 };
 

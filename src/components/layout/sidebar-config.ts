@@ -320,6 +320,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 storeScope: "branch",
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") ||
+                    hasRole(roles, "manajer_toko") ||
                     hasPermission(roles, permissions, "view_remittances") ||
                     hasPermission(roles, permissions, "create_remittances") ||
                     hasPermission(roles, permissions, "manage_remittances"),
@@ -332,6 +333,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 storeScope: "central",
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") ||
+                    hasRole(roles, "manajer_toko") ||
                     hasPermission(roles, permissions, "verify_remittances") ||
                     hasPermission(roles, permissions, "manage_remittances"),
             },

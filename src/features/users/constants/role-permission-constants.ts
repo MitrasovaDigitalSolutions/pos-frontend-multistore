@@ -241,6 +241,12 @@ export const PERMISSION_METADATA: Record<string, PermissionMeta> = {
         actionType: "auth",
         categoryId: "finance",
     },
+    manage_remittances: {
+        label: "Kelola Setoran Cabang",
+        desc: "Akses penuh mengelola, membuat, dan membatalkan pengajuan setoran kas cabang ke pusat.",
+        actionType: "manage",
+        categoryId: "finance",
+    },
 
     // 6. Akuntansi & Aset Tetap
     view_chart_of_accounts: {
@@ -414,6 +420,7 @@ export const PERMISSION_CATEGORIES: StaticPermissionCategory[] = [
             "view_remittances",
             "create_remittances",
             "verify_remittances",
+            "manage_remittances",
         ],
     },
     {
