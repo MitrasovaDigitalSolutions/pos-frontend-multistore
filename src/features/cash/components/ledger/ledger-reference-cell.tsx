@@ -17,26 +17,55 @@ export function LedgerReferenceCell({ movement }: LedgerReferenceCellProps) {
     const sessionUid = movement.cash_drawer_session_uid || drawerSession?.uid || drawerMovement?.cash_drawer_session_uid;
     const stockReceiving = movement.stockReceiving || movement.stock_receiving;
     const memberPayment = movement.memberPayment || movement.member_payment;
-    const coa = movement.chartOfAccount || movement.chart_of_account;
     const storeRemittance = movement.storeRemittance || movement.store_remittance;
+    const coa = movement.chartOfAccount || movement.chart_of_account;
     const kat = (movement.kategori || "").toLowerCase();
 
-    if (storeRemittance || movement.store_remittance_uid) {
+    if (storeRemittance || movement.store_remittance_uid || kat === "remittance") {
+        const isOutflow = movement.amount < 0;
+        const title = isOutflow ? "Setoran Kas ke Pusat" : "Penerimaan Setoran Cabang";
+        const badgeColor = isOutflow
+            ? "bg-blue-50 text-blue-700 border-blue-200/60"
+            : "bg-emerald-50 text-emerald-700 border-emerald-200/60";
+
+        const storeName = isOutflow
+            ? (storeRemittance?.destinationStore?.nama || storeRemittance?.destination_store?.nama || "Pusat")
+            : (storeRemittance?.store?.nama || "Cabang");
+
+        const storeLabel = isOutflow ? "Tujuan" : "Dari";
+        const note = storeRemittance?.catatan || movement.catatan;
+        const buktiUrl = storeRemittance?.bukti_transfer_url;
+        const remitNumber = storeRemittance?.nomor_remittance || (storeRemittance as unknown as { nomor_setoran?: string })?.nomor_setoran;
+
         return (
             <div className="flex flex-col gap-0.5">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="font-bold text-slate-900 text-xs">
-                        Setoran Cabang (Konsinyasi)
-                    </span>
-                    {storeRemittance?.nomor_setoran && (
-                        <span className="text-[10px] bg-indigo-50 text-indigo-700 font-mono px-1.5 py-0.2 rounded border border-indigo-200/60 font-semibold">
-                            #{storeRemittance.nomor_setoran}
+                    <span className="font-bold text-slate-900 text-xs">{title}</span>
+                    {remitNumber && (
+                        <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded border font-semibold ${badgeColor}`}>
+                            #{remitNumber}
                         </span>
                     )}
                 </div>
-                {movement.catatan && (
+                <div className="flex items-center gap-2 flex-wrap text-[10px]">
+                    <span className="text-slate-500 font-medium">
+                        {storeLabel}: <strong className="text-slate-700">{storeName}</strong>
+                    </span>
+                    {buktiUrl && (
+                        <a
+                            href={buktiUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 underline font-medium"
+                            title="Buka bukti transfer"
+                        >
+                            Bukti Transfer
+                        </a>
+                    )}
+                </div>
+                {note && (
                     <span className="text-[10px] italic text-slate-400 max-w-xs truncate">
-                        &quot;{movement.catatan}&quot;
+                        &quot;{note}&quot;
                     </span>
                 )}
             </div>

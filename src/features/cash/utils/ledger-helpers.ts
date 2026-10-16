@@ -119,6 +119,16 @@ export function getCategoryMeta(movement: CashLedger): CategoryMeta {
             iconClass: "text-purple-600 bg-purple-100",
         };
     }
+    if (movement.storeRemittance || movement.store_remittance || kat.includes("remittance") || kat.includes("setoran")) {
+        return {
+            label: "Setoran Toko",
+            subLabel: movement.amount < 0 ? "Ke Pusat" : "Dari Cabang",
+            icon: IconArrowsExchange,
+            colorClass: "bg-indigo-50 text-indigo-700 border-indigo-200/80",
+            iconClass: "text-indigo-600 bg-indigo-100",
+        };
+    }
+
     if (movement.tipe === "transfer" || kat.includes("transfer")) {
         return {
             label: "Transfer Kas",
