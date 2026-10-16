@@ -1,8 +1,11 @@
 "use client";
 
-import { IconArrowRight, IconBuildingStore, IconNotes } from "@tabler/icons-react";
+import { IconArrowRight, IconBuildingStore, IconInfoCircle, IconNotes, IconTag } from "@tabler/icons-react";
 import { CommandSelect, type CommandOption } from "@/components/ui/command-select";
 import { STORE_LABEL_HQ, STORE_LABEL_BRANCH } from "@/constants/store";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import { TRANSFER_TYPE, type TransferType, TRANSFER_TYPE_LABELS } from "../../constants";
 
 interface TransferRouteCardProps {
   activeStoreName?: string;
@@ -10,6 +13,8 @@ interface TransferRouteCardProps {
   storeOptions: CommandOption[];
   destinationUid: string;
   setDestinationUid: (val: string) => void;
+  tipeTransfer: TransferType;
+  setTipeTransfer: (val: TransferType) => void;
   catatan: string;
   setCatatan: (val: string) => void;
 }
@@ -20,6 +25,8 @@ export function TransferRouteCard({
   storeOptions,
   destinationUid,
   setDestinationUid,
+  tipeTransfer,
+  setTipeTransfer,
   catatan,
   setCatatan,
 }: TransferRouteCardProps) {
@@ -73,6 +80,94 @@ export function TransferRouteCard({
           />
         </div>
       </div>
+
+      {/* ─── Pilihan Tipe Transfer ────────────────────────────────────────── */}
+      <TooltipProvider delayDuration={150}>
+        <div id="transfer-type-selector" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 pt-3 border-t border-slate-100">
+          <div className="flex items-center gap-1.5">
+            <IconTag size={13} className="text-emerald-600" />
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              Tipe Transfer
+            </span>
+          </div>
+
+          <div className="inline-flex p-1 bg-slate-100/80 rounded-xl border border-slate-200/70 gap-1 w-full sm:w-auto">
+            {/* Transfer Reguler */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => setTipeTransfer(TRANSFER_TYPE.REGULAR)}
+                  className={cn(
+                    "flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                    tipeTransfer === TRANSFER_TYPE.REGULAR
+                      ? "bg-white text-emerald-800 shadow-2xs font-bold border border-emerald-200/60"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-white/60 border border-transparent"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "w-2 h-2 rounded-full shrink-0",
+                      tipeTransfer === TRANSFER_TYPE.REGULAR ? "bg-emerald-600" : "bg-slate-300"
+                    )}
+                  />
+                  <span>{TRANSFER_TYPE_LABELS.regular}</span>
+                  <IconInfoCircle
+                    size={13}
+                    className={cn(
+                      "shrink-0",
+                      tipeTransfer === TRANSFER_TYPE.REGULAR ? "text-emerald-600/70" : "text-slate-400"
+                    )}
+                  />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs p-2.5">
+                <p className="font-bold text-emerald-400 mb-0.5">Transfer Reguler</p>
+                <p className="text-slate-200 leading-relaxed text-[11px]">
+                  Distribusi stok biasa antar toko/gudang tanpa ikatan setoran komisi.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Konsinyasi Internal */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => setTipeTransfer(TRANSFER_TYPE.KONSINYASI_INTERNAL)}
+                  className={cn(
+                    "flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                    tipeTransfer === TRANSFER_TYPE.KONSINYASI_INTERNAL
+                      ? "bg-white text-purple-800 shadow-2xs font-bold border border-purple-200/60"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-white/60 border border-transparent"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "w-2 h-2 rounded-full shrink-0",
+                      tipeTransfer === TRANSFER_TYPE.KONSINYASI_INTERNAL ? "bg-purple-600" : "bg-slate-300"
+                    )}
+                  />
+                  <span>{TRANSFER_TYPE_LABELS.konsinyasi_internal}</span>
+                  <IconInfoCircle
+                    size={13}
+                    className={cn(
+                      "shrink-0",
+                      tipeTransfer === TRANSFER_TYPE.KONSINYASI_INTERNAL ? "text-purple-600/70" : "text-slate-400"
+                    )}
+                  />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs p-2.5">
+                <p className="font-bold text-purple-400 mb-0.5">Konsinyasi Internal</p>
+                <p className="text-slate-200 leading-relaxed text-[11px]">
+                  Barang titipan off-book dari Pusat. Harga retail dikontrol penuh & cabang menyetor nilai pasok.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
+      </TooltipProvider>
 
       {/* Catatan Field */}
       <div className="space-y-1 pt-1">

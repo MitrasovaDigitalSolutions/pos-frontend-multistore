@@ -25,6 +25,7 @@ import {
 } from "./sidebar-config";
 import { SidebarItem } from "./sidebar-item";
 import { useLicenseStatusQuery } from "@/features/license/api/license-api";
+import { useIsCentralStore } from "@/hooks/use-active-store";
 
 export function AdminSidebar() {
     const pathname = usePathname();
@@ -68,6 +69,7 @@ export function AdminSidebar() {
         licenseStatus?.can_operate && (licenseStatus?.status === "active" || licenseStatus?.is_grace_period)
     );
     const activeAddons = isLicenseOperable ? (licenseStatus?.active_addons ?? []) : [];
+    const isCentralStore = useIsCentralStore();
 
     const getSetting = useSettingsStore((state) => state.getSetting);
     const isLoadingSettings = useSettingsStore((state) => state.isLoading);
@@ -155,7 +157,7 @@ export function AdminSidebar() {
                         )}
                     >
                         {NAVIGATION_CONFIG.map((section) => {
-                            const visibleItems = filterNavItems(section.items, userRoles, userPermissions, activeAddons);
+                            const visibleItems = filterNavItems(section.items, userRoles, userPermissions, activeAddons, isCentralStore);
                             if (visibleItems.length === 0) return null;
 
                             return (

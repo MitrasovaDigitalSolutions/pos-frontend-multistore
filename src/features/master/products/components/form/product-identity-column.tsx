@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { FormSelect, type FormSelectProps } from "@/components/forms/form-select";
 import { FormRadioChips } from "@/components/forms/form-radio-chips";
 import { FormSwitch } from "@/components/forms/form-switch";
+import { Scrollable } from "@/components/ui/scrollable";
 import { generateEan13Barcode } from "@/lib/barcode-utils";
 import { toast } from "sonner";
 import {
@@ -57,138 +58,142 @@ export function ProductIdentityColumn({
     };
 
     return (
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-3.5 shadow-2xs space-y-2.5 flex flex-col justify-between">
-            <div className="space-y-2.5">
-                <div className="flex items-center gap-1.5 pb-1 border-b border-slate-100">
-                    <div className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center">
-                        <IconPackage size={12} />
-                    </div>
-                    <span className="text-xs font-bold text-slate-800">
-                        Identitas &amp; Klasifikasi
-                    </span>
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-3.5 shadow-2xs flex flex-col md:h-full min-h-0">
+            {/* Header Kolom */}
+            <div className="flex items-center gap-1.5 pb-2 border-b border-slate-100 shrink-0">
+                <div className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                    <IconPackage size={12} />
                 </div>
+                <span className="text-xs font-bold text-slate-800">
+                    Identitas &amp; Klasifikasi
+                </span>
+            </div>
 
-                {/* Nama Produk */}
-                <div className="space-y-1" id="form-product-name-input">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                        Nama Produk <span className="text-rose-500">*</span>
-                    </label>
-                    <Input
-                        type="text"
-                        placeholder="Contoh: Kemeja Formal Pria Slim Fit Cotton"
-                        className="h-9 text-xs font-semibold border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                        disabled={disabled}
-                        {...register("nama")}
-                    />
-                    {errors.nama && (
-                        <p className="text-[10px] text-rose-500 font-medium">
-                            {errors.nama.message}
-                        </p>
-                    )}
-                </div>
-
-                {/* Tipe Produk (Radio / Chip Select) */}
-                <div id="form-product-type-select">
-                    <FormRadioChips<ProductInput>
-                        name="product_type"
-                        label="Tipe Produk"
-                        options={PRODUCT_TYPE_OPTIONS}
-                        variant="segmented"
-                        size="sm"
-                        onChange={(val) => onProductTypeChange((val as ProductType) || "finished_good")}
-                        disabled={disabled}
-                    />
-                </div>
-
-                {/* Barcode / SKU with Generate Action only */}
-                <div className="space-y-1" id="form-product-barcode-container">
-                    <div className="flex items-center justify-between">
+            {/* Scrollable Body Kolom */}
+            <Scrollable className="flex-1 min-h-0 pr-2 pt-2" scrollbarClassName="z-20">
+                <div className="space-y-3 pb-2">
+                    {/* Nama Produk */}
+                    <div className="space-y-1" id="form-product-name-input">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            Barcode / SKU
+                            Nama Produk <span className="text-rose-500">*</span>
                         </label>
-                        {!currentBarcode && (
-                            <button
-                                id="btn-generate-barcode-addon"
-                                type="button"
-                                onClick={handleAutoGenerateBarcode}
-                                disabled={disabled}
-                                className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 flex items-center gap-1 cursor-pointer transition-colors"
-                            >
-                                <IconSparkles size={11} />
-                                <span>Buat Barcode</span>
-                            </button>
-                        )}
-                    </div>
-                    <div className="relative">
                         <Input
                             type="text"
-                            placeholder="Contoh: 8990002004"
-                            className="h-9 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl font-mono pr-8"
+                            placeholder="Contoh: Kemeja Formal Pria Slim Fit Cotton"
+                            className="h-9 text-xs font-semibold border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
                             disabled={disabled}
-                            {...register("barcode")}
+                            {...register("nama")}
                         />
-                        <IconBarcode
-                            size={16}
-                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                        {errors.nama && (
+                            <p className="text-[10px] text-rose-500 font-medium">
+                                {errors.nama.message}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Tipe Produk (Radio / Chip Select) */}
+                    <div id="form-product-type-select">
+                        <FormRadioChips<ProductInput>
+                            name="product_type"
+                            label="Tipe Produk"
+                            options={PRODUCT_TYPE_OPTIONS}
+                            variant="segmented"
+                            size="sm"
+                            onChange={(val) => onProductTypeChange((val as ProductType) || "finished_good")}
+                            disabled={disabled}
                         />
                     </div>
-                    {errors.barcode && (
-                        <p className="text-[10px] text-rose-500 font-medium">
-                            {errors.barcode.message}
-                        </p>
-                    )}
-                </div>
 
-                {/* Kategori & Brand */}
-                <div className="grid grid-cols-2 gap-2" id="form-product-category-brand">
-                    <FormSelect<ProductInput, Category>
-                        name="category_uid"
-                        label="Kategori"
-                        {...categorySelectProps}
-                        placeholder="Pilih Kategori"
-                        searchPlaceholder="Cari kategori..."
-                        disabled={disabled}
-                        size="sm"
-                    />
+                    {/* Barcode / SKU with Generate Action */}
+                    <div className="space-y-1" id="form-product-barcode-container">
+                        <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                Barcode / SKU
+                            </label>
+                            {!currentBarcode && (
+                                <button
+                                    id="btn-generate-barcode-addon"
+                                    type="button"
+                                    onClick={handleAutoGenerateBarcode}
+                                    disabled={disabled}
+                                    className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 flex items-center gap-1 cursor-pointer transition-colors"
+                                >
+                                    <IconSparkles size={11} />
+                                    <span>Buat Barcode</span>
+                                </button>
+                            )}
+                        </div>
+                        <div className="relative">
+                            <Input
+                                type="text"
+                                placeholder="Contoh: 8990002004"
+                                className="h-9 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl font-mono pr-8"
+                                disabled={disabled}
+                                {...register("barcode")}
+                            />
+                            <IconBarcode
+                                size={16}
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                            />
+                        </div>
+                        {errors.barcode && (
+                            <p className="text-[10px] text-rose-500 font-medium">
+                                {errors.barcode.message}
+                            </p>
+                        )}
+                    </div>
 
-                    <FormSelect<ProductInput, Brand>
-                        name="brand_uid"
-                        label="Brand / Merek"
-                        {...brandSelectProps}
-                        placeholder="Pilih Brand"
-                        searchPlaceholder="Cari brand..."
-                        disabled={disabled}
-                        size="sm"
-                    />
-                </div>
+                    {/* Kategori & Brand */}
+                    <div className="grid grid-cols-2 gap-2" id="form-product-category-brand">
+                        <FormSelect<ProductInput, Category>
+                            name="category_uid"
+                            label="Kategori"
+                            {...categorySelectProps}
+                            placeholder="Pilih Kategori"
+                            searchPlaceholder="Cari kategori..."
+                            disabled={disabled}
+                            size="sm"
+                        />
 
-                {/* Satuan Unit Pengukuran */}
-                <div className="space-y-1" id="form-product-unit-select">
-                    <FormSelect<ProductInput, Unit>
-                        name="unit_uid"
-                        label="Satuan Standar"
-                        {...unitSelectProps}
-                        placeholder="Pilih Satuan (Pcs, Kg, Meter, dll)"
-                        searchPlaceholder="Cari satuan..."
-                        disabled={disabled}
-                        size="sm"
-                    />
-                </div>
+                        <FormSelect<ProductInput, Brand>
+                            name="brand_uid"
+                            label="Brand / Merek"
+                            {...brandSelectProps}
+                            placeholder="Pilih Brand"
+                            searchPlaceholder="Cari brand..."
+                            disabled={disabled}
+                            size="sm"
+                        />
+                    </div>
 
-                {/* Status Aktif / Nonaktif Switch */}
-                <div className="pt-1">
-                    <FormSwitch<ProductInput>
-                        name="is_active"
-                        label={isActive !== false ? "Status Produk: Aktif" : "Status Produk: Nonaktif"}
-                        description={
-                            isActive !== false
-                                ? "Produk aktif dan dapat diperjualbelikan serta didistribusikan."
-                                : "Produk dinonaktifkan sementara dari katalog dan transaksi kasir."
-                        }
-                        disabled={disabled}
-                    />
+                    {/* Satuan Unit Pengukuran */}
+                    <div className="space-y-1" id="form-product-unit-select">
+                        <FormSelect<ProductInput, Unit>
+                            name="unit_uid"
+                            label="Satuan Standar"
+                            {...unitSelectProps}
+                            placeholder="Pilih Satuan (Pcs, Kg, Meter, dll)"
+                            searchPlaceholder="Cari satuan..."
+                            disabled={disabled}
+                            size="sm"
+                        />
+                    </div>
+
+                    {/* Status Aktif / Nonaktif Switch */}
+                    <div className="pt-2 border-t border-slate-100">
+                        <FormSwitch<ProductInput>
+                            name="is_active"
+                            label={isActive !== false ? "Status Produk: Aktif" : "Status Produk: Nonaktif"}
+                            description={
+                                isActive !== false
+                                    ? "Produk aktif dan dapat diperjualbelikan serta didistribusikan."
+                                    : "Produk dinonaktifkan sementara dari katalog dan transaksi kasir."
+                            }
+                            disabled={disabled}
+                        />
+                    </div>
                 </div>
-            </div>
+            </Scrollable>
         </div>
     );
 }

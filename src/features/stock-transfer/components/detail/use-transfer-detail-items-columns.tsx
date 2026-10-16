@@ -5,6 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { FormNumberInput } from "@/components/forms/form-number-input";
 import { FormInput } from "@/components/forms/form-input";
 import { Badge } from "@/components/ui/badge";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
 import type { StockTransferItem } from "../../types";
 import type { ReceiveFormValues } from "./types";
 import { JENIS_SELISIH, JENIS_SELISIH_LABELS } from "../../constants";
@@ -13,6 +14,7 @@ interface UseTransferDetailItemsColumnsProps {
   items: StockTransferItem[];
   canReceive: boolean;
   canValidateTransfer?: boolean;
+  tipeTransfer?: string | null;
   onReceiveItemSubmit?: (
     item: StockTransferItem,
     payload: {
@@ -44,6 +46,7 @@ export function useTransferDetailItemsColumns({
   items,
   canReceive,
   canValidateTransfer,
+  tipeTransfer,
   onOpenTerimaItem,
   registerInputRef,
   onOpenValidateItem,
@@ -52,6 +55,113 @@ export function useTransferDetailItemsColumns({
   validatingItemUid,
 }: UseTransferDetailItemsColumnsProps) {
   return useMemo<ColumnDef<StockTransferItem>[]>(() => {
+    const isKonsinyasi = tipeTransfer === "konsinyasi_internal";
+
+    // Reusable consignment columns
+    const consignmentColumns: ColumnDef<StockTransferItem>[] = [
+      {
+        id: "harga_pasok_pusat",
+        header: "Harga Pasok",
+        size: 130,
+        meta: { headerClassName: "text-right", cellClassName: "text-right" },
+        cell: ({ row }) => {
+          const pasok = Number(
+            row.original.harga_pasok_pusat ??
+              row.original.harga_beli_cabang ??
+              row.original.harga_pasok ??
+              0
+          );
+          const total = pasok * row.original.kuantitas;
+          return (
+            <div className="flex flex-col items-end">
+              <span className="font-bold text-slate-800 text-xs font-mono">
+                {formatRupiah(pasok)}
+              </span>
+              <span className="text-[10px] text-slate-400 font-mono">
+                Sub: {formatRupiah(total)}
+              </span>
+            </div>
+          );
+        },
+      },
+      {
+        id: "harga_jual_pusat",
+        header: "Harga Retail",
+        size: 130,
+        meta: { headerClassName: "text-right", cellClassName: "text-right" },
+        cell: ({ row }) => {
+          const retail = Number(
+            row.original.harga_jual_pusat ??
+              row.original.harga_jual_cabang ??
+              row.original.harga_jual ??
+              row.original.product?.harga_jual ??
+              0
+          );
+          const total = retail * row.original.kuantitas;
+          return (
+            <div className="flex flex-col items-end">
+              <span className="font-bold text-slate-800 text-xs font-mono">
+                {retail > 0 ? formatRupiah(retail) : "Rp 0"}
+              </span>
+              <span className="text-[10px] text-slate-400 font-mono">
+                Sub: {formatRupiah(total)}
+              </span>
+            </div>
+          );
+        },
+      },
+      {
+        id: "komisi_cabang",
+        header: "Komisi Cabang",
+        size: 135,
+        meta: { headerClassName: "text-right", cellClassName: "text-right" },
+        cell: ({ row }) => {
+          const pasok = Number(
+            row.original.harga_pasok_pusat ??
+              row.original.harga_beli_cabang ??
+              row.original.harga_pasok ??
+              0
+          );
+          const retail = Number(
+            row.original.harga_jual_pusat ??
+              row.original.harga_jual_cabang ??
+              row.original.harga_jual ??
+              row.original.product?.harga_jual ??
+              0
+          );
+          const nominalKomisi =
+            row.original.nominal_komisi !== undefined && row.original.nominal_komisi !== null
+              ? Number(row.original.nominal_komisi)
+              : Math.max(0, retail - pasok);
+
+          const margin =
+            retail > 0
+              ? Math.round((nominalKomisi / retail) * 100)
+              : 0;
+
+          if (retail === 0 && nominalKomisi === 0) {
+            return <span className="text-slate-400 text-xs font-mono">—</span>;
+          }
+
+          const rateText =
+            row.original.tipe_komisi === "percentage" && row.original.nilai_komisi !== null && row.original.nilai_komisi !== undefined
+              ? `${Number(row.original.nilai_komisi)}%`
+              : `${margin}%`;
+
+          return (
+            <div className="flex flex-col items-end">
+              <span className="font-bold text-emerald-700 text-xs font-mono">
+                +{formatRupiah(nominalKomisi)}
+              </span>
+              <span className="text-[10px] font-medium text-emerald-600/90 font-mono">
+                {rateText} ({formatRupiah(nominalKomisi * row.original.kuantitas)})
+              </span>
+            </div>
+          );
+        },
+      },
+    ];
+
     if (canReceive) {
       return [
         {
@@ -63,14 +173,22 @@ export function useTransferDetailItemsColumns({
               <span className="font-bold text-slate-800 text-xs">
                 {row.original.product?.nama || "—"}
               </span>
-              {row.original.product?.barcode && (
-                <span className="font-mono text-[10px] text-slate-400">
-                  {row.original.product.barcode}
-                </span>
-              )}
+              <div className="flex items-center gap-2 flex-wrap text-[10px]">
+                {row.original.product?.barcode && (
+                  <span className="font-mono text-slate-400">
+                    {row.original.product.barcode}
+                  </span>
+                )}
+                {row.original.product?.satuan && (
+                  <span className="text-slate-400">
+                    ({row.original.product.satuan})
+                  </span>
+                )}
+              </div>
             </div>
           ),
         },
+        ...(isKonsinyasi ? consignmentColumns : []),
         {
           accessorKey: "kuantitas",
           header: "Dikirim",
@@ -175,14 +293,22 @@ export function useTransferDetailItemsColumns({
               <span className="font-bold text-slate-800 text-xs">
                 {row.original.product?.nama || "—"}
               </span>
-              {row.original.product?.barcode && (
-                <span className="font-mono text-[10px] text-slate-400">
-                  {row.original.product.barcode}
-                </span>
-              )}
+              <div className="flex items-center gap-2 flex-wrap text-[10px]">
+                {row.original.product?.barcode && (
+                  <span className="font-mono text-slate-400">
+                    {row.original.product.barcode}
+                  </span>
+                )}
+                {row.original.product?.satuan && (
+                  <span className="text-slate-400">
+                    ({row.original.product.satuan})
+                  </span>
+                )}
+              </div>
             </div>
           ),
         },
+        ...(isKonsinyasi ? consignmentColumns : []),
         {
           id: "input_kuantitas_return",
           header: "Retur / Kelebihan",
@@ -321,14 +447,22 @@ export function useTransferDetailItemsColumns({
             <span className="font-bold text-slate-800 text-xs">
               {row.original.product?.nama || "—"}
             </span>
-            {row.original.product?.barcode && (
-              <span className="font-mono text-[10px] text-slate-400">
-                {row.original.product.barcode}
-              </span>
-            )}
+            <div className="flex items-center gap-2 flex-wrap text-[10px]">
+              {row.original.product?.barcode && (
+                <span className="font-mono text-slate-400">
+                  {row.original.product.barcode}
+                </span>
+              )}
+              {row.original.product?.satuan && (
+                <span className="text-slate-400">
+                  ({row.original.product.satuan})
+                </span>
+              )}
+            </div>
           </div>
         ),
       },
+      ...(isKonsinyasi ? consignmentColumns : []),
       {
         accessorKey: "kuantitas",
         header: "Dikirim",
@@ -437,6 +571,7 @@ export function useTransferDetailItemsColumns({
     items,
     canReceive,
     canValidateTransfer,
+    tipeTransfer,
     onOpenTerimaItem,
     registerInputRef,
     onOpenValidateItem,

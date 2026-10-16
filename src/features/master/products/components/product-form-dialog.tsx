@@ -15,6 +15,7 @@ import {
 import { FormProvider } from "react-hook-form";
 import type { Product } from "../types";
 import { useProductFormDialog } from "../hooks/use-product-form-dialog";
+import { useIsCentralStore } from "@/hooks/use-active-store";
 import { ProductMediaColumn } from "./form/product-media-column";
 import { ProductIdentityColumn } from "./form/product-identity-column";
 import { ProductPricingColumn } from "./form/product-pricing-column";
@@ -74,6 +75,8 @@ export function ProductFormDialog({
     const activeProductName = editingProduct?.nama || watch("nama");
     const activePrice = editingProduct?.harga_jual ?? editingProduct?.harga ?? watch("harga");
 
+    const isCentralStore = useIsCentralStore();
+
     return (
         <>
             <BaseDialog
@@ -130,26 +133,28 @@ export function ProductFormDialog({
                         </Button>
                     ) : undefined
                 }
-                className="sm:max-w-5xl"
-                scrollable={true}
+                className="sm:max-w-5xl md:h-[680px] lg:h-[720px] max-h-[92dvh] flex flex-col"
+                scrollable={false}
             >
                 <FormProvider {...methods}>
                     <form
                         onSubmit={handleSubmit(onSubmit, onError)}
-                        className="space-y-3 pt-1"
+                        className="flex-1 min-h-0 flex flex-col justify-between pt-2 overflow-hidden gap-3"
                     >
                         {infoMessage && (
-                            <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-medium flex items-center gap-2">
+                            <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-medium flex items-center gap-2 shrink-0">
                                 <IconInfoCircle size={15} className="text-amber-600 shrink-0" />
                                 <span><strong>Info:</strong> {infoMessage}</span>
                             </div>
                         )}
 
                         {/* ── 3-Column 3-5-4 Harmonic Bento Grid Layout ── */}
-                        {/* ── 3-Column 3-5-4 Harmonic Bento Grid Layout ── */}
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-stretch">
+                        <div
+                            id="product-form-scrollable"
+                            className="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-stretch flex-1 min-h-0 max-md:overflow-y-auto max-md:pr-1"
+                        >
                             {/* Kolom 1: Foto Produk & Live Preview (Compact - 3 cols) */}
-                            <div id="product-form-media-column" className="md:col-span-3">
+                            <div id="product-form-media-column" className="md:col-span-3 flex flex-col min-h-0 md:h-full">
                                 <ProductMediaColumn
                                     productType={productType}
                                     disabled={isPending}
@@ -160,7 +165,7 @@ export function ProductFormDialog({
                             </div>
 
                             {/* Kolom 2: Identitas, FormSelect Tipe Produk, & Klasifikasi (Ekstra Luas - 5 cols) */}
-                            <div id="product-form-identity-column" className="md:col-span-5">
+                            <div id="product-form-identity-column" className="md:col-span-5 flex flex-col min-h-0 md:h-full">
                                 <ProductIdentityColumn
                                     onProductTypeChange={handleProductTypeChange}
                                     disabled={isPending}
@@ -171,11 +176,12 @@ export function ProductFormDialog({
                             </div>
 
                             {/* Kolom 3: Harga, Stok Qty, & Grosir (Nyaman & Pas - 4 cols) */}
-                            <div id="product-form-pricing-column" className="md:col-span-4">
+                            <div id="product-form-pricing-column" className="md:col-span-4 flex flex-col min-h-0 md:h-full">
                                 <ProductPricingColumn
                                     productType={productType}
                                     isGrosir={isGrosir}
                                     disabled={isPending}
+                                    isCentralStore={isCentralStore}
                                     onHargaBeliChange={handleHargaBeliChange}
                                     onHargaChange={handleHargaChange}
                                     onMarginChange={handleMarginChange}
@@ -187,7 +193,7 @@ export function ProductFormDialog({
                         </div>
 
                         {/* ── Dialog Footer Actions ── */}
-                        <div className="pt-2.5 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+                        <div className="pt-2.5 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800 shrink-0">
                             <Button
                                 type="button"
                                 variant="outline"
@@ -203,19 +209,19 @@ export function ProductFormDialog({
                                 disabled={isPending}
                                 className="h-9 px-5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 cursor-pointer shadow-md shadow-emerald-600/20"
                             >
-                                    {isPending ? (
-                                        <>
-                                            <IconLoader2 size={15} className="animate-spin" />
-                                            <span>Menyimpan...</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <IconCheck size={15} />
-                                            <span>{editingProduct ? "Simpan Perubahan" : "Simpan Produk"}</span>
-                                        </>
-                                    )}
-                                </Button>
-                            </div>
+                                {isPending ? (
+                                    <>
+                                        <IconLoader2 size={15} className="animate-spin" />
+                                        <span>Menyimpan...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <IconCheck size={15} />
+                                        <span>{editingProduct ? "Simpan Perubahan" : "Simpan Produk"}</span>
+                                    </>
+                                )}
+                            </Button>
+                        </div>
                     </form>
                 </FormProvider>
             </BaseDialog>

@@ -15,7 +15,7 @@ import PrinterService, { type PrinterDevice } from "@/services/printer.service";
 
 // UI Components
 import { Card } from "@/components/ui/card";
-import { IconAdjustments, IconPrinter } from "@tabler/icons-react";
+import { IconAdjustments, IconPrinter, IconReceiptTax } from "@tabler/icons-react";
 import { Store, Wallet, Settings2, ChevronRight, Boxes } from "lucide-react";
 import { Show } from "@/components/ui/show";
 
@@ -23,6 +23,7 @@ import { Show } from "@/components/ui/show";
 import { TabProfile } from "./tab-profile";
 import { TabFinance } from "./tab-finance";
 import { TabInventory } from "./tab-inventory";
+import { TabConsignment } from "./tab-consignment";
 import { TabCash } from "./tab-cash";
 import { TabPrinter } from "./tab-printer";
 import { FloatingSaveBar } from "./floating-save-bar";
@@ -63,6 +64,7 @@ export function StoreProfile() {
             hpp_adjustment_method: "latest",
             cash_in_out_enabled: "true",
             branch_can_create_product: "true",
+            consignment_commission_mode: "cut_revenue",
         },
     });
 
@@ -95,6 +97,14 @@ export function StoreProfile() {
             adminOnly: true,
         },
         {
+            id: "consignment",
+            label: "Konsinyasi Cabang",
+            description: "Perlakuan komisi cabang & konsinyasi",
+            icon: IconReceiptTax,
+            fields: ["consignment_commission_mode"] as const,
+            adminOnly: true,
+        },
+        {
             id: "cash",
             label: "Kas & Operasional Kasir",
             description: "Pemetaan kas & fitur laci kasir",
@@ -118,7 +128,7 @@ export function StoreProfile() {
 
     // Safety fallback: if non-admin has an admin-only activeTab, reset to profile
     useEffect(() => {
-        if (!isAdmin && ["finance", "inventory", "cash"].includes(activeTab)) {
+        if (!isAdmin && ["finance", "inventory", "consignment", "cash"].includes(activeTab)) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setActiveTab("profile");
         }
@@ -158,6 +168,7 @@ export function StoreProfile() {
                 branch_can_create_product: settings.branch_can_create_product === undefined || settings.branch_can_create_product === null
                     ? "true"
                     : settings.branch_can_create_product,
+                consignment_commission_mode: (settings.consignment_commission_mode as "cut_revenue" | "markup_price") || "cut_revenue",
             });
         }
     }, [settings, methods]);
@@ -222,6 +233,7 @@ export function StoreProfile() {
                     "point_system_enabled",
                     "hpp_adjustment_method",
                     "branch_can_create_product",
+                    "consignment_commission_mode",
                     "cash_account_register_uid",
                     "cash_account_main_uid",
                     "cash_account_bank_uid",
@@ -459,6 +471,13 @@ export function StoreProfile() {
                         <Show.When isTrue={isAdmin && activeTab === "inventory"}>
                             <div className="animate-fade-in">
                                 <TabInventory isSaving={isSaving} />
+                            </div>
+                        </Show.When>
+
+                        {/* Tab 4: Konsinyasi Cabang */}
+                        <Show.When isTrue={isAdmin && activeTab === "consignment"}>
+                            <div className="animate-fade-in">
+                                <TabConsignment isSaving={isSaving} />
                             </div>
                         </Show.When>
 

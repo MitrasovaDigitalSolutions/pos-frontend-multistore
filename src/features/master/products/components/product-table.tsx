@@ -15,7 +15,6 @@ import {
 import { hasPermission, hasRole } from "@/constants/roles";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { useActiveStoreStore } from "@/stores/active-store-store";
-import { useSettingsStore } from "@/stores/settings-store";
 import { IconActivity, IconArchiveOff, IconPlus } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
@@ -88,9 +87,7 @@ export function ProductTable(props: ProductTableProps) {
     const activeStore = userStores.find((s) => s.uid === activeStoreUid) || userStores[0];
     const isCentralStore = activeStore?.is_central ?? false;
 
-    const branchCanCreateSetting = useSettingsStore((s) => s.getSetting("branch_can_create_product", "true"));
-    const canBranchCreateProduct = branchCanCreateSetting === "true";
-    const canCreateProduct = isCentralStore || canBranchCreateProduct;
+    const canCreateProduct = isCentralStore;
 
     const detachStoreProduct = useDetachProductStore();
     const toggleStatus = useToggleProductStatus();
@@ -395,6 +392,12 @@ export function ProductTable(props: ProductTableProps) {
                             <IconPlus size={16} /> Tambah Produk
                         </Button>
                     </Show.When>
+                    {!isCentralStore && (
+                        <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 border border-slate-200/80 px-2.5 py-1.5 rounded-xl flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                            Produk Dikelola Pusat
+                        </span>
+                    )}
                 </div>
             </div>
 

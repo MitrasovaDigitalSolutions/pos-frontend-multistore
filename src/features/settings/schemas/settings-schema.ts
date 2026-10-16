@@ -71,6 +71,11 @@ export const storeSettingsSchema = z.object({
         .optional()
         .nullable()
         .transform((val) => val || "true"),
+    consignment_commission_mode: z
+        .enum(["cut_revenue", "markup_price"])
+        .optional()
+        .nullable()
+        .transform((val) => val || "cut_revenue"),
 });
 
 export type StoreSettingsInput = z.infer<typeof storeSettingsSchema>;

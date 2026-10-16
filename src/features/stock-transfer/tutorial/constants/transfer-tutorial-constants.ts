@@ -41,6 +41,8 @@ export const MOCK_STOCK_TRANSFER_ITEMS: TransferItem[] = [
         barcode: "8991111222333",
         stok_tersedia: 48,
         kuantitas: 12,
+        harga_pasok: 28000,
+        harga_jual: 34000,
     },
     {
         product_uid: "mock-prod-trf-2",
@@ -48,6 +50,8 @@ export const MOCK_STOCK_TRANSFER_ITEMS: TransferItem[] = [
         barcode: "8994444555666",
         stok_tersedia: 30,
         kuantitas: 6,
+        harga_pasok: 65000,
+        harga_jual: 75000,
     },
 ];
 

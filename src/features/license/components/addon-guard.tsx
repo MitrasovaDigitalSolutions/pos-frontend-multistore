@@ -95,7 +95,8 @@ export function AddonGuard({
         return null;
     }
 
-    const addonInfo = ADDON_DETAILS[addon] || {
+    const addonKey = addon.toLowerCase();
+    const addonInfo = ADDON_DETAILS[addonKey] || ADDON_DETAILS[addon] || {
         title: title || `Add-on ${addon}`,
         description: description || "Fitur ini memerlukan add-on tambahan pada paket langganan Anda.",
     };

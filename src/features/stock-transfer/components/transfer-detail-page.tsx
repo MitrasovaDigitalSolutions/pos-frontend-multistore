@@ -454,6 +454,7 @@ export function TransferDetailPage({ uid }: TransferDetailPageProps) {
               onValidateItem={handleValidateItem}
               validatingItemUid={validatingItemUid}
               isFetching={isFetching}
+              tipeTransfer={transfer.tipe_transfer}
             />
           </div>
 

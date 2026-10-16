@@ -179,6 +179,10 @@ export interface CashLedger {
 
     chartOfAccount?: CashLedgerChartOfAccount | null;
     chart_of_account?: CashLedgerChartOfAccount | null;
+
+    store_remittance_uid?: string | null;
+    storeRemittance?: { uid: string; nomor_setoran?: string } | null;
+    store_remittance?: { uid: string; nomor_setoran?: string } | null;
 }
 
 export interface CashFlowFilters extends PaginationParams {

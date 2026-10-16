@@ -41,6 +41,9 @@ export const licenseApi = {
 
         const response = await apiGet<LicenseStatusResponse>(ENDPOINTS.LICENSE.STATUS);
         const data = response.data;
+        if (data && Array.isArray(data.active_addons)) {
+            data.active_addons = data.active_addons.map((a: string) => a.toLowerCase());
+        }
         useLicenseStore.getState().setLicenseStatus(data);
         return data;
     },
@@ -48,6 +51,9 @@ export const licenseApi = {
     activate: async (payload: ActivatePayload): Promise<LicenseStatus> => {
         const response = await apiPost<ActivateResponse>(ENDPOINTS.LICENSE.ACTIVATE, payload);
         const data = response.data;
+        if (data && Array.isArray(data.active_addons)) {
+            data.active_addons = data.active_addons.map((a: string) => a.toLowerCase());
+        }
         useLicenseStore.getState().setLicenseStatus(data);
         return data;
     },
@@ -55,6 +61,9 @@ export const licenseApi = {
     sync: async (): Promise<LicenseStatus> => {
         const response = await apiPost<SyncResponse>(ENDPOINTS.LICENSE.SYNC);
         const data = response.data;
+        if (data && Array.isArray(data.active_addons)) {
+            data.active_addons = data.active_addons.map((a: string) => a.toLowerCase());
+        }
         useLicenseStore.getState().setLicenseStatus(data);
         return data;
     },

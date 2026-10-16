@@ -25,6 +25,7 @@ const ROUTE_ADDON_MAP: Array<{ prefix: string; addon: string; label: string }> =
     { prefix: "/admin/inventory/stock-opname", addon: "stock_opname", label: "Stock Opname" },
     { prefix: "/admin/inventory/stock-transfer", addon: "multi_store", label: "Transfer Stok" },
     { prefix: "/admin/request-transfer", addon: "multi_store", label: "Request Transfer Stok" },
+    { prefix: "/admin/remittance", addon: "multi_store", label: "Setoran Cabang" },
     { prefix: "/admin/manufacturing", addon: "production", label: "Manufaktur & Produksi" },
     { prefix: "/admin/assets", addon: "assets", label: "Manajemen Aset" },
     { prefix: "/admin/reports/central", addon: "multi_store", label: "Laporan Konsolidasi" },
@@ -65,8 +66,8 @@ export function LicenseAdminGuard({ children }: LicenseAdminGuardProps) {
         );
 
         if (matchedAddon) {
-            const userAddons = status.active_addons ?? [];
-            if (!userAddons.includes(matchedAddon.addon)) {
+            const userAddons = (status.active_addons ?? []).map((a) => a.toLowerCase());
+            if (!userAddons.includes(matchedAddon.addon.toLowerCase())) {
                 toast.error(
                     `Add-on ${matchedAddon.label} belum aktif pada paket langganan Anda. Silakan aktifkan add-on di halaman Kelola Langganan.`
                 );
@@ -89,8 +90,8 @@ export function LicenseAdminGuard({ children }: LicenseAdminGuardProps) {
         );
 
         if (matchedAddon) {
-            const userAddons = status.active_addons ?? [];
-            if (!userAddons.includes(matchedAddon.addon)) {
+            const userAddons = (status.active_addons ?? []).map((a) => a.toLowerCase());
+            if (!userAddons.includes(matchedAddon.addon.toLowerCase())) {
                 return null;
             }
         }

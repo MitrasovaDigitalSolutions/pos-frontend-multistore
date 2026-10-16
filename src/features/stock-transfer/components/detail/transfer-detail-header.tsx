@@ -13,7 +13,7 @@ import {
 } from "@tabler/icons-react";
 import { ROUTES } from "@/constants/routes";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { TRANSFER_STATUS, TRANSFER_STATUS_CLASSES, TRANSFER_STATUS_LABELS } from "../../constants";
+import { TRANSFER_STATUS, TRANSFER_STATUS_CLASSES, TRANSFER_STATUS_LABELS, TRANSFER_TYPE_BADGES } from "../../constants";
 import type { StockTransfer } from "../../types";
 
 interface TransferDetailHeaderProps {
@@ -63,7 +63,7 @@ export function TransferDetailHeader({
           <IconArrowLeft size={18} />
         </Button>
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-lg font-bold text-slate-900">Transfer: {transfer.nomor_transfer}</h2>
             <Badge
               variant="outline"
@@ -71,6 +71,15 @@ export function TransferDetailHeader({
             >
               {TRANSFER_STATUS_LABELS[transfer.status] || transfer.status}
             </Badge>
+            {transfer.tipe_transfer && TRANSFER_TYPE_BADGES[transfer.tipe_transfer] && (
+              <span
+                className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                  TRANSFER_TYPE_BADGES[transfer.tipe_transfer].className
+                }`}
+              >
+                {TRANSFER_TYPE_BADGES[transfer.tipe_transfer].label}
+              </span>
+            )}
           </div>
           <p className="text-xs text-slate-400 mt-0.5">Rincian mutasi stok produk antarcabang</p>
         </div>

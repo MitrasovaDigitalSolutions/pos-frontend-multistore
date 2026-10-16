@@ -25,11 +25,20 @@ export const useLicenseStore = create<LicenseStoreState>((set, get) => ({
     isLoading: false,
     lastSyncedAt: null,
 
-    setLicenseStatus: (status) =>
+    setLicenseStatus: (status) => {
+        const normalizedStatus = status
+            ? {
+                  ...status,
+                  active_addons: Array.isArray(status.active_addons)
+                      ? status.active_addons.map((a) => a.toLowerCase())
+                      : [],
+              }
+            : null;
         set({
-            licenseStatus: status,
+            licenseStatus: normalizedStatus,
             lastSyncedAt: status?.last_synced_at ?? new Date().toISOString(),
-        }),
+        });
+    },
 
     setLoading: (isLoading) => set({ isLoading }),
 
@@ -45,8 +54,10 @@ export const useLicenseStore = create<LicenseStoreState>((set, get) => ({
         );
         if (!isOperable) return false;
 
-        const addons = Array.isArray(status.active_addons) ? status.active_addons : [];
-        return addons.includes(addonCode);
+        const addons = Array.isArray(status.active_addons)
+            ? status.active_addons.map((a) => a.toLowerCase())
+            : [];
+        return addons.includes(addonCode.toLowerCase());
     },
 
     hasAllAddons: (addonCodes: string[]) => {
@@ -75,7 +86,9 @@ export const useLicenseStore = create<LicenseStoreState>((set, get) => ({
 
     getActiveAddons: () => {
         const status = get().licenseStatus;
-        return Array.isArray(status?.active_addons) ? status.active_addons : [];
+        return Array.isArray(status?.active_addons)
+            ? status.active_addons.map((a) => a.toLowerCase())
+            : [];
     },
 }));
 

@@ -29,6 +29,27 @@ export const TRANSFER_STATUS_CLASSES: Record<string, string> = {
   cancelled: "bg-rose-50 text-rose-700 border-rose-200",
 };
 
+// ─── Tipe Transfer (Reguler vs Konsinyasi Internal) ───────────────────────────
+export const TRANSFER_TYPE = {
+  REGULER: "reguler",
+  REGULAR: "reguler",
+  KONSINYASI_INTERNAL: "konsinyasi_internal",
+} as const;
+
+export type TransferType = (typeof TRANSFER_TYPE)[keyof typeof TRANSFER_TYPE];
+
+export const TRANSFER_TYPE_LABELS: Record<string, string> = {
+  reguler: "Transfer Reguler",
+  regular: "Transfer Reguler",
+  konsinyasi_internal: "Konsinyasi Internal (Titipan Pusat)",
+};
+
+export const TRANSFER_TYPE_BADGES: Record<string, { label: string; className: string }> = {
+  reguler: { label: "Reguler", className: "bg-slate-100 text-slate-700 border-slate-200" },
+  regular: { label: "Reguler", className: "bg-slate-100 text-slate-700 border-slate-200" },
+  konsinyasi_internal: { label: "Titipan Pusat", className: "bg-purple-50 text-purple-700 border-purple-200/80 font-bold" },
+};
+
 // ─── Jenis Validasi ─────────────────────────────────────────────────────────
 export const JENIS_VALIDASI = {
   RETUR: "retur",

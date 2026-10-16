@@ -18,7 +18,30 @@ export function LedgerReferenceCell({ movement }: LedgerReferenceCellProps) {
     const stockReceiving = movement.stockReceiving || movement.stock_receiving;
     const memberPayment = movement.memberPayment || movement.member_payment;
     const coa = movement.chartOfAccount || movement.chart_of_account;
+    const storeRemittance = movement.storeRemittance || movement.store_remittance;
     const kat = (movement.kategori || "").toLowerCase();
+
+    if (storeRemittance || movement.store_remittance_uid) {
+        return (
+            <div className="flex flex-col gap-0.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-bold text-slate-900 text-xs">
+                        Setoran Cabang (Konsinyasi)
+                    </span>
+                    {storeRemittance?.nomor_setoran && (
+                        <span className="text-[10px] bg-indigo-50 text-indigo-700 font-mono px-1.5 py-0.2 rounded border border-indigo-200/60 font-semibold">
+                            #{storeRemittance.nomor_setoran}
+                        </span>
+                    )}
+                </div>
+                {movement.catatan && (
+                    <span className="text-[10px] italic text-slate-400 max-w-xs truncate">
+                        &quot;{movement.catatan}&quot;
+                    </span>
+                )}
+            </div>
+        );
+    }
 
     if (expense) {
         return (

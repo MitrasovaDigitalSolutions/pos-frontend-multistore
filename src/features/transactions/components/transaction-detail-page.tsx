@@ -274,6 +274,8 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
                     transactionName={transaction.nama_transaksi}
                     onConfirm={handleVoid}
                     isLoading={voidMutation.isPending}
+                    isRemitted={transaction.is_remitted}
+                    remittanceStatus={transaction.remittance_status}
                 />
 
                 {/* Main content grid */}

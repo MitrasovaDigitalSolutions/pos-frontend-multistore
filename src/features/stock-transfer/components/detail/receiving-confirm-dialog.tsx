@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useForm, FormProvider } from "react-hook-form";
-import { IconAlertTriangle, IconCircleCheck, IconLoader2, IconX } from "@tabler/icons-react";
+import { IconAlertTriangle, IconCircleCheck, IconInfoCircle, IconLoader2, IconX } from "@tabler/icons-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FormSelect } from "@/components/forms/form-select";
@@ -181,6 +181,19 @@ export function ReceivingConfirmDialog({
                   </span>
                 </div>
               </div>
+
+              {/* Consignment Price Notice */}
+              {Boolean(item.harga_pasok || item.harga_jual) && (
+                <div className="w-full bg-purple-50/70 border border-purple-200/60 rounded-xl p-2.5 text-[11px] text-purple-900 text-left flex items-start gap-2">
+                  <IconInfoCircle size={15} className="text-purple-600 shrink-0 mt-0.5" />
+                  <div className="leading-snug">
+                    <p className="font-bold">Barang Titipan Pusat</p>
+                    <p className="text-purple-700">
+                      Penerimaan barang ini menyelaraskan harga retail di cabang ({item.harga_jual ? `Rp ${item.harga_jual.toLocaleString("id-ID")}` : "terbaru"}).
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Discrepancy Alert / Selector */}
               {needsReason && (

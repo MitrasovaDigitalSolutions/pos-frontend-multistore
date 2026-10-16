@@ -23,6 +23,11 @@ import {
   useStockTransferDetail,
   useUpdateStockTransfer,
 } from "../api/stock-transfer-api";
+import { TRANSFER_TYPE, type TransferType } from "../constants";
+import {
+  useConsignmentCommissionMode,
+  type CommissionType,
+} from "../hooks/use-consignment-commission-mode";
 
 import { TransferCreateHeader } from "./create/transfer-create-header";
 import { TransferItemsSection, type TransferItem } from "./create/transfer-items-section";
@@ -70,6 +75,7 @@ export function TransferCreatePage({ editUid }: TransferCreatePageProps) {
   }, [destStores]);
 
   const [destinationUid, setDestinationUid] = useState<string>("");
+  const [tipeTransfer, setTipeTransfer] = useState<TransferType>(TRANSFER_TYPE.REGULAR);
   const [catatan, setCatatan] = useState("");
   const [items, setItems] = useState<TransferItem[]>([]);
   const [prefilled, setPrefilled] = useState(false);
@@ -167,12 +173,32 @@ export function TransferCreatePage({ editUid }: TransferCreatePageProps) {
           if (active) {
             setDestinationUid(detailData.store_uid_destination || "");
             setCatatan(detailData.catatan || "");
+            if (detailData.tipe_transfer) {
+              setTipeTransfer(detailData.tipe_transfer as TransferType);
+            }
             setItems(
               detailData.items.map((item) => ({
                 product_uid: item.product_uid,
                 nama: item.product?.nama || "Unknown",
                 barcode: item.product?.barcode || null,
-                kuantitas: item.kuantitas,
+                stok_tersedia: item.product?.stok,
+                kuantitas: Number(item.kuantitas),
+                tipe_komisi: (item.tipe_komisi as CommissionType) || "percentage",
+                nilai_komisi: Number(item.nilai_komisi ?? 0),
+                modal_pusat: Number(item.product?.harga_beli ?? 0),
+                harga_dasar_pusat: Number(
+                  item.product?.harga_jual ?? item.harga_jual_pusat ?? item.harga_jual_cabang ?? 0
+                ),
+                harga_pasok: item.harga_pasok_pusat
+                  ? Number(item.harga_pasok_pusat)
+                  : item.harga_beli_cabang
+                  ? Number(item.harga_beli_cabang)
+                  : undefined,
+                harga_jual: item.harga_jual_pusat
+                  ? Number(item.harga_jual_pusat)
+                  : item.harga_jual_cabang
+                  ? Number(item.harga_jual_cabang)
+                  : undefined,
               }))
             );
             setPrefilled(true);
@@ -184,6 +210,141 @@ export function TransferCreatePage({ editUid }: TransferCreatePageProps) {
       active = false;
     };
   }, [editUid, detailData, prefilled]);
+
+  const selectedDestStore = stores.find((s) => s.uid === destinationUid);
+  const { calculatePricing } = useConsignmentCommissionMode();
+
+  const handleProductFound = (product: Product) => {
+    const existing = items.find((i) => i.product_uid === product.uid);
+    if (existing) {
+      const others = items.filter((i) => i.product_uid !== product.uid);
+      setItems([{ ...existing, kuantitas: existing.kuantitas + 1 }, ...others]);
+      toast.success(`Qty "${product.nama}" ditambah (+1).`);
+      return;
+    }
+    const defaultHargaJual = product.harga_jual ?? product.harga ?? 0;
+    const defaultModal = product.harga_beli ?? 0;
+
+    setItems([
+      {
+        product_uid: product.uid,
+        nama: product.nama,
+        barcode: product.barcode,
+        stok_tersedia: product.stok,
+        kuantitas: 1,
+        tipe_komisi: "percentage",
+        nilai_komisi: 0,
+        modal_pusat: defaultModal,
+        harga_dasar_pusat: defaultHargaJual,
+        harga_pasok: defaultModal,
+        harga_jual: defaultHargaJual,
+      },
+      ...items,
+    ]);
+    toast.success(`"${product.nama}" ditambahkan ke daftar`);
+  };
+
+  const updateQty = (uid: string, qty: number) => {
+    const validQty = Math.max(0.001, qty);
+    setItems((prev) => prev.map((i) => (i.product_uid === uid ? { ...i, kuantitas: validQty } : i)));
+  };
+
+  const updateKomisi = (uid: string, tipe: CommissionType, nilai: number) => {
+    setItems((prev) =>
+      prev.map((i) =>
+        i.product_uid === uid
+          ? { ...i, tipe_komisi: tipe, nilai_komisi: Math.max(0, nilai) }
+          : i
+      )
+    );
+  };
+
+  const removeItem = (uid: string) => {
+    setItems((prev) => prev.filter((i) => i.product_uid !== uid));
+  };
+
+  const isKonsinyasi = tipeTransfer === TRANSFER_TYPE.KONSINYASI_INTERNAL;
+  const totalJenis = items.length;
+  const totalQty = items.reduce((sum, item) => sum + item.kuantitas, 0);
+
+  const { totalNilaiPasok, totalNilaiRetail, totalEstimasiKomisi } = useMemo(() => {
+    let pasokSum = 0;
+    let retailSum = 0;
+    let komisiSum = 0;
+
+    for (const item of items) {
+      if (isKonsinyasi) {
+        const pricing = calculatePricing({
+          modalPusat: item.modal_pusat ?? 0,
+          hargaDasarPusat: item.harga_dasar_pusat ?? item.harga_jual ?? 0,
+          tipeKomisi: item.tipe_komisi || "percentage",
+          nilaiKomisi: item.nilai_komisi ?? 0,
+          kuantitas: item.kuantitas,
+        });
+        pasokSum += pricing.totalWajibSetor;
+        retailSum += pricing.totalOmzetRetail;
+        komisiSum += pricing.totalLabaCabang;
+      } else {
+        const dasar = item.harga_dasar_pusat ?? item.harga_jual ?? 0;
+        const subtotal = dasar * item.kuantitas;
+        pasokSum += subtotal;
+        retailSum += subtotal;
+      }
+    }
+
+    return {
+      totalNilaiPasok: pasokSum,
+      totalNilaiRetail: retailSum,
+      totalEstimasiKomisi: komisiSum,
+    };
+  }, [items, isKonsinyasi, calculatePricing]);
+
+  const handleSubmit = () => {
+    if (!destinationUid) return toast.error("Pilih toko tujuan pengiriman!");
+    if (items.length === 0) return toast.error("Minimal tambahkan 1 barang ke dalam daftar transfer");
+    if (items.some((i) => i.kuantitas <= 0)) return toast.error("Kuantitas pengiriman harus lebih dari 0");
+
+    if (isTutorialRunning || destinationUid.startsWith("mock-")) {
+      toast.success("Simulasi: Draft transfer stok berhasil disimpan (Mode Panduan)!");
+      return;
+    }
+
+    const payload = {
+      store_uid_destination: destinationUid,
+      tipe_transfer: tipeTransfer,
+      catatan: catatan || undefined,
+      items: items.map((i) => ({
+        product_uid: i.product_uid,
+        kuantitas: Number(i.kuantitas),
+        tipe_komisi: i.tipe_komisi || "percentage",
+        nilai_komisi: Number(i.nilai_komisi || 0),
+      })),
+    };
+
+    if (editUid) {
+      updateMutation.mutate(
+        { uid: editUid, payload },
+        {
+          onSuccess: (res) => {
+            toast.success("Transfer draft berhasil diperbarui!");
+            router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/${res.data.uid}`);
+          },
+          onError: (err) => toast.error(err.message || "Gagal memperbarui transfer stok"),
+        }
+      );
+    } else {
+      createMutation.mutate(
+        payload,
+        {
+          onSuccess: (res) => {
+            toast.success("Draft transfer stok berhasil disimpan!");
+            router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/${res.data.uid}`);
+          },
+          onError: (err) => toast.error(err.message || "Gagal membuat transfer stok"),
+        }
+      );
+    }
+  };
 
   if (!mounted || status === "loading" || (editUid && detailLoading)) {
     return (
@@ -230,82 +391,6 @@ export function TransferCreatePage({ editUid }: TransferCreatePageProps) {
     );
   }
 
-  const selectedDestStore = stores.find((s) => s.uid === destinationUid);
-
-  const handleProductFound = (product: Product) => {
-    const existing = items.find((i) => i.product_uid === product.uid);
-    if (existing) {
-      const others = items.filter((i) => i.product_uid !== product.uid);
-      setItems([{ ...existing, kuantitas: existing.kuantitas + 1 }, ...others]);
-      toast.success(`Qty "${product.nama}" ditambah (+1).`);
-      return;
-    }
-    setItems([
-      {
-        product_uid: product.uid,
-        nama: product.nama,
-        barcode: product.barcode,
-        stok_tersedia: product.stok,
-        kuantitas: 1,
-      },
-      ...items,
-    ]);
-    toast.success(`"${product.nama}" ditambahkan ke daftar`);
-  };
-
-  const updateQty = (uid: string, qty: number) => {
-    const validQty = Math.max(1, qty);
-    setItems(items.map((i) => (i.product_uid === uid ? { ...i, kuantitas: validQty } : i)));
-  };
-
-  const removeItem = (uid: string) => {
-    setItems(items.filter((i) => i.product_uid !== uid));
-  };
-
-  const totalJenis = items.length;
-  const totalQty = items.reduce((sum, item) => sum + item.kuantitas, 0);
-
-  const handleSubmit = () => {
-    if (!destinationUid) return toast.error("Pilih toko tujuan pengiriman!");
-    if (items.length === 0) return toast.error("Minimal tambahkan 1 barang ke dalam daftar transfer");
-    if (items.some((i) => i.kuantitas <= 0)) return toast.error("Kuantitas pengiriman harus lebih dari 0");
-
-    if (isTutorialRunning || destinationUid.startsWith("mock-") || items.some((it) => it.product_uid.startsWith("mock-"))) {
-      toast.success("Simulasi: Draft transfer stok berhasil disimpan (Mode Panduan)!");
-      return;
-    }
-
-    const payload = {
-      store_uid_destination: destinationUid,
-      catatan: catatan || undefined,
-      items: items.map((i) => ({ product_uid: i.product_uid, kuantitas: i.kuantitas })),
-    };
-
-    if (editUid) {
-      updateMutation.mutate(
-        { uid: editUid, payload },
-        {
-          onSuccess: (res) => {
-            toast.success("Transfer draft berhasil diperbarui!");
-            router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/${res.data.uid}`);
-          },
-          onError: (err) => toast.error(err.message || "Gagal memperbarui transfer stok"),
-        }
-      );
-    } else {
-      createMutation.mutate(
-        payload,
-        {
-          onSuccess: (res) => {
-            toast.success("Draft transfer stok berhasil disimpan!");
-            router.push(`${ROUTES.ADMIN_STOCK_TRANSFERS}/${res.data.uid}`);
-          },
-          onError: (err) => toast.error(err.message || "Gagal membuat transfer stok"),
-        }
-      );
-    }
-  };
-
   return (
     <div className="space-y-6">
       <TransferCreateHeader />
@@ -318,14 +403,18 @@ export function TransferCreatePage({ editUid }: TransferCreatePageProps) {
             storeOptions={storeOptions}
             destinationUid={destinationUid}
             setDestinationUid={setDestinationUid}
+            tipeTransfer={tipeTransfer}
+            setTipeTransfer={setTipeTransfer}
             catatan={catatan}
             setCatatan={setCatatan}
           />
 
           <TransferItemsSection
             items={items}
+            tipeTransfer={tipeTransfer}
             onProductFound={handleProductFound}
             onUpdateQty={updateQty}
+            onUpdateKomisi={updateKomisi}
             onRemoveItem={removeItem}
           />
         </div>
@@ -336,6 +425,10 @@ export function TransferCreatePage({ editUid }: TransferCreatePageProps) {
             destinationStoreName={selectedDestStore?.nama}
             totalJenis={totalJenis}
             totalQty={totalQty}
+            tipeTransfer={tipeTransfer}
+            totalNilaiPasok={totalNilaiPasok}
+            totalNilaiRetail={totalNilaiRetail}
+            totalEstimasiKomisi={totalEstimasiKomisi}
             onSubmit={handleSubmit}
             isPending={createMutation.isPending || updateMutation.isPending}
             canSubmit={items.length > 0 && !!destinationUid}

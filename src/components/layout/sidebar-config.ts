@@ -8,6 +8,7 @@ import {
     IconBuildingStore,
     IconBuildingWarehouse,
     IconChartBar,
+    IconCash,
     IconDatabase,
     IconDeviceLaptop,
     IconHome,
@@ -15,6 +16,7 @@ import {
     IconNotebook,
     IconReceipt,
     IconSettings,
+    IconShieldCheck,
     IconShieldLock,
     IconShoppingCart,
     IconUsers,
@@ -33,6 +35,7 @@ export interface NavItem {
     badgeVariant?: "emerald" | "amber" | "rose" | "blue" | "slate";
     permission?: PermissionChecker;
     addon?: string;
+    storeScope?: "central" | "branch";
     children?: NavItem[];
 }
 
@@ -308,6 +311,29 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     hasRole(roles, "admin") ||
                     hasPermission(roles, permissions, "manage_cash_accounts") ||
                     hasPermission(roles, permissions, "view_cash_drawer"),
+            },
+            {
+                label: "Setoran ke Pusat",
+                path: ROUTES.ADMIN_REMITTANCE,
+                icon: IconCash,
+                addon: "multi_store",
+                storeScope: "branch",
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") ||
+                    hasPermission(roles, permissions, "view_remittances") ||
+                    hasPermission(roles, permissions, "create_remittances") ||
+                    hasPermission(roles, permissions, "manage_remittances"),
+            },
+            {
+                label: "Verifikasi Setoran",
+                path: ROUTES.ADMIN_REMITTANCE_VERIFY,
+                icon: IconShieldCheck,
+                addon: "multi_store",
+                storeScope: "central",
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") ||
+                    hasPermission(roles, permissions, "verify_remittances") ||
+                    hasPermission(roles, permissions, "manage_remittances"),
             },
             {
                 label: "Pengeluaran",
@@ -749,25 +775,34 @@ export function filterNavItems(
     items: NavItem[],
     roles: string[],
     permissions: string[],
-    activeAddons?: string[] | null
+    activeAddons?: string[] | null,
+    isCentral?: boolean
 ): NavItem[] {
     return items
         .map((item) => {
+            // Check storeScope requirement: item can be restricted to central HQ or branch
+            if (item.storeScope) {
+                if (item.storeScope === "central" && !isCentral) return null;
+                if (item.storeScope === "branch" && isCentral) return null;
+            }
+
             // Check self permission
             const isAllowed = item.permission ? item.permission(roles, permissions) : true;
             if (!isAllowed) return null;
 
             // Check addon requirement: item requires an active addon subscription
             if (item.addon) {
-                const userAddons = Array.isArray(activeAddons) ? activeAddons : [];
-                if (!userAddons.includes(item.addon)) {
+                const userAddons = Array.isArray(activeAddons)
+                    ? activeAddons.map((a) => a.toLowerCase())
+                    : [];
+                if (!userAddons.includes(item.addon.toLowerCase())) {
                     return null;
                 }
             }
 
             // If item has children, filter them recursively
             if (item.children && item.children.length > 0) {
-                const filteredChildren = filterNavItems(item.children, roles, permissions, activeAddons);
+                const filteredChildren = filterNavItems(item.children, roles, permissions, activeAddons, isCentral);
                 if (filteredChildren.length === 0) return null;
                 return { ...item, children: filteredChildren };
             }
