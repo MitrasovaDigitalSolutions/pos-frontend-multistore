@@ -37,6 +37,18 @@ export const ENDPOINTS = {
     CASH_FLOW: "/v1/cash-flow",
     ACCOUNT_CASH_FLOW: (uid: string) => `/v1/cash-accounts/${uid}/cashflow`,
 
+    // Store Remittances (Konsinyasi Internal & Setoran Cabang)
+    STORE_REMITTANCES: {
+        LIST: "/v1/store-remittances",
+        UNSETTLED: "/v1/store-remittances/unsettled",
+        UNSETTLED_ITEMS: "/v1/store-remittances/unsettled-items",
+        DETAIL: (uid: string) => `/v1/store-remittances/${uid}`,
+        CREATE: "/v1/store-remittances",
+        VERIFY: (uid: string) => `/v1/store-remittances/${uid}/verify`,
+        REJECT: (uid: string) => `/v1/store-remittances/${uid}/reject`,
+        CONSIGNMENT_STOCK: "/v1/store-remittances/consignment-stock",
+    },
+
     // Inventory
     INVENTORY: {
         STOCK_TRANSFERS: {

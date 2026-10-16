@@ -45,11 +45,32 @@ export function useStockTransferDetail(uid: string) {
   });
 }
 
+export interface CreateStockTransferItemPayload {
+  product_uid: string;
+  kuantitas: number;
+  tipe_komisi?: "percentage" | "fixed";
+  nilai_komisi?: number;
+}
+
+export interface CreateStockTransferPayload {
+  store_uid_destination: string;
+  tipe_transfer?: string;
+  catatan?: string | null;
+  items: CreateStockTransferItemPayload[];
+}
+
+export interface UpdateStockTransferPayload {
+  store_uid_destination: string;
+  tipe_transfer?: string;
+  catatan?: string | null;
+  items: CreateStockTransferItemPayload[];
+}
+
 export function useCreateStockTransfer() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { store_uid_destination: string; catatan?: string | null; items: { product_uid: string; kuantitas: number }[] }) =>
-      apiPost<ApiResponse<StockTransfer>, typeof payload>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.CREATE, payload),
+    mutationFn: (payload: CreateStockTransferPayload) =>
+      apiPost<ApiResponse<StockTransfer>, CreateStockTransferPayload>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.CREATE, payload),
     onSuccess: () => {
       invalidateStockQueries(qc);
     },
@@ -59,8 +80,8 @@ export function useCreateStockTransfer() {
 export function useUpdateStockTransfer() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ uid, payload }: { uid: string; payload: { store_uid_destination: string; catatan?: string; items: { product_uid: string; kuantitas: number }[] } }) =>
-      apiPatch<ApiResponse<StockTransfer>, typeof payload>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.UPDATE(uid), payload),
+    mutationFn: ({ uid, payload }: { uid: string; payload: UpdateStockTransferPayload }) =>
+      apiPatch<ApiResponse<StockTransfer>, UpdateStockTransferPayload>(ENDPOINTS.INVENTORY.STOCK_TRANSFERS.UPDATE(uid), payload),
     onSuccess: (_, variables) => {
       invalidateStockQueries(qc);
       qc.invalidateQueries({ queryKey: queryKeys.inventory.stockTransferDetail(variables.uid), refetchType: "all" });

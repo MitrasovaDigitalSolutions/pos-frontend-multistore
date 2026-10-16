@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { IconMinus, IconPackage, IconPlus, IconScan, IconTrash } from "@tabler/icons-react";
+import { IconPackage, IconScan } from "@tabler/icons-react";
 import { BarcodeInput } from "@/components/shared/barcode-input";
-import { NumberInput } from "@/components/ui/number-input";
 import type { Product } from "@/features/master/products/types";
-import { TransferItemMobileCard } from "./transfer-item-mobile-card";
+import { TRANSFER_TYPE, type TransferType } from "../../constants";
+import type { CommissionType } from "../../hooks/use-consignment-commission-mode";
+import { TransferItemCard } from "./transfer-item-card";
 
 export interface TransferItem {
   product_uid: string;
@@ -13,19 +14,30 @@ export interface TransferItem {
   barcode?: string | null;
   stok_tersedia?: number;
   kuantitas: number;
+  modal_pusat?: number;
+  harga_dasar_pusat?: number;
+  harga_pasok?: number;
+  harga_beli?: number;
+  harga_jual?: number;
+  tipe_komisi?: CommissionType;
+  nilai_komisi?: number;
 }
 
 interface TransferItemsSectionProps {
   items: TransferItem[];
+  tipeTransfer?: TransferType;
   onProductFound: (product: Product) => void;
   onUpdateQty: (uid: string, qty: number) => void;
+  onUpdateKomisi?: (uid: string, tipe: CommissionType, nilai: number) => void;
   onRemoveItem: (uid: string) => void;
 }
 
 export function TransferItemsSection({
   items,
+  tipeTransfer = TRANSFER_TYPE.REGULAR,
   onProductFound,
   onUpdateQty,
+  onUpdateKomisi,
   onRemoveItem,
 }: TransferItemsSectionProps) {
   const barcodeInputRef = useRef<HTMLInputElement>(null);
@@ -94,115 +106,28 @@ export function TransferItemsSection({
         />
       </div>
 
-      {/* Selected Items */}
+      {/* Selected Items (Carding List) */}
       {items.length > 0 ? (
-        <div id="transfer-items-table" className="space-y-3">
-          {/* ── Mobile Card List View (< 768px) ── */}
-          <div className="block md:hidden space-y-2.5">
-            {items.map((item, idx) => (
-              <TransferItemMobileCard
-                key={item.product_uid}
-                item={item}
-                index={idx}
-                onUpdateQty={onUpdateQty}
-                onRemoveItem={onRemoveItem}
-                qtyInputRef={(el) => {
-                  if (el) {
-                    qtyInputRefs.current.set(item.product_uid, el);
-                  } else {
-                    qtyInputRefs.current.delete(item.product_uid);
-                  }
-                }}
-                onEnterPress={handleEnterKey}
-              />
-            ))}
-          </div>
-
-          {/* ── Desktop Table View (≥ 768px) ── */}
-          <div className="hidden md:block border border-slate-100 rounded-xl overflow-x-auto shadow-2xs">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-slate-50/80 border-b border-slate-100 font-bold text-slate-600">
-                <tr>
-                  <th className="px-3.5 py-2.5">Produk</th>
-                  <th className="px-3.5 py-2.5 text-center w-36">Kuantitas</th>
-                  <th className="px-3 py-2.5 text-center w-12">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
-                {items.map((item) => (
-                  <tr key={item.product_uid} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-3.5 py-2.5">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-bold text-slate-900 text-xs">
-                          {item.nama}
-                        </span>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {item.barcode && (
-                            <span className="font-mono text-[10px] text-slate-400">
-                              {item.barcode}
-                            </span>
-                          )}
-                          {item.stok_tersedia !== undefined && (
-                            <span className="text-[9px] font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded-md">
-                              Stok Toko: {item.stok_tersedia} pcs
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-3.5 py-2.5">
-                      <div className="flex items-center justify-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => onUpdateQty(item.product_uid, item.kuantitas - 1)}
-                          className="w-7 h-7 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-all cursor-pointer"
-                        >
-                          <IconMinus size={13} />
-                        </button>
-                        <NumberInput
-                          ref={(el) => {
-                            if (el) {
-                              qtyInputRefs.current.set(item.product_uid, el);
-                            } else {
-                              qtyInputRefs.current.delete(item.product_uid);
-                            }
-                          }}
-                          value={item.kuantitas}
-                          onChange={(val) => onUpdateQty(item.product_uid, val || 1)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              handleEnterKey();
-                            }
-                          }}
-                          min={1}
-                          allowNegative={false}
-                          className="h-7 w-14 text-center text-xs font-bold border-slate-200 rounded-lg px-1"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => onUpdateQty(item.product_uid, item.kuantitas + 1)}
-                          className="w-7 h-7 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-all cursor-pointer"
-                        >
-                          <IconPlus size={13} />
-                        </button>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2.5 text-center">
-                      <button
-                        type="button"
-                        onClick={() => onRemoveItem(item.product_uid)}
-                        className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
-                        title="Hapus produk dari daftar"
-                      >
-                        <IconTrash size={15} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div id="transfer-items-table" className="space-y-2.5">
+          {items.map((item, idx) => (
+            <TransferItemCard
+              key={item.product_uid}
+              item={item}
+              index={idx}
+              tipeTransfer={tipeTransfer}
+              onUpdateQty={onUpdateQty}
+              onUpdateKomisi={onUpdateKomisi}
+              onRemoveItem={onRemoveItem}
+              qtyInputRef={(el) => {
+                if (el) {
+                  qtyInputRefs.current.set(item.product_uid, el);
+                } else {
+                  qtyInputRefs.current.delete(item.product_uid);
+                }
+              }}
+              onEnterPress={handleEnterKey}
+            />
+          ))}
         </div>
       ) : (
         <div id="transfer-items-table" className="p-7 text-center bg-slate-50/50 border border-dashed border-slate-200 rounded-xl space-y-2">

@@ -4,9 +4,15 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatDate, formatToReadableDate } from "@/lib/date-utils";
 import { IconArrowDownLeft, IconArrowRight, IconArrowUpRight } from "@tabler/icons-react";
-import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
-import { TRANSFER_STATUS, TRANSFER_STATUS_LABELS, TRANSFER_SHIPMENT_STATUS, TRANSFER_SHIPMENT_STATUS_LABELS } from "../../constants";
+import type { ColumnDef } from "@tanstack/react-table";
+import {
+  TRANSFER_STATUS,
+  TRANSFER_STATUS_LABELS,
+  TRANSFER_SHIPMENT_STATUS,
+  TRANSFER_SHIPMENT_STATUS_LABELS,
+  TRANSFER_TYPE_BADGES,
+} from "../../constants";
 import type { StockTransfer } from "../../types";
 import { STORE_BADGE_HQ } from "@/constants/store";
 import { MOCK_INCOMING_STOCK_TRANSFER_UID, MOCK_VALIDATION_STOCK_TRANSFER_UID } from "../../tutorial/constants/transfer-tutorial-constants";
@@ -26,12 +32,21 @@ export function useTransferColumns(activeStoreUid?: string | null) {
             row.original.uid === MOCK_VALIDATION_STOCK_TRANSFER_UID ||
             row.index === 0;
 
+          const typeBadge = row.original.tipe_transfer
+            ? TRANSFER_TYPE_BADGES[row.original.tipe_transfer]
+            : null;
+
           return (
             <div id={isFirstRow ? "transfer-row-0" : undefined} className="flex flex-col gap-0.5 min-w-[170px]">
               <div className="flex items-center gap-1.5 whitespace-nowrap">
                 <span className="font-mono font-bold text-slate-900 text-xs tracking-tight">
                   {row.original.nomor_transfer}
                 </span>
+                {typeBadge && (
+                  <span className={`px-1 py-0.2 rounded border text-[9px] shrink-0 ${typeBadge.className}`}>
+                    {typeBadge.label}
+                  </span>
+                )}
                 {isOutgoing && (
                   <Tooltip>
                     <TooltipTrigger asChild>

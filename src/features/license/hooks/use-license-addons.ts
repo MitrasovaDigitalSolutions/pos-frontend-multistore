@@ -22,9 +22,14 @@ export function useLicenseAddons(
 ) {
     const [searchQuery, setSearchQuery] = useState("");
 
-    const proratePayload = useMemo(
-        () => activeAddons.map((code) => ({ id: code })),
+    const normalizedActiveAddons = useMemo(
+        () => (activeAddons || []).map((code) => code.toLowerCase()),
         [activeAddons]
+    );
+
+    const proratePayload = useMemo(
+        () => normalizedActiveAddons.map((code) => ({ id: code })),
+        [normalizedActiveAddons]
     );
 
     const { data: prorateData, isLoading: isProrateLoading } = useLicenseProrateQuery(
@@ -43,15 +48,21 @@ export function useLicenseAddons(
         const map = new Map<string, ProrateItem>();
         if (!prorateData?.items) return map;
         for (const item of prorateData.items) {
-            if (item.code) map.set(item.code, item);
-            if (item.addon_id) map.set(item.addon_id, item);
+            if (item.code) {
+                map.set(item.code, item);
+                map.set(item.code.toLowerCase(), item);
+            }
+            if (item.addon_id) {
+                map.set(item.addon_id, item);
+                map.set(item.addon_id.toLowerCase(), item);
+            }
         }
         return map;
     }, [prorateData]);
 
     // Parse active/purchased add-on items with metadata and accurate expiration from calculate endpoint
     const purchasedAddons = useMemo<PurchasedAddonItem[]>(() => {
-        return activeAddons.map((code) => {
+        return normalizedActiveAddons.map((code) => {
             const meta = ADDON_METADATA[code];
             const prorateItem = prorateMap.get(code);
 
@@ -71,7 +82,7 @@ export function useLicenseAddons(
                 is_currently_active: prorateItem?.is_currently_active ?? true,
             };
         });
-    }, [activeAddons, prorateMap]);
+    }, [normalizedActiveAddons, prorateMap]);
 
     // Filter by name, code, description, or menu access path
     const filteredAddons = useMemo<PurchasedAddonItem[]>(() => {

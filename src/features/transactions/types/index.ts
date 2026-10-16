@@ -23,6 +23,9 @@ export interface Transaction extends BaseSale {
     catatan_void?: string | null;
     voided_at?: string | null;
     void_by_uid?: string | null;
+    store_remittance_uid?: string | null;
+    is_remitted?: boolean;
+    remittance_status?: "pending" | "verified" | "rejected" | null;
 }
 
 export interface TransactionQueryParams extends PaginationParams {

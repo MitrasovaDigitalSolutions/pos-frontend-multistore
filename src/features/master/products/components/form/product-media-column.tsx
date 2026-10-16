@@ -2,6 +2,7 @@
 
 import { FormImageUpload } from "@/components/forms/form-image-upload";
 import { Badge } from "@/components/ui/badge";
+import { Scrollable } from "@/components/ui/scrollable";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconTrendingUp, IconUpload } from "@tabler/icons-react";
 import type { ProductInput } from "../../schemas/product-schema";
@@ -23,48 +24,62 @@ export function ProductMediaColumn({
     margin,
 }: ProductMediaColumnProps) {
     return (
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-3 shadow-2xs space-y-2 flex flex-col justify-between h-full">
-            <div className="space-y-1.5">
-                <div className="flex items-center gap-1.5 pb-1 border-b border-slate-100">
-                    <div className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center">
-                        <IconUpload size={12} />
-                    </div>
-                    <span className="text-xs font-bold text-slate-800">
-                        Foto Produk
-                    </span>
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-3.5 shadow-2xs flex flex-col md:h-full min-h-0">
+            {/* Header Kolom */}
+            <div className="flex items-center gap-1.5 pb-2 border-b border-slate-100 shrink-0">
+                <div className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                    <IconUpload size={12} />
                 </div>
-
-                <FormImageUpload<ProductInput>
-                    name="image"
-                    disabled={disabled}
-                    initialUrl={initialImageUrl}
-                    dropzoneClassName="h-32 min-h-[125px] max-h-[135px] rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-100/70 hover:border-emerald-500 transition-all flex flex-col items-center justify-center p-2"
-                />
+                <span className="text-xs font-bold text-slate-800">
+                    Foto Produk
+                </span>
             </div>
 
-            {/* Live Profit Preview */}
-            {productType === "finished_good" && profitPerUnit > 0 ? (
-                <div className="p-2 bg-emerald-50/80 border border-emerald-200/80 rounded-xl space-y-0.5">
-                    <div className="flex items-center gap-1 text-emerald-800 font-bold text-[10px]">
-                        <IconTrendingUp size={12} className="text-emerald-600 shrink-0" />
-                        <span className="truncate">Estimasi Laba:</span>
+            {/* Scrollable Body Kolom */}
+            <Scrollable className="flex-1 min-h-0 pr-1 pt-2" scrollbarClassName="z-20">
+                <div className="space-y-3 flex flex-col justify-between min-h-full pb-2">
+                    <div className="space-y-1.5">
+                        <FormImageUpload<ProductInput>
+                            name="image"
+                            disabled={disabled}
+                            initialUrl={initialImageUrl}
+                            dropzoneClassName="h-36 min-h-[130px] rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-100/70 hover:border-emerald-500 transition-all flex flex-col items-center justify-center p-2.5"
+                        />
+                        <p className="text-[10px] text-slate-400 text-center leading-tight">
+                            Format JPG, PNG, WEBP. Maks 2MB.
+                        </p>
                     </div>
-                    <div className="flex items-baseline justify-between pt-0.5 gap-1">
-                        <span className="font-extrabold text-emerald-950 text-xs truncate">
-                            {formatRupiah(profitPerUnit)}
-                        </span>
-                        <Badge variant="success" className="text-[8.5px] px-1 py-0 font-bold shrink-0">
-                            {margin || 0}%
-                        </Badge>
-                    </div>
+
+                    {/* Live Profit Preview */}
+                    {productType === "finished_good" && profitPerUnit > 0 ? (
+                        <div className="p-2.5 bg-emerald-50/80 border border-emerald-200/80 rounded-xl space-y-1">
+                            <div className="flex items-center gap-1 text-emerald-800 font-bold text-[10.5px]">
+                                <IconTrendingUp size={13} className="text-emerald-600 shrink-0" />
+                                <span className="truncate">Estimasi Laba Satuan:</span>
+                            </div>
+                            <div className="flex items-baseline justify-between pt-0.5 gap-1">
+                                <span className="font-extrabold text-emerald-950 text-xs truncate">
+                                    {formatRupiah(profitPerUnit)}
+                                </span>
+                                <Badge variant="success" className="text-[8.5px] px-1 py-0 font-bold shrink-0">
+                                    +{margin || 0}%
+                                </Badge>
+                            </div>
+                            <p className="text-[9.5px] text-emerald-700/80">
+                                Dihitung dari selisih Harga Jual &amp; Modal.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="p-2 bg-slate-50 border border-slate-100 rounded-xl">
+                            <p className="text-[9.5px] text-slate-400 text-center italic">
+                                {productType === "finished_good" && "Produk retail fisik siap jual"}
+                                {productType === "raw_material" && "Bahan baku formulasi resep"}
+                                {productType === "jasa" && "Layanan tanpa persediaan fisik"}
+                            </p>
+                        </div>
+                    )}
                 </div>
-            ) : (
-                <p className="text-[9.5px] text-slate-400 text-center italic py-0.5">
-                    {productType === "finished_good" && "Produk retail fisik"}
-                    {productType === "raw_material" && "Bahan baku formulasi"}
-                    {productType === "jasa" && "Layanan tanpa persediaan"}
-                </p>
-            )}
+            </Scrollable>
         </div>
     );
 }

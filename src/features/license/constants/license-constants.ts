@@ -131,8 +131,8 @@ export const ADDON_METADATA: Record<string, AddonMetadata> = {
     multi_store: {
         code: "multi_store",
         nama: "Multi-Store & Cabang",
-        description: "Pengelolaan cabang toko tak terbatas, transfer stok antar cabang, request transfer, dan laporan konsolidasi pusat.",
-        menuPaths: ["Admin → Kelola Toko", "Inventori → Transfer Stok", "Admin → Laporan Konsolidasi"],
+        description: "Pengelolaan cabang toko tak terbatas, transfer stok antar cabang, request transfer, setoran konsinyasi cabang ke pusat, dan laporan konsolidasi.",
+        menuPaths: ["Admin → Kelola Toko", "Inventori → Transfer Stok", "Keuangan → Setoran ke Pusat", "Admin → Laporan Konsolidasi"],
     },
     // Resto addons
     kds: {

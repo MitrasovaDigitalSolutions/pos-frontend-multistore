@@ -8,6 +8,7 @@ import {
     IconTruckDelivery,
     IconUserCheck,
     IconWallet,
+    IconBuildingBank,
 } from "@tabler/icons-react";
 import type { CashLedger } from "../api/cash-api";
 
@@ -125,6 +126,15 @@ export function getCategoryMeta(movement: CashLedger): CategoryMeta {
             icon: IconArrowsExchange,
             colorClass: "bg-sky-50 text-sky-700 border-sky-200/80",
             iconClass: "text-sky-600 bg-sky-100",
+        };
+    }
+    if (movement.store_remittance_uid || movement.storeRemittance || movement.store_remittance || kat.includes("remittance") || kat.includes("setoran")) {
+        return {
+            label: "Setoran Cabang",
+            subLabel: undefined,
+            icon: IconBuildingBank,
+            colorClass: "bg-indigo-50 text-indigo-700 border-indigo-200/80",
+            iconClass: "text-indigo-600 bg-indigo-100",
         };
     }
 

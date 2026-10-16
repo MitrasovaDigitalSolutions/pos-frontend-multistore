@@ -3,12 +3,18 @@
 import { IconCheck, IconDeviceFloppy, IconInfoCircle, IconX } from "@tabler/icons-react";
 import { AppButton } from "@/components/shared/app-button";
 import { STORE_LABEL_HQ } from "@/constants/store";
+import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { TRANSFER_TYPE, type TransferType } from "../../constants";
 
 interface TransferSummaryCardProps {
   activeStoreName?: string;
   destinationStoreName?: string;
   totalJenis: number;
   totalQty: number;
+  tipeTransfer?: TransferType;
+  totalNilaiPasok?: number;
+  totalNilaiRetail?: number;
+  totalEstimasiKomisi?: number;
   onSubmit: () => void;
   isPending: boolean;
   canSubmit: boolean;
@@ -19,18 +25,30 @@ export function TransferSummaryCard({
   destinationStoreName,
   totalJenis,
   totalQty,
+  tipeTransfer = TRANSFER_TYPE.REGULAR,
+  totalNilaiPasok = 0,
+  totalNilaiRetail = 0,
+  totalEstimasiKomisi = 0,
   onSubmit,
   isPending,
   canSubmit,
 }: TransferSummaryCardProps) {
   const isDestValid = !!destinationStoreName;
   const isItemsValid = totalJenis > 0;
+  const isKonsinyasi = tipeTransfer === TRANSFER_TYPE.KONSINYASI_INTERNAL;
 
   return (
     <div id="transfer-summary-card" className="bg-white border border-slate-100 rounded-2xl shadow-2xs p-5 space-y-4 sticky top-20">
-      <h3 className="font-bold text-sm text-slate-900 border-b border-slate-50 pb-2.5">
-        Ringkasan Transfer
-      </h3>
+      <div className="flex items-center justify-between border-b border-slate-50 pb-2.5">
+        <h3 className="font-bold text-sm text-slate-900">
+          Ringkasan Transfer
+        </h3>
+        {isKonsinyasi && (
+          <span className="text-[10px] font-extrabold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">
+            Titipan Pusat
+          </span>
+        )}
+      </div>
 
       {/* Summary Stats */}
       <div className="space-y-2.5 text-xs">
@@ -52,6 +70,23 @@ export function TransferSummaryCard({
           <span>Total Unit Dikirim:</span>
           <span className="font-black text-slate-900 text-sm">{totalQty} pcs</span>
         </div>
+
+        {isKonsinyasi && (
+          <div className="pt-2 border-t border-slate-100 space-y-1.5 bg-purple-50/40 p-2.5 rounded-xl border border-purple-100/60">
+            <div className="flex justify-between items-center text-slate-600 text-[11px]">
+              <span>Total Nilai Pasok (Wajib Setor):</span>
+              <span className="font-bold text-purple-900">{formatRupiah(totalNilaiPasok)}</span>
+            </div>
+            <div className="flex justify-between items-center text-slate-600 text-[11px]">
+              <span>Potensi Omzet Retail:</span>
+              <span className="font-semibold text-slate-800">{formatRupiah(totalNilaiRetail)}</span>
+            </div>
+            <div className="flex justify-between items-center text-emerald-700 text-[11px] pt-1 border-t border-purple-100">
+              <span className="font-bold">Estimasi Komisi Cabang:</span>
+              <span className="font-black">{formatRupiah(totalEstimasiKomisi)}</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Checklist validation */}

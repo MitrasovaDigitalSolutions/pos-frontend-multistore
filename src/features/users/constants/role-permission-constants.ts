@@ -223,6 +223,30 @@ export const PERMISSION_METADATA: Record<string, PermissionMeta> = {
         actionType: "manage",
         categoryId: "finance",
     },
+    view_remittances: {
+        label: "Lihat Setoran Cabang",
+        desc: "Melihat daftar riwayat pengajuan setoran kas omzet konsinyasi internal dari cabang ke pusat.",
+        actionType: "view",
+        categoryId: "finance",
+    },
+    create_remittances: {
+        label: "Buat Setoran Cabang",
+        desc: "Membuat pengajuan setoran kas omzet penjualan konsinyasi dari cabang ke rekening pusat.",
+        actionType: "manage",
+        categoryId: "finance",
+    },
+    verify_remittances: {
+        label: "Verifikasi Setoran Cabang",
+        desc: "Memverifikasi atau menolak bukti transfer setoran kas cabang ke rekening pusat (Toko Pusat).",
+        actionType: "auth",
+        categoryId: "finance",
+    },
+    manage_remittances: {
+        label: "Kelola Setoran Cabang",
+        desc: "Akses penuh mengelola, membuat, dan membatalkan pengajuan setoran kas cabang ke pusat.",
+        actionType: "manage",
+        categoryId: "finance",
+    },
 
     // 6. Akuntansi & Aset Tetap
     view_chart_of_accounts: {
@@ -393,6 +417,10 @@ export const PERMISSION_CATEGORIES: StaticPermissionCategory[] = [
             "manage_cash_accounts",
             "view_expenses",
             "manage_expenses",
+            "view_remittances",
+            "create_remittances",
+            "verify_remittances",
+            "manage_remittances",
         ],
     },
     {

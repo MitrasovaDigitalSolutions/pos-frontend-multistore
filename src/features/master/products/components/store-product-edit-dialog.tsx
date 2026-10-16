@@ -10,7 +10,17 @@ import { Button } from "@/components/ui/button";
 import { ProductBarcodeDialog } from "@/components/shared/product-barcode-dialog";
 import { getImageUrl } from "@/lib/utils";
 import { useActiveStoreStore } from "@/stores/active-store-store";
-import { IconActivity, IconBarcode, IconCheck, IconLoader2, IconPackage, IconTag, IconTrendingUp } from "@tabler/icons-react";
+import { useIsCentralStore } from "@/hooks/use-active-store";
+import {
+    IconActivity,
+    IconBarcode,
+    IconCheck,
+    IconLoader2,
+    IconPackage,
+    IconShieldCheck,
+    IconTag,
+    IconTrendingUp,
+} from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -45,6 +55,8 @@ export function StoreProductEditDialog({
 }: StoreProductEditDialogProps) {
     const activeStoreUid = useActiveStoreStore((s) => s.activeStoreUid);
     const updateProductStore = useUpdateProductStore();
+    const isCentralStore = useIsCentralStore();
+    const isPriceDisabled = updateProductStore.isPending || !isCentralStore;
     const [barcodeModalOpen, setBarcodeModalOpen] = useState(false);
     const [isAdjustmentOpen, setIsAdjustmentOpen] = useState(false);
 
@@ -363,24 +375,36 @@ export function StoreProductEditDialog({
 
                         {/* Column 2: Financial & Wholesale Inputs */}
                         <div className="space-y-3">
+                            {!isCentralStore && (
+                                <div className="p-3 bg-purple-50/80 border border-purple-200/80 rounded-xl flex items-start gap-2.5 text-purple-900 text-xs">
+                                    <IconShieldCheck size={18} className="text-purple-600 shrink-0 mt-0.5" />
+                                    <div className="leading-relaxed">
+                                        <p className="font-bold text-xs text-purple-950">Harga Dikontrol Gudang Pusat</p>
+                                        <p className="text-[11px] text-purple-700">
+                                            Toko cabang dilarang mengubah harga jual maupun harga beli produk secara manual. Harga akan otomatis diselaraskan saat konfirmasi penerimaan transfer stok dari Pusat.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
                             <div id="store-edit-pricing-grid" className="grid grid-cols-3 gap-2">
                                 <FormNominalInput<StoreProductEditFormValues>
                                     name="harga_beli"
                                     label="Harga Beli"
                                     placeholder="0"
-                                    disabled={updateProductStore.isPending}
+                                    disabled={isPriceDisabled}
                                 />
                                 <FormNominalInput<StoreProductEditFormValues>
                                     name="harga_jual"
                                     label="Harga Jual"
                                     placeholder="0"
-                                    disabled={updateProductStore.isPending}
+                                    disabled={isPriceDisabled}
                                 />
                                 <FormNumberInput<StoreProductEditFormValues>
                                     name="margin"
                                     label="Margin (%)"
                                     placeholder="0"
-                                    disabled={updateProductStore.isPending}
+                                    disabled={isPriceDisabled}
                                 />
                             </div>
 
@@ -402,7 +426,7 @@ export function StoreProductEditDialog({
                                     name="is_grosir"
                                     label="Harga Grosir Toko"
                                     description="Aktifkan penentuan harga grosir khusus untuk toko ini."
-                                    disabled={updateProductStore.isPending}
+                                    disabled={isPriceDisabled}
                                 />
                             </div>
 
@@ -417,19 +441,19 @@ export function StoreProductEditDialog({
                                             name="min_qty_grosir"
                                             label="Min Qty"
                                             placeholder="Min Qty"
-                                            disabled={updateProductStore.isPending}
+                                            disabled={isPriceDisabled}
                                         />
                                         <FormNominalInput<StoreProductEditFormValues>
                                             name="harga_grosir"
                                             label="Harga Unit"
                                             placeholder="0"
-                                            disabled={updateProductStore.isPending}
+                                            disabled={isPriceDisabled}
                                         />
                                         <FormNominalInput<StoreProductEditFormValues>
                                             name="harga_grosir_total"
                                             label="Total Akumulasi"
                                             placeholder="0"
-                                            disabled={updateProductStore.isPending}
+                                            disabled={isPriceDisabled}
                                         />
                                     </div>
                                 </div>

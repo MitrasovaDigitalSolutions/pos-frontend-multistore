@@ -36,6 +36,7 @@ interface TransferDetailItemsTableProps {
   ) => void;
   validatingItemUid?: string | null;
   isFetching?: boolean;
+  tipeTransfer?: string | null;
 }
 
 export function TransferDetailItemsTable({
@@ -47,6 +48,7 @@ export function TransferDetailItemsTable({
   onValidateItem,
   validatingItemUid,
   isFetching = false,
+  tipeTransfer,
 }: TransferDetailItemsTableProps) {
   const { watch } = useFormContext<ReceiveFormValues>();
   const isTutorialRunning = useTransferTutorialStore((state) => state.isRunning);
@@ -227,6 +229,7 @@ export function TransferDetailItemsTable({
     items,
     canReceive,
     canValidateTransfer,
+    tipeTransfer,
     onReceiveItemSubmit,
     onOpenTerimaItem: handleOpenTerimaItem,
     registerInputRef,
@@ -327,6 +330,11 @@ export function TransferDetailItemsTable({
           ) : (
             <span className="text-xs font-medium text-slate-400 ml-1">
               ({totalItemsCount} Produk)
+            </span>
+          )}
+          {tipeTransfer === "konsinyasi_internal" && (
+            <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200 ml-1">
+              Konsinyasi Internal
             </span>
           )}
         </h3>

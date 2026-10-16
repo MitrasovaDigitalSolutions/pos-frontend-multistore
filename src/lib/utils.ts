@@ -23,3 +23,25 @@ export function getImageUrl(path: string | null | undefined): string {
     
     return `${baseUrl}/storage${cleanPath}`;
 }
+
+/**
+ * Safely extracts an array from various API response shapes:
+ * - Direct array: [...]
+ * - Standard paginated: { data: [...] }
+ * - Nested Laravel paginated: { data: { data: [...] } }
+ * - Items array: { items: [...] }
+ * Returns [] if response is null, undefined, or not containing an array.
+ */
+export function extractDataList<T>(res: unknown): T[] {
+    if (Array.isArray(res)) return res as T[];
+    if (res && typeof res === "object") {
+        const obj = res as Record<string, unknown>;
+        if (Array.isArray(obj.data)) return obj.data as T[];
+        if (obj.data && typeof obj.data === "object") {
+            const nested = obj.data as Record<string, unknown>;
+            if (Array.isArray(nested.data)) return nested.data as T[];
+        }
+        if (Array.isArray(obj.items)) return obj.items as T[];
+    }
+    return [];
+}

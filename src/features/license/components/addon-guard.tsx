@@ -51,7 +51,7 @@ export const ADDON_DETAILS: Record<string, { title: string; description: string 
     },
     multi_store: {
         title: "Multi-Store & Cabang",
-        description: "Dukungan pengelolaan lebih dari 1 cabang, transfer stok antar toko, dan laporan konsolidasi pusat.",
+        description: "Dukungan pengelolaan lebih dari 1 cabang, transfer stok antar toko, setoran konsinyasi cabang ke pusat, dan laporan konsolidasi.",
     },
 };
 
@@ -95,7 +95,8 @@ export function AddonGuard({
         return null;
     }
 
-    const addonInfo = ADDON_DETAILS[addon] || {
+    const addonKey = addon.toLowerCase();
+    const addonInfo = ADDON_DETAILS[addonKey] || ADDON_DETAILS[addon] || {
         title: title || `Add-on ${addon}`,
         description: description || "Fitur ini memerlukan add-on tambahan pada paket langganan Anda.",
     };
