@@ -151,18 +151,6 @@ export function Users() {
 
   return (
     <div className="space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
-            Kelola Karyawan
-          </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Mengatur akun karyawan POS, tingkat pengawas (supervisor), dan manajer toko.
-          </p>
-        </div>
-      </div>
-
       <div className="space-y-6">
         <FormProvider {...dialogMethods}>
           <UserTable

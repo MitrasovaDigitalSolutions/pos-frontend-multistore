@@ -173,7 +173,7 @@ export interface CashLedger {
     cash_drawer_session_uid?: string | null;
     chart_of_account_uid?: string | null;
     member_payment_uid?: string | null;
-    store_remittance_uid?: string | null;
+    // store_remittance_uid?: string | null;
     user_uid?: string | null;
 
     // Relations (camelCase & snake_case)
@@ -211,8 +211,6 @@ export interface CashLedger {
     chart_of_account?: CashLedgerChartOfAccount | null;
 
     store_remittance_uid?: string | null;
-    storeRemittance?: { uid: string; nomor_setoran?: string } | null;
-    store_remittance?: { uid: string; nomor_setoran?: string } | null;
 }
 
 export interface CashFlowFilters extends PaginationParams {
