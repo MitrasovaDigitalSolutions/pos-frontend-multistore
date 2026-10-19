@@ -127,6 +127,32 @@ export interface CashLedgerChartOfAccount {
     tipe_akun?: string;
 }
 
+export interface CashLedgerStoreRemittance {
+    uid: string;
+    nomor_remittance?: string;
+    store_uid?: string;
+    store_uid_dest?: string;
+    total_omzet?: number;
+    total_fee_komisi?: number;
+    total_wajib_setor?: number;
+    nominal_disetor?: number;
+    bukti_transfer_url?: string | null;
+    status?: string;
+    catatan?: string | null;
+    store?: {
+        uid: string;
+        nama: string;
+    } | null;
+    destinationStore?: {
+        uid: string;
+        nama: string;
+    } | null;
+    destination_store?: {
+        uid: string;
+        nama: string;
+    } | null;
+}
+
 export interface CashLedger {
     uid: string;
     cash_account_uid: string;
@@ -147,6 +173,7 @@ export interface CashLedger {
     cash_drawer_session_uid?: string | null;
     chart_of_account_uid?: string | null;
     member_payment_uid?: string | null;
+    store_remittance_uid?: string | null;
     user_uid?: string | null;
 
     // Relations (camelCase & snake_case)
@@ -159,6 +186,9 @@ export interface CashLedger {
 
     supplierPayment?: CashLedgerSupplierPayment | null;
     supplier_payment?: CashLedgerSupplierPayment | null;
+
+    storeRemittance?: CashLedgerStoreRemittance | null;
+    store_remittance?: CashLedgerStoreRemittance | null;
 
     purchaseReturnSettlement?: CashLedgerPurchaseReturnSettlement | null;
     purchase_return_settlement?: CashLedgerPurchaseReturnSettlement | null;
