@@ -11,6 +11,7 @@ import { STORE_LABEL_HQ } from "@/constants/store";
 import type { Product } from "@/features/master/products/types";
 import { useStores } from "@/features/stores/api/stores-api";
 import { useAppRouter } from "@/hooks/use-app-router";
+import { useBranchPolicy } from "@/hooks/use-branch-policy";
 import { useActiveStoreStore } from "@/stores/active-store-store";
 import { useTransferTutorialStore } from "@/stores/transfer-tutorial-store";
 import {
@@ -63,9 +64,15 @@ export function TransferCreatePage({ editUid }: TransferCreatePageProps) {
     return rawStores.filter((s) => !s.uid.startsWith("mock-"));
   }, [rawStores, isTutorialRunning]);
 
+  const canTransferToOtherBranch = useBranchPolicy("branch_can_transfer_to_other_branch");
+
   const destStores = useMemo(() => {
-    return stores.filter((s) => s.uid !== activeStoreUid);
-  }, [stores, activeStoreUid]);
+    return stores.filter((s) => {
+      if (s.uid === activeStoreUid) return false;
+      if (!canTransferToOtherBranch && !s.is_central) return false;
+      return true;
+    });
+  }, [stores, activeStoreUid, canTransferToOtherBranch]);
 
   const storeOptions: CommandOption[] = useMemo(() => {
     return destStores.map((s) => ({
@@ -407,6 +414,7 @@ export function TransferCreatePage({ editUid }: TransferCreatePageProps) {
             setTipeTransfer={setTipeTransfer}
             catatan={catatan}
             setCatatan={setCatatan}
+            isRestrictedToCentral={!canTransferToOtherBranch && !activeStore?.is_central}
           />
 
           <TransferItemsSection

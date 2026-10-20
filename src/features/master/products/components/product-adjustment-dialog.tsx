@@ -13,10 +13,12 @@ import {
     IconArrowUpRight,
     IconCheck,
     IconInfoCircle,
+    IconLock,
     IconPackage,
     IconPlus,
     IconMinus,
 } from "@tabler/icons-react";
+import { useBranchPolicy } from "@/hooks/use-branch-policy";
 import { type AdjustmentInput } from "@/features/stock/schemas/adjustment-schema";
 import { useCreateAdjustment } from "@/features/stock/api/stock-api";
 import type { Product } from "../types";
@@ -45,6 +47,7 @@ export function ProductAdjustmentDialog({
     onSuccess,
 }: ProductAdjustmentDialogProps) {
     const createAdjustment = useCreateAdjustment();
+    const canManualAdjustment = useBranchPolicy("branch_can_manual_stock_adjustment");
     const [adjustmentType, setAdjustmentType] = useState<"add" | "subtract">("add");
 
     // Reset adjustment type during render when open changes
@@ -88,6 +91,11 @@ export function ProductAdjustmentDialog({
     const previewFinalStock = currentStock + calculatedDelta;
 
     const onSubmit = handleSubmit((data) => {
+        if (!canManualAdjustment) {
+            toast.error("Penyesuaian stok manual di toko cabang tidak diizinkan.");
+            return;
+        }
+
         if (!product?.uid) {
             toast.error("Data produk tidak valid.");
             return;
@@ -154,6 +162,14 @@ export function ProductAdjustmentDialog({
         >
             <FormProvider {...methods}>
                 <form onSubmit={onSubmit} className="space-y-4 pt-1">
+                    {!canManualAdjustment && (
+                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-amber-900 text-xs">
+                            <IconLock size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                            <p className="leading-snug">
+                                Penyesuaian stok manual di toko cabang tidak diizinkan. Silakan ajukan melalui Stok Opname atau Mutasi Stok Pusat.
+                            </p>
+                        </div>
+                    )}
                     {/* Product Summary Card */}
                     <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2.5 min-w-0">
@@ -338,7 +354,7 @@ export function ProductAdjustmentDialog({
                         <AppButton
                             type="submit"
                             isLoading={createAdjustment.isPending}
-                            disabled={numericAmount <= 0 || !watchAlasan?.trim()}
+                            disabled={!canManualAdjustment || numericAmount <= 0 || !watchAlasan?.trim()}
                             className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold h-9 rounded-xl gap-1.5 shadow-2xs"
                         >
                             <IconCheck size={16} />

@@ -8,8 +8,10 @@ import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/stores/settings-store";
+import { useBranchPolicy } from "@/hooks/use-branch-policy";
 import {
     IconCash,
+    IconLock,
     IconPlayerPause,
     IconPlayerPlay,
     IconPrinter,
@@ -87,6 +89,13 @@ export function CheckoutTotalsSection({
     const getSetting = useSettingsStore((state) => state.getSetting);
     const pointRate = parseFloat(getSetting("point_rate", "1000")) || 1000;
     const pointSystemEnabled = getSetting("point_system_enabled", "true") === "true";
+    const canApplyDiscount = useBranchPolicy("branch_can_apply_manual_discount");
+
+    useEffect(() => {
+        if (!canApplyDiscount && discountValue > 0) {
+            setDiscountValue(0);
+        }
+    }, [canApplyDiscount, discountValue, setDiscountValue]);
 
     const [prevNama, setPrevNama] = useState(namaTransaksi);
     const [localNama, setLocalNama] = useState(namaTransaksi);
@@ -361,21 +370,39 @@ export function CheckoutTotalsSection({
                 </div>
 
                 {/* Cart Status & Diskon Transaksi Card */}
-                <div id="discount-section" className="bg-white border border-slate-200/80 rounded-xl p-3 shadow-xs space-y-2.5">
-                    <div className="flex justify-between items-center text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
-                        <span>Diskon Transaksi</span>
+                <div
+                    id="discount-section"
+                    className={cn(
+                        "bg-white border rounded-xl p-3 shadow-xs space-y-2.5 transition-colors",
+                        !canApplyDiscount ? "border-amber-200/80 bg-amber-50/20" : "border-slate-200/80"
+                    )}
+                >
+                    <div className="flex justify-between items-center text-[10px] font-extrabold uppercase tracking-wider">
+                        <span className={cn(canApplyDiscount ? "text-slate-400" : "text-amber-700 flex items-center gap-1")}>
+                            {!canApplyDiscount && <IconLock size={12} className="text-amber-600" />}
+                            Diskon Transaksi
+                        </span>
+                        {!canApplyDiscount && (
+                            <span className="text-[10px] font-medium text-amber-600 normal-case">
+                                Dinonaktifkan Pusat
+                            </span>
+                        )}
                     </div>
 
                     <div className="flex gap-2">
-                        <div className="flex bg-slate-100 p-0.5 rounded-lg shrink-0">
+                        <div className={cn("flex p-0.5 rounded-lg shrink-0", canApplyDiscount ? "bg-slate-100" : "bg-slate-100 opacity-60")}>
                             <button
                                 type="button"
+                                disabled={!canApplyDiscount}
+                                title={!canApplyDiscount ? "Pemberian diskon manual di kasir cabang dinonaktifkan." : undefined}
                                 onClick={() => {
+                                    if (!canApplyDiscount) return;
                                     setDiscountType("nominal");
                                     setDiscountValue(0);
                                 }}
                                 className={cn(
-                                    "px-2.5 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer border-none outline-none",
+                                    "px-2.5 py-1 text-[10px] font-black rounded-md transition-all border-none outline-none",
+                                    !canApplyDiscount ? "cursor-not-allowed opacity-50" : "cursor-pointer",
                                     discountType === "nominal"
                                         ? "bg-white text-slate-800 shadow-xs"
                                         : "text-slate-500 hover:text-slate-700 bg-transparent"
@@ -385,12 +412,16 @@ export function CheckoutTotalsSection({
                             </button>
                             <button
                                 type="button"
+                                disabled={!canApplyDiscount}
+                                title={!canApplyDiscount ? "Pemberian diskon manual di kasir cabang dinonaktifkan." : undefined}
                                 onClick={() => {
+                                    if (!canApplyDiscount) return;
                                     setDiscountType("percent");
                                     setDiscountValue(0);
                                 }}
                                 className={cn(
-                                    "px-2.5 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer border-none outline-none",
+                                    "px-2.5 py-1 text-[10px] font-black rounded-md transition-all border-none outline-none",
+                                    !canApplyDiscount ? "cursor-not-allowed opacity-50" : "cursor-pointer",
                                     discountType === "percent"
                                         ? "bg-white text-slate-800 shadow-xs"
                                         : "text-slate-500 hover:text-slate-700 bg-transparent"
@@ -404,8 +435,10 @@ export function CheckoutTotalsSection({
                             {discountType === "nominal" ? (
                                 <input
                                     type="text"
+                                    disabled={!canApplyDiscount}
                                     value={discountValue > 0 ? new Intl.NumberFormat("id-ID").format(discountValue) : ""}
                                     onChange={(e) => {
+                                        if (!canApplyDiscount) return;
                                         const cleanValue = e.target.value.replace(/\D/g, "");
                                         const val = cleanValue === "" ? 0 : Number(cleanValue);
                                         if (val > subtotal) {
@@ -414,16 +447,24 @@ export function CheckoutTotalsSection({
                                             setDiscountValue(val);
                                         }
                                     }}
-                                    placeholder="Nominal diskon (misal 10.000)..."
-                                    className="w-full h-8 pl-3 pr-8 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-bold transition-all outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                                    placeholder={canApplyDiscount ? "Nominal diskon (misal 10.000)..." : "Diskon dinonaktifkan kebijakan pusat"}
+                                    title={!canApplyDiscount ? "Pemberian diskon manual di kasir cabang dinonaktifkan oleh kebijakan Toko Pusat." : undefined}
+                                    className={cn(
+                                        "w-full h-8 pl-3 pr-8 rounded-lg border text-xs font-bold transition-all outline-none",
+                                        !canApplyDiscount
+                                            ? "border-amber-200 bg-amber-50/40 text-amber-900/60 cursor-not-allowed placeholder:text-amber-800/40"
+                                            : "border-slate-200 bg-slate-50/50 text-slate-800 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                                    )}
                                 />
                             ) : (
                                 <input
                                     type="number"
+                                    disabled={!canApplyDiscount}
                                     min="0"
                                     max="100"
                                     value={discountValue || ""}
                                     onChange={(e) => {
+                                        if (!canApplyDiscount) return;
                                         const val = parseFloat(e.target.value) || 0;
                                         if (val < 0) return;
                                         if (val > 100) {
@@ -432,11 +473,17 @@ export function CheckoutTotalsSection({
                                             setDiscountValue(val);
                                         }
                                     }}
-                                    placeholder="Persen diskon (misal 10)..."
-                                    className="w-full h-8 pl-3 pr-8 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-bold transition-all outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    placeholder={canApplyDiscount ? "Persen diskon (misal 10)..." : "Diskon dinonaktifkan kebijakan pusat"}
+                                    title={!canApplyDiscount ? "Pemberian diskon manual di kasir cabang dinonaktifkan oleh kebijakan Toko Pusat." : undefined}
+                                    className={cn(
+                                        "w-full h-8 pl-3 pr-8 rounded-lg border text-xs font-bold transition-all outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
+                                        !canApplyDiscount
+                                            ? "border-amber-200 bg-amber-50/40 text-amber-900/60 cursor-not-allowed placeholder:text-amber-800/40"
+                                            : "border-slate-200 bg-slate-50/50 text-slate-800 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                                    )}
                                 />
                             )}
-                            {discountValue > 0 && (
+                            {discountValue > 0 && canApplyDiscount && (
                                 <button
                                     type="button"
                                     onClick={() => setDiscountValue(0)}

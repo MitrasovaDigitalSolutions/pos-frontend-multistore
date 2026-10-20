@@ -6,7 +6,8 @@ import { DataTable } from "@/components/ui/data-table";
 import { DataTableActionButton } from "@/components/ui/data-table-actions";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { IconArchiveOff, IconBuildingStore, IconCopy, IconPlus, IconUser } from "@tabler/icons-react";
+import { useBranchPolicy } from "@/hooks/use-branch-policy";
+import { IconArchiveOff, IconBuildingStore, IconCopy, IconLock, IconPlus, IconUser } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -71,6 +72,7 @@ export function CatalogTable({
     onSortChange,
     isAdmin,
 }: CatalogTableProps) {
+    const canCreateProduct = useBranchPolicy("branch_can_create_product");
     const deleteCatalogProduct = useDeleteCatalogProduct();
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [productToDelete, setProductToDelete] = useState<CatalogProduct | null>(null);
@@ -313,13 +315,34 @@ export function CatalogTable({
                     </p>
                 </div>
                 {isAdmin && onAddClick && (
-                    <Button
-                        id="catalog-btn-add"
-                        onClick={onAddClick}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
-                    >
-                        <IconPlus size={16} /> Tambah Produk
-                    </Button>
+                    canCreateProduct ? (
+                        <Button
+                            id="catalog-btn-add"
+                            onClick={onAddClick}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
+                        >
+                            <IconPlus size={16} /> Tambah Produk
+                        </Button>
+                    ) : (
+                        <TooltipProvider delayDuration={150}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <span tabIndex={0} className="inline-block cursor-not-allowed">
+                                        <Button
+                                            id="catalog-btn-add"
+                                            disabled
+                                            className="bg-slate-100 text-slate-400 border border-slate-200 font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-not-allowed opacity-75"
+                                        >
+                                            <IconLock size={15} /> Tambah Produk
+                                        </Button>
+                                    </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" className="max-w-xs text-xs">
+                                    Pembuatan produk baru di toko cabang dinonaktifkan oleh kebijakan Toko Pusat.
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )
                 )}
             </div>
 

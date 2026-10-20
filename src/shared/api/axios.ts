@@ -1,6 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { ApiError, NetworkError } from "@/shared/errors/api-error";
 import { signOut } from "next-auth/react";
+import { toast } from "sonner";
 
 import { useActiveStoreStore } from "@/stores/active-store-store";
 
@@ -96,6 +97,12 @@ apiClient.interceptors.response.use(
                 await signOut({ callbackUrl: "/login" });
                 // isSigningOut intentionally stays true until page reload.
             }
+        }
+
+        // Forbidden (403) — branch policy violation or authorization error
+        if (status === 403 && typeof window !== "undefined") {
+            const forbiddenMessage = data?.message || "Aksi ini tidak diizinkan oleh kebijakan toko cabang.";
+            toast.error(forbiddenMessage, { id: forbiddenMessage });
         }
 
         return Promise.reject(

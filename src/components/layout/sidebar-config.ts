@@ -22,6 +22,7 @@ import {
     IconUsers,
     IconWallet
 } from "@tabler/icons-react";
+import type { BranchPolicyKey } from "@/hooks/use-branch-policy";
 
 export type PermissionChecker = (roles: string[], permissions: string[]) => boolean;
 
@@ -36,6 +37,7 @@ export interface NavItem {
     permission?: PermissionChecker;
     addon?: string;
     storeScope?: "central" | "branch";
+    branchPolicy?: BranchPolicyKey;
     children?: NavItem[];
 }
 
@@ -100,6 +102,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 label: "Pembelian",
                 icon: IconShoppingCart,
                 addon: "purchasing",
+                branchPolicy: "branch_can_direct_purchase",
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") ||
                     hasPermission(roles, permissions, "view_purchase") ||
@@ -108,6 +111,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     {
                         label: "Pemesanan",
                         path: ROUTES.ADMIN_PURCHASE_ORDER,
+                        branchPolicy: "branch_can_direct_purchase",
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") ||
                             hasPermission(roles, permissions, "view_purchase") ||
@@ -116,6 +120,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     {
                         label: "Penerimaan Barang",
                         path: ROUTES.ADMIN_PURCHASE_RECEIVING,
+                        branchPolicy: "branch_can_direct_purchase",
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") ||
                             hasPermission(roles, permissions, "view_purchase") ||
@@ -124,6 +129,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     {
                         label: "Pembayaran",
                         path: ROUTES.ADMIN_PURCHASE_PAYMENT,
+                        branchPolicy: "branch_can_direct_purchase",
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") ||
                             hasPermission(roles, permissions, "view_purchase") ||
@@ -132,6 +138,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                     {
                         label: "Retur Pembelian",
                         path: ROUTES.ADMIN_PURCHASE_RETURN,
+                        branchPolicy: "branch_can_direct_purchase",
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") ||
                             hasPermission(roles, permissions, "view_purchase") ||
@@ -771,14 +778,15 @@ export function hasActiveChild(
 }
 
 /**
- * Filters navigation tree by user roles, permissions, and active addons recursively.
+ * Filters navigation tree by user roles, permissions, active addons, and store policies recursively.
  */
 export function filterNavItems(
     items: NavItem[],
     roles: string[],
     permissions: string[],
     activeAddons?: string[] | null,
-    isCentral?: boolean
+    isCentral?: boolean,
+    isBranchPolicyAllowed?: (key: BranchPolicyKey) => boolean
 ): NavItem[] {
     return items
         .map((item) => {
@@ -786,6 +794,13 @@ export function filterNavItems(
             if (item.storeScope) {
                 if (item.storeScope === "central" && !isCentral) return null;
                 if (item.storeScope === "branch" && isCentral) return null;
+            }
+
+            // Check branchPolicy requirement: for branches, setting must be enabled
+            if (item.branchPolicy && isBranchPolicyAllowed) {
+                if (!isBranchPolicyAllowed(item.branchPolicy)) {
+                    return null;
+                }
             }
 
             // Check self permission
@@ -804,7 +819,14 @@ export function filterNavItems(
 
             // If item has children, filter them recursively
             if (item.children && item.children.length > 0) {
-                const filteredChildren = filterNavItems(item.children, roles, permissions, activeAddons, isCentral);
+                const filteredChildren = filterNavItems(
+                    item.children,
+                    roles,
+                    permissions,
+                    activeAddons,
+                    isCentral,
+                    isBranchPolicyAllowed
+                );
                 if (filteredChildren.length === 0) return null;
                 return { ...item, children: filteredChildren };
             }

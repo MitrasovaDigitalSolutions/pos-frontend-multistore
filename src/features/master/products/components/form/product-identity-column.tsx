@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import {
     IconBarcode,
     IconBox,
+    IconLock,
     IconPackage,
     IconSparkles,
     IconTools,
@@ -30,6 +31,8 @@ const PRODUCT_TYPE_OPTIONS = [
 interface ProductIdentityColumnProps {
     onProductTypeChange: (value: ProductType) => void;
     disabled?: boolean;
+    canEditMasterData?: boolean;
+    isEditing?: boolean;
     categorySelectProps: Omit<FormSelectProps<ProductInput, Category>, "name">;
     brandSelectProps: Omit<FormSelectProps<ProductInput, Brand>, "name">;
     unitSelectProps: Omit<FormSelectProps<ProductInput, Unit>, "name">;
@@ -38,6 +41,8 @@ interface ProductIdentityColumnProps {
 export function ProductIdentityColumn({
     onProductTypeChange,
     disabled = false,
+    canEditMasterData = true,
+    isEditing = false,
     categorySelectProps,
     brandSelectProps,
     unitSelectProps,
@@ -50,6 +55,7 @@ export function ProductIdentityColumn({
 
     const isActive = useWatch<ProductInput>({ name: "is_active" });
     const currentBarcode = useWatch<ProductInput>({ name: "barcode" });
+    const isMasterDataDisabled = disabled || (isEditing && !canEditMasterData);
 
     const handleAutoGenerateBarcode = () => {
         const newBarcode = generateEan13Barcode();
@@ -72,6 +78,18 @@ export function ProductIdentityColumn({
             {/* Scrollable Body Kolom */}
             <Scrollable className="flex-1 min-h-0 pr-2 pt-2" scrollbarClassName="z-20">
                 <div className="space-y-3 pb-2">
+                    {isEditing && !canEditMasterData && (
+                        <div className="p-2.5 bg-amber-50/80 border border-amber-200/70 rounded-xl flex items-start gap-2 text-amber-900 text-xs">
+                            <IconLock size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                            <div className="leading-snug">
+                                <p className="font-bold text-[11px]">Data Master Produk Dikunci</p>
+                                <p className="text-[10px] text-amber-700">
+                                    Toko cabang dilarang mengubah nama, barcode, atau klasifikasi produk.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Nama Produk */}
                     <div className="space-y-1" id="form-product-name-input">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
@@ -81,7 +99,7 @@ export function ProductIdentityColumn({
                             type="text"
                             placeholder="Contoh: Kemeja Formal Pria Slim Fit Cotton"
                             className="h-9 text-xs font-semibold border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                            disabled={disabled}
+                            disabled={isMasterDataDisabled}
                             {...register("nama")}
                         />
                         {errors.nama && (
@@ -100,7 +118,7 @@ export function ProductIdentityColumn({
                             variant="segmented"
                             size="sm"
                             onChange={(val) => onProductTypeChange((val as ProductType) || "finished_good")}
-                            disabled={disabled}
+                            disabled={isMasterDataDisabled}
                         />
                     </div>
 
@@ -110,12 +128,12 @@ export function ProductIdentityColumn({
                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                 Barcode / SKU
                             </label>
-                            {!currentBarcode && (
+                            {!currentBarcode && !isMasterDataDisabled && (
                                 <button
                                     id="btn-generate-barcode-addon"
                                     type="button"
                                     onClick={handleAutoGenerateBarcode}
-                                    disabled={disabled}
+                                    disabled={isMasterDataDisabled}
                                     className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 flex items-center gap-1 cursor-pointer transition-colors"
                                 >
                                     <IconSparkles size={11} />
@@ -128,7 +146,7 @@ export function ProductIdentityColumn({
                                 type="text"
                                 placeholder="Contoh: 8990002004"
                                 className="h-9 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl font-mono pr-8"
-                                disabled={disabled}
+                                disabled={isMasterDataDisabled}
                                 {...register("barcode")}
                             />
                             <IconBarcode
@@ -151,7 +169,7 @@ export function ProductIdentityColumn({
                             {...categorySelectProps}
                             placeholder="Pilih Kategori"
                             searchPlaceholder="Cari kategori..."
-                            disabled={disabled}
+                            disabled={isMasterDataDisabled}
                             size="sm"
                         />
 
@@ -161,7 +179,7 @@ export function ProductIdentityColumn({
                             {...brandSelectProps}
                             placeholder="Pilih Brand"
                             searchPlaceholder="Cari brand..."
-                            disabled={disabled}
+                            disabled={isMasterDataDisabled}
                             size="sm"
                         />
                     </div>
@@ -174,7 +192,7 @@ export function ProductIdentityColumn({
                             {...unitSelectProps}
                             placeholder="Pilih Satuan (Pcs, Kg, Meter, dll)"
                             searchPlaceholder="Cari satuan..."
-                            disabled={disabled}
+                            disabled={isMasterDataDisabled}
                             size="sm"
                         />
                     </div>

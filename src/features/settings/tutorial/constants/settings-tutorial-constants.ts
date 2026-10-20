@@ -19,6 +19,7 @@ export const SETTINGS_TUTORIAL_LIST: SettingsTutorialMeta[] = [
         stepCount: 5,
         badge: "Keuangan",
         adminOnly: true,
+        centralOnly: true,
         isAvailable: true,
     },
     {
@@ -29,6 +30,7 @@ export const SETTINGS_TUTORIAL_LIST: SettingsTutorialMeta[] = [
         stepCount: 4,
         badge: "Inventori",
         adminOnly: true,
+        centralOnly: true,
         isAvailable: true,
     },
     {

@@ -15,7 +15,8 @@ import {
 import { hasPermission, hasRole } from "@/constants/roles";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { useActiveStoreStore } from "@/stores/active-store-store";
-import { IconActivity, IconArchiveOff, IconPlus } from "@tabler/icons-react";
+import { useBranchPolicy } from "@/hooks/use-branch-policy";
+import { IconActivity, IconArchiveOff, IconLock, IconPlus } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
 import { useMemo, useState } from "react";
@@ -87,7 +88,7 @@ export function ProductTable(props: ProductTableProps) {
     const activeStore = userStores.find((s) => s.uid === activeStoreUid) || userStores[0];
     const isCentralStore = activeStore?.is_central ?? false;
 
-    const canCreateProduct = isCentralStore;
+    const canCreateProduct = useBranchPolicy("branch_can_create_product");
 
     const detachStoreProduct = useDetachProductStore();
     const toggleStatus = useToggleProductStatus();
@@ -383,15 +384,36 @@ export function ProductTable(props: ProductTableProps) {
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Show.When isTrue={Boolean(hasManageProducts && canCreateProduct)}>
-                        <Button
-                            id="btn-tambah-produk-master"
-                            onClick={onAddClick}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
-                        >
-                            <IconPlus size={16} /> Tambah Produk
-                        </Button>
-                    </Show.When>
+                    {hasManageProducts && (
+                        canCreateProduct ? (
+                            <Button
+                                id="btn-tambah-produk-master"
+                                onClick={onAddClick}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
+                            >
+                                <IconPlus size={16} /> Tambah Produk
+                            </Button>
+                        ) : (
+                            <TooltipProvider delayDuration={150}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <span tabIndex={0} className="inline-block cursor-not-allowed">
+                                            <Button
+                                                id="btn-tambah-produk-master"
+                                                disabled
+                                                className="bg-slate-100 text-slate-400 border border-slate-200 font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-not-allowed opacity-75"
+                                            >
+                                                <IconLock size={15} /> Tambah Produk
+                                            </Button>
+                                        </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom" className="max-w-xs text-xs">
+                                        Pembuatan produk baru di toko cabang dinonaktifkan oleh Pusat.
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )
+                    )}
                     {!isCentralStore && (
                         <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 border border-slate-200/80 px-2.5 py-1.5 rounded-xl flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />

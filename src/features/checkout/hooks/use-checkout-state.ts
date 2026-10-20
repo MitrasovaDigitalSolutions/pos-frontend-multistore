@@ -235,6 +235,7 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
 
     const handleUpdatePrice = async (item: CartItem, newPrice: number) => {
         if (newPrice < 0) return;
+        if (!item.is_jasa) return;
         updateItemPrice(item.product_uid, newPrice);
     };
 

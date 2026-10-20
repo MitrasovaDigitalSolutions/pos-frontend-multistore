@@ -1,5 +1,6 @@
 "use client";
 
+import { useActiveStore } from "@/hooks/use-active-store";
 import { useCashAccounts } from "@/features/cash/api/cash-api";
 import { settingsApi } from "@/features/settings/api/settings-api";
 import { useSettingsStore } from "@/stores/settings-store";
@@ -16,7 +17,7 @@ import PrinterService, { type PrinterDevice } from "@/services/printer.service";
 // UI Components
 import { Card } from "@/components/ui/card";
 import { IconAdjustments, IconPrinter, IconReceiptTax } from "@tabler/icons-react";
-import { Store, Wallet, Settings2, ChevronRight, Boxes } from "lucide-react";
+import { Store, Wallet, Settings2, ChevronRight, Boxes, ShieldCheck } from "lucide-react";
 import { Show } from "@/components/ui/show";
 
 // Subcomponents
@@ -26,6 +27,7 @@ import { TabInventory } from "./tab-inventory";
 import { TabConsignment } from "./tab-consignment";
 import { TabCash } from "./tab-cash";
 import { TabPrinter } from "./tab-printer";
+import { TabBranchPolicy } from "./tab-branch-policy";
 import { FloatingSaveBar } from "./floating-save-bar";
 import { StoreSettingsInput, storeSettingsSchema } from "../schemas/settings-schema";
 import { SettingsTutorialController } from "../tutorial/components/settings-tutorial-controller";
@@ -35,6 +37,8 @@ export function StoreProfile() {
     const { data: session, update: updateSession } = useSession();
     const userRoles = useMemo(() => session?.user?.roles || [], [session?.user?.roles]);
     const isAdmin = useMemo(() => userRoles.includes("admin"), [userRoles]);
+    const { isCentralStore } = useActiveStore();
+    const isCentralAdmin = isAdmin && isCentralStore;
 
     const { settings, fetchSettings, isLoading: isSettingsLoading } = useSettingsStore();
     const { data: cashAccountsData, isLoading: isCashAccountsLoading } = useCashAccounts();
@@ -63,7 +67,14 @@ export function StoreProfile() {
             printer_id: "",
             hpp_adjustment_method: "latest",
             cash_in_out_enabled: "true",
-            branch_can_create_product: "true",
+            branch_can_create_product: "false",
+            branch_can_edit_product_price: "false",
+            branch_can_edit_master_data: "false",
+            branch_can_manual_stock_adjustment: "false",
+            branch_can_stock_opname: "false",
+            branch_can_direct_purchase: "false",
+            branch_can_transfer_to_other_branch: "false",
+            branch_can_apply_manual_discount: "false",
             consignment_commission_mode: "cut_revenue",
         },
     });
@@ -79,6 +90,7 @@ export function StoreProfile() {
             icon: Store,
             fields: ["app_name", "app_phone", "app_address", "app_logo_url"] as const,
             adminOnly: false,
+            centralOnly: false,
         },
         {
             id: "finance",
@@ -87,14 +99,34 @@ export function StoreProfile() {
             icon: IconAdjustments,
             fields: ["tax_rate_ppn", "point_rate", "point_system_enabled"] as const,
             adminOnly: true,
+            centralOnly: true,
         },
         {
             id: "inventory",
             label: "Inventori & Produk",
             description: "Kalkulasi HPP & izin produk cabang",
             icon: Boxes,
-            fields: ["hpp_adjustment_method", "branch_can_create_product"] as const,
+            fields: ["hpp_adjustment_method"] as const,
             adminOnly: true,
+            centralOnly: true,
+        },
+        {
+            id: "branch_policy",
+            label: "Kebijakan Cabang",
+            description: "Aturan wewenang operasional toko cabang",
+            icon: ShieldCheck,
+            fields: [
+                "branch_can_create_product",
+                "branch_can_edit_product_price",
+                "branch_can_edit_master_data",
+                "branch_can_manual_stock_adjustment",
+                "branch_can_stock_opname",
+                "branch_can_direct_purchase",
+                "branch_can_transfer_to_other_branch",
+                "branch_can_apply_manual_discount",
+            ] as const,
+            adminOnly: true,
+            centralOnly: true,
         },
         {
             id: "consignment",
@@ -103,6 +135,7 @@ export function StoreProfile() {
             icon: IconReceiptTax,
             fields: ["consignment_commission_mode"] as const,
             adminOnly: true,
+            centralOnly: true,
         },
         {
             id: "cash",
@@ -111,6 +144,7 @@ export function StoreProfile() {
             icon: Wallet,
             fields: ["cash_account_register_uid", "cash_account_main_uid", "cash_account_bank_uid", "cash_in_out_enabled"] as const,
             adminOnly: true,
+            centralOnly: false,
         },
         {
             id: "printer",
@@ -119,20 +153,26 @@ export function StoreProfile() {
             icon: IconPrinter,
             fields: ["printer_id"] as const,
             adminOnly: false,
+            centralOnly: false,
         },
     ], []);
 
     const tabs = useMemo(() => {
-        return allTabs.filter((tab) => !tab.adminOnly || isAdmin);
-    }, [allTabs, isAdmin]);
+        return allTabs.filter((tab) => {
+            if (tab.adminOnly && !isAdmin) return false;
+            if (tab.centralOnly && (!isCentralStore || !isAdmin)) return false;
+            return true;
+        });
+    }, [allTabs, isAdmin, isCentralStore]);
 
-    // Safety fallback: if non-admin has an admin-only activeTab, reset to profile
+    // Safety fallback: if user does not have permission for the current activeTab, reset to profile
     useEffect(() => {
-        if (!isAdmin && ["finance", "inventory", "consignment", "cash"].includes(activeTab)) {
+        const availableTabIds = tabs.map((t) => t.id);
+        if (!availableTabIds.includes(activeTab)) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setActiveTab("profile");
         }
-    }, [isAdmin, activeTab]);
+    }, [tabs, activeTab]);
 
     // Check if a tab is dirty
     const isTabDirty = (tabFields: readonly string[]) => {
@@ -165,9 +205,14 @@ export function StoreProfile() {
                 cash_in_out_enabled: settings.cash_in_out_enabled === undefined || settings.cash_in_out_enabled === null
                     ? "true"
                     : settings.cash_in_out_enabled,
-                branch_can_create_product: settings.branch_can_create_product === undefined || settings.branch_can_create_product === null
-                    ? "true"
-                    : settings.branch_can_create_product,
+                branch_can_create_product: settings.branch_can_create_product ?? "false",
+                branch_can_edit_product_price: settings.branch_can_edit_product_price ?? "false",
+                branch_can_edit_master_data: settings.branch_can_edit_master_data ?? "false",
+                branch_can_manual_stock_adjustment: settings.branch_can_manual_stock_adjustment ?? "false",
+                branch_can_stock_opname: settings.branch_can_stock_opname ?? "false",
+                branch_can_direct_purchase: settings.branch_can_direct_purchase ?? "false",
+                branch_can_transfer_to_other_branch: settings.branch_can_transfer_to_other_branch ?? "false",
+                branch_can_apply_manual_discount: settings.branch_can_apply_manual_discount ?? "false",
                 consignment_commission_mode: (settings.consignment_commission_mode as "cut_revenue" | "markup_price") || "cut_revenue",
             });
         }
@@ -226,14 +271,27 @@ export function StoreProfile() {
             const updateTasks: Promise<unknown>[] = [];
 
             for (const key of Object.keys(data) as Array<keyof StoreSettingsInput>) {
-                // If not admin, ignore any admin-only settings fields to ensure strict authorization
-                if (!isAdmin && [
+                // If not central admin, ignore all central-only settings fields to ensure strict authorization
+                if (!isCentralAdmin && [
                     "tax_rate_ppn",
                     "point_rate",
                     "point_system_enabled",
                     "hpp_adjustment_method",
                     "branch_can_create_product",
+                    "branch_can_edit_product_price",
+                    "branch_can_edit_master_data",
+                    "branch_can_manual_stock_adjustment",
+                    "branch_can_stock_opname",
+                    "branch_can_direct_purchase",
+                    "branch_can_transfer_to_other_branch",
+                    "branch_can_apply_manual_discount",
                     "consignment_commission_mode",
+                ].includes(key)) {
+                    continue;
+                }
+
+                // If not admin, ignore branch store admin settings fields (cash accounts)
+                if (!isAdmin && [
                     "cash_account_register_uid",
                     "cash_account_main_uid",
                     "cash_account_bank_uid",
@@ -460,24 +518,31 @@ export function StoreProfile() {
                             </div>
                         </Show.When>
 
-                        {/* Tab 2: Keuangan & Pajak */}
-                        <Show.When isTrue={isAdmin && activeTab === "finance"}>
+                        {/* Tab 2: Keuangan & Pajak (Pusat & Admin Only) */}
+                        <Show.When isTrue={isCentralAdmin && activeTab === "finance"}>
                             <div className="animate-fade-in">
                                 <TabFinance isSaving={isSaving} />
                             </div>
                         </Show.When>
 
-                        {/* Tab 3: Inventori & HPP */}
-                        <Show.When isTrue={isAdmin && activeTab === "inventory"}>
+                        {/* Tab 3: Inventori & HPP (Pusat & Admin Only) */}
+                        <Show.When isTrue={isCentralAdmin && activeTab === "inventory"}>
                             <div className="animate-fade-in">
                                 <TabInventory isSaving={isSaving} />
                             </div>
                         </Show.When>
 
-                        {/* Tab 4: Konsinyasi Cabang */}
-                        <Show.When isTrue={isAdmin && activeTab === "consignment"}>
+                        {/* Tab 4: Konsinyasi Cabang (Pusat & Admin Only) */}
+                        <Show.When isTrue={isCentralAdmin && activeTab === "consignment"}>
                             <div className="animate-fade-in">
                                 <TabConsignment isSaving={isSaving} />
+                            </div>
+                        </Show.When>
+
+                        {/* Tab: Kebijakan Cabang (Pusat & Admin Only) */}
+                        <Show.When isTrue={isCentralAdmin && activeTab === "branch_policy"}>
+                            <div className="animate-fade-in">
+                                <TabBranchPolicy isSaving={isSaving} />
                             </div>
                         </Show.When>
 

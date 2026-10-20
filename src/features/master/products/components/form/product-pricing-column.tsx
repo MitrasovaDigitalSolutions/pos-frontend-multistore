@@ -14,6 +14,7 @@ interface ProductPricingColumnProps {
     isGrosir: boolean;
     disabled?: boolean;
     isCentralStore?: boolean;
+    canEditPrice?: boolean;
     onHargaBeliChange?: (val: number | null) => void;
     onHargaChange?: (val: number | null) => void;
     onMarginChange?: (val: number | null) => void;
@@ -27,6 +28,7 @@ export function ProductPricingColumn({
     isGrosir,
     disabled = false,
     isCentralStore = true,
+    canEditPrice,
     onHargaBeliChange,
     onHargaChange,
     onMarginChange,
@@ -34,7 +36,8 @@ export function ProductPricingColumn({
     onMinQtyGrosirChange,
     onHargaGrosirTotalChange,
 }: ProductPricingColumnProps) {
-    const isPriceDisabled = disabled || !isCentralStore;
+    const effectiveCanEdit = canEditPrice !== undefined ? canEditPrice : isCentralStore;
+    const isPriceDisabled = disabled || !effectiveCanEdit;
 
     return (
         <div id="form-product-pricing-col" className="bg-slate-50/80 border border-slate-200/80 rounded-2xl p-3.5 shadow-2xs flex flex-col md:h-full min-h-0">
@@ -55,13 +58,13 @@ export function ProductPricingColumn({
             {/* Scrollable Body Kolom */}
             <Scrollable className="flex-1 min-h-0 pr-1.5 pt-2" scrollbarClassName="z-20">
                 <div className="space-y-3 pb-2">
-                    {!isCentralStore && (
+                    {!effectiveCanEdit && (
                         <div className="p-2.5 bg-purple-50/80 border border-purple-200/70 rounded-xl flex items-start gap-2 text-purple-900 text-xs">
                             <IconShieldCheck size={16} className="text-purple-600 shrink-0 mt-0.5" />
                             <div className="leading-snug">
-                                <p className="font-bold text-[11px]">Harga Dikontrol Gudang Pusat</p>
+                                <p className="font-bold text-[11px]">Harga Dikontrol Kebijakan Pusat</p>
                                 <p className="text-[10px] text-purple-700">
-                                    Cabang dilarang mengubah harga. Harga retail kasir ditentukan dari Pusat.
+                                    Cabang dilarang mengubah harga. Penetapan harga produk dikontrol oleh kebijakan Toko Pusat.
                                 </p>
                             </div>
                         </div>

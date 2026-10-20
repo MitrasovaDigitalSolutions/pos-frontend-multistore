@@ -14,6 +14,7 @@ import {
 } from "@tabler/icons-react";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useSession } from "next-auth/react";
+import { useActiveStore } from "@/hooks/use-active-store";
 
 const SETTINGS_TUTORIAL_ICONS: Record<
     SettingsTutorialId,
@@ -42,6 +43,7 @@ export function SettingsTutorialMenuDialog() {
     const { data: session } = useSession();
     const userRoles = useMemo(() => session?.user?.roles || [], [session?.user?.roles]);
     const isAdmin = useMemo(() => userRoles.includes("admin"), [userRoles]);
+    const { isCentralStore } = useActiveStore();
 
     const isMenuOpen = useSettingsTutorialStore((state) => state.isMenuOpen);
     const setMenuOpen = useSettingsTutorialStore((state) => state.setMenuOpen);
@@ -60,7 +62,11 @@ export function SettingsTutorialMenuDialog() {
 
     const tutorialItems: FeatureTutorialItem[] = useMemo(() => {
         return SETTINGS_TUTORIAL_LIST
-            .filter((item) => !item.adminOnly || isAdmin)
+            .filter((item) => {
+                if (item.adminOnly && !isAdmin) return false;
+                if (item.centralOnly && (!isCentralStore || !isAdmin)) return false;
+                return true;
+            })
             .map((item) => ({
                 id: item.id,
                 title: item.title,
@@ -71,7 +77,7 @@ export function SettingsTutorialMenuDialog() {
                 isAvailable: item.isAvailable,
                 icon: SETTINGS_TUTORIAL_ICONS[item.id],
             }));
-    }, [isAdmin]);
+    }, [isAdmin, isCentralStore]);
 
     return (
         <FeatureTutorialDialog

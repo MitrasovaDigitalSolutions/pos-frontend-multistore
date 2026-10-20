@@ -20,7 +20,14 @@ import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { formatDate, formatToTime } from "@/lib/date-utils";
-import { IconChevronRight, IconCircleX, IconPlus } from "@tabler/icons-react";
+import { useBranchPolicy } from "@/hooks/use-branch-policy";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { IconChevronRight, IconCircleX, IconLock, IconPlus } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 import { useDeferredValue, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -172,6 +179,8 @@ export function POListPage() {
         hasRole(userRoles, "admin") ||
         hasPermission(userRoles, userPermissions, "manage_purchase");
 
+    const canDirectPurchase = useBranchPolicy("branch_can_direct_purchase");
+
     const handleCancel = (order: PurchaseOrder) => {
         setConfirmDialog({
             open: true,
@@ -260,13 +269,34 @@ export function POListPage() {
                         </p>
                     </div>
                     {hasManagePurchase && (
-                        <Button
-                            id="btn-create-po"
-                            onClick={() => router.push("/admin/purchase/order/new")}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
-                        >
-                            <IconPlus size={16} /> Buat Purchase Order
-                        </Button>
+                        canDirectPurchase ? (
+                            <Button
+                                id="btn-create-po"
+                                onClick={() => router.push("/admin/purchase/order/new")}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
+                            >
+                                <IconPlus size={16} /> Buat Purchase Order
+                            </Button>
+                        ) : (
+                            <TooltipProvider delayDuration={150}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <span tabIndex={0} className="inline-block cursor-not-allowed">
+                                            <Button
+                                                id="btn-create-po"
+                                                disabled
+                                                className="bg-slate-100 text-slate-400 border border-slate-200 font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-not-allowed opacity-75"
+                                            >
+                                                <IconLock size={15} /> Buat Purchase Order
+                                            </Button>
+                                        </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom" className="max-w-xs text-xs">
+                                        Pembelian langsung ke supplier luar dinonaktifkan untuk toko cabang oleh kebijakan Pusat.
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )
                     )}
                 </div>
 

@@ -6,7 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { IconActivity } from "@tabler/icons-react";
+import { IconActivity, IconLock } from "@tabler/icons-react";
+import { useBranchPolicy } from "@/hooks/use-branch-policy";
 import { toast } from "sonner";
 import { FormNumberInput } from "@/components/forms/form-number-input";
 import {
@@ -267,8 +268,14 @@ export function AdjustmentFormDialog({
     }, [open, product, reset]);
 
     const isPending = createAdjustment.isPending;
+    const canManualAdjustment = useBranchPolicy("branch_can_manual_stock_adjustment");
 
     const onSubmit = (data: AdjustmentInput) => {
+        if (!canManualAdjustment) {
+            toast.error("Penyesuaian stok manual di toko cabang tidak diizinkan.");
+            return;
+        }
+
         if (useStockTutorialStore.getState().isRunning) {
             toast.success("Penyesuaian stok manual berhasil disimpan!");
             onOpenChange(false);
@@ -309,6 +316,15 @@ export function AdjustmentFormDialog({
                     onSubmit={handleSubmit(onSubmit, onErrorSubmit)}
                     className="space-y-4"
                 >
+                    {!canManualAdjustment && (
+                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-amber-900 text-xs">
+                            <IconLock size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                            <p className="leading-snug">
+                                Penyesuaian stok manual di toko cabang tidak diizinkan. Silakan ajukan melalui Stok Opname atau Mutasi Stok Pusat.
+                            </p>
+                        </div>
+                    )}
+
                     <div id="adjustment-selected-product-card" className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1">
                         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Produk Terpilih</span>
                         <p className="text-xs font-bold text-slate-800">{product.nama}</p>
@@ -328,7 +344,7 @@ export function AdjustmentFormDialog({
                                 </>
                             }
                             placeholder="Contoh: -5 untuk kurangi, 10 untuk tambah..."
-                            disabled={isPending}
+                            disabled={isPending || !canManualAdjustment}
                             allowNegative={true}
                         />
                     </div>
@@ -343,7 +359,7 @@ export function AdjustmentFormDialog({
                             type="text"
                             placeholder="Contoh: Barang rusak, display hilang..."
                             className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                            disabled={isPending}
+                            disabled={isPending || !canManualAdjustment}
                             {...register("alasan")}
                         />
                         {errors.alasan && (
@@ -365,8 +381,8 @@ export function AdjustmentFormDialog({
                         <Button
                             id="btn-submit-adjustment"
                             type="submit"
-                            className="w-full h-11 bg-amber-600 hover:bg-amber-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-amber-600/10 border-none"
-                            disabled={isPending}
+                            className="w-full h-11 bg-amber-600 hover:bg-amber-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-amber-600/10 border-none disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={isPending || !canManualAdjustment}
                         >
                             {isPending ? "Menyimpan..." : "Simpan Penyesuaian"}
                         </Button>
