@@ -1,17 +1,16 @@
 "use client";
 
-import { type StoreSettingsInput } from "../schemas/settings-schema";
-import { Card, CardContent } from "@/components/ui/card";
-import { IconAdjustments } from "@tabler/icons-react";
-import { FormNumberInput } from "@/components/forms/form-number-input";
-import { Scrollable } from "@/components/ui/scrollable";
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { useFormContext, Controller } from "react-hook-form";
-import { Switch } from "@/components/ui/switch";
+import { IconAdjustments } from "@tabler/icons-react";
 import { Coins, Percent, Info } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { Switch } from "@/components/ui/switch";
 import { AppButton } from "@/components/shared/app-button";
+import { FormNumberInput } from "@/components/forms/form-number-input";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useSettingsTutorialStore } from "@/stores/settings-tutorial-store";
+import { SettingsTabCard } from "./settings-tab-card";
+import type { StoreSettingsInput } from "../schemas/settings-schema";
 
 interface TabFinanceProps {
     isSaving: boolean;
@@ -20,7 +19,7 @@ interface TabFinanceProps {
 function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }) {
     return (
         <div className="flex items-center gap-1.5 mb-1.5 select-none">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                 {label}
             </span>
             <Tooltip>
@@ -48,7 +47,6 @@ export function TabFinance({ isSaving }: TabFinanceProps) {
     const isTutorialRunning = useSettingsTutorialStore((state) => state.isRunning);
     const activeTutorial = useSettingsTutorialStore((state) => state.activeTutorial);
     const pointSystemEnable = watch("point_system_enabled") === "true";
-    // ponytail: show point_rate input during tutorial so interactive step target is mounted in DOM
     const showPointRateInput = pointSystemEnable || (isTutorialRunning && activeTutorial === "atur_ppn_poin");
 
     const taxMeta = getSettingMeta("tax_rate_ppn");
@@ -57,112 +55,105 @@ export function TabFinance({ isSaving }: TabFinanceProps) {
 
     return (
         <TooltipProvider delayDuration={150}>
-            <Card className="border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-[0_4px_20px_rgba(15,23,42,0.03)] bg-white dark:bg-slate-900 overflow-hidden flex flex-col w-full min-h-[460px]">
-                {/* Header (pinned) */}
-                <div className="p-5 pb-3 border-b border-slate-100 shrink-0">
-                    <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100/60 shadow-sm">
-                            <IconAdjustments size={15} />
+            <SettingsTabCard
+                icon={IconAdjustments}
+                title="Keuangan & Pajak"
+                subtitle="Konfigurasi tarif PPN transaksi dan rasio perolehan poin belanja pelanggan"
+                iconBgClassName="bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-900/50"
+                badge={
+                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                        Pusat Only
+                    </span>
+                }
+            >
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                    {/* Inputs Column */}
+                    <div className="lg:col-span-7 space-y-4">
+                        {/* PPN Input */}
+                        <div className="flex flex-col">
+                            <LabelWithTooltip
+                                label={taxMeta?.label || "Tarif PPN Default (%)"}
+                                tooltip={taxMeta?.description || "Persentase tarif pajak PPN yang dihitung otomatis pada total transaksi."}
+                            />
+                            <div className="relative">
+                                <FormNumberInput<StoreSettingsInput>
+                                    name="tax_rate_ppn"
+                                    placeholder="Contoh: 11"
+                                    disabled={isSaving}
+                                    min={0}
+                                    max={100}
+                                />
+                            </div>
                         </div>
-                        <div>
-                            <h3 className="text-xs font-black text-slate-800 uppercase tracking-wide">Keuangan & Pajak</h3>
-                            <p className="text-xs text-slate-400 mt-0.5">Pengaturan tarif PPN dan poin loyalitas</p>
+
+                        {/* Point System Toggle */}
+                        <div
+                            id="form-settings-point-toggle"
+                            className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200/70 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40"
+                        >
+                            <div className="space-y-0.5 min-w-0 pr-3">
+                                <LabelWithTooltip
+                                    label={pointSysMeta?.label || "Sistem Poin Member"}
+                                    tooltip={pointSysMeta?.description || "Aktifkan atau nonaktifkan fitur loyalitas poin member."}
+                                />
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                                    Akumulasikan poin belanja otomatis saat member bertransaksi di kasir POS.
+                                </p>
+                            </div>
+                            <Controller
+                                control={control}
+                                name="point_system_enabled"
+                                render={({ field }) => (
+                                    <Switch
+                                        checked={field.value === "true"}
+                                        onCheckedChange={(checked) => field.onChange(checked ? "true" : "false")}
+                                        disabled={isSaving}
+                                    />
+                                )}
+                            />
+                        </div>
+
+                        {/* Point Rate Input */}
+                        {showPointRateInput && (
+                            <div className="flex flex-col animate-in fade-in duration-200">
+                                <LabelWithTooltip
+                                    label={pointRateMeta?.label || "Rasio Poin (Rp per 1 Poin)"}
+                                    tooltip={pointRateMeta?.description || "Nominal kelipatan belanja untuk mendapatkan 1 poin loyalitas."}
+                                />
+                                <FormNumberInput<StoreSettingsInput>
+                                    name="point_rate"
+                                    placeholder="Contoh: 1000"
+                                    disabled={isSaving}
+                                    min={1}
+                                />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Simulation Helper Panel */}
+                    <div className="lg:col-span-5 space-y-2.5">
+                        <div className="border border-emerald-200/70 dark:border-emerald-900/40 rounded-xl p-3.5 bg-emerald-50/40 dark:bg-emerald-950/20 space-y-1.5">
+                            <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-bold text-xs uppercase tracking-wider">
+                                <Percent size={13} />
+                                Pajak Pertambahan Nilai (PPN)
+                            </div>
+                            <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-snug">
+                                Standar umum PPN di Indonesia adalah <strong>11%</strong>. Transaksi kasir cabang otomatis menggunakan tarif ini sebagai basis faktur.
+                            </p>
+                        </div>
+
+                        <div className="border border-amber-200/70 dark:border-amber-900/40 rounded-xl p-3.5 bg-amber-50/40 dark:bg-amber-950/20 space-y-1.5">
+                            <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 font-bold text-xs uppercase tracking-wider">
+                                <Coins size={13} />
+                                Konversi Poin Loyalitas
+                            </div>
+                            <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-snug">
+                                Jika diatur ke <strong>Rp 1.000</strong>, pembelanjaan senilai Rp 50.000 akan otomatis menghasilkan <strong>50 Poin</strong> untuk pelanggan member.
+                            </p>
                         </div>
                     </div>
                 </div>
-
-                {/* Scrollable Content */}
-                <Scrollable className="flex-1 min-h-0 w-full">
-                    <CardContent className="p-5 space-y-6">
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                            {/* Inputs Column */}
-                            <div className="lg:col-span-7 space-y-5">
-                                <div className="flex flex-col">
-                                    <LabelWithTooltip
-                                        label={taxMeta?.label || "Pajak (PPN %)"}
-                                        tooltip={taxMeta?.description || "Persentase pajak default yang dikenakan pada penjualan."}
-                                    />
-                                    <div className="relative flex items-center">
-                                        <div className="w-full">
-                                            <FormNumberInput<StoreSettingsInput>
-                                                name="tax_rate_ppn"
-                                                placeholder="Contoh: 11"
-                                                disabled={isSaving}
-                                                min={0}
-                                                max={100}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div
-                                    id="form-settings-point-toggle"
-                                    className="flex items-center justify-between border border-slate-100/80 rounded-xl p-4 bg-slate-50/30"
-                                >
-                                    <div className="space-y-0.5">
-                                        <LabelWithTooltip
-                                            label={pointSysMeta?.label || "Sistem Poin Aktif"}
-                                            tooltip={pointSysMeta?.description || "Apakah sistem poin untuk member diaktifkan (true/false)."}
-                                        />
-                                        <p className="text-[11px] text-slate-400">
-                                            Aktifkan loyalitas member dan akumulasi poin transaksi
-                                        </p>
-                                    </div>
-                                    <Controller
-                                        control={control}
-                                        name="point_system_enabled"
-                                        render={({ field }) => (
-                                            <Switch
-                                                checked={field.value === "true"}
-                                                onCheckedChange={(checked) => field.onChange(checked ? "true" : "false")}
-                                                disabled={isSaving}
-                                            />
-                                        )}
-                                    />
-                                </div>
-
-                                {showPointRateInput && (
-                                    <div className="flex flex-col animate-in fade-in duration-200">
-                                        <LabelWithTooltip
-                                            label={pointRateMeta?.label || "Point Rate (Rp per Poin)"}
-                                            tooltip={pointRateMeta?.description || "Berapa Rupiah transaksi yang dibutuhkan untuk mendapatkan 1 poin."}
-                                        />
-                                        <FormNumberInput<StoreSettingsInput>
-                                            name="point_rate"
-                                            placeholder="Contoh: 10000"
-                                            disabled={isSaving}
-                                            min={1}
-                                        />
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Help Panel Column */}
-                            <div className="lg:col-span-5 space-y-4">
-                                <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50 space-y-3">
-                                    <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold text-xs uppercase tracking-wider">
-                                        <Percent size={13} />
-                                        Simulasi Pajak (PPN)
-                                    </div>
-                                    <p className="text-xs text-slate-500 leading-relaxed">
-                                        Tarif PPN default di Indonesia adalah <strong>11%</strong>. Ketika diaktifkan di layar transaksi kasir, sistem akan otomatis menjumlahkan nilai pajak berdasarkan subtotal transaksi Anda.
-                                    </p>
-                                </div>
-
-                                <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50 space-y-3">
-                                    <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-bold text-xs uppercase tracking-wider">
-                                        <Coins size={13} />
-                                        Mekanisme Poin Loyalitas
-                                    </div>
-                                    <p className="text-xs text-slate-500 leading-relaxed">
-                                        Jika diatur ke <strong>1000</strong>, pembelanjaan senilai Rp 10.000 akan otomatis menghasilkan <strong>10 Poin</strong> untuk member. Poin ini dapat dikumpulkan pelanggan untuk promo potongan belanja di kemudian hari.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Scrollable>
-            </Card>
+            </SettingsTabCard>
         </TooltipProvider>
     );
 }
