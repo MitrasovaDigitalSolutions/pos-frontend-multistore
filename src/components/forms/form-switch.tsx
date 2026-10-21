@@ -25,13 +25,17 @@ export function FormSwitch<T extends FieldValues>({
 
     return (
         <div className={cn(
-            "flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100",
+            "flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100 transition-opacity",
+            disabled && "opacity-60 cursor-not-allowed",
             className
         )}>
             <div className="space-y-0.5 pr-4">
                 <label
-                    htmlFor={`switch-${name}`}
-                    className="text-xs font-bold text-slate-800 cursor-pointer select-none block"
+                    htmlFor={disabled ? undefined : `switch-${name}`}
+                    className={cn(
+                        "text-xs font-bold text-slate-800 select-none block",
+                        disabled ? "cursor-not-allowed text-slate-500" : "cursor-pointer"
+                    )}
                 >
                     {label}
                 </label>
@@ -48,6 +52,7 @@ export function FormSwitch<T extends FieldValues>({
                     <Switch
                         checked={field.value}
                         onCheckedChange={(val) => {
+                            if (disabled) return;
                             field.onChange(val);
                             onCheckedChange?.(val);
                         }}

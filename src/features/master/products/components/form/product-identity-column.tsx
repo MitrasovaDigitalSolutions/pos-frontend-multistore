@@ -203,11 +203,13 @@ export function ProductIdentityColumn({
                             name="is_active"
                             label={isActive !== false ? "Status Produk: Aktif" : "Status Produk: Nonaktif"}
                             description={
-                                isActive !== false
-                                    ? "Produk aktif dan dapat diperjualbelikan serta didistribusikan."
-                                    : "Produk dinonaktifkan sementara dari katalog dan transaksi kasir."
+                                isEditing && !canEditMasterData
+                                    ? "Pengubahan status produk dinonaktifkan oleh kebijakan Toko Pusat."
+                                    : isActive !== false
+                                        ? "Produk aktif dan dapat diperjualbelikan serta didistribusikan."
+                                        : "Produk dinonaktifkan sementara dari katalog dan transaksi kasir."
                             }
-                            disabled={disabled}
+                            disabled={isMasterDataDisabled}
                         />
                     </div>
                 </div>
