@@ -351,7 +351,7 @@ export function OpnameDetailPage({ opnameId }: OpnameDetailPageProps) {
                             className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-8 px-4 shadow-xs rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0 border-none"
                         >
                             <IconCheck size={14} />
-                            <span>Finalisasi &amp; Update Stok</span>
+                            <span>Finalisasi & Update Stok</span>
                         </Button>
                     </div>
                 )}

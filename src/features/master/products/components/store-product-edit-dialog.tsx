@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ProductBarcodeDialog } from "@/components/shared/product-barcode-dialog";
 import { getImageUrl } from "@/lib/utils";
 import { useActiveStoreStore } from "@/stores/active-store-store";
-import { useIsCentralStore } from "@/hooks/use-active-store";
+import { useBranchPolicy } from "@/hooks/use-branch-policy";
 import {
     IconActivity,
     IconBarcode,
@@ -55,8 +55,8 @@ export function StoreProductEditDialog({
 }: StoreProductEditDialogProps) {
     const activeStoreUid = useActiveStoreStore((s) => s.activeStoreUid);
     const updateProductStore = useUpdateProductStore();
-    const isCentralStore = useIsCentralStore();
-    const isPriceDisabled = updateProductStore.isPending || !isCentralStore;
+    const canEditProductPrice = useBranchPolicy("branch_can_edit_product_price");
+    const isPriceDisabled = updateProductStore.isPending || !canEditProductPrice;
     const [barcodeModalOpen, setBarcodeModalOpen] = useState(false);
     const [isAdjustmentOpen, setIsAdjustmentOpen] = useState(false);
 
@@ -375,13 +375,13 @@ export function StoreProductEditDialog({
 
                         {/* Column 2: Financial & Wholesale Inputs */}
                         <div className="space-y-3">
-                            {!isCentralStore && (
+                            {!canEditProductPrice && (
                                 <div className="p-3 bg-purple-50/80 border border-purple-200/80 rounded-xl flex items-start gap-2.5 text-purple-900 text-xs">
                                     <IconShieldCheck size={18} className="text-purple-600 shrink-0 mt-0.5" />
                                     <div className="leading-relaxed">
-                                        <p className="font-bold text-xs text-purple-950">Harga Dikontrol Gudang Pusat</p>
+                                        <p className="font-bold text-xs text-purple-950">Harga Dikontrol Kebijakan Pusat</p>
                                         <p className="text-[11px] text-purple-700">
-                                            Toko cabang dilarang mengubah harga jual maupun harga beli produk secara manual. Harga akan otomatis diselaraskan saat konfirmasi penerimaan transfer stok dari Pusat.
+                                            Toko cabang dilarang mengubah harga jual maupun harga beli produk secara manual. Perubahan harga dikontrol oleh kebijakan Toko Pusat.
                                         </p>
                                     </div>
                                 </div>

@@ -70,7 +70,42 @@ export const storeSettingsSchema = z.object({
         .string()
         .optional()
         .nullable()
-        .transform((val) => val || "true"),
+        .transform((val) => val ?? "false"),
+    branch_can_edit_product_price: z
+        .string()
+        .optional()
+        .nullable()
+        .transform((val) => val ?? "false"),
+    branch_can_edit_master_data: z
+        .string()
+        .optional()
+        .nullable()
+        .transform((val) => val ?? "false"),
+    branch_can_manual_stock_adjustment: z
+        .string()
+        .optional()
+        .nullable()
+        .transform((val) => val ?? "false"),
+    branch_can_stock_opname: z
+        .string()
+        .optional()
+        .nullable()
+        .transform((val) => val ?? "false"),
+    branch_can_direct_purchase: z
+        .string()
+        .optional()
+        .nullable()
+        .transform((val) => val ?? "false"),
+    branch_can_transfer_to_other_branch: z
+        .string()
+        .optional()
+        .nullable()
+        .transform((val) => val ?? "true"),
+    branch_can_apply_manual_discount: z
+        .string()
+        .optional()
+        .nullable()
+        .transform((val) => val ?? "false"),
     consignment_commission_mode: z
         .enum(["cut_revenue", "markup_price"])
         .optional()

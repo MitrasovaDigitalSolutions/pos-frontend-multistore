@@ -158,7 +158,7 @@ export function SessionDetailDialog({
                     <div className="mb-4 pb-3 border-b border-slate-100 flex items-center justify-between">
                         <div>
                             <h4 className="text-sm font-bold text-slate-900">Formulir Tutup Sesi Shift Kasir</h4>
-                            <p className="text-xs text-slate-500">Hitung kas fisik dan laporkan saldo laci untuk mengakhiri shift.</p>
+                            <p className="text-xs text-slate-500">Nominal setoran kas otomatis disamakan dengan saldo sistem untuk mengakhiri shift.</p>
                         </div>
                     </div>
                     <CloseShiftForm

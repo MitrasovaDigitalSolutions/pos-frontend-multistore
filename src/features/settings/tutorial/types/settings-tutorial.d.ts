@@ -38,5 +38,6 @@ export interface SettingsTutorialMeta {
     stepCount: number;
     badge?: string;
     adminOnly?: boolean;
+    centralOnly?: boolean;
     isAvailable?: boolean;
 }

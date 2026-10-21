@@ -16,6 +16,7 @@ import { FormProvider } from "react-hook-form";
 import type { Product } from "../types";
 import { useProductFormDialog } from "../hooks/use-product-form-dialog";
 import { useIsCentralStore } from "@/hooks/use-active-store";
+import { useBranchPolicy } from "@/hooks/use-branch-policy";
 import { ProductMediaColumn } from "./form/product-media-column";
 import { ProductIdentityColumn } from "./form/product-identity-column";
 import { ProductPricingColumn } from "./form/product-pricing-column";
@@ -76,6 +77,9 @@ export function ProductFormDialog({
     const activePrice = editingProduct?.harga_jual ?? editingProduct?.harga ?? watch("harga");
 
     const isCentralStore = useIsCentralStore();
+    const canEditProductPrice = useBranchPolicy("branch_can_edit_product_price");
+    const canEditMasterData = useBranchPolicy("branch_can_edit_master_data");
+    const isEditing = Boolean(editingProduct);
 
     return (
         <>
@@ -157,7 +161,7 @@ export function ProductFormDialog({
                             <div id="product-form-media-column" className="md:col-span-3 flex flex-col min-h-0 md:h-full">
                                 <ProductMediaColumn
                                     productType={productType}
-                                    disabled={isPending}
+                                    disabled={isPending || (isEditing && !canEditMasterData)}
                                     initialImageUrl={initialImageUrl}
                                     profitPerUnit={profitPerUnit}
                                     margin={margin}
@@ -169,6 +173,8 @@ export function ProductFormDialog({
                                 <ProductIdentityColumn
                                     onProductTypeChange={handleProductTypeChange}
                                     disabled={isPending}
+                                    canEditMasterData={canEditMasterData}
+                                    isEditing={isEditing}
                                     categorySelectProps={categorySelectProps}
                                     brandSelectProps={brandSelectProps}
                                     unitSelectProps={unitSelectProps}
@@ -182,6 +188,7 @@ export function ProductFormDialog({
                                     isGrosir={isGrosir}
                                     disabled={isPending}
                                     isCentralStore={isCentralStore}
+                                    canEditPrice={isEditing ? canEditProductPrice : true}
                                     onHargaBeliChange={handleHargaBeliChange}
                                     onHargaChange={handleHargaChange}
                                     onMarginChange={handleMarginChange}

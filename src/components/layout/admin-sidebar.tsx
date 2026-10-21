@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ChevronsLeft, ChevronsRight } from "lucide-react";
@@ -26,6 +26,7 @@ import {
 import { SidebarItem } from "./sidebar-item";
 import { useLicenseStatusQuery } from "@/features/license/api/license-api";
 import { useIsCentralStore } from "@/hooks/use-active-store";
+import { isBranchPolicyAllowed, type BranchPolicyKey } from "@/hooks/use-branch-policy";
 
 export function AdminSidebar() {
     const pathname = usePathname();
@@ -70,6 +71,12 @@ export function AdminSidebar() {
     );
     const activeAddons = isLicenseOperable ? (licenseStatus?.active_addons ?? []) : [];
     const isCentralStore = useIsCentralStore();
+    const settings = useSettingsStore((state) => state.settings);
+
+    const checkBranchPolicy = useCallback(
+        (key: BranchPolicyKey) => isBranchPolicyAllowed(key, settings, isCentralStore),
+        [settings, isCentralStore]
+    );
 
     const getSetting = useSettingsStore((state) => state.getSetting);
     const isLoadingSettings = useSettingsStore((state) => state.isLoading);
@@ -157,7 +164,14 @@ export function AdminSidebar() {
                         )}
                     >
                         {NAVIGATION_CONFIG.map((section) => {
-                            const visibleItems = filterNavItems(section.items, userRoles, userPermissions, activeAddons, isCentralStore);
+                            const visibleItems = filterNavItems(
+                                section.items,
+                                userRoles,
+                                userPermissions,
+                                activeAddons,
+                                isCentralStore,
+                                checkBranchPolicy
+                            );
                             if (visibleItems.length === 0) return null;
 
                             return (

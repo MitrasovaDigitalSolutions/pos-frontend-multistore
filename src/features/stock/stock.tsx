@@ -13,6 +13,13 @@ import { AdjustmentDialog } from "@/features/stock/components/adjustment-dialog"
 import { OpnameDialog } from "@/features/stock/components/opname-dialog";
 import { OpnameList } from "@/features/stock/components/opname-list";
 import { useAppRouter } from "@/hooks/use-app-router";
+import { useBranchPolicy } from "@/hooks/use-branch-policy";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
     IconActivity,
     IconClipboardCheck,
@@ -20,6 +27,7 @@ import {
     IconFileSpreadsheet,
     IconFileTypePdf,
     IconLoader2,
+    IconLock,
 } from "@tabler/icons-react";
 import {
     DropdownMenu,
@@ -56,6 +64,9 @@ export function StockManagement() {
     const hasManageInventory =
         hasRole(userRoles, "admin") ||
         hasPermission(userRoles, userPermissions, "manage_inventory");
+
+    const canManualAdjustment = useBranchPolicy("branch_can_manual_stock_adjustment");
+    const canStockOpname = useBranchPolicy("branch_can_stock_opname");
 
     const [opnamesPage, setOpnamesPage] = useState(1);
     const [opnamesSortBy, setOpnamesSortBy] = useState<string | undefined>("created_at");
@@ -246,22 +257,67 @@ export function StockManagement() {
                                         </DropdownMenuContent>
                                     </DropdownMenu>
 
-                                    <Button
-                                        id="btn-stock-adjustment"
-                                        onClick={() => setIsAdjustmentOpen(true)}
-                                        className="flex-1 sm:flex-none bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9 px-3.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-xs border-none"
-                                    >
-                                        <IconActivity size={15} />
-                                        <span>Penyesuaian Stok</span>
-                                    </Button>
-                                    <Button
-                                        id="btn-new-opname"
-                                        onClick={() => setIsOpnameModalOpen(true)}
-                                        className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 px-3.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-xs border-none"
-                                    >
-                                        <IconClipboardCheck size={15} />
-                                        <span>Opname Baru</span>
-                                    </Button>
+                                    {canManualAdjustment ? (
+                                        <Button
+                                            id="btn-stock-adjustment"
+                                            onClick={() => setIsAdjustmentOpen(true)}
+                                            className="flex-1 sm:flex-none bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9 px-3.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-xs border-none"
+                                        >
+                                            <IconActivity size={15} />
+                                            <span>Penyesuaian Stok</span>
+                                        </Button>
+                                    ) : (
+                                        <TooltipProvider delayDuration={150}>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <span tabIndex={0} className="inline-block cursor-not-allowed flex-1 sm:flex-none">
+                                                        <Button
+                                                            id="btn-stock-adjustment"
+                                                            disabled
+                                                            className="w-full bg-slate-100 text-slate-400 border border-slate-200 font-bold text-xs h-9 px-3.5 rounded-xl flex items-center justify-center gap-1.5 cursor-not-allowed opacity-75"
+                                                        >
+                                                            <IconLock size={14} />
+                                                            <span>Penyesuaian Stok</span>
+                                                        </Button>
+                                                    </span>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="bottom" className="max-w-xs text-xs">
+                                                    Penyesuaian stok manual di toko cabang dinonaktifkan oleh kebijakan Toko Pusat.
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    )}
+
+                                    {canStockOpname ? (
+                                        <Button
+                                            id="btn-new-opname"
+                                            onClick={() => setIsOpnameModalOpen(true)}
+                                            className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 px-3.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-xs border-none"
+                                        >
+                                            <IconClipboardCheck size={15} />
+                                            <span>Opname Baru</span>
+                                        </Button>
+                                    ) : (
+                                        <TooltipProvider delayDuration={150}>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <span tabIndex={0} className="inline-block cursor-not-allowed flex-1 sm:flex-none">
+                                                        <Button
+                                                            id="btn-new-opname"
+                                                            disabled
+                                                            className="w-full bg-slate-100 text-slate-400 border border-slate-200 font-bold text-xs h-9 px-3.5 rounded-xl flex items-center justify-center gap-1.5 cursor-not-allowed opacity-75"
+                                                        >
+                                                            <IconLock size={14} />
+                                                            <span>Opname Baru</span>
+                                                        </Button>
+                                                    </span>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="bottom" className="max-w-xs text-xs">
+                                                    Sesi stok opname mandiri di toko cabang dinonaktifkan oleh kebijakan Toko Pusat.
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    )}
                                 </div>
                             )}
                         </div>

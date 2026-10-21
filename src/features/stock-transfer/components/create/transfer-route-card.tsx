@@ -1,11 +1,11 @@
 "use client";
 
-import { IconArrowRight, IconBuildingStore, IconInfoCircle, IconNotes, IconTag } from "@tabler/icons-react";
 import { CommandSelect, type CommandOption } from "@/components/ui/command-select";
-import { STORE_LABEL_HQ, STORE_LABEL_BRANCH } from "@/constants/store";
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { STORE_LABEL_BRANCH, STORE_LABEL_HQ } from "@/constants/store";
 import { cn } from "@/lib/utils";
-import { TRANSFER_TYPE, type TransferType, TRANSFER_TYPE_LABELS } from "../../constants";
+import { IconArrowRight, IconBuildingStore, IconInfoCircle, IconNotes, IconTag } from "@tabler/icons-react";
+import { TRANSFER_TYPE, TRANSFER_TYPE_LABELS, type TransferType } from "../../constants";
 
 interface TransferRouteCardProps {
   activeStoreName?: string;
@@ -17,6 +17,7 @@ interface TransferRouteCardProps {
   setTipeTransfer: (val: TransferType) => void;
   catatan: string;
   setCatatan: (val: string) => void;
+  isRestrictedToCentral?: boolean;
 }
 
 export function TransferRouteCard({

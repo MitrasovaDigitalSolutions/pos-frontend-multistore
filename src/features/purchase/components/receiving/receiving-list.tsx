@@ -5,8 +5,14 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { hasPermission, hasRole } from "@/constants/roles";
-import type { Product } from "@/features/master/products/types";
-import { IconPlus, IconChevronRight } from "@tabler/icons-react";
+import { useBranchPolicy } from "@/hooks/use-branch-policy";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { IconPlus, IconChevronRight, IconLock } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useMemo, useState } from "react";
@@ -27,6 +33,7 @@ import {
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { formatDate, formatToTime } from "@/lib/date-utils";
 import { receivingColumns } from "./receiving-columns";
+import { Product } from "@/types/common";
 
 interface ReceivingListProps {
     receivings: Receiving[];
@@ -64,6 +71,7 @@ export function ReceivingList({
     const router = useAppRouter();
     const { data: session } = useSession();
     const deleteReceiving = useDeleteReceiving();
+    const canDirectPurchase = useBranchPolicy("branch_can_direct_purchase");
 
     const [selectedReceiving, setSelectedReceiving] = useState<Receiving | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -141,13 +149,34 @@ export function ReceivingList({
                     </p>
                 </div>
                 {hasManagePurchase && (
-                    <Button
-                        id="btn-create-receiving"
-                        onClick={onAddClick}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
-                    >
-                        <IconPlus size={16} /> Terima Barang Masuk
-                    </Button>
+                    canDirectPurchase ? (
+                        <Button
+                            id="btn-create-receiving"
+                            onClick={onAddClick}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
+                        >
+                            <IconPlus size={16} /> Terima Barang Masuk
+                        </Button>
+                    ) : (
+                        <TooltipProvider delayDuration={150}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <span tabIndex={0} className="inline-block cursor-not-allowed">
+                                        <Button
+                                            id="btn-create-receiving"
+                                            disabled
+                                            className="bg-slate-100 text-slate-400 border border-slate-200 font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-not-allowed opacity-75"
+                                        >
+                                            <IconLock size={15} /> Terima Barang Masuk
+                                        </Button>
+                                    </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" className="max-w-xs text-xs">
+                                    Penerimaan langsung ke supplier dinonaktifkan untuk toko cabang oleh kebijakan Pusat.
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )
                 )}
             </div>
 
@@ -202,9 +231,8 @@ export function ReceivingList({
                                             <span className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate group-hover:text-blue-600 transition-colors font-mono">
                                                 {rec.nomor_penerimaan}
                                             </span>
-                                            <span className={`px-1.5 py-0.2 rounded text-[9px] font-extrabold border ${
-                                                isFromPo ? "bg-indigo-50 text-indigo-700 border-indigo-100" : "bg-slate-50 text-slate-700 border-slate-100"
-                                            }`}>
+                                            <span className={`px-1.5 py-0.2 rounded text-[9px] font-extrabold border ${isFromPo ? "bg-indigo-50 text-indigo-700 border-indigo-100" : "bg-slate-50 text-slate-700 border-slate-100"
+                                                }`}>
                                                 {isFromPo ? "PO" : "Langsung"}
                                             </span>
                                         </div>
