@@ -11,6 +11,7 @@ import {
     IconInfoCircle,
     IconLoader2,
     IconPackage,
+    IconShieldCheck,
 } from "@tabler/icons-react";
 import { FormProvider } from "react-hook-form";
 import type { Product } from "../types";
@@ -80,6 +81,8 @@ export function ProductFormDialog({
     const canEditProductPrice = useBranchPolicy("branch_can_edit_product_price");
     const canEditMasterData = useBranchPolicy("branch_can_edit_master_data");
     const isEditing = Boolean(editingProduct);
+    const canEditAny = isCentralStore || canEditMasterData || canEditProductPrice;
+    const isReadOnlyMode = isEditing && !canEditAny;
 
     return (
         <>
@@ -96,28 +99,34 @@ export function ProductFormDialog({
                             <div className="flex items-center gap-2">
                                 <h4 className="text-sm font-bold text-slate-900 leading-tight">
                                     {editingProduct
-                                        ? "Edit Detail Produk"
+                                        ? isReadOnlyMode
+                                            ? "Detail Produk (Hanya Lihat)"
+                                            : "Edit Detail Produk"
                                         : duplicateProduct
                                             ? "Duplikat Produk Baru"
                                             : "Tambah Produk Baru"}
                                 </h4>
                                 <Badge
-                                    variant={editingProduct ? "secondary" : duplicateProduct ? "warning" : "success"}
+                                    variant={isReadOnlyMode ? "secondary" : editingProduct ? "secondary" : duplicateProduct ? "warning" : "success"}
                                     className="text-[9px] px-1.5 py-0 font-bold"
                                 >
-                                    {editingProduct
-                                        ? "Edit Mode"
-                                        : duplicateProduct
-                                            ? "Salin Data"
-                                            : "Katalog Master"}
+                                    {isReadOnlyMode
+                                        ? "Hanya Lihat"
+                                        : editingProduct
+                                            ? "Edit Mode"
+                                            : duplicateProduct
+                                                ? "Salin Data"
+                                                : "Katalog Master"}
                                 </Badge>
                             </div>
                             <p className="text-[11px] text-slate-400 font-normal">
-                                {editingProduct
-                                    ? "Perbarui spesifikasi, penetapan harga, dan stok cabang"
-                                    : duplicateProduct
-                                        ? "Data disalin dari produk sebelumnya. Masukkan barcode dan sesuaikan spesifikasi bila perlu."
-                                        : "Lengkapi spesifikasi produk untuk didistribusikan ke toko"}
+                                {isReadOnlyMode
+                                    ? "Informasi produk dikontrol oleh kebijakan Toko Pusat (mode hanya lihat)"
+                                    : editingProduct
+                                        ? "Perbarui spesifikasi, penetapan harga, dan stok cabang"
+                                        : duplicateProduct
+                                            ? "Data disalin dari produk sebelumnya. Masukkan barcode dan sesuaikan spesifikasi bila perlu."
+                                            : "Lengkapi spesifikasi produk untuk didistribusikan ke toko"}
                             </p>
                         </div>
                     </div>
@@ -149,6 +158,15 @@ export function ProductFormDialog({
                             <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-medium flex items-center gap-2 shrink-0">
                                 <IconInfoCircle size={15} className="text-amber-600 shrink-0" />
                                 <span><strong>Info:</strong> {infoMessage}</span>
+                            </div>
+                        )}
+
+                        {isReadOnlyMode && (
+                            <div className="p-2.5 bg-purple-50/90 border border-purple-200/80 rounded-xl flex items-center gap-2 text-purple-900 text-xs shrink-0">
+                                <IconShieldCheck size={16} className="text-purple-600 shrink-0" />
+                                <span>
+                                    <strong>Mode Pratinjau:</strong> Perubahan data dan harga produk dinonaktifkan oleh kebijakan Toko Pusat.
+                                </span>
                             </div>
                         )}
 
@@ -188,6 +206,7 @@ export function ProductFormDialog({
                                     isGrosir={isGrosir}
                                     disabled={isPending}
                                     isCentralStore={isCentralStore}
+                                    isEditing={isEditing}
                                     canEditPrice={isEditing ? canEditProductPrice : true}
                                     onHargaBeliChange={handleHargaBeliChange}
                                     onHargaChange={handleHargaChange}
@@ -201,33 +220,46 @@ export function ProductFormDialog({
 
                         {/* ── Dialog Footer Actions ── */}
                         <div className="pt-2.5 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800 shrink-0">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => onOpenChange(false)}
-                                disabled={isPending}
-                                className="h-9 px-4 text-xs font-bold rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer"
-                            >
-                                Batal
-                            </Button>
-                            <Button
-                                id="btn-submit-product-form"
-                                type="submit"
-                                disabled={isPending}
-                                className="h-9 px-5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 cursor-pointer shadow-md shadow-emerald-600/20"
-                            >
-                                {isPending ? (
-                                    <>
-                                        <IconLoader2 size={15} className="animate-spin" />
-                                        <span>Menyimpan...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <IconCheck size={15} />
-                                        <span>{editingProduct ? "Simpan Perubahan" : "Simpan Produk"}</span>
-                                    </>
-                                )}
-                            </Button>
+                            {isReadOnlyMode ? (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => onOpenChange(false)}
+                                    className="h-9 px-5 text-xs font-bold rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer"
+                                >
+                                    Tutup
+                                </Button>
+                            ) : (
+                                <>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => onOpenChange(false)}
+                                        disabled={isPending}
+                                        className="h-9 px-4 text-xs font-bold rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                    >
+                                        Batal
+                                    </Button>
+                                    <Button
+                                        id="btn-submit-product-form"
+                                        type="submit"
+                                        disabled={isPending}
+                                        className="h-9 px-5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 cursor-pointer shadow-md shadow-emerald-600/20"
+                                    >
+                                        {isPending ? (
+                                            <>
+                                                <IconLoader2 size={15} className="animate-spin" />
+                                                <span>Menyimpan...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <IconCheck size={15} />
+                                                <span>{editingProduct ? "Simpan Perubahan" : "Simpan Produk"}</span>
+                                            </>
+                                        )}
+                                    </Button>
+                                </>
+                            )}
                         </div>
                     </form>
                 </FormProvider>

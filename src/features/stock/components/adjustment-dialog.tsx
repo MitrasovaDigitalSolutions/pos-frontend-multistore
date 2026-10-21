@@ -1,20 +1,9 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useForm, FormProvider, type Resolver } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { BaseDialog } from "@/components/ui/base-dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { IconActivity, IconLock } from "@tabler/icons-react";
-import { useBranchPolicy } from "@/hooks/use-branch-policy";
-import { toast } from "sonner";
-import { FormNumberInput } from "@/components/forms/form-number-input";
-import {
-    adjustmentSchema,
-    type AdjustmentInput,
-} from "../schemas/adjustment-schema";
-import { useCreateAdjustment } from "../api/stock-api";
+import { IconActivity } from "@tabler/icons-react";
 import { useProducts } from "@/features/master/products/api/products-api";
 import type { Product } from "@/features/master/products/types";
 import { FilterForm } from "@/components/forms/filter-form";
@@ -24,6 +13,10 @@ import { DataTableTextActionButton } from "@/components/ui/data-table-actions";
 import { ColumnDef } from "@tanstack/react-table";
 import { useStockTutorialStore } from "@/stores/stock-tutorial-store";
 import { MOCK_ADJUSTMENT_PRODUCT } from "../tutorial/constants/stock-tutorial-constants";
+import {
+    ProductAdjustmentDialog,
+    type ProductAdjustmentDialogProps,
+} from "@/components/shared/product-adjustment-dialog";
 
 interface AdjustmentDialogProps {
     open: boolean;
@@ -217,8 +210,8 @@ export function AdjustmentDialog({
                 </div>
             </BaseDialog>
 
-            {/* Step 2: Form Popup Dialog */}
-            <AdjustmentFormDialog
+            {/* Step 2: Form Popup Dialog (Canonical Reusable Component) */}
+            <ProductAdjustmentDialog
                 open={isFormOpen}
                 onOpenChange={setIsFormOpen}
                 product={selectedProduct}
@@ -227,168 +220,8 @@ export function AdjustmentDialog({
     );
 }
 
-interface AdjustmentFormDialogProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    product: Product | null;
-}
-
-export function AdjustmentFormDialog({
-    open,
-    onOpenChange,
-    product,
-}: AdjustmentFormDialogProps) {
-    const createAdjustment = useCreateAdjustment();
-
-    const methods = useForm<AdjustmentInput>({
-        resolver: zodResolver(adjustmentSchema) as Resolver<AdjustmentInput>,
-        defaultValues: {
-            product_uid: "",
-            kuantitas: 0,
-            alasan: "",
-        },
-    });
-
-    const {
-        register,
-        handleSubmit,
-        reset,
-        formState: { errors },
-    } = methods;
-
-    // Reset values when a new product is selected
-    useEffect(() => {
-        if (open && product) {
-            reset({
-                product_uid: product.uid,
-                kuantitas: 0,
-                alasan: "",
-            });
-        }
-    }, [open, product, reset]);
-
-    const isPending = createAdjustment.isPending;
-    const canManualAdjustment = useBranchPolicy("branch_can_manual_stock_adjustment");
-
-    const onSubmit = (data: AdjustmentInput) => {
-        if (!canManualAdjustment) {
-            toast.error("Penyesuaian stok manual di toko cabang tidak diizinkan.");
-            return;
-        }
-
-        if (useStockTutorialStore.getState().isRunning) {
-            toast.success("Penyesuaian stok manual berhasil disimpan!");
-            onOpenChange(false);
-            return;
-        }
-
-        createAdjustment.mutate(data, {
-            onSuccess: () => {
-                toast.success("Penyesuaian stok manual berhasil disimpan!");
-                onOpenChange(false);
-            },
-            onError: (err) => {
-                toast.error(err.message || "Gagal melakukan penyesuaian.");
-            },
-        });
-    };
-
-    const onErrorSubmit = () => {
-        toast.error("Harap lengkapi semua bidang form yang wajib diisi.");
-    };
-
-    if (!product) return null;
-
-    return (
-        <BaseDialog
-            open={open}
-            onOpenChange={onOpenChange}
-            title={
-                <>
-                    <IconActivity size={20} className="text-amber-500" />
-                    <span>Sesuaikan Stok</span>
-                </>
-            }
-            className="max-w-md"
-        >
-            <FormProvider {...methods}>
-                <form
-                    onSubmit={handleSubmit(onSubmit, onErrorSubmit)}
-                    className="space-y-4"
-                >
-                    {!canManualAdjustment && (
-                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-amber-900 text-xs">
-                            <IconLock size={16} className="text-amber-600 shrink-0 mt-0.5" />
-                            <p className="leading-snug">
-                                Penyesuaian stok manual di toko cabang tidak diizinkan. Silakan ajukan melalui Stok Opname atau Mutasi Stok Pusat.
-                            </p>
-                        </div>
-                    )}
-
-                    <div id="adjustment-selected-product-card" className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-1">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Produk Terpilih</span>
-                        <p className="text-xs font-bold text-slate-800">{product.nama}</p>
-                        {product.barcode && (
-                            <p className="text-[10px] text-slate-400 font-mono">SKU: {product.barcode}</p>
-                        )}
-                        <p className="text-[10px] text-slate-500 mt-1">Stok Saat Ini: <strong className="text-slate-800 font-bold">{product.stok}</strong></p>
-                    </div>
-
-                    <div id="adjustment-quantity-field">
-                        <FormNumberInput<AdjustmentInput>
-                            id="adjustment-quantity-input"
-                            name="kuantitas"
-                            label={
-                                <>
-                                    Kuantitas Perubahan (+ / -) <span className="text-rose-500 font-bold">*</span>
-                                </>
-                            }
-                            placeholder="Contoh: -5 untuk kurangi, 10 untuk tambah..."
-                            disabled={isPending || !canManualAdjustment}
-                            allowNegative={true}
-                        />
-                    </div>
-
-                    {/* Alasan */}
-                    <div id="adjustment-reason-field" className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            Alasan Penyesuaian <span className="text-rose-500 font-bold">*</span>
-                        </label>
-                        <Input
-                            id="adjustment-reason-input"
-                            type="text"
-                            placeholder="Contoh: Barang rusak, display hilang..."
-                            className="h-10 text-xs border-slate-200 focus-visible:ring-emerald-600 rounded-xl"
-                            disabled={isPending || !canManualAdjustment}
-                            {...register("alasan")}
-                        />
-                        {errors.alasan && (
-                            <p className="text-[10px] text-rose-500 font-medium">
-                                {errors.alasan.message}
-                            </p>
-                        )}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 pt-2">
-                        <Button
-                            type="button"
-                            onClick={() => onOpenChange(false)}
-                            className="w-full h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center cursor-pointer border-none"
-                            disabled={isPending}
-                        >
-                            Batal
-                        </Button>
-                        <Button
-                            id="btn-submit-adjustment"
-                            type="submit"
-                            className="w-full h-11 bg-amber-600 hover:bg-amber-700 font-bold text-xs text-white rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-amber-600/10 border-none disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={isPending || !canManualAdjustment}
-                        >
-                            {isPending ? "Menyimpan..." : "Simpan Penyesuaian"}
-                        </Button>
-                    </div>
-                </form>
-            </FormProvider>
-        </BaseDialog>
-    );
-}
+// Re-export for any external consumers
+export {
+    ProductAdjustmentDialog as AdjustmentFormDialog,
+    type ProductAdjustmentDialogProps as AdjustmentFormDialogProps,
+};

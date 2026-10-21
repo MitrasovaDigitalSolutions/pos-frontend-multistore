@@ -15,6 +15,7 @@ interface ProductPricingColumnProps {
     disabled?: boolean;
     isCentralStore?: boolean;
     canEditPrice?: boolean;
+    isEditing?: boolean;
     onHargaBeliChange?: (val: number | null) => void;
     onHargaChange?: (val: number | null) => void;
     onMarginChange?: (val: number | null) => void;
@@ -29,6 +30,7 @@ export function ProductPricingColumn({
     disabled = false,
     isCentralStore = true,
     canEditPrice,
+    isEditing = false,
     onHargaBeliChange,
     onHargaChange,
     onMarginChange,
@@ -172,12 +174,17 @@ export function ProductPricingColumn({
                                 disabled={isPriceDisabled}
                                 onValueChange={onHargaBeliChange}
                             />
-                            <FormNumberInput<ProductInput>
-                                name="stok"
-                                label="Stok Awal Bahan Baku"
-                                placeholder="0"
-                                disabled={disabled}
-                            />
+                            <div className="space-y-1">
+                                <FormNumberInput<ProductInput>
+                                    name="stok"
+                                    label={isEditing ? "Stok Saat Ini (Hanya Lihat)" : "Stok Awal (Hanya Lihat)"}
+                                    placeholder="0"
+                                    disabled={true}
+                                />
+                                <p className="text-[10px] text-slate-400 leading-tight">
+                                    Kuantitas stok tidak dapat diubah di master produk. Perubahan stok hanya melalui Penyesuaian Stok, Stok Opname, atau Pembelian.
+                                </p>
+                            </div>
                         </div>
                     )}
 

@@ -19,7 +19,7 @@ import { useBranchPolicy } from "@/hooks/use-branch-policy";
 import { IconActivity, IconArchiveOff, IconLock, IconPlus } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useDetachProductStore } from "../api/product-store-api";
 import { useToggleProductStatus } from "../api/products-api";
@@ -89,6 +89,8 @@ export function ProductTable(props: ProductTableProps) {
     const isCentralStore = activeStore?.is_central ?? false;
 
     const canCreateProduct = useBranchPolicy("branch_can_create_product");
+    const canEditMasterData = useBranchPolicy("branch_can_edit_master_data");
+    const canManualAdjustment = useBranchPolicy("branch_can_manual_stock_adjustment");
 
     const detachStoreProduct = useDetachProductStore();
     const toggleStatus = useToggleProductStatus();
@@ -108,7 +110,7 @@ export function ProductTable(props: ProductTableProps) {
     const productToUnarchive = props.productToUnarchive !== undefined ? props.productToUnarchive : localProductToUnarchive;
     const setProductToUnarchive = props.onProductToUnarchiveChange || setLocalProductToUnarchive;
 
-    const handleToggleStatus = (p: Product) => {
+    const handleToggleStatus = useCallback((p: Product) => {
         if (p.status === "archived") {
             setProductToUnarchive(p);
             setIsUnarchiveOpen(true);
@@ -129,7 +131,7 @@ export function ProductTable(props: ProductTableProps) {
                 },
             },
         );
-    };
+    }, [setProductToUnarchive, setIsUnarchiveOpen, toggleStatus]);
 
     const handleRemoveProduct = (p: Product) => {
         setProductToDelete(p);
@@ -351,13 +353,28 @@ export function ProductTable(props: ProductTableProps) {
                     size: 80,
                     cell: ({ row }) => {
                         const p = row.original;
-                        if (!hasManageProducts) {
-                            return <StatusBadge status={p.status} />;
+                        const canToggleStatus = hasManageProducts && (isCentralStore || canEditMasterData);
+                        if (!canToggleStatus) {
+                            return (
+                                <TooltipProvider delayDuration={200}>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <span className="inline-block cursor-not-allowed opacity-90">
+                                                <StatusBadge status={p.status} />
+                                            </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top">
+                                            <p className="text-xs">Pengubahan status produk dinonaktifkan oleh kebijakan Toko Pusat</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            );
                         }
                         return (
                             <button
                                 onClick={() => handleToggleStatus(p)}
                                 className="bg-transparent border-none p-0 cursor-pointer focus:outline-none"
+                                title="Klik untuk mengubah status produk"
                             >
                                 <StatusBadge status={p.status} />
                             </button>
@@ -368,8 +385,7 @@ export function ProductTable(props: ProductTableProps) {
 
             return baseColumns;
         },
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [hasManageProducts],
+        [hasManageProducts, isCentralStore, canEditMasterData, handleToggleStatus],
     );
 
     return (
@@ -445,7 +461,7 @@ export function ProductTable(props: ProductTableProps) {
                 virtualize={true}
                 estimateRowHeight={44}
                 onEdit={hasManageProducts ? onEdit : undefined}
-                onDelete={hasManageProducts ? handleRemoveProduct : undefined}
+                onDelete={hasManageProducts && (isCentralStore || canEditMasterData) ? handleRemoveProduct : undefined}
                 hideDelete={(row: Product) => row.status === "archived"}
                 hideEdit={(row: Product) => row.status === "archived"}
                 extraActions={
@@ -469,6 +485,31 @@ export function ProductTable(props: ProductTableProps) {
                             }
 
                             if (props.onAdjustmentClick) {
+                                if (!canManualAdjustment) {
+                                    return (
+                                        <TooltipProvider delayDuration={150}>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <span tabIndex={0} className="inline-block cursor-not-allowed">
+                                                        <DataTableActionButton
+                                                            variant="slate"
+                                                            disabled
+                                                            tooltip="Penyesuaian stok manual dinonaktifkan oleh kebijakan Toko Pusat"
+                                                            data-action="adjust-stock"
+                                                            className="cursor-not-allowed opacity-50"
+                                                        >
+                                                            <IconLock size={15} />
+                                                        </DataTableActionButton>
+                                                    </span>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top" className="text-xs max-w-xs">
+                                                    Penyesuaian stok manual di cabang dinonaktifkan oleh kebijakan Toko Pusat.
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    );
+                                }
+
                                 return (
                                     <DataTableActionButton
                                         variant="slate"

@@ -10,17 +10,25 @@ import { Button } from "@/components/ui/button";
 import { ProductBarcodeDialog } from "@/components/shared/product-barcode-dialog";
 import { getImageUrl } from "@/lib/utils";
 import { useActiveStoreStore } from "@/stores/active-store-store";
+import { useIsCentralStore } from "@/hooks/use-active-store";
 import { useBranchPolicy } from "@/hooks/use-branch-policy";
 import {
     IconActivity,
     IconBarcode,
     IconCheck,
     IconLoader2,
+    IconLock,
     IconPackage,
     IconShieldCheck,
     IconTag,
     IconTrendingUp,
 } from "@tabler/icons-react";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -55,8 +63,14 @@ export function StoreProductEditDialog({
 }: StoreProductEditDialogProps) {
     const activeStoreUid = useActiveStoreStore((s) => s.activeStoreUid);
     const updateProductStore = useUpdateProductStore();
+    const isCentralStore = useIsCentralStore();
     const canEditProductPrice = useBranchPolicy("branch_can_edit_product_price");
+    const canEditMasterData = useBranchPolicy("branch_can_edit_master_data");
+    const canManualAdjustment = useBranchPolicy("branch_can_manual_stock_adjustment");
+    const canEditAny = isCentralStore || canEditProductPrice || canEditMasterData;
+    const isReadOnlyMode = !canEditAny;
     const isPriceDisabled = updateProductStore.isPending || !canEditProductPrice;
+    const isStatusDisabled = updateProductStore.isPending || (!isCentralStore && !canEditMasterData);
     const [barcodeModalOpen, setBarcodeModalOpen] = useState(false);
     const [isAdjustmentOpen, setIsAdjustmentOpen] = useState(false);
 
@@ -217,8 +231,21 @@ export function StoreProductEditDialog({
                         <IconTag size={18} />
                     </div>
                     <div>
-                        <h4 className="text-sm font-bold text-slate-900 leading-tight">Edit Harga Produk Toko</h4>
-                        <p className="text-[11px] text-slate-400 font-medium">Penyesuaian harga jual, harga beli, &amp; margin cabang</p>
+                        <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-bold text-slate-900 leading-tight">
+                                {isReadOnlyMode ? "Detail Produk Toko (Hanya Lihat)" : "Edit Harga Produk Toko"}
+                            </h4>
+                            {isReadOnlyMode && (
+                                <Badge variant="secondary" className="text-[9px] px-1.5 py-0 font-bold">
+                                    Hanya Lihat
+                                </Badge>
+                            )}
+                        </div>
+                        <p className="text-[11px] text-slate-400 font-medium">
+                            {isReadOnlyMode
+                                ? "Informasi produk dikontrol oleh kebijakan Toko Pusat (mode hanya lihat)"
+                                : "Penyesuaian harga jual, harga beli, & margin cabang"}
+                        </p>
                     </div>
                 </div>
             }
@@ -342,16 +369,40 @@ export function StoreProductEditDialog({
                                                 Stok Toko: <strong className="font-bold text-slate-900 font-mono">{product.stok ?? 0} {product.unit?.simbol || product.satuan || ""}</strong>
                                             </span>
                                         </div>
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => setIsAdjustmentOpen(true)}
-                                            className="h-7 px-2.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800 border-emerald-200/80 rounded-lg gap-1 shrink-0 cursor-pointer"
-                                        >
-                                            <IconActivity size={13} />
-                                            <span>Adjustment Qty</span>
-                                        </Button>
+                                        {canManualAdjustment ? (
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => setIsAdjustmentOpen(true)}
+                                                className="h-7 px-2.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800 border-emerald-200/80 rounded-lg gap-1 shrink-0 cursor-pointer"
+                                            >
+                                                <IconActivity size={13} />
+                                                <span>Adjustment Qty</span>
+                                            </Button>
+                                        ) : (
+                                            <TooltipProvider delayDuration={150}>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <span tabIndex={0} className="inline-block cursor-not-allowed">
+                                                            <Button
+                                                                type="button"
+                                                                size="sm"
+                                                                variant="outline"
+                                                                disabled
+                                                                className="h-7 px-2.5 text-[11px] font-bold text-slate-400 bg-slate-100 border-slate-200 rounded-lg gap-1 shrink-0 cursor-not-allowed opacity-75"
+                                                            >
+                                                                <IconLock size={12} />
+                                                                <span>Adjustment Qty</span>
+                                                            </Button>
+                                                        </span>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent side="top" className="max-w-xs text-xs">
+                                                        Penyesuaian stok manual di cabang dinonaktifkan oleh kebijakan Toko Pusat.
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -375,7 +426,17 @@ export function StoreProductEditDialog({
 
                         {/* Column 2: Financial & Wholesale Inputs */}
                         <div className="space-y-3">
-                            {!canEditProductPrice && (
+                            {isReadOnlyMode ? (
+                                <div className="p-3 bg-purple-50/80 border border-purple-200/80 rounded-xl flex items-start gap-2.5 text-purple-900 text-xs">
+                                    <IconShieldCheck size={18} className="text-purple-600 shrink-0 mt-0.5" />
+                                    <div className="leading-relaxed">
+                                        <p className="font-bold text-xs text-purple-950">Mode Pratinjau (Hanya Lihat)</p>
+                                        <p className="text-[11px] text-purple-700">
+                                            Perubahan harga dan status produk di cabang dinonaktifkan oleh kebijakan Toko Pusat.
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : !canEditProductPrice ? (
                                 <div className="p-3 bg-purple-50/80 border border-purple-200/80 rounded-xl flex items-start gap-2.5 text-purple-900 text-xs">
                                     <IconShieldCheck size={18} className="text-purple-600 shrink-0 mt-0.5" />
                                     <div className="leading-relaxed">
@@ -385,7 +446,7 @@ export function StoreProductEditDialog({
                                         </p>
                                     </div>
                                 </div>
-                            )}
+                            ) : null}
 
                             <div id="store-edit-pricing-grid" className="grid grid-cols-3 gap-2">
                                 <FormNominalInput<StoreProductEditFormValues>
@@ -413,11 +474,13 @@ export function StoreProductEditDialog({
                                 name="is_active"
                                 label={watchIsActive !== false ? "Status Produk: Aktif" : "Status Produk: Nonaktif"}
                                 description={
-                                    watchIsActive !== false
-                                        ? "Produk aktif dan dapat diperjualbelikan di kasir."
-                                        : "Produk dinonaktifkan sementara dari kasir cabang."
+                                    !isCentralStore && !canEditMasterData
+                                        ? "Pengubahan status produk di cabang dinonaktifkan oleh kebijakan Toko Pusat."
+                                        : watchIsActive !== false
+                                            ? "Produk aktif dan dapat diperjualbelikan di kasir."
+                                            : "Produk dinonaktifkan sementara dari kasir cabang."
                                 }
-                                disabled={updateProductStore.isPending || toggleStatus.isPending}
+                                disabled={isStatusDisabled}
                             />
 
                             {/* Fitur Grosir */}
@@ -425,7 +488,11 @@ export function StoreProductEditDialog({
                                 <FormSwitch<StoreProductEditFormValues>
                                     name="is_grosir"
                                     label="Harga Grosir Toko"
-                                    description="Aktifkan penentuan harga grosir khusus untuk toko ini."
+                                    description={
+                                        isPriceDisabled
+                                            ? "Pengaturan harga grosir di cabang dinonaktifkan oleh kebijakan Toko Pusat."
+                                            : "Aktifkan penentuan harga grosir khusus untuk toko ini."
+                                    }
                                     disabled={isPriceDisabled}
                                 />
                             </div>
@@ -463,34 +530,48 @@ export function StoreProductEditDialog({
 
                     {/* Actions */}
                     <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onOpenChange(false)}
-                            disabled={updateProductStore.isPending}
-                            className="h-9 px-4 text-xs font-bold rounded-xl border-slate-200"
-                        >
-                            Batal
-                        </Button>
-                        <Button
-                            id="btn-submit-store-edit"
-                            type="submit"
-                            disabled={updateProductStore.isPending}
-                            className="h-9 px-4 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 cursor-pointer"
-                        >
-                            {updateProductStore.isPending ? (
-                                <>
-                                    <IconLoader2 size={16} className="animate-spin" />
-                                    Menyimpan...
-                                </>
-                            ) : (
-                                <>
-                                    <IconCheck size={16} />
-                                    Simpan Perubahan
-                                </>
-                            )}
-                        </Button>
+                        {isReadOnlyMode ? (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onOpenChange(false)}
+                                className="h-9 px-5 text-xs font-bold rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer"
+                            >
+                                Tutup
+                            </Button>
+                        ) : (
+                            <>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => onOpenChange(false)}
+                                    disabled={updateProductStore.isPending}
+                                    className="h-9 px-4 text-xs font-bold rounded-xl border-slate-200"
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    id="btn-submit-store-edit"
+                                    type="submit"
+                                    disabled={updateProductStore.isPending}
+                                    className="h-9 px-4 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 cursor-pointer"
+                                >
+                                    {updateProductStore.isPending ? (
+                                        <>
+                                            <IconLoader2 size={16} className="animate-spin" />
+                                            Menyimpan...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <IconCheck size={16} />
+                                            Simpan Perubahan
+                                        </>
+                                    )}
+                                </Button>
+                            </>
+                        )}
                     </div>
                 </form>
             </FormProvider>

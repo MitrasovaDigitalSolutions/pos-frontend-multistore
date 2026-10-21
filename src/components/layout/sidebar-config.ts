@@ -249,6 +249,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                         label: "Stok Opname",
                         path: ROUTES.ADMIN_STOCK,
                         addon: "stock_opname",
+                        branchPolicy: "branch_can_stock_opname",
                         permission: (roles, permissions) =>
                             hasRole(roles, "admin") ||
                             hasPermission(roles, permissions, "view_inventory") ||
@@ -666,7 +667,10 @@ export function isNavItemActive(
     }
 
     if (path === ROUTES.ADMIN_STOCK) {
-        return pathname === path && currentTab !== "receiving";
+        return (
+            (pathname === path || pathname.startsWith(path + "/")) &&
+            currentTab !== "receiving"
+        );
     }
 
     // Exact matches for root paths
