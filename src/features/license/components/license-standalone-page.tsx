@@ -115,11 +115,11 @@ export function LicenseStandalonePage() {
     const timeMetrics = getLicenseTimeMetrics(status);
 
     const tabs: TabDef[] = [
-        { id: "status",   label: "Ringkasan",        icon: IconShieldCheck },
-        { id: "catalog",  label: "Paket & Add-on",   icon: IconPackage     },
+        { id: "status",   label: "Ringkasan",                icon: IconShieldCheck },
+        { id: "catalog",  label: "Katalog Fitur & Add-on",   icon: IconPackage     },
         { id: "addons",   label: isOperable ? "Add-on Aktif" : "Add-on", icon: IconShoppingCart },
-        { id: "invoices", label: "Riwayat Tagihan",  icon: IconFileInvoice  },
-        { id: "activate", label: "Aktivasi License", icon: IconKey         },
+        { id: "invoices", label: "Riwayat Tagihan",          icon: IconFileInvoice  },
+        { id: "activate", label: "Aktivasi License",         icon: IconKey         },
     ];
 
     return (
@@ -128,7 +128,7 @@ export function LicenseStandalonePage() {
             <LicenseTopNav showBackToDashboard={isOperable} />
 
             {/* Main Content Area */}
-            <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-4 space-y-4">
+            <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-4 space-y-4 pb-28 sm:pb-8">
                 {/* ── Hero License Card ─────────────────────────────────────────── */}
                 {statusLoading ? (
                     <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 space-y-4 shadow-2xs">
@@ -170,7 +170,7 @@ export function LicenseStandalonePage() {
                 ) : null}
 
                 {/* ── Tab Navigation (Apple/Google Sliding Segmented Controls) ── */}
-                <div className="sticky top-12 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 bg-slate-50/90 backdrop-blur-md border-b border-slate-200/70">
+                <div className="sticky top-12 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 bg-slate-50/95 border-b border-slate-200/70">
                     <div className="flex items-center justify-between gap-3">
                         {/* Sliding Tab Pills */}
                         <div className="flex items-center gap-1 overflow-x-auto scrollbar-none bg-slate-200/60 p-1 rounded-xl w-full sm:w-fit border border-slate-200/70">
@@ -204,6 +204,18 @@ export function LicenseStandalonePage() {
                                                 className={isActive ? "text-emerald-600" : "text-slate-500"}
                                             />
                                             <span>{tab.label}</span>
+                                            {tab.id === "catalog" && catalogList[0]?.addons && catalogList[0].addons.length > 0 && (
+                                                <span
+                                                    className={cn(
+                                                        "text-[9px] font-black px-1.5 py-0.2 rounded-full",
+                                                        isActive
+                                                            ? "bg-emerald-100 text-emerald-800"
+                                                            : "bg-slate-300/70 text-slate-700"
+                                                    )}
+                                                >
+                                                    {catalogList[0].addons.length}
+                                                </span>
+                                            )}
                                             {tab.id === "addons" && activeAddons.length > 0 && (
                                                 <span
                                                     className={cn(
