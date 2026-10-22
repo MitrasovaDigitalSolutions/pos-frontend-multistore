@@ -12,13 +12,42 @@ import {
     useCentralSalesTrend,
     useCentralInventory,
 } from "../../api/central-reports-api";
+import dynamic from "next/dynamic";
 import { CentralHeaderFilters, CentralFilterValues } from "./central-header-filters";
-import { CentralOverviewTab } from "./central-overview-tab";
-import { CentralStoresComparisonTab } from "./central-stores-comparison-tab";
-import { CentralInventoryTab } from "./central-inventory-tab";
 import { IconChartLine, IconBuildingStore, IconBox } from "@tabler/icons-react";
 import { useCentralReportTutorialStore } from "@/stores/central-report-tutorial-store";
-import { CentralReportTutorialController } from "../../tutorial/central/components/central-report-tutorial-controller";
+
+const TabContentSkeleton = () => (
+    <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="h-28 rounded-2xl bg-white border border-slate-100 p-4 animate-pulse" />
+            <div className="h-28 rounded-2xl bg-white border border-slate-100 p-4 animate-pulse" />
+            <div className="h-28 rounded-2xl bg-white border border-slate-100 p-4 animate-pulse" />
+        </div>
+        <div className="h-[320px] rounded-2xl bg-white border border-slate-100 p-4 animate-pulse" />
+    </div>
+);
+
+// ─── Dynamic Tab Panels & Tutorial Controller ─────────────────────────────────
+const CentralOverviewTab = dynamic(
+    () => import("./central-overview-tab").then((m) => m.CentralOverviewTab),
+    { ssr: false, loading: TabContentSkeleton }
+);
+
+const CentralStoresComparisonTab = dynamic(
+    () => import("./central-stores-comparison-tab").then((m) => m.CentralStoresComparisonTab),
+    { ssr: false, loading: TabContentSkeleton }
+);
+
+const CentralInventoryTab = dynamic(
+    () => import("./central-inventory-tab").then((m) => m.CentralInventoryTab),
+    { ssr: false, loading: TabContentSkeleton }
+);
+
+const CentralReportTutorialController = dynamic(
+    () => import("../../tutorial/central/components/central-report-tutorial-controller").then((m) => m.CentralReportTutorialController),
+    { ssr: false }
+);
 import {
     MOCK_CENTRAL_OVERVIEW,
     MOCK_CENTRAL_TREND,

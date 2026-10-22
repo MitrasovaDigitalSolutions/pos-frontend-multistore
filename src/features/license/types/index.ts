@@ -10,6 +10,15 @@ export type LicenseEffectiveStatus =
 export type SubscriptionType = "monthly" | "annual" | "yearly" | "lifetime" | "trial" | (string & {});
 
 /**
+ * Business preset type — determines which POS vertical/modules are active.
+ * Controlled by the license from Portal Admin, not user-editable.
+ * - `retail`: Default — Minimarket, Toko Retail umum, Fashion
+ * - `confectionery`: Konveksi, Sablon Kaos, Manufaktur Garmen
+ * - `pharmacy`: Apotek, Toko Obat, Alkes
+ */
+export type BusinessPresetType = "retail" | "confectionery" | "pharmacy";
+
+/**
  * Response shape from GET /api/v1/license/status
  */
 export interface LicenseStatus {
@@ -17,6 +26,7 @@ export interface LicenseStatus {
     license_key: string | null;
     status: LicenseEffectiveStatus;
     subscription_type: SubscriptionType | null;
+    business_type: BusinessPresetType;
     instance_name: string | null;
     domain_instance: string | null;
     expires_at: string | null;

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Joyride } from "react-joyride";
+import { DynamicJoyride as Joyride } from "@/components/shared/dynamic-joyride";
 import { useConsignmentTutorial } from "../hooks/use-consignment-tutorial";
 import { ConsignmentTutorialTooltip } from "./consignment-tutorial-tooltip";
 import { ConsignmentTutorialCursor } from "./consignment-tutorial-cursor";

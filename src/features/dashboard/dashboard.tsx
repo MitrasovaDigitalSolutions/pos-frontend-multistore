@@ -1,18 +1,75 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { FormDatePicker } from "@/components/forms/form-date-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useDashboardSummary, useJasaVsProduct } from "@/features/dashboard/api/dashboard-api";
-import { RecentOrdersTable } from "@/features/dashboard/components/recent-orders-table";
-import { RevenueChart } from "@/features/dashboard/components/revenue-chart";
-import { SalesStatistics } from "@/features/dashboard/components/sales-statistics";
 import { StatMiniCards } from "@/features/dashboard/components/stat-mini-cards";
-import { TopSellingWeekly } from "@/features/dashboard/components/top-selling-weekly";
-import { JasaVsProductChart } from "@/features/dashboard/components/jasa-vs-product-chart";
 import { getDefaultDateRange, formatDate } from "@/lib/date-utils";
 import { IconFilter } from "@tabler/icons-react";
 import { useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
+
+// ─── Dynamic Imports with Smooth Loading Skeletons ───────────────────────────
+const RevenueChart = dynamic(
+  () => import("@/features/dashboard/components/revenue-chart").then((m) => m.RevenueChart),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[320px] w-full rounded-2xl bg-white border border-slate-100/80 p-4 animate-pulse flex items-center justify-center">
+        <div className="h-4 w-28 bg-slate-100 rounded-lg" />
+      </div>
+    ),
+  }
+);
+
+const SalesStatistics = dynamic(
+  () => import("@/features/dashboard/components/sales-statistics").then((m) => m.SalesStatistics),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[320px] w-full rounded-2xl bg-white border border-slate-100/80 p-4 animate-pulse flex items-center justify-center">
+        <div className="h-4 w-28 bg-slate-100 rounded-lg" />
+      </div>
+    ),
+  }
+);
+
+const JasaVsProductChart = dynamic(
+  () => import("@/features/dashboard/components/jasa-vs-product-chart").then((m) => m.JasaVsProductChart),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[280px] w-full rounded-2xl bg-white border border-slate-100/80 p-4 animate-pulse flex items-center justify-center">
+        <div className="h-4 w-28 bg-slate-100 rounded-lg" />
+      </div>
+    ),
+  }
+);
+
+const RecentOrdersTable = dynamic(
+  () => import("@/features/dashboard/components/recent-orders-table").then((m) => m.RecentOrdersTable),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[320px] w-full rounded-2xl bg-white border border-slate-100/80 p-4 animate-pulse flex items-center justify-center">
+        <div className="h-4 w-32 bg-slate-100 rounded-lg" />
+      </div>
+    ),
+  }
+);
+
+const TopSellingWeekly = dynamic(
+  () => import("@/features/dashboard/components/top-selling-weekly").then((m) => m.TopSellingWeekly),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[280px] w-full rounded-2xl bg-white border border-slate-100/80 p-4 animate-pulse flex items-center justify-center">
+        <div className="h-4 w-28 bg-slate-100 rounded-lg" />
+      </div>
+    ),
+  }
+);
 
 interface DashboardFilterValues {
   from: string;

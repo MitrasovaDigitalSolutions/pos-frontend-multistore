@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 import { usePathname } from "next/navigation";
-import { Joyride } from "react-joyride";
+import { DynamicJoyride as Joyride } from "@/components/shared/dynamic-joyride";
 import { useReportsTutorial } from "../hooks/use-reports-tutorial";
 import { ReportsTutorialTooltip } from "./reports-tutorial-tooltip";
 import { ReportsTutorialCursor } from "./reports-tutorial-cursor";

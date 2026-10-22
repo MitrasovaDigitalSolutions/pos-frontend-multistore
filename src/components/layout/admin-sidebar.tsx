@@ -25,6 +25,7 @@ import {
 } from "./sidebar-config";
 import { SidebarItem } from "./sidebar-item";
 import { useLicenseStatusQuery } from "@/features/license/api/license-api";
+import { useAppPreset } from "@/features/license/hooks/use-app-preset";
 import { useIsCentralStore } from "@/hooks/use-active-store";
 import { isBranchPolicyAllowed, type BranchPolicyKey } from "@/hooks/use-branch-policy";
 
@@ -70,6 +71,7 @@ export function AdminSidebar() {
         licenseStatus?.can_operate && (licenseStatus?.status === "active" || licenseStatus?.is_grace_period)
     );
     const activeAddons = isLicenseOperable ? (licenseStatus?.active_addons ?? []) : [];
+    const { businessType } = useAppPreset();
     const isCentralStore = useIsCentralStore();
     const settings = useSettingsStore((state) => state.settings);
 
@@ -170,7 +172,8 @@ export function AdminSidebar() {
                                 userPermissions,
                                 activeAddons,
                                 isCentralStore,
-                                checkBranchPolicy
+                                checkBranchPolicy,
+                                businessType
                             );
                             if (visibleItems.length === 0) return null;
 

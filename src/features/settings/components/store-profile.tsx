@@ -7,20 +7,61 @@ import { getImageUrl } from "@/lib/utils";
 import { useCashAccounts } from "@/features/cash/api/cash-api";
 import { useSettingsStore } from "@/stores/settings-store";
 
+import dynamic from "next/dynamic";
+
 // Feature Hook & Subcomponents
 import { useSettingsForm } from "../hooks/use-settings-form";
 import { SettingsTabNav } from "./settings-tab-nav";
-import { TabProfile } from "./tab-profile";
-import { TabFinance } from "./tab-finance";
-import { TabInventory } from "./tab-inventory";
-import { TabConsignment } from "./tab-consignment";
-import { TabBranchPolicy } from "./tab-branch-policy";
-import { TabCash } from "./tab-cash";
-import { TabPrinter } from "./tab-printer";
 import { FloatingSaveBar } from "./floating-save-bar";
-import { SettingsTutorialController } from "../tutorial/components/settings-tutorial-controller";
 
 import type { SettingsTabId } from "../types/settings";
+
+const TabSkeleton = () => (
+    <div className="h-64 w-full bg-white rounded-2xl border border-slate-100 p-6 animate-pulse flex items-center justify-center">
+        <div className="h-4 w-32 bg-slate-100 rounded-lg" />
+    </div>
+);
+
+// ─── Dynamic Tab Panels & Tutorial Controller ─────────────────────────────────
+const TabProfile = dynamic(
+    () => import("./tab-profile").then((m) => m.TabProfile),
+    { ssr: false, loading: TabSkeleton }
+);
+
+const TabFinance = dynamic(
+    () => import("./tab-finance").then((m) => m.TabFinance),
+    { ssr: false, loading: TabSkeleton }
+);
+
+const TabInventory = dynamic(
+    () => import("./tab-inventory").then((m) => m.TabInventory),
+    { ssr: false, loading: TabSkeleton }
+);
+
+const TabConsignment = dynamic(
+    () => import("./tab-consignment").then((m) => m.TabConsignment),
+    { ssr: false, loading: TabSkeleton }
+);
+
+const TabBranchPolicy = dynamic(
+    () => import("./tab-branch-policy").then((m) => m.TabBranchPolicy),
+    { ssr: false, loading: TabSkeleton }
+);
+
+const TabCash = dynamic(
+    () => import("./tab-cash").then((m) => m.TabCash),
+    { ssr: false, loading: TabSkeleton }
+);
+
+const TabPrinter = dynamic(
+    () => import("./tab-printer").then((m) => m.TabPrinter),
+    { ssr: false, loading: TabSkeleton }
+);
+
+const SettingsTutorialController = dynamic(
+    () => import("../tutorial/components/settings-tutorial-controller").then((m) => m.SettingsTutorialController),
+    { ssr: false }
+);
 
 export function StoreProfile() {
     const { settings, isLoading: isSettingsLoading } = useSettingsStore();

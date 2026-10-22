@@ -2,16 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useCheckoutState } from "@/features/checkout/hooks/use-checkout-state";
+import dynamic from "next/dynamic";
 import { CheckoutTopBar } from "@/features/checkout/components/checkout-top-bar";
 import { CheckoutCartSection } from "@/features/checkout/components/checkout-cart-section";
 import { CheckoutTotalsSection } from "@/features/checkout/components/checkout-totals-section";
-import { PaymentDialog } from "@/features/checkout/components/payment/payment-dialog";
-import { HoldListDialog } from "@/features/checkout/components/hold-list-dialog";
-import { ReceiptDialog } from "@/features/checkout/components/receipt-dialog";
-import { OfflineTransactionsDialog } from "@/features/checkout/components/offline-transactions-dialog";
-import { PastTransactionsDialog } from "@/features/checkout/components/past-transactions-dialog";
-import { CashierSettingsDialog } from "@/features/checkout/components/cashier-settings-dialog";
-import { BukaShiftModal, InfoSesiAktifModal } from "@/features/checkout/components/cash-drawer";
 import { useCurrentCashDrawer } from "@/features/checkout/api/cash-drawer-api";
 import { useSession } from "next-auth/react";
 import { signOut } from "@/lib/auth-helpers";
@@ -22,13 +16,62 @@ import { useNetworkStatus } from "@/hooks/use-network-status";
 import { useOfflineReadiness } from "@/hooks/use-offline-readiness";
 import { toast } from "sonner";
 import { useSyncEngine } from "@/features/checkout/hooks/use-sync-engine";
-import { PrintReceiptLayout } from "@/features/checkout/components/print-receipt-layout";
 import type { CashDrawerSession } from "@/features/checkout/types";
 import { db } from "@/lib/db";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { Show } from "@/components/ui/show";
-import { CheckoutTutorialController } from "@/features/tutorial/components/checkout-tutorial-controller";
 import { useTutorialStore } from "@/stores/tutorial-store";
+
+// ─── Dynamic Modal Dialogs & Non-Critical Controllers ─────────────────────────
+const PaymentDialog = dynamic(
+    () => import("@/features/checkout/components/payment/payment-dialog").then((m) => m.PaymentDialog),
+    { ssr: false }
+);
+
+const HoldListDialog = dynamic(
+    () => import("@/features/checkout/components/hold-list-dialog").then((m) => m.HoldListDialog),
+    { ssr: false }
+);
+
+const ReceiptDialog = dynamic(
+    () => import("@/features/checkout/components/receipt-dialog").then((m) => m.ReceiptDialog),
+    { ssr: false }
+);
+
+const OfflineTransactionsDialog = dynamic(
+    () => import("@/features/checkout/components/offline-transactions-dialog").then((m) => m.OfflineTransactionsDialog),
+    { ssr: false }
+);
+
+const PastTransactionsDialog = dynamic(
+    () => import("@/features/checkout/components/past-transactions-dialog").then((m) => m.PastTransactionsDialog),
+    { ssr: false }
+);
+
+const CashierSettingsDialog = dynamic(
+    () => import("@/features/checkout/components/cashier-settings-dialog").then((m) => m.CashierSettingsDialog),
+    { ssr: false }
+);
+
+const BukaShiftModal = dynamic(
+    () => import("@/features/checkout/components/cash-drawer").then((m) => m.BukaShiftModal),
+    { ssr: false }
+);
+
+const InfoSesiAktifModal = dynamic(
+    () => import("@/features/checkout/components/cash-drawer").then((m) => m.InfoSesiAktifModal),
+    { ssr: false }
+);
+
+const PrintReceiptLayout = dynamic(
+    () => import("@/features/checkout/components/print-receipt-layout").then((m) => m.PrintReceiptLayout),
+    { ssr: false }
+);
+
+const CheckoutTutorialController = dynamic(
+    () => import("@/features/tutorial/components/checkout-tutorial-controller").then((m) => m.CheckoutTutorialController),
+    { ssr: false }
+);
 
 export function Checkout() {
     const isOnline = useNetworkStatus();

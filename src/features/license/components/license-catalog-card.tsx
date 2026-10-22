@@ -1,27 +1,31 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { cn } from "@/lib/utils";
 import {
     IconArrowsExchange,
     IconAssembly,
     IconBuildingStore,
     IconBuildingWarehouse,
+    IconCalendar,
     IconChartBar,
     IconCreditCard,
+    IconDeviceDesktop,
+    IconLayoutGrid,
+    IconMapPin,
     IconPackage,
-    IconPlus,
     IconReceipt2,
     IconReportMoney,
     IconScan,
     IconTruckDelivery,
-    IconUsers
+    IconUsers,
 } from "@tabler/icons-react";
+import { ADDON_METADATA } from "../constants/license-constants";
 import type { CatalogAddon, ProrateItem } from "../types";
+import { LicenseCatalogAction } from "./catalog/license-catalog-action";
+import { LicenseCatalogPriceBlock } from "./catalog/license-catalog-price-block";
+import { LicenseCatalogStatusBadge } from "./catalog/license-catalog-status-badge";
 
-interface LicenseCatalogCardProps {
+export interface LicenseCatalogCardProps {
     addon: CatalogAddon;
     isOwned: boolean;
     isOperable?: boolean;
@@ -44,70 +48,92 @@ const ADDON_VISUALS: Record<
         icon: IconTruckDelivery,
         iconBg: "bg-emerald-50",
         iconColor: "text-emerald-600",
-        borderColor: "border-emerald-100",
+        borderColor: "border-emerald-200/80",
     },
     debts: {
         icon: IconCreditCard,
         iconBg: "bg-rose-50",
         iconColor: "text-rose-600",
-        borderColor: "border-rose-100",
+        borderColor: "border-rose-200/80",
     },
     expenses: {
         icon: IconReceipt2,
         iconBg: "bg-amber-50",
         iconColor: "text-amber-600",
-        borderColor: "border-amber-100",
+        borderColor: "border-amber-200/80",
     },
     members: {
         icon: IconUsers,
         iconBg: "bg-violet-50",
         iconColor: "text-violet-600",
-        borderColor: "border-violet-100",
+        borderColor: "border-violet-200/80",
     },
     stock_opname: {
         icon: IconScan,
         iconBg: "bg-indigo-50",
         iconColor: "text-indigo-600",
-        borderColor: "border-indigo-100",
+        borderColor: "border-indigo-200/80",
     },
     reports: {
         icon: IconChartBar,
         iconBg: "bg-cyan-50",
         iconColor: "text-cyan-600",
-        borderColor: "border-cyan-100",
+        borderColor: "border-cyan-200/80",
     },
     accounting: {
         icon: IconReportMoney,
         iconBg: "bg-blue-50",
         iconColor: "text-blue-600",
-        borderColor: "border-blue-100",
+        borderColor: "border-blue-200/80",
     },
     consignment: {
         icon: IconArrowsExchange,
         iconBg: "bg-teal-50",
         iconColor: "text-teal-600",
-        borderColor: "border-teal-100",
+        borderColor: "border-teal-200/80",
     },
     production: {
         icon: IconAssembly,
         iconBg: "bg-orange-50",
         iconColor: "text-orange-600",
-        borderColor: "border-orange-100",
+        borderColor: "border-orange-200/80",
     },
     assets: {
         icon: IconBuildingWarehouse,
         iconBg: "bg-purple-50",
         iconColor: "text-purple-600",
-        borderColor: "border-purple-100",
+        borderColor: "border-purple-200/80",
     },
     multi_store: {
         icon: IconBuildingStore,
         iconBg: "bg-emerald-50",
         iconColor: "text-emerald-600",
-        borderColor: "border-emerald-100",
+        borderColor: "border-emerald-200/80",
+    },
+    kds: {
+        icon: IconDeviceDesktop,
+        iconBg: "bg-rose-50",
+        iconColor: "text-rose-600",
+        borderColor: "border-rose-200/80",
+    },
+    table_mgmt: {
+        icon: IconLayoutGrid,
+        iconBg: "bg-sky-50",
+        iconColor: "text-sky-600",
+        borderColor: "border-sky-200/80",
+    },
+    reservation: {
+        icon: IconCalendar,
+        iconBg: "bg-fuchsia-50",
+        iconColor: "text-fuchsia-600",
+        borderColor: "border-fuchsia-200/80",
     },
 };
 
+/**
+ * Compact Add-on Card formatted uniformly with Server Package cards.
+ * Lightweight, hardware-accelerated, and responsive across mobile, tablet, and desktop.
+ */
 export function LicenseCatalogCard({
     addon,
     isOwned,
@@ -117,7 +143,8 @@ export function LicenseCatalogCard({
     isProrateLoading = false,
     prorateItem,
 }: LicenseCatalogCardProps) {
-    const visual = ADDON_VISUALS[addon.code] ?? {
+    const codeLower = (addon.code || "").toLowerCase();
+    const visual = ADDON_VISUALS[codeLower] ?? {
         icon: IconPackage,
         iconBg: "bg-slate-100",
         iconColor: "text-slate-600",
@@ -125,164 +152,80 @@ export function LicenseCatalogCard({
     };
     const VisualIcon = visual.icon;
 
-    const price =
-        billingView === "monthly"
-            ? addon.harga_bulanan
-            : addon.harga_tahunan;
-
-    const hasProratePrice =
-        !isOwned &&
-        billingView === "monthly" &&
-        Boolean(prorateItem && prorateItem.is_prorated);
+    const meta = ADDON_METADATA[codeLower];
+    const primaryMenuPath = meta?.menuPaths?.[0];
 
     return (
         <div
             className={cn(
-                "rounded-xl border p-3.5 sm:p-4 flex flex-col justify-between gap-3.5 transition-all",
+                "relative rounded-xl border p-3 sm:p-3.5 flex flex-col justify-between gap-2.5 transition-all shadow-2xs group hover:shadow-xs",
                 isOwned
                     ? isOperable
-                        ? "bg-slate-50/40 border-slate-200/90"
+                        ? "bg-slate-50/50 border-slate-200/90"
                         : "bg-rose-50/20 border-rose-200/70"
-                    : "bg-white border-slate-200 hover:border-emerald-300 hover:shadow-2xs",
+                    : "bg-white border-slate-200/80 hover:border-slate-300"
             )}
         >
-            {/* Top: Semantic Icon + Title + Status */}
-            <div className="space-y-2.5">
-                <div className="flex items-start justify-between gap-2.5">
-                    <div className="flex items-center gap-2.5">
+            <div className="space-y-2">
+                {/* Top: Semantic Icon + Title + Code + Status Badge */}
+                <div className="flex items-start justify-between gap-1.5">
+                    <div className="flex items-center gap-2 min-w-0">
                         <div
                             className={cn(
-                                "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border shadow-2xs",
+                                "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border shadow-2xs",
                                 visual.iconBg,
                                 visual.iconColor,
-                                visual.borderColor,
+                                visual.borderColor
                             )}
                         >
-                            <VisualIcon size={18} strokeWidth={2} />
+                            <VisualIcon size={15} strokeWidth={2.2} />
                         </div>
-                        <div>
-                            <h4 className="text-xs font-bold text-slate-900 tracking-tight">
+                        <div className="min-w-0">
+                            <h5 className="font-bold text-xs text-slate-900 group-hover:text-emerald-700 transition-colors truncate">
                                 {addon.nama}
-                            </h4>
-                            <span className="font-mono text-[10px] text-slate-400 font-semibold">
+                            </h5>
+                            <span className="font-mono text-[9px] text-slate-400 font-semibold uppercase">
                                 {addon.code}
                             </span>
                         </div>
                     </div>
 
-                    {isOwned ? (
-                        isOperable ? (
-                            <Badge
-                                variant="outline"
-                                className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border-emerald-200/90 shrink-0 flex items-center gap-1 shadow-2xs"
-                            >
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                <span>Berlangganan</span>
-                            </Badge>
-                        ) : (
-                            <Badge
-                                variant="outline"
-                                className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border-rose-200 shrink-0 flex items-center gap-1 shadow-2xs"
-                            >
-                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                                <span>Nonaktif</span>
-                            </Badge>
-                        )
-                    ) : (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200/60 shrink-0">
-                            Tersedia
-                        </span>
-                    )}
+                    <LicenseCatalogStatusBadge
+                        isOwned={isOwned}
+                        isOperable={isOperable}
+                    />
                 </div>
 
-                <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2">
+                {/* Middle: Menu Location Tag (Hardware/Module specs style) */}
+                {primaryMenuPath && (
+                    <div className="flex flex-wrap gap-1 text-[10px] text-slate-600 font-mono font-medium">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200/60 truncate max-w-full">
+                            <IconMapPin size={10} className="text-slate-400 shrink-0" />
+                            <span className="truncate">{primaryMenuPath}</span>
+                        </span>
+                    </div>
+                )}
+
+                {/* Description: Exactly 2 lines */}
+                <p className="text-[11px] text-slate-500 leading-snug line-clamp-2">
                     {addon.description}
                 </p>
             </div>
 
-            {/* Bottom: Pricing + Action */}
-            <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-slate-100">
-                <div>
-                    {isProrateLoading && billingView === "monthly" && !isOwned ? (
-                        <div>
-                            <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-medium">
-                                Biaya Langganan
-                            </span>
-                            <div className="flex items-center gap-1.5 pt-1 pb-0.5">
-                                <Skeleton className="h-4 w-20 rounded" />
-                            </div>
-                        </div>
-                    ) : hasProratePrice && prorateItem ? (
-                        <div className="space-y-0.5">
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-medium">
-                                    Biaya Langganan
-                                </span>
-                                <Badge
-                                    variant="outline"
-                                    className="text-[9px] font-bold px-1.5 py-0 rounded bg-emerald-50 text-emerald-700 border-emerald-200"
-                                >
-                                    Prorata
-                                </Badge>
-                            </div>
-                            <div className="flex items-baseline gap-1.5 flex-wrap">
-                                <span className="text-xs font-black text-slate-900 font-mono">
-                                    {prorateItem.formatted_price || formatRupiah(prorateItem.price)}
-                                </span>
-                                <span className="text-[10px] text-slate-400 line-through font-mono">
-                                    {formatRupiah(addon.harga_bulanan)}
-                                </span>
-                            </div>
-                            <span className="text-[10px] text-slate-400 block leading-tight">
-                                sisa {prorateItem.prorated_days} hari masa aktif lisensi
-                            </span>
-                        </div>
-                    ) : (
-                        <div>
-                            <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-medium">
-                                Biaya Langganan
-                            </span>
-                            <div className="flex items-baseline gap-1">
-                                <span className="text-xs font-extrabold text-slate-900 font-mono">
-                                    {formatRupiah(price)}
-                                </span>
-                                <span className="text-[10px] text-slate-400 font-medium">
-                                    /{billingView === "monthly" ? "bulan" : "tahun"}
-                                </span>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                <div>
-                    {isOwned ? (
-                        isOperable ? (
-                            // <div className="h-7.5 pxO-3 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 flex items-center gap-1 shadow-2xs">
-                            //     <IconCheck size={13} strokeWidth={2.5} />
-                            //     <span>Aktif</span>
-                            // </div>
-                            <></>
-                        ) : (
-                            <button
-                                type="button"
-                                onClick={onOrder}
-                                className="h-7.5 px-2.5 rounded-lg text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 border border-rose-200/80 transition-colors duration-150 flex items-center gap-1 cursor-pointer shadow-2xs"
-                                title="Perbarui langganan untuk mengaktifkan kembali add-on ini"
-                            >
-                                <span>Aktifkan Kembali</span>
-                            </button>
-                        )
-                    ) : (
-                        <button
-                            type="button"
-                            onClick={onOrder}
-                            className="h-7.5 px-3 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200/80 border border-emerald-200/80 transition-colors duration-150 flex items-center gap-1 cursor-pointer shadow-2xs"
-                        >
-                            <IconPlus size={13} strokeWidth={2.5} />
-                            <span>Pesan Add-on</span>
-                        </button>
-                    )}
-                </div>
+            {/* Bottom: Price + Action Button */}
+            <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2">
+                <LicenseCatalogPriceBlock
+                    addon={addon}
+                    isOwned={isOwned}
+                    billingView={billingView}
+                    isProrateLoading={isProrateLoading}
+                    prorateItem={prorateItem}
+                />
+                <LicenseCatalogAction
+                    isOwned={isOwned}
+                    isOperable={isOperable}
+                    onOrder={onOrder}
+                />
             </div>
         </div>
     );

@@ -12,15 +12,43 @@ import {
     IconShoppingCart,
 } from "@tabler/icons-react";
 import { AnimatePresence, motion } from "framer-motion";
+import dynamic from "next/dynamic";
 import { LicenseTopNav } from "./license-top-nav";
 import { LicenseHeroCard } from "./license-hero-card";
-import { LicenseActivateForm } from "./license-activate-form";
-import { LicenseAddonsTab } from "./license-addons-tab";
-import { LicenseCatalogSection } from "./license-catalog-section";
-import { LicenseInvoicesTable } from "./license-invoices-table";
-import { LicenseOrderDialog } from "./license-order-dialog";
 import { LicenseKeyMaskedChip } from "./license-key-masked-chip";
 import { LicenseExpiredWrapper } from "./license-expired-wrapper";
+
+const TabContentSkeleton = () => (
+    <div className="h-64 w-full rounded-2xl bg-white border border-slate-100 p-6 animate-pulse flex items-center justify-center">
+        <div className="h-4 w-32 bg-slate-100 rounded-lg" />
+    </div>
+);
+
+// ─── Dynamic Tabs & Order Modal ───────────────────────────────────────────────
+const LicenseActivateForm = dynamic(
+    () => import("./license-activate-form").then((m) => m.LicenseActivateForm),
+    { ssr: false, loading: TabContentSkeleton }
+);
+
+const LicenseAddonsTab = dynamic(
+    () => import("./license-addons-tab").then((m) => m.LicenseAddonsTab),
+    { ssr: false, loading: TabContentSkeleton }
+);
+
+const LicenseCatalogSection = dynamic(
+    () => import("./license-catalog-section").then((m) => m.LicenseCatalogSection),
+    { ssr: false, loading: TabContentSkeleton }
+);
+
+const LicenseInvoicesTable = dynamic(
+    () => import("./license-invoices-table").then((m) => m.LicenseInvoicesTable),
+    { ssr: false, loading: TabContentSkeleton }
+);
+
+const LicenseOrderDialog = dynamic(
+    () => import("./license-order-dialog").then((m) => m.LicenseOrderDialog),
+    { ssr: false }
+);
 import { AppButton } from "@/components/shared/app-button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -87,11 +115,11 @@ export function LicenseStandalonePage() {
     const timeMetrics = getLicenseTimeMetrics(status);
 
     const tabs: TabDef[] = [
-        { id: "status",   label: "Ringkasan",        icon: IconShieldCheck },
-        { id: "catalog",  label: "Paket & Add-on",   icon: IconPackage     },
+        { id: "status",   label: "Ringkasan",                icon: IconShieldCheck },
+        { id: "catalog",  label: "Katalog Fitur & Add-on",   icon: IconPackage     },
         { id: "addons",   label: isOperable ? "Add-on Aktif" : "Add-on", icon: IconShoppingCart },
-        { id: "invoices", label: "Riwayat Tagihan",  icon: IconFileInvoice  },
-        { id: "activate", label: "Aktivasi License", icon: IconKey         },
+        { id: "invoices", label: "Riwayat Tagihan",          icon: IconFileInvoice  },
+        { id: "activate", label: "Aktivasi License",         icon: IconKey         },
     ];
 
     return (
@@ -100,7 +128,7 @@ export function LicenseStandalonePage() {
             <LicenseTopNav showBackToDashboard={isOperable} />
 
             {/* Main Content Area */}
-            <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-4 space-y-4">
+            <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-4 space-y-4 pb-28 sm:pb-8">
                 {/* ── Hero License Card ─────────────────────────────────────────── */}
                 {statusLoading ? (
                     <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 space-y-4 shadow-2xs">
@@ -142,7 +170,7 @@ export function LicenseStandalonePage() {
                 ) : null}
 
                 {/* ── Tab Navigation (Apple/Google Sliding Segmented Controls) ── */}
-                <div className="sticky top-12 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 bg-slate-50/90 backdrop-blur-md border-b border-slate-200/70">
+                <div className="sticky top-12 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 bg-slate-50/95 border-b border-slate-200/70">
                     <div className="flex items-center justify-between gap-3">
                         {/* Sliding Tab Pills */}
                         <div className="flex items-center gap-1 overflow-x-auto scrollbar-none bg-slate-200/60 p-1 rounded-xl w-full sm:w-fit border border-slate-200/70">
@@ -176,6 +204,18 @@ export function LicenseStandalonePage() {
                                                 className={isActive ? "text-emerald-600" : "text-slate-500"}
                                             />
                                             <span>{tab.label}</span>
+                                            {tab.id === "catalog" && catalogList[0]?.addons && catalogList[0].addons.length > 0 && (
+                                                <span
+                                                    className={cn(
+                                                        "text-[9px] font-black px-1.5 py-0.2 rounded-full",
+                                                        isActive
+                                                            ? "bg-emerald-100 text-emerald-800"
+                                                            : "bg-slate-300/70 text-slate-700"
+                                                    )}
+                                                >
+                                                    {catalogList[0].addons.length}
+                                                </span>
+                                            )}
                                             {tab.id === "addons" && activeAddons.length > 0 && (
                                                 <span
                                                     className={cn(

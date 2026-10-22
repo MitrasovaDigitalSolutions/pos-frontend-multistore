@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
@@ -9,9 +10,18 @@ import {
     downloadOpnameTemplateXlsx,
     downloadOpnameSheetPdf,
 } from "@/features/stock/api/stock-api";
-import { AdjustmentDialog } from "@/features/stock/components/adjustment-dialog";
-import { OpnameDialog } from "@/features/stock/components/opname-dialog";
 import { OpnameList } from "@/features/stock/components/opname-list";
+
+// ─── Dynamic Modal Dialogs ───────────────────────────────────────────────────
+const AdjustmentDialog = dynamic(
+    () => import("@/features/stock/components/adjustment-dialog").then((m) => m.AdjustmentDialog),
+    { ssr: false }
+);
+
+const OpnameDialog = dynamic(
+    () => import("@/features/stock/components/opname-dialog").then((m) => m.OpnameDialog),
+    { ssr: false }
+);
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useBranchPolicy } from "@/hooks/use-branch-policy";
 import {

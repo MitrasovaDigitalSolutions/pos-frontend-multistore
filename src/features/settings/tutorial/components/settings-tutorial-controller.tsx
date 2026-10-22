@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Joyride } from "react-joyride";
+import { DynamicJoyride as Joyride } from "@/components/shared/dynamic-joyride";
 import { useSettingsTutorial, type SettingsTutorialControls } from "../hooks/use-settings-tutorial";
 import { SettingsTutorialTooltip } from "./settings-tutorial-tooltip";
 import { SettingsTutorialCursor } from "./settings-tutorial-cursor";
