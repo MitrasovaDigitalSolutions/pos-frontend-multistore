@@ -9,11 +9,35 @@ import { ROUTES } from "@/constants/routes";
 import { useIsCentralStore } from "@/hooks/use-active-store";
 import { REMITTANCE_QUERY_KEYS } from "../constants";
 import { useUnsettledRemittanceSummary } from "../api/remittance-api";
+import dynamic from "next/dynamic";
 import { RemittanceStatCards } from "./remittance-stat-cards";
-import { UnsettledTransactionsTable } from "./unsettled-transactions-table";
-import { RemittanceHistoryTable } from "./remittance-history-table";
-import { CreateRemittanceDialog } from "./create-remittance-dialog";
-import { ConsignmentStockPositionTable } from "./consignment-stock-position-table";
+
+const TableSkeleton = () => (
+  <div className="h-64 rounded-2xl bg-white border border-slate-100 p-6 animate-pulse flex items-center justify-center">
+    <div className="h-4 w-32 bg-slate-100 rounded-lg" />
+  </div>
+);
+
+// ─── Dynamic Tab Tables & Modal Dialog ───────────────────────────────────────
+const UnsettledTransactionsTable = dynamic(
+  () => import("./unsettled-transactions-table").then((m) => m.UnsettledTransactionsTable),
+  { ssr: false, loading: TableSkeleton }
+);
+
+const RemittanceHistoryTable = dynamic(
+  () => import("./remittance-history-table").then((m) => m.RemittanceHistoryTable),
+  { ssr: false, loading: TableSkeleton }
+);
+
+const ConsignmentStockPositionTable = dynamic(
+  () => import("./consignment-stock-position-table").then((m) => m.ConsignmentStockPositionTable),
+  { ssr: false, loading: TableSkeleton }
+);
+
+const CreateRemittanceDialog = dynamic(
+  () => import("./create-remittance-dialog").then((m) => m.CreateRemittanceDialog),
+  { ssr: false }
+);
 
 export function RemittanceDashboard() {
   const isCentralStore = useIsCentralStore();

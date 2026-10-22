@@ -1,5 +1,6 @@
 import { hasPermission, hasRole } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
+import type { BusinessPresetType } from "@/features/license/types";
 import {
     IconArrowsLeftRight,
     IconBox,
@@ -36,6 +37,8 @@ export interface NavItem {
     badgeVariant?: "emerald" | "amber" | "rose" | "blue" | "slate";
     permission?: PermissionChecker;
     addon?: string;
+    /** Restrict this item to specific business presets (e.g. ["confectionery"]). If omitted, shown for all presets. */
+    businessPresets?: BusinessPresetType[];
     storeScope?: "central" | "branch";
     branchPolicy?: BranchPolicyKey;
     children?: NavItem[];
@@ -150,6 +153,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 label: "Konsinyasi",
                 icon: IconBuildingWarehouse,
                 addon: "consignment",
+                businessPresets: ["confectionery"],
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") ||
                     hasPermission(roles, permissions, "view_consignment") ||
@@ -269,6 +273,7 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                 label: "Manufaktur",
                 icon: IconBuildingFactory2,
                 addon: "production",
+                businessPresets: ["confectionery"],
                 permission: (roles, permissions) =>
                     hasRole(roles, "admin") ||
                     hasPermission(roles, permissions, "view_production") ||
@@ -790,10 +795,18 @@ export function filterNavItems(
     permissions: string[],
     activeAddons?: string[] | null,
     isCentral?: boolean,
-    isBranchPolicyAllowed?: (key: BranchPolicyKey) => boolean
+    isBranchPolicyAllowed?: (key: BranchPolicyKey) => boolean,
+    currentBusinessType: BusinessPresetType = "retail"
 ): NavItem[] {
     return items
         .map((item) => {
+            // Check business preset requirement: item restricted to specific presets
+            if (item.businessPresets && item.businessPresets.length > 0) {
+                if (!item.businessPresets.includes(currentBusinessType)) {
+                    return null;
+                }
+            }
+
             // Check storeScope requirement: item can be restricted to central HQ or branch
             if (item.storeScope) {
                 if (item.storeScope === "central" && !isCentral) return null;
@@ -829,7 +842,8 @@ export function filterNavItems(
                     permissions,
                     activeAddons,
                     isCentral,
-                    isBranchPolicyAllowed
+                    isBranchPolicyAllowed,
+                    currentBusinessType
                 );
                 if (filteredChildren.length === 0) return null;
                 return { ...item, children: filteredChildren };

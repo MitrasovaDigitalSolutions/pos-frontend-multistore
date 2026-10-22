@@ -1,6 +1,6 @@
 // ─── License Feature Constants ───────────────────────────────────────────────
 
-import type { LicenseEffectiveStatus } from "../types";
+import type { BusinessPresetType, LicenseEffectiveStatus } from "../types";
 
 export const LICENSE_STATUS_LABELS: Record<LicenseEffectiveStatus, string> = {
     active: "Aktif",
@@ -190,4 +190,41 @@ export const SUBSCRIPTION_TYPE_BADGE_LABELS: Record<string, string> = {
     lifetime: "Permanen",
     trial: "Uji Coba",
 };
+
+// ─── Business Preset Constants ───────────────────────────────────────────────
+
+
+export const BUSINESS_PRESET_CODES = {
+    RETAIL: "retail",
+    CONFECTIONERY: "confectionery",
+    PHARMACY: "pharmacy",
+} as const;
+
+export const BUSINESS_PRESET_LABELS: Record<BusinessPresetType, string> = {
+    retail: "Retail (Minimarket, Toko Kelontong, Fashion)",
+    confectionery: "Konveksi / Manufaktur (Jahit, Sablon, Produksi BOM)",
+    pharmacy: "Apotek / Farmasi (Obat, Resep Dokter, FEFO Batch)",
+};
+
+export const BUSINESS_PRESET_SHORT_LABELS: Record<BusinessPresetType, string> = {
+    retail: "Retail",
+    confectionery: "Konveksi",
+    pharmacy: "Apotek",
+};
+
+export const BUSINESS_PRESET_DESCRIPTIONS: Record<BusinessPresetType, string> = {
+    retail: "Cocok untuk toko retail umum, fashion, minimarket, toko alat tulis, dan aksesoris.",
+    confectionery: "Cocok untuk konveksi pakaian, sablon/printing kaos, garmen, dan manufaktur ber-BOM.",
+    pharmacy: "Cocok untuk apotek, toko obat, klinik pratama, dan toko alat kesehatan.",
+};
+
+export const BUSINESS_PRESET_BADGE_VARIANTS: Record<
+    BusinessPresetType,
+    "emerald" | "amber" | "rose" | "blue" | "slate"
+> = {
+    retail: "blue",
+    confectionery: "amber",
+    pharmacy: "emerald",
+};
+
 

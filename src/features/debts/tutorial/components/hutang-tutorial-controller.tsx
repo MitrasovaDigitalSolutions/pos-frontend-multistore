@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 import { usePathname } from "next/navigation";
-import { Joyride } from "react-joyride";
+import { DynamicJoyride as Joyride } from "@/components/shared/dynamic-joyride";
 import { useHutangTutorial } from "../hooks/use-hutang-tutorial";
 import { HutangTutorialTooltip } from "./hutang-tutorial-tooltip";
 import { HutangTutorialCursor } from "./hutang-tutorial-cursor";

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Joyride } from "react-joyride";
+import { DynamicJoyride as Joyride } from "@/components/shared/dynamic-joyride";
 import { useCheckoutTutorial } from "../hooks/use-checkout-tutorial";
 import { TutorialTooltip } from "./tutorial-tooltip";
 import { AnimatedCursor } from "./animated-cursor";

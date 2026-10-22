@@ -6,6 +6,8 @@ import { useAppRouter } from "@/hooks/use-app-router";
 import { useLicenseStatusQuery } from "../api/license-api";
 import { toast } from "sonner";
 
+import type { BusinessPresetType } from "../types";
+
 interface LicenseAdminGuardProps {
     children: React.ReactNode;
 }
@@ -36,6 +38,18 @@ const ROUTE_ADDON_MAP: Array<{ prefix: string; addon: string; label: string }> =
 ];
 
 /**
+ * Mapping of route prefixes to their allowed business presets.
+ */
+const ROUTE_PRESET_MAP: Array<{
+    prefix: string;
+    presets: BusinessPresetType[];
+    label: string;
+}> = [
+    { prefix: "/admin/manufacturing", presets: ["confectionery"], label: "Manufaktur & Produksi" },
+    { prefix: "/admin/consignment", presets: ["confectionery"], label: "Konsinyasi" },
+];
+
+/**
  * Guard component for admin layout.
  * 1. Ensures only users with an active & valid license (or in allowed grace period)
  *    can access /admin and its subpages. If expired/suspended/not activated, redirects to /licenses.
@@ -60,7 +74,21 @@ export function LicenseAdminGuard({ children }: LicenseAdminGuardProps) {
             return;
         }
 
-        // 2. Add-on module subscription validation
+        // 2. Business preset route access validation
+        const currentBusinessType: BusinessPresetType = status.business_type || "retail";
+        const matchedPreset = ROUTE_PRESET_MAP.find((item) =>
+            pathname === item.prefix || pathname.startsWith(item.prefix + "/")
+        );
+
+        if (matchedPreset && !matchedPreset.presets.includes(currentBusinessType)) {
+            toast.error(
+                `Fitur ${matchedPreset.label} tidak tersedia untuk jenis usaha Anda.`
+            );
+            router.replace("/admin");
+            return;
+        }
+
+        // 3. Add-on module subscription validation
         const matchedAddon = ROUTE_ADDON_MAP.find((item) =>
             pathname === item.prefix || pathname.startsWith(item.prefix + "/")
         );
@@ -76,12 +104,21 @@ export function LicenseAdminGuard({ children }: LicenseAdminGuardProps) {
         }
     }, [status, isLoading, pathname, router]);
 
-    // Prevent flashing content of unpurchased addon or inactive license
+    // Prevent flashing content of unpurchased addon, incompatible preset, or inactive license
     if (status) {
         const isGraceAllowed = status.is_grace_period && status.can_operate;
         const isActiveAndValid = status.status === "active" && status.can_operate;
 
         if (!isActiveAndValid && !isGraceAllowed) {
+            return null;
+        }
+
+        const currentBusinessType: BusinessPresetType = status.business_type || "retail";
+        const matchedPreset = ROUTE_PRESET_MAP.find((item) =>
+            pathname === item.prefix || pathname.startsWith(item.prefix + "/")
+        );
+
+        if (matchedPreset && !matchedPreset.presets.includes(currentBusinessType)) {
             return null;
         }
 

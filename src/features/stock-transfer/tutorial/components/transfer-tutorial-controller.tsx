@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Joyride } from "react-joyride";
+import { DynamicJoyride as Joyride } from "@/components/shared/dynamic-joyride";
 import { useTransferTutorial } from "../hooks/use-transfer-tutorial";
 import { TransferTutorialTooltip } from "./transfer-tutorial-tooltip";
 import { TransferTutorialCursor } from "./transfer-tutorial-cursor";

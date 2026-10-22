@@ -2,6 +2,7 @@
 
 import {
     IconAlertTriangle,
+    IconBuildingStore,
     IconCalendarOff,
     IconClock,
     IconRefresh,
@@ -14,6 +15,7 @@ import { motion } from "framer-motion";
 import type { LicenseStatus } from "../types";
 import { getLicenseTimeMetrics } from "../utils/license-time";
 import {
+    BUSINESS_PRESET_SHORT_LABELS,
     LICENSE_STATUS_LABELS,
     SUBSCRIPTION_TYPE_LABELS,
 } from "../constants/license-constants";
@@ -121,6 +123,15 @@ export function LicenseHeroCard({
                                         <IconSparkles size={11} className="text-blue-500" />
                                         <span>
                                             {SUBSCRIPTION_TYPE_LABELS[data.subscription_type] ?? data.subscription_type}
+                                        </span>
+                                    </div>
+                                )}
+                                {/* Business Preset Badge */}
+                                {data.business_type && (
+                                    <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-[10px] font-bold tracking-wide shrink-0 bg-indigo-50 text-indigo-700 border-indigo-200/80">
+                                        <IconBuildingStore size={11} className="text-indigo-500" />
+                                        <span>
+                                            {BUSINESS_PRESET_SHORT_LABELS[data.business_type] ?? data.business_type}
                                         </span>
                                     </div>
                                 )}

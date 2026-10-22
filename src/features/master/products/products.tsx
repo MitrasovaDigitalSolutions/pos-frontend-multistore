@@ -5,13 +5,9 @@ import { useSession } from "next-auth/react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { hasRole, hasPermission } from "@/constants/roles";
+import dynamic from "next/dynamic";
 import { useProducts } from "./api/products-api";
 import { ProductTable } from "./components/product-table";
-import { ProductFormDialog } from "./components/product-form-dialog";
-import { ProductStoreDialog } from "./components/product-store-dialog";
-import { CatalogMatchDialog } from "./components/catalog-match-dialog";
-import { StoreProductEditDialog } from "./components/store-product-edit-dialog";
-import { ProductAdjustmentDialog } from "./components/product-adjustment-dialog";
 import { productSchema, type ProductInput } from "./schemas/product-schema";
 import type { Product } from "./types";
 import { useCategories } from "@/features/master/categories/api/categories-api";
@@ -23,9 +19,39 @@ import { FormRadioChips, type RadioChipOption } from "@/components/forms/form-ra
 import { IconBox, IconLayoutGrid, IconPackage, IconTools } from "@tabler/icons-react";
 import { useSearchParams } from "next/navigation";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
-import { ProductsTutorialController } from "./tutorial/components/products-tutorial-controller";
 import { useProductsTutorialStore } from "@/stores/products-tutorial-store";
 import { MOCK_MASTER_PRODUCTS } from "./tutorial/constants/products-tutorial-constants";
+
+// ─── Dynamic Modal Dialogs & Tutorial Controller ─────────────────────────────
+const ProductFormDialog = dynamic(
+  () => import("./components/product-form-dialog").then((m) => m.ProductFormDialog),
+  { ssr: false }
+);
+
+const ProductStoreDialog = dynamic(
+  () => import("./components/product-store-dialog").then((m) => m.ProductStoreDialog),
+  { ssr: false }
+);
+
+const CatalogMatchDialog = dynamic(
+  () => import("./components/catalog-match-dialog").then((m) => m.CatalogMatchDialog),
+  { ssr: false }
+);
+
+const StoreProductEditDialog = dynamic(
+  () => import("./components/store-product-edit-dialog").then((m) => m.StoreProductEditDialog),
+  { ssr: false }
+);
+
+const ProductAdjustmentDialog = dynamic(
+  () => import("./components/product-adjustment-dialog").then((m) => m.ProductAdjustmentDialog),
+  { ssr: false }
+);
+
+const ProductsTutorialController = dynamic(
+  () => import("./tutorial/components/products-tutorial-controller").then((m) => m.ProductsTutorialController),
+  { ssr: false }
+);
 
 interface ProductFilterValues {
   search: string;

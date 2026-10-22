@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Joyride } from "react-joyride";
+import { DynamicJoyride as Joyride } from "@/components/shared/dynamic-joyride";
 import { useProductsTutorial, type ProductsTutorialControls } from "../hooks/use-products-tutorial";
 import { ProductsTutorialTooltip } from "./products-tutorial-tooltip";
 import { ProductsTutorialCursor } from "./products-tutorial-cursor";

@@ -12,15 +12,43 @@ import {
     IconShoppingCart,
 } from "@tabler/icons-react";
 import { AnimatePresence, motion } from "framer-motion";
+import dynamic from "next/dynamic";
 import { LicenseTopNav } from "./license-top-nav";
 import { LicenseHeroCard } from "./license-hero-card";
-import { LicenseActivateForm } from "./license-activate-form";
-import { LicenseAddonsTab } from "./license-addons-tab";
-import { LicenseCatalogSection } from "./license-catalog-section";
-import { LicenseInvoicesTable } from "./license-invoices-table";
-import { LicenseOrderDialog } from "./license-order-dialog";
 import { LicenseKeyMaskedChip } from "./license-key-masked-chip";
 import { LicenseExpiredWrapper } from "./license-expired-wrapper";
+
+const TabContentSkeleton = () => (
+    <div className="h-64 w-full rounded-2xl bg-white border border-slate-100 p-6 animate-pulse flex items-center justify-center">
+        <div className="h-4 w-32 bg-slate-100 rounded-lg" />
+    </div>
+);
+
+// ─── Dynamic Tabs & Order Modal ───────────────────────────────────────────────
+const LicenseActivateForm = dynamic(
+    () => import("./license-activate-form").then((m) => m.LicenseActivateForm),
+    { ssr: false, loading: TabContentSkeleton }
+);
+
+const LicenseAddonsTab = dynamic(
+    () => import("./license-addons-tab").then((m) => m.LicenseAddonsTab),
+    { ssr: false, loading: TabContentSkeleton }
+);
+
+const LicenseCatalogSection = dynamic(
+    () => import("./license-catalog-section").then((m) => m.LicenseCatalogSection),
+    { ssr: false, loading: TabContentSkeleton }
+);
+
+const LicenseInvoicesTable = dynamic(
+    () => import("./license-invoices-table").then((m) => m.LicenseInvoicesTable),
+    { ssr: false, loading: TabContentSkeleton }
+);
+
+const LicenseOrderDialog = dynamic(
+    () => import("./license-order-dialog").then((m) => m.LicenseOrderDialog),
+    { ssr: false }
+);
 import { AppButton } from "@/components/shared/app-button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
