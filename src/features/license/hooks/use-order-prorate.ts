@@ -1,6 +1,10 @@
 import { useCallback, useMemo, useState } from "react";
 import type { CatalogAddon, ProrateCalculateData, ProrateItem } from "../types";
 import { useLicenseProrateQuery } from "../api/license-api";
+import {
+    buildProrateAddonsPayload,
+    createProrateLookupMap,
+} from "../utils/license-pricing";
 
 // ─── Params ──────────────────────────────────────────────────────────────────
 
@@ -62,9 +66,7 @@ export function useOrderProrate({
     // Build payload for ALL addons without custom_days. Sliding the duration
     // is calculated 100% on the client for instant 60fps UX without network roundtrips.
     const prorateAddonsPayload = useMemo(() => {
-        return addons.map((a) => ({
-            id: a.code || a.id,
-        }));
+        return buildProrateAddonsPayload(addons);
     }, [addons]);
 
     // Query key changes naturally when params change → react-query auto-fetches.
@@ -91,14 +93,8 @@ export function useOrderProrate({
 
     // O(n) lookup map keyed by addon_id and code for fast prorate lookups
     const prorateMap = useMemo(() => {
-        const map = new Map<string, ProrateItem>();
-        if (!prorateData?.items) return map;
-        for (const item of prorateData.items) {
-            if (item.addon_id) map.set(item.addon_id, item);
-            if (item.code) map.set(item.code, item);
-        }
-        return map;
-    }, [prorateData]);
+        return createProrateLookupMap(prorateData?.items);
+    }, [prorateData?.items]);
 
     return {
         addonCustomDays,

@@ -275,6 +275,16 @@ export interface AddonOrderItem {
     custom_days?: number;
 }
 
+export interface PurchasedAddonItem {
+    code: string;
+    nama: string;
+    description: string;
+    menuPaths: string[];
+    expires_at?: string | null;
+    days_remaining?: number | null;
+    is_currently_active?: boolean;
+}
+
 export interface ProrateCalculatePayload {
     addons: AddonOrderItem[];
     with_renewal?: boolean;
