@@ -3,33 +3,39 @@ import {
     ADDON_LABELS,
     ADDON_METADATA,
 } from "../constants/license-constants";
-import type { ProrateItem } from "../types";
+import type { PurchasedAddonItem } from "../types";
 import { useLicenseProrateQuery } from "../api/license-api";
+import {
+    buildProrateAddonsPayload,
+    createProrateLookupMap,
+} from "../utils/license-pricing";
 
-export interface PurchasedAddonItem {
-    code: string;
-    nama: string;
-    description: string;
-    menuPaths: string[];
-    expires_at?: string | null;
-    days_remaining?: number | null;
-    is_currently_active?: boolean;
+export type { PurchasedAddonItem };
+
+export interface UseLicenseAddonsReturn {
+    purchasedAddons: PurchasedAddonItem[];
+    filteredAddons: PurchasedAddonItem[];
+    searchQuery: string;
+    setSearchQuery: (query: string) => void;
+    isProrateLoading: boolean;
 }
 
 export function useLicenseAddons(
     activeAddons: string[],
     isOperable: boolean = true
-) {
+): UseLicenseAddonsReturn {
     const [searchQuery, setSearchQuery] = useState("");
 
+    // Normalizing keys for local lookup against ADDON_METADATA
     const normalizedActiveAddons = useMemo(
         () => (activeAddons || []).map((code) => code.toLowerCase()),
         [activeAddons]
     );
 
+    // Build uppercase and alphabetically sorted payload matching backend calculate contract
     const proratePayload = useMemo(
-        () => normalizedActiveAddons.map((code) => ({ id: code })),
-        [normalizedActiveAddons]
+        () => buildProrateAddonsPayload(activeAddons),
+        [activeAddons]
     );
 
     const { data: prorateData, isLoading: isProrateLoading } = useLicenseProrateQuery(
@@ -44,21 +50,10 @@ export function useLicenseAddons(
         }
     );
 
+    // Fast O(1) multi-cased lookup map for prorate responses
     const prorateMap = useMemo(() => {
-        const map = new Map<string, ProrateItem>();
-        if (!prorateData?.items) return map;
-        for (const item of prorateData.items) {
-            if (item.code) {
-                map.set(item.code, item);
-                map.set(item.code.toLowerCase(), item);
-            }
-            if (item.addon_id) {
-                map.set(item.addon_id, item);
-                map.set(item.addon_id.toLowerCase(), item);
-            }
-        }
-        return map;
-    }, [prorateData]);
+        return createProrateLookupMap(prorateData?.items);
+    }, [prorateData?.items]);
 
     // Parse active/purchased add-on items with metadata and accurate expiration from calculate endpoint
     const purchasedAddons = useMemo<PurchasedAddonItem[]>(() => {

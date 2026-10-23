@@ -4,6 +4,7 @@ import { ENDPOINTS } from "@/shared/api/endpoints";
 import { useLicenseStore } from "@/stores/license-store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { buildProrateAddonsPayload } from "../utils/license-pricing";
 import type {
     ActivatePayload,
     ActivateResponse,
@@ -127,12 +128,7 @@ export const licenseApi = {
 
     calculateProrate: async (payload: ProrateCalculatePayload): Promise<ProrateCalculateData> => {
         const cleanPayload = {
-            addons: payload.addons.map((a) => ({
-                id: a.id,
-                ...(a.custom_days !== undefined && a.custom_days !== null && a.custom_days > 0
-                    ? { custom_days: a.custom_days }
-                    : {}),
-            })),
+            addons: buildProrateAddonsPayload(payload.addons),
             with_renewal: Boolean(payload.with_renewal),
             renewal_period: payload.renewal_period ?? "monthly",
         };
@@ -263,38 +259,30 @@ export function useLicenseProrateQuery(
     params: Array<string | AddonOrderItem> | ProrateCalculatePayload,
     options?: { enabled?: boolean; staleTime?: number }
 ) {
-    const payload: ProrateCalculatePayload = Array.isArray(params)
-        ? {
-              addons: params.map((item) =>
-                  typeof item === "string" ? { id: item } : item
-              ),
-              with_renewal: false,
-              renewal_period: "monthly",
-          }
-        : {
-              addons: params.addons.map((item) =>
-                  typeof item === "string" ? { id: item } : item
-              ),
-              with_renewal: Boolean(params.with_renewal),
-              renewal_period: params.renewal_period ?? "monthly",
-          };
+    const rawAddons = Array.isArray(params) ? params : params.addons;
+    const withRenewal = Array.isArray(params) ? false : Boolean(params.with_renewal);
+    const renewalPeriod = Array.isArray(params) ? "monthly" : (params.renewal_period ?? "monthly");
 
-    const sortedKey = payload.addons
+    const normalizedAddons = buildProrateAddonsPayload(rawAddons);
+
+    const sortedKey = normalizedAddons
         .map((a) => `${a.id}:${a.custom_days ?? "auto"}`)
-        .sort()
         .join(",");
 
-    const withRenewalKey = Boolean(payload.with_renewal);
-    const periodKey = payload.renewal_period ?? "monthly";
+    const payload: ProrateCalculatePayload = {
+        addons: normalizedAddons,
+        with_renewal: withRenewal,
+        renewal_period: renewalPeriod,
+    };
 
     return useQuery({
         queryKey: queryKeys.license.prorate([
             sortedKey,
-            withRenewalKey ? "with_renewal" : "no_renewal",
-            periodKey,
+            withRenewal ? "with_renewal" : "no_renewal",
+            renewalPeriod,
         ]),
         queryFn: () => licenseApi.calculateProrate(payload),
-        enabled: (options?.enabled ?? true) && payload.addons.length > 0,
+        enabled: (options?.enabled ?? true) && normalizedAddons.length > 0,
         staleTime: options?.staleTime ?? 0,
     });
 }

@@ -1,4 +1,4 @@
-import type { ProrateItem } from "../types";
+import type { AddonOrderItem, ProrateItem } from "../types";
 
 /**
  * Calculates the effective prorated price of an add-on purely on the client side.
@@ -97,4 +97,54 @@ export function getAddonActiveDays(
         prorateItem.selected_days ||
         fallbackDays
     );
+}
+
+/**
+ * Normalizes and formats addon items into a deterministic, uppercase, and sorted payload
+ * matching backend requirements for the prorate calculate endpoint.
+ *
+ * @param addons Array of string IDs or objects containing code/id/custom_days
+ * @returns Sorted array of AddonOrderItem with uppercase IDs
+ */
+export function buildProrateAddonsPayload(
+    addons: Array<string | { id?: string; code?: string; custom_days?: number }>
+): AddonOrderItem[] {
+    return (addons || [])
+        .map((item) => {
+            if (typeof item === "string") {
+                return { id: item.toUpperCase() };
+            }
+            const id = (item.code || item.id || "").toUpperCase();
+            return {
+                id,
+                ...(item.custom_days !== undefined && item.custom_days !== null && item.custom_days > 0
+                    ? { custom_days: item.custom_days }
+                    : {}),
+            };
+        })
+        .filter((item) => Boolean(item.id))
+        .sort((a, b) => a.id.localeCompare(b.id));
+}
+
+/**
+ * Creates an O(1) multi-key lookup map for prorate items, indexing by both
+ * uppercase, lowercase, and original keys for `code` and `addon_id`.
+ */
+export function createProrateLookupMap(items?: ProrateItem[]): Map<string, ProrateItem> {
+    const map = new Map<string, ProrateItem>();
+    if (!items || !Array.isArray(items)) return map;
+
+    for (const item of items) {
+        if (item.code) {
+            map.set(item.code, item);
+            map.set(item.code.toLowerCase(), item);
+            map.set(item.code.toUpperCase(), item);
+        }
+        if (item.addon_id) {
+            map.set(item.addon_id, item);
+            map.set(item.addon_id.toLowerCase(), item);
+            map.set(item.addon_id.toUpperCase(), item);
+        }
+    }
+    return map;
 }
