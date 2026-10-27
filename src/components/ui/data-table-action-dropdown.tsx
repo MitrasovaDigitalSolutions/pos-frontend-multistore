@@ -10,7 +10,12 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 export interface DataTableActionDropdownItem {
@@ -51,6 +56,9 @@ export function DataTableActionDropdown({
     disabled = false,
     children,
 }: DataTableActionDropdownProps) {
+    const [open, setOpen] = React.useState(false);
+    const activeItems = (items || []).filter((item) => !item.hidden);
+
     const triggerBtn = (
         <button
             type="button"
@@ -62,27 +70,34 @@ export function DataTableActionDropdown({
             )}
             title={typeof tooltip === "string" ? tooltip : "Aksi Lainnya"}
             data-action="more-actions"
+            onClick={(e) => e.stopPropagation()}
         >
             {triggerIcon || <IconDotsVertical size={16} />}
         </button>
     );
 
-    const activeItems = (items || []).filter((item) => !item.hidden);
+    const triggerElement = (
+        <DropdownMenuTrigger asChild>
+            {triggerBtn}
+        </DropdownMenuTrigger>
+    );
 
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                {tooltip && !disabled ? (
-                    <Tooltip delayDuration={200}>
-                        <TooltipTrigger asChild>{triggerBtn}</TooltipTrigger>
+        <DropdownMenu open={open} onOpenChange={setOpen}>
+            {tooltip && !disabled ? (
+                <TooltipProvider delayDuration={200}>
+                    <Tooltip open={open ? false : undefined}>
+                        <TooltipTrigger asChild>
+                            {triggerElement}
+                        </TooltipTrigger>
                         <TooltipContent side="top" className="text-xs">
                             {tooltip}
                         </TooltipContent>
                     </Tooltip>
-                ) : (
-                    triggerBtn
-                )}
-            </DropdownMenuTrigger>
+                </TooltipProvider>
+            ) : (
+                triggerElement
+            )}
 
             <DropdownMenuContent
                 align={align}
@@ -105,7 +120,18 @@ export function DataTableActionDropdown({
                         <React.Fragment key={item.id || `dropdown-item-${index}`}>
                             <DropdownMenuItem
                                 disabled={item.disabled}
-                                onClick={item.onClick}
+                                onSelect={(e) => {
+                                    if (item.disabled) {
+                                        e.preventDefault();
+                                        return;
+                                    }
+                                    item.onClick?.();
+                                }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (item.disabled) return;
+                                    item.onClick?.();
+                                }}
                                 className={cn(
                                     "flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer text-xs font-semibold transition-colors outline-none",
                                     isDanger
