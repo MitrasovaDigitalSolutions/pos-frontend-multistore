@@ -15,6 +15,7 @@ import {
     IconHome,
     IconKey,
     IconNotebook,
+    IconPill,
     IconReceipt,
     IconSettings,
     IconShieldCheck,
@@ -180,6 +181,33 @@ export const NAVIGATION_CONFIG: SidebarSectionConfig[] = [
                             hasPermission(roles, permissions, "manage_consignment") ||
                             hasPermission(roles, permissions, "view_purchase") ||
                             hasPermission(roles, permissions, "manage_purchase"),
+                    },
+                ],
+            },
+            {
+                label: "Apotek & Farmasi",
+                icon: IconPill,
+                businessPresets: ["pharmacy"],
+                permission: (roles, permissions) =>
+                    hasRole(roles, "admin") ||
+                    hasPermission(roles, permissions, "view_sales") ||
+                    hasPermission(roles, permissions, "create_sales"),
+                children: [
+                    {
+                        label: "Template Racikan",
+                        path: ROUTES.ADMIN_PHARMACY_TEMPLATES,
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_sales") ||
+                            hasPermission(roles, permissions, "create_sales"),
+                    },
+                    {
+                        label: "Riwayat Racikan",
+                        path: ROUTES.ADMIN_PHARMACY_HISTORY,
+                        permission: (roles, permissions) =>
+                            hasRole(roles, "admin") ||
+                            hasPermission(roles, permissions, "view_sales") ||
+                            hasPermission(roles, permissions, "create_sales"),
                     },
                 ],
             },

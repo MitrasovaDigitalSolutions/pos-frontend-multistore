@@ -14,6 +14,7 @@ import {
     type PaymentStatus,
 } from "@/constants/purchase";
 import { formatDate, formatToTime, formatToReadableDateTime } from "@/lib/date-utils";
+import { useAppPreset } from "@/features/license/hooks/use-app-preset";
 
 interface ReceivingDetailDialogProps {
     open: boolean;
@@ -26,6 +27,7 @@ export function ReceivingDetailDialog({
     onOpenChange,
     receivingId,
 }: ReceivingDetailDialogProps) {
+    const { isPharmacy } = useAppPreset();
     const [activeTab, setActiveTab] = useState<"items" | "logs">("items");
 
     const { data: receiving, isLoading: isDetailLoading } = useReceivingDetail(receivingId);
@@ -242,8 +244,29 @@ export function ReceivingDetailDialog({
                                             const subtotal = (item.harga_beli || 0) * (item.kuantitas || 0);
                                             return (
                                                 <tr key={item.uid} className="hover:bg-slate-50/50">
-                                                    <td className="p-3 font-semibold text-slate-900">
-                                                        {item.product?.nama || "Produk dihapus"}
+                                                    <td className="p-3">
+                                                        <div className="space-y-1">
+                                                            <p className="font-semibold text-slate-900 leading-snug">
+                                                                {item.product?.nama || "Produk dihapus"}
+                                                            </p>
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                {item.product?.barcode && (
+                                                                    <span className="text-[10px] text-slate-400 font-mono">
+                                                                        {item.product.barcode}
+                                                                    </span>
+                                                                )}
+                                                                {isPharmacy && item.batch_number && (
+                                                                    <span className="text-[9px] font-mono font-bold bg-amber-50 text-amber-700 border border-amber-200/80 px-1.5 py-0.5 rounded">
+                                                                        #{item.batch_number}
+                                                                    </span>
+                                                                )}
+                                                                {isPharmacy && item.expired_date && (
+                                                                    <span className="text-[9px] font-mono font-semibold bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded">
+                                                                        Exp: {formatDate(item.expired_date, "dd MMM yyyy") || item.expired_date}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                     </td>
                                                     <td className="p-3 text-right text-slate-700 font-mono">
                                                         {item.harga_beli ? formatRupiah(item.harga_beli) : "Rp 0"}

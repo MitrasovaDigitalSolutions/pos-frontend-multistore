@@ -244,7 +244,7 @@ export function buildReceiptMobileApp58(
     lines.push(
         leftRight(
             `Kasir: ${
-                sale.user?.name ?? "-"
+                sale.user?.name || sale.user?.nama || "-"
             }`,
             "POS-01",
         ),
@@ -257,7 +257,7 @@ export function buildReceiptMobileApp58(
                     "-",
             ),
             formatDate(
-                sale.created_at,
+                sale.tanggal_transaksi || sale.created_at,
             ),
         ),
     );
@@ -338,6 +338,50 @@ export function buildReceiptMobileApp58(
         }
 
         lines.push("");
+    }
+
+    // =========================
+    // COMPOUNDED ITEMS (RACIKAN)
+    // =========================
+
+    const compoundedList = Array.isArray(sale.compounded_items) && sale.compounded_items.length > 0
+        ? sale.compounded_items
+        : Array.isArray(sale.prescriptions) && sale.prescriptions.length > 0
+            ? sale.prescriptions
+            : Array.isArray(sale.prescription_histories) && sale.prescription_histories.length > 0
+                ? sale.prescription_histories
+                : Array.isArray(sale.prescriptionHistories) && sale.prescriptionHistories.length > 0
+                    ? sale.prescriptionHistories
+                    : [];
+
+    if (compoundedList.length > 0) {
+        for (const comp of compoundedList) {
+            const kemasan = comp.jumlah_kemasan ?? 1;
+            const namaRacikan = `[RACIKAN] ${comp.nama_racikan} (${kemasan} bks)`;
+            lines.push(...wrapText(namaRacikan));
+
+            if (comp.aturan_pakai) {
+                lines.push(...wrapText(`Signa: ${comp.aturan_pakai}`));
+            }
+
+            const ingredients = Array.isArray(comp.ingredients) ? comp.ingredients : [];
+            const ingNames = ingredients
+                .map((i: Record<string, unknown>) => (i.nama_produk as string) || (i.product as Record<string, unknown>)?.nama as string)
+                .filter(Boolean)
+                .join(", ");
+
+            if (ingNames) {
+                lines.push(...wrapText(`Bahan: ${ingNames}`));
+            }
+
+            const totalFees = Number(comp.tuslah_fee || 0) + Number(comp.embalase_fee || 0);
+            if (totalFees > 0) {
+                lines.push(leftRight("Tuslah & Embalase:", money(totalFees)));
+            }
+
+            lines.push(leftRight("Total Racikan:", money(Number(comp.total_harga || 0))));
+            lines.push("");
+        }
     }
 
     lines.push(

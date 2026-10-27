@@ -19,6 +19,8 @@ import { formatDate } from "@/lib/date-utils";
 import axios from "axios";
 
 import { useActiveStoreStore } from "@/stores/active-store-store";
+import { useAppPreset } from "@/features/license/hooks/use-app-preset";
+import { usePharmacyCheckoutStore } from "@/features/pharmacy/hooks/use-pharmacy-checkout-store";
 
 export interface UseCheckoutStateOptions {
     validateCanPay?: () => boolean;
@@ -56,16 +58,23 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
     const namaTransaksiStore = useCheckoutStore((state) => state.namaTransaksi);
     const setNamaTransaksi = useCheckoutStore((state) => state.setNamaTransaksi);
 
+    const { isPharmacy } = useAppPreset();
+    const compoundedItems = usePharmacyCheckoutStore((state) => state.compoundedItems);
+    const clearPharmacyCheckout = usePharmacyCheckoutStore((state) => state.clearPharmacyCheckout);
+
     // Reset draft cart when switching stores
     const prevStoreRef = useRef(activeStoreUid);
     useEffect(() => {
         if (prevStoreRef.current && prevStoreRef.current !== activeStoreUid) {
             clearCart();
+            if (isPharmacy) {
+                clearPharmacyCheckout();
+            }
             setSelectedMember(null);
             setNamaTransaksi("");
         }
         prevStoreRef.current = activeStoreUid;
-    }, [activeStoreUid, clearCart, setSelectedMember, setNamaTransaksi]);
+    }, [activeStoreUid, clearCart, setSelectedMember, setNamaTransaksi, isPharmacy, clearPharmacyCheckout]);
 
     // Hydration check to prevent Next.js hydration mismatches
     const [mounted, setMounted] = useState(false);
@@ -107,7 +116,14 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
     const barcodeInputRef = useRef<HTMLInputElement>(null);
 
     // ─── Calculations ─────────────────────────────────────────────────────────
-    const subtotal = useMemo(() => cart.reduce((acc, i) => acc + calculateItemSubtotal(i), 0), [cart]);
+    const compoundedTotal = useMemo(
+        () => (isPharmacy ? compoundedItems.reduce((acc, i) => acc + i.total_harga, 0) : 0),
+        [isPharmacy, compoundedItems]
+    );
+    const subtotal = useMemo(
+        () => cart.reduce((acc, i) => acc + calculateItemSubtotal(i), 0) + compoundedTotal,
+        [cart, compoundedTotal]
+    );
     const getTaxRate = useSettingsStore((state) => state.getTaxRate);
     const taxRate = getTaxRate() / 100;
     const discountAmount = useMemo(() => {
@@ -122,7 +138,7 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
     // ─── Handlers ─────────────────────────────────────────────────────────────
 
     const handleHold = useCallback(() => {
-        if (cart.length === 0) return;
+        if (cart.length === 0 && compoundedItems.length === 0) return;
         try {
             setIsProcessing(true);
             const holdId = activeRecallId || Date.now().toString();
@@ -150,7 +166,7 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
         } finally {
             setIsProcessing(false);
         }
-    }, [cart, subtotal, discountType, discountValue, addHoldTransaction, clearCart, activeRecallId, selectedMember, namaTransaksi, setNamaTransaksi]);
+    }, [cart, compoundedItems.length, subtotal, discountType, discountValue, addHoldTransaction, clearCart, activeRecallId, selectedMember, namaTransaksi, setNamaTransaksi]);
 
     const openHoldList = useCallback(() => {
         setIsHoldListOpen(true);
@@ -159,17 +175,21 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
     const [isVoidConfirmOpen, setIsVoidConfirmOpen] = useState(false);
 
     const handleVoidDraft = useCallback(() => {
-        if (cart.length === 0) return;
+        const hasItems = cart.length > 0 || (isPharmacy && compoundedItems.length > 0);
+        if (!hasItems) return;
         setIsVoidConfirmOpen(true);
-    }, [cart.length]);
+    }, [cart.length, isPharmacy, compoundedItems.length]);
 
     const handleConfirmVoid = useCallback(() => {
         clearCart();
+        if (isPharmacy) {
+            clearPharmacyCheckout();
+        }
         setActiveRecallId(null);
         setNamaTransaksi("");
         setIsVoidConfirmOpen(false);
         toast.error("Transaksi dibatalkan.");
-    }, [clearCart, setNamaTransaksi]);
+    }, [clearCart, isPharmacy, clearPharmacyCheckout, setNamaTransaksi]);
 
     const handleAddProduct = async (product: Product) => {
         if (product.status !== "active") {
@@ -413,6 +433,9 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
 
     const handleNewTransaction = () => {
         clearCart();
+        if (isPharmacy) {
+            clearPharmacyCheckout();
+        }
         setActiveRecallId(null);
         setNamaTransaksi("");
         setReceipt(null);
@@ -477,7 +500,8 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "F1") {
                 e.preventDefault();
-                if (cart.length > 0) {
+                const hasItemsToPay = cart.length > 0 || (isPharmacy && compoundedItems.length > 0);
+                if (hasItemsToPay) {
                     if (optionsRef.current?.validateCanPay && !optionsRef.current.validateCanPay()) return;
                     setIsPayModalOpen(true);
                 }
@@ -486,7 +510,8 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
                 handleReprint();
             } else if (e.key === "F5") {
                 e.preventDefault();
-                if (cart.length > 0) handleHold();
+                const hasItemsToHold = cart.length > 0 || (isPharmacy && compoundedItems.length > 0);
+                if (hasItemsToHold) handleHold();
             } else if (e.key === "F6") {
                 e.preventDefault();
                 openHoldList();
@@ -505,7 +530,7 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
             clearInterval(timer);
             window.removeEventListener("keydown", handleKeyDown);
         };
-    }, [cart, handleHold, openHoldList, handleVoidDraft, handleReprint, options]);
+    }, [cart, handleHold, openHoldList, handleVoidDraft, handleReprint, options, compoundedItems.length, isPharmacy]);
 
     const hasAccessAdmin = !!(
         user?.roles?.includes("admin") ||
@@ -569,5 +594,7 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
         handleClearHoldList,
         handleReprint,
         lastTransactionId,
+        isPharmacy,
+        compoundedItems,
     };
 }

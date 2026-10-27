@@ -17,6 +17,8 @@ export const receivingItemSchema = z.object({
         .nullable()
         .optional()
         .transform((val) => (val === undefined || val === null ? null : Number(val))),
+    batch_number: z.string().nullable().optional().transform((val) => val || null),
+    expired_date: z.string().nullable().optional().transform((val) => val || null),
 });
 
 export const receivingSchema = z.object({
@@ -42,7 +44,7 @@ export const receivingSchema = z.object({
         .nullable()
         .optional()
         .transform((val) => (val === undefined || val === null ? null : Number(val))),
-    status: z.enum(["draft", "completed"]).default("completed"),
+    status: z.enum(["draft", "completed", "void"]).default("completed"),
     catatan: z
         .string()
         .nullable()
@@ -88,6 +90,8 @@ export const receivingBulkItemsSchema = z.object({
             product_uid: z.string().min(1, "Produk wajib dipilih"),
             kuantitas: z.coerce.number().min(0, "Jumlah minimal 0 pcs"),
             harga_beli: z.coerce.number().min(0, "Harga beli minimal 0"),
+            batch_number: z.string().nullable().optional().transform((val) => val || null),
+            expired_date: z.string().nullable().optional().transform((val) => val || null),
         })
     ),
 });

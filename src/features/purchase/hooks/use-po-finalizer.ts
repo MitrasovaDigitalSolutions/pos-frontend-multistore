@@ -92,6 +92,8 @@ export function usePoFinalizer({
                         product_uid: item.product_uid,
                         kuantitas: item.kuantitas,
                         harga_estimasi: item.harga_estimasi,
+                        batch_number: item.batch_number || null,
+                        expired_date: item.expired_date || null,
                     })),
                 };
 
@@ -116,6 +118,8 @@ export function usePoFinalizer({
                         product_uid: item.product_uid,
                         kuantitas: item.kuantitas,
                         harga_estimasi: item.harga_estimasi,
+                        batch_number: item.batch_number || null,
+                        expired_date: item.expired_date || null,
                     })),
                 };
 
@@ -155,6 +159,8 @@ export function usePoFinalizer({
                         product_uid: item.product_uid,
                         kuantitas: item.kuantitas,
                         harga_estimasi: item.harga_estimasi,
+                        batch_number: item.batch_number || null,
+                        expired_date: item.expired_date || null,
                     })),
                 };
 
@@ -177,6 +183,8 @@ export function usePoFinalizer({
                         product_uid: item.product_uid,
                         kuantitas: item.kuantitas,
                         harga_estimasi: item.harga_estimasi,
+                        batch_number: item.batch_number || null,
+                        expired_date: item.expired_date || null,
                     })),
                 };
 

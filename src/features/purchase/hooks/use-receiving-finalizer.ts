@@ -61,6 +61,8 @@ export function useReceivingFinalizer({
         update_harga_jual: boolean;
         harga_jual_baru: number | null;
         margin_baru: number | null;
+        batch_number?: string | null;
+        expired_date?: string | null;
     }[] | null>(null);
 
     const bulkCreateReceiving = useBulkCreateReceiving();
@@ -105,6 +107,8 @@ export function useReceivingFinalizer({
                         product_uid: item.product_uid,
                         kuantitas: item.kuantitas,
                         harga_beli: item.harga_estimasi,
+                        batch_number: item.batch_number || null,
+                        expired_date: item.expired_date || null,
                     }));
 
                     const replaceRes = await bulkReplace.mutateAsync({
@@ -137,6 +141,8 @@ export function useReceivingFinalizer({
                 product_uid: item.product_uid,
                 kuantitas: item.kuantitas,
                 harga_beli: item.harga_estimasi,
+                batch_number: item.batch_number || null,
+                expired_date: item.expired_date || null,
             }));
 
             const updatePayload = {
@@ -227,6 +233,8 @@ export function useReceivingFinalizer({
                 update_harga_jual: pricing ? pricing.update_harga_jual : false,
                 harga_jual_baru: pricing && pricing.update_harga_jual ? pricing.harga_jual_baru : null,
                 margin_baru: pricing && pricing.update_harga_jual ? pricing.margin_baru : null,
+                batch_number: item.batch_number || null,
+                expired_date: item.expired_date || null,
             };
         });
 
@@ -267,6 +275,8 @@ export function useReceivingFinalizer({
                     update_harga_jual: false,
                     harga_jual_baru: null,
                     margin_baru: null,
+                    batch_number: item.batch_number || null,
+                    expired_date: item.expired_date || null,
                 }));
 
                 const payload = {
@@ -298,6 +308,8 @@ export function useReceivingFinalizer({
                 product_uid: item.product_uid,
                 kuantitas: item.kuantitas,
                 harga_beli: item.harga_estimasi,
+                batch_number: item.batch_number || null,
+                expired_date: item.expired_date || null,
             }));
 
             const payload = {

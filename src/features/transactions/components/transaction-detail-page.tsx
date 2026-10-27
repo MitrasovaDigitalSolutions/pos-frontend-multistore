@@ -16,10 +16,12 @@ import { buildReceiptMobileApp58 } from "@/utils/ReceiptMobileApp58";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
+import { useAppPreset } from "@/features/license/hooks/use-app-preset";
 
 // Import refactored subcomponents
 import { TransactionDetailHeader } from "./detail/transaction-detail-header";
 import { TransactionDetailItems } from "./detail/transaction-detail-items";
+import { TransactionDetailCompoundedItems } from "./detail/transaction-detail-compounded-items";
 import { TransactionDetailSummary } from "./detail/transaction-detail-summary";
 import { TransactionPrintReceipt } from "./detail/transaction-print-receipt";
 import { VoidTransactionDialog } from "./detail/void-transaction-dialog";
@@ -96,6 +98,7 @@ import { DUMMY_TRANSACTIONS_MAP, DUMMY_TRANSACTION_DETAIL } from "@/features/sal
 export function TransactionDetailPage({ transactionId }: TransactionDetailPageProps) {
     const router = useAppRouter();
     const queryClient = useQueryClient();
+    const { isPharmacy } = useAppPreset();
     const isDummy = transactionId.startsWith("trx-dummy");
     const { data: realTransaction, isLoading: isRealLoading, error: realError } = useTransactionDetail(isDummy ? "" : transactionId);
     const transaction = isDummy
@@ -133,7 +136,8 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
     }
 
     // Format transaction date
-    const date = new Date(transaction.created_at);
+    const rawDate = transaction.tanggal_transaksi || transaction.created_at;
+    const date = new Date(rawDate);
     const formattedDate = format(date, "dd MMMM yyyy, HH:mm", { locale: localeId });
 
     const handlePrint = async () => {
@@ -281,8 +285,31 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
                 {/* Main content grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     {/* Left: Table details */}
-                    <div className="lg:col-span-8">
-                        <TransactionDetailItems items={transaction.items} />
+                    <div className="lg:col-span-8 space-y-4">
+                        {(() => {
+                            const compoundedList = isPharmacy
+                                ? ((transaction.compounded_items && transaction.compounded_items.length > 0)
+                                    ? transaction.compounded_items
+                                    : (transaction.prescriptions && transaction.prescriptions.length > 0)
+                                        ? transaction.prescriptions
+                                        : (transaction.prescription_histories && transaction.prescription_histories.length > 0)
+                                            ? transaction.prescription_histories
+                                            : [])
+                                : [];
+
+                            return (
+                                <>
+                                    <TransactionDetailItems
+                                        items={transaction.items}
+                                        hasCompoundedItems={compoundedList.length > 0}
+                                    />
+
+                                    {compoundedList.length > 0 && (
+                                        <TransactionDetailCompoundedItems compoundedItems={compoundedList} />
+                                    )}
+                                </>
+                            );
+                        })()}
                     </div>
 
                     {/* Right: Summary details panels */}

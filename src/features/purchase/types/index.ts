@@ -3,12 +3,21 @@ import type { Supplier } from "@/features/master/suppliers/types";
 
 export interface ReceivingItem {
     uid: string;
-    receiving_uid: string;
+    receiving_uid?: string;
+    stock_receiving_uid?: string;
     product_uid: string;
     kuantitas: number;
     harga_beli: number;
+    update_harga_jual?: boolean;
+    harga_jual_baru?: number | null;
+    margin_baru?: number | null;
+    batch_number?: string | null;
+    expired_date?: string | null;
     created_at: string;
     product?: Product;
+    kuantitas_po?: number;
+    kuantitas_diterima_po?: number;
+    sisa_belum_diterima_po?: number;
 }
 
 export interface Receiving {
@@ -19,7 +28,7 @@ export interface Receiving {
     supplier: string | null;
     nomor_faktur: string | null;
     nilai_faktur: number | null;
-    status: "draft" | "completed";
+    status: "draft" | "completed" | "void";
     status_pembayaran: "pending" | "unpaid" | "partial" | "paid";
     metode_transaksi?: "cash" | "credit" | null;
     cash_account_uid?: string | null;
@@ -30,6 +39,7 @@ export interface Receiving {
     catatan: string | null;
     created_at: string;
     tanggal_terima: string;
+    voided_at?: string | null;
     items?: ReceivingItem[];
 }
 export interface PurchaseOrderItem {
@@ -40,6 +50,8 @@ export interface PurchaseOrderItem {
     kuantitas_diterima: number;
     sisa_belum_diterima: number;
     harga_estimasi: number;
+    batch_number?: string | null;
+    expired_date?: string | null;
     created_at: string;
     product?: Product;
 }
@@ -76,6 +88,11 @@ export interface PurchaseItemLocal {
     kuantitas: number;
     harga_estimasi: number;
     alasan?: string | null;
+    update_harga_jual?: boolean;
+    harga_jual_baru?: number | null;
+    margin_baru?: number | null;
+    batch_number?: string | null;
+    expired_date?: string | null;
 }
 
 export interface CashAccount {

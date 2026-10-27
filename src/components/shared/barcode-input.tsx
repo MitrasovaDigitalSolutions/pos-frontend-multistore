@@ -224,8 +224,8 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
             }
         };
 
-        const handleSubmit = async (e: React.FormEvent) => {
-            e.preventDefault();
+        const handleSubmit = async (e?: React.FormEvent | React.SyntheticEvent) => {
+            e?.preventDefault();
             const query = value.trim();
 
             setValue("");
@@ -357,9 +357,12 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
             if (e.key === "Enter") {
                 e.preventDefault();
                 debounceRef.current = setTimeout(() => {
-                    const form = inputRef.current?.form;
-                    if (form) {
-                        form.requestSubmit();
+                    if (onSearchSubmit) {
+                        onSearchSubmit(value.trim());
+                        setShowDropdown(false);
+                        setFocusedIndex(-1);
+                    } else {
+                        handleSubmit();
                     }
                 }, 100);
             }
@@ -374,7 +377,7 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
 
         return (
             <div ref={containerRef} className="relative">
-                <form onSubmit={handleSubmit}>
+                <div>
                     <div
                         className={`
                             relative flex items-center gap-2 rounded-2xl border border-slate-200 
@@ -416,12 +419,16 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                         />
 
                         <button
-                            type={onSearchSubmit ? "button" : "submit"}
-                            onClick={onSearchSubmit ? () => {
-                                onSearchSubmit(value.trim());
-                                setShowDropdown(false);
-                                setFocusedIndex(-1);
-                            } : undefined}
+                            type="button"
+                            onClick={() => {
+                                if (onSearchSubmit) {
+                                    onSearchSubmit(value.trim());
+                                    setShowDropdown(false);
+                                    setFocusedIndex(-1);
+                                } else {
+                                    handleSubmit();
+                                }
+                            }}
                             disabled={disabled || isSearching || (!onSearchSubmit && !value.trim())}
                             className="
                                 flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold
@@ -434,7 +441,7 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                             <span>{searchLabel}</span>
                         </button>
                     </div>
-                </form>
+                </div>
 
                 {/* Suggestions Dropdown list */}
                 {showDropdown && (

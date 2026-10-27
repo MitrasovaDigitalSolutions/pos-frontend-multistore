@@ -109,6 +109,7 @@ export const ENDPOINTS = {
             DETAIL: (uid: string) => `/v1/purchase/receiving/${uid}`,
             UPDATE: (uid: string) => `/v1/purchase/receiving/${uid}`,
             DELETE: (uid: string) => `/v1/purchase/receiving/${uid}`,
+            VOID: (uid: string) => `/v1/purchase/receiving/${uid}/void`,
             PAYMENT_STATUS: (uid: string) => `/v1/purchase/receiving/${uid}/payment-status`,
             COMPARE_PRICES: "/v1/purchase/receiving/compare-prices",
             ITEMS_REPLACE: (uid: string) => `/v1/purchase/receiving/${uid}/items`,

@@ -140,6 +140,8 @@ export function useReceivingFlow({
                 nama: item.product?.nama || "Produk Tanpa Nama",
                 kuantitas: item.kuantitas,
                 harga_estimasi: item.harga_beli,
+                batch_number: item.batch_number || null,
+                expired_date: item.expired_date ? (typeof item.expired_date === "string" ? item.expired_date.split("T")[0] : null) : null,
             }));
             store.setState({ items: dbItems });
         }
@@ -164,6 +166,8 @@ export function useReceivingFlow({
                             nama: item.product.nama,
                             harga_estimasi: item.harga_estimasi,
                             kuantitas: sisa,
+                            batch_number: item.batch_number || null,
+                            expired_date: item.expired_date ? (typeof item.expired_date === "string" ? item.expired_date.split("T")[0] : null) : null,
                         });
                         addedCount++;
                     }
@@ -206,7 +210,7 @@ export function useReceivingFlow({
     // ─── Orchestrated Handlers ────────────────────────────────────────────────
     const handleUpdateItem = (
         temp_uid: string,
-        data: Partial<Pick<PurchaseItemLocal, "kuantitas" | "harga_estimasi" | "alasan">>
+        data: Partial<Pick<PurchaseItemLocal, "kuantitas" | "harga_estimasi" | "alasan" | "expired_date">>
     ) => {
         const item = items.find((i) => i.temp_uid === temp_uid);
         if (item && data.kuantitas && headerState.poId) {

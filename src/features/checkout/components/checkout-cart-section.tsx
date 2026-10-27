@@ -16,12 +16,17 @@ import type { CartItem } from "@/features/checkout/types";
 import type { Product } from "@/features/master/products/types";
 import { useDeviceResponsive } from "@/hooks/use-device";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { IconBulb, IconScan, IconTag, IconTrash } from "@tabler/icons-react";
+import { IconBulb, IconPill, IconScan, IconTag, IconTrash } from "@tabler/icons-react";
 import React, { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { calculateItemSubtotal, getItemWholesaleBreakdown } from "../utils/cart-utils";
 import { ProductSearchDialog } from "./product-search-dialog";
+import { useAppPreset } from "@/features/license/hooks/use-app-preset";
+import { usePharmacyCheckoutStore } from "@/features/pharmacy/hooks/use-pharmacy-checkout-store";
+import { CompoundingCartCard } from "@/features/pharmacy/components/compounding/compounding-cart-card";
+import { useAppRouter } from "@/hooks/use-app-router";
+import { ROUTES } from "@/constants/routes";
 function ItemWholesaleBadge({ item }: { item: CartItem }) {
     const breakdown = getItemWholesaleBreakdown(item);
     const minQty = item.min_qty_grosir;
@@ -156,6 +161,11 @@ export function CheckoutCartSection({
     products = [],
 }: CheckoutCartSectionProps) {
     const { isMobile } = useDeviceResponsive();
+    const router = useAppRouter();
+    const { isPharmacy } = useAppPreset();
+    const compoundedItems = usePharmacyCheckoutStore((s) => s.compoundedItems);
+    const removeCompoundedItem = usePharmacyCheckoutStore((s) => s.removeCompoundedItem);
+
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -184,9 +194,33 @@ export function CheckoutCartSection({
                 </div>
             </div>
 
+            {/* Pharmacy Toolbar (Only visible when isPharmacy) */}
+            {isPharmacy && (
+                <div className="px-3 py-2 bg-emerald-50/60 dark:bg-emerald-950/30 border-b border-emerald-100 dark:border-emerald-900/50 flex flex-wrap items-center justify-between gap-2 shrink-0">
+                    <div className="flex items-center gap-2">
+                        <AppButton
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => router.push(ROUTES.CHECKOUT_COMPOUNDING)}
+                            className="h-7 text-xs px-2.5 font-bold border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-950 flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                        >
+                            <IconPill size={14} className="text-emerald-600" />
+                            <span>+ Tambah Racikan</span>
+                        </AppButton>
+                    </div>
+
+                    {compoundedItems.length > 0 && (
+                        <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded-full">
+                            {compoundedItems.length} Racikan di Kasir
+                        </span>
+                    )}
+                </div>
+            )}
+
             {/* Cart Items (Table on Desktop, Cards on Mobile) */}
             <div id="checkout-cart-table" className="grow overflow-y-auto p-3 min-h-0">
-                {cart.length === 0 ? (
+                {cart.length === 0 && compoundedItems.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-slate-400 p-6 text-center">
                         <IconScan size={40} className="text-slate-200 mb-2" />
                         <h4 className="text-[12px] font-bold text-slate-600">
@@ -198,6 +232,20 @@ export function CheckoutCartSection({
                     </div>
                 ) : (
                     <>
+                        {/* Pharmacy Compounded Items Cards */}
+                        {isPharmacy && compoundedItems.length > 0 && (
+                            <div className="space-y-2 mb-3">
+                                {compoundedItems.map((item) => (
+                                    <CompoundingCartCard
+                                        key={item.uid}
+                                        item={item}
+                                        onEdit={(uid) => router.push(ROUTES.CHECKOUT_COMPOUNDING_EDIT(uid))}
+                                        onRemove={(uid) => removeCompoundedItem(uid)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+
                         {/* Desktop Table View */}
                         <div className="hidden md:block">
                             <Table className="w-full border-collapse">

@@ -263,7 +263,7 @@ export function Checkout() {
                 >
                     <span>Keranjang</span>
                     <span className="bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold">
-                        {state.cart.length}
+                        {state.cart.length + (state.isPharmacy ? state.compoundedItems.length : 0)}
                     </span>
                 </button>
                 <button
@@ -314,7 +314,7 @@ export function Checkout() {
                         setDiscountType={state.setDiscountType}
                         setDiscountValue={state.setDiscountValue}
                         grandTotal={state.grandTotal}
-                        cartLength={state.cart.length}
+                        cartLength={state.cart.length + (state.isPharmacy ? state.compoundedItems.length : 0)}
                         isProcessing={state.isProcessing}
                         selectedMember={state.selectedMember}
                         onMemberChange={state.setSelectedMember}

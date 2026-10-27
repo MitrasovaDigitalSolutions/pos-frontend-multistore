@@ -1,24 +1,24 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { AccessDeniedState } from "@/components/ui/access-denied-state";
-import { IconArrowLeft, IconBarcode, IconCheck, IconInfoCircle, IconSparkles, IconX } from "@tabler/icons-react";
-import { useAppRouter } from "@/hooks/use-app-router";
 import { useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { AccessDeniedState } from "@/components/ui/access-denied-state";
+import { IconArrowLeft, IconCheck, IconSparkles } from "@tabler/icons-react";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ProductFormDialog } from "@/features/master/products/components/product-form-dialog";
-import { toast } from "sonner";
 import { usePurchaseOrderDetail } from "../../../api/purchase-api";
 import type { PurchaseItemLocal, PurchaseOrder } from "../../../types";
-import { BarcodeInput } from "@/components/shared/barcode-input";
 import { BulkSubmitBar } from "../../shared/bulk-submit-bar";
 import { ItemsTable } from "../../shared/items-table";
+import { PurchaseBarcodeScannerCard } from "../../shared/purchase-barcode-scanner-card";
 import { PO_STATUS } from "@/constants/purchase";
 import { usePoFlow } from "@/features/purchase/hooks/use-po-flow";
 import { POHeaderCard } from "./po-header-card";
 import { POInstructionPanel } from "./po-instruction-panel";
+import { POPageSkeleton } from "./po-page-skeleton";
 import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
 import { usePurchaseTutorialStore } from "@/stores/purchase-tutorial-store";
 import { MOCK_PO_ITEMS } from "@/features/purchase/tutorial/constants/purchase-tutorial-constants";
@@ -120,6 +120,29 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
         onSaveSuccess: handleSaveSuccess,
     });
 
+    const barcodeInputRef = useRef<HTMLInputElement>(null);
+    const [lastScannedUid, setLastScannedUid] = useState<string | null>(null);
+    const [isContinuousScan, setIsContinuousScan] = useState(() => {
+        if (typeof window !== "undefined") {
+            try {
+                return localStorage.getItem("pos_continuous_scan_mode") === "true";
+            } catch {
+                return false;
+            }
+        }
+        return false;
+    });
+
+    const handleToggleContinuousScan = (checked: boolean) => {
+        setIsContinuousScan(checked);
+        try {
+            localStorage.setItem("pos_continuous_scan_mode", String(checked));
+        } catch {
+            // ignore
+        }
+        barcodeInputRef.current?.focus();
+    };
+
     const isFirstLoad = useRef(true);
     const store = getPurchaseItemsStore(currentId, "po");
 
@@ -150,7 +173,7 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
 
     return (
         <FormProvider {...productForm}>
-            <div className="space-y-6 pb-28 sm:pb-8">
+            <div className="space-y-6 pb-36 sm:pb-32">
                 {/* Header info / Breadcrumb */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
@@ -179,17 +202,34 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
                 {/* Main Content Layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     <div className="lg:col-span-8 space-y-6">
-                        {/* Barcode scanner box */}
-                        <div id="po-barcode-box" className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
-                            <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-50">
-                                <div className="flex items-center gap-2">
-                                    <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg border border-emerald-100/30">
-                                        <IconBarcode size={18} />
-                                    </div>
-                                    <h3 className="text-xs font-bold text-slate-900">Scan Barcode / Cari Produk</h3>
-                                </div>
-
-                                {isTutorialRunning && (
+                        <PurchaseBarcodeScannerCard
+                            id="po-barcode-box"
+                            title="Scan Barcode / Cari Produk"
+                            inputRef={barcodeInputRef}
+                            isContinuousScan={isContinuousScan}
+                            onToggleContinuousScan={handleToggleContinuousScan}
+                            onProductFound={(product) => {
+                                setNotFoundQuery("");
+                                if (!isContinuousScan) {
+                                    setLastScannedUid(product.uid);
+                                }
+                                handleProductFound(product);
+                            }}
+                            onProductNotFound={(query) => {
+                                setNotFoundQuery(query);
+                                handleOpenCreateDialog(query);
+                            }}
+                            notFoundQuery={notFoundQuery}
+                            onClearNotFoundQuery={() => setNotFoundQuery("")}
+                            onOpenCreateDialog={handleOpenCreateDialog}
+                            disabled={isSubmitting}
+                            placeholder={
+                                isContinuousScan
+                                    ? "Scan barcode berulang kali (mode cepat aktif)..."
+                                    : "Arahkan scanner ke barcode atau ketik nama produk..."
+                            }
+                            extraActions={
+                                isTutorialRunning ? (
                                     <button
                                         type="button"
                                         id="btn-po-seeder"
@@ -207,58 +247,9 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
                                         <IconSparkles size={13} className="text-emerald-600 animate-pulse" />
                                         <span>Seeder Demo PO</span>
                                     </button>
-                                )}
-                            </div>
-
-                            <BarcodeInput
-                                id="po-barcode-input"
-                                isJasa={false}
-                                onProductFound={(product) => {
-                                    setNotFoundQuery("");
-                                    handleProductFound(product);
-                                }}
-                                onError={(err) => toast.error(err)}
-                                onProductNotFound={(query) => {
-                                    setNotFoundQuery(query);
-                                    handleOpenCreateDialog(query);
-                                }}
-                                onInputChange={(__value) => {
-                                    if (notFoundQuery) {
-                                        setNotFoundQuery("");
-                                    }
-                                }}
-                                disabled={isSubmitting}
-                                placeholder="Arahkan scanner ke barcode atau ketik nama produk..."
-                            />
-
-                            {notFoundQuery && (
-                                <div className="flex items-center justify-between p-3.5 bg-rose-50/50 border border-rose-100 rounded-xl text-rose-900 text-xs">
-                                    <div className="flex items-center gap-2">
-                                        <IconInfoCircle size={16} className="text-rose-500 shrink-0" />
-                                        <span>
-                                            Produk <strong>&quot;{notFoundQuery}&quot;</strong> tidak ditemukan.
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 shrink-0">
-                                        <Button
-                                            type="button"
-                                            onClick={() => handleOpenCreateDialog(notFoundQuery)}
-                                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold h-8 px-3 rounded-lg border-none cursor-pointer"
-                                        >
-                                            Tambah Produk
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            onClick={() => setNotFoundQuery("")}
-                                            className="h-8 w-8 p-0 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-rose-100/50 cursor-pointer border-none flex items-center justify-center shrink-0"
-                                        >
-                                            <IconX size={16} />
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+                                ) : null
+                            }
+                        />
 
                         {/* Table of items */}
                         <div id="po-items-table" className="space-y-4">
@@ -268,6 +259,12 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
                                 onRemoveItem={removeItem}
                                 disabled={isSubmitting}
                                 isPriceReadOnly={false}
+                                lastScannedUid={lastScannedUid}
+                                onClearLastScannedUid={() => setLastScannedUid(null)}
+                                onEnterKey={() => {
+                                    barcodeInputRef.current?.focus();
+                                    barcodeInputRef.current?.select();
+                                }}
                             />
                         </div>
                     </div>
@@ -349,48 +346,3 @@ function POItemsContainer({ poId, order }: { poId: string; order?: PurchaseOrder
         </FormProvider>
     );
 }
-
-function POPageSkeleton() {
-    return (
-        <div className="space-y-6">
-            <div className="flex items-center gap-4">
-                <Skeleton className="h-9 w-9 rounded-xl" />
-                <div className="space-y-2">
-                    <Skeleton className="h-5 w-48" />
-                    <Skeleton className="h-3 w-72" />
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-8 space-y-6">
-                    {/* Header card skeleton */}
-                    <div className="bg-white border border-slate-100 rounded-2xl p-5 space-y-4">
-                        <Skeleton className="h-4 w-32" />
-                        <div className="grid grid-cols-2 gap-4">
-                            <Skeleton className="h-10 rounded-xl" />
-                            <Skeleton className="h-10 rounded-xl" />
-                        </div>
-                        <Skeleton className="h-10 rounded-xl" />
-                    </div>
-
-                    {/* Scanner skeleton */}
-                    <div className="bg-white border border-slate-100 rounded-2xl p-5">
-                        <Skeleton className="h-10 rounded-xl" />
-                    </div>
-
-                    {/* Table skeleton */}
-                    <div className="bg-white border border-slate-100 rounded-2xl p-5 space-y-2">
-                        <Skeleton className="h-8 w-full" />
-                        <Skeleton className="h-12 w-full" />
-                        <Skeleton className="h-12 w-full" />
-                    </div>
-                </div>
-                <div className="lg:col-span-4">
-                    <Skeleton className="h-44 rounded-2xl" />
-                </div>
-            </div>
-        </div>
-    );
-}
-
-

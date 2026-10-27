@@ -32,6 +32,17 @@ export function TransactionDetailSummary({ transaction, formattedDate }: Transac
 
     const { cashPortion, cardPortion } = getSplitPaymentBreakdown();
 
+    const compoundedList = (transaction.compounded_items && transaction.compounded_items.length > 0)
+        ? transaction.compounded_items
+        : (transaction.prescriptions && transaction.prescriptions.length > 0)
+            ? transaction.prescriptions
+            : (transaction.prescription_histories && transaction.prescription_histories.length > 0)
+                ? transaction.prescription_histories
+                : [];
+
+    const regularItemsCount = transaction.items?.length || 0;
+    const compoundedCount = compoundedList.length;
+
     const totalProfit = transaction.items.reduce(
         (sum, item) => sum + ((item.harga_satuan - (item.harga_beli ?? 0)) * item.kuantitas),
         0
@@ -54,7 +65,10 @@ export function TransactionDetailSummary({ transaction, formattedDate }: Transac
                             {formatRupiah(transaction.total)}
                         </p>
                         <span className="text-[8px] font-medium text-slate-400 block">
-                            {transaction.items.length} item
+                            {regularItemsCount > 0 && `${regularItemsCount} produk`}
+                            {regularItemsCount > 0 && compoundedCount > 0 && " • "}
+                            {compoundedCount > 0 && `${compoundedCount} racikan`}
+                            {regularItemsCount === 0 && compoundedCount === 0 && "0 item"}
                         </span>
                     </div>
                 </div>
@@ -246,7 +260,7 @@ export function TransactionDetailSummary({ transaction, formattedDate }: Transac
                         <div className="truncate">
                             <span className="text-[8px] text-slate-400 font-bold uppercase block leading-none">Kasir</span>
                             <span className="font-bold text-slate-800 truncate block mt-0.5 text-[10px] leading-none">
-                                {transaction.user?.name || "Kasir"}
+                                {transaction.user?.name || transaction.user?.nama || "Kasir"}
                             </span>
                         </div>
                     </div>

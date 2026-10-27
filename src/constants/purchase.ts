@@ -33,6 +33,7 @@ export const PO_STATUS_CLASSES: Record<POStatus, string> = {
 export const RECEIVING_STATUS = {
     DRAFT: "draft",
     COMPLETED: "completed",
+    VOID: "void",
 } as const;
 
 export type ReceivingStatus = typeof RECEIVING_STATUS[keyof typeof RECEIVING_STATUS];
@@ -40,11 +41,13 @@ export type ReceivingStatus = typeof RECEIVING_STATUS[keyof typeof RECEIVING_STA
 export const RECEIVING_STATUS_LABELS: Record<ReceivingStatus, string> = {
     [RECEIVING_STATUS.DRAFT]: "Draft",
     [RECEIVING_STATUS.COMPLETED]: "Selesai",
+    [RECEIVING_STATUS.VOID]: "Dibatalkan",
 };
 
 export const RECEIVING_STATUS_CLASSES: Record<ReceivingStatus, string> = {
     [RECEIVING_STATUS.DRAFT]: "bg-amber-50 text-amber-700 border-amber-100",
     [RECEIVING_STATUS.COMPLETED]: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    [RECEIVING_STATUS.VOID]: "bg-rose-50 text-rose-700 border-rose-100",
 };
 
 export const PAYMENT_STATUS = {

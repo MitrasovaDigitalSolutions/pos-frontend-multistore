@@ -29,6 +29,8 @@ export interface DatePickerProps {
   startMonth?: Date
   endMonth?: Date
   reverseYears?: boolean
+  id?: string
+  onKeyDown?: React.KeyboardEventHandler<HTMLButtonElement>
 }
 
 export const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(

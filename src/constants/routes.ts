@@ -72,12 +72,19 @@ export const ROUTES = {
     ADMIN_UNITS: "/admin/units",
     ADMIN_LICENSE: "/admin/license",
 
+    // Protected - Pharmacy Backoffice
+    ADMIN_PHARMACY_TEMPLATES: "/admin/pharmacy/templates",
+    ADMIN_PHARMACY_TEMPLATES_CREATE: "/admin/pharmacy/templates/create",
+    ADMIN_PHARMACY_HISTORY: "/admin/pharmacy/history",
+
     // Protected - Standalone Pages (no sidebar/header)
     LICENSE: "/licenses",
 
-
     // Protected - POS
     CHECKOUT: "/checkout",
+    CHECKOUT_COMPOUNDING: "/checkout/compounding",
+    CHECKOUT_COMPOUNDING_CREATE: "/checkout/compounding/create",
+    CHECKOUT_COMPOUNDING_EDIT: (id: string) => `/checkout/compounding/${id}`,
     PRODUCTS: "/products",
 
     // Error

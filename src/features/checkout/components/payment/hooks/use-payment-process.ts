@@ -14,6 +14,8 @@ import { toUTC7String } from "@/lib/date-utils";
 import type { Receipt, CartItem } from "@/features/checkout/types";
 import type { Member } from "@/features/master/members/types";
 import type { PaymentMode, PaymentFormValues } from "../types/payment-dialog.types";
+import { useAppPreset } from "@/features/license/hooks/use-app-preset";
+import { usePharmacyCheckoutStore } from "@/features/pharmacy/hooks/use-pharmacy-checkout-store";
 
 interface UsePaymentProcessParams {
     open: boolean;
@@ -46,6 +48,7 @@ export function usePaymentProcess({
     const isOnline = useNetworkStatus();
     const { data: session } = useSession();
     const getSetting = useSettingsStore((state) => state.getSetting);
+    const { isPharmacy } = useAppPreset();
 
     const [payMode, setPayMode] = useState<PaymentMode>("cash");
 
@@ -182,6 +185,13 @@ export function usePaymentProcess({
                 return itemPayload;
             }),
         };
+
+        if (isPharmacy) {
+            const pharmStore = usePharmacyCheckoutStore.getState();
+            if (pharmStore.compoundedItems.length > 0) {
+                payload.compounded_items = pharmStore.compoundedItems;
+            }
+        }
 
         if (payMode === "cash") {
             payload.cash_received = cashNum;
@@ -340,6 +350,9 @@ export function usePaymentProcess({
                 }
 
                 toast.warning(notice);
+                if (isPharmacy) {
+                    usePharmacyCheckoutStore.getState().clearPharmacyCheckout();
+                }
                 onPaySuccess(mockReceipt);
                 onOpenChange(false);
 
@@ -356,6 +369,9 @@ export function usePaymentProcess({
                                 harga_satuan: item.price,
                                 subtotal: item.price * item.qty,
                             })),
+                            ...(isPharmacy && {
+                                compounded_items: payload.compounded_items,
+                            }),
                         },
                         setting: {
                             app_name: getSetting("app_name", "Mitrasova POS"),
@@ -380,6 +396,9 @@ export function usePaymentProcess({
                 {
                     onSuccess: async (res) => {
                         await decrementLocalStock();
+                        if (isPharmacy) {
+                            usePharmacyCheckoutStore.getState().clearPharmacyCheckout();
+                        }
                         if (res.data) onPaySuccess(res.data);
                         onOpenChange(false);
                         if (res.data?.uid) {
