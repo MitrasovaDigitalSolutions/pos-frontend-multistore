@@ -16,6 +16,7 @@ import { buildReceiptMobileApp58 } from "@/utils/ReceiptMobileApp58";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
+import { useAppPreset } from "@/features/license/hooks/use-app-preset";
 
 // Import refactored subcomponents
 import { TransactionDetailHeader } from "./detail/transaction-detail-header";
@@ -97,6 +98,7 @@ import { DUMMY_TRANSACTIONS_MAP, DUMMY_TRANSACTION_DETAIL } from "@/features/sal
 export function TransactionDetailPage({ transactionId }: TransactionDetailPageProps) {
     const router = useAppRouter();
     const queryClient = useQueryClient();
+    const { isPharmacy } = useAppPreset();
     const isDummy = transactionId.startsWith("trx-dummy");
     const { data: realTransaction, isLoading: isRealLoading, error: realError } = useTransactionDetail(isDummy ? "" : transactionId);
     const transaction = isDummy
@@ -285,13 +287,15 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
                     {/* Left: Table details */}
                     <div className="lg:col-span-8 space-y-4">
                         {(() => {
-                            const compoundedList = (transaction.compounded_items && transaction.compounded_items.length > 0)
-                                ? transaction.compounded_items
-                                : (transaction.prescriptions && transaction.prescriptions.length > 0)
-                                    ? transaction.prescriptions
-                                    : (transaction.prescription_histories && transaction.prescription_histories.length > 0)
-                                        ? transaction.prescription_histories
-                                        : [];
+                            const compoundedList = isPharmacy
+                                ? ((transaction.compounded_items && transaction.compounded_items.length > 0)
+                                    ? transaction.compounded_items
+                                    : (transaction.prescriptions && transaction.prescriptions.length > 0)
+                                        ? transaction.prescriptions
+                                        : (transaction.prescription_histories && transaction.prescription_histories.length > 0)
+                                            ? transaction.prescription_histories
+                                            : [])
+                                : [];
 
                             return (
                                 <>

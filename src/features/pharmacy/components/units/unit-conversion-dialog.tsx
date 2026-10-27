@@ -49,9 +49,8 @@ export function UnitConversionDialog({
         resolver: zodResolver(unitConversionSchema) as Resolver<UnitConversionFormValues>,
         defaultValues: {
             unit_name: "",
-            conversion_factor: 1,
-            barcode: "",
-            price: null,
+            multiplier: 1,
+            selling_price: null,
         },
     });
 
@@ -65,12 +64,15 @@ export function UnitConversionDialog({
         try {
             await createUnit.mutateAsync({
                 unit_name: values.unit_name.trim(),
-                conversion_factor: values.conversion_factor,
-                barcode: values.barcode?.trim() || null,
-                price: values.price || null,
+                multiplier: Number(values.multiplier),
+                selling_price: values.selling_price ? Number(values.selling_price) : null,
             });
             toast.success("Konversi satuan bertingkat berhasil ditambahkan");
-            reset();
+            reset({
+                unit_name: "",
+                multiplier: 1,
+                selling_price: null,
+            });
             refetch();
         } catch (error: unknown) {
             const err = error as { message?: string };
@@ -102,32 +104,29 @@ export function UnitConversionDialog({
                 ),
             },
             {
-                id: "conversion_factor",
+                id: "multiplier",
                 header: "Rasio Konversi",
                 cell: ({ row }) => (
-                    <span className="text-slate-600 dark:text-slate-400">
-                        1 {row.original.unit_name} = {row.original.conversion_factor} {baseUnit}
+                    <span className="text-slate-600 dark:text-slate-400 font-mono text-xs">
+                        1 {row.original.unit_name} = <strong className="text-slate-800 dark:text-slate-200 font-bold">{row.original.multiplier}</strong> {baseUnit}
                     </span>
                 ),
             },
             {
-                accessorKey: "barcode",
-                header: "Barcode",
-                cell: ({ row }) => (
-                    <span className="font-mono text-[11px] text-slate-500">
-                        {row.original.barcode || "—"}
-                    </span>
-                ),
-            },
-            {
-                accessorKey: "price",
-                header: "Harga",
+                accessorKey: "selling_price",
+                header: "Harga Jual",
                 meta: {
                     headerClassName: "text-right",
                     cellClassName: "text-right font-bold tabular-nums",
                 },
                 cell: ({ row }) =>
-                    row.original.price ? formatRupiah(row.original.price) : "Sesuai Rasio",
+                    row.original.selling_price ? (
+                        <span className="text-emerald-700 dark:text-emerald-400 font-mono font-bold">
+                            {formatRupiah(row.original.selling_price)}
+                        </span>
+                    ) : (
+                        <span className="text-slate-400 text-xs italic">Sesuai Rasio</span>
+                    ),
             },
         ],
         [baseUnit]
@@ -165,32 +164,33 @@ export function UnitConversionDialog({
                             Tambah Satuan Bertingkat Baru
                         </h4>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                            <FormInput<UnitConversionFormValues>
-                                name="unit_name"
-                                label="Nama Satuan Baru"
-                                placeholder="Contoh: Strip / Box"
-                                required
-                            />
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            <div className="sm:col-span-1">
+                                <FormInput<UnitConversionFormValues>
+                                    name="unit_name"
+                                    label="Nama Satuan"
+                                    placeholder="Contoh: Strip / Box"
+                                    required
+                                />
+                            </div>
 
-                            <FormNumberInput<UnitConversionFormValues>
-                                name="conversion_factor"
-                                label="Isi per Satuan (Konversi)"
-                                placeholder="Contoh: 10"
-                                min={1}
-                            />
+                            <div className="sm:col-span-1">
+                                <FormNumberInput<UnitConversionFormValues>
+                                    name="multiplier"
+                                    label={`Isi per ${baseUnit}`}
+                                    placeholder="Contoh: 10"
+                                    min={0.001}
+                                    allowDecimal={true}
+                                />
+                            </div>
 
-                            <FormNominalInput<UnitConversionFormValues>
-                                name="price"
-                                label="Harga Jual Satuan Ini (Opsional)"
-                                placeholder="Rp 0"
-                            />
-
-                            <FormInput<UnitConversionFormValues>
-                                name="barcode"
-                                label="Barcode Khusus Satuan Ini (Opsional)"
-                                placeholder="Barcode kemasan..."
-                            />
+                            <div className="sm:col-span-1">
+                                <FormNominalInput<UnitConversionFormValues>
+                                    name="selling_price"
+                                    label="Harga Jual (Opsional)"
+                                    placeholder="Rp 0"
+                                />
+                            </div>
                         </div>
 
                         <div className="flex justify-end pt-1">

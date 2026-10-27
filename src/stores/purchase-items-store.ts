@@ -41,8 +41,10 @@ interface PurchaseItemsState {
         harga_estimasi: number;
         kuantitas?: number;
         alasan?: string | null;
+        batch_number?: string | null;
+        expired_date?: string | null;
     }) => void;
-    updateItem: (temp_uid: string, data: Partial<Pick<PurchaseItemLocal, "kuantitas" | "harga_estimasi" | "alasan">>) => void;
+    updateItem: (temp_uid: string, data: Partial<Pick<PurchaseItemLocal, "kuantitas" | "harga_estimasi" | "alasan" | "batch_number" | "expired_date">>) => void;
     removeItem: (temp_uid: string) => void;
     clearAll: () => void;
     getSubmitPayload: () => {
@@ -51,6 +53,8 @@ interface PurchaseItemsState {
             kuantitas: number;
             harga_estimasi: number;
             alasan?: string | null;
+            batch_number?: string | null;
+            expired_date?: string | null;
         }[];
     };
 }
@@ -93,7 +97,12 @@ export function createPurchaseItemsStore(parentId: string, parentType: ParentTyp
                             (i) => i.product_uid === product.product_uid,
                         );
                         if (existing) {
-                            const updatedExisting = { ...existing, kuantitas: existing.kuantitas + targetQty };
+                            const updatedExisting = {
+                                ...existing,
+                                kuantitas: existing.kuantitas + targetQty,
+                                batch_number: product.batch_number !== undefined ? product.batch_number : existing.batch_number,
+                                expired_date: product.expired_date !== undefined ? product.expired_date : existing.expired_date,
+                            };
                             const others = state.items.filter((i) => i.product_uid !== product.product_uid);
                             return {
                                 items: [updatedExisting, ...others],
@@ -110,6 +119,8 @@ export function createPurchaseItemsStore(parentId: string, parentType: ParentTyp
                                     kuantitas: targetQty,
                                     harga_estimasi: product.harga_estimasi,
                                     alasan: product.alasan || null,
+                                    batch_number: product.batch_number || null,
+                                    expired_date: product.expired_date || null,
                                 },
                                 ...state.items,
                             ],
@@ -146,6 +157,8 @@ export function createPurchaseItemsStore(parentId: string, parentType: ParentTyp
                             kuantitas: i.kuantitas,
                             harga_estimasi: i.harga_estimasi,
                             alasan: i.alasan || null,
+                            batch_number: i.batch_number || null,
+                            expired_date: i.expired_date || null,
                         })),
                     };
                 },

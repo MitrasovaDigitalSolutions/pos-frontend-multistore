@@ -126,3 +126,9 @@ export const DataTableTextActionButton = React.forwardRef<
 );
 
 DataTableTextActionButton.displayName = "DataTableTextActionButton";
+
+export {
+    DataTableActionDropdown,
+    type DataTableActionDropdownItem,
+    type DataTableActionDropdownProps,
+} from "./data-table-action-dropdown";

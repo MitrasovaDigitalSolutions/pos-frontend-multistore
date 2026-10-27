@@ -23,6 +23,8 @@ interface FormDatePickerProps<T extends FieldValues> {
     mode?: "date" | "year";
     minYear?: number;
     maxYear?: number;
+    id?: string;
+    onKeyDown?: React.KeyboardEventHandler<HTMLButtonElement>;
     onChange?: (val: string | number | null) => void;
 }
 
@@ -43,6 +45,8 @@ export function FormDatePicker<T extends FieldValues>({
     mode = "date",
     minYear,
     maxYear,
+    id,
+    onKeyDown,
     onChange: customOnChange,
 }: FormDatePickerProps<T>) {
     const {
@@ -95,6 +99,8 @@ export function FormDatePicker<T extends FieldValues>({
                     />
                 ) : (
                     <DatePicker
+                        id={id}
+                        onKeyDown={onKeyDown}
                         value={field.value}
                         onChange={(val) => {
                             field.onChange(val);

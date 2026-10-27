@@ -4,12 +4,15 @@ import type { ApiResponse } from "@/types/api";
 
 export interface ProductBatch {
     uid: string;
+    store_uid?: string;
     product_uid: string;
     product_name?: string;
     batch_number: string;
     expired_date: string;
-    stock: number;
-    initial_stock?: number;
+    initial_stock: number;
+    current_stock: number;
+    stock?: number; // fallback compatibility
+    buy_price?: number | null;
     status: "active" | "depleted" | "expired" | string;
     days_to_expire?: number;
     created_at?: string;
@@ -19,14 +22,20 @@ export interface ProductBatch {
 export interface CreateBatchPayload {
     batch_number: string;
     expired_date: string;
+    initial_stock?: number;
+    current_stock?: number;
     stock?: number;
+    buy_price?: number | null;
     status?: string;
 }
 
 export interface UpdateBatchPayload {
     batch_number?: string;
     expired_date?: string;
+    initial_stock?: number;
+    current_stock?: number;
     stock?: number;
+    buy_price?: number | null;
     status?: string;
 }
 
@@ -36,10 +45,9 @@ export interface UnitConversion {
     uid: string;
     product_uid: string;
     unit_name: string;
+    multiplier: number;
+    selling_price?: number | null;
     base_unit?: string;
-    conversion_factor: number;
-    barcode?: string | null;
-    price?: number | null;
     is_active?: boolean;
     created_at?: string;
     updated_at?: string;
@@ -47,9 +55,8 @@ export interface UnitConversion {
 
 export interface CreateUnitConversionPayload {
     unit_name: string;
-    conversion_factor: number;
-    barcode?: string | null;
-    price?: number | null;
+    multiplier: number;
+    selling_price?: number | null;
 }
 
 // ─── Template Racikan (Master Prescriptions) ───────────────────────────────────

@@ -1,32 +1,28 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { AccessDeniedState } from "@/components/ui/access-denied-state";
-import { IconArrowLeft, IconBarcode, IconCheck, IconInfoCircle, IconSparkles, IconUpload, IconX } from "@tabler/icons-react";
-import { useAppRouter } from "@/hooks/use-app-router";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { FormProvider } from "react-hook-form";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { ProductFormDialog } from "@/features/master/products/components/product-form-dialog";
 import { toast } from "sonner";
-import {
-    useReceivingDetail,
-} from "../../../api/purchase-api";
+import { Button } from "@/components/ui/button";
+import { AccessDeniedState } from "@/components/ui/access-denied-state";
+import { IconArrowLeft, IconSparkles } from "@tabler/icons-react";
+import { useAppRouter } from "@/hooks/use-app-router";
+import { useReceivingDetail } from "../../../api/purchase-api";
 import type { Receiving } from "../../../types";
-import { BarcodeInput } from "@/components/shared/barcode-input";
 import { BulkSubmitBar } from "../../shared/bulk-submit-bar";
 import { ItemsTable } from "../../shared/items-table";
-import { ReceivingFinalizeDialog } from "../receiving-finalize-dialog";
+import { PurchaseBarcodeScannerCard } from "../../shared/purchase-barcode-scanner-card";
 import { RECEIVING_STATUS } from "@/constants/purchase";
-import { PriceAlertDialog } from "./price-alert-dialog";
 import { ReceivingInstructionPanel } from "./receiving-instruction-panel";
 import { ReceivingHeaderCard } from "./receiving-header-card";
+import { ReceivingPageSkeleton } from "./receiving-page-skeleton";
+import { ReceivingItemsDialogs } from "./receiving-items-dialogs";
 import { useAllSuppliers } from "@/features/master/suppliers/api/suppliers-api";
 import { useReceivingFlow } from "@/features/purchase/hooks/use-receiving-flow";
 import { usePurchaseTutorialStore } from "@/stores/purchase-tutorial-store";
 import { MOCK_PRICE_ALERTS, MOCK_RECEIVING_ITEMS } from "@/features/purchase/tutorial/constants/purchase-tutorial-constants";
 import { getPurchaseItemsStore } from "@/stores/purchase-items-store";
+import { IconCheck, IconUpload } from "@tabler/icons-react";
 
 interface ReceivingItemsPageProps {
     receivingId: string;
@@ -103,6 +99,28 @@ function ReceivingItemsContainer({
 }: ReceivingItemsContainerProps) {
     const router = useAppRouter();
     const { data: suppliers = [] } = useAllSuppliers();
+    const barcodeInputRef = useRef<HTMLInputElement>(null);
+    const [lastScannedUid, setLastScannedUid] = useState<string | null>(null);
+    const [isContinuousScan, setIsContinuousScan] = useState(() => {
+        if (typeof window !== "undefined") {
+            try {
+                return localStorage.getItem("pos_continuous_scan_mode") === "true";
+            } catch {
+                return false;
+            }
+        }
+        return false;
+    });
+
+    const handleToggleContinuousScan = (checked: boolean) => {
+        setIsContinuousScan(checked);
+        try {
+            localStorage.setItem("pos_continuous_scan_mode", String(checked));
+        } catch {
+            // ignore
+        }
+        barcodeInputRef.current?.focus();
+    };
 
     const {
         currentReceiving,
@@ -158,9 +176,20 @@ function ReceivingItemsContainer({
     const effectiveFinalizeOpen = isReceivingTutorial ? tutorialDialog === "finalize" : isFinalizeOpen;
     const effectivePriceAlerts = isReceivingTutorial && tutorialDialog === "price_alert" ? MOCK_PRICE_ALERTS : priceAlerts;
 
+    const supplierName = suppliers.find(
+        (s) => s.uid === (headerForm.watch("supplier_uid") || receiving?.supplier_uid)
+    )?.nama || "—";
+    const purchaseOrderUid = headerForm.watch("purchase_order_uid") || receiving?.purchase_order_uid || null;
+    const nomorFaktur = headerForm.watch("nomor_faktur") || "";
+    const nilaiFaktur =
+        headerForm.watch("nilai_faktur") != null && Number(headerForm.watch("nilai_faktur")) !== 0
+            ? Number(headerForm.watch("nilai_faktur"))
+            : totalValue;
+    const catatan = headerForm.watch("catatan") || "";
+
     return (
         <FormProvider {...productForm}>
-            <div className="space-y-6 pb-28 sm:pb-8">
+            <div className="space-y-6 pb-36 sm:pb-32">
                 {/* Header info / Breadcrumb */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                     <div className="flex items-center gap-4">
@@ -208,17 +237,34 @@ function ReceivingItemsContainer({
                 {/* Scanning and Info Panel */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     <div className="lg:col-span-8 space-y-6">
-                        {/* Barcode scanner box */}
-                        <div id="rec-barcode-box" className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
-                            <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-50">
-                                <div className="flex items-center gap-2">
-                                    <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg">
-                                        <IconBarcode size={18} />
-                                    </div>
-                                    <h3 className="text-xs font-bold text-slate-900">Scan Barcode Penerimaan</h3>
-                                </div>
-
-                                {isTutorialRunning && (
+                        <PurchaseBarcodeScannerCard
+                            id="rec-barcode-box"
+                            title="Scan Barcode Penerimaan"
+                            inputRef={barcodeInputRef}
+                            isContinuousScan={isContinuousScan}
+                            onToggleContinuousScan={handleToggleContinuousScan}
+                            onProductFound={(product) => {
+                                setNotFoundQuery("");
+                                if (!isContinuousScan) {
+                                    setLastScannedUid(product.uid);
+                                }
+                                handleProductFound(product);
+                            }}
+                            onProductNotFound={(query) => {
+                                setNotFoundQuery(query);
+                                handleOpenCreateDialog(query);
+                            }}
+                            notFoundQuery={notFoundQuery}
+                            onClearNotFoundQuery={() => setNotFoundQuery("")}
+                            onOpenCreateDialog={handleOpenCreateDialog}
+                            disabled={isSubmitting}
+                            placeholder={
+                                isContinuousScan
+                                    ? "Scan barcode distributor berulang kali (mode cepat aktif)..."
+                                    : "Scan barcode distributor atau masukkan kode produk..."
+                            }
+                            extraActions={
+                                isTutorialRunning ? (
                                     <button
                                         type="button"
                                         id="btn-rec-seeder"
@@ -236,58 +282,9 @@ function ReceivingItemsContainer({
                                         <IconSparkles size={13} className="text-emerald-600 animate-pulse" />
                                         <span>Seeder Demo Penerimaan</span>
                                     </button>
-                                )}
-                            </div>
-
-                            <BarcodeInput
-                                id="rec-barcode-input"
-                                isJasa={false}
-                                onProductFound={(product) => {
-                                    setNotFoundQuery("");
-                                    handleProductFound(product);
-                                }}
-                                onError={(msg) => toast.error(msg)}
-                                onProductNotFound={(query) => {
-                                    setNotFoundQuery(query);
-                                    handleOpenCreateDialog(query);
-                                }}
-                                onInputChange={(__value) => {
-                                    if (notFoundQuery) {
-                                        setNotFoundQuery("");
-                                    }
-                                }}
-                                disabled={isSubmitting}
-                                placeholder="Scan barcode distributor atau masukkan kode produk..."
-                            />
-
-                            {notFoundQuery && (
-                                <div className="flex items-center justify-between p-3.5 bg-rose-50/50 border border-rose-100 rounded-xl text-rose-900 text-xs">
-                                    <div className="flex items-center gap-2">
-                                        <IconInfoCircle size={16} className="text-rose-500 shrink-0" />
-                                        <span>
-                                            Produk <strong>&quot;{notFoundQuery}&quot;</strong> tidak ditemukan.
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 shrink-0">
-                                        <Button
-                                            type="button"
-                                            onClick={() => handleOpenCreateDialog(notFoundQuery)}
-                                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold h-8 px-3 rounded-lg border-none cursor-pointer"
-                                        >
-                                            Tambah Produk
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            onClick={() => setNotFoundQuery("")}
-                                            className="h-8 w-8 p-0 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-rose-100/50 cursor-pointer border-none flex items-center justify-center shrink-0"
-                                        >
-                                            <IconX size={16} />
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+                                ) : null
+                            }
+                        />
 
                         {/* Table of items */}
                         <div id="rec-items-table" className="space-y-4">
@@ -298,6 +295,12 @@ function ReceivingItemsContainer({
                                 onRemoveItem={removeItem}
                                 disabled={isSubmitting}
                                 allowSubtotalInput={true}
+                                lastScannedUid={lastScannedUid}
+                                onClearLastScannedUid={() => setLastScannedUid(null)}
+                                onEnterKey={() => {
+                                    barcodeInputRef.current?.focus();
+                                    barcodeInputRef.current?.select();
+                                }}
                             />
                         </div>
                     </div>
@@ -333,69 +336,36 @@ function ReceivingItemsContainer({
                     />
                 </div>
 
-                {/* Finalize Dialog */}
-                {(currentReceiving || (isCurrentNew && (isFinalizeOpen || effectiveFinalizeOpen))) && (
-                    <ReceivingFinalizeDialog
-                        open={effectiveFinalizeOpen}
-                        onOpenChange={(val) => {
-                            if (isReceivingTutorial) {
-                                usePurchaseTutorialStore.getState().setActiveDialog(val ? "finalize" : null);
-                            } else {
-                                handleFinalizeClose(val);
-                            }
-                        }}
-                        receiving={currentReceiving || ({
-                            nomor_penerimaan: isReceivingTutorial ? "RCV-2024-001 (Simulasi)" : "Akan Dibuat Otomatis",
-                            supplier: isReceivingTutorial ? "PT Sumber Makmur Distributor" : (suppliers.find(s => s.uid === (headerForm.watch("supplier_uid") || receiving?.supplier_uid))?.nama || "—"),
-                            purchase_order_uid: isReceivingTutorial ? "PO-2024-001" : (headerForm.watch("purchase_order_uid") || receiving?.purchase_order_uid || null),
-                            nomor_faktur: headerForm.watch("nomor_faktur") || (isReceivingTutorial ? "INV-2024-089" : ""),
-                            nilai_faktur: (headerForm.watch("nilai_faktur") != null && Number(headerForm.watch("nilai_faktur")) !== 0)
-                                ? Number(headerForm.watch("nilai_faktur"))
-                                : totalValue,
-                            catatan: headerForm.watch("catatan") || "",
-                        } as unknown as Receiving)}
-                        items={items}
-                        isPending={isSubmitting}
-                        onConfirm={isReceivingTutorial ? () => { } : handleFinalizeConfirm}
-                    />
-                )}
-
-                {/* Price comparison alert dialog */}
-                <PriceAlertDialog
-                    open={effectiveAlertOpen}
-                    onOpenChange={(val) => {
-                        if (isReceivingTutorial) {
-                            usePurchaseTutorialStore.getState().setActiveDialog(val ? "price_alert" : null);
-                        } else {
-                            handleAlertClose(val);
-                        }
-                    }}
-                    priceAlerts={effectivePriceAlerts}
+                <ReceivingItemsDialogs
+                    receiving={currentReceiving}
+                    isCurrentNew={isCurrentNew}
+                    isReceivingTutorial={isReceivingTutorial}
+                    effectiveFinalizeOpen={effectiveFinalizeOpen}
+                    onFinalizeChange={handleFinalizeClose}
+                    onFinalizeConfirm={handleFinalizeConfirm}
+                    supplierName={supplierName}
+                    purchaseOrderUid={purchaseOrderUid}
+                    nomorFaktur={nomorFaktur}
+                    nilaiFaktur={nilaiFaktur}
+                    catatan={catatan}
+                    items={items}
+                    isSubmitting={isSubmitting}
                     isFinalizing={isFinalizing}
-                    onCompleteWithoutPrices={isReceivingTutorial ? () => { } : handleCompleteWithoutPrices}
-                    onCompleteWithPrices={isReceivingTutorial ? () => { } : handleCompleteWithPrices}
-                />
-
-                <ProductFormDialog
-                    open={isCreateDialogOpen}
-                    onOpenChange={setIsCreateDialogOpen}
-                    editingProduct={null}
-                    onSuccess={(product) => {
+                    effectiveAlertOpen={effectiveAlertOpen}
+                    effectivePriceAlerts={effectivePriceAlerts}
+                    onAlertChange={handleAlertClose}
+                    onCompleteWithoutPrices={handleCompleteWithoutPrices}
+                    onCompleteWithPrices={handleCompleteWithPrices}
+                    isCreateDialogOpen={isCreateDialogOpen}
+                    setIsCreateDialogOpen={setIsCreateDialogOpen}
+                    notFoundQuery={notFoundQuery}
+                    onProductFound={(product) => {
                         setNotFoundQuery("");
                         handleProductFound(product);
                     }}
-                    infoMessage={notFoundQuery ? `Produk "${notFoundQuery}" tidak ditemukan. Silakan buat baru.` : undefined}
-                />
-
-                <ConfirmDialog
-                    open={isResetDialogOpen}
-                    onOpenChange={setIsResetDialogOpen}
-                    title="Kosongkan Penerimaan"
-                    description="Apakah Anda yakin ingin mengosongkan seluruh data penerimaan? Semua barang yang telah dipindai dan informasi header yang telah diisi akan hilang."
-                    confirmText="Ya, Kosongkan"
-                    cancelText="Batal"
-                    variant="warning"
-                    onConfirm={() => {
+                    isResetDialogOpen={isResetDialogOpen}
+                    setIsResetDialogOpen={setIsResetDialogOpen}
+                    onResetConfirm={() => {
                         clearAll();
                         setIsResetDialogOpen(false);
                         toast.info("Seluruh data penerimaan lokal berhasil dikosongkan.");
@@ -403,58 +373,5 @@ function ReceivingItemsContainer({
                 />
             </div>
         </FormProvider>
-    );
-}
-
-function ReceivingPageSkeleton() {
-    return (
-        <div className="space-y-6">
-            {/* Header info / Breadcrumb */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-                <div className="flex items-center gap-4">
-                    <Skeleton className="h-9 w-9 rounded-xl" />
-                    <div className="space-y-2">
-                        <Skeleton className="h-5 w-48 rounded" />
-                        <Skeleton className="h-3 w-72 rounded" />
-                    </div>
-                </div>
-            </div>
-
-            {/* Scanning and Info Panel */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                <div className="lg:col-span-8 space-y-6">
-                    {/* Barcode scanner box */}
-                    <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
-                        <div className="flex items-center gap-2 pb-3 border-b border-slate-50">
-                            <Skeleton className="h-5 w-5 rounded" />
-                            <Skeleton className="h-4 w-36 rounded" />
-                        </div>
-                        <Skeleton className="h-10 w-full rounded-xl" />
-                    </div>
-
-                    {/* Table of items */}
-                    <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-4 space-y-3">
-                        <Skeleton className="h-8 w-full rounded" />
-                        <Skeleton className="h-12 w-full rounded" />
-                        <Skeleton className="h-12 w-full rounded" />
-                        <Skeleton className="h-12 w-full rounded" />
-                    </div>
-                </div>
-
-                {/* Sidebar Info/Instruction */}
-                <div className="lg:col-span-4 space-y-6">
-                    <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
-                        <Skeleton className="h-4 w-32 rounded" />
-                        <Skeleton className="h-8 w-full rounded" />
-                        <Skeleton className="h-8 w-full rounded" />
-                        <Skeleton className="h-8 w-full rounded" />
-                    </div>
-                    <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
-                        <Skeleton className="h-4 w-24 rounded" />
-                        <Skeleton className="h-16 w-full rounded" />
-                    </div>
-                </div>
-            </div>
-        </div>
     );
 }

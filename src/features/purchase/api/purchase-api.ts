@@ -194,6 +194,22 @@ export function useDeleteReceiving() {
     });
 }
 
+export function useVoidReceiving() {
+    const queryClient = useQueryClient();
+    return useMutation<ApiResponse<Receiving>, Error, string>({
+        mutationFn: (uid) =>
+            apiPost<ApiResponse<Receiving>, void>(ENDPOINTS.PURCHASE.RECEIVING.VOID(uid)),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: ["purchase"],
+            });
+            invalidateStockQueries(queryClient);
+            invalidateSupplierQueries(queryClient);
+            invalidateFinanceQueries(queryClient);
+        },
+    });
+}
+
 export function useUpdateReceivingPaymentStatus() {
     const queryClient = useQueryClient();
     return useMutation<ApiResponse<Receiving>, Error, { uid: string; status_pembayaran: "pending" | "unpaid" | "partial" | "paid" }>({

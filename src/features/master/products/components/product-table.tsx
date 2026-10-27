@@ -1,33 +1,20 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { DataTable } from "@/components/ui/data-table";
-import { DataTableActionButton } from "@/components/ui/data-table-actions";
-import { Show } from "@/components/ui/show";
-import { StatusBadge } from "@/components/ui/status-badge";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { hasPermission, hasRole } from "@/constants/roles";
-import { formatRupiah } from "@/hooks/use-format-rupiah";
-import { useActiveStoreStore } from "@/stores/active-store-store";
-import { useBranchPolicy } from "@/hooks/use-branch-policy";
-import { IconActivity, IconArchiveOff, IconCalendarTime, IconLayersIntersect, IconLock, IconPlus } from "@tabler/icons-react";
-import { ColumnDef } from "@tanstack/react-table";
+import { useCallback, useState } from "react";
 import { useSession } from "next-auth/react";
-import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { DataTable } from "@/components/ui/data-table";
+import { hasPermission, hasRole } from "@/constants/roles";
+import { useBranchPolicy } from "@/hooks/use-branch-policy";
+import { useActiveStoreStore } from "@/stores/active-store-store";
 import { useAppPreset } from "@/features/license/hooks/use-app-preset";
-import { BatchListDialog } from "@/features/pharmacy/components/batch/batch-list-dialog";
-import { UnitConversionDialog } from "@/features/pharmacy/components/units/unit-conversion-dialog";
 import { useDetachProductStore } from "../api/product-store-api";
 import { useToggleProductStatus } from "../api/products-api";
+import { useProductColumns } from "../hooks/use-product-columns";
 import type { Product } from "../types";
-import { UnarchiveProductDialog } from "./unarchive-product-dialog";
+import { ProductTableHeader } from "./product-table-header";
+import { renderProductTableActions } from "./product-table-actions";
+import { ProductTableDialogs } from "./product-table-dialogs";
 
 interface ProductTableProps {
     products: Product[];
@@ -70,7 +57,6 @@ export function ProductTable(props: ProductTableProps) {
         onPageChange,
         onPerPageChange,
         onEdit,
-        onManageStores: _onManageStores,
         onAddClick,
         isLoading = false,
         isFetching = false,
@@ -78,7 +64,9 @@ export function ProductTable(props: ProductTableProps) {
         sortBy,
         sortOrder,
         onSortChange,
+        onAdjustmentClick,
     } = props;
+
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
     const userPermissions = session?.user?.permissions || [];
@@ -94,8 +82,8 @@ export function ProductTable(props: ProductTableProps) {
     const canCreateProduct = useBranchPolicy("branch_can_create_product");
     const canEditMasterData = useBranchPolicy("branch_can_edit_master_data");
     const canManualAdjustment = useBranchPolicy("branch_can_manual_stock_adjustment");
-
     const { isPharmacy } = useAppPreset();
+
     const [batchDialogProduct, setBatchDialogProduct] = useState<Product | null>(null);
     const [unitDialogProduct, setUnitDialogProduct] = useState<Product | null>(null);
 
@@ -117,28 +105,29 @@ export function ProductTable(props: ProductTableProps) {
     const productToUnarchive = props.productToUnarchive !== undefined ? props.productToUnarchive : localProductToUnarchive;
     const setProductToUnarchive = props.onProductToUnarchiveChange || setLocalProductToUnarchive;
 
-    const handleToggleStatus = useCallback((p: Product) => {
-        if (p.status === "archived") {
-            setProductToUnarchive(p);
-            setIsUnarchiveOpen(true);
-            return;
-        }
+    const handleToggleStatus = useCallback(
+        (p: Product) => {
+            if (p.status === "archived") {
+                setProductToUnarchive(p);
+                setIsUnarchiveOpen(true);
+                return;
+            }
 
-        const nextStatus = p.status === "active" ? "inactive" : "active";
-        toggleStatus.mutate(
-            { uid: p.uid, status: nextStatus },
-            {
-                onSuccess: () => {
-                    toast.success(
-                        `Status ${p.nama} diperbarui menjadi ${nextStatus}.`,
-                    );
-                },
-                onError: () => {
-                    toast.error("Gagal memperbarui status produk.");
-                },
-            },
-        );
-    }, [setProductToUnarchive, setIsUnarchiveOpen, toggleStatus]);
+            const nextStatus = p.status === "active" ? "inactive" : "active";
+            toggleStatus.mutate(
+                { uid: p.uid, status: nextStatus },
+                {
+                    onSuccess: () => {
+                        toast.success(`Status ${p.nama} diperbarui menjadi ${nextStatus}.`);
+                    },
+                    onError: () => {
+                        toast.error("Gagal memperbarui status produk.");
+                    },
+                }
+            );
+        },
+        [setProductToUnarchive, setIsUnarchiveOpen, toggleStatus]
+    );
 
     const handleRemoveProduct = (p: Product) => {
         setProductToDelete(p);
@@ -167,284 +156,21 @@ export function ProductTable(props: ProductTableProps) {
         );
     };
 
-    const columns = useMemo<ColumnDef<Product>[]>(
-        () => {
-            const baseColumns: ColumnDef<Product>[] = [
-                {
-                    accessorKey: "barcode",
-                    header: "Barcode / SKU",
-                    cell: ({ row }) => {
-                        const barcode = row.original.barcode || "-";
-                        return (
-                            <TooltipProvider delayDuration={200}>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <span className="font-bold text-slate-900 truncate block max-w-[130px] cursor-default font-mono">
-                                            {barcode}
-                                        </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top">
-                                        <p className="font-mono text-xs">{barcode}</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        );
-                    },
-                    size: 130,
-                },
-                {
-                    accessorKey: "nama",
-                    header: "Nama Produk",
-                    cell: ({ row }) => (
-                        <div className="flex flex-col gap-0.5 max-w-[260px] min-w-0">
-                            <TooltipProvider delayDuration={200}>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <span className="font-semibold text-slate-800 truncate block cursor-default">
-                                            {row.original.nama}
-                                        </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top" className="max-w-xs">
-                                        <p className="text-xs">{row.original.nama}</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                            <div className="flex items-center gap-1">
-                                {row.original.is_jasa && (
-                                    <span className="badge text-[9px] border-none bg-blue-50 text-blue-700 w-fit px-1.5 py-px rounded font-semibold">
-                                        Jasa
-                                    </span>
-                                )}
-                                {row.original.is_raw_material && (
-                                    <span className="badge text-[9px] border-none bg-amber-50 text-amber-700 w-fit px-1.5 py-px rounded font-semibold">
-                                        Bahan Baku
-                                    </span>
-                                )}
-                                {(row.original.unit?.simbol || row.original.satuan) && (
-                                    <span className="badge text-[9px] border-none bg-emerald-50 text-emerald-700 w-fit px-1.5 py-px rounded font-semibold">
-                                        {row.original.unit?.simbol || row.original.satuan}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                    ),
-                    size: 260,
-                },
-                {
-                    id: "category",
-                    accessorFn: (row) => row.category?.nama || "",
-                    header: "Kategori",
-                    cell: ({ row }) => {
-                        const catName = row.original.category?.nama || "-";
-                        return (
-                            <TooltipProvider delayDuration={200}>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <span className="text-slate-500 text-xs truncate block max-w-[130px] cursor-default">
-                                            {catName}
-                                        </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top">
-                                        <p className="text-xs">{catName}</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        );
-                    },
-                    size: 140,
-                },
-                {
-                    id: "merek",
-                    accessorFn: (row) => row.brand?.nama || row.merek || "",
-                    header: "Merek/Brand",
-                    cell: ({ row }) => {
-                        const brandName = row.original.brand?.nama || row.original.merek || "-";
-                        return (
-                            <TooltipProvider delayDuration={200}>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <span className="text-slate-500 text-xs truncate block max-w-[130px] cursor-default">
-                                            {brandName}
-                                        </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top">
-                                        <p className="text-xs">{brandName}</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        );
-                    },
-                    size: 140,
-                },
-                {
-                    accessorKey: "harga_beli",
-                    header: "Harga Beli",
-                    meta: {
-                        headerClassName: "text-right",
-                        cellClassName: "text-right text-slate-500 text-xs",
-                    },
-                    size: 120,
-                    cell: ({ row }) => row.original.harga_beli !== null && row.original.harga_beli !== undefined
-                        ? formatRupiah(row.original.harga_beli)
-                        : "-",
-                },
-                {
-                    accessorKey: "harga",
-                    header: "Harga Jual",
-                    meta: {
-                        headerClassName: "text-right",
-                        cellClassName: "text-right font-bold text-slate-800",
-                    },
-                    size: 140,
-                    cell: ({ row }) => {
-                        const p = row.original;
-                        const storeProduct = p.product_stores?.[0];
-                        const hargaGrosir = p.harga_grosir ?? storeProduct?.harga_grosir;
-                        const minQtyGrosir = p.min_qty_grosir ?? storeProduct?.min_qty_grosir;
-                        const isGrosirFlag = p.is_grosir ?? storeProduct?.is_grosir;
-                        const hasGrosir = Boolean(isGrosirFlag === true && hargaGrosir && minQtyGrosir);
-                        return (
-                            <div className="flex flex-col items-end">
-                                <span className="font-bold text-slate-800">{formatRupiah(p.harga)}</span>
-                                <Show.When isTrue={hasGrosir}>
-                                    <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-50/90 border border-emerald-200/80 px-1.5 py-0.5 rounded-md mt-0.5 whitespace-nowrap leading-none font-mono">
-                                        Grosir: {formatRupiah(Number(hargaGrosir))}
-                                    </span>
-                                </Show.When>
-                            </div>
-                        );
-                    },
-                },
-                {
-                    accessorKey: "margin",
-                    header: "Margin",
-                    meta: {
-                        headerClassName: "text-right",
-                        cellClassName: "text-right text-slate-500 text-xs",
-                    },
-                    size: 120,
-                    cell: ({ row }) => row.original.margin !== null && row.original.margin !== undefined
-                        ? `${row.original.margin}%`
-                        : "-",
-                },
-                {
-                    accessorKey: "stok",
-                    header: "Stok",
-                    meta: {
-                        headerClassName: "text-right",
-                        cellClassName: "text-right",
-                    },
-                    size: 80,
-                    cell: ({ row }) => {
-                        const p = row.original;
-                        const unitLabel = p.unit?.simbol || p.satuan || "";
-                        return (
-                            <span
-                                className={`font-bold ${p.stok <= 10
-                                    ? "text-amber-500"
-                                    : "text-slate-800"
-                                    }`}
-                            >
-                                {p.stok}{unitLabel ? ` ${unitLabel}` : ""}
-                            </span>
-                        );
-                    },
-                },
-                {
-                    accessorKey: "status",
-                    header: "Status",
-                    meta: {
-                        headerClassName: "text-center",
-                        cellClassName: "text-center",
-                    },
-                    size: 80,
-                    cell: ({ row }) => {
-                        const p = row.original;
-                        const canToggleStatus = hasManageProducts && (isCentralStore || canEditMasterData);
-                        if (!canToggleStatus) {
-                            return (
-                                <TooltipProvider delayDuration={200}>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <span className="inline-block cursor-not-allowed opacity-90">
-                                                <StatusBadge status={p.status} />
-                                            </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="top">
-                                            <p className="text-xs">Pengubahan status produk dinonaktifkan oleh kebijakan Toko Pusat</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            );
-                        }
-                        return (
-                            <button
-                                onClick={() => handleToggleStatus(p)}
-                                className="bg-transparent border-none p-0 cursor-pointer focus:outline-none"
-                                title="Klik untuk mengubah status produk"
-                            >
-                                <StatusBadge status={p.status} />
-                            </button>
-                        );
-                    },
-                },
-            ];
-
-            return baseColumns;
-        },
-        [hasManageProducts, isCentralStore, canEditMasterData, handleToggleStatus],
-    );
+    const columns = useProductColumns({
+        hasManageProducts,
+        isCentralStore,
+        canEditMasterData,
+        onToggleStatus: handleToggleStatus,
+    });
 
     return (
         <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-2">
-            <div className="flex justify-between items-center border-b border-slate-50 pb-4">
-                <div>
-                    <h3 className="text-sm font-bold text-slate-900">
-                        Daftar Produk
-                    </h3>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                        Manajemen inventori produk aktif dan SKU.
-                    </p>
-                </div>
-                <div className="flex items-center gap-2">
-                    {hasManageProducts && (
-                        canCreateProduct ? (
-                            <Button
-                                id="btn-tambah-produk-master"
-                                onClick={onAddClick}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-pointer"
-                            >
-                                <IconPlus size={16} /> Tambah Produk
-                            </Button>
-                        ) : (
-                            <TooltipProvider delayDuration={150}>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <span tabIndex={0} className="inline-block cursor-not-allowed">
-                                            <Button
-                                                id="btn-tambah-produk-master"
-                                                disabled
-                                                className="bg-slate-100 text-slate-400 border border-slate-200 font-bold text-xs h-9 rounded-xl flex gap-1.5 cursor-not-allowed opacity-75"
-                                            >
-                                                <IconLock size={15} /> Tambah Produk
-                                            </Button>
-                                        </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="bottom" className="max-w-xs text-xs">
-                                        Pembuatan produk baru di toko cabang dinonaktifkan oleh Pusat.
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        )
-                    )}
-                    {!isCentralStore && (
-                        <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 border border-slate-200/80 px-2.5 py-1.5 rounded-xl flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                            Produk Dikelola Pusat
-                        </span>
-                    )}
-                </div>
-            </div>
+            <ProductTableHeader
+                hasManageProducts={hasManageProducts}
+                canCreateProduct={canCreateProduct}
+                isCentralStore={isCentralStore}
+                onAddClick={onAddClick}
+            />
 
             <div id="product-table-filters">
                 {filterElement}
@@ -473,166 +199,38 @@ export function ProductTable(props: ProductTableProps) {
                 hideEdit={(row: Product) => row.status === "archived"}
                 extraActions={
                     hasManageProducts
-                        ? (row: Product) => {
-                            if (row.status === "archived") {
-                                return (
-                                    <DataTableActionButton
-                                        variant="emerald"
-                                        onClick={() => {
-                                            setProductToUnarchive(row);
-                                            setIsUnarchiveOpen(true);
-                                        }}
-                                        tooltip="Batalkan Hapus (Unarchive)"
-                                        data-action="unarchive"
-                                        className="table-action-unarchive"
-                                    >
-                                        <IconArchiveOff size={16} />
-                                    </DataTableActionButton>
-                                );
-                            }
-
-                            if (props.onAdjustmentClick) {
-                                if (!canManualAdjustment) {
-                                    return (
-                                        <TooltipProvider delayDuration={150}>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <span tabIndex={0} className="inline-block cursor-not-allowed">
-                                                        <DataTableActionButton
-                                                            variant="slate"
-                                                            disabled
-                                                            tooltip="Penyesuaian stok manual dinonaktifkan oleh kebijakan Toko Pusat"
-                                                            data-action="adjust-stock"
-                                                            className="cursor-not-allowed opacity-50"
-                                                        >
-                                                            <IconLock size={15} />
-                                                        </DataTableActionButton>
-                                                    </span>
-                                                </TooltipTrigger>
-                                                <TooltipContent side="top" className="text-xs max-w-xs">
-                                                    Penyesuaian stok manual di cabang dinonaktifkan oleh kebijakan Toko Pusat.
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                    );
-                                }
-
-                                return (
-                                    <div className="flex items-center gap-1">
-                                        {isPharmacy && (
-                                            <>
-                                                <DataTableActionButton
-                                                    variant="sky"
-                                                    onClick={() => setBatchDialogProduct(row)}
-                                                    tooltip="Kelola Batch & Expired Date (FEFO)"
-                                                    data-action="manage-batch"
-                                                >
-                                                    <IconCalendarTime size={16} />
-                                                </DataTableActionButton>
-                                                <DataTableActionButton
-                                                    variant="indigo"
-                                                    onClick={() => setUnitDialogProduct(row)}
-                                                    tooltip="Multi-Satuan Bertingkat"
-                                                    data-action="manage-units"
-                                                >
-                                                    <IconLayersIntersect size={16} />
-                                                </DataTableActionButton>
-                                            </>
-                                        )}
-                                        <DataTableActionButton
-                                            variant="slate"
-                                            onClick={() => props.onAdjustmentClick?.(row)}
-                                            tooltip="Penyesuaian Stok (Adjustment Qty)"
-                                            data-action="adjust-stock"
-                                            className="hover:text-emerald-600 hover:bg-emerald-50"
-                                        >
-                                            <IconActivity size={16} />
-                                        </DataTableActionButton>
-                                    </div>
-                                );
-                            }
-
-                            if (isPharmacy) {
-                                return (
-                                    <div className="flex items-center gap-1">
-                                        <DataTableActionButton
-                                            variant="sky"
-                                            onClick={() => setBatchDialogProduct(row)}
-                                            tooltip="Kelola Batch & Expired Date (FEFO)"
-                                            data-action="manage-batch"
-                                        >
-                                            <IconCalendarTime size={16} />
-                                        </DataTableActionButton>
-                                        <DataTableActionButton
-                                            variant="indigo"
-                                            onClick={() => setUnitDialogProduct(row)}
-                                            tooltip="Multi-Satuan Bertingkat"
-                                            data-action="manage-units"
-                                        >
-                                            <IconLayersIntersect size={16} />
-                                        </DataTableActionButton>
-                                    </div>
-                                );
-                            }
-
-                            return null;
-                        }
+                        ? (row: Product) =>
+                              renderProductTableActions({
+                                  row,
+                                  isPharmacy,
+                                  canManualAdjustment,
+                                  onUnarchive: (p) => {
+                                      setProductToUnarchive(p);
+                                      setIsUnarchiveOpen(true);
+                                  },
+                                  onOpenBatch: setBatchDialogProduct,
+                                  onOpenUnits: setUnitDialogProduct,
+                                  onAdjustmentClick,
+                              })
                         : undefined
                 }
             />
 
-            <ConfirmDialog
-                open={isConfirmOpen}
-                onOpenChange={setIsConfirmOpen}
-                title="Hapus Produk"
-                description={
-                    productToDelete ? (
-                        <span>
-                            Apakah Anda yakin ingin menghapus produk{" "}
-                            <strong className="font-semibold text-slate-900 dark:text-slate-100">
-                                {productToDelete.nama}
-                            </strong>
-                            ? Tindakan ini tidak dapat dibatalkan.
-                        </span>
-                    ) : (
-                        "Apakah Anda yakin ingin menghapus produk ini?"
-                    )
-                }
-                confirmText="Ya, Hapus"
-                cancelText="Batal"
-                onConfirm={handleConfirmDelete}
-                isLoading={detachStoreProduct.isPending}
-                variant="danger"
+            <ProductTableDialogs
+                isConfirmOpen={isConfirmOpen}
+                onConfirmOpenChange={setIsConfirmOpen}
+                productToDelete={productToDelete}
+                onConfirmDelete={handleConfirmDelete}
+                isDeleting={detachStoreProduct.isPending}
+                isUnarchiveOpen={isUnarchiveOpen}
+                onUnarchiveOpenChange={setIsUnarchiveOpen}
+                productToUnarchive={productToUnarchive}
+                isPharmacy={isPharmacy}
+                batchDialogProduct={batchDialogProduct}
+                onBatchDialogClose={() => setBatchDialogProduct(null)}
+                unitDialogProduct={unitDialogProduct}
+                onUnitDialogClose={() => setUnitDialogProduct(null)}
             />
-
-            <UnarchiveProductDialog
-                open={isUnarchiveOpen}
-                onOpenChange={setIsUnarchiveOpen}
-                product={productToUnarchive}
-            />
-
-            {batchDialogProduct && (
-                <BatchListDialog
-                    open={Boolean(batchDialogProduct)}
-                    onOpenChange={(open) => {
-                        if (!open) setBatchDialogProduct(null);
-                    }}
-                    productUid={batchDialogProduct.uid}
-                    productName={batchDialogProduct.nama}
-                />
-            )}
-
-            {unitDialogProduct && (
-                <UnitConversionDialog
-                    open={Boolean(unitDialogProduct)}
-                    onOpenChange={(open) => {
-                        if (!open) setUnitDialogProduct(null);
-                    }}
-                    productUid={unitDialogProduct.uid}
-                    productName={unitDialogProduct.nama}
-                    baseUnit={unitDialogProduct.satuan || "Satuan"}
-                />
-            )}
         </section>
     );
 }

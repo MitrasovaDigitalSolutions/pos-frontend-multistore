@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
     IconArrowLeft,
@@ -12,6 +12,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { FilterForm } from "@/components/forms/filter-form";
 import { FormInput } from "@/components/forms/form-input";
 import { useAppRouter } from "@/hooks/use-app-router";
+import { useAppPreset } from "@/features/license/hooks/use-app-preset";
 import { ROUTES } from "@/constants/routes";
 import { usePrescriptionTemplates } from "../../api/pharmacy-api";
 import type { PrescriptionTemplate } from "../../types";
@@ -24,6 +25,14 @@ interface CompoundingFilterValues {
 
 export function CheckoutCompoundingListView() {
     const router = useAppRouter();
+    const { isPharmacy } = useAppPreset();
+
+    useEffect(() => {
+        if (!isPharmacy) {
+            router.replace(ROUTES.CHECKOUT);
+        }
+    }, [isPharmacy, router]);
+
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(15);
     const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -68,6 +77,8 @@ export function CheckoutCompoundingListView() {
     };
 
     const columns = useTemplateColumns();
+
+    if (!isPharmacy) return null;
 
     return (
         <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 p-3 sm:p-6 pb-28 sm:pb-8">

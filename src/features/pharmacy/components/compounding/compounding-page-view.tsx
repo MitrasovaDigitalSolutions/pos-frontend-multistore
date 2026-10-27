@@ -13,6 +13,9 @@ import { FormProvider } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Scrollable } from "@/components/ui/scrollable";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { useAppRouter } from "@/hooks/use-app-router";
+import { useAppPreset } from "@/features/license/hooks/use-app-preset";
+import { ROUTES } from "@/constants/routes";
 import { useCompoundingForm } from "../../hooks/use-compounding-form";
 import { CompoundingFeesPanel } from "./compounding-fees-panel";
 import { CompoundingHeaderCard } from "./compounding-header-card";
@@ -26,6 +29,15 @@ interface CompoundingPageViewProps {
 }
 
 export function CompoundingPageView({ draftId, templateId }: CompoundingPageViewProps) {
+    const router = useAppRouter();
+    const { isPharmacy } = useAppPreset();
+
+    useEffect(() => {
+        if (!isPharmacy) {
+            router.replace(ROUTES.CHECKOUT);
+        }
+    }, [isPharmacy, router]);
+
     const {
         methods,
         ingredients,
@@ -71,6 +83,8 @@ export function CompoundingPageView({ draftId, templateId }: CompoundingPageView
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [isSaveDisabled, onSave, onCancel, isTemplatePickerOpen]);
+
+    if (!isPharmacy) return null;
 
     return (
         <FormProvider {...methods}>

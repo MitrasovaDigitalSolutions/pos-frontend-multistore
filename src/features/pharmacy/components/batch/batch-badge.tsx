@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { formatDate, parseToDate } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import { IconAlertTriangle, IconCheck, IconClock, IconX } from "@tabler/icons-react";
 import { EXPIRATION_THRESHOLDS } from "../../constants/pharmacy-constants";
@@ -26,17 +27,18 @@ export function BatchBadge({
         );
     }
 
-    const expTime = new Date(expiredDate).getTime();
-    const nowTime = new Date().getTime();
-    const diffDays = Math.ceil((expTime - nowTime) / (1000 * 60 * 60 * 24));
-
-    if (isNaN(diffDays)) {
+    const parsedDate = parseToDate(expiredDate);
+    if (!parsedDate) {
         return (
             <Badge variant="secondary" className={cn("text-[9px]", className)}>
-                {expiredDate}
+                {formatDate(expiredDate) || expiredDate}
             </Badge>
         );
     }
+
+    const expTime = parsedDate.getTime();
+    const nowTime = new Date().getTime();
+    const diffDays = Math.ceil((expTime - nowTime) / (1000 * 60 * 60 * 24));
 
     // Expired
     if (diffDays <= 0) {

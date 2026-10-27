@@ -1,4 +1,6 @@
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { formatDate } from "@/lib/date-utils";
+import { useAppPreset } from "@/features/license/hooks/use-app-preset";
 import type { PurchaseOrderItem } from "../../../types";
 import { IconPackage } from "@tabler/icons-react";
 
@@ -7,6 +9,7 @@ interface POItemsTabProps {
 }
 
 export function POItemsTab({ items }: POItemsTabProps) {
+    const { isPharmacy } = useAppPreset();
     if (!items || items.length === 0) {
         return (
             <div className="p-8 text-center text-slate-400 text-xs font-medium">
@@ -44,9 +47,21 @@ export function POItemsTab({ items }: POItemsTabProps) {
                                         <p className="font-semibold text-slate-900 dark:text-slate-100">
                                             {item.product?.nama || "Produk dihapus"}
                                         </p>
-                                        <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                                            {item.product?.barcode || "-"}
-                                        </p>
+                                        <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                                            <span className="text-[10px] text-slate-400 font-mono">
+                                                {item.product?.barcode || "-"}
+                                            </span>
+                                            {isPharmacy && item.batch_number && (
+                                                <span className="text-[9px] font-mono font-bold bg-amber-50 text-amber-700 border border-amber-200/80 px-1.5 py-0.2 rounded">
+                                                    #{item.batch_number}
+                                                </span>
+                                            )}
+                                            {isPharmacy && item.expired_date && (
+                                                <span className="text-[9px] font-mono font-semibold bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.2 rounded">
+                                                    Exp: {formatDate(item.expired_date, "dd MMM yyyy") || item.expired_date}
+                                                </span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="p-3 text-right text-slate-700 dark:text-slate-300 font-mono">
                                         {formatRupiah(item.harga_estimasi)}
@@ -106,9 +121,19 @@ export function POItemsTab({ items }: POItemsTabProps) {
                                         <h4 className="font-bold text-slate-900 dark:text-slate-100 text-xs truncate">
                                             {item.product?.nama || "Produk dihapus"}
                                         </h4>
-                                        <p className="text-[10px] text-slate-400 font-mono truncate">
-                                            {item.product?.barcode || "-"}
-                                        </p>
+                                        <div className="flex items-center gap-1.5 flex-wrap text-[10px] text-slate-400 font-mono">
+                                            <span>{item.product?.barcode || "-"}</span>
+                                            {isPharmacy && item.batch_number && (
+                                                <span className="text-[9px] font-bold bg-amber-50 text-amber-700 px-1 rounded">
+                                                    #{item.batch_number}
+                                                </span>
+                                            )}
+                                            {isPharmacy && item.expired_date && (
+                                                <span className="text-[9px] bg-slate-100 text-slate-600 px-1 rounded">
+                                                    Exp: {formatDate(item.expired_date, "dd MMM yyyy") || item.expired_date}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                                 <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-[10px] font-extrabold font-mono shrink-0">

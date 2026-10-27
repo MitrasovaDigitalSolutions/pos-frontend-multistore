@@ -4,14 +4,13 @@ export const unitConversionSchema = z.object({
     unit_name: z
         .string()
         .min(1, "Nama satuan wajib diisi")
-        .max(50, "Maksimal 50 karakter"),
-    conversion_factor: z.coerce
+        .max(255, "Maksimal 255 karakter"),
+    multiplier: z.coerce
         .number()
-        .positive("Faktor konversi harus lebih dari 0"),
-    barcode: z.string().optional().nullable(),
-    price: z.coerce
+        .gt(0, "Faktor pengali harus lebih dari 0"),
+    selling_price: z.coerce
         .number()
-        .min(0, "Harga tidak boleh negatif")
+        .min(0, "Harga jual minimal 0")
         .optional()
         .nullable(),
 });

@@ -80,7 +80,7 @@ export function ReceivingDialog({
             status_pembayaran: PAYMENT_STATUS.PENDING,
             status: RECEIVING_STATUS.COMPLETED,
             catatan: "",
-            items: [{ product_uid: "", kuantitas: 0, harga_beli: 0, update_harga_jual: false, harga_jual_baru: null, margin_baru: null }],
+            items: [{ product_uid: "", kuantitas: 0, harga_beli: 0, update_harga_jual: false, harga_jual_baru: null, margin_baru: null, batch_number: null, expired_date: null }],
         },
     });
 
@@ -117,7 +117,9 @@ export function ReceivingDialog({
                         update_harga_jual: false,
                         harga_jual_baru: null,
                         margin_baru: null,
-                    })) || [{ product_uid: "", kuantitas: 0, harga_beli: 0, update_harga_jual: false, harga_jual_baru: null, margin_baru: null }],
+                        batch_number: item.batch_number || null,
+                        expired_date: item.expired_date ? (typeof item.expired_date === "string" ? item.expired_date.split("T")[0] : null) : null,
+                    })) || [{ product_uid: "", kuantitas: 0, harga_beli: 0, update_harga_jual: false, harga_jual_baru: null, margin_baru: null, batch_number: null, expired_date: null }],
                 });
             } else {
                 reset({
@@ -128,7 +130,7 @@ export function ReceivingDialog({
                     status_pembayaran: PAYMENT_STATUS.PENDING,
                     status: RECEIVING_STATUS.COMPLETED,
                     catatan: "",
-                    items: [{ product_uid: "", kuantitas: 0, harga_beli: 0, update_harga_jual: false, harga_jual_baru: null, margin_baru: null }],
+                    items: [{ product_uid: "", kuantitas: 0, harga_beli: 0, update_harga_jual: false, harga_jual_baru: null, margin_baru: null, batch_number: null, expired_date: null }],
                 });
             }
         }
@@ -407,6 +409,8 @@ export function ReceivingDialog({
                                                 update_harga_jual: false,
                                                 harga_jual_baru: null,
                                                 margin_baru: null,
+                                                batch_number: null,
+                                                expired_date: null,
                                             })
                                         }
                                         variant="outline"

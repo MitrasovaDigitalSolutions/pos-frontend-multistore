@@ -46,7 +46,7 @@ const receivingFinalizeSchema = z.object({
     }
 });
 
-type ReceivingFinalizeInput = z.infer<typeof receivingFinalizeSchema>;
+export type ReceivingFinalizeInput = z.infer<typeof receivingFinalizeSchema>;
 
 interface ReceivingFinalizeDialogProps {
     open: boolean;

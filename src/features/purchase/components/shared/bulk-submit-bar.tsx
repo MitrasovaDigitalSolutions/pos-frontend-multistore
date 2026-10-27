@@ -1,8 +1,12 @@
+"use client";
+
+import { useSyncExternalStore } from "react";
 import { AppButton } from "@/components/shared/app-button";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { IconAlertCircle, IconUpload } from "@tabler/icons-react";
 import { RefreshCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSidebarStore } from "@/stores/sidebar-store";
 
 interface BulkSubmitBarProps {
     itemCount: number;
@@ -45,9 +49,25 @@ export function BulkSubmitBar({
 }: BulkSubmitBarProps) {
     const hasItems = itemCount > 0;
     const isAnySubmitting = isSubmitting || isSecondarySubmitting;
+    const isSidebarCollapsed = useSidebarStore((state) => state.isCollapsed);
+    const mounted = useSyncExternalStore(
+        () => () => {},
+        () => true,
+        () => false
+    );
+
+    const effectiveCollapsed = mounted ? isSidebarCollapsed : false;
 
     return (
-        <div id={id || "bulk-submit-bar"} className={cn("sticky bottom-2 sm:bottom-0 z-30 mt-4", className)}>
+        <div
+            id={id || "bulk-submit-bar"}
+            className={cn(
+                "fixed bottom-3 sm:bottom-4 z-40 transition-all duration-300",
+                "left-3 right-3 sm:left-6 sm:right-6 md:left-8 md:right-8",
+                effectiveCollapsed ? "lg:left-[96px] lg:right-8" : "lg:left-[256px] lg:right-8",
+                className
+            )}
+        >
             <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xl shadow-slate-900/10 p-3 sm:p-4 transition-all">
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
                     {/* Left: Stats */}
