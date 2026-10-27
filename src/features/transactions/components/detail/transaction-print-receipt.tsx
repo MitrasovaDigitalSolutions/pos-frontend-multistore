@@ -36,7 +36,7 @@ export function TransactionPrintReceipt({ transaction, formattedDate }: Transact
                 </div>
                 <div className="flex justify-between">
                     <span>Kasir:</span>
-                    <span>{transaction.user?.name || "Kasir"}</span>
+                    <span>{transaction.user?.name || transaction.user?.nama || "Kasir"}</span>
                 </div>
                 <div className="flex justify-between">
                     <span>Status:</span>
@@ -52,26 +52,78 @@ export function TransactionPrintReceipt({ transaction, formattedDate }: Transact
             </div>
 
             {/* Print Items */}
-            <table className="w-full text-[9px] border-collapse mb-4">
-                <thead>
-                    <tr className="border-b border-dashed border-gray-400">
-                        <th className="text-left pb-1">Item</th>
-                        <th className="text-center pb-1">Qty</th>
-                        <th className="text-right pb-1">Harga</th>
-                        <th className="text-right pb-1">Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {transaction.items.map((item) => (
-                        <tr key={item.uid} className="align-top">
-                            <td className="py-1 pr-2 truncate max-w-[120px]">{item.nama_produk}</td>
-                            <td className="py-1 text-center">{item.kuantitas}</td>
-                            <td className="py-1 text-right">{formatRupiah(item.harga_satuan)}</td>
-                            <td className="py-1 text-right">{formatRupiah(item.subtotal)}</td>
+            {transaction.items && transaction.items.length > 0 && (
+                <table className="w-full text-[9px] border-collapse mb-2">
+                    <thead>
+                        <tr className="border-b border-dashed border-gray-400">
+                            <th className="text-left pb-1">Item</th>
+                            <th className="text-center pb-1">Qty</th>
+                            <th className="text-right pb-1">Harga</th>
+                            <th className="text-right pb-1">Total</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {transaction.items.map((item) => (
+                            <tr key={item.uid} className="align-top">
+                                <td className="py-1 pr-2 truncate max-w-[120px]">{item.nama_produk}</td>
+                                <td className="py-1 text-center">{item.kuantitas}</td>
+                                <td className="py-1 text-right">{formatRupiah(item.harga_satuan)}</td>
+                                <td className="py-1 text-right">{formatRupiah(item.subtotal)}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            )}
+
+            {/* Print Compounded Items */}
+            {(() => {
+                const compoundedList = (transaction.compounded_items && transaction.compounded_items.length > 0)
+                    ? transaction.compounded_items
+                    : (transaction.prescriptions && transaction.prescriptions.length > 0)
+                        ? transaction.prescriptions
+                        : (transaction.prescription_histories && transaction.prescription_histories.length > 0)
+                            ? transaction.prescription_histories
+                            : [];
+
+                if (compoundedList.length === 0) return null;
+
+                return (
+                    <div className="space-y-2 mb-3">
+                        <div className="text-[9px] font-bold uppercase tracking-wider border-b border-dashed border-gray-400 pb-0.5">
+                            Obat Racikan
+                        </div>
+                        {compoundedList.map((comp, idx) => {
+                            const totalFees = (comp.tuslah_fee || 0) + (comp.embalase_fee || 0);
+                            const ingNames = comp.ingredients?.map((i) => i.nama_produk).filter(Boolean).join(", ");
+
+                            return (
+                                <div key={comp.uid || `comp-${idx}`} className="text-[8.5px] space-y-0.5">
+                                    <div className="flex justify-between font-bold">
+                                        <span className="truncate max-w-[160px]">[R/] {comp.nama_racikan} ({comp.jumlah_kemasan} bks)</span>
+                                        <span>{formatRupiah(comp.total_harga)}</span>
+                                    </div>
+                                    {comp.aturan_pakai && (
+                                        <div className="text-[8px] text-gray-600 pl-1">
+                                            Signa: {comp.aturan_pakai}
+                                        </div>
+                                    )}
+                                    {ingNames && (
+                                        <div className="text-[7.5px] text-gray-500 pl-1 truncate">
+                                            Bahan: {ingNames}
+                                        </div>
+                                    )}
+                                    {totalFees > 0 && (
+                                        <div className="flex justify-between text-[7.5px] text-gray-500 pl-1">
+                                            <span>Tuslah & Embalase</span>
+                                            <span>{formatRupiah(totalFees)}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                );
+            })()}
 
             <div className="border-t border-dashed border-gray-400 my-2" />
 

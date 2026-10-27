@@ -226,13 +226,13 @@ ${
 }
 
 <div class="row">
-    <span>Kasir: ${sale.user?.name ?? "-"}</span>
+    <span>Kasir: ${sale.user?.name || sale.user?.nama || "-"}</span>
     <span>POS-01</span>
 </div>
 
 <div class="row">
     <span class="trx">${sale.nomor_transaksi}</span>
-    <span class="date">${formatDate(sale.created_at)}</span>
+    <span class="date">${formatDate(sale.tanggal_transaksi || sale.created_at)}</span>
 </div>
 
 ${
@@ -268,6 +268,52 @@ ${items.map((item: ReceiptProcessedItem) => `
     }
 </div>
 `).join("")}
+
+${
+    (() => {
+        const compoundedList = Array.isArray(sale.compounded_items) && sale.compounded_items.length > 0
+            ? sale.compounded_items
+            : Array.isArray(sale.prescriptions) && sale.prescriptions.length > 0
+                ? sale.prescriptions
+                : Array.isArray(sale.prescription_histories) && sale.prescription_histories.length > 0
+                    ? sale.prescription_histories
+                    : Array.isArray(sale.prescriptionHistories) && sale.prescriptionHistories.length > 0
+                        ? sale.prescriptionHistories
+                        : [];
+
+        if (compoundedList.length === 0) return "";
+
+        return compoundedList.map((comp: Record<string, unknown>) => {
+            const ingredients = Array.isArray(comp.ingredients) ? comp.ingredients : [];
+            const ingredientNames = ingredients
+                .map((i: Record<string, unknown>) => (i.nama_produk as string) || (i.product as Record<string, unknown>)?.nama as string)
+                .filter(Boolean)
+                .join(", ");
+
+            const totalFees = Number(comp.tuslah_fee || 0) + Number(comp.embalase_fee || 0);
+            const totalRacikan = Number(comp.total_harga || 0);
+            const kemasan = comp.jumlah_kemasan ?? 1;
+
+            return `
+<div class="item">
+    <div class="product-name" style="font-weight:bold;">
+        [RACIKAN] ${comp.nama_racikan} (${kemasan} bungkus)
+    </div>
+    ${comp.aturan_pakai ? `<div style="font-size:8px; color:#333; padding-left:6px;">Signa: ${comp.aturan_pakai}</div>` : ""}
+    ${ingredientNames ? `<div style="font-size:7.5px; color:#555; padding-left:6px;">Bahan: ${ingredientNames}</div>` : ""}
+    <div class="item-detail">
+        <span style="padding-left:6px; font-size:8px;">Tuslah & Embalase</span>
+        <span>${money(totalFees)}</span>
+    </div>
+    <div class="item-detail" style="font-weight:bold;">
+        <span style="padding-left:6px;">Total Racikan</span>
+        <span>${money(totalRacikan)}</span>
+    </div>
+</div>
+            `;
+        }).join("");
+    })()
+}
 
 <hr/>
 

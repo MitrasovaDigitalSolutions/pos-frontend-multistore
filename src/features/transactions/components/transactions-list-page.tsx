@@ -162,11 +162,28 @@ export function TransactionsListPage() {
         {
             accessorKey: "nomor_transaksi",
             header: "No. Transaksi",
-            cell: ({ row }) => (
-                <span className="font-bold text-slate-800">
-                    {row.original.nomor_transaksi}
-                </span>
-            ),
+            cell: ({ row }) => {
+                const compoundedList = (row.original.compounded_items && row.original.compounded_items.length > 0)
+                    ? row.original.compounded_items
+                    : (row.original.prescriptions && row.original.prescriptions.length > 0)
+                        ? row.original.prescriptions
+                        : (row.original.prescription_histories && row.original.prescription_histories.length > 0)
+                            ? row.original.prescription_histories
+                            : [];
+
+                return (
+                    <div className="flex flex-col gap-0.5">
+                        <span className="font-bold text-slate-800">
+                            {row.original.nomor_transaksi}
+                        </span>
+                        {compoundedList.length > 0 && (
+                            <span className="inline-flex items-center text-[9px] font-bold text-teal-700 bg-teal-50 border border-teal-200/60 rounded px-1.5 py-0.2 w-fit">
+                                Racikan ({compoundedList.length})
+                            </span>
+                        )}
+                    </div>
+                );
+            },
         },
         {
             accessorKey: "nama_transaksi",
@@ -182,7 +199,7 @@ export function TransactionsListPage() {
             header: "Kasir",
             cell: ({ row }) => (
                 <span className="font-semibold text-slate-700">
-                    {row.original.user?.name || "Kasir"}
+                    {row.original.user?.name || row.original.user?.nama || "Kasir"}
                 </span>
             ),
         },
@@ -190,10 +207,11 @@ export function TransactionsListPage() {
             accessorKey: "created_at",
             header: "Waktu Transaksi",
             cell: ({ row }) => {
-                const date = new Date(row.original.created_at);
+                const dateStr = row.original.tanggal_transaksi || row.original.created_at;
+                const date = dateStr ? new Date(dateStr) : null;
                 return (
                     <span className="text-slate-500 whitespace-nowrap">
-                        {format(date, "dd MMM yyyy, HH:mm", { locale: id })}
+                        {date ? format(date, "dd MMM yyyy, HH:mm", { locale: id }) : "-"}
                     </span>
                 );
             },
@@ -394,8 +412,19 @@ export function TransactionsListPage() {
                         const status = trx.status?.toLowerCase() || "completed";
                         const statusLabel = statusLabels[status] || trx.status;
                         const method = trx.metode_pembayaran?.toLowerCase() || "cash";
-                        const date = trx.created_at ? new Date(trx.created_at) : null;
+                        const dateStr = trx.tanggal_transaksi || trx.created_at;
+                        const date = dateStr ? new Date(dateStr) : null;
                         const formattedDate = date ? format(date, "dd MMM yyyy, HH:mm", { locale: id }) : "-";
+
+                        const compoundedList = (trx.compounded_items && trx.compounded_items.length > 0)
+                            ? trx.compounded_items
+                            : (trx.prescriptions && trx.prescriptions.length > 0)
+                                ? trx.prescriptions
+                                : (trx.prescription_histories && trx.prescription_histories.length > 0)
+                                    ? trx.prescription_histories
+                                    : [];
+                        const regularCount = trx.items?.length || 0;
+                        const compCount = compoundedList.length;
 
                         return (
                             <div
@@ -411,8 +440,15 @@ export function TransactionsListPage() {
                                             #
                                         </div>
                                         <div className="min-w-0 truncate">
-                                            <div className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate group-hover:text-emerald-600 transition-colors">
-                                                {trx.nomor_transaksi}
+                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                <span className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate group-hover:text-emerald-600 transition-colors">
+                                                    {trx.nomor_transaksi}
+                                                </span>
+                                                {compCount > 0 && (
+                                                    <span className="inline-flex items-center text-[9px] font-extrabold text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 border border-teal-200/60 dark:border-teal-800 rounded px-1.5 py-0.2">
+                                                        Racikan ({compCount})
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="text-[10px] text-slate-400 font-medium truncate">
                                                 {formattedDate}
@@ -428,7 +464,7 @@ export function TransactionsListPage() {
                                     <div className="space-y-0.5">
                                         <span className="text-[10px] text-slate-400 font-medium">Kasir:</span>
                                         <p className="font-semibold text-slate-700 dark:text-slate-300 truncate">
-                                            {trx.user?.name || "Kasir"}
+                                            {trx.user?.name || trx.user?.nama || "Kasir"}
                                         </p>
                                     </div>
                                     <div className="space-y-0.5 text-right">
@@ -450,7 +486,9 @@ export function TransactionsListPage() {
                                 {/* Footer: Total Nominal & Button Detail */}
                                 <div className="flex items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800/80 pt-2.5">
                                     <div>
-                                        <span className="text-[10px] text-slate-400 block font-medium">Total Transaksi</span>
+                                        <span className="text-[10px] text-slate-400 block font-medium">
+                                            Total Transaksi {compCount > 0 ? `(${regularCount} produk, ${compCount} racikan)` : regularCount > 0 ? `(${regularCount} item)` : ""}
+                                        </span>
                                         <span className="text-sm font-extrabold text-slate-900 dark:text-slate-100 tabular-nums">
                                             {formatRupiah(trx.total)}
                                         </span>

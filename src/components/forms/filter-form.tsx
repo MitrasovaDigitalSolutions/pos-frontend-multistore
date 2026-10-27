@@ -1,14 +1,15 @@
 "use client";
 
 import React, { ReactNode, useState } from "react";
-import { FormProvider, UseFormReturn, FieldValues } from "react-hook-form";
+import { FormProvider, UseFormReturn, FieldValues, useFormContext } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { IconFilter, IconRotate, IconChevronUp, IconChevronDown, IconSearch, IconX } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 
 interface FilterFormProps<T extends FieldValues> {
-    methods: UseFormReturn<T>;
+    methods?: UseFormReturn<T>;
+    form?: UseFormReturn<T>;
     onSubmit: (data: T) => void;
     onReset: () => void;
     children: ReactNode;
@@ -58,6 +59,7 @@ function formatFilterValue(val: string): string {
 
 export function FilterForm<T extends FieldValues>({
     methods,
+    form,
     onSubmit,
     onReset,
     children,
@@ -71,10 +73,12 @@ export function FilterForm<T extends FieldValues>({
     actionsId,
     headerId,
 }: FilterFormProps<T>) {
+    const contextMethods = useFormContext<T>();
+    const activeMethods = methods || form || contextMethods;
     const queryClient = useQueryClient();
     const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
-    const watchedValues = methods.watch();
+    const watchedValues = activeMethods?.watch();
 
     // Extract active filter entries
     const activeFilters = React.useMemo(() => {
@@ -95,10 +99,11 @@ export function FilterForm<T extends FieldValues>({
 
     const handleClearSingle = (key: string, e: React.MouseEvent) => {
         e.stopPropagation();
+        if (!activeMethods) return;
         const resetVal = key === "status" ? "all" : "";
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        methods.setValue(key as any, resetVal as any);
-        methods.handleSubmit((data) => {
+        activeMethods.setValue(key as any, resetVal as any);
+        activeMethods.handleSubmit((data) => {
             onSubmit(data);
             queryClient.invalidateQueries({ type: "active" });
         })();
@@ -127,12 +132,16 @@ export function FilterForm<T extends FieldValues>({
         4: "md:grid-cols-4",
     }[resolvedCols as 1 | 2 | 3 | 4] || "md:grid-cols-4";
 
+    if (!activeMethods) {
+        return <div className={className}>{children}</div>;
+    }
+
     // Optimized layout for single-filter (search-only) forms: render inline in a single row
     if (isSingleFilter) {
         return (
-        <FormProvider {...methods}>
+        <FormProvider {...activeMethods}>
             <form
-                onSubmit={methods.handleSubmit((data) => {
+                onSubmit={activeMethods.handleSubmit((data) => {
                     onSubmit(data);
                     queryClient.invalidateQueries({ type: "active" });
                 })}
@@ -171,9 +180,9 @@ export function FilterForm<T extends FieldValues>({
 }
 
 return (
-    <FormProvider {...methods}>
+    <FormProvider {...activeMethods}>
         <form
-            onSubmit={methods.handleSubmit((data) => {
+            onSubmit={activeMethods.handleSubmit((data) => {
                 onSubmit(data);
                 queryClient.invalidateQueries({ type: "active" });
             })}

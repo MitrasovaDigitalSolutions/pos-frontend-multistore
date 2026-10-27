@@ -9,9 +9,10 @@ import { IconPackage, IconReceipt } from "@tabler/icons-react";
 
 interface TransactionDetailItemsProps {
     items: TransactionItem[];
+    hasCompoundedItems?: boolean;
 }
 
-export function TransactionDetailItems({ items }: TransactionDetailItemsProps) {
+export function TransactionDetailItems({ items, hasCompoundedItems }: TransactionDetailItemsProps) {
     const columns: ColumnDef<TransactionItem>[] = [
         {
             accessorKey: "nama_produk",
@@ -156,9 +157,13 @@ export function TransactionDetailItems({ items }: TransactionDetailItemsProps) {
                         <IconReceipt size={16} className="stroke-[2.2]" />
                     </div>
                     <div className="min-w-0">
-                        <h3 className="text-xs font-bold text-slate-900 leading-none">Daftar Item</h3>
+                        <h3 className="text-xs font-bold text-slate-900 leading-none">
+                            {hasCompoundedItems ? "Daftar Produk Retail" : "Daftar Item"}
+                        </h3>
                         <p className="text-[10px] text-slate-400 mt-1 leading-none truncate">
-                            Daftar barang / jasa layanan yang tercatat.
+                            {hasCompoundedItems
+                                ? "Daftar barang / produk non-racikan yang tercatat."
+                                : "Daftar barang / jasa layanan yang tercatat."}
                         </p>
                     </div>
                 </div>
@@ -171,7 +176,11 @@ export function TransactionDetailItems({ items }: TransactionDetailItemsProps) {
             <DataTable
                 columns={columns}
                 data={items}
-                emptyMessage="Tidak ada item dalam transaksi ini."
+                emptyMessage={
+                    hasCompoundedItems
+                        ? "Tidak ada produk retail/non-racikan dalam transaksi ini."
+                        : "Tidak ada item dalam transaksi ini."
+                }
                 virtualize={false}
                 entityName="item"
                 getRowMotionProps={(item) => {

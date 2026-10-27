@@ -16,11 +16,14 @@ import { hasPermission, hasRole } from "@/constants/roles";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { useActiveStoreStore } from "@/stores/active-store-store";
 import { useBranchPolicy } from "@/hooks/use-branch-policy";
-import { IconActivity, IconArchiveOff, IconLock, IconPlus } from "@tabler/icons-react";
+import { IconActivity, IconArchiveOff, IconCalendarTime, IconLayersIntersect, IconLock, IconPlus } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useAppPreset } from "@/features/license/hooks/use-app-preset";
+import { BatchListDialog } from "@/features/pharmacy/components/batch/batch-list-dialog";
+import { UnitConversionDialog } from "@/features/pharmacy/components/units/unit-conversion-dialog";
 import { useDetachProductStore } from "../api/product-store-api";
 import { useToggleProductStatus } from "../api/products-api";
 import type { Product } from "../types";
@@ -91,6 +94,10 @@ export function ProductTable(props: ProductTableProps) {
     const canCreateProduct = useBranchPolicy("branch_can_create_product");
     const canEditMasterData = useBranchPolicy("branch_can_edit_master_data");
     const canManualAdjustment = useBranchPolicy("branch_can_manual_stock_adjustment");
+
+    const { isPharmacy } = useAppPreset();
+    const [batchDialogProduct, setBatchDialogProduct] = useState<Product | null>(null);
+    const [unitDialogProduct, setUnitDialogProduct] = useState<Product | null>(null);
 
     const detachStoreProduct = useDetachProductStore();
     const toggleStatus = useToggleProductStatus();
@@ -511,15 +518,60 @@ export function ProductTable(props: ProductTableProps) {
                                 }
 
                                 return (
-                                    <DataTableActionButton
-                                        variant="slate"
-                                        onClick={() => props.onAdjustmentClick?.(row)}
-                                        tooltip="Penyesuaian Stok (Adjustment Qty)"
-                                        data-action="adjust-stock"
-                                        className="hover:text-emerald-600 hover:bg-emerald-50"
-                                    >
-                                        <IconActivity size={16} />
-                                    </DataTableActionButton>
+                                    <div className="flex items-center gap-1">
+                                        {isPharmacy && (
+                                            <>
+                                                <DataTableActionButton
+                                                    variant="sky"
+                                                    onClick={() => setBatchDialogProduct(row)}
+                                                    tooltip="Kelola Batch & Expired Date (FEFO)"
+                                                    data-action="manage-batch"
+                                                >
+                                                    <IconCalendarTime size={16} />
+                                                </DataTableActionButton>
+                                                <DataTableActionButton
+                                                    variant="indigo"
+                                                    onClick={() => setUnitDialogProduct(row)}
+                                                    tooltip="Multi-Satuan Bertingkat"
+                                                    data-action="manage-units"
+                                                >
+                                                    <IconLayersIntersect size={16} />
+                                                </DataTableActionButton>
+                                            </>
+                                        )}
+                                        <DataTableActionButton
+                                            variant="slate"
+                                            onClick={() => props.onAdjustmentClick?.(row)}
+                                            tooltip="Penyesuaian Stok (Adjustment Qty)"
+                                            data-action="adjust-stock"
+                                            className="hover:text-emerald-600 hover:bg-emerald-50"
+                                        >
+                                            <IconActivity size={16} />
+                                        </DataTableActionButton>
+                                    </div>
+                                );
+                            }
+
+                            if (isPharmacy) {
+                                return (
+                                    <div className="flex items-center gap-1">
+                                        <DataTableActionButton
+                                            variant="sky"
+                                            onClick={() => setBatchDialogProduct(row)}
+                                            tooltip="Kelola Batch & Expired Date (FEFO)"
+                                            data-action="manage-batch"
+                                        >
+                                            <IconCalendarTime size={16} />
+                                        </DataTableActionButton>
+                                        <DataTableActionButton
+                                            variant="indigo"
+                                            onClick={() => setUnitDialogProduct(row)}
+                                            tooltip="Multi-Satuan Bertingkat"
+                                            data-action="manage-units"
+                                        >
+                                            <IconLayersIntersect size={16} />
+                                        </DataTableActionButton>
+                                    </div>
                                 );
                             }
 
@@ -558,6 +610,29 @@ export function ProductTable(props: ProductTableProps) {
                 onOpenChange={setIsUnarchiveOpen}
                 product={productToUnarchive}
             />
+
+            {batchDialogProduct && (
+                <BatchListDialog
+                    open={Boolean(batchDialogProduct)}
+                    onOpenChange={(open) => {
+                        if (!open) setBatchDialogProduct(null);
+                    }}
+                    productUid={batchDialogProduct.uid}
+                    productName={batchDialogProduct.nama}
+                />
+            )}
+
+            {unitDialogProduct && (
+                <UnitConversionDialog
+                    open={Boolean(unitDialogProduct)}
+                    onOpenChange={(open) => {
+                        if (!open) setUnitDialogProduct(null);
+                    }}
+                    productUid={unitDialogProduct.uid}
+                    productName={unitDialogProduct.nama}
+                    baseUnit={unitDialogProduct.satuan || "Satuan"}
+                />
+            )}
         </section>
     );
 }
