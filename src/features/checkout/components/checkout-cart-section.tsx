@@ -1,9 +1,9 @@
 "use client";
 
 import { FormNominalInput } from "@/components/forms/form-nominal-input";
+import { FormNumberStepperInput } from "@/components/forms/form-number-stepper-input";
 import { AppButton } from "@/components/shared/app-button";
 import { BarcodeInput } from "@/components/shared/barcode-input";
-import { NumberInput } from "@/components/ui/number-input";
 import {
     Table,
     TableBody,
@@ -21,12 +21,14 @@ import React, { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { calculateItemSubtotal, getItemWholesaleBreakdown } from "../utils/cart-utils";
+import { ItemBatchBadge } from "./item-batch-badge";
 import { ProductSearchDialog } from "./product-search-dialog";
 import { useAppPreset } from "@/features/license/hooks/use-app-preset";
 import { usePharmacyCheckoutStore } from "@/features/pharmacy/hooks/use-pharmacy-checkout-store";
 import { CompoundingCartCard } from "@/features/pharmacy/components/compounding/compounding-cart-card";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { ROUTES } from "@/constants/routes";
+
 function ItemWholesaleBadge({ item }: { item: CartItem }) {
     const breakdown = getItemWholesaleBreakdown(item);
     const minQty = item.min_qty_grosir;
@@ -104,38 +106,57 @@ function ServicePriceInput({
     );
 }
 
-interface CheckoutQtyInputProps {
-    value: number;
-    onChange: (val: number) => void;
-    onBlur?: React.FocusEventHandler<HTMLInputElement>;
+interface CheckoutQtyStepperProps {
+    item: CartItem;
+    onUpdateQty: (item: CartItem, qty: number) => void;
     onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
-    className?: string;
     disabled?: boolean;
+    size?: "sm" | "md";
 }
 
-function CheckoutQtyInput({
-    value,
-    onChange,
-    onBlur,
+function CheckoutQtyStepper({
+    item,
+    onUpdateQty,
     onKeyDown,
-    className,
     disabled,
-}: CheckoutQtyInputProps) {
+    size = "sm",
+}: CheckoutQtyStepperProps) {
+    const methods = useForm<{ qty: number }>({
+        defaultValues: {
+            qty: item.qty,
+        },
+    });
+
+    React.useEffect(() => {
+        methods.reset({ qty: item.qty });
+    }, [item.qty, methods]);
+
     return (
-        <NumberInput
-            value={value}
-            onChange={(val) => {
-                if (val !== null) {
-                    onChange(val);
-                }
-            }}
-            onBlur={onBlur}
-            onKeyDown={onKeyDown}
-            className={className}
-            disabled={disabled}
-            allowDecimal={true}
-            min={0}
-        />
+        <FormProvider {...methods}>
+            <FormNumberStepperInput<{ qty: number }>
+                name="qty"
+                min={0}
+                max={item.is_jasa ? undefined : item.stock}
+                step={1}
+                allowDecimal={true}
+                size={size}
+                disabled={disabled}
+                onKeyDown={onKeyDown}
+                onMaxExceeded={(_attempted, maxStock) => {
+                    toast.error(`Stok ${item.name} tidak mencukupi! Maksimal: ${maxStock}`);
+                }}
+                onValueChange={(val) => {
+                    if (val === null) return;
+                    if (!item.is_jasa && val > item.stock) {
+                        toast.error(`Stok ${item.name} tidak mencukupi! Maksimal: ${item.stock}`);
+                        methods.setValue("qty", item.stock);
+                        onUpdateQty(item, item.stock);
+                        return;
+                    }
+                    onUpdateQty(item, val);
+                }}
+            />
+        </FormProvider>
     );
 }
 
@@ -289,28 +310,25 @@ export function CheckoutCartSection({
                                                             </span>
                                                         )}
                                                     </div>
-                                                    {item.barcode && (
-                                                        <div className="text-[9px] text-slate-400 font-medium mt-0.5 leading-none">
-                                                            {item.barcode}
+                                                    {(item.barcode || (item.batches && item.batches.length > 0)) && (
+                                                        <div className="flex flex-wrap items-center gap-1.5 mt-0.5 leading-none">
+                                                            {item.barcode && (
+                                                                <span className="text-[9px] text-slate-400 font-mono font-medium">
+                                                                    {item.barcode}
+                                                                </span>
+                                                            )}
+                                                            <ItemBatchBadge batches={item.batches} qty={item.qty} />
                                                         </div>
                                                     )}
                                                     <ItemWholesaleBadge item={item} />
                                                 </TableCell>
                                                 <TableCell className="p-2">
-                                                    <div className="flex items-center justify-center gap-0.5">
-                                                        <AppButton
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="icon-xs"
-                                                            onClick={() => onUpdateQty(item, item.qty - 1)}
+                                                    <div className="flex items-center justify-center">
+                                                        <CheckoutQtyStepper
+                                                            item={item}
+                                                            onUpdateQty={onUpdateQty}
                                                             disabled={isProcessing}
-                                                            className="w-5 h-5 border border-slate-200 rounded flex items-center justify-center hover:bg-emerald-50 text-emerald-600 font-bold disabled:opacity-40 cursor-pointer text-[10px]"
-                                                        >
-                                                            -
-                                                        </AppButton>
-                                                        <CheckoutQtyInput
-                                                            value={item.qty}
-                                                            onChange={(num) => onUpdateQty(item, num)}
+                                                            size="sm"
                                                             onKeyDown={(e) => {
                                                                 if (e.key === "Enter") {
                                                                     e.preventDefault();
@@ -318,19 +336,7 @@ export function CheckoutCartSection({
                                                                     barcodeInputRef.current?.focus();
                                                                 }
                                                             }}
-                                                            className="w-10 h-5 text-center text-[10px] font-bold text-slate-800 border border-slate-200 rounded-md outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                            disabled={isProcessing}
                                                         />
-                                                        <AppButton
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="icon-xs"
-                                                            onClick={() => onUpdateQty(item, item.qty + 1)}
-                                                            disabled={isProcessing}
-                                                            className="w-5 h-5 border border-slate-200 rounded flex items-center justify-center hover:bg-emerald-50 text-emerald-600 font-bold disabled:opacity-40 cursor-pointer text-[10px]"
-                                                        >
-                                                            +
-                                                        </AppButton>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="p-2 text-right text-slate-700 font-medium tabular-nums text-[11px]">
@@ -411,9 +417,14 @@ export function CheckoutCartSection({
                                                         </span>
                                                     )}
                                                 </div>
-                                                {item.barcode && (
-                                                    <div className="text-[10px] text-slate-400 font-mono font-medium mt-0.5">
-                                                        {item.barcode}
+                                                {(item.barcode || (item.batches && item.batches.length > 0)) && (
+                                                    <div className="flex flex-wrap items-center gap-1.5 mt-0.5 leading-none">
+                                                        {item.barcode && (
+                                                            <span className="text-[10px] text-slate-400 font-mono font-medium">
+                                                                {item.barcode}
+                                                            </span>
+                                                        )}
+                                                        <ItemBatchBadge batches={item.batches} qty={item.qty} />
                                                     </div>
                                                 )}
                                                 <ItemWholesaleBadge item={item} />
@@ -470,33 +481,13 @@ export function CheckoutCartSection({
                                             </div>
 
                                             {/* Touch-Friendly Qty Controls */}
-                                            <div className="flex items-center gap-1 shrink-0">
-                                                <AppButton
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon-xs"
-                                                    onClick={() => onUpdateQty(item, item.qty - 1)}
+                                            <div className="flex items-center shrink-0">
+                                                <CheckoutQtyStepper
+                                                    item={item}
+                                                    onUpdateQty={onUpdateQty}
                                                     disabled={isProcessing}
-                                                    className="w-8 h-8 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-center bg-slate-50 hover:bg-emerald-50 dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 font-black disabled:opacity-40 cursor-pointer text-sm shadow-2xs active:scale-95 transition-all"
-                                                >
-                                                    -
-                                                </AppButton>
-                                                <CheckoutQtyInput
-                                                    value={item.qty}
-                                                    onChange={(num) => onUpdateQty(item, num)}
-                                                    className="w-12 h-8 text-center text-xs font-extrabold text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-emerald-500 px-1 shadow-2xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                    disabled={isProcessing}
+                                                    size="sm"
                                                 />
-                                                <AppButton
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon-xs"
-                                                    onClick={() => onUpdateQty(item, item.qty + 1)}
-                                                    disabled={isProcessing}
-                                                    className="w-8 h-8 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-center bg-slate-50 hover:bg-emerald-50 dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 font-black disabled:opacity-40 cursor-pointer text-sm shadow-2xs active:scale-95 transition-all"
-                                                >
-                                                    +
-                                                </AppButton>
                                             </div>
                                         </div>
                                     </div>

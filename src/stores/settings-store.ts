@@ -33,6 +33,7 @@ interface SettingsState {
     settingsMeta: Record<string, AppSetting>;
     isLoading: boolean;
     error: Error | null;
+    hydrateFromCache: () => void;
     fetchSettings: () => Promise<void>;
     getSetting: (key: string, defaultValue?: string) => string;
     getSettingMeta: (key: string) => AppSetting | undefined;
@@ -42,14 +43,30 @@ interface SettingsState {
 let inFlightFetch: Promise<void> | null = null;
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
-    settings: loadCachedSettings(),
+    // Always initialize empty `{}` so SSR and Client initial hydration render match
+    settings: {},
     settingsMeta: {},
     isLoading: true,
     error: null,
 
+    hydrateFromCache: () => {
+        const cached = loadCachedSettings();
+        if (Object.keys(cached).length > 0) {
+            set((state) => ({
+                settings: { ...cached, ...state.settings },
+            }));
+        }
+    },
+
     fetchSettings: async () => {
         if (inFlightFetch) {
             return inFlightFetch;
+        }
+
+        // Load cached settings immediately on client while fetching fresh data
+        const cachedOnStart = loadCachedSettings();
+        if (Object.keys(cachedOnStart).length > 0 && Object.keys(get().settings).length === 0) {
+            set({ settings: cachedOnStart });
         }
 
         inFlightFetch = (async () => {
@@ -97,6 +114,5 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
             return isNaN(parsed) ? 0 : parsed;
         }
         return 0;
-    }
+    },
 }));
-

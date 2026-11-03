@@ -15,6 +15,18 @@ export interface ProductStore {
     status: "active" | "inactive";
 }
 
+export interface ProductBatchInfo {
+    id_batch?: string;
+    batch_uid?: string;
+    uid?: string;
+    batch_number: string;
+    qty_batch?: number;
+    current_stock: number;
+    tanggal_terima?: string | null;
+    tanggal_kedaluarsa?: string | null;
+    expired_date?: string | null;
+}
+
 export interface Product {
     uid: string;
     nama: string;
@@ -46,7 +58,7 @@ export interface Product {
     category?: Category | null;
     brand?: Brand | null;
     product_stores?: ProductStore[];
+    batches?: ProductBatchInfo[];
     created_at?: string;
     updated_at?: string;
 }
-

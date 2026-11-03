@@ -43,11 +43,12 @@ export class ProductLocalRepository {
     }
 
     /**
-     * Cari produk exact berdasarkan barcode atau nama di IndexedDB (kecepatan <1ms via index).
+     * Cari produk exact berdasarkan barcode, nomor batch, atau nama di IndexedDB.
      */
     public async lookupBarcodeLocal(query: string): Promise<Product | null> {
         const cleanQuery = query.trim();
         if (!cleanQuery) return null;
+        const lowerQuery = cleanQuery.toLowerCase();
 
         try {
             // 1. Exact match Barcode (Case-insensitive)
@@ -64,9 +65,20 @@ export class ProductLocalRepository {
                 .first();
             if (byName && byName.status === "active" && !byName.is_raw_material) return byName;
 
-            // 3. Substring match Nama jika query pendek
+            // 3. Exact match Nomor Batch aktif (FEFO / Batch scan)
+            const byBatchNumber = await db.products
+                .filter(
+                    (p) =>
+                        p.status === "active" &&
+                        !p.is_raw_material &&
+                        Boolean(p.batches?.some((b) => b.batch_number?.toLowerCase() === lowerQuery))
+                )
+                .first();
+            if (byBatchNumber) return byBatchNumber;
+
+            // 4. Substring match Nama jika query pendek
             const byNamePartial = await db.products
-                .filter((p) => p.status === "active" && !p.is_raw_material && p.nama.toLowerCase().includes(cleanQuery.toLowerCase()))
+                .filter((p) => p.status === "active" && !p.is_raw_material && p.nama.toLowerCase().includes(lowerQuery))
                 .first();
             if (byNamePartial) return byNamePartial;
 
@@ -99,8 +111,10 @@ export class ProductLocalRepository {
                         p.brand?.nama.toLowerCase().includes(cleanQuery) ||
                         p.merek?.toLowerCase().includes(cleanQuery) ||
                         false;
+                    const batchMatch =
+                        p.batches?.some((b) => b.batch_number?.toLowerCase().includes(cleanQuery)) ?? false;
 
-                    return barcodeMatch || nameMatch || brandMatch;
+                    return barcodeMatch || nameMatch || brandMatch || batchMatch;
                 })
                 .until(() => results.length >= limit)
                 .each((p) => {
@@ -139,7 +153,7 @@ export class ProductLocalRepository {
                 if (p.status && p.status !== "active") return false;
                 if (p.is_raw_material) return false;
 
-                // Filter Kata Kunci (Nama, Barcode, Merek)
+                // Filter Kata Kunci (Nama, Barcode, Merek, Nomor Batch)
                 if (search) {
                     const words = search.split(/\s+/);
                     const isMatch = words.every((w) => {
@@ -149,7 +163,9 @@ export class ProductLocalRepository {
                             p.brand?.nama.toLowerCase().includes(w) ||
                             p.merek?.toLowerCase().includes(w) ||
                             false;
-                        return nameMatch || barcodeMatch || brandMatch;
+                        const batchMatch =
+                            p.batches?.some((b) => b.batch_number?.toLowerCase().includes(w)) ?? false;
+                        return nameMatch || barcodeMatch || brandMatch || batchMatch;
                     });
                     if (!isMatch) return false;
                 }

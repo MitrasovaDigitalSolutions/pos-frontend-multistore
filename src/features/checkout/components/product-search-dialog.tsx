@@ -21,6 +21,13 @@ import { Show } from "@/components/ui/show";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { productLocalRepository } from "@/features/checkout/services/product-local-repository";
+import {
+    formatShortBatchNumber,
+    getBatchExpiredDate,
+    getBatchExpiryMeta,
+    getBatchStock,
+    getSortedFefoBatches,
+} from "@/features/checkout/utils/batch-utils";
 
 interface ProductSearchDialogProps {
     open: boolean;
@@ -220,8 +227,10 @@ export function ProductSearchDialog({
                         p.brand?.nama.toLowerCase().includes(word) ||
                         p.merek?.toLowerCase().includes(word) ||
                         false;
+                    const batchMatch =
+                        p.batches?.some((b) => b.batch_number?.toLowerCase().includes(word)) ?? false;
 
-                    return nameMatch || barcodeMatch || brandMatch;
+                    return nameMatch || barcodeMatch || brandMatch || batchMatch;
                 });
 
                 if (!isMatch) return false;
@@ -358,6 +367,12 @@ export function ProductSearchDialog({
                 header: "Nama Produk",
                 cell: ({ row }) => {
                     const p = row.original;
+                    const sortedBatches = getSortedFefoBatches(p.batches);
+                    const primaryBatch = sortedBatches[0] ?? null;
+                    const expiryMeta = primaryBatch
+                        ? getBatchExpiryMeta(getBatchExpiredDate(primaryBatch))
+                        : null;
+
                     return (
                         <div className="flex flex-col gap-0.5 min-w-0 max-w-[200px] xs:max-w-[240px] sm:max-w-xs md:max-w-sm">
                             <span
@@ -378,6 +393,44 @@ export function ProductSearchDialog({
                                         title={p.brand.nama}
                                     >
                                         {p.brand.nama}
+                                    </span>
+                                )}
+                                {primaryBatch && (
+                                    <span
+                                        className={cn(
+                                            "inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.2 rounded border shrink-0 leading-none",
+                                            expiryMeta?.status === "expired" || expiryMeta?.status === "danger"
+                                                ? "bg-rose-50 text-rose-600 border-rose-200"
+                                                : expiryMeta?.status === "warning"
+                                                    ? "bg-amber-50 text-amber-700 border-amber-200"
+                                                    : "bg-slate-100 text-slate-600 border-slate-200"
+                                        )}
+                                        title={sortedBatches
+                                            .map(
+                                                (b, idx) =>
+                                                    `#${idx + 1} ${b.batch_number} (Stok: ${getBatchStock(b)}, ED: ${getBatchExpiredDate(b) || "-"})`
+                                            )
+                                            .join(" | ")}
+                                    >
+                                        <span
+                                            className={cn(
+                                                "w-1.5 h-1.5 rounded-full shrink-0",
+                                                expiryMeta?.status === "expired" || expiryMeta?.status === "danger"
+                                                    ? "bg-rose-500"
+                                                    : expiryMeta?.status === "warning"
+                                                        ? "bg-amber-500"
+                                                        : "bg-emerald-500"
+                                            )}
+                                        />
+                                        <strong className="font-bold">
+                                            {formatShortBatchNumber(primaryBatch.batch_number)}
+                                        </strong>
+                                        {expiryMeta?.shortDate && (
+                                            <span className="opacity-80">· ED {expiryMeta.shortDate}</span>
+                                        )}
+                                        {sortedBatches.length > 1 && (
+                                            <span className="opacity-70">+{sortedBatches.length - 1}</span>
+                                        )}
                                     </span>
                                 )}
                             </div>
@@ -527,7 +580,7 @@ export function ProductSearchDialog({
                     >
                         <FormInput<ProductSearchFilterValues>
                             name="search"
-                            label="Cari Nama/Barcode"
+                            label="Cari Nama/Barcode/Batch"
                             placeholder="Masukkan kata kunci..."
                         />
                         <FormSelect<ProductSearchFilterValues>

@@ -8,6 +8,7 @@ import type { PaginationParams } from "@/types/api";
 import { useCheckoutStore } from "@/stores/checkout-store";
 import { useActiveStoreStore } from "@/stores/active-store-store";
 import { productLocalRepository } from "@/features/checkout/services/product-local-repository";
+import { deductBatchesFefo } from "@/features/checkout/utils/batch-utils";
 import type { AxiosRequestConfig } from "axios";
 
 export interface ProductSyncResponse {
@@ -212,6 +213,42 @@ export class CatalogSyncManager {
                 lastProductUpdate = lastSyncedAt;
             }
 
+            // Hitung pemotongan stok & batch dari transaksi offline yang masih pending agar tidak tertimpa saat sync
+            const pendingOfflineTxs = await targetDb.offlineTransactions
+                .where("status")
+                .equals("pending")
+                .toArray();
+
+            const pendingProductDeductions: Record<string, number> = {};
+            for (const tx of pendingOfflineTxs) {
+                const rawItems = tx.payload?.items;
+                if (Array.isArray(rawItems)) {
+                    for (const rawItem of rawItems) {
+                        const itemObj = rawItem as { product_uid?: string; product_id?: string; quantity?: number };
+                        const pUid = itemObj.product_uid || itemObj.product_id;
+                        const qty = Number(itemObj.quantity) || 0;
+                        if (pUid && qty > 0) {
+                            pendingProductDeductions[pUid] = (pendingProductDeductions[pUid] || 0) + qty;
+                        }
+                    }
+                }
+                const rawCompounded = tx.payload?.compounded_items;
+                if (Array.isArray(rawCompounded)) {
+                    for (const comp of rawCompounded) {
+                        const compObj = comp as { ingredients?: Array<{ product_uid?: string; kuantitas?: number }> };
+                        if (Array.isArray(compObj.ingredients)) {
+                            for (const ing of compObj.ingredients) {
+                                const pUid = ing.product_uid;
+                                const qty = Number(ing.kuantitas) || 0;
+                                if (pUid && qty > 0) {
+                                    pendingProductDeductions[pUid] = (pendingProductDeductions[pUid] || 0) + qty;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             const perPage = CATALOG_SYNC_PER_PAGE;
             let totalSyncedThisSession = 0;
 
@@ -229,8 +266,7 @@ export class CatalogSyncManager {
 
             // ─── 1. Sync Products via Cursor (keyset pagination) ─────────────────
             // Endpoint /v1/products/sync: O(1) per halaman, tanpa COUNT/OFFSET,
-            // payload minimal (tanpa relasi berat). Cursor (after_ts, after_uid)
-            // self-contained — tidak perlu checkpoint page.
+            // termasuk data batches aktif untuk FEFO kasir & offline mode.
             let afterTs: string | undefined;
             let afterUid: string | undefined;
             let hasMore = true;
@@ -257,8 +293,20 @@ export class CatalogSyncManager {
                 }
 
                 if (res.items.length > 0) {
-                    await targetDb.products.bulkPut(res.items);
-                    totalSyncedThisSession += res.items.length;
+                    const adjustedProducts = res.items.map((prod) => {
+                        const deduction = pendingProductDeductions[prod.uid] || 0;
+                        if (deduction > 0 && !prod.is_jasa) {
+                            return {
+                                ...prod,
+                                stok: Number(Math.max(0, prod.stok - deduction).toFixed(4)),
+                                batches: deductBatchesFefo(prod.batches, deduction),
+                            };
+                        }
+                        return prod;
+                    });
+
+                    await targetDb.products.bulkPut(adjustedProducts);
+                    totalSyncedThisSession += adjustedProducts.length;
                 }
 
                 afterTs = res.next_after_ts ?? undefined;

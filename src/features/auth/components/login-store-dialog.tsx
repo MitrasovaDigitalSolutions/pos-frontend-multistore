@@ -21,7 +21,7 @@ export function LoginStoreDialog({
     stores: initialStores,
     onConfirm,
 }: LoginStoreDialogProps) {
-    const { data: storesRes } = useStores({ per_page: 1000 });
+    const { data: storesRes } = useStores({ per_page: 1000 }, { enabled: open });
     const apiStores = storesRes?.data;
 
     // Merge session stores with live API data so names/central status are always up-to-date

@@ -6,10 +6,14 @@ import type { Store, StoreUser } from "../types";
 import type { StoreInput } from "../schemas/store-schema";
 import type { PaginatedResponse, PaginationParams } from "@/types/api";
 
-export function useStores(params?: PaginationParams & { search?: string; status?: string }) {
+export function useStores(
+    params?: PaginationParams & { search?: string; status?: string },
+    options?: { enabled?: boolean }
+) {
     return useQuery<PaginatedResponse<Store>>({
         queryKey: [...queryKeys.stores.list(), params],
         queryFn: () => apiGetList<Store>("/v1/stores", params),
+        enabled: options?.enabled,
     });
 }
 
