@@ -1,15 +1,21 @@
 import type { ApiResponse } from "@/types/api";
+import type { ProductBatchInfo } from "@/features/master/products/types";
 
 // ─── Batch Management Types ──────────────────────────────────────────────────
 
 export interface ProductBatch {
     uid: string;
+    id_batch?: string;
+    batch_uid?: string;
     store_uid?: string;
     product_uid: string;
     product_name?: string;
     batch_number: string;
     expired_date: string;
+    tanggal_kedaluarsa?: string | null;
+    tanggal_terima?: string | null;
     initial_stock: number;
+    qty_batch?: number;
     current_stock: number;
     stock?: number; // fallback compatibility
     buy_price?: number | null;
@@ -74,6 +80,7 @@ export interface PrescriptionTemplateIngredient {
         satuan?: string;
         harga?: number;
         stok?: number;
+        batches?: ProductBatchInfo[];
     };
 }
 
@@ -155,6 +162,7 @@ export interface CompoundedIngredient {
     subtotal: number;
     stok_tersedia?: number;
     satuan?: string;
+    batches?: ProductBatchInfo[];
 }
 
 export interface CompoundedItem {

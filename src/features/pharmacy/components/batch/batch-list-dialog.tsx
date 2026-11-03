@@ -5,10 +5,11 @@ import { DataTable } from "@/components/ui/data-table";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { formatDate } from "@/lib/date-utils";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useProductBatches } from "../../api/pharmacy-api";
 import type { ProductBatch } from "../../types";
 import { BatchBadge } from "./batch-badge";
+import { db } from "@/lib/db";
 
 interface BatchListDialogProps {
     open: boolean;
@@ -24,7 +25,45 @@ export function BatchListDialog({
     productName,
 }: BatchListDialogProps) {
     const { data: batchesData, isLoading } = useProductBatches(productUid);
-    const batches = Array.isArray(batchesData?.data) ? batchesData.data : [];
+    const [localBatches, setLocalBatches] = useState<ProductBatch[]>([]);
+
+    useEffect(() => {
+        let isCurrent = true;
+        if (open && productUid) {
+            db.products
+                .get(productUid)
+                .then((prod) => {
+                    if (isCurrent && prod?.batches && prod.batches.length > 0) {
+                        const mapped: ProductBatch[] = prod.batches.map((b) => ({
+                            uid: b.batch_uid || b.id_batch || b.uid || b.batch_number,
+                            id_batch: b.id_batch,
+                            batch_uid: b.batch_uid,
+                            product_uid: productUid,
+                            batch_number: b.batch_number,
+                            expired_date: b.expired_date || b.tanggal_kedaluarsa || "",
+                            tanggal_kedaluarsa: b.tanggal_kedaluarsa,
+                            tanggal_terima: b.tanggal_terima,
+                            initial_stock: b.qty_batch ?? b.current_stock ?? 0,
+                            qty_batch: b.qty_batch,
+                            current_stock: b.current_stock ?? b.qty_batch ?? 0,
+                            status: "active",
+                        }));
+                        setLocalBatches(mapped);
+                    }
+                })
+                .catch(() => {});
+        }
+        return () => {
+            isCurrent = false;
+        };
+    }, [open, productUid]);
+
+    const batches = useMemo(() => {
+        if (Array.isArray(batchesData?.data) && batchesData.data.length > 0) {
+            return batchesData.data;
+        }
+        return localBatches;
+    }, [batchesData?.data, localBatches]);
 
     const columns = useMemo<ColumnDef<ProductBatch, unknown>[]>(
         () => [
@@ -41,7 +80,7 @@ export function BatchListDialog({
                 accessorKey: "expired_date",
                 header: "Exp. Date",
                 cell: ({ row }) => {
-                    const exp = row.original.expired_date;
+                    const exp = row.original.expired_date || row.original.tanggal_kedaluarsa;
                     const formattedDate = exp ? formatDate(exp, "dd MMM yyyy") : null;
                     return (
                         <span className="font-mono text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -57,7 +96,7 @@ export function BatchListDialog({
                     headerClassName: "text-right",
                     cellClassName: "text-right font-mono text-slate-500",
                 },
-                cell: ({ row }) => row.original.initial_stock ?? "—",
+                cell: ({ row }) => row.original.initial_stock ?? row.original.qty_batch ?? "—",
             },
             {
                 id: "current_stock",
@@ -67,7 +106,11 @@ export function BatchListDialog({
                     cellClassName: "text-right font-bold tabular-nums text-slate-900 dark:text-slate-100",
                 },
                 cell: ({ row }) => {
-                    const currentStock = row.original.current_stock ?? row.original.stock ?? 0;
+                    const currentStock =
+                        row.original.current_stock ??
+                        row.original.qty_batch ??
+                        row.original.stock ??
+                        0;
                     return (
                         <span className={currentStock <= 0 ? "text-rose-500 font-bold" : "font-extrabold text-slate-800 dark:text-slate-200"}>
                             {currentStock}
@@ -94,8 +137,13 @@ export function BatchListDialog({
                 },
                 cell: ({ row }) => (
                     <BatchBadge
-                        expiredDate={row.original.expired_date}
-                        stock={row.original.current_stock ?? row.original.stock ?? 0}
+                        expiredDate={row.original.expired_date || row.original.tanggal_kedaluarsa}
+                        stock={
+                            row.original.current_stock ??
+                            row.original.qty_batch ??
+                            row.original.stock ??
+                            0
+                        }
                     />
                 ),
             },
@@ -127,7 +175,7 @@ export function BatchListDialog({
                     <DataTable<ProductBatch, unknown>
                         columns={columns}
                         data={batches}
-                        isLoading={isLoading}
+                        isLoading={isLoading && batches.length === 0}
                         emptyMessage="Belum ada nomor batch tercatat untuk produk ini. Lakukan penerimaan barang untuk menambahkan stok batch."
                         virtualize={false}
                         showViewToggle={false}

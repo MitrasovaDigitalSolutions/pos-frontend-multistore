@@ -11,6 +11,7 @@ export interface NumberInputProps extends Omit<
     allowDecimal?: boolean;
     min?: number;
     max?: number;
+    onMaxExceeded?: (attemptedValue: number, max: number) => void;
 }
 
 export const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
@@ -21,6 +22,7 @@ export const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
         allowDecimal = true,
         min,
         max,
+        onMaxExceeded,
         className,
         disabled,
         onBlur,
@@ -141,6 +143,7 @@ export const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
 
             // Clamp value to max immediately on change if max is defined
             if (parsed !== null && max !== undefined && parsed > max) {
+                onMaxExceeded?.(parsed, max);
                 parsed = max;
                 rawValue = String(max);
             }
@@ -178,11 +181,8 @@ export const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
         const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
             const currentRaw = e.target?.value !== undefined ? e.target.value : localValue;
             const parsed = parseNumber(currentRaw);
-            if (parsed !== null) {
+            if (parsed !== null && (min === undefined || parsed >= min)) {
                 let adjusted = parsed;
-                if (min !== undefined && adjusted < min) {
-                    adjusted = min;
-                }
                 if (max !== undefined && adjusted > max) {
                     adjusted = max;
                 }

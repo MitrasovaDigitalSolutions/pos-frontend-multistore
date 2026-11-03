@@ -17,12 +17,13 @@ export interface NumberStepperInputProps {
     className?: string;
     inputClassName?: string;
     buttonClassName?: string;
-    size?: "sm" | "md" | "lg";
+    size?: "sm" | "md";
     id?: string;
     name?: string;
     placeholder?: string;
     onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
     onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+    onMaxExceeded?: (attemptedValue: number, max: number) => void;
     "aria-label"?: string;
 }
 
@@ -40,17 +41,21 @@ export const NumberStepperInput = React.forwardRef<HTMLInputElement, NumberStepp
             className,
             inputClassName,
             buttonClassName,
-            size = "sm",
+            size = "md",
             id,
             name,
             placeholder,
             onBlur,
             onKeyDown,
+            onMaxExceeded,
             "aria-label": ariaLabel,
         },
         ref
     ) => {
         const numericValue = value === null || value === undefined ? (min ?? 0) : Number(value);
+
+        // Minimum valid value when typing manually in the input (prevents deleting item when user clears input to type a new number)
+        const manualInputMin = !allowNegative ? Math.max(0.0001, min ?? 0) : min;
 
         const handleIncrement = () => {
             if (disabled) return;
@@ -60,6 +65,7 @@ export const NumberStepperInput = React.forwardRef<HTMLInputElement, NumberStepp
                 : current + step;
 
             if (max !== undefined && next > max) {
+                onMaxExceeded?.(next, max);
                 next = max;
             }
             if (next === numericValue) return;
@@ -94,32 +100,26 @@ export const NumberStepperInput = React.forwardRef<HTMLInputElement, NumberStepp
         const isMinusDisabled = disabled || (min !== undefined && numericValue <= min);
         const isPlusDisabled = disabled || (max !== undefined && numericValue >= max);
 
-        // Sizing styles
+        // Sizing styles ("md" is the default size, "sm" is compact for checkout)
         const sizeConfig = {
             sm: {
-                container: "h-7",
+                container: "h-6 rounded-md",
+                button: "w-5.5 h-6",
+                icon: 11,
+                input: "w-10 h-6 text-[11px] px-0.5",
+            },
+            md: {
+                container: "h-7 rounded-lg",
                 button: "w-7 h-7",
                 icon: 13,
                 input: "w-14 h-7 text-xs px-1",
-            },
-            md: {
-                container: "h-8",
-                button: "w-8 h-8",
-                icon: 14,
-                input: "w-16 h-8 text-xs sm:text-sm px-1.5",
-            },
-            lg: {
-                container: "h-9.5",
-                button: "w-9.5 h-9.5",
-                icon: 16,
-                input: "w-20 h-9.5 text-sm sm:text-base px-2",
             },
         }[size];
 
         return (
             <div
                 className={cn(
-                    "inline-flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-900 shadow-2xs transition-all focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 select-none",
+                    "inline-flex items-center border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-900 shadow-2xs transition-all focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 select-none",
                     sizeConfig.container,
                     disabled && "opacity-50 cursor-not-allowed",
                     className
@@ -147,10 +147,15 @@ export const NumberStepperInput = React.forwardRef<HTMLInputElement, NumberStepp
                     name={name}
                     value={value === null || value === undefined ? null : Number(value)}
                     onChange={(val) => {
-                        onChange(val ?? (min ?? 0));
+                        // Do not emit 0 or null while user is clearing/typing manually;
+                        // onBlur will restore the previous valid value if left empty or 0.
+                        if (val === null) return;
+                        if (manualInputMin !== undefined && val < manualInputMin) return;
+                        onChange(val);
                     }}
-                    min={min}
+                    min={manualInputMin}
                     max={max}
+                    onMaxExceeded={onMaxExceeded}
                     allowDecimal={allowDecimal}
                     allowNegative={allowNegative}
                     disabled={disabled}

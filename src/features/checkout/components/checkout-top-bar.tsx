@@ -1,5 +1,6 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { OfflineReadinessBadge } from "@/features/checkout/components/offline-readiness-badge";
 import type { OfflineReadinessState } from "@/hooks/use-offline-readiness";
@@ -11,6 +12,8 @@ import { useActiveStoreStore } from "@/stores/active-store-store";
 import { Show } from "@/components/ui/show";
 
 import type { SyncProgress } from "@/features/checkout/services/catalog-sync-manager";
+
+const emptySubscribe = () => () => {};
 
 interface CheckoutTopBarProps {
     transactionId: string | null;
@@ -47,14 +50,23 @@ export function CheckoutTopBar({
     isCatalogSyncing = false,
     catalogProgress,
 }: CheckoutTopBarProps) {
-    const getSetting = useSettingsStore((state) => state.getSetting);
-    const appName = getSetting("app_name", "Mitrasova POS");
-    const appLogoRaw = getSetting("app_logo_url", "");
+    const isHydrated = useSyncExternalStore(
+        emptySubscribe,
+        () => true,
+        () => false
+    );
+
+    // Subscribe to settings object so component re-renders when settings hydrate/update
+    const settings = useSettingsStore((state) => state.settings);
+    const appName = isHydrated && settings["app_name"] ? settings["app_name"] : "Mitrasova POS";
+    const appLogoRaw = isHydrated && settings["app_logo_url"] ? settings["app_logo_url"] : "";
     const appLogo = getImageUrl(appLogoRaw);
 
     const { data: session } = useSession();
     const activeStoreUid = useActiveStoreStore((state) => state.activeStoreUid);
-    const activeStore = session?.user?.stores?.find((s) => s.uid === activeStoreUid);
+    const activeStore = isHydrated
+        ? session?.user?.stores?.find((s) => s.uid === activeStoreUid)
+        : undefined;
 
     return (
         <div className="bg-slate-900 text-white h-10 px-3 sm:px-5 flex items-center justify-between border-b border-slate-800">

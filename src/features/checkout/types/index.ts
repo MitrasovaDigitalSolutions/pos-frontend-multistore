@@ -1,4 +1,5 @@
 import type { Member } from "@/features/master/members/types";
+import type { ProductBatchInfo } from "@/features/master/products/types";
 
 export interface CartItem {
     product_uid: string;
@@ -12,6 +13,7 @@ export interface CartItem {
     stock: number;
     barcode: string | null;
     is_jasa?: boolean;
+    batches?: ProductBatchInfo[];
 }
 
 export interface HoldTransaction {

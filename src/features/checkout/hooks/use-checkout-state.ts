@@ -13,6 +13,11 @@ import { db } from "@/lib/db";
 import { useNetworkStatus } from "@/hooks/use-network-status";
 import { productLocalRepository } from "@/features/checkout/services/product-local-repository";
 import { calculateItemSubtotal } from "@/features/checkout/utils/cart-utils";
+import {
+    getBatchExpiredDate,
+    getBatchExpiryMeta,
+    getPrimaryFefoBatch,
+} from "@/features/checkout/utils/batch-utils";
 import { buildReceipt58 } from "@/utils/ReceiptFormatter58";
 import printerService from "@/services/printer.service";
 import { formatDate } from "@/lib/date-utils";
@@ -36,7 +41,6 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
     const isOnline = useNetworkStatus();
     const products = useMemo<Product[]>(() => [], []);
     const refetchProducts = useCallback(() => { }, []);
-    const reloadLocalProducts = useCallback(() => { }, []);
 
     // Connect to local checkout Zustand store
     const storeCart = useCheckoutStore((state) => state.cart);
@@ -45,6 +49,7 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
     const addItem = useCheckoutStore((state) => state.addItem);
     const updateItemQty = useCheckoutStore((state) => state.updateItemQty);
     const updateItemPrice = useCheckoutStore((state) => state.updateItemPrice);
+    const syncCartProducts = useCheckoutStore((state) => state.syncCartProducts);
     const removeItem = useCheckoutStore((state) => state.removeItem);
     const clearCart = useCheckoutStore((state) => state.clearCart);
     const addHoldTransaction = useCheckoutStore((state) => state.addHoldTransaction);
@@ -61,6 +66,43 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
     const { isPharmacy } = useAppPreset();
     const compoundedItems = usePharmacyCheckoutStore((state) => state.compoundedItems);
     const clearPharmacyCheckout = usePharmacyCheckoutStore((state) => state.clearPharmacyCheckout);
+
+    const reloadLocalProducts = useCallback(async () => {
+        const currentCart = useCheckoutStore.getState().cart;
+        if (currentCart.length === 0) return;
+
+        try {
+            const uids = currentCart.map((item) => item.product_uid);
+            const localProds = await db.products.bulkGet(uids);
+            const map = new Map<string, Product>();
+            localProds.forEach((p) => {
+                if (p) map.set(p.uid, p);
+            });
+            if (map.size > 0) {
+                syncCartProducts(map);
+            }
+        } catch (err) {
+            console.warn("Gagal menyegarkan data produk keranjang dari DB lokal:", err);
+        }
+    }, [syncCartProducts]);
+
+    // Refresh cart items' stock & batches whenever catalog sync finishes
+    useEffect(() => {
+        void reloadLocalProducts();
+
+        const handleCatalogSynced = () => {
+            void reloadLocalProducts();
+        };
+
+        if (typeof window !== "undefined") {
+            window.addEventListener("pos_catalog_synced", handleCatalogSynced);
+        }
+        return () => {
+            if (typeof window !== "undefined") {
+                window.removeEventListener("pos_catalog_synced", handleCatalogSynced);
+            }
+        };
+    }, [reloadLocalProducts]);
 
     // Reset draft cart when switching stores
     const prevStoreRef = useRef(activeStoreUid);
@@ -231,8 +273,28 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
                 stock: product.stok,
                 barcode: product.barcode || null,
                 is_jasa: !!product.is_jasa,
+                batches: product.batches,
             });
             toast.success(`${product.nama} ditambahkan.`);
+
+            // FEFO Batch expiry notification if the primary batch is near expiry or expired
+            if (product.batches && product.batches.length > 0) {
+                const primaryBatch = getPrimaryFefoBatch(product.batches);
+                if (primaryBatch) {
+                    const expDate = getBatchExpiredDate(primaryBatch);
+                    const expiryMeta = getBatchExpiryMeta(expDate);
+                    if (expiryMeta.status === "expired") {
+                        toast.warning(
+                            `Perhatian FEFO: Batch #${primaryBatch.batch_number} (${product.nama}) telah kedaluarsa (${expiryMeta.formattedDate})!`
+                        );
+                    } else if (expiryMeta.status === "danger") {
+                        toast.warning(
+                            `Info FEFO: Batch #${primaryBatch.batch_number} (${product.nama}) akan kedaluarsa dalam ${expiryMeta.diffDays} hari (${expiryMeta.formattedDate}).`
+                        );
+                    }
+                }
+            }
+
             setTimeout(() => barcodeInputRef.current?.focus(), 50);
         } catch {
             toast.error("Gagal menambahkan item.");
@@ -248,6 +310,7 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
         }
         if (!item.is_jasa && newQty > item.stock) {
             toast.error(`Stok ${item.name} tidak mencukupi! Maksimal: ${item.stock}`);
+            updateItemQty(item.product_uid, item.stock);
             return;
         }
         updateItemQty(item.product_uid, newQty);
@@ -279,6 +342,8 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
                 const prod = await lookupBarcode(query, { is_raw_material: 0 });
                 if (prod && !prod.is_raw_material) {
                     found = prod;
+                    // Cache latest product & batches into local IndexedDB for offline readiness
+                    void db.products.put(prod).catch(() => {});
                 }
             } catch {
                 // Ignore API lookup error
@@ -332,12 +397,13 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
             removeHoldTransaction(holdTrxId);
             setIsHoldListOpen(false);
             toast.success("Transaksi di-recall.");
+            void reloadLocalProducts();
         } catch {
             toast.error("Gagal recall transaksi.");
         } finally {
             setIsProcessing(false);
         }
-    }, [storeHoldList, removeHoldTransaction, activeRecallId, addHoldTransaction, namaTransaksi]);
+    }, [storeHoldList, removeHoldTransaction, activeRecallId, addHoldTransaction, namaTransaksi, reloadLocalProducts]);
 
     const printOnlineReceipt = useCallback(async (uid: string) => {
         const printerName = getSetting("printer_id");
@@ -350,8 +416,6 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
         const toastId = toast.success("Mencetak struk...");
         try {
             const { data } = await axios.get(`/api/proxy/v1/transactions-print/${uid}`);
-            // const receiptText = buildReceipt(data);
-            // await QZService.print(printerName, receiptText);
             const receiptText = buildReceipt58(data);
             await printerService.print(printerName, receiptText);
         } catch (err) {
@@ -416,8 +480,6 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
                 app_phone: getSetting("app_phone", ""),
             };
 
-            // const receiptText = buildReceipt({ sale, setting });
-            // await QZService.print(printerName, receiptText);
             const receiptText = buildReceipt58({ sale, setting });
             await printerService.print(printerName, receiptText);
 
@@ -520,7 +582,6 @@ export function useCheckoutState(options?: UseCheckoutStateOptions) {
                 handleVoidDraft();
             } else if (e.key === "Escape") {
                 setIsPayModalOpen(false);
-                // setIsCatalogOpen(false);
                 setIsReceiptOpen(false);
                 setIsHoldListOpen(false);
             }

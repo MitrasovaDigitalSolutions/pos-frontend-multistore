@@ -16,6 +16,7 @@ import type { Member } from "@/features/master/members/types";
 import type { PaymentMode, PaymentFormValues } from "../types/payment-dialog.types";
 import { useAppPreset } from "@/features/license/hooks/use-app-preset";
 import { usePharmacyCheckoutStore } from "@/features/pharmacy/hooks/use-pharmacy-checkout-store";
+import { deductBatchesFefo } from "@/features/checkout/utils/batch-utils";
 
 interface UsePaymentProcessParams {
     open: boolean;
@@ -104,16 +105,43 @@ export function usePaymentProcess({
                 : isDebtValid;
 
     const decrementLocalStock = async () => {
+        // Aggregate deductions per product_uid (including pharmacy compounded ingredients)
+        const deductions = new Map<string, number>();
+
         for (const item of cartList) {
             if (item.is_jasa) continue;
+            deductions.set(
+                item.product_uid,
+                (deductions.get(item.product_uid) ?? 0) + item.qty
+            );
+        }
+
+        if (isPharmacy) {
+            const pharmItems = usePharmacyCheckoutStore.getState().compoundedItems;
+            for (const comp of pharmItems) {
+                for (const ing of comp.ingredients) {
+                    deductions.set(
+                        ing.product_uid,
+                        (deductions.get(ing.product_uid) ?? 0) + ing.kuantitas
+                    );
+                }
+            }
+        }
+
+        for (const [productUid, totalDeductQty] of deductions.entries()) {
+            if (totalDeductQty <= 0) continue;
             try {
-                const product = await db.products.get(item.product_uid);
+                const product = await db.products.get(productUid);
                 if (product) {
-                    const newStock = Math.max(0, product.stok - item.qty);
-                    await db.products.update(item.product_uid, { stok: newStock });
+                    const newStock = Number(Math.max(0, product.stok - totalDeductQty).toFixed(4));
+                    const updatedBatches = deductBatchesFefo(product.batches, totalDeductQty);
+                    await db.products.update(productUid, {
+                        stok: newStock,
+                        ...(updatedBatches !== undefined ? { batches: updatedBatches } : {}),
+                    });
                 }
             } catch (stockErr) {
-                console.warn(`Gagal mengurangi stok produk ${item.product_uid}:`, stockErr);
+                console.warn(`Gagal mengurangi stok produk ${productUid}:`, stockErr);
             }
         }
         onLocalProductsReload?.();
@@ -133,7 +161,10 @@ export function usePaymentProcess({
     };
 
     const handlePaySubmit = async () => {
-        if (cartItems.length === 0) {
+        const pharmStore = usePharmacyCheckoutStore.getState();
+        const hasCompounded = isPharmacy && pharmStore.compoundedItems.length > 0;
+
+        if (cartItems.length === 0 && !hasCompounded) {
             toast.error("Keranjang belanja kosong.");
             return;
         }
@@ -186,11 +217,8 @@ export function usePaymentProcess({
             }),
         };
 
-        if (isPharmacy) {
-            const pharmStore = usePharmacyCheckoutStore.getState();
-            if (pharmStore.compoundedItems.length > 0) {
-                payload.compounded_items = pharmStore.compoundedItems;
-            }
+        if (isPharmacy && pharmStore.compoundedItems.length > 0) {
+            payload.compounded_items = pharmStore.compoundedItems;
         }
 
         if (payMode === "cash") {

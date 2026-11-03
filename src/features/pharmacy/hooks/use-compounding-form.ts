@@ -19,6 +19,7 @@ import {
 import type { CompoundedIngredient, CompoundedItem, PrescriptionTemplate } from "../types";
 import type { Product } from "@/features/master/products/types";
 import { formatDosisKalkulasi } from "../utils/pharmacy-calc";
+import { db } from "@/lib/db";
 
 export function useCompoundingForm(draftId?: string, templateId?: string) {
     const router = useAppRouter();
@@ -73,6 +74,33 @@ export function useCompoundingForm(draftId?: string, templateId?: string) {
         ingredients.length === 0 ||
         totalHarga <= 0;
 
+    // Enrich template ingredients with local IndexedDB batches if missing from template response
+    const enrichIngredientsWithLocalBatches = useCallback(async (ings: CompoundedIngredient[]) => {
+        try {
+            const uids = ings.map((i) => i.product_uid);
+            const localProds = await db.products.bulkGet(uids);
+            const map = new Map<string, Product>();
+            localProds.forEach((p) => {
+                if (p) map.set(p.uid, p);
+            });
+            if (map.size > 0) {
+                const current = methods.getValues("ingredients") || [];
+                const updated = current.map((ing) => {
+                    const localProd = map.get(ing.product_uid);
+                    if (!localProd) return ing;
+                    return {
+                        ...ing,
+                        stok_tersedia: localProd.stok ?? ing.stok_tersedia,
+                        batches: ing.batches && ing.batches.length > 0 ? ing.batches : localProd.batches,
+                    };
+                });
+                setValue("ingredients", updated, { shouldValidate: true });
+            }
+        } catch {
+            // Non-critical fallback
+        }
+    }, [methods, setValue]);
+
     // Apply template logic (Template ingredients are per 1 kemasan; scale by jumlah_kemasan)
     const handleSelectTemplate = useCallback((template: PrescriptionTemplate) => {
         setValue("nama_racikan", template.nama_racikan, { shouldValidate: true });
@@ -97,14 +125,16 @@ export function useCompoundingForm(draftId?: string, templateId?: string) {
                 subtotal: price * totalQty,
                 stok_tersedia: ing.product?.stok ?? 0,
                 satuan: ing.product?.satuan,
+                batches: ing.product?.batches,
             };
         });
 
         setValue("ingredients", mappedIngredients, { shouldValidate: true });
+        void enrichIngredientsWithLocalBatches(mappedIngredients);
         setAppliedTemplate(template);
         setIsLockedToTemplate(true);
         toast.success(`Template "${template.nama_racikan}" dimuat untuk ${currentKemasan} kemasan (terkunci standar)!`);
-    }, [methods, setValue]);
+    }, [methods, setValue, enrichIngredientsWithLocalBatches]);
 
     // Handle updating jumlah kemasan: automatically scales template ingredients when locked
     const handleUpdateJumlahKemasan = useCallback((newKemasan: number) => {
@@ -156,12 +186,14 @@ export function useCompoundingForm(draftId?: string, templateId?: string) {
                 subtotal: price * totalQty,
                 stok_tersedia: ing.product?.stok ?? 0,
                 satuan: ing.product?.satuan,
+                batches: ing.product?.batches,
             };
         });
         setValue("ingredients", mappedIngredients, { shouldValidate: true });
+        void enrichIngredientsWithLocalBatches(mappedIngredients);
         setIsLockedToTemplate(true);
         toast.success(`Formula dikunci kembali sesuai template standar "${appliedTemplate.nama_racikan}".`);
-    }, [appliedTemplate, methods, setValue]);
+    }, [appliedTemplate, methods, setValue, enrichIngredientsWithLocalBatches]);
 
     // Auto load template when templateId is passed in URL
     useEffect(() => {
@@ -185,7 +217,7 @@ export function useCompoundingForm(draftId?: string, templateId?: string) {
         }
 
         const defaultQty = 1;
-        const price = product.harga_jual || 0;
+        const price = product.harga_jual || product.harga || 0;
 
         const newIngredient: CompoundedIngredient = {
             product_uid: product.uid,
@@ -197,6 +229,7 @@ export function useCompoundingForm(draftId?: string, templateId?: string) {
             subtotal: price * defaultQty,
             stok_tersedia: product.stok ?? 0,
             satuan: product.satuan || undefined,
+            batches: product.batches,
         };
 
         setValue("ingredients", [...ingredients, newIngredient], { shouldValidate: true });

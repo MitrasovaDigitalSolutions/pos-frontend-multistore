@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { CartItem, HoldTransaction } from "@/features/checkout/types";
 import type { Member } from "@/features/master/members/types";
+import type { Product } from "@/features/master/products/types";
 
 // ─── Checkout Zustand Store ──────────────────────────────────────────────────
 // Persists the active cart and offline holdList in sessionStorage to prevent
@@ -20,6 +21,7 @@ interface CheckoutStoreState {
     addItem: (item: CartItem) => void;
     updateItemQty: (productId: string, qty: number) => void;
     updateItemPrice: (productId: string, price: number) => void;
+    syncCartProducts: (productsMap: Map<string, Product>) => void;
     removeItem: (productId: string) => void;
     clearCart: () => void;
 
@@ -60,7 +62,12 @@ export const useCheckoutStore = create<CheckoutStoreState>()(
                         return {
                             cart: state.cart.map((i) =>
                                 i.product_uid === item.product_uid
-                                    ? { ...i, qty: i.qty + item.qty }
+                                    ? {
+                                          ...i,
+                                          qty: i.qty + item.qty,
+                                          stock: item.stock,
+                                          batches: item.batches ?? i.batches,
+                                      }
                                     : i
                             ),
                         };
@@ -81,6 +88,23 @@ export const useCheckoutStore = create<CheckoutStoreState>()(
                         i.product_uid === productId ? { ...i, price } : i
                     ),
                 })),
+
+            syncCartProducts: (productsMap) =>
+                set((state) => {
+                    if (state.cart.length === 0) return state;
+                    let changed = false;
+                    const updatedCart = state.cart.map((item) => {
+                        const prod = productsMap.get(item.product_uid);
+                        if (!prod) return item;
+                        changed = true;
+                        return {
+                            ...item,
+                            stock: prod.stok,
+                            batches: prod.batches ?? item.batches,
+                        };
+                    });
+                    return changed ? { cart: updatedCart } : state;
+                }),
 
             removeItem: (productId) =>
                 set((state) => ({

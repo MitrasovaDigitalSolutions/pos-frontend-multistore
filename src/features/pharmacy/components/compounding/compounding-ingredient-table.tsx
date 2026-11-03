@@ -5,6 +5,7 @@ import { FormNumberStepperInput } from "@/components/forms/form-number-stepper-i
 import { Button } from "@/components/ui/button";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { formatDosisKalkulasi } from "../../utils/pharmacy-calc";
+import { ItemBatchBadge } from "@/features/checkout/components/item-batch-badge";
 import {
     IconBottle,
     IconCalculator,
@@ -137,18 +138,19 @@ export function CompoundingIngredientTable({
                             >
                                 {/* Top Row: Nama Obat, Harga Satuan & Tombol Hapus / Kunci */}
                                 <div className="flex items-start justify-between gap-2">
-                                    <div className="flex items-center gap-2 min-w-0">
-                                        <div className="w-7 h-7 rounded-lg bg-emerald-100/70 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
+                                    <div className="flex items-start gap-2 min-w-0">
+                                        <div className="w-7 h-7 rounded-lg bg-emerald-100/70 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0 mt-0.5">
                                             <IconPill size={15} />
                                         </div>
                                         <div className="min-w-0">
                                             <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
                                                 {item.nama_produk}
                                             </h4>
-                                            <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono">
+                                            <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-slate-400 font-mono mt-0.5">
                                                 {item.satuan && <span>Satuan: {item.satuan}</span>}
-                                                <span>•</span>
+                                                {item.satuan && <span>•</span>}
                                                 <span>{formatRupiah(item.harga_satuan)} / {item.satuan || "item"}</span>
+                                                <ItemBatchBadge batches={item.batches} qty={item.kuantitas} />
                                             </div>
                                         </div>
                                     </div>
@@ -202,7 +204,7 @@ export function CompoundingIngredientTable({
                                                 min={0.01}
                                                 step={1}
                                                 allowDecimal={true}
-                                                size="sm"
+                                                size="md"
                                                 disabled={isLocked}
                                                 onValueChange={(val) => {
                                                     onUpdateKuantitas(idx, val ?? 1);

@@ -6,6 +6,14 @@ import { lookupProductByBarcode } from "@/features/purchase/api/purchase-api";
 import type { Product } from "@/features/master/products/types";
 import { useQuery } from "@tanstack/react-query";
 import { productLocalRepository } from "@/features/checkout/services/product-local-repository";
+import {
+    formatShortBatchNumber,
+    getBatchExpiredDate,
+    getBatchExpiryMeta,
+    getBatchStock,
+    getSortedFefoBatches,
+} from "@/features/checkout/utils/batch-utils";
+import { db } from "@/lib/db";
 import { Scrollable } from "@/components/ui/scrollable";
 
 interface BarcodeInputProps {
@@ -130,7 +138,7 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
             queryKey: ["products", "autocomplete", debouncedValue, isRawParam, isJasaParam, hasBomParam],
             queryFn: async () => {
                 try {
-                    return await lookupProductByBarcode(
+                    const res = await lookupProductByBarcode(
                         debouncedValue,
                         {
                             ...(isRawParam !== undefined ? { is_raw_material: isRawParam } : {}),
@@ -138,6 +146,10 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                             ...(hasBomParam !== undefined ? { has_bom: hasBomParam } : {}),
                         }
                     );
+                    if (mode === "sell" && Array.isArray(res) && res.length > 0) {
+                        void db.products.bulkPut(res).catch(() => {});
+                    }
+                    return res;
                 } catch {
                     return [];
                 }
@@ -165,8 +177,9 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                             return false;
                         }
                         const barcodeMatch = p.barcode?.toLowerCase().includes(searchLower) ?? false;
+                        const batchMatch = p.batches?.some((b) => b.batch_number?.toLowerCase().includes(searchLower)) ?? false;
                         const nameWordsMatch = queryWords.every((word) => p.nama.toLowerCase().includes(word));
-                        return barcodeMatch || nameWordsMatch;
+                        return barcodeMatch || batchMatch || nameWordsMatch;
                     })
                     .slice(0, 8);
             }
@@ -256,6 +269,13 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                         (p) => p.barcode?.toLowerCase() === query.toLowerCase(),
                     );
 
+                    // 1b. Try match by batch number
+                    if (!found) {
+                        found = filteredProducts.find((p) =>
+                            p.batches?.some((b) => b.batch_number?.toLowerCase() === query.toLowerCase())
+                        );
+                    }
+
                     // 2. Try match by name (precise)
                     if (!found) {
                         found = filteredProducts.find((p) =>
@@ -297,6 +317,9 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                         );
                         if (results && results.length > 0) {
                             found = results[0];
+                            if (mode === "sell") {
+                                void db.products.bulkPut(results).catch(() => {});
+                            }
                         }
                     } catch {
                         // API lookup failed
@@ -479,6 +502,12 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                                 <div className="divide-y divide-slate-50 dark:divide-slate-800/50">
                                     {suggestions.map((p, index) => {
                                         const isFocused = index === focusedIndex;
+                                        const sortedBatches = getSortedFefoBatches(p.batches);
+                                        const primaryBatch = sortedBatches[0] ?? null;
+                                        const expiryMeta = primaryBatch
+                                            ? getBatchExpiryMeta(getBatchExpiredDate(primaryBatch))
+                                            : null;
+
                                         return (
                                             <div
                                                 key={p.uid}
@@ -486,21 +515,21 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                                                 onClick={() => handleSelectProduct(p)}
                                                 onMouseEnter={() => setFocusedIndex(index)}
                                                 className={`
-                                                    flex items-center justify-between pr-4 py-3 cursor-pointer transition-all duration-150 border-l-4
+                                                    flex items-center justify-between pr-4 py-2.5 cursor-pointer transition-all duration-150 border-l-4
                                                     ${isFocused
                                                         ? "bg-emerald-100 dark:bg-emerald-900/60 border-l-emerald-500 pl-3"
                                                         : "hover:bg-slate-50/50 dark:hover:bg-slate-800/30 border-l-transparent pl-3"
                                                     }
                                                 `}
                                             >
-                                                <div className="flex flex-col gap-0.5 text-left">
-                                                    <span className={`text-xs font-semibold ${isFocused ? "text-emerald-950 dark:text-emerald-50" : "text-slate-800 dark:text-slate-200"}`}>
+                                                <div className="flex flex-col gap-0.5 text-left min-w-0">
+                                                    <span className={`text-xs font-semibold truncate ${isFocused ? "text-emerald-950 dark:text-emerald-50" : "text-slate-800 dark:text-slate-200"}`}>
                                                         {p.nama}
                                                     </span>
-                                                    <div className="flex items-center gap-2 text-[10px] text-slate-400 font-medium">
+                                                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium flex-wrap">
                                                         {p.barcode && (
                                                             <span className="font-mono flex items-center gap-0.5">
-                                                                <IconBarcode size={12} className="opacity-70" />
+                                                                <IconBarcode size={11} className="opacity-70" />
                                                                 {p.barcode}
                                                             </span>
                                                         )}
@@ -515,9 +544,45 @@ export const BarcodeInput = forwardRef<HTMLInputElement, BarcodeInputProps>(
                                                         {p.category?.nama && (
                                                             <span>{p.category.nama}</span>
                                                         )}
+                                                        {primaryBatch && (
+                                                            <span
+                                                                title={sortedBatches
+                                                                    .map(
+                                                                        (b, idx) =>
+                                                                            `#${idx + 1} ${b.batch_number} (Stok: ${getBatchStock(b)}, ED: ${getBatchExpiredDate(b) || "-"})`
+                                                                    )
+                                                                    .join(" | ")}
+                                                                className={`inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-mono leading-none border ${
+                                                                    expiryMeta?.status === "expired" || expiryMeta?.status === "danger"
+                                                                        ? "bg-rose-50 text-rose-600 border-rose-200"
+                                                                        : expiryMeta?.status === "warning"
+                                                                            ? "bg-amber-50 text-amber-700 border-amber-200"
+                                                                            : "bg-slate-100 text-slate-600 border-slate-200"
+                                                                }`}
+                                                            >
+                                                                <span
+                                                                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                                                        expiryMeta?.status === "expired" || expiryMeta?.status === "danger"
+                                                                            ? "bg-rose-500"
+                                                                            : expiryMeta?.status === "warning"
+                                                                                ? "bg-amber-500"
+                                                                                : "bg-emerald-500"
+                                                                    }`}
+                                                                />
+                                                                <strong className="font-bold">
+                                                                    {formatShortBatchNumber(primaryBatch.batch_number)}
+                                                                </strong>
+                                                                {expiryMeta?.shortDate && (
+                                                                    <span className="opacity-80">· ED {expiryMeta.shortDate}</span>
+                                                                )}
+                                                                {sortedBatches.length > 1 && (
+                                                                    <span className="opacity-70">+{sortedBatches.length - 1}</span>
+                                                                )}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
-                                                <div className="text-right flex flex-col items-end gap-0.5">
+                                                <div className="text-right flex flex-col items-end gap-0.5 shrink-0 ml-2">
                                                     <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 font-mono">
                                                         {mode === "sell"
                                                             ? `Rp ${p.harga.toLocaleString("id-ID")}`

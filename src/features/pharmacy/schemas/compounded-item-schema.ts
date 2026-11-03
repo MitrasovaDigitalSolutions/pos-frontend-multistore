@@ -1,5 +1,17 @@
 import { z } from "zod";
 
+export const productBatchInfoSchema = z.object({
+    id_batch: z.string().optional(),
+    batch_uid: z.string().optional(),
+    uid: z.string().optional(),
+    batch_number: z.string(),
+    qty_batch: z.coerce.number().optional(),
+    current_stock: z.coerce.number(),
+    tanggal_terima: z.string().optional().nullable(),
+    tanggal_kedaluarsa: z.string().optional().nullable(),
+    expired_date: z.string().optional().nullable(),
+});
+
 export const compoundedIngredientSchema = z.object({
     product_uid: z.string().min(1, "Produk bahan wajib dipilih"),
     nama_produk: z.string().min(1, "Nama bahan wajib ada"),
@@ -12,6 +24,7 @@ export const compoundedIngredientSchema = z.object({
     subtotal: z.coerce.number().min(0),
     stok_tersedia: z.coerce.number().optional(),
     satuan: z.string().optional(),
+    batches: z.array(productBatchInfoSchema).optional(),
 });
 
 export const compoundedItemFormSchema = z.object({
