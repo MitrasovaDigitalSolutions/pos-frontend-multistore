@@ -25,6 +25,7 @@ export function ConsignmentStockPositionTable({
 
   const queryParams = useMemo(
     () => ({
+      all: 1,
       store_uid: storeUid,
       search: debouncedSearch.trim() ? debouncedSearch.trim() : undefined,
     }),

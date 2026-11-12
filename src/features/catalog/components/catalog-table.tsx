@@ -7,6 +7,7 @@ import { DataTableActionButton } from "@/components/ui/data-table-actions";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { useBranchPolicy } from "@/hooks/use-branch-policy";
+import { useHasManufacturingLicense } from "@/stores/license-store";
 import { IconArchiveOff, IconBuildingStore, IconCopy, IconLock, IconPlus, IconUser } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
@@ -73,6 +74,7 @@ export function CatalogTable({
     isAdmin,
 }: CatalogTableProps) {
     const canCreateProduct = useBranchPolicy("branch_can_create_product");
+    const hasManufacturingLicense = useHasManufacturingLicense();
     const deleteCatalogProduct = useDeleteCatalogProduct();
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [productToDelete, setProductToDelete] = useState<CatalogProduct | null>(null);
@@ -147,7 +149,7 @@ export function CatalogTable({
                                     Jasa
                                 </span>
                             )}
-                            {row.original.is_raw_material && (
+                            {hasManufacturingLicense && row.original.is_raw_material && (
                                 <span className="badge text-[9px] border-none bg-amber-50 text-amber-700 w-fit px-1.5 py-px rounded font-semibold">
                                     Bahan Baku
                                 </span>
@@ -297,7 +299,7 @@ export function CatalogTable({
                 },
             },
         ],
-        []
+        [hasManufacturingLicense]
     );
 
     return (

@@ -1,12 +1,14 @@
 "use client";
 
-import React from "react";
+import React, { useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, Sparkles, ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useHasAddon } from "@/stores/license-store";
+
+const emptySubscribe = () => () => {};
 
 export const ADDON_DETAILS: Record<string, { title: string; description: string }> = {
     purchasing: {
@@ -78,10 +80,16 @@ export function AddonGuard({
     showLockedCard = true,
 }: AddonGuardProps) {
     const router = useRouter();
+    const isHydrated = useSyncExternalStore(
+        emptySubscribe,
+        () => true,
+        () => false
+    );
     const hasAddon = useHasAddon(addon);
 
-    // If addon is active, render wrapped children normally
-    if (hasAddon) {
+    // During SSR / initial client hydration pass, or if addon is active, render wrapped children
+    // to prevent SSR vs localStorage hydration mismatch.
+    if (!isHydrated || hasAddon) {
         return <>{children}</>;
     }
 

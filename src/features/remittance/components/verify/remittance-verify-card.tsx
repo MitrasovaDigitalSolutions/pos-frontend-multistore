@@ -1,6 +1,6 @@
 "use client";
 
-import { IconCheck, IconFileText, IconX } from "@tabler/icons-react";
+import { IconCheck, IconEye, IconFileText, IconX } from "@tabler/icons-react";
 import { DataTableTextActionButton } from "@/components/ui/data-table";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { formatDate } from "@/lib/date-utils";
@@ -10,10 +10,17 @@ import {
   REMITTANCE_STATUS_LABELS,
 } from "../../constants";
 import type { StoreRemittance } from "../../types";
+import {
+  getRemittanceNomor,
+  getRemittanceProofUrl,
+  getRemittanceSourceAccountName,
+  getRemittanceSourceStoreName,
+} from "../../utils/remittance-utils";
 
 interface RemittanceVerifyCardProps {
   remittance: StoreRemittance;
   onOpenProof: (url: string, nomor: string) => void;
+  onOpenDetail: (rem: StoreRemittance) => void;
   onApprove: (rem: StoreRemittance) => void;
   onReject: (rem: StoreRemittance) => void;
 }
@@ -21,6 +28,7 @@ interface RemittanceVerifyCardProps {
 export function RemittanceVerifyCard({
   remittance: rem,
   onOpenProof,
+  onOpenDetail,
   onApprove,
   onReject,
 }: RemittanceVerifyCardProps) {
@@ -30,14 +38,24 @@ export function RemittanceVerifyCard({
   const formattedDate = rem.created_at
     ? formatDate(rem.created_at, "dd MMM yyyy, HH:mm") || rem.created_at
     : "—";
+  const nomor = getRemittanceNomor(rem);
+  const proofUrl = getRemittanceProofUrl(rem);
+  const itemCount = rem.items_count ?? rem.items?.length;
 
   return (
     <div className="p-3 bg-white border border-slate-200/80 rounded-xl space-y-2 text-xs shadow-2xs">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <span className="font-mono font-bold text-slate-900 block leading-tight">
-            {rem.nomor_setoran}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="font-mono font-bold text-slate-900 leading-tight">
+              {nomor}
+            </span>
+            {itemCount !== undefined && itemCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-md text-[9.5px] font-mono font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                {itemCount} item
+              </span>
+            )}
+          </div>
           <span className="text-[10px] text-slate-400 block mt-0.5">{formattedDate}</span>
         </div>
         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusClass}`}>
@@ -48,13 +66,11 @@ export function RemittanceVerifyCard({
       <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
         <div>
           <span className="font-semibold text-slate-800 block">
-            {rem.store_source_nama || "Cabang"}
+            {getRemittanceSourceStoreName(rem)}
           </span>
-          {rem.cash_account_source_nama && (
-            <span className="text-[10px] text-slate-400 block">
-              via {rem.cash_account_source_nama}
-            </span>
-          )}
+          <span className="text-[10px] text-slate-400 block">
+            via {getRemittanceSourceAccountName(rem)}
+          </span>
         </div>
         <span className="font-extrabold text-slate-900 font-mono text-sm">
           {formatRupiah(rem.nominal_disetor)}
@@ -62,18 +78,24 @@ export function RemittanceVerifyCard({
       </div>
 
       <div className="flex items-center justify-between pt-1 border-t border-slate-100 gap-2">
-        <div>
-          {rem.bukti_transfer_url ? (
+        <div className="flex items-center gap-1.5">
+          <DataTableTextActionButton
+            variant="slate"
+            icon={<IconEye size={12} />}
+            onClick={() => onOpenDetail(rem)}
+            tooltip="Lihat Detail Item Setoran"
+          >
+            Detail
+          </DataTableTextActionButton>
+          {proofUrl && (
             <DataTableTextActionButton
               variant="slate"
               icon={<IconFileText size={12} />}
-              onClick={() => onOpenProof(rem.bukti_transfer_url || "", rem.nomor_setoran)}
+              onClick={() => onOpenProof(proofUrl, nomor)}
               tooltip="Lihat Bukti Transfer"
             >
               Bukti
             </DataTableTextActionButton>
-          ) : (
-            <span className="text-slate-400 text-[11px]">—</span>
           )}
         </div>
 

@@ -10,12 +10,17 @@ import {
   REMITTANCE_STATUS_LABELS,
 } from "../../constants";
 import type { StoreRemittance } from "../../types";
+import {
+  getRemittanceNomor,
+  getRemittanceSourceAccountName,
+  getRemittanceSourceStoreName,
+} from "../../utils/remittance-utils";
 
 export function useRemittanceVerifyColumns() {
   return useMemo<ColumnDef<StoreRemittance>[]>(
     () => [
       {
-        accessorKey: "nomor_setoran",
+        accessorKey: "nomor_remittance",
         header: "No. Setoran",
         size: 160,
         cell: ({ row }) => {
@@ -24,11 +29,20 @@ export function useRemittanceVerifyColumns() {
             ? formatDate(rem.created_at, "dd MMM yyyy, HH:mm") || rem.created_at
             : "—";
 
+          const itemCount = rem.items_count ?? rem.items?.length;
+
           return (
             <div>
-              <span className="font-mono font-bold text-slate-900 block leading-tight">
-                {rem.nomor_setoran}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-mono font-bold text-slate-900 leading-tight">
+                  {getRemittanceNomor(rem)}
+                </span>
+                {itemCount !== undefined && itemCount > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-md text-[9.5px] font-mono font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                    {itemCount} item
+                  </span>
+                )}
+              </div>
               <span className="text-[10px] text-slate-400 block mt-0.5">
                 {formattedDate}
               </span>
@@ -45,13 +59,11 @@ export function useRemittanceVerifyColumns() {
           return (
             <div>
               <span className="font-semibold text-slate-800 block leading-tight">
-                {rem.store_source_nama || "Cabang"}
+                {getRemittanceSourceStoreName(rem)}
               </span>
-              {rem.cash_account_source_nama && (
-                <span className="text-[10px] text-slate-400 block mt-0.5">
-                  via {rem.cash_account_source_nama}
-                </span>
-              )}
+              <span className="text-[10px] text-slate-400 block mt-0.5">
+                via {getRemittanceSourceAccountName(rem)}
+              </span>
             </div>
           );
         },
@@ -76,7 +88,8 @@ export function useRemittanceVerifyColumns() {
         },
         cell: ({ row }) => {
           const rem = row.original;
-          const statusClass = REMITTANCE_STATUS_CLASSES[rem.status] || "bg-slate-50 text-slate-700";
+          const statusClass =
+            REMITTANCE_STATUS_CLASSES[rem.status] || "bg-slate-50 text-slate-700";
           const statusLabel = REMITTANCE_STATUS_LABELS[rem.status] || rem.status;
 
           return (

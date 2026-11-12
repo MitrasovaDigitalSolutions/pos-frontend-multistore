@@ -11,8 +11,16 @@ import {
 import { AppButton } from "@/components/shared/app-button";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { formatDate } from "@/lib/date-utils";
-import { useVerifyStoreRemittance } from "../../api/remittance-api";
+import {
+  useStoreRemittanceDetail,
+  useVerifyStoreRemittance,
+} from "../../api/remittance-api";
 import type { StoreRemittance } from "../../types";
+import {
+  getRemittanceNomor,
+  getRemittanceSourceAccountName,
+  getRemittanceSourceStoreName,
+} from "../../utils/remittance-utils";
 
 interface RemittanceApprovalDialogProps {
   open: boolean;
@@ -26,17 +34,23 @@ export function RemittanceApprovalDialog({
   remittance,
 }: RemittanceApprovalDialogProps) {
   const verifyMutation = useVerifyStoreRemittance();
+  const { data: detailData } = useStoreRemittanceDetail(
+    open && remittance?.uid ? remittance.uid : ""
+  );
 
-  if (!remittance) return null;
+  const activeRem = detailData || remittance;
+  if (!activeRem) return null;
 
-  const formattedDate = remittance.created_at
-    ? formatDate(remittance.created_at, "dd MMMM yyyy, HH:mm")
+  const nomor = getRemittanceNomor(activeRem);
+  const formattedDate = activeRem.created_at
+    ? formatDate(activeRem.created_at, "dd MMMM yyyy, HH:mm")
     : "—";
+  const itemsCount = activeRem.items?.length ?? activeRem.items_count;
 
   const handleVerify = () => {
-    verifyMutation.mutate(remittance.uid, {
+    verifyMutation.mutate(activeRem.uid, {
       onSuccess: () => {
-        toast.success(`Setoran ${remittance.nomor_setoran} berhasil diverifikasi!`);
+        toast.success(`Setoran ${nomor} berhasil diverifikasi!`);
         onOpenChange(false);
       },
       onError: (err) => {
@@ -72,7 +86,7 @@ export function RemittanceApprovalDialog({
           <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 space-y-1.5">
             <div className="flex justify-between items-center text-slate-500">
               <span>No. Setoran:</span>
-              <span className="font-mono font-bold text-slate-800">{remittance.nomor_setoran}</span>
+              <span className="font-mono font-bold text-slate-800">{nomor}</span>
             </div>
             <div className="flex justify-between items-center text-slate-500">
               <span>Tgl Pengajuan:</span>
@@ -80,18 +94,34 @@ export function RemittanceApprovalDialog({
             </div>
             <div className="flex justify-between items-center text-slate-500">
               <span>Cabang Pengirim:</span>
-              <span className="font-bold text-slate-800">{remittance.store_source_nama || "Cabang"}</span>
+              <span className="font-bold text-slate-800">
+                {getRemittanceSourceStoreName(activeRem)}
+              </span>
             </div>
             <div className="flex justify-between items-center text-slate-500">
+              <span>Kas Asal Cabang:</span>
+              <span className="font-medium text-slate-700">
+                {getRemittanceSourceAccountName(activeRem)}
+              </span>
+            </div>
+            {itemsCount !== undefined && (
+              <div className="flex justify-between items-center text-slate-500">
+                <span>Jumlah Item Disetor:</span>
+                <span className="font-mono font-bold text-slate-800">
+                  {itemsCount} item
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between items-center text-slate-500 pt-1 border-t border-slate-200/70">
               <span>Nominal Masuk:</span>
               <span className="font-extrabold text-emerald-600 text-sm font-mono">
-                {formatRupiah(remittance.nominal_disetor)}
+                {formatRupiah(activeRem.nominal_disetor)}
               </span>
             </div>
           </div>
 
           <p className="text-[11px] text-slate-400 leading-tight">
-            Setelah disetujui, status transaksi konsinyasi cabang terkait akan ditandai resmi lunas (*settled*).
+            Setelah disetujui, status item penjualan konsinyasi cabang terkait akan ditandai resmi lunas (<em>remitted</em>).
           </p>
         </div>
 

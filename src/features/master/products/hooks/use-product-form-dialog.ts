@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/query-keys";
 import { getImageUrl } from "@/lib/utils";
+import { useHasManufacturingLicense } from "@/stores/license-store";
 import { useCategorySelectConfig } from "@/features/master/categories/hooks/use-category-select";
 import { useBrandSelectConfig } from "@/features/master/brands/hooks/use-brand-select";
 import { useUnitSelectConfig } from "@/features/master/units/hooks/use-unit-select";
@@ -62,6 +63,7 @@ export function useProductFormDialog({
     const createProduct = useCreateProduct();
     const updateProduct = useUpdateProduct();
     const queryClient = useQueryClient();
+    const hasManufacturingLicense = useHasManufacturingLicense();
 
     const methods = useForm<ProductInput>({
         resolver: zodResolver(productSchema) as Resolver<ProductInput>,
@@ -88,9 +90,10 @@ export function useProductFormDialog({
                 const minQty = rawMinQty !== null && rawMinQty !== undefined ? Number(rawMinQty) : null;
                 const hGrosirTotal = (hGrosir && minQty) ? Math.round(hGrosir * minQty) : null;
 
+                const isRawMaterialProduct = hasManufacturingLicense && Boolean(editingProduct.is_raw_material);
                 const initialProductType: ProductType = editingProduct.is_jasa
                     ? "jasa"
-                    : editingProduct.is_raw_material
+                    : isRawMaterialProduct
                         ? "raw_material"
                         : "finished_good";
 
@@ -112,7 +115,7 @@ export function useProductFormDialog({
                     image: undefined,
                     product_type: initialProductType,
                     is_jasa: !!editingProduct.is_jasa,
-                    is_raw_material: !!editingProduct.is_raw_material,
+                    is_raw_material: isRawMaterialProduct,
                     is_grosir: Boolean(editingProduct.is_grosir ?? storeProduct?.is_grosir ?? false),
                     is_active: editingProduct.status !== "inactive",
                     status: editingProduct.status,
@@ -125,9 +128,10 @@ export function useProductFormDialog({
                 const minQty = rawMinQty !== null && rawMinQty !== undefined ? Number(rawMinQty) : null;
                 const hGrosirTotal = (hGrosir && minQty) ? Math.round(hGrosir * minQty) : null;
 
+                const isRawMaterialProduct = hasManufacturingLicense && Boolean(duplicateProduct.is_raw_material);
                 const initialProductType: ProductType = duplicateProduct.is_jasa
                     ? "jasa"
-                    : duplicateProduct.is_raw_material
+                    : isRawMaterialProduct
                         ? "raw_material"
                         : "finished_good";
 
@@ -149,7 +153,7 @@ export function useProductFormDialog({
                     image: undefined,
                     product_type: initialProductType,
                     is_jasa: !!duplicateProduct.is_jasa,
-                    is_raw_material: !!duplicateProduct.is_raw_material,
+                    is_raw_material: isRawMaterialProduct,
                     is_grosir: Boolean(duplicateProduct.is_grosir ?? storeProduct?.is_grosir ?? false),
                     is_active: true,
                     status: "active",
@@ -158,7 +162,7 @@ export function useProductFormDialog({
                 reset(defaultProductValues);
             }
         }
-    }, [open, editingProduct, duplicateProduct, reset]);
+    }, [open, editingProduct, duplicateProduct, hasManufacturingLicense, reset]);
 
     const activeProduct = editingProduct ?? duplicateProduct;
 
@@ -187,24 +191,32 @@ export function useProductFormDialog({
     const watchedProductType = useWatch({ control, name: "product_type" });
 
     // Derive active product type
-    const productType: ProductType = watchedProductType || (
+    const rawProductType: ProductType = watchedProductType || (
         isJasa
             ? "jasa"
             : isRawMaterial
                 ? "raw_material"
                 : "finished_good"
     );
+    const productType: ProductType =
+        !hasManufacturingLicense && rawProductType === "raw_material"
+            ? "finished_good"
+            : rawProductType;
 
     const handleProductTypeChange = (value: ProductType) => {
-        setValue("product_type", value, { shouldValidate: true, shouldDirty: true });
-        if (value === "jasa") {
+        const effectiveValue: ProductType =
+            !hasManufacturingLicense && value === "raw_material"
+                ? "finished_good"
+                : value;
+        setValue("product_type", effectiveValue, { shouldValidate: true, shouldDirty: true });
+        if (effectiveValue === "jasa") {
             setValue("is_jasa", true, { shouldValidate: true, shouldDirty: true });
             setValue("is_raw_material", false, { shouldValidate: true, shouldDirty: true });
             setValue("is_grosir", false, { shouldValidate: true, shouldDirty: true });
             setValue("stok", 0);
             setValue("harga_beli", 0);
             setValue("margin", 0);
-        } else if (value === "raw_material") {
+        } else if (effectiveValue === "raw_material") {
             setValue("is_jasa", false, { shouldValidate: true, shouldDirty: true });
             setValue("is_raw_material", true, { shouldValidate: true, shouldDirty: true });
             setValue("is_grosir", false, { shouldValidate: true, shouldDirty: true });
@@ -312,13 +324,15 @@ export function useProductFormDialog({
             formData.append("barcode", data.barcode);
         }
 
-        const finalHargaJual = data.is_raw_material
+        const effectiveIsRawMaterial = Boolean(hasManufacturingLicense && data.is_raw_material);
+
+        const finalHargaJual = effectiveIsRawMaterial
             ? (data.harga || data.harga_beli || 0)
             : (data.harga || 0);
 
         formData.append("harga_jual", String(finalHargaJual));
 
-        const isGrosirFlag = Boolean(data.is_grosir && !data.is_raw_material && !data.is_jasa);
+        const isGrosirFlag = Boolean(data.is_grosir && !effectiveIsRawMaterial && !data.is_jasa);
         formData.append("is_grosir", isGrosirFlag ? "1" : "0");
 
         if (isGrosirFlag && data.harga_grosir !== null && data.harga_grosir !== undefined) {
@@ -337,7 +351,7 @@ export function useProductFormDialog({
             formData.append("harga_beli", String(data.is_jasa ? 0 : data.harga_beli));
         }
 
-        const finalMargin = (data.is_raw_material || data.is_jasa) ? 0 : (data.margin ?? 0);
+        const finalMargin = (effectiveIsRawMaterial || data.is_jasa) ? 0 : (data.margin ?? 0);
         formData.append("margin", String(finalMargin));
 
         formData.append("category_uid", data.category_uid ? String(data.category_uid) : "");
@@ -385,7 +399,7 @@ export function useProductFormDialog({
         }
 
         formData.append("is_jasa", data.is_jasa ? "1" : "0");
-        formData.append("is_raw_material", data.is_raw_material ? "1" : "0");
+        formData.append("is_raw_material", effectiveIsRawMaterial ? "1" : "0");
 
         const targetStatus: "active" | "inactive" = data.is_active !== false ? "active" : "inactive";
 

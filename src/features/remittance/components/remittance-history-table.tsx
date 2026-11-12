@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { IconFileText, IconHistory } from "@tabler/icons-react";
+import { IconEye, IconFileText, IconHistory } from "@tabler/icons-react";
 import { DataTable, DataTableTextActionButton } from "@/components/ui/data-table";
 import { extractDataList } from "@/lib/utils";
 import { useStoreRemittances } from "../api/remittance-api";
 import type { StoreRemittance } from "../types";
+import { getRemittanceNomor, getRemittanceProofUrl } from "../utils/remittance-utils";
+import { RemittanceDetailDialog } from "./remittance-detail-dialog";
 import { RemittanceProofModal } from "./remittance-proof-modal";
 import { useRemittanceHistoryColumns } from "./history/use-remittance-history-columns";
 import { RemittanceHistoryCard } from "./history/remittance-history-card";
@@ -15,8 +17,13 @@ export function RemittanceHistoryTable() {
   const [selectedProofUrl, setSelectedProofUrl] = useState<string | null>(null);
   const [selectedNomorSetoran, setSelectedNomorSetoran] = useState<string>("");
   const [proofModalOpen, setProofModalOpen] = useState(false);
+  const [selectedDetailRemittance, setSelectedDetailRemittance] =
+    useState<StoreRemittance | null>(null);
 
-  const remittances = useMemo(() => extractDataList<StoreRemittance>(remittancesRes), [remittancesRes]);
+  const remittances = useMemo(
+    () => extractDataList<StoreRemittance>(remittancesRes),
+    [remittancesRes]
+  );
 
   const handleOpenProof = (url: string, nomor: string) => {
     setSelectedProofUrl(url);
@@ -37,18 +44,31 @@ export function RemittanceHistoryTable() {
         perPage={10}
         entityName="setoran"
         emptyMessage="Belum ada riwayat setoran"
-        actionColumnWidth="w-28"
+        actionColumnWidth="w-36"
         extraActions={(rem) => {
-          if (!rem.bukti_transfer_url) return null;
+          const nomor = getRemittanceNomor(rem);
+          const proofUrl = getRemittanceProofUrl(rem);
           return (
-            <DataTableTextActionButton
-              variant="slate"
-              icon={<IconFileText size={13} />}
-              onClick={() => handleOpenProof(rem.bukti_transfer_url || "", rem.nomor_setoran)}
-              tooltip="Lihat Bukti Transfer Bank"
-            >
-              Bukti
-            </DataTableTextActionButton>
+            <div className="flex items-center gap-1.5 justify-center">
+              <DataTableTextActionButton
+                variant="slate"
+                icon={<IconEye size={13} />}
+                onClick={() => setSelectedDetailRemittance(rem)}
+                tooltip="Lihat Detail & Daftar Item Setoran"
+              >
+                Detail
+              </DataTableTextActionButton>
+              {proofUrl && (
+                <DataTableTextActionButton
+                  variant="slate"
+                  icon={<IconFileText size={13} />}
+                  onClick={() => handleOpenProof(proofUrl, nomor)}
+                  tooltip="Lihat Bukti Transfer Bank"
+                >
+                  Bukti
+                </DataTableTextActionButton>
+              )}
+            </div>
           );
         }}
         extraToolbarActions={
@@ -63,8 +83,19 @@ export function RemittanceHistoryTable() {
           </div>
         }
         renderCardItem={(row) => (
-          <RemittanceHistoryCard remittance={row.original} onOpenProof={handleOpenProof} />
+          <RemittanceHistoryCard
+            remittance={row.original}
+            onOpenProof={handleOpenProof}
+            onOpenDetail={(rem) => setSelectedDetailRemittance(rem)}
+          />
         )}
+      />
+
+      <RemittanceDetailDialog
+        open={Boolean(selectedDetailRemittance)}
+        onOpenChange={(open) => !open && setSelectedDetailRemittance(null)}
+        remittance={selectedDetailRemittance}
+        onOpenProof={handleOpenProof}
       />
 
       <RemittanceProofModal

@@ -20,19 +20,20 @@ export interface UnsettledTransactionItem {
   sale_uid?: string;
   product_uid?: string;
   store_uid?: string;
+  store_remittance_uid?: string | null;
   nama_produk?: string;
   barcode?: string;
-  harga_satuan?: number;
+  harga_satuan?: string | number;
   kuantitas: number;
-  subtotal?: number;
-  diskon_item?: number;
-  harga_beli?: number;
+  subtotal?: string | number;
+  diskon_item?: string | number;
+  harga_beli?: string | number;
   harga_pasok?: string | number;
   fee_komisi_toko?: string | number;
   harga_beli_cabang?: number;
   harga_jual_cabang?: number;
   laba_cabang?: number;
-  remittance_status?: string;
+  remittance_status?: "unsettled" | "pending_remittance" | "remitted" | string;
   created_at?: string;
   updated_at?: string;
   sale?: {
@@ -61,20 +62,60 @@ export interface UnsettledTransactionItem {
   wajib_setor?: number;
 }
 
+export interface StoreRemittanceItem {
+  uid?: string;
+  id?: number;
+  store_remittance_uid: string;
+  sale_item_uid: string;
+  nominal_pasok: string | number;
+  nominal_komisi: string | number;
+  sale_item?: UnsettledTransactionItem | null;
+  saleItem?: UnsettledTransactionItem | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface StoreRemittanceStoreRef {
+  uid: string;
+  nama: string;
+  is_central?: boolean;
+}
+
+export interface StoreRemittanceUserRef {
+  uid: string;
+  name: string;
+  username?: string;
+}
+
+export interface StoreRemittanceCashAccountRef {
+  uid: string;
+  nama: string;
+  nomor_rekening?: string | null;
+}
+
 export interface StoreRemittance {
   uid: string;
-  nomor_setoran: string;
-  store_uid_source: string;
+  nomor_remittance?: string;
+  nomor_setoran?: string;
+  store_uid?: string;
+  store_uid_source?: string;
   store_source_nama?: string;
-  store_uid_destination: string;
+  store_uid_dest?: string;
+  store_uid_destination?: string;
   store_destination_nama?: string;
-  total_omzet_kotor: number;
-  total_fee_cabang: number;
+  user_uid?: string;
+  verified_by?: string | null;
+  total_omzet?: string | number;
+  total_omzet_kotor?: number;
+  total_fee_komisi?: string | number;
+  total_fee_cabang?: number;
+  total_wajib_setor?: string | number;
   nominal_disetor: number;
   cash_account_source_uid: string;
   cash_account_source_nama?: string;
   cash_account_dest_uid?: string | null;
   cash_account_dest_nama?: string | null;
+  bukti_transfer?: string | null;
   bukti_transfer_url?: string | null;
   status: RemittanceStatus;
   catatan?: string | null;
@@ -83,12 +124,27 @@ export interface StoreRemittance {
   user_verify_nama?: string | null;
   verified_at?: string | null;
   cutoff_at?: string | null;
+  items_count?: number;
   created_at: string;
   updated_at: string;
+  // Eager-loaded relations from Backend
+  store?: StoreRemittanceStoreRef | null;
+  destination_store?: StoreRemittanceStoreRef | null;
+  destinationStore?: StoreRemittanceStoreRef | null;
+  user?: StoreRemittanceUserRef | null;
+  verified_by_user?: StoreRemittanceUserRef | null;
+  verifiedByUser?: StoreRemittanceUserRef | null;
+  source_cash_account?: StoreRemittanceCashAccountRef | null;
+  sourceCashAccount?: StoreRemittanceCashAccountRef | null;
+  destination_cash_account?: StoreRemittanceCashAccountRef | null;
+  destinationCashAccount?: StoreRemittanceCashAccountRef | null;
+  items?: StoreRemittanceItem[];
 }
 
 export interface CreateRemittancePayload {
-  cash_account_source_uid: string;
+  sale_item_uids: string[];
+  cash_account_source_uid?: string;
+  cash_account_dest_uid?: string;
   nominal_disetor: number;
   bukti_transfer?: File | null;
   catatan?: string;

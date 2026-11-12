@@ -9,6 +9,7 @@ import {
 import { Show } from "@/components/ui/show";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { useHasManufacturingLicense } from "@/stores/license-store";
 import type { Product } from "../types";
 
 export interface UseProductColumnsOptions {
@@ -24,6 +25,8 @@ export function useProductColumns({
     canEditMasterData,
     onToggleStatus,
 }: UseProductColumnsOptions): ColumnDef<Product>[] {
+    const hasManufacturingLicense = useHasManufacturingLicense();
+
     return useMemo<ColumnDef<Product>[]>(
         () => [
             {
@@ -71,7 +74,7 @@ export function useProductColumns({
                                     Jasa
                                 </span>
                             )}
-                            {row.original.is_raw_material && (
+                            {hasManufacturingLicense && row.original.is_raw_material && (
                                 <span className="badge text-[9px] border-none bg-amber-50 text-amber-700 w-fit px-1.5 py-px rounded font-semibold">
                                     Bahan Baku
                                 </span>
@@ -251,6 +254,6 @@ export function useProductColumns({
                 },
             },
         ],
-        [hasManageProducts, isCentralStore, canEditMasterData, onToggleStatus]
+        [hasManageProducts, isCentralStore, canEditMasterData, hasManufacturingLicense, onToggleStatus]
     );
 }

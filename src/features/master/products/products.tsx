@@ -19,6 +19,7 @@ import { FormRadioChips, type RadioChipOption } from "@/components/forms/form-ra
 import { IconBox, IconLayoutGrid, IconPackage, IconTools } from "@tabler/icons-react";
 import { useSearchParams } from "next/navigation";
 import { AccessDeniedState } from "@/components/ui/access-denied-state";
+import { useHasManufacturingLicense } from "@/stores/license-store";
 import { useProductsTutorialStore } from "@/stores/products-tutorial-store";
 import { MOCK_MASTER_PRODUCTS } from "./tutorial/constants/products-tutorial-constants";
 
@@ -72,6 +73,8 @@ export function Products() {
   const hasViewProducts =
     hasRole(userRoles, "admin") ||
     hasPermission(userRoles, userPermissions, "view_products");
+
+  const hasManufacturingLicense = useHasManufacturingLicense();
 
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
@@ -129,13 +132,28 @@ export function Products() {
       status = data.status;
     }
 
+    const effectiveProductType =
+      !hasManufacturingLicense && data.product_type === "raw_material"
+        ? "all"
+        : data.product_type;
+
     setAppliedFilters({
       search: data.search || undefined,
       status,
       category_uid: data.category_uid !== "all" ? data.category_uid : undefined,
       brand_uid: data.brand_uid !== "all" ? data.brand_uid : undefined,
-      is_jasa: data.product_type === "jasa" ? "1" : undefined,
-      is_raw_material: data.product_type === "raw_material" ? "1" : (data.product_type === "finished_good" ? "0" : undefined),
+      is_jasa:
+        effectiveProductType === "jasa"
+          ? "1"
+          : effectiveProductType === "finished_good"
+            ? "0"
+            : undefined,
+      is_raw_material:
+        hasManufacturingLicense && effectiveProductType === "raw_material"
+          ? "1"
+          : effectiveProductType === "finished_good"
+            ? "0"
+            : undefined,
       include_archived,
     });
     setPage(1);
@@ -281,7 +299,9 @@ export function Products() {
   const productTypeRadioOptions: RadioChipOption[] = [
     { value: "all", label: "Semua Tipe", icon: <IconLayoutGrid size={13} /> },
     { value: "finished_good", label: "Barang Jadi", icon: <IconPackage size={13} /> },
-    { value: "raw_material", label: "Bahan Baku", icon: <IconBox size={13} /> },
+    ...(hasManufacturingLicense
+      ? [{ value: "raw_material", label: "Bahan Baku", icon: <IconBox size={13} /> }]
+      : []),
     { value: "jasa", label: "Jasa", icon: <IconTools size={13} /> },
   ];
 

@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import {
   IconCheck,
+  IconEye,
   IconFileText,
   IconPackage,
   IconRefresh,
@@ -19,26 +20,37 @@ import {
 import { extractDataList } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { ROUTES } from "@/constants/routes";
-import { useIsCentralStore } from "@/hooks/use-active-store";
+import { useActiveStore } from "@/hooks/use-active-store";
 import { useStoreRemittances } from "../../api/remittance-api";
 import { REMITTANCE_QUERY_KEYS, REMITTANCE_STATUS } from "../../constants";
 import type { StoreRemittance } from "../../types";
+import { getRemittanceNomor, getRemittanceProofUrl } from "../../utils/remittance-utils";
 import { RemittanceApprovalDialog } from "./remittance-approval-dialog";
 import { RemittanceRejectDialog } from "./remittance-reject-dialog";
+import { RemittanceDetailDialog } from "../remittance-detail-dialog";
 import { RemittanceProofModal } from "../remittance-proof-modal";
 import { ConsignmentStockPositionTable } from "../consignment-stock-position-table";
 import { RemittanceVerifyStatCards } from "./remittance-verify-stat-cards";
 import { useRemittanceVerifyColumns } from "./use-remittance-verify-columns";
 import { RemittanceVerifyCard } from "./remittance-verify-card";
 
+const emptySubscribe = () => () => {};
+
 export function RemittanceVerifyDashboard() {
-  const isCentralStore = useIsCentralStore();
+  const isHydrated = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+  const { activeStore, isCentralStore } = useActiveStore();
   const [activeTab, setActiveTab] = useState<"remittances" | "stock-position">("remittances");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedProofUrl, setSelectedProofUrl] = useState<string | null>(null);
   const [selectedNomorSetoran, setSelectedNomorSetoran] = useState<string>("");
   const [proofModalOpen, setProofModalOpen] = useState(false);
 
+  const [selectedDetailRemittance, setSelectedDetailRemittance] =
+    useState<StoreRemittance | null>(null);
   const [approvingRemittance, setApprovingRemittance] = useState<StoreRemittance | null>(null);
   const [rejectingRemittance, setRejectingRemittance] = useState<StoreRemittance | null>(null);
 
@@ -60,7 +72,7 @@ export function RemittanceVerifyDashboard() {
   const { data: verifiedRes } = useStoreRemittances({ status: REMITTANCE_STATUS.VERIFIED });
   const verifiedList = useMemo(() => extractDataList<StoreRemittance>(verifiedRes), [verifiedRes]);
   const verifiedTotal = useMemo(
-    () => verifiedList.reduce((sum, r) => sum + (r.nominal_disetor || 0), 0),
+    () => verifiedList.reduce((sum, r) => sum + (Number(r.nominal_disetor) || 0), 0),
     [verifiedList]
   );
 
@@ -82,7 +94,7 @@ export function RemittanceVerifyDashboard() {
 
   const columns = useRemittanceVerifyColumns();
 
-  if (!isCentralStore) {
+  if (isHydrated && activeStore && !isCentralStore) {
     return (
       <div className="bg-white border border-slate-100 rounded-2xl p-8 max-w-lg mx-auto text-center space-y-4 my-10 shadow-2xs">
         <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mx-auto">
@@ -194,15 +206,25 @@ export function RemittanceVerifyDashboard() {
             perPage={10}
             entityName="setoran cabang"
             emptyMessage="Tidak ada antrean setoran ditemukan"
-            actionColumnWidth="w-52"
+            actionColumnWidth="w-56"
             extraActions={(rem) => {
               const isPending = rem.status === REMITTANCE_STATUS.PENDING;
+              const nomor = getRemittanceNomor(rem);
+              const proofUrl = getRemittanceProofUrl(rem);
               return (
                 <div className="flex items-center gap-1.5 justify-center">
-                  {rem.bukti_transfer_url && (
+                  <DataTableActionButton
+                    variant="slate"
+                    onClick={() => setSelectedDetailRemittance(rem)}
+                    tooltip="Lihat Detail & Daftar Item Setoran"
+                  >
+                    <IconEye size={15} />
+                  </DataTableActionButton>
+
+                  {proofUrl && (
                     <DataTableActionButton
                       variant="slate"
-                      onClick={() => handleOpenProof(rem.bukti_transfer_url || "", rem.nomor_setoran)}
+                      onClick={() => handleOpenProof(proofUrl, nomor)}
                       tooltip="Lihat Bukti Transfer"
                     >
                       <IconFileText size={15} />
@@ -263,6 +285,7 @@ export function RemittanceVerifyDashboard() {
               <RemittanceVerifyCard
                 remittance={row.original}
                 onOpenProof={handleOpenProof}
+                onOpenDetail={(rem) => setSelectedDetailRemittance(rem)}
                 onApprove={(rem) => setApprovingRemittance(rem)}
                 onReject={(rem) => setRejectingRemittance(rem)}
               />
@@ -271,7 +294,14 @@ export function RemittanceVerifyDashboard() {
         </>
       )}
 
-      {/* Verification Dialogs */}
+      {/* Detail & Verification Dialogs */}
+      <RemittanceDetailDialog
+        open={Boolean(selectedDetailRemittance)}
+        onOpenChange={(open) => !open && setSelectedDetailRemittance(null)}
+        remittance={selectedDetailRemittance}
+        onOpenProof={handleOpenProof}
+      />
+
       <RemittanceApprovalDialog
         open={Boolean(approvingRemittance)}
         onOpenChange={(open) => !open && setApprovingRemittance(null)}

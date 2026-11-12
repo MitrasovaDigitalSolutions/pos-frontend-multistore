@@ -1,16 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { IconBuildingBank, IconHistory, IconPackage, IconReceipt2, IconRefresh } from "@tabler/icons-react";
 import { AppButton } from "@/components/shared/app-button";
 import { useQueryClient } from "@tanstack/react-query";
 import { ROUTES } from "@/constants/routes";
-import { useIsCentralStore } from "@/hooks/use-active-store";
+import { useActiveStore } from "@/hooks/use-active-store";
+import { cn } from "@/lib/utils";
 import { REMITTANCE_QUERY_KEYS } from "../constants";
 import { useUnsettledRemittanceSummary } from "../api/remittance-api";
+import type { UnsettledTransactionItem } from "../types";
 import dynamic from "next/dynamic";
 import { RemittanceStatCards } from "./remittance-stat-cards";
+
+const emptySubscribe = () => () => {};
 
 const TableSkeleton = () => (
   <div className="h-64 rounded-2xl bg-white border border-slate-100 p-6 animate-pulse flex items-center justify-center">
@@ -40,13 +44,27 @@ const CreateRemittanceDialog = dynamic(
 );
 
 export function RemittanceDashboard() {
-  const isCentralStore = useIsCentralStore();
+  const isHydrated = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+  const { activeStore, isCentralStore } = useActiveStore();
   const [activeTab, setActiveTab] = useState<"unsettled" | "history" | "stock-position">("unsettled");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [selectedItemUids, setSelectedItemUids] = useState<string[]>([]);
+  const [singleRemitItemUid, setSingleRemitItemUid] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const queryClient = useQueryClient();
   const { data: summary, isLoading: loadingSummary } = useUnsettledRemittanceSummary();
+
+  const dialogSelectedUids = useMemo(() => {
+    if (singleRemitItemUid) {
+      return [singleRemitItemUid];
+    }
+    return selectedItemUids;
+  }, [singleRemitItemUid, selectedItemUids]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -54,7 +72,33 @@ export function RemittanceDashboard() {
     setTimeout(() => setIsRefreshing(false), 500);
   };
 
-  if (isCentralStore) {
+  const handleOpenCreateWithSelected = () => {
+    setSingleRemitItemUid(null);
+    setCreateDialogOpen(true);
+  };
+
+  const handleRemitSingleItem = (item: UnsettledTransactionItem) => {
+    setSingleRemitItemUid(item.uid);
+    setCreateDialogOpen(true);
+  };
+
+  const handleDialogOpenChange = (nextOpen: boolean) => {
+    setCreateDialogOpen(nextOpen);
+    if (!nextOpen) {
+      setSingleRemitItemUid(null);
+    }
+  };
+
+  const handleSuccessSubmit = () => {
+    if (singleRemitItemUid) {
+      setSelectedItemUids((prev) => prev.filter((uid) => uid !== singleRemitItemUid));
+      setSingleRemitItemUid(null);
+    } else {
+      setSelectedItemUids([]);
+    }
+  };
+
+  if (isHydrated && activeStore && isCentralStore) {
     return (
       <div className="bg-white border border-slate-100 rounded-2xl p-8 max-w-lg mx-auto text-center space-y-4 my-10 shadow-2xs">
         <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
@@ -81,8 +125,15 @@ export function RemittanceDashboard() {
     );
   }
 
+  const hasFloatingBar = activeTab === "unsettled" && selectedItemUids.length > 0;
+
   return (
-    <div className="space-y-3.5 pb-24 sm:pb-8">
+    <div
+      className={cn(
+        "space-y-3.5 transition-all",
+        hasFloatingBar ? "pb-44 sm:pb-28" : "pb-24 sm:pb-8"
+      )}
+    >
       {/* Compact Page Header */}
       <div className="flex items-center justify-between gap-3 px-3.5 py-2.5 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -115,7 +166,7 @@ export function RemittanceDashboard() {
       <RemittanceStatCards
         summary={summary}
         isLoading={loadingSummary}
-        onOpenCreateDialog={() => setCreateDialogOpen(true)}
+        onOpenCreateDialog={handleOpenCreateWithSelected}
       />
 
       {/* Compact Tab Navigation */}
@@ -166,15 +217,24 @@ export function RemittanceDashboard() {
       </div>
 
       {/* Active Tab View */}
-      {activeTab === "unsettled" && <UnsettledTransactionsTable />}
+      {activeTab === "unsettled" && (
+        <UnsettledTransactionsTable
+          selectedItemUids={selectedItemUids}
+          onSelectionChange={setSelectedItemUids}
+          onOpenCreateWithSelected={handleOpenCreateWithSelected}
+          onRemitSingleItem={handleRemitSingleItem}
+        />
+      )}
       {activeTab === "history" && <RemittanceHistoryTable />}
       {activeTab === "stock-position" && <ConsignmentStockPositionTable />}
 
       {/* Create Remittance Modal */}
       <CreateRemittanceDialog
         open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
+        onOpenChange={handleDialogOpenChange}
         summary={summary}
+        selectedItemUids={dialogSelectedUids}
+        onSuccessSubmit={handleSuccessSubmit}
       />
     </div>
   );

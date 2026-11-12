@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
+import { useHasManufacturingLicense } from "@/stores/license-store";
 import { IconPackage, IconTag, IconPercentage } from "@tabler/icons-react";
 import type { CatalogProduct } from "../../types";
 
@@ -10,6 +11,7 @@ interface CatalogAssignProductSummaryProps {
 }
 
 export function CatalogAssignProductSummary({ product }: CatalogAssignProductSummaryProps) {
+    const hasManufacturingLicense = useHasManufacturingLicense();
     const masterPrice = product.harga_jual ?? product.harga;
     const hasMasterWholesale = Boolean(
         product.is_grosir &&
@@ -34,7 +36,7 @@ export function CatalogAssignProductSummary({ product }: CatalogAssignProductSum
                                 Jasa
                             </Badge>
                         )}
-                        {product.is_raw_material && (
+                        {hasManufacturingLicense && product.is_raw_material && (
                             <Badge variant="warning" className="text-[9px] px-1.5 py-0 font-bold">
                                 Bahan Baku
                             </Badge>
