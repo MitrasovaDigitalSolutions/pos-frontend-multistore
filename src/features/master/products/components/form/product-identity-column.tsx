@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { FormSelect, type FormSelectProps } from "@/components/forms/form-select";
@@ -7,6 +8,7 @@ import { FormRadioChips } from "@/components/forms/form-radio-chips";
 import { FormSwitch } from "@/components/forms/form-switch";
 import { Scrollable } from "@/components/ui/scrollable";
 import { generateEan13Barcode } from "@/lib/barcode-utils";
+import { useHasManufacturingLicense } from "@/stores/license-store";
 import { toast } from "sonner";
 import {
     IconBarcode,
@@ -21,12 +23,6 @@ import type { Brand } from "@/features/master/brands/types";
 import type { Unit } from "@/features/master/units/types";
 import type { ProductInput } from "../../schemas/product-schema";
 import type { ProductType } from "../../hooks/use-product-form-dialog";
-
-const PRODUCT_TYPE_OPTIONS = [
-    { value: "finished_good", label: "Barang Jadi", icon: <IconPackage size={13} /> },
-    { value: "raw_material", label: "Bahan Baku", icon: <IconBox size={13} /> },
-    { value: "jasa", label: "Jasa", icon: <IconTools size={13} /> },
-];
 
 interface ProductIdentityColumnProps {
     onProductTypeChange: (value: ProductType) => void;
@@ -56,6 +52,18 @@ export function ProductIdentityColumn({
     const isActive = useWatch<ProductInput>({ name: "is_active" });
     const currentBarcode = useWatch<ProductInput>({ name: "barcode" });
     const isMasterDataDisabled = disabled || (isEditing && !canEditMasterData);
+    const hasManufacturingLicense = useHasManufacturingLicense();
+
+    const productTypeOptions = useMemo(
+        () => [
+            { value: "finished_good", label: "Barang Jadi", icon: <IconPackage size={13} /> },
+            ...(hasManufacturingLicense
+                ? [{ value: "raw_material", label: "Bahan Baku", icon: <IconBox size={13} /> }]
+                : []),
+            { value: "jasa", label: "Jasa", icon: <IconTools size={13} /> },
+        ],
+        [hasManufacturingLicense]
+    );
 
     const handleAutoGenerateBarcode = () => {
         const newBarcode = generateEan13Barcode();
@@ -114,7 +122,7 @@ export function ProductIdentityColumn({
                         <FormRadioChips<ProductInput>
                             name="product_type"
                             label="Tipe Produk"
-                            options={PRODUCT_TYPE_OPTIONS}
+                            options={productTypeOptions}
                             variant="segmented"
                             size="sm"
                             onChange={(val) => onProductTypeChange((val as ProductType) || "finished_good")}

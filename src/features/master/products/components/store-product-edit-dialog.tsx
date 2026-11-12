@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ProductBarcodeDialog } from "@/components/shared/product-barcode-dialog";
 import { getImageUrl } from "@/lib/utils";
 import { useActiveStoreStore } from "@/stores/active-store-store";
+import { useHasManufacturingLicense } from "@/stores/license-store";
 import { useIsCentralStore } from "@/hooks/use-active-store";
 import { useBranchPolicy } from "@/hooks/use-branch-policy";
 import {
@@ -62,6 +63,7 @@ export function StoreProductEditDialog({
     product,
 }: StoreProductEditDialogProps) {
     const activeStoreUid = useActiveStoreStore((s) => s.activeStoreUid);
+    const hasManufacturingLicense = useHasManufacturingLicense();
     const updateProductStore = useUpdateProductStore();
     const isCentralStore = useIsCentralStore();
     const canEditProductPrice = useBranchPolicy("branch_can_edit_product_price");
@@ -295,12 +297,12 @@ export function StoreProductEditDialog({
                                                         <span className="translate-y-px">Jasa</span>
                                                     </Badge>
                                                 )}
-                                                {product.is_raw_material && (
+                                                {hasManufacturingLicense && product.is_raw_material && (
                                                     <Badge variant="warning" className="h-5 px-2.5 py-0 text-[10px] font-bold leading-none inline-flex items-center justify-center">
                                                         <span className="translate-y-px">Bahan Baku</span>
                                                     </Badge>
                                                 )}
-                                                {!product.is_jasa && !product.is_raw_material && (
+                                                {!product.is_jasa && !(hasManufacturingLicense && product.is_raw_material) && (
                                                     <Badge variant="secondary" className="h-5 px-2.5 py-0 text-[10px] font-bold leading-none inline-flex items-center justify-center">
                                                         <span className="translate-y-px">Barang Jadi</span>
                                                     </Badge>

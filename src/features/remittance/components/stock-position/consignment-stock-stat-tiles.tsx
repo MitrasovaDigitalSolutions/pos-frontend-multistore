@@ -25,9 +25,11 @@ export function ConsignmentStockStatTiles({
       (acc, item) => {
         const sisaStok = Number(item.stok ?? item.sisa_stok ?? 0);
         const hargaPasok = Number(
-          item.harga_beli_cabang ?? item.harga_beli ?? item.harga_pasok ?? 0
+          item.harga_pasok || item.harga_beli_cabang || item.harga_beli || 0
         );
-        const hargaJual = Number(item.harga_jual_cabang ?? item.harga_jual ?? 0);
+        const hargaJual = Number(
+          item.harga_jual || item.harga_jual_cabang || item.product?.harga || 0
+        );
         const labaCabang = Number(
           item.laba_cabang ??
             item.komisi_per_unit ??

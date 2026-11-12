@@ -61,31 +61,68 @@ export function useStoreRemittanceDetail(uid: string) {
 }
 
 /**
- * Mutation to submit a new branch remittance with proof file (FormData)
+ * Mutation to submit a new branch remittance.
+ * - Jika ada file `bukti_transfer`, menggunakan `FormData` dengan notasi indeks `sale_item_uids[0]`, `sale_item_uids[1]`
+ *   agar parser multipart PHP/Laravel membacanya sebagai array, dan membiarkan Axios/browser mengatur boundary header secara otomatis.
+ * - Jika tidak ada file `bukti_transfer`, mengirim payload JSON murni (`application/json`) dengan `sale_item_uids` berupa array native.
  */
 export function useCreateStoreRemittance() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (payload: CreateRemittancePayload) => {
-      const formData = new FormData();
-      formData.append("cash_account_source_uid", payload.cash_account_source_uid);
-      formData.append("nominal_disetor", String(payload.nominal_disetor));
-      if (payload.bukti_transfer) {
+      const cleanUids = Array.isArray(payload.sale_item_uids)
+        ? payload.sale_item_uids.filter(Boolean)
+        : [];
+      const sourceAccountUid = payload.cash_account_source_uid?.trim() || undefined;
+      const destAccountUid = payload.cash_account_dest_uid?.trim() || undefined;
+      const catatan = payload.catatan?.trim() || undefined;
+
+      if (payload.bukti_transfer instanceof File) {
+        const formData = new FormData();
+        cleanUids.forEach((uid, index) => {
+          formData.append(`sale_item_uids[${index}]`, uid);
+        });
+        if (sourceAccountUid) {
+          formData.append("cash_account_source_uid", sourceAccountUid);
+        }
+        if (destAccountUid) {
+          formData.append("cash_account_dest_uid", destAccountUid);
+        }
+        if (payload.nominal_disetor && payload.nominal_disetor > 0) {
+          formData.append("nominal_disetor", String(payload.nominal_disetor));
+        }
         formData.append("bukti_transfer", payload.bukti_transfer);
-      }
-      if (payload.catatan) {
-        formData.append("catatan", payload.catatan);
+        if (catatan) {
+          formData.append("catatan", catatan);
+        }
+
+        return apiPost<ApiResponse<StoreRemittance>, FormData>(
+          ENDPOINTS.STORE_REMITTANCES.CREATE,
+          formData
+        );
       }
 
-      return apiPost<ApiResponse<StoreRemittance>, FormData>(
+      const jsonBody: Record<string, unknown> = {};
+      if (cleanUids.length > 0) {
+        jsonBody.sale_item_uids = cleanUids;
+      }
+      if (sourceAccountUid) {
+        jsonBody.cash_account_source_uid = sourceAccountUid;
+      }
+      if (destAccountUid) {
+        jsonBody.cash_account_dest_uid = destAccountUid;
+      }
+      if (payload.nominal_disetor && payload.nominal_disetor > 0) {
+        jsonBody.nominal_disetor = payload.nominal_disetor;
+      }
+      if (catatan) {
+        jsonBody.catatan = catatan;
+      }
+
+      return apiPost<ApiResponse<StoreRemittance>, Record<string, unknown>>(
         ENDPOINTS.STORE_REMITTANCES.CREATE,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        jsonBody
       );
     },
     onSuccess: () => {
@@ -130,7 +167,12 @@ export function useRejectStoreRemittance() {
 /**
  * Fetch consignment stock positions (received, sold, returned, remaining stock & value)
  */
-export function useConsignmentStockPositions(filters?: { store_uid?: string; search?: string }) {
+export function useConsignmentStockPositions(filters?: {
+  store_uid?: string;
+  search?: string;
+  per_page?: number;
+  all?: number | boolean;
+}) {
   return useQuery({
     queryKey: REMITTANCE_QUERY_KEYS.consignmentStock((filters as Record<string, unknown>) || {}),
     queryFn: () =>

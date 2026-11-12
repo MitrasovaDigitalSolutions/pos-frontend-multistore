@@ -8,6 +8,7 @@ import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { formatToReadableDateTime } from "@/lib/date-utils";
 import { STORE_BADGE_HQ } from "@/constants/store";
 import { ProductBarcodeDialog } from "@/components/shared/product-barcode-dialog";
+import { useHasManufacturingLicense } from "@/stores/license-store";
 import { cn } from "@/lib/utils";
 import {
     IconArchiveOff,
@@ -35,6 +36,7 @@ export function CatalogProductDetailDialog({
     onUnarchiveClick,
 }: CatalogProductDetailDialogProps) {
     const [barcodeModalOpen, setBarcodeModalOpen] = useState(false);
+    const hasManufacturingLicense = useHasManufacturingLicense();
 
     if (!product) return null;
 
@@ -137,7 +139,7 @@ export function CatalogProductDetailDialog({
                                     <Badge variant="info" className="h-4.5 px-1.5 py-0 text-[9.5px] font-bold">
                                         Jasa
                                     </Badge>
-                                ) : product.is_raw_material ? (
+                                ) : hasManufacturingLicense && product.is_raw_material ? (
                                     <Badge variant="warning" className="h-4.5 px-1.5 py-0 text-[9.5px] font-bold">
                                         Bahan Baku
                                     </Badge>

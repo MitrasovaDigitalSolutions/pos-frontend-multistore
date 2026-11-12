@@ -1,6 +1,9 @@
+import { useSyncExternalStore } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { BusinessPresetType, LicenseStatus } from "@/features/license/types";
+
+const emptySubscribe = () => () => {};
 
 interface LicenseStoreState {
     licenseStatus: LicenseStatus | null;
@@ -124,6 +127,18 @@ export const useLicenseStore = create<LicenseStoreState>()(
  */
 export function useHasAddon(addonCode: string): boolean {
     return useLicenseStore((state) => state.hasAddon(addonCode));
+}
+
+export function useHasManufacturingLicense(): boolean {
+    const isHydrated = useSyncExternalStore(
+        emptySubscribe,
+        () => true,
+        () => false
+    );
+    const hasAddon = useLicenseStore((state) =>
+        state.hasAnyAddon(["production", "manufacturing", "manufaktur"])
+    );
+    return isHydrated && hasAddon;
 }
 
 export function useIsLicenseOperable(): boolean {

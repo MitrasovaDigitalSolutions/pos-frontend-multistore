@@ -20,6 +20,10 @@ import {
   type RejectRemittanceFormValues,
 } from "../../schemas/remittance-schema";
 import type { StoreRemittance } from "../../types";
+import {
+  getRemittanceNomor,
+  getRemittanceSourceStoreName,
+} from "../../utils/remittance-utils";
 
 interface RemittanceRejectDialogProps {
   open: boolean;
@@ -45,6 +49,7 @@ export function RemittanceRejectDialog({
 
   if (!remittance) return null;
 
+  const nomor = getRemittanceNomor(remittance);
   const formattedDate = remittance.created_at
     ? formatDate(remittance.created_at, "dd MMMM yyyy, HH:mm")
     : "—";
@@ -57,7 +62,7 @@ export function RemittanceRejectDialog({
       },
       {
         onSuccess: () => {
-          toast.success(`Setoran ${remittance.nomor_setoran} ditolak.`);
+          toast.success(`Setoran ${nomor} ditolak.`);
           reset();
           onOpenChange(false);
         },
@@ -93,7 +98,7 @@ export function RemittanceRejectDialog({
             <div className="bg-rose-50/60 border border-rose-100 rounded-xl p-3 space-y-1.5">
               <div className="flex justify-between items-center text-slate-600">
                 <span>No. Setoran:</span>
-                <span className="font-mono font-bold text-slate-900">{remittance.nomor_setoran}</span>
+                <span className="font-mono font-bold text-slate-900">{nomor}</span>
               </div>
               <div className="flex justify-between items-center text-slate-600">
                 <span>Tgl Pengajuan:</span>
@@ -101,7 +106,9 @@ export function RemittanceRejectDialog({
               </div>
               <div className="flex justify-between items-center text-slate-600">
                 <span>Cabang:</span>
-                <span className="font-bold text-slate-800">{remittance.store_source_nama || "Cabang"}</span>
+                <span className="font-bold text-slate-800">
+                  {getRemittanceSourceStoreName(remittance)}
+                </span>
               </div>
               <div className="flex justify-between items-center text-slate-600">
                 <span>Nominal:</span>
@@ -122,7 +129,7 @@ export function RemittanceRejectDialog({
                 className="text-xs"
               />
               <p className="text-[10px] text-slate-400">
-                Alasan ini akan dikirimkan dan dibaca langsung oleh kasir / admin cabang pengirim.
+                Item yang ditolak akan dikembalikan ke status Belum Disetor (unsettled) agar dapat diajukan kembali.
               </p>
             </div>
 

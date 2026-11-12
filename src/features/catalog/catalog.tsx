@@ -21,6 +21,7 @@ import type { CatalogProduct } from "./types";
 import { ProductFormDialog } from "@/features/master/products/components/product-form-dialog";
 import { productSchema, type ProductInput } from "@/features/master/products/schemas/product-schema";
 import type { Product } from "@/features/master/products/types";
+import { useHasManufacturingLicense } from "@/stores/license-store";
 import { useCatalogTutorialStore } from "@/stores/catalog-tutorial-store";
 import { MOCK_CATALOG_PRODUCTS } from "./tutorial/constants/catalog-tutorial-constants";
 import { CatalogTutorialController } from "./tutorial/components/catalog-tutorial-controller";
@@ -44,6 +45,7 @@ export function ProductCatalog() {
     const { data: session } = useSession();
     const userRoles = session?.user?.roles || [];
     const isAdmin = hasRole(userRoles, "admin");
+    const hasManufacturingLicense = useHasManufacturingLicense();
 
     // ── Tutorial Store ────────────────────────────────────────────────────────
     const isRunning = useCatalogTutorialStore((s) => s.isRunning);
@@ -135,7 +137,7 @@ export function ProductCatalog() {
             brand_uid: product.brand_uid ?? null,
             image: null,
             is_jasa: !!product.is_jasa,
-            is_raw_material: !!product.is_raw_material,
+            is_raw_material: Boolean(hasManufacturingLicense && product.is_raw_material),
             is_active: product.status !== "inactive",
         });
         setIsEditDialogOpen(true);
@@ -198,13 +200,28 @@ export function ProductCatalog() {
             status = data.status;
         }
 
+        const effectiveProductType =
+            !hasManufacturingLicense && data.product_type === "raw_material"
+                ? "all"
+                : data.product_type;
+
         setAppliedFilters({
             search: data.search || undefined,
             status,
             category_uid: data.category_uid !== "all" ? data.category_uid : undefined,
             brand_uid: data.brand_uid !== "all" ? data.brand_uid : undefined,
-            is_jasa: data.product_type === "jasa" ? "1" : undefined,
-            is_raw_material: data.product_type === "raw_material" ? "1" : (data.product_type === "finished_good" ? "0" : undefined),
+            is_jasa:
+                effectiveProductType === "jasa"
+                    ? "1"
+                    : effectiveProductType === "finished_good"
+                        ? "0"
+                        : undefined,
+            is_raw_material:
+                hasManufacturingLicense && effectiveProductType === "raw_material"
+                    ? "1"
+                    : effectiveProductType === "finished_good"
+                        ? "0"
+                        : undefined,
             include_archived,
         });
         setPage(1);
@@ -312,7 +329,9 @@ export function ProductCatalog() {
     const productTypeRadioOptions: RadioChipOption[] = [
         { value: "all", label: "Semua Tipe", icon: <IconLayoutGrid size={13} /> },
         { value: "finished_good", label: "Barang Jadi", icon: <IconPackage size={13} /> },
-        { value: "raw_material", label: "Bahan Baku", icon: <IconBox size={13} /> },
+        ...(hasManufacturingLicense
+            ? [{ value: "raw_material", label: "Bahan Baku", icon: <IconBox size={13} /> }]
+            : []),
         { value: "jasa", label: "Jasa", icon: <IconTools size={13} /> },
     ];
 
