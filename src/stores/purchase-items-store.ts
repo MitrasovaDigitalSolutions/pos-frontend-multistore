@@ -46,6 +46,7 @@ interface PurchaseItemsState {
     }) => void;
     updateItem: (temp_uid: string, data: Partial<Pick<PurchaseItemLocal, "kuantitas" | "harga_estimasi" | "alasan" | "batch_number" | "expired_date">>) => void;
     removeItem: (temp_uid: string) => void;
+    clearItems: () => void;
     clearAll: () => void;
     getSubmitPayload: () => {
         items: {
@@ -142,6 +143,11 @@ export function createPurchaseItemsStore(parentId: string, parentType: ParentTyp
                         lastUpdated: Date.now(),
                     })),
 
+                clearItems: () =>
+                    set({
+                        items: [],
+                        lastUpdated: Date.now(),
+                    }),
                 clearAll: () =>
                     set({
                         items: [],
