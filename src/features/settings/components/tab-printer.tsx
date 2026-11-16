@@ -15,6 +15,7 @@ interface TabPrinterProps {
     isLoadingPrinters: boolean;
     loadPrinters: () => Promise<void>;
     qzError: string | null;
+    lnaStatus: PermissionState | null;
 }
 
 function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }) {
@@ -48,9 +49,53 @@ export function TabPrinter({
     isLoadingPrinters,
     loadPrinters,
     qzError,
+    lnaStatus,
 }: TabPrinterProps) {
     const { getSettingMeta } = useSettingsStore();
     const printerMeta = getSettingMeta("printer_id");
+
+    // Banner panduan LNA: hanya tampil saat izin belum diberikan (prompt) atau ditolak (denied)
+    const renderLnaBanner = () => {
+        if (lnaStatus === "granted" || lnaStatus === null) return null;
+
+        if (lnaStatus === "denied") {
+            return (
+                <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 p-3 dark:border-rose-800 dark:bg-rose-950/40">
+                    <AlertCircle size={15} className="mt-0.5 shrink-0 text-rose-600 dark:text-rose-400" />
+                    <div className="space-y-1">
+                        <p className="text-[11px] font-bold text-rose-700 dark:text-rose-300">
+                            Izin &ldquo;Aplikasi di perangkat&rdquo; diblokir
+                        </p>
+                        <p className="text-[11px] leading-snug text-rose-600 dark:text-rose-400">
+                            Klik ikon 🔒 di kiri address bar →{" "}
+                            <strong>Setelan situs</strong> →{" "}
+                            <strong>Aplikasi di perangkat</strong>{" "}
+                            <span className="opacity-70">(Apps on device)</span> → ubah ke{" "}
+                            <strong>Izinkan</strong>, lalu muat ulang halaman.
+                        </p>
+                    </div>
+                </div>
+            );
+        }
+
+        // state === "prompt": izin belum pernah diminta
+        return (
+            <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/40">
+                <Info size={15} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                <div className="space-y-1">
+                    <p className="text-[11px] font-bold text-amber-700 dark:text-amber-300">
+                        Izin akses printer diperlukan
+                    </p>
+                    <p className="text-[11px] leading-snug text-amber-600 dark:text-amber-400">
+                        Klik <strong>Pindai Ulang</strong> di bawah, lalu pilih{" "}
+                        <strong>Izinkan</strong> pada popup Chrome yang muncul di pojok kiri atas browser.
+                        Popup akan meminta izin <strong>Aplikasi di perangkat</strong>{" "}
+                        <span className="opacity-70">(Apps on device)</span>.
+                    </p>
+                </div>
+            </div>
+        );
+    };
 
     const renderStatusBadge = () => {
         if (isLoadingPrinters) {
@@ -86,6 +131,7 @@ export function TabPrinter({
                 iconBgClassName="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
                 headerAction={renderStatusBadge()}
             >
+                {renderLnaBanner()}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
                     {/* Left: Printer Selector */}
                     <div className="md:col-span-7 space-y-3.5">
@@ -175,7 +221,8 @@ export function TabPrinter({
                                 <li>Install Driver printer thermal USB/LAN Anda.</li>
                                 <li>Jalankan aplikasi <strong>Print Service</strong> di komputer kasir.</li>
                                 <li>
-                                    Klik <strong>Pindai Ulang</strong> untuk mendeteksi printer (pilih <strong>Allow / Izinkan</strong> jika browser Chrome meminta izin akses perangkat lokal).
+                                    Klik <strong>Pindai Ulang</strong> → pilih <strong>Izinkan</strong> pada
+                                    popup Chrome (<em>Aplikasi di perangkat / Apps on device</em>).
                                 </li>
                             </ol>
                         </div>
