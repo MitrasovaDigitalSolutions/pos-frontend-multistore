@@ -146,6 +146,7 @@ export function useReceivingHeaderForm({
     const watchedHeaderValues = useWatch({ control: headerForm.control });
     useEffect(() => {
         if (isCurrentNew && isHeaderDirty) {
+            hasInitializedRef.current = true;
             setHeaderData({
                 purchase_order_uid: watchedHeaderValues.purchase_order_uid || null,
                 supplier_uid: watchedHeaderValues.supplier_uid || null,

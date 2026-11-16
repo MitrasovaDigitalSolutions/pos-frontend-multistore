@@ -149,63 +149,64 @@ export function useReceivingFlow({
         initializedIdRef.current = currentId;
     }, [currentId, currentReceiving, isCurrentNew, store]);
 
-    // Effect A: Auto-populate items from PO when it loads
+    // Unified PO Sync Effect:
+    // 1. Clear stale items & population cache whenever selected PO changes (before populating).
+    // 2. Auto-populate items when store is empty and loaded poData matches the active poId.
     useEffect(() => {
-        if (isCurrentNew && headerState.poData?.items && items.length === 0) {
-            const poKey = headerState.poData.uid;
-            if (!poItemsLoadedRef.current[poKey]) {
-                poItemsLoadedRef.current[poKey] = true;
+        if (!isCurrentNew) return;
 
-                let addedCount = 0;
-                headerState.poData.items.forEach((item) => {
-                    const sisa = Math.max(0, Number(item.kuantitas) - Number(item.kuantitas_diterima));
-                    if (sisa > 0 && item.product) {
-                        addItem({
-                            product_uid: item.product_uid,
-                            barcode: item.product.barcode ?? null,
-                            nama: item.product.nama,
-                            harga_estimasi: item.harga_estimasi,
-                            kuantitas: sisa,
-                            batch_number: item.batch_number || null,
-                            expired_date: item.expired_date ? (typeof item.expired_date === "string" ? item.expired_date.split("T")[0] : null) : null,
-                        });
-                        addedCount++;
-                    }
-                });
+        const currentPoId = headerState.poId;
+        if (prevPoIdRef.current !== currentPoId) {
+            const isFormDirty = headerState.headerForm.formState.isDirty;
 
-                if (addedCount > 0) {
-                    toast.success(
-                        `Berhasil memuat ${addedCount} barang dari PO ${headerState.poData.nomor_po}.`
-                    );
+            if (isInitialPoLoadRef.current) {
+                isInitialPoLoadRef.current = false;
+                if (currentPoId !== urlPoUid) {
+                    store.getState().clearItems();
                 }
+            } else if (isFormDirty || currentPoId === null) {
+                store.getState().clearItems();
             }
+
+            poItemsLoadedRef.current = {};
+            prevPoIdRef.current = currentPoId;
         }
-    }, [isCurrentNew, headerState.poData, items.length, addItem]);
 
-    // Effect B: Clear items if PO is changed manually, ignoring initial transition to urlPoUid
-    useEffect(() => {
-        if (isCurrentNew) {
-            const currentPoId = headerState.poId;
-            if (prevPoIdRef.current !== currentPoId) {
-                const isFormDirty = headerState.headerForm.formState.isDirty;
+        const poData = headerState.poData;
+        if (
+            currentPoId &&
+            poData?.uid === currentPoId &&
+            poData.items &&
+            store.getState().items.length === 0 &&
+            !poItemsLoadedRef.current[poData.uid]
+        ) {
+            poItemsLoadedRef.current[poData.uid] = true;
 
-                if (isInitialPoLoadRef.current) {
-                    if (currentPoId === urlPoUid) {
-                        isInitialPoLoadRef.current = false;
-                    } else {
-                        clearAll();
-                        poItemsLoadedRef.current = {};
-                        isInitialPoLoadRef.current = false;
-                    }
-                } else if (isFormDirty) {
-                    clearAll();
-                    poItemsLoadedRef.current = {};
+            let addedCount = 0;
+            poData.items.forEach((item) => {
+                const sisa = Math.max(0, Number(item.kuantitas) - Number(item.kuantitas_diterima));
+                if (sisa > 0 && item.product) {
+                    addItem({
+                        product_uid: item.product_uid,
+                        barcode: item.product.barcode ?? null,
+                        nama: item.product.nama,
+                        harga_estimasi: item.harga_estimasi,
+                        kuantitas: sisa,
+                        batch_number: item.batch_number || null,
+                        expired_date: item.expired_date ? (typeof item.expired_date === "string" ? item.expired_date.split("T")[0] : null) : null,
+                    });
+                    addedCount++;
                 }
-                prevPoIdRef.current = currentPoId;
+            });
+
+            if (addedCount > 0) {
+                toast.success(
+                    `Berhasil memuat ${addedCount} barang dari PO ${poData.nomor_po}.`
+                );
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isCurrentNew, headerState.poId, urlPoUid, clearAll]);
+    }, [isCurrentNew, headerState.poId, headerState.poData, urlPoUid, store, addItem]);
 
     // ─── Orchestrated Handlers ────────────────────────────────────────────────
     const handleUpdateItem = (
