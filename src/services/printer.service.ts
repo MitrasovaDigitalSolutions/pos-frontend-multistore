@@ -62,22 +62,32 @@ class PrinterService {
     }
 
     /**
-     * Chrome 142+ memblokir request ke localhost sampai origin diizinkan
-     * (Local Network Access). Prompt hanya muncul saat request dipicu user,
-     * dan kalau pernah diblokir request gagal tanpa pesan apa pun.
+     * Chrome 136+ memblokir request ke localhost sampai origin diizinkan
+     * lewat izin "Aplikasi di perangkat" (Apps on device) di site settings.
+     * Izin ini muncul di UI Chrome sebagai "Apps on device" dan di
+     * chrome://settings/content/loopbackNetwork untuk akses localhost.
+     *
+     * Permissions API: Chrome mengenali nama "local-network-access" ATAU
+     * "loopback-network" tergantung versi — kita coba keduanya dengan fallback.
+     * Prompt hanya muncul saat request dipicu oleh gesture user (klik tombol).
      */
     private async assertLocalNetworkAccess(): Promise<void> {
         const permissions = typeof navigator !== "undefined" ? navigator.permissions : undefined;
-        if (!permissions?.query) return; // browser tanpa LNA
+        if (!permissions?.query) return; // browser tanpa Permissions API
 
+        // Coba "local-network-access" (Chrome 136+), fallback ke "loopback-network"
         const state = await permissions
             .query({ name: "local-network-access" as PermissionName })
-            .then((status) => status.state)
-            .catch(() => "prompt" as PermissionState);
+            .catch(() =>
+                permissions
+                    .query({ name: "loopback-network" as PermissionName })
+                    .catch(() => ({ state: "prompt" as PermissionState }))
+            )
+            .then((status) => (status as PermissionStatus).state ?? "prompt");
 
         if (state === "denied") {
             throw new Error(
-                "Akses ke perangkat lokal diblokir browser. Klik ikon di kiri address bar → Setelan situs (Site settings) → Aplikasi di perangkat (Apps on device) / Local network → Izinkan, lalu muat ulang halaman."
+                'Akses printer diblokir browser. Klik ikon 🔒 di kiri address bar → "Setelan situs" → "Aplikasi di perangkat" (Apps on device) → ubah ke Izinkan, lalu muat ulang halaman.'
             );
         }
     }
@@ -113,7 +123,7 @@ class PrinterService {
                 pending.reject(
                     new Error(
                         response.message ||
-                            "Printer operation failed"
+                        "Printer operation failed"
                     )
                 );
             }
@@ -139,19 +149,19 @@ class PrinterService {
                         "Flutter printer bridge tidak tersedia"
                     )
                 );
-    
+
                 return;
             }
-    
+
             const requestId = crypto.randomUUID();
-    
+
             this.pendingRequests.set(requestId, {
                 resolve: (data: unknown) => {
                     resolve(data as T);
                 },
                 reject,
             });
-    
+
             window.FlutterBridge!.postMessage(
                 JSON.stringify({
                     action,
@@ -176,8 +186,8 @@ class PrinterService {
                 "printer_connect",
                 printer
                     ? {
-                          printer,
-                      }
+                        printer,
+                    }
                     : undefined
             );
 
@@ -326,6 +336,7 @@ class PrinterService {
                         signal: controller.signal,
                         headers: {
                             Accept: "application/json, text/plain, */*",
+                            // targetAddressSpace: 'loopback',
                         },
                     });
                     clearTimeout(timeoutId);

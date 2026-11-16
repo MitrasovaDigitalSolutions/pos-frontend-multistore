@@ -188,35 +188,44 @@ export function useSettingsForm() {
             return;
         }
 
-        // Periksa status izin Local Network Access untuk tampilkan panduan kontekstual.
-        // Jangan memicu request ke localhost tanpa gesture user; Chrome akan
-        // menolaknya senyap kalau izin belum diberikan.
+        // Periksa status izin "Aplikasi di perangkat" (Apps on device) Chrome.
+        // Chrome 136+ mengenal nama "local-network-access" atau "loopback-network"
+        // tergantung versi — kita coba keduanya. Jangan picu request ke localhost
+        // tanpa gesture user; Chrome menolaknya senyap bila izin belum ada.
         const permissions = typeof navigator !== "undefined" ? navigator.permissions : undefined;
-        if (permissions?.query) {
+        if (!permissions?.query) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setLnaStatus("granted"); // Browser tanpa Permissions API, biarkan fetch menangani
+            return;
+        }
+
+        const queryLna = (): Promise<PermissionStatus> =>
             permissions
                 .query({ name: "local-network-access" as PermissionName })
-                .then((status) => {
-                    // eslint-disable-next-line react-hooks/set-state-in-effect
+                .catch(() =>
+                    permissions.query({ name: "loopback-network" as PermissionName })
+                );
+
+        queryLna()
+            .then((status) => {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
+                setLnaStatus(status.state);
+                if (status.state === "granted") {
+                    loadPrinters();
+                }
+                // Pantau perubahan izin secara real-time (misal user klik Allow di popup)
+                status.onchange = () => {
                     setLnaStatus(status.state);
                     if (status.state === "granted") {
                         loadPrinters();
                     }
-                    // Pantau perubahan izin secara real-time (misal user klik Allow di popup)
-                    status.onchange = () => {
-                        setLnaStatus(status.state);
-                        if (status.state === "granted") {
-                            loadPrinters();
-                        }
-                    };
-                })
-                .catch(() => {
-                    // Browser tidak mendukung LNA permission query (bukan Chrome 136+)
-                    // eslint-disable-next-line react-hooks/set-state-in-effect
-                    setLnaStatus("granted"); // Anggap granted, biarkan fetch yang gagal sendiri
-                });
-        } else {
-            setLnaStatus("granted"); // Browser tanpa LNA API
-        }
+                };
+            })
+            .catch(() => {
+                // Browser tidak mendukung nama permission ini sama sekali
+                // eslint-disable-next-line react-hooks/set-state-in-effect
+                setLnaStatus("granted"); // Anggap granted, biarkan fetch yang menentukan
+            });
     }, [activeTab, settings, loadPrinters]);
 
     // Form submission handler

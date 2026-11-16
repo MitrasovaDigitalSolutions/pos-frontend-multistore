@@ -64,11 +64,14 @@ export function TabPrinter({
                     <AlertCircle size={15} className="mt-0.5 shrink-0 text-rose-600 dark:text-rose-400" />
                     <div className="space-y-1">
                         <p className="text-[11px] font-bold text-rose-700 dark:text-rose-300">
-                            Akses jaringan lokal diblokir
+                            Izin &ldquo;Aplikasi di perangkat&rdquo; diblokir
                         </p>
                         <p className="text-[11px] leading-snug text-rose-600 dark:text-rose-400">
-                            Klik ikon 🔒 di sebelah kiri alamat URL → <strong>Setelan situs</strong> →{" "}
-                            <strong>Aplikasi di perangkat</strong> → ubah ke <strong>Izinkan</strong>, lalu muat ulang halaman.
+                            Klik ikon 🔒 di kiri address bar →{" "}
+                            <strong>Setelan situs</strong> →{" "}
+                            <strong>Aplikasi di perangkat</strong>{" "}
+                            <span className="opacity-70">(Apps on device)</span> → ubah ke{" "}
+                            <strong>Izinkan</strong>, lalu muat ulang halaman.
                         </p>
                     </div>
                 </div>
@@ -84,8 +87,10 @@ export function TabPrinter({
                         Izin akses printer diperlukan
                     </p>
                     <p className="text-[11px] leading-snug text-amber-600 dark:text-amber-400">
-                        Klik <strong>Pindai Ulang</strong> di bawah, lalu pilih <strong>Izinkan</strong> pada popup Chrome
-                        yang muncul di pojok kiri atas browser.
+                        Klik <strong>Pindai Ulang</strong> di bawah, lalu pilih{" "}
+                        <strong>Izinkan</strong> pada popup Chrome yang muncul di pojok kiri atas browser.
+                        Popup akan meminta izin <strong>Aplikasi di perangkat</strong>{" "}
+                        <span className="opacity-70">(Apps on device)</span>.
                     </p>
                 </div>
             </div>
@@ -216,7 +221,8 @@ export function TabPrinter({
                                 <li>Install Driver printer thermal USB/LAN Anda.</li>
                                 <li>Jalankan aplikasi <strong>Print Service</strong> di komputer kasir.</li>
                                 <li>
-                                    Klik <strong>Pindai Ulang</strong> untuk mendeteksi printer (pilih <strong>Allow / Izinkan</strong> jika browser Chrome meminta izin akses perangkat lokal).
+                                    Klik <strong>Pindai Ulang</strong> → pilih <strong>Izinkan</strong> pada
+                                    popup Chrome (<em>Aplikasi di perangkat / Apps on device</em>).
                                 </li>
                             </ol>
                         </div>
