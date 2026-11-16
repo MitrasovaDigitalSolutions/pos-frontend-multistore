@@ -81,6 +81,7 @@ export function StoreProfile() {
         printerOptions,
         isLoadingPrinters,
         qzError,
+        lnaStatus,
         loadPrinters,
         handleSubmit,
     } = useSettingsForm();
@@ -174,6 +175,7 @@ export function StoreProfile() {
                                     isLoadingPrinters={isLoadingPrinters}
                                     loadPrinters={loadPrinters}
                                     qzError={qzError}
+                                    lnaStatus={lnaStatus}
                                 />
                             </div>
                         </Show.When>

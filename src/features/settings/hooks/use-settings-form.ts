@@ -39,6 +39,8 @@ export function useSettingsForm() {
     const [printerOptions, setPrinterOptions] = useState<{ value: string; label: string }[]>([]);
     const [isLoadingPrinters, setIsLoadingPrinters] = useState(false);
     const [qzError, setQzError] = useState<string | null>(null);
+    // "prompt" = belum pernah diminta, "granted" = sudah diizinkan, "denied" = diblokir
+    const [lnaStatus, setLnaStatus] = useState<PermissionState | null>(null);
 
     // Initialize React Hook Form
     const methods = useForm<StoreSettingsInput>({
@@ -180,10 +182,13 @@ export function useSettingsForm() {
         const isFlutter = typeof window !== "undefined" && typeof window.FlutterBridge?.postMessage === "function";
         if (isFlutter) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
+            setLnaStatus("granted");
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             loadPrinters();
             return;
         }
 
+        // Periksa status izin Local Network Access untuk tampilkan panduan kontekstual.
         // Jangan memicu request ke localhost tanpa gesture user; Chrome akan
         // menolaknya senyap kalau izin belum diberikan.
         const permissions = typeof navigator !== "undefined" ? navigator.permissions : undefined;
@@ -191,11 +196,26 @@ export function useSettingsForm() {
             permissions
                 .query({ name: "local-network-access" as PermissionName })
                 .then((status) => {
+                    // eslint-disable-next-line react-hooks/set-state-in-effect
+                    setLnaStatus(status.state);
                     if (status.state === "granted") {
                         loadPrinters();
                     }
+                    // Pantau perubahan izin secara real-time (misal user klik Allow di popup)
+                    status.onchange = () => {
+                        setLnaStatus(status.state);
+                        if (status.state === "granted") {
+                            loadPrinters();
+                        }
+                    };
                 })
-                .catch(() => {});
+                .catch(() => {
+                    // Browser tidak mendukung LNA permission query (bukan Chrome 136+)
+                    // eslint-disable-next-line react-hooks/set-state-in-effect
+                    setLnaStatus("granted"); // Anggap granted, biarkan fetch yang gagal sendiri
+                });
+        } else {
+            setLnaStatus("granted"); // Browser tanpa LNA API
         }
     }, [activeTab, settings, loadPrinters]);
 
@@ -294,6 +314,7 @@ export function useSettingsForm() {
         printerOptions,
         isLoadingPrinters,
         qzError,
+        lnaStatus,
         loadPrinters,
         handleSubmit: handleSubmit(onSubmit, onError),
     };
