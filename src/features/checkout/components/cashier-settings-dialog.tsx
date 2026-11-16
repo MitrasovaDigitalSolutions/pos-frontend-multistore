@@ -88,7 +88,11 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
             setPrinterOptions(options);
         } catch (err) {
             console.error("Gagal mendeteksi printer dari Print Service:", err);
-            setQzError("Gagal menghubungkan ke Print Service. Pastikan aplikasi Print Service telah berjalan.");
+            setQzError(
+                err instanceof Error && err.message.includes("diblokir browser")
+                    ? err.message
+                    : "Gagal menghubungkan ke Print Service. Pastikan aplikasi Print Service telah berjalan."
+            );
 
             const currentPrinter = methods.getValues("printer_id") || settings.printer_id;
             if (currentPrinter) {
@@ -101,11 +105,27 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
         }
     };
 
-    // Load printers when printer tab is active
+    // Load printers when printer tab is active ONLY IF already granted
     useEffect(() => {
-        if (open && activeTab === "printer") {
+        if (!open || activeTab !== "printer") return;
+
+        const isFlutter = typeof window !== "undefined" && typeof window.FlutterBridge?.postMessage === "function";
+        if (isFlutter) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             loadPrinters();
+            return;
+        }
+
+        const permissions = typeof navigator !== "undefined" ? navigator.permissions : undefined;
+        if (permissions?.query) {
+            permissions
+                .query({ name: "local-network-access" as PermissionName })
+                .then((status) => {
+                    if (status.state === "granted") {
+                        loadPrinters();
+                    }
+                })
+                .catch(() => {});
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, activeTab]);

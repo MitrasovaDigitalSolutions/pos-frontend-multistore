@@ -40,6 +40,11 @@ const serwist = new Serwist({
             handler: new NetworkOnly(),
         },
         {
+            // Local printer service (:62000) requests must always hit the local network directly, never cache.
+            matcher: ({ url }) => url.port === "62000",
+            handler: new NetworkOnly(),
+        },
+        {
             matcher: ({ url, sameOrigin }) => url.pathname === "/api/auth/session" && sameOrigin,
             handler: new NetworkFirst({
                 cacheName: "auth-session",

@@ -155,7 +155,11 @@ export function useSettingsForm() {
             setPrinterOptions(options);
         } catch (err) {
             console.error("Gagal mendeteksi printer dari printer service:", err);
-            setQzError("Gagal menghubungkan ke printer service. Pastikan aplikasi printer service telah berjalan.");
+            setQzError(
+                err instanceof Error && err.message.includes("diblokir browser")
+                    ? err.message
+                    : "Gagal menghubungkan ke printer service. Pastikan aplikasi printer service telah berjalan."
+            );
 
             const currentPrinter = getValues("printer_id") || settings.printer_id;
             if (currentPrinter) {
@@ -168,11 +172,30 @@ export function useSettingsForm() {
         }
     }, [getValues, settings.printer_id]);
 
-    // Automatically scan printers when printer tab is active
+    // Automatically scan printers when printer tab is active ONLY IF already granted
     useEffect(() => {
-        if (activeTab === "printer" && Object.keys(settings).length > 0) {
+        if (activeTab !== "printer" || Object.keys(settings).length === 0) return;
+
+        // Flutter WebView tidak terkena batasan LNA browser
+        const isFlutter = typeof window !== "undefined" && typeof window.FlutterBridge?.postMessage === "function";
+        if (isFlutter) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             loadPrinters();
+            return;
+        }
+
+        // Jangan memicu request ke localhost tanpa gesture user; Chrome akan
+        // menolaknya senyap kalau izin belum diberikan.
+        const permissions = typeof navigator !== "undefined" ? navigator.permissions : undefined;
+        if (permissions?.query) {
+            permissions
+                .query({ name: "local-network-access" as PermissionName })
+                .then((status) => {
+                    if (status.state === "granted") {
+                        loadPrinters();
+                    }
+                })
+                .catch(() => {});
         }
     }, [activeTab, settings, loadPrinters]);
 
