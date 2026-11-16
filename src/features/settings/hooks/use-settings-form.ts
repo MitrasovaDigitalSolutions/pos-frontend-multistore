@@ -183,7 +183,6 @@ export function useSettingsForm() {
         if (isFlutter) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setLnaStatus("granted");
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             loadPrinters();
             return;
         }
@@ -194,7 +193,6 @@ export function useSettingsForm() {
         // tanpa gesture user; Chrome menolaknya senyap bila izin belum ada.
         const permissions = typeof navigator !== "undefined" ? navigator.permissions : undefined;
         if (!permissions?.query) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLnaStatus("granted"); // Browser tanpa Permissions API, biarkan fetch menangani
             return;
         }
@@ -208,7 +206,6 @@ export function useSettingsForm() {
 
         queryLna()
             .then((status) => {
-                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setLnaStatus(status.state);
                 if (status.state === "granted") {
                     loadPrinters();
@@ -223,7 +220,6 @@ export function useSettingsForm() {
             })
             .catch(() => {
                 // Browser tidak mendukung nama permission ini sama sekali
-                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setLnaStatus("granted"); // Anggap granted, biarkan fetch yang menentukan
             });
     }, [activeTab, settings, loadPrinters]);
