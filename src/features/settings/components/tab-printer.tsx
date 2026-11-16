@@ -174,7 +174,9 @@ export function TabPrinter({
                             <ol className="text-[11px] text-slate-600 dark:text-slate-400 space-y-1 list-decimal list-inside pl-0.5 leading-snug">
                                 <li>Install Driver printer thermal USB/LAN Anda.</li>
                                 <li>Jalankan aplikasi <strong>Print Service</strong> di komputer kasir.</li>
-                                <li>Klik <strong>Pindai Ulang</strong> untuk memilih nama printer.</li>
+                                <li>
+                                    Klik <strong>Pindai Ulang</strong> untuk mendeteksi printer (pilih <strong>Allow / Izinkan</strong> jika browser Chrome meminta izin akses perangkat lokal).
+                                </li>
                             </ol>
                         </div>
                     </div>

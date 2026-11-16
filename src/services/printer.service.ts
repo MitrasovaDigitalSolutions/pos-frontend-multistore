@@ -2,6 +2,10 @@ import axios from "axios";
 
 const BASE_URL = "http://localhost:62000";
 const CONNECT_RETRIES = 2;
+// Percobaan pertama bisa memunculkan prompt LNA; beri waktu user klik Allow.
+const FIRST_CONNECT_TIMEOUT = 15000;
+// Scanning seluruh printer di Windows butuh waktu ekstra bila ada printer offline/network.
+const PRINTER_SCAN_TIMEOUT = 20000;
 
 export interface PrinterDevice {
     id?: string;
@@ -55,6 +59,27 @@ class PrinterService {
             typeof window !== "undefined" &&
             typeof window.FlutterBridge?.postMessage === "function"
         );
+    }
+
+    /**
+     * Chrome 142+ memblokir request ke localhost sampai origin diizinkan
+     * (Local Network Access). Prompt hanya muncul saat request dipicu user,
+     * dan kalau pernah diblokir request gagal tanpa pesan apa pun.
+     */
+    private async assertLocalNetworkAccess(): Promise<void> {
+        const permissions = typeof navigator !== "undefined" ? navigator.permissions : undefined;
+        if (!permissions?.query) return; // browser tanpa LNA
+
+        const state = await permissions
+            .query({ name: "local-network-access" as PermissionName })
+            .then((status) => status.state)
+            .catch(() => "prompt" as PermissionState);
+
+        if (state === "denied") {
+            throw new Error(
+                "Akses ke perangkat lokal diblokir browser. Klik ikon di kiri address bar → Setelan situs (Site settings) → Aplikasi di perangkat (Apps on device) / Local network → Izinkan, lalu muat ulang halaman."
+            );
+        }
     }
 
     /**
@@ -168,18 +193,49 @@ class PrinterService {
             return;
         }
 
+        await this.assertLocalNetworkAccess();
+
         for (
             let attempt = 1;
             attempt <= CONNECT_RETRIES;
             attempt += 1
         ) {
             try {
-                const { data } = await axios.get(
-                    `${BASE_URL}/health`,
-                    {
-                        timeout: 3000,
+                const timeoutMs = attempt === 1 ? FIRST_CONNECT_TIMEOUT : 5000;
+                let data: { message?: string; connected?: boolean } | undefined;
+
+                try {
+                    const res = await axios.get(
+                        `${BASE_URL}/health`,
+                        {
+                            // Percobaan pertama = pemicu prompt izin LNA, beri waktu user klik Allow
+                            timeout: timeoutMs,
+                        }
+                    );
+                    data = res.data;
+                } catch (axiosErr) {
+                    // Fallback ke native fetch jika XHR diblokir atau timeout
+                    if (typeof window !== "undefined" && typeof window.fetch === "function") {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+                        try {
+                            const fetchRes = await fetch(`${BASE_URL}/health`, {
+                                signal: controller.signal,
+                            });
+                            clearTimeout(timeoutId);
+                            if (fetchRes.ok) {
+                                data = await fetchRes.json();
+                            } else {
+                                throw axiosErr;
+                            }
+                        } catch {
+                            clearTimeout(timeoutId);
+                            throw axiosErr;
+                        }
+                    } else {
+                        throw axiosErr;
                     }
-                );
+                }
 
                 if (
                     data?.message === "ok" ||
@@ -251,14 +307,47 @@ class PrinterService {
          */
         await this.connect();
 
-        const { data } = await axios.get(
-            `${BASE_URL}/printers`,
-            {
-                timeout: 3000,
+        let rawData: unknown;
+        try {
+            const { data } = await axios.get(
+                `${BASE_URL}/printers`,
+                {
+                    timeout: PRINTER_SCAN_TIMEOUT,
+                }
+            );
+            rawData = data;
+        } catch (axiosErr) {
+            // Fallback ke native fetch jika XMLHttpRequest (Axios) timeout/dibatalkan oleh browser
+            if (typeof window !== "undefined" && typeof window.fetch === "function") {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), PRINTER_SCAN_TIMEOUT);
+                try {
+                    const res = await fetch(`${BASE_URL}/printers`, {
+                        signal: controller.signal,
+                        headers: {
+                            Accept: "application/json, text/plain, */*",
+                        },
+                    });
+                    clearTimeout(timeoutId);
+                    if (res.ok) {
+                        rawData = await res.json();
+                    } else {
+                        throw axiosErr;
+                    }
+                } catch {
+                    clearTimeout(timeoutId);
+                    throw axiosErr;
+                }
+            } else {
+                throw axiosErr;
             }
-        );
+        }
 
-        return data.data || [];
+        if (Array.isArray(rawData)) {
+            return rawData as PrinterDevice[];
+        }
+
+        return ((rawData as { data?: PrinterDevice[] })?.data) || [];
     }
 
     /**
@@ -287,20 +376,48 @@ class PrinterService {
 
         /**
          * HTTP DESKTOP
-         * TIDAK DIUBAH
          */
         await this.connect();
 
-        await axios.post(
-            `${BASE_URL}/print`,
-            {
-                printer,
-                content: text,
-            },
-            {
-                timeout: 10000,
+        try {
+            await axios.post(
+                `${BASE_URL}/print`,
+                {
+                    printer,
+                    content: text,
+                },
+                {
+                    timeout: 15000,
+                }
+            );
+        } catch (axiosErr) {
+            if (typeof window !== "undefined" && typeof window.fetch === "function") {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000);
+                try {
+                    const res = await fetch(`${BASE_URL}/print`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            printer,
+                            content: text,
+                        }),
+                        signal: controller.signal,
+                    });
+                    clearTimeout(timeoutId);
+                    if (!res.ok) {
+                        throw axiosErr;
+                    }
+                } catch {
+                    clearTimeout(timeoutId);
+                    throw axiosErr;
+                }
+            } else {
+                throw axiosErr;
             }
-        );
+        }
     }
 }
 
