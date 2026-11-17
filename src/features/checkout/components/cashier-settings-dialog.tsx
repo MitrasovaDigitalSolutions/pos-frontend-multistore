@@ -3,17 +3,16 @@
 import { FormSelect } from "@/components/forms/form-select";
 import { BaseDialog } from "@/components/ui/base-dialog";
 import { Button } from "@/components/ui/button";
-import { settingsApi } from "@/features/settings/api/settings-api";
 import { cn } from "@/lib/utils";
 import PrinterService, { type PrinterDevice } from "@/services/printer.service";
 import { useActiveStoreStore } from "@/stores/active-store-store";
-import { useSettingsStore } from "@/stores/settings-store";
+import { usePrinterStore } from "@/stores/printer-store";
 import { IconBuildingStore, IconPrinter, IconSettings } from "@tabler/icons-react";
 import { STORE_BADGE_HQ, STORE_LABEL_HQ, STORE_LABEL_BRANCH } from "@/constants/store";
 import { useQueryClient } from "@tanstack/react-query";
 import { Info, Loader2, RefreshCw, Save, ExternalLink } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { Show } from "@/components/ui/show";
@@ -30,10 +29,10 @@ interface CashierSettingsInput {
 }
 
 export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDialogProps) {
-    const { settings, fetchSettings } = useSettingsStore();
     const { data: session } = useSession();
     const queryClient = useQueryClient();
     const { activeStoreUid, setActiveStore } = useActiveStoreStore();
+    const { printerId, setPrinterId } = usePrinterStore();
     const stores = session?.user?.stores ?? [];
 
     const [activeTab, setActiveTab] = useState("printer");
@@ -49,9 +48,10 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
         });
     }, []);
 
+    // Form only manages activeStore — printer_id is client-side via printer-store
     const methods = useForm<CashierSettingsInput>({
         values: {
-            printer_id: settings.printer_id || "",
+            printer_id: printerId,
             activeStore: activeStoreUid || "",
         },
     });
@@ -60,18 +60,18 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
     const selectedStoreUid = useWatch({ control: methods.control, name: "activeStore" });
     const selectedStore = stores.find((s) => s.uid === selectedStoreUid);
 
-    // Load settings values into form
+    // Sync printer_id from store into form when dialog opens
     useEffect(() => {
-        if (open && Object.keys(settings).length > 0) {
+        if (open) {
             reset({
-                printer_id: settings.printer_id || "",
+                printer_id: printerId,
                 activeStore: activeStoreUid || "",
             });
         }
-    }, [open, settings, activeStoreUid, reset]);
+    }, [open, printerId, activeStoreUid, reset]);
 
     // Fetch printers from Print Service
-    const loadPrinters = async () => {
+    const loadPrinters = useCallback(async () => {
         setIsLoadingPrinters(true);
         setQzError(null);
         try {
@@ -80,9 +80,8 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
             const options = list.map((p: PrinterDevice) => ({ value: isFlutter ? p.id! : p.name, label: p.name }));
 
             // Ensure currently saved printer_id is in the options list
-            const currentPrinter = methods.getValues("printer_id") || settings.printer_id;
-            if (currentPrinter && !list.some((p: PrinterDevice) => p.name === currentPrinter)) {
-                options.push({ value: currentPrinter, label: currentPrinter });
+            if (printerId && !list.some((p: PrinterDevice) => p.name === printerId)) {
+                options.push({ value: printerId, label: printerId });
             }
 
             setPrinterOptions(options);
@@ -94,50 +93,39 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
                     : "Gagal menghubungkan ke Print Service. Pastikan aplikasi Print Service telah berjalan."
             );
 
-            const currentPrinter = methods.getValues("printer_id") || settings.printer_id;
-            if (currentPrinter) {
-                setPrinterOptions([{ value: currentPrinter, label: currentPrinter }]);
+            if (printerId) {
+                setPrinterOptions([{ value: printerId, label: printerId }]);
             } else {
                 setPrinterOptions([]);
             }
         } finally {
             setIsLoadingPrinters(false);
         }
-    };
+    }, [printerId]);
 
-    // Load printers when printer tab is active ONLY IF already granted
+    // Auto-scan printers when printer tab opens (LNA permission already guaranteed
+    // by PrinterPermissionGate wrapping the checkout page)
     useEffect(() => {
         if (!open || activeTab !== "printer") return;
-
-        const isFlutter = typeof window !== "undefined" && typeof window.FlutterBridge?.postMessage === "function";
-        if (isFlutter) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            loadPrinters();
-            return;
-        }
-
-        const permissions = typeof navigator !== "undefined" ? navigator.permissions : undefined;
-        if (permissions?.query) {
-            permissions
-                .query({ name: "local-network-access" as PermissionName })
-                .then((status) => {
-                    if (status.state === "granted") {
-                        loadPrinters();
-                    }
-                })
-                .catch(() => {});
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open, activeTab]);
+        let isCancelled = false;
+        queueMicrotask(() => {
+            if (!isCancelled) {
+                void loadPrinters();
+            }
+        });
+        return () => {
+            isCancelled = true;
+        };
+    }, [open, activeTab, loadPrinters]);
 
     const onSubmit = async (data: CashierSettingsInput) => {
         setIsSaving(true);
         let hasChanges = false;
         try {
-            if (data.printer_id !== settings.printer_id) {
-                await settingsApi.update("printer_id", data.printer_id);
-                await fetchSettings();
-                toast.success("Pengaturan printer kasir berhasil disimpan.");
+            // Save printer_id to client-side store (localStorage), not server
+            if (data.printer_id !== printerId) {
+                setPrinterId(data.printer_id);
+                toast.success("Printer kasir berhasil disimpan di terminal ini.");
                 hasChanges = true;
             }
 

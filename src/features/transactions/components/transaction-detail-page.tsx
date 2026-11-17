@@ -14,6 +14,7 @@ import axios from "axios";
 import { buildReceipt58 } from "@/utils/ReceiptFormatter58";
 import { buildReceiptMobileApp58 } from "@/utils/ReceiptMobileApp58";
 import { useSettingsStore } from "@/stores/settings-store";
+import { usePrinterStore } from "@/stores/printer-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import { useAppPreset } from "@/features/license/hooks/use-app-preset";
@@ -107,6 +108,7 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
     const isLoading = !isDummy && isRealLoading;
     const error = !isDummy && realError;
     const getSetting = useSettingsStore((state) => state.getSetting);
+    const { printerId } = usePrinterStore();
     const [isVoidDialogOpen, setIsVoidDialogOpen] = useState(false);
 
     const voidMutation = useVoidTransaction();
@@ -148,7 +150,7 @@ export function TransactionDetailPage({ transactionId }: TransactionDetailPagePr
             // const receipt = buildReceipt(data);
             const isFlutter = typeof window !== "undefined" && typeof window.FlutterBridge?.postMessage === "function";
             const receipt = isFlutter ? buildReceiptMobileApp58(data) : buildReceipt58(data);
-            const printerName = getSetting("printer_id") || "EPSON LX-310 ESC/P";
+            const printerName = printerId || getSetting("printer_id") || "EPSON LX-310 ESC/P";
             await PrinterService.print(printerName, receipt);
 
             setTimeout(() => {

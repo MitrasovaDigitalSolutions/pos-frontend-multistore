@@ -21,6 +21,7 @@ import { db } from "@/lib/db";
 import { formatRupiah } from "@/hooks/use-format-rupiah";
 import { Show } from "@/components/ui/show";
 import { useTutorialStore } from "@/stores/tutorial-store";
+import { PrinterPermissionGate } from "@/features/printer/components/printer-permission-gate";
 
 // ─── Dynamic Modal Dialogs & Non-Critical Controllers ─────────────────────────
 const PaymentDialog = dynamic(
@@ -74,6 +75,14 @@ const CheckoutTutorialController = dynamic(
 );
 
 export function Checkout() {
+    return (
+        <PrinterPermissionGate>
+            <CheckoutContent />
+        </PrinterPermissionGate>
+    );
+}
+
+function CheckoutContent() {
     const isOnline = useNetworkStatus();
     const syncEngine = useSyncEngine();
     const offlineReadiness = useOfflineReadiness();

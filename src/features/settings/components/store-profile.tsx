@@ -6,6 +6,7 @@ import { Show } from "@/components/ui/show";
 import { getImageUrl } from "@/lib/utils";
 import { useCashAccounts } from "@/features/cash/api/cash-api";
 import { useSettingsStore } from "@/stores/settings-store";
+import { PrinterPermissionGate } from "@/features/printer/components/printer-permission-gate";
 
 import dynamic from "next/dynamic";
 
@@ -78,14 +79,14 @@ export function StoreProfile() {
         isSaving,
         isTabDirty,
         hasTabError,
+        printerId,
+        setPrinterId,
         printerOptions,
         isLoadingPrinters,
         qzError,
-        lnaStatus,
         loadPrinters,
         handleSubmit,
     } = useSettingsForm();
-
     const cashAccountOptions = useMemo(() => {
         if (!cashAccountsData) return [];
         return cashAccountsData.map((account) => ({
@@ -166,17 +167,20 @@ export function StoreProfile() {
                             </div>
                         </Show.When>
 
-                        {/* Tab 3: Perangkat Printer */}
+                        {/* Tab 3: Perangkat Printer (gated by LNA permission) */}
                         <Show.When isTrue={activeTab === "printer"}>
                             <div className="animate-fade-in">
-                                <TabPrinter
-                                    isSaving={isSaving}
-                                    printerOptions={printerOptions}
-                                    isLoadingPrinters={isLoadingPrinters}
-                                    loadPrinters={loadPrinters}
-                                    qzError={qzError}
-                                    lnaStatus={lnaStatus}
-                                />
+                                <PrinterPermissionGate>
+                                    <TabPrinter
+                                        isSaving={isSaving}
+                                        printerId={printerId}
+                                        printerOptions={printerOptions}
+                                        isLoadingPrinters={isLoadingPrinters}
+                                        loadPrinters={loadPrinters}
+                                        onPrinterChange={setPrinterId}
+                                        qzError={qzError}
+                                    />
+                                </PrinterPermissionGate>
                             </div>
                         </Show.When>
 
