@@ -13,7 +13,7 @@ interface PrinterPermissionGateProps {
  * PrinterPermissionGate
  *
  * Komponen pelindung akses fitur printer / checkout.
- * Memastikan izin Local Network Access ("Aplikasi di perangkat" / Apps on device di Chrome)
+ * Memastikan izin Local Network Access ("Aplikasi di perangkat" / Apps on device & Jaringan lokal di Chrome)
  * telah berstatus "granted" sebelum konten utama dapat diakses.
  */
 export function PrinterPermissionGate({ children }: PrinterPermissionGateProps) {
@@ -25,7 +25,8 @@ export function PrinterPermissionGate({ children }: PrinterPermissionGateProps) 
         setIsTriggeringPermission(true);
         setTriggerAttempted(false);
         try {
-            // Memicu fetch ke localhost dari user gesture agar Chrome menampilkan prompt izin
+            // Memicu fetch ke localhost DAN 127.0.0.1 dari user gesture
+            // agar Chrome memunculkan dialog izin "Aplikasi di perangkat" dan "Jaringan lokal"
             await triggerLnaPermissionRequest();
         } finally {
             setIsTriggeringPermission(false);
@@ -64,7 +65,7 @@ export function PrinterPermissionGate({ children }: PrinterPermissionGateProps) 
                                 Akses Printer Diblokir Browser
                             </h3>
                             <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                                Izin <strong>Aplikasi di perangkat</strong> (perangkat lokal) dinonaktifkan di setelan situs browser.
+                                Izin <strong>Aplikasi di perangkat</strong> atau <strong>Jaringan lokal</strong> dinonaktifkan di setelan situs browser.
                             </p>
                         </div>
                     </div>
@@ -80,13 +81,13 @@ export function PrinterPermissionGate({ children }: PrinterPermissionGateProps) 
                                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-300">
                                     <SlidersHorizontal size={10} className="text-slate-500" /> kontrol
                                 </span>{" "}
-                                di samping kiri alamat URL
+                                di samping kiri alamat URL browser
                             </li>
                             <li>
                                 Buka <strong>Setelan situs</strong> <em>(Site settings)</em>
                             </li>
                             <li>
-                                Pada <strong>Aplikasi di perangkat</strong> <em>(Apps on device)</em>, pilih <strong>Izinkan</strong>
+                                Ubah <strong>Aplikasi di perangkat</strong> <em>(Apps on device)</em> dan <strong>Jaringan lokal</strong> ke <strong>Izinkan</strong>
                             </li>
                             <li>Muat ulang halaman ini</li>
                         </ol>
@@ -108,7 +109,7 @@ export function PrinterPermissionGate({ children }: PrinterPermissionGateProps) 
         );
     }
 
-    // Status "prompt": izin belum pernah diberikan, perlu konfirmasi user
+    // Status "prompt": izin belum pernah diberikan / belum terhubung, perlu konfirmasi user
     return (
         <div className="flex min-h-[360px] w-full items-center justify-center p-4 sm:p-6">
             <div className="w-full max-w-md rounded-2xl border border-amber-200/90 bg-white p-5 shadow-sm dark:border-amber-800/60 dark:bg-slate-900 space-y-4">
@@ -133,7 +134,7 @@ export function PrinterPermissionGate({ children }: PrinterPermissionGateProps) 
                         <Info size={13} className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
                         <div>
                             <span>
-                                Klik <strong>Izinkan Akses Printer</strong> di bawah, lalu pilih <strong>Izinkan</strong> (<em>Allow</em>) pada popup konfirmasi browser.
+                                Klik <strong>Izinkan Akses Printer</strong> di bawah, lalu pilih <strong>Izinkan</strong> (<em>Allow</em>) pada popup perizinan Chrome (<strong>Aplikasi di perangkat</strong> & <strong>Jaringan lokal</strong>).
                             </span>
                         </div>
                     </div>
@@ -143,7 +144,7 @@ export function PrinterPermissionGate({ children }: PrinterPermissionGateProps) 
                             <span className="inline-flex items-center gap-0.5 font-bold">
                                 <SlidersHorizontal size={10} className="inline text-amber-700 dark:text-amber-300" />
                             </span>{" "}
-                            di sebelah kiri URL address bar, lalu aktifkan izin <strong>Aplikasi di perangkat</strong>.
+                            di samping kiri alamat URL browser, lalu aktifkan izin <strong>Aplikasi di perangkat</strong> dan <strong>Jaringan lokal</strong> secara manual.
                         </p>
                     )}
                 </div>

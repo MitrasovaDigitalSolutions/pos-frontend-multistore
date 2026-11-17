@@ -4,11 +4,13 @@ import { IconPrinter } from "@tabler/icons-react";
 import { Loader2, RefreshCw, CheckCircle2, AlertCircle, Info, Download, ExternalLink } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { AppButton } from "@/components/shared/app-button";
+import { FormSelect } from "@/components/forms/form-select";
 import { SettingsTabCard } from "./settings-tab-card";
+import type { StoreSettingsInput } from "../schemas/settings-schema";
 
 interface TabPrinterProps {
     isSaving: boolean;
-    printerId: string;
+    printerId?: string;
     printerOptions: { value: string; label: string }[];
     isLoadingPrinters: boolean;
     loadPrinters: () => Promise<void>;
@@ -43,14 +45,12 @@ function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }
 
 export function TabPrinter({
     isSaving,
-    printerId,
     printerOptions,
     isLoadingPrinters,
     loadPrinters,
     onPrinterChange,
     qzError,
 }: TabPrinterProps) {
-
     const renderStatusBadge = () => {
         if (isLoadingPrinters) {
             return (
@@ -81,7 +81,7 @@ export function TabPrinter({
             <SettingsTabCard
                 icon={IconPrinter}
                 title="Perangkat Printer"
-                subtitle="Pilih printer thermal untuk mencetak struk belanja di terminal ini"
+                subtitle="Pilih printer thermal untuk mencetak struk belanja kasir"
                 iconBgClassName="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
                 headerAction={renderStatusBadge()}
             >
@@ -110,7 +110,7 @@ export function TabPrinter({
                             <div className="flex items-center justify-between">
                                 <LabelWithTooltip
                                     label="Pilih Printer Struk"
-                                    tooltip="Nama printer thermal lokal yang terpasang di komputer/device kasir ini. Disimpan per-terminal."
+                                    tooltip="ID / Nama printer thermal lokal yang terpasang di komputer/device kasir."
                                 />
                                 <AppButton
                                     id="btn-scan-printer"
@@ -129,33 +129,15 @@ export function TabPrinter({
                             </div>
 
                             <div id="form-settings-printer-select">
-                                <select
-                                    value={printerId}
-                                    onChange={(e) => onPrinterChange(e.target.value)}
+                                <FormSelect<StoreSettingsInput>
+                                    name="printer_id"
+                                    options={printerOptions}
+                                    placeholder={isLoadingPrinters ? "Memuat printer..." : "Pilih Nama Printer"}
                                     disabled={isSaving || isLoadingPrinters}
-                                    className="w-full h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <option value="">
-                                        {isLoadingPrinters ? "Memuat printer..." : "Pilih Nama Printer"}
-                                    </option>
-                                    {printerOptions.map((opt) => (
-                                        <option key={opt.value} value={opt.value}>
-                                            {opt.label}
-                                        </option>
-                                    ))}
-                                </select>
-                                {printerOptions.length === 0 && !isLoadingPrinters && (
-                                    <p className="mt-1.5 text-[11px] text-slate-400 dark:text-slate-500">
-                                        {qzError ? "Gagal terhubung ke Printer Service." : "Tidak ada printer yang terdeteksi — klik Pindai Ulang."}
-                                    </p>
-                                )}
+                                    emptyMessage={qzError ? "Gagal terhubung ke Printer Service." : "Tidak ada printer yang terdeteksi"}
+                                    onChange={onPrinterChange}
+                                />
                             </div>
-
-                            {printerId && (
-                                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-                                    ✓ Printer aktif: <strong>{printerId}</strong> — disimpan di terminal ini
-                                </p>
-                            )}
                         </div>
                     </div>
 
@@ -168,7 +150,7 @@ export function TabPrinter({
                             </div>
 
                             <a
-                                href="https://drive.google.com/drive/folders/1ily8yGout-jtxjvjI3iiCwZoutqR0kKM?usp=drive_link"
+                                href="https://portal.mitrasovapos.my.id/downloads/service-print.exe"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center justify-between gap-2.5 p-2.5 rounded-lg bg-emerald-50/80 hover:bg-emerald-100/70 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 transition-all group no-underline"
@@ -179,10 +161,10 @@ export function TabPrinter({
                                     </div>
                                     <div className="flex flex-col min-w-0">
                                         <span className="truncate text-slate-800 dark:text-slate-100 font-extrabold text-[11px]">
-                                            Unduh Print Service & Driver
+                                            Unduh Print Service (Windows .exe)
                                         </span>
                                         <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">
-                                            Google Drive Folder
+                                            portal.mitrasovapos.my.id
                                         </span>
                                     </div>
                                 </div>
@@ -194,17 +176,10 @@ export function TabPrinter({
                                 <li>Jalankan aplikasi <strong>Print Service</strong> di komputer kasir.</li>
                                 <li>
                                     Klik <strong>Pindai Ulang</strong> → pilih <strong>Izinkan</strong> pada
-                                    popup Chrome <em>(Aplikasi di perangkat / Apps on device)</em>.
+                                    popup Chrome <em>(Aplikasi di perangkat / Apps on device & Jaringan lokal)</em>.
                                 </li>
-                                <li>Pilih printer dari dropdown, lalu klik <strong>Simpan</strong>.</li>
+                                <li>Pilih printer dari dropdown, lalu simpan pengaturan.</li>
                             </ol>
-
-                            <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-2.5">
-                                <p className="text-[10px] text-amber-700 dark:text-amber-400 leading-snug">
-                                    <strong>Info:</strong> Pilihan printer disimpan di browser ini saja, bukan ke server.
-                                    Setiap terminal kasir perlu memilih printernya masing-masing.
-                                </p>
-                            </div>
                         </div>
                     </div>
                 </div>

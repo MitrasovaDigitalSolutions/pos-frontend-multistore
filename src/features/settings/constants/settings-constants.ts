@@ -36,7 +36,7 @@ export const SETTINGS_TABS: readonly SettingsTabItem[] = [
         description: "Pengaturan printer struk kasir",
         icon: IconPrinter,
         category: "store",
-        fields: [] as const,
+        fields: ["printer_id"] as const,
         adminOnly: false,
         centralOnly: false,
     },

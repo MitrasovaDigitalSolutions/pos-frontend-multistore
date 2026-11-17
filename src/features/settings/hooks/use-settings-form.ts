@@ -58,6 +58,7 @@ export function useSettingsForm() {
             cash_account_register_uid: "",
             cash_account_main_uid: "",
             cash_account_bank_uid: "",
+            printer_id: printerId || "",
             hpp_adjustment_method: "latest",
             cash_in_out_enabled: "true",
             branch_can_create_product: "false",
@@ -120,6 +121,7 @@ export function useSettingsForm() {
                 cash_account_register_uid: settings.cash_account_register_uid || "",
                 cash_account_main_uid: settings.cash_account_main_uid || "",
                 cash_account_bank_uid: settings.cash_account_bank_uid || "",
+                printer_id: printerId || settings.printer_id || "",
                 hpp_adjustment_method: (settings.hpp_adjustment_method as "latest" | "average") || "latest",
                 cash_in_out_enabled: settings.cash_in_out_enabled ?? "true",
                 branch_can_create_product: settings.branch_can_create_product ?? "false",
@@ -189,10 +191,21 @@ export function useSettingsForm() {
     // Form submission handler (printer_id saved separately via printer-store)
     const onSubmit = async (data: StoreSettingsInput) => {
         setIsSaving(true);
+        let clientPrinterChanged = false;
         try {
+            if (data.printer_id !== undefined && data.printer_id !== printerId) {
+                setPrinterId(data.printer_id);
+                clientPrinterChanged = true;
+            }
+
             const updateTasks: Promise<unknown>[] = [];
 
             for (const key of Object.keys(data) as Array<keyof StoreSettingsInput>) {
+                // printer_id dikelola di client-side (printer-store), jangan kirim ke server
+                if (key === "printer_id") {
+                    continue;
+                }
+
                 // If not central admin, ignore all central-only settings fields
                 if (!isCentralAdmin && CENTRAL_ONLY_FIELDS.includes(key)) {
                     continue;
@@ -237,6 +250,8 @@ export function useSettingsForm() {
                     await updateSession();
                 }
                 toast.success("Pengaturan toko berhasil diperbarui.");
+            } else if (clientPrinterChanged) {
+                toast.success("Pengaturan printer berhasil disimpan.");
             } else {
                 toast.info("Tidak ada perubahan yang disimpan.");
             }
