@@ -299,12 +299,12 @@ export function CashierSettingsDialog({ open, onOpenChange }: CashierSettingsDia
                                         </span>
                                     </div>
                                     <a
-                                        href="https://drive.google.com/drive/folders/1ily8yGout-jtxjvjI3iiCwZoutqR0kKM?usp=drive_link"
+                                        href="https://portal.mitrasovapos.my.id/downloads/service-print.exe"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-emerald-600 hover:text-emerald-700 font-extrabold flex items-center gap-1 text-[10px] no-underline transition-colors pl-4"
                                     >
-                                        <span>Unduh Driver & Print Service</span>
+                                        <span>Unduh Print Service (Windows .exe)</span>
                                         <ExternalLink size={10} />
                                     </a>
                                 </div>

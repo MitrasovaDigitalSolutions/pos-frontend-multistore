@@ -3,25 +3,18 @@
 import { useEffect, useCallback, useState } from "react";
 
 /**
- * Status izin Local Network Access (LNA) / "Aplikasi di perangkat" (Apps on device)
- * yang dibutuhkan untuk akses localhost printer service.
+ * Status izin akses printer lokal (LNA / Local Network Access & Apps on device).
+ * - "checking": sedang memeriksa koneksi ke printer service lokal
+ * - "granted": akses berhasil diverifikasi dan printer service terhubung
+ * - "prompt": memerlukan konfirmasi / klik izin dari pengguna untuk memicu popup Chrome
+ * - "denied": akses diblokir di setelan browser
  */
-export type LnaStatus = "checking" | "granted" | "prompt" | "denied" | "unsupported";
+export type LnaStatus = "checking" | "granted" | "prompt" | "denied";
 
-/**
- * Daftar nama permission yang dicoba secara berurutan sesuai implementasi browser.
- *
- * - "local-network-access"  → Chrome 136+ (nama resmi dari W3C spec)
- * - "loopback-network"       → Nama alternatif Chrome (loopback specifically)
- *
- * Browser lain (Firefox, Safari) TIDAK mengimplementasikan LNA permission API
- * → fallback ke "unsupported" → biarkan fetch yang menentukan
- */
 const LNA_PERMISSION_NAMES = ["local-network-access", "loopback-network"] as const;
 
 /**
- * Coba query permission LNA dengan fallback ke nama berikutnya jika gagal.
- * Mengembalikan PermissionStatus jika berhasil, null jika semua nama gagal.
+ * Coba periksa status permission melalui Permissions API jika didukung browser.
  */
 async function queryLnaPermission(): Promise<PermissionStatus | null> {
     if (typeof navigator === "undefined" || !navigator.permissions?.query) return null;
@@ -31,117 +24,171 @@ async function queryLnaPermission(): Promise<PermissionStatus | null> {
             const status = await navigator.permissions.query({ name: name as PermissionName });
             return status;
         } catch {
-            // Nama ini tidak dikenal browser — coba nama berikutnya
+            // Permission name belum diimplementasikan di browser ini
         }
     }
     return null;
 }
 
 /**
- * Memicu request aktual ke localhost agar browser menampilkan popup izin LNA.
- * Request ini HARUS dipanggil dari event handler user (klik tombol), bukan useEffect,
- * agar browser menganggapnya sebagai "user gesture" dan menampilkan popup.
- *
- * Mengembalikan true jika koneksi berhasil (printer service jalan), false jika gagal.
+ * Melakukan probe cepat untuk mengecek apakah print service di localhost / 127.0.0.1
+ * sudah dapat dihubungi secara langsung tanpa diblokir oleh browser.
  */
-export async function triggerLnaPermissionRequest(printerServiceUrl = "http://localhost:62000"): Promise<boolean> {
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-        const res = await fetch(`${printerServiceUrl}/health`, {
-            signal: controller.signal,
-            cache: "no-store",
-        });
-        clearTimeout(timeoutId);
-        return res.ok;
-    } catch {
-        // Gagal (service tidak jalan atau permission di-deny) — masih OK untuk tujuan trigger
-        return false;
-    }
-}
+export async function probePrinterHealth(): Promise<boolean> {
+    const probe = async (url: string) => {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2000);
+            const res = await fetch(url, {
+                signal: controller.signal,
+                cache: "no-store",
+            });
+            clearTimeout(timeoutId);
+            return res.ok;
+        } catch {
+            return false;
+        }
+    };
 
-function getInitialStatus(): LnaStatus {
-    if (typeof window !== "undefined" && typeof window.FlutterBridge?.postMessage === "function") {
-        return "granted";
-    }
-    if (typeof navigator === "undefined" || !navigator.permissions?.query) {
-        return "unsupported";
-    }
-    return "checking";
+    const [r1, r2] = await Promise.allSettled([
+        probe("http://localhost:62000/health"),
+        probe("http://127.0.0.1:62000/health"),
+    ]);
+
+    const ok1 = r1.status === "fulfilled" && r1.value;
+    const ok2 = r2.status === "fulfilled" && r2.value;
+
+    return ok1 || ok2;
 }
 
 /**
- * Hook untuk memantau status izin LNA "Aplikasi di perangkat" (Apps on device)
- * lintas browser. Auto-detect dan subscribe ke perubahan status real-time.
+ * Memicu dialog perizinan browser Chrome di bawah interaksi langsung pengguna (user gesture):
+ * 1. Request ke http://localhost:62000/health -> memicu prompt izin "Aplikasi di perangkat" (Apps on device)
+ * 2. Request ke http://127.0.0.1:62000/health -> memicu prompt izin "Jaringan lokal" (Local network access)
+ *
+ * Keduanya dipanggil bersamaan dari event klik agar kedua dialog perizinan Chrome muncul ke user.
+ */
+export async function triggerLnaPermissionRequest(): Promise<boolean> {
+    const triggerUrl = async (url: string) => {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 12000);
+            const res = await fetch(url, {
+                signal: controller.signal,
+                cache: "no-store",
+                mode: "cors",
+            });
+            clearTimeout(timeoutId);
+            return res.ok;
+        } catch {
+            return false;
+        }
+    };
+
+    const [resLocalhost, resLoopback] = await Promise.allSettled([
+        triggerUrl("http://localhost:62000/health"),
+        triggerUrl("http://127.0.0.1:62000/health"),
+    ]);
+
+    const localhostOk = resLocalhost.status === "fulfilled" && resLocalhost.value;
+    const loopbackOk = resLoopback.status === "fulfilled" && resLoopback.value;
+
+    return localhostOk || loopbackOk;
+}
+
+function isFlutterWebView(): boolean {
+    return (
+        typeof window !== "undefined" &&
+        typeof window.FlutterBridge?.postMessage === "function"
+    );
+}
+
+/**
+ * Hook untuk memantau status izin LNA & konektivitas printer lokal.
+ * Selalu menampilkan status "prompt" jika akses belum diverifikasi,
+ * sehingga tombol izin selalu muncul jika user mereset permission / data browser.
  */
 export function useLnaPermission() {
-    const [status, setStatus] = useState<LnaStatus>(getInitialStatus);
+    const [status, setStatus] = useState<LnaStatus>(() => (isFlutterWebView() ? "granted" : "checking"));
 
-    const checkPermission = useCallback(async () => {
-        // Flutter WebView tidak terkena batasan LNA
-        if (
-            typeof window !== "undefined" &&
-            typeof window.FlutterBridge?.postMessage === "function"
-        ) {
+    const verifyAccess = useCallback(async () => {
+        if (isFlutterWebView()) {
             setStatus("granted");
             return;
         }
 
+        // Cek status resmi dari Permissions API jika tersedia
         const permStatus = await queryLnaPermission();
-
-        if (!permStatus) {
-            // Browser tidak mendukung LNA permission API (Firefox, Safari, dll.)
-            // Anggap "unsupported" — biarkan fetch ke localhost yang menentukan
-            setStatus("unsupported");
+        if (permStatus?.state === "denied") {
+            setStatus("denied");
             return;
         }
 
-        setStatus(permStatus.state as LnaStatus);
+        // Probe langsung ke port printer service
+        const isHealthy = await probePrinterHealth();
+        if (isHealthy || permStatus?.state === "granted") {
+            setStatus("granted");
+            return;
+        }
 
-        // Subscribe real-time: status berubah setelah user klik Allow/Block di popup
-        permStatus.onchange = () => {
-            setStatus(permStatus.state as LnaStatus);
-        };
+        // Jika belum terhubung atau izin belum aktif, set status ke prompt
+        // agar tombol pemicu izin selalu tampil untuk pengguna
+        setStatus("prompt");
     }, []);
 
     useEffect(() => {
+        if (isFlutterWebView()) return;
+
         let isCancelled = false;
 
-        if (typeof window !== "undefined" && typeof window.FlutterBridge?.postMessage === "function") {
-            return;
-        }
+        void (async () => {
+            const permStatus = await queryLnaPermission();
+            if (isCancelled) return;
 
-        queryLnaPermission()
-            .then((permStatus) => {
-                if (isCancelled) return;
-                if (!permStatus) {
-                    setStatus("unsupported");
-                    return;
-                }
+            if (permStatus?.state === "denied") {
+                setStatus("denied");
+                return;
+            }
 
-                setStatus(permStatus.state as LnaStatus);
+            const isHealthy = await probePrinterHealth();
+            if (isCancelled) return;
 
+            if (isHealthy || permStatus?.state === "granted") {
+                setStatus("granted");
+            } else {
+                setStatus("prompt");
+            }
+
+            if (permStatus) {
                 permStatus.onchange = () => {
-                    if (!isCancelled) {
-                        setStatus(permStatus.state as LnaStatus);
+                    if (isCancelled) return;
+                    if (permStatus.state === "granted") {
+                        setStatus("granted");
+                    } else if (permStatus.state === "denied") {
+                        setStatus("denied");
+                    } else {
+                        setStatus("prompt");
                     }
                 };
-            })
-            .catch(() => {
-                if (!isCancelled) {
-                    setStatus("unsupported");
-                }
-            });
+            }
+        })();
 
         return () => {
             isCancelled = true;
         };
     }, []);
 
-    const isGranted = status === "granted" || status === "unsupported";
+    const isGranted = status === "granted";
     const isBlocked = status === "denied";
     const needsPrompt = status === "prompt";
     const isChecking = status === "checking";
 
-    return { status, isGranted, isBlocked, needsPrompt, isChecking, recheckPermission: checkPermission };
+    return {
+        status,
+        isGranted,
+        isBlocked,
+        needsPrompt,
+        isChecking,
+        recheckPermission: verifyAccess,
+    };
 }
