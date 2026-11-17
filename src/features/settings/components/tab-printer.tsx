@@ -4,18 +4,16 @@ import { IconPrinter } from "@tabler/icons-react";
 import { Loader2, RefreshCw, CheckCircle2, AlertCircle, Info, Download, ExternalLink } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { AppButton } from "@/components/shared/app-button";
-import { FormSelect } from "@/components/forms/form-select";
-import { useSettingsStore } from "@/stores/settings-store";
 import { SettingsTabCard } from "./settings-tab-card";
-import type { StoreSettingsInput } from "../schemas/settings-schema";
 
 interface TabPrinterProps {
     isSaving: boolean;
+    printerId: string;
     printerOptions: { value: string; label: string }[];
     isLoadingPrinters: boolean;
     loadPrinters: () => Promise<void>;
+    onPrinterChange: (id: string) => void;
     qzError: string | null;
-    lnaStatus: PermissionState | null;
 }
 
 function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }) {
@@ -45,57 +43,13 @@ function LabelWithTooltip({ label, tooltip }: { label: string; tooltip: string }
 
 export function TabPrinter({
     isSaving,
+    printerId,
     printerOptions,
     isLoadingPrinters,
     loadPrinters,
+    onPrinterChange,
     qzError,
-    lnaStatus,
 }: TabPrinterProps) {
-    const { getSettingMeta } = useSettingsStore();
-    const printerMeta = getSettingMeta("printer_id");
-
-    // Banner panduan LNA: hanya tampil saat izin belum diberikan (prompt) atau ditolak (denied)
-    const renderLnaBanner = () => {
-        if (lnaStatus === "granted" || lnaStatus === null) return null;
-
-        if (lnaStatus === "denied") {
-            return (
-                <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 p-3 dark:border-rose-800 dark:bg-rose-950/40">
-                    <AlertCircle size={15} className="mt-0.5 shrink-0 text-rose-600 dark:text-rose-400" />
-                    <div className="space-y-1">
-                        <p className="text-[11px] font-bold text-rose-700 dark:text-rose-300">
-                            Izin &ldquo;Aplikasi di perangkat&rdquo; diblokir
-                        </p>
-                        <p className="text-[11px] leading-snug text-rose-600 dark:text-rose-400">
-                            Klik ikon 🔒 di kiri address bar →{" "}
-                            <strong>Setelan situs</strong> →{" "}
-                            <strong>Aplikasi di perangkat</strong>{" "}
-                            <span className="opacity-70">(Apps on device)</span> → ubah ke{" "}
-                            <strong>Izinkan</strong>, lalu muat ulang halaman.
-                        </p>
-                    </div>
-                </div>
-            );
-        }
-
-        // state === "prompt": izin belum pernah diminta
-        return (
-            <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/40">
-                <Info size={15} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
-                <div className="space-y-1">
-                    <p className="text-[11px] font-bold text-amber-700 dark:text-amber-300">
-                        Izin akses printer diperlukan
-                    </p>
-                    <p className="text-[11px] leading-snug text-amber-600 dark:text-amber-400">
-                        Klik <strong>Pindai Ulang</strong> di bawah, lalu pilih{" "}
-                        <strong>Izinkan</strong> pada popup Chrome yang muncul di pojok kiri atas browser.
-                        Popup akan meminta izin <strong>Aplikasi di perangkat</strong>{" "}
-                        <span className="opacity-70">(Apps on device)</span>.
-                    </p>
-                </div>
-            </div>
-        );
-    };
 
     const renderStatusBadge = () => {
         if (isLoadingPrinters) {
@@ -127,11 +81,10 @@ export function TabPrinter({
             <SettingsTabCard
                 icon={IconPrinter}
                 title="Perangkat Printer"
-                subtitle="ID printer thermal default untuk mencetak struk belanja kasir"
+                subtitle="Pilih printer thermal untuk mencetak struk belanja di terminal ini"
                 iconBgClassName="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
                 headerAction={renderStatusBadge()}
             >
-                {renderLnaBanner()}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
                     {/* Left: Printer Selector */}
                     <div className="md:col-span-7 space-y-3.5">
@@ -156,8 +109,8 @@ export function TabPrinter({
                         <div className="space-y-1.5">
                             <div className="flex items-center justify-between">
                                 <LabelWithTooltip
-                                    label={printerMeta?.label || "Pilih Printer Struk"}
-                                    tooltip={printerMeta?.description || "ID printer thermal lokal yang terpasang di komputer/device kasir."}
+                                    label="Pilih Printer Struk"
+                                    tooltip="Nama printer thermal lokal yang terpasang di komputer/device kasir ini. Disimpan per-terminal."
                                 />
                                 <AppButton
                                     id="btn-scan-printer"
@@ -176,14 +129,33 @@ export function TabPrinter({
                             </div>
 
                             <div id="form-settings-printer-select">
-                                <FormSelect<StoreSettingsInput>
-                                    name="printer_id"
-                                    options={printerOptions}
-                                    placeholder={isLoadingPrinters ? "Memuat printer..." : "Pilih Nama Printer"}
+                                <select
+                                    value={printerId}
+                                    onChange={(e) => onPrinterChange(e.target.value)}
                                     disabled={isSaving || isLoadingPrinters}
-                                    emptyMessage={qzError ? "Gagal terhubung ke Printer Service." : "Tidak ada printer yang terdeteksi"}
-                                />
+                                    className="w-full h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <option value="">
+                                        {isLoadingPrinters ? "Memuat printer..." : "Pilih Nama Printer"}
+                                    </option>
+                                    {printerOptions.map((opt) => (
+                                        <option key={opt.value} value={opt.value}>
+                                            {opt.label}
+                                        </option>
+                                    ))}
+                                </select>
+                                {printerOptions.length === 0 && !isLoadingPrinters && (
+                                    <p className="mt-1.5 text-[11px] text-slate-400 dark:text-slate-500">
+                                        {qzError ? "Gagal terhubung ke Printer Service." : "Tidak ada printer yang terdeteksi — klik Pindai Ulang."}
+                                    </p>
+                                )}
                             </div>
+
+                            {printerId && (
+                                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                                    ✓ Printer aktif: <strong>{printerId}</strong> — disimpan di terminal ini
+                                </p>
+                            )}
                         </div>
                     </div>
 
@@ -222,9 +194,17 @@ export function TabPrinter({
                                 <li>Jalankan aplikasi <strong>Print Service</strong> di komputer kasir.</li>
                                 <li>
                                     Klik <strong>Pindai Ulang</strong> → pilih <strong>Izinkan</strong> pada
-                                    popup Chrome (<em>Aplikasi di perangkat / Apps on device</em>).
+                                    popup Chrome <em>(Aplikasi di perangkat / Apps on device)</em>.
                                 </li>
+                                <li>Pilih printer dari dropdown, lalu klik <strong>Simpan</strong>.</li>
                             </ol>
+
+                            <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-2.5">
+                                <p className="text-[10px] text-amber-700 dark:text-amber-400 leading-snug">
+                                    <strong>Info:</strong> Pilihan printer disimpan di browser ini saja, bukan ke server.
+                                    Setiap terminal kasir perlu memilih printernya masing-masing.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>

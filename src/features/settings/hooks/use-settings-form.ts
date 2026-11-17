@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 import { useActiveStore } from "@/hooks/use-active-store";
 import { useSettingsStore } from "@/stores/settings-store";
+import { usePrinterStore } from "@/stores/printer-store";
 import { settingsApi } from "@/features/settings/api/settings-api";
 import { queryKeys } from "@/lib/query-keys";
 import PrinterService, { type PrinterDevice } from "@/services/printer.service";
@@ -34,15 +35,16 @@ export function useSettingsForm() {
 
     const { settings, fetchSettings } = useSettingsStore();
 
-    const [isSaving, setIsSaving] = useState(false);
-    const [activeTab, setActiveTab] = useState<SettingsTabId>("profile");
+    // Printer config — client-side only (localStorage via printer-store)
+    const { printerId, setPrinterId } = usePrinterStore();
     const [printerOptions, setPrinterOptions] = useState<{ value: string; label: string }[]>([]);
     const [isLoadingPrinters, setIsLoadingPrinters] = useState(false);
     const [qzError, setQzError] = useState<string | null>(null);
-    // "prompt" = belum pernah diminta, "granted" = sudah diizinkan, "denied" = diblokir
-    const [lnaStatus, setLnaStatus] = useState<PermissionState | null>(null);
 
-    // Initialize React Hook Form
+    const [isSaving, setIsSaving] = useState(false);
+    const [activeTab, setActiveTab] = useState<SettingsTabId>("profile");
+
+    // Initialize React Hook Form (printer_id NOT included — stored client-side)
     const methods = useForm<StoreSettingsInput>({
         resolver: zodResolver(storeSettingsSchema) as Resolver<StoreSettingsInput>,
         defaultValues: {
@@ -56,7 +58,6 @@ export function useSettingsForm() {
             cash_account_register_uid: "",
             cash_account_main_uid: "",
             cash_account_bank_uid: "",
-            printer_id: "",
             hpp_adjustment_method: "latest",
             cash_in_out_enabled: "true",
             branch_can_create_product: "false",
@@ -75,7 +76,6 @@ export function useSettingsForm() {
         formState: { dirtyFields, errors },
         reset,
         handleSubmit,
-        getValues,
     } = methods;
 
     // Filter available tabs based on admin & central status
@@ -106,7 +106,7 @@ export function useSettingsForm() {
         return tabFields.some((field) => errors[field]);
     }, [errors]);
 
-    // Populate form data once settings are loaded
+    // Populate form data once settings are loaded (printer_id excluded)
     useEffect(() => {
         if (Object.keys(settings).length > 0) {
             reset({
@@ -120,7 +120,6 @@ export function useSettingsForm() {
                 cash_account_register_uid: settings.cash_account_register_uid || "",
                 cash_account_main_uid: settings.cash_account_main_uid || "",
                 cash_account_bank_uid: settings.cash_account_bank_uid || "",
-                printer_id: settings.printer_id || "",
                 hpp_adjustment_method: (settings.hpp_adjustment_method as "latest" | "average") || "latest",
                 cash_in_out_enabled: settings.cash_in_out_enabled ?? "true",
                 branch_can_create_product: settings.branch_can_create_product ?? "false",
@@ -136,7 +135,7 @@ export function useSettingsForm() {
         }
     }, [settings, reset]);
 
-    // Load available printers from PrinterService
+    // Load available printers from PrinterService (called from user gesture — scan button)
     const loadPrinters = useCallback(async () => {
         setIsLoadingPrinters(true);
         setQzError(null);
@@ -149,9 +148,8 @@ export function useSettingsForm() {
             }));
 
             // Preserve currently saved printer_id in options
-            const currentPrinter = getValues("printer_id") || settings.printer_id;
-            if (currentPrinter && !list.some((p: PrinterDevice) => p.name === currentPrinter)) {
-                options.push({ value: currentPrinter, label: `${currentPrinter} (Tidak Ditemukan)` });
+            if (printerId && !list.some((p: PrinterDevice) => p.name === printerId)) {
+                options.push({ value: printerId, label: `${printerId} (Tidak Ditemukan)` });
             }
 
             setPrinterOptions(options);
@@ -163,68 +161,32 @@ export function useSettingsForm() {
                     : "Gagal menghubungkan ke printer service. Pastikan aplikasi printer service telah berjalan."
             );
 
-            const currentPrinter = getValues("printer_id") || settings.printer_id;
-            if (currentPrinter) {
-                setPrinterOptions([{ value: currentPrinter, label: currentPrinter }]);
+            if (printerId) {
+                setPrinterOptions([{ value: printerId, label: printerId }]);
             } else {
                 setPrinterOptions([]);
             }
         } finally {
             setIsLoadingPrinters(false);
         }
-    }, [getValues, settings.printer_id]);
+    }, [printerId]);
 
-    // Automatically scan printers when printer tab is active ONLY IF already granted
+    // Auto-scan when switching to printer tab (LNA permission already granted
+    // because PrinterPermissionGate ensures it before rendering this page)
     useEffect(() => {
         if (activeTab !== "printer" || Object.keys(settings).length === 0) return;
-
-        // Flutter WebView tidak terkena batasan LNA browser
-        const isFlutter = typeof window !== "undefined" && typeof window.FlutterBridge?.postMessage === "function";
-        if (isFlutter) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setLnaStatus("granted");
-            loadPrinters();
-            return;
-        }
-
-        // Periksa status izin "Aplikasi di perangkat" (Apps on device) Chrome.
-        // Chrome 136+ mengenal nama "local-network-access" atau "loopback-network"
-        // tergantung versi — kita coba keduanya. Jangan picu request ke localhost
-        // tanpa gesture user; Chrome menolaknya senyap bila izin belum ada.
-        const permissions = typeof navigator !== "undefined" ? navigator.permissions : undefined;
-        if (!permissions?.query) {
-            setLnaStatus("granted"); // Browser tanpa Permissions API, biarkan fetch menangani
-            return;
-        }
-
-        const queryLna = (): Promise<PermissionStatus> =>
-            permissions
-                .query({ name: "local-network-access" as PermissionName })
-                .catch(() =>
-                    permissions.query({ name: "loopback-network" as PermissionName })
-                );
-
-        queryLna()
-            .then((status) => {
-                setLnaStatus(status.state);
-                if (status.state === "granted") {
-                    loadPrinters();
-                }
-                // Pantau perubahan izin secara real-time (misal user klik Allow di popup)
-                status.onchange = () => {
-                    setLnaStatus(status.state);
-                    if (status.state === "granted") {
-                        loadPrinters();
-                    }
-                };
-            })
-            .catch(() => {
-                // Browser tidak mendukung nama permission ini sama sekali
-                setLnaStatus("granted"); // Anggap granted, biarkan fetch yang menentukan
-            });
+        let isCancelled = false;
+        queueMicrotask(() => {
+            if (!isCancelled) {
+                void loadPrinters();
+            }
+        });
+        return () => {
+            isCancelled = true;
+        };
     }, [activeTab, settings, loadPrinters]);
 
-    // Form submission handler
+    // Form submission handler (printer_id saved separately via printer-store)
     const onSubmit = async (data: StoreSettingsInput) => {
         setIsSaving(true);
         try {
@@ -316,10 +278,12 @@ export function useSettingsForm() {
         isSaving,
         isTabDirty,
         hasTabError,
+        // Printer (client-side)
+        printerId,
+        setPrinterId,
         printerOptions,
         isLoadingPrinters,
         qzError,
-        lnaStatus,
         loadPrinters,
         handleSubmit: handleSubmit(onSubmit, onError),
     };

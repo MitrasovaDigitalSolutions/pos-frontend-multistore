@@ -28,6 +28,7 @@ import {
 import { db } from "@/lib/db";
 import axios from "axios";
 import { useSettingsStore } from "@/stores/settings-store";
+import { usePrinterStore } from "@/stores/printer-store";
 import PrinterService from "@/services/printer.service";
 import { buildCashDepositText } from "@/utils/ReceiptCashierSession";
 
@@ -71,13 +72,14 @@ export function CloseShiftForm({
     }, [expectedCash, setValue]);
 
     const getSetting = useSettingsStore((state) => state.getSetting);
+    const { printerId } = usePrinterStore();
 
     const onPrint = async () => {
         try {
             const { data } = await axios.get(
                 `/api/proxy/v1/cash-drawer/sessions/${sessionId}/struk-setoran`
             );
-            const printerName = getSetting("printer_id") || "EPSON LX-310 ESC/P";
+            const printerName = printerId || getSetting("printer_id") || "EPSON LX-310 ESC/P";
             await PrinterService.print(printerName, buildCashDepositText(data));
         } catch (error: unknown) {
             console.error("Print failed:", error);

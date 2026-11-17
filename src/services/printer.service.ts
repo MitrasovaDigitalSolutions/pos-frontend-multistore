@@ -87,7 +87,7 @@ class PrinterService {
 
         if (state === "denied") {
             throw new Error(
-                'Akses printer diblokir browser. Klik ikon 🔒 di kiri address bar → "Setelan situs" → "Aplikasi di perangkat" (Apps on device) → ubah ke Izinkan, lalu muat ulang halaman.'
+                'Akses printer diblokir browser. Klik ikon setelan situs di samping kiri alamat URL → "Setelan situs" → "Aplikasi di perangkat" (Apps on device) → ubah ke Izinkan, lalu muat ulang halaman.'
             );
         }
     }

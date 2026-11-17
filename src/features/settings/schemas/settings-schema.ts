@@ -50,12 +50,6 @@ export const storeSettingsSchema = z.object({
         .or(z.literal(""))
         .nullable()
         .transform((val) => val || ""),
-    printer_id: z
-        .string()
-        .optional()
-        .or(z.literal(""))
-        .nullable()
-        .transform((val) => val || ""),
     hpp_adjustment_method: z
         .enum(["latest", "average"])
         .optional()
